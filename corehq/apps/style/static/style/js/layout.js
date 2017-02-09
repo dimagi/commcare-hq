@@ -3,6 +3,7 @@ var hqLayout = {};
 hqLayout.selector = {
     navigation: '#hq-navigation',
     content: '#hq-content',
+    appmanager: '#js-appmanager-body.appmanager-content-not-formdesigner',
     footer: '#hq-footer',
     sidebar: '#hq-sidebar',
     breadcrumbs: '#hq-breadcrumbs',
@@ -59,7 +60,9 @@ hqLayout.actions = {
     },
     balanceSidebar: function () {
         var $sidebar = $(hqLayout.selector.sidebar),
-            $content = $(hqLayout.selector.content);
+            $content = $(hqLayout.selector.content),
+            $appmanager = $(hqLayout.selector.appmanager);
+
         if ($content.length) {
             var availableHeight = hqLayout.utils.getAvailableContentHeight(),
                 contentHeight = $content.innerHeight();
@@ -76,6 +79,9 @@ hqLayout.actions = {
                     $content.css('min-height', $sidebar.outerHeight() + 'px');
                 }
             }
+        }
+        if ($appmanager.length && $content.length) {
+            $appmanager.css('min-height', $content.outerHeight() + 'px');
         }
     },
     balanceWidths: function () {

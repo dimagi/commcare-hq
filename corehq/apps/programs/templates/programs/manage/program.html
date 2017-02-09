@@ -3,30 +3,20 @@
 {% load hqstyle_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
+{% load compress %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    <script src="{% static 'style/js/ui-element.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/base_list_view_model.js' %}"></script>
-    <script src="{% static 'commtrack/js/products_and_programs.async.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    {% if program.get_id %}
-        <script>
-            $(function(){
-                $('#product-list').asyncProgramProductList({
-                    total: {{ data_list.total }},
-                    start_page: {{ data_list.page }},
-                    limit: {{ data_list.limit }},
-                    list_url: '{% url "commtrack_product_for_program_fetch" domain program.get_id %}'
-                });
-            });
-        </script>
-    {% endif %}
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+        <script src="{% static 'style/js/ui-element.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/base_list_view_model.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'commtrack/js/products_and_programs.async.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'program_product_options' program_product_options %}
     <form class="form form-horizontal" name="program" method="post">
         {% csrf_token %}
         <legend>{% trans "Program Information" %}</legend>
@@ -44,8 +34,8 @@
         </div>
     </form>
 
-{% if data_list %}
-    <div id="product-list">
+{% if has_data_list %}
+    <div class="ko-program-product-list">
 
         <div class="row" data-bind="visible: !initial_load()">
             <div class="col-sm-12">

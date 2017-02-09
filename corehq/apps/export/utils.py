@@ -132,7 +132,6 @@ def convert_saved_export_to_export_instance(
 
             # Create a user defined TableConfiguration
             new_table = TableConfiguration(
-                is_user_defined=True,
                 path=_convert_index_to_path_nodes(old_table.index),
             )
             instance._insert_system_properties(domain, instance.type, new_table)

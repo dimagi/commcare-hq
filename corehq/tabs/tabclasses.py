@@ -1667,8 +1667,6 @@ class AdminTab(UITab):
             dropdown_dict(_("System Info"), url=reverse("system_info")),
             dropdown_dict(_("Submission Map"), url=reverse("dimagisphere")),
             dropdown_dict(_("Management"), is_header=True),
-            dropdown_dict(mark_for_escaping(_("Commands")),
-                          url=reverse("management_commands")),
             # dropdown_dict(mark_for_escaping("HQ Announcements"),
             #                      url=reverse("default_announcement_admin")),
         ]

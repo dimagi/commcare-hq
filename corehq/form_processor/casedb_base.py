@@ -1,8 +1,11 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 import six
 from casexml.apps.case.exceptions import IllegalCaseId
+from corehq.util.soft_assert.api import soft_assert
 from dimagi.utils.couch import release_lock
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
+
+_soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
 
 
 def _get_id_for_case(case):
@@ -147,6 +150,12 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         """
         case = self.get(case_update.id)
         if case is None:
+            _soft_assert(
+                case_update.creates_case(), "Case created without create block", {
+                    'case_id': case_update.id,
+                    'domain': xform.domain
+                }
+            )
             case = self.case_update_strategy.case_from_case_update(case_update, xform)
             self.set(case.case_id, case)
             return CaseUpdateMetadata(case, is_creation=True, previous_owner_id=None)

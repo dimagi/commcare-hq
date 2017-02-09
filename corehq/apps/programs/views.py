@@ -32,6 +32,17 @@ class ProgramListView(BaseCommTrackManageView):
     template_name = 'programs/manage/programs.html'
     page_title = ugettext_noop("Programs")
 
+    @property
+    def page_context(self):
+        return {
+            'program_product_options': {
+                'total': 10,
+                'start_page': 1,
+                'limit': 10,
+                'list_url': reverse('commtrack_program_fetch', args=[self.domain]),
+            }
+        }
+
 
 class FetchProgramListView(ProgramListView):
     urlname = 'commtrack_program_fetch'
@@ -112,13 +123,16 @@ class EditProgramView(NewProgramView):
     def page_context(self):
         return {
             'program': self.program,
-            'data_list': {
-                'page': self.page,
-                'limit': self.limit,
-                'total': self.program.get_products_count(),
-            },
+            'has_data_list': True,
             'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
             'form': self.new_program_form,
+            'program_product_options': {
+                'total': self.program.get_products_count(),
+                'start_page': self.page,
+                'limit': self.limit,
+                'list_url': reverse('commtrack_product_for_program_fetch',
+                                    args=[self.domain, self.program.get_id]),
+            },
         }
 
     @property

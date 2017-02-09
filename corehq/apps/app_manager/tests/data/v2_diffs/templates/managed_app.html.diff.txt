@@ -59,7 +59,7 @@
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -117,230 +137,48 @@
+@@ -117,238 +137,54 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -85,13 +85,13 @@
 +
 +      <div class="{% if not module %}active {% endif %}appnav-name-wrapper{% if release_manager %} active{% endif %}">
 +          <div class="appnav-name-settings">
-+              <a href="{% url "app_settings" domain app.id %}" class="{% if is_app_settings_page %}active{% endif %}">
++              <a href="{% url "app_settings" domain app.id %}" class="{% if is_app_settings_page %}active{% endif %} appnav-responsive">
 +                  <i class="fa fa-gear"></i>
 +              </a>
 +          </div>
 +          <h2 class="appnav-name">
 +            <a href="{% url "view_app" domain app.id %}"
-+               class="variable-app_name">
++               class="variable-app_name appnav-responsive">
 +                {{ app.name }}
              </a>
 -        </li>
@@ -328,3 +328,12 @@
  {% endblock %}
  
  {% block pre_page_content %}
+-    {% if not formdesigner %}
+-        <div class="spacer"></div>
+-    {% endif %}
+ {% endblock %}
+ 
+ {% block app-content %}
++    {% block pre_form_content %}{% endblock %}
+     {% block form-view %}{% endblock %}
+ {% endblock %}

@@ -4,6 +4,7 @@ from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.test_utils import softer_assert
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -13,6 +14,7 @@ class OutOfOrderCaseTest(TestCase):
         super(OutOfOrderCaseTest, self).setUp()
         delete_all_cases()
 
+    @softer_assert()
     def testOutOfOrderSubmissions(self):
         dir = os.path.join(os.path.dirname(__file__), "data", "ordering")
         for fname in ('update_oo.xml', 'create_oo.xml'):

@@ -113,7 +113,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = ugettext_lazy("My Information")
     api_key = None
-    template_name = 'settings/edit_my_account.b3.html'
+    template_name = 'settings/edit_my_account.html'
 
     @use_select2
     @method_decorator(login_required)
