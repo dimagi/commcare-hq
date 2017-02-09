@@ -1,6 +1,7 @@
 import json
 import datetime
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.exceptions import RequestConnectionError
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
 from custom.enikshay.const import (
@@ -14,7 +15,9 @@ from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_person_locations,
     get_episode_case_from_test,
-    get_open_episode_case_from_person)
+    get_open_episode_case_from_person,
+    get_lab_referral_from_test,
+)
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.exceptions import NikshayLocationNotFound
@@ -169,6 +172,9 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
         :param episode_case:
         :return:
         """
+        lab_referral_case = get_lab_referral_from_test(test_case.get_id)
+        dmc = SQLLocation.active_objects.get(location_id=lab_referral_case.owner_id)
+        dmc_code = dmc.metadata.get('nikshay_code')
         episode_case = get_episode_case_from_test(test_case.get_id)
         person_case = get_person_case_from_episode(episode_case.get_id)
 
@@ -184,14 +190,15 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
             "PatientID": episode_case_properties.get('nikshay_id'),
             "TestDate": datetime.datetime.strptime(test_case_properties.get('date_tested'),
                                                    '%Y-%m-%d').strftime('%d/%m/%Y'),
-            "LabNo": test_case.case_id,  # This needs to be confirmed
-            "RegBy": "tbu-dmdmo01",  # TODO: change this to a real username, store in localsettings
+            # MK to test if there is a limit of length of this number and truncate for that accordingly
+            "LabNo": test_case_properties.get('lab_serial_number', 0),
+            "RegBy": "tbu-dmdmo01",
             "Local_ID": person_case.get_id,
             "IP_From": "127.0.0.1",
             "IntervalId": interval_id,
             "SmearResult": smear_result_grade.get(test_case_properties.get('result_grade'), 0),
             "Source": ENIKSHAY_ID,
-            "DMC": test_case_properties.get('owner_id')  # This needs to be confirmed
+            "DMC": dmc_code
         }
 
         return json.dumps(properties_dict)

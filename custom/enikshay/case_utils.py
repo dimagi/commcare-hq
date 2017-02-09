@@ -18,6 +18,7 @@ CASE_TYPE_ADHERENCE = "adherence"
 CASE_TYPE_OCCURRENCE = "occurrence"
 CASE_TYPE_EPISODE = "episode"
 CASE_TYPE_PERSON = "person"
+CASE_TYPE_LAB_REFERRAL = "lab_referral"
 
 
 def get_parent_of_case(domain, case_id, parent_case_type):
@@ -114,6 +115,26 @@ def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
     else:
         raise ENikshayCaseNotFound(
             "Occurrence with id: {} exists but has no open episode cases".format(occurrence_case_id)
+        )
+
+
+# MK: Should lab referral be a open case or a closed case as well like in referenced method above?
+def get_lab_referral_from_test(domain, test_case_id):
+    """
+    Gets the first open 'episode' case for the occurrence
+
+    Assumes the following case structure:
+    Occurrence <--ext-- Episode
+
+    """
+    case_accessor = CaseAccessors(domain)
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([test_case_id])
+    lab_referral_cases = [case for case in reverse_indexed_cases if case.type == CASE_TYPE_LAB_REFERRAL]
+    if lab_referral_cases:
+        return lab_referral_cases[0]
+    else:
+        raise ENikshayCaseNotFound(
+            "test with id: {} exists but has no lab referral cases".format(test_case_id)
         )
 
 
