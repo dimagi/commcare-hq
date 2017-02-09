@@ -200,7 +200,7 @@ class TestSmsExport(SimpleTestCase):
     @patch('corehq.apps.export.transforms._cached_case_id_to_case_name')
     @patch('corehq.apps.export.transforms.cached_user_id_to_username')
     @patch('corehq.apps.export.export._get_export_documents')
-    def test_export_doc_type_transform(self, docs, owner_id_to_display, case_id_to_casename):
+    def test_export_recipient_id_transform(self, docs, owner_id_to_display, case_id_to_casename):
         docs.return_value = [
             self._make_message(1234, couch_recipient_doc_type='WebUser'),
             self._make_message(1235, couch_recipient_doc_type='CommCareCase'),
