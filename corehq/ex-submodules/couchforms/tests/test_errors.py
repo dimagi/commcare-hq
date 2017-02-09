@@ -2,6 +2,7 @@ from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.util.test_utils import softer_assert
 
 
 class CaseProcessingErrorsTest(TestCase):
@@ -40,15 +41,14 @@ class CaseProcessingErrorsTest(TestCase):
         self.assertEqual(xform.problem, 'IllegalCaseId: case_id must not be empty')
 
     @run_with_all_backends
+    @softer_assert()
     def test_uses_referrals(self):
-        """
-        submit form with a case block that uses referrals
-
-        check that
-        - it errors
-        - the form is not saved under its original id
-        - an XFormError is saved with the original id as orig_id
-        """
+        # submit form with a case block that uses referrals
+        #
+        # check that
+        # - it errors
+        # - the form is not saved under its original id
+        # - an XFormError is saved with the original id as orig_id
         domain = 'special_domain'
         _, xform, _ = submit_form_locally(
             """<data xmlns="example.com/foo">

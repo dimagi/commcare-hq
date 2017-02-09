@@ -149,11 +149,11 @@ class CaseFactoryTest(TestCase):
         child_case_id = uuid.uuid4().hex
         parent_case_id = uuid.uuid4().hex
         structures = [
-            CaseStructure(case_id=case_id),
+            CaseStructure(case_id=case_id, attrs={'create': True}),
             CaseStructure(
                 case_id=child_case_id,
                 indices=[
-                    CaseIndex(CaseStructure(case_id=parent_case_id))
+                    CaseIndex(CaseStructure(case_id=parent_case_id, attrs={'create': True}))
                 ]
             )
         ]
@@ -188,7 +188,7 @@ class CaseFactoryTest(TestCase):
         LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain)
-        [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': token_id})
+        [case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}), form_extras={'last_sync_token': token_id})
         form = FormAccessors(domain).get_form(case.xform_ids[0])
         self.assertEqual(token_id, form.last_sync_token)
 
@@ -210,6 +210,6 @@ class CaseFactoryTest(TestCase):
         LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
-        [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': 'differenttoken'})
+        [case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}), form_extras={'last_sync_token': 'differenttoken'})
         form = FormAccessors(domain).get_form(case.xform_ids[0])
         self.assertEqual('differenttoken', form.last_sync_token)

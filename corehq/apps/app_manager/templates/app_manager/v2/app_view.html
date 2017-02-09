@@ -61,14 +61,14 @@
   {% endif %}
 {% endblock %}
 
-{% block pre_page_content %}
-
+{% block pre_form_content %}
+  {% if not intro_only %}
   <div class="appmanager-page-actions">
       {% if can_preview_form %}
-      <a class="btn btn-purple js-preview-toggle" style="display: none;" href="#">
+      <button type="button" class="btn btn-info js-preview-toggle" style="display: none;">
         <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
         <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
-      </a>
+      </button>
       {% endif %}
       {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
           <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
@@ -77,6 +77,7 @@
           </a>
       {% endif %}
   </div>
+  {% endif %}
 
   <div class="appmanager-edit-title">
     <inline-edit-v2 params="

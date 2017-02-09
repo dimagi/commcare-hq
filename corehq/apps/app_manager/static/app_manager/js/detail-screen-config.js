@@ -216,7 +216,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
     };
 
-    var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang, saveButton) {
+    var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
+                                    searchButtonDisplayCondition, saveButton) {
         var self = this,
             DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
@@ -246,6 +247,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             });
         };
 
+        self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
         self.relevant = ko.observable();
         self.default_relevant = ko.observable(true);
         self.includeClosed = ko.observable(includeClosed);
@@ -332,6 +334,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             return {
                 properties: self._getProperties(),
                 relevant: self._getRelevant(),
+                search_button_display_condition: self.searchButtonDisplayCondition(),
                 include_closed: self.includeClosed(),
                 default_properties: self._getDefaultProperties(),
             };
@@ -347,6 +350,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             saveButton.fire('change');
         });
         self.defaultProperties.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.searchButtonDisplayCondition.subscribe(function () {
             saveButton.fire('change');
         });
     };
@@ -1337,6 +1343,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         spec.includeClosed,
                         spec.defaultProperties,
                         spec.lang,
+                        spec.searchButtonDisplayCondition,
                         this.shortScreen.saveButton
                     );
                 }

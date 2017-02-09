@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import urllib
 from collections import namedtuple, OrderedDict
 import datetime
@@ -120,6 +121,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
 from pillowtop.dao.exceptions import DocumentNotFoundError
+import six
 
 
 SAMPLE_DATA_MAX_ROWS = 100
@@ -1030,7 +1032,7 @@ def evaluate_expression(request, domain):
         )
     except Exception as e:
         return json_response(
-            {"error": unicode(e)},
+            {"error": six.text_type(e)},
             status_code=500,
         )
 
@@ -1391,7 +1393,7 @@ def export_data_source(request, domain, config_id):
 
     # build export
     def get_table(q):
-        yield table.columns.keys()
+        yield list(table.columns)
         for row in q:
             yield row
 

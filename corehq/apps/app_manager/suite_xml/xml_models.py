@@ -588,6 +588,7 @@ class ActionMixin(OrderedXmlObject):
     ORDER = ('display', 'stack')
 
     stack = NodeField('stack', Stack)
+    relevant = XPathField('@relevant')
 
 
 class Action(ActionMixin):

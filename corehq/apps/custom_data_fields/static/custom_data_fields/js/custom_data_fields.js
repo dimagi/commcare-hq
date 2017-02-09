@@ -58,6 +58,7 @@ function CustomDataField () {
 function CustomDataFieldsModel () {
     var self = this;
     self.data_fields = ko.observableArray();
+    self.purge_existing = ko.observable(false);
     // The data field that the "remove field modal" currently refers to.
     self.modalField = ko.observable();
 
@@ -120,6 +121,11 @@ function CustomDataFieldsModel () {
         $('<input type="hidden">')
             .attr('name', 'data_fields')
             .attr('value', JSON.stringify(self.serialize()))
+            .appendTo(customDataFieldsForm);
+
+        $('<input type="hidden">')
+            .attr('name', 'purge_existing')
+            .attr('value', self.purge_existing())
             .appendTo(customDataFieldsForm);
         customDataFieldsForm.appendTo("body");
         customDataFieldsForm.submit();

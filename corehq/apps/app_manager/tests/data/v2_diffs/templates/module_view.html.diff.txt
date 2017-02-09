@@ -48,7 +48,7 @@
          $(function () {
              var state = hqImport('app_manager/js/detail-screen-config.js').state;
              var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
-@@ -86,6 +87,7 @@
+@@ -88,6 +89,7 @@
                  }
              }
          });
@@ -56,7 +56,7 @@
          $(function () {
              var moduleType = {{ module.module_type|JSON }};
              var showCaseTypeError = function(message) {
-@@ -102,6 +104,15 @@
+@@ -104,6 +106,15 @@
                  if (value !== valueNoSpaces) {
                      $(this).val(valueNoSpaces);
                  }
@@ -72,7 +72,7 @@
                  if (!valueNoSpaces.match(/^[\w-]*$/g)) {
                      $(this).closest('.form-group').addClass('has-error');
                      showCaseTypeError(
-@@ -112,7 +123,6 @@
+@@ -114,7 +125,6 @@
                      showCaseTypeError(
                          gettext("'commcare-user' is a reserved case type. Please change the case type")
                      );
@@ -80,11 +80,11 @@
                  } else {
                      $(this).closest('.form-group').removeClass('has-error');
                      hideCaseTypeError();
-@@ -230,71 +240,77 @@
+@@ -232,71 +242,77 @@
      </script>
  {% endblock %}
  
-+{% block pre_page_content %}
++{% block pre_form_content %}
 +  {% include 'app_manager/v2/partials/module_view_heading.html' %}
 +{% endblock %}
 +
@@ -120,9 +120,9 @@
 +                </li>
 +              {% endif %}
 +            {% endfor %}
-+            {% if details %}
++            {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
 +                <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-+            {% endif %}
++            {% endif %}{% endif %}
 +          {% endif %}
 +        {% endblock %}{# endblock tab-headers #}
 +      </ul>
@@ -142,9 +142,9 @@
 -    </li>
 -    {% endif %}
 -    {% endfor %}
--    {% if details %}
+-    {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
 -        <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
--    {% endif %}
+-    {% endif %}{% endif %}
 -    {% endblock %}{# endblock tab-headers #}
 -</ul>
 -<div class="spacer"></div>
@@ -170,11 +170,11 @@
 +              </div>
 +            {% endif %}
 +          {% endfor %}
-+          {% if details %}
++          {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
 +            <div class="tab-pane" id="module-actions">
 +                {% include 'app_manager/v2/partials/module_actions.html' %}
 +            </div>
-+          {% endif %}
++          {% endif %}{% endif %}
 +        {% endif %}
 +      {% endblock %}
      </div>
@@ -194,11 +194,11 @@
 -    </div>
 -    {% endif %}
 -    {% endfor %}
--    {% if details %}
--    <div class="tab-pane" id="module-actions">
--        {% include 'app_manager/v1/partials/module_actions.html' %}
--    </div>
--    {% endif %}
+-    {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
+-        <div class="tab-pane" id="module-actions">
+-            {% include 'app_manager/v1/partials/module_actions.html' %}
+-        </div>
+-    {% endif %}{% endif %}
 -    {% endblock %}{# endblock tab-content #}
  </div>
 -</div>

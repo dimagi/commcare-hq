@@ -263,6 +263,18 @@
                 "calculate_total": false
             },
             {
+                "display": "Female Total",
+                "type": "field",
+                "field": "female",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "male 0-4",
                 "type": "field",
                 "field": "male_under_4",
@@ -358,7 +370,19 @@
                 },
                 "calculate_total": false
             },
-                                    {
+            {
+                "display": "Male Total",
+                "type": "field",
+                "field": "male",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "transgender 0-4",
                 "type": "field",
                 "field": "transgender_under_4",
@@ -446,6 +470,18 @@
                 "display": "transgender ≥ 65",
                 "type": "field",
                 "field": "transgender_over_65",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Transgender Total",
+                "type": "field",
+                "field": "transgender",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,

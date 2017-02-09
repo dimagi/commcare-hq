@@ -1,10 +1,14 @@
 .appmanager-main-container {
   display: block;
   margin-left: @app-manager-sidebar-width;
-  background-color: white;
+  background-color: @cc-brand-low;
   position:relative;
   padding: 10px 20px;
   box-sizing: border-box;
+  background-image: url('img/loading.gif');
+  background-repeat: no-repeat;
+  background-position: center 100px;
+  background-size: 25% auto;
 
   .transition(all 1s);
   .box-shadow(0 0 20px 0 rgba(0, 0, 0, .20));
@@ -17,6 +21,17 @@
 .appmanager-content {
   display: none;
   position: relative;
+}
+
+#js-appmanager-body.appmanager-content-not-formdesigner {
+  background-color: white;
+  margin-top: -9px;
+  margin-left: -20px;
+  margin-right: -20px;
+  margin-bottom: -30px;
+  padding-top: 9px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 .appmanager-loading-container {

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext_lazy as _
 
 REPORT_BUILDER_EVENTS_KEY = 'REPORT_BUILDER_EVENTS_KEY'
