@@ -26,39 +26,6 @@ module1, form1 = factory.new_basic_module('my_slug', 'my_case_type')
 form1.source = read(['data', 'forms', 'simple.xml'])
 
 
-@patch('corehq.apps.app_manager.models.Application.get', return_value=factory.app)
-@patch('corehq.apps.app_manager.models.Form.get_form', return_value=form1)
-class ConfigureReportFormsTest(SimpleTestCase):
-
-    def test_count_column_existence(self, _, __):
-        """
-        Confirm that aggregated reports have a count column option, and that
-        non aggregated reports ... also do.
-        """
-
-        def get_count_column_columns(configuration_form):
-            return len([
-                x for x in six.itervalues(configuration_form.report_column_options)
-                if isinstance(x, CountColumn)
-            ])
-
-        list_report_form = ConfigureListReportForm(
-            "my report",
-            factory.app._id,
-            "form",
-            form1.unique_id,
-        )
-        self.assertEqual(get_count_column_columns(list_report_form), 1)
-
-        table_report_form = ConfigureTableReportForm(
-            "my report",
-            factory.app._id,
-            "form",
-            form1.unique_id,
-        )
-        self.assertEqual(get_count_column_columns(table_report_form), 1)
-
-
 class ReportBuilderDBTest(TestCase):
 
     @classmethod
