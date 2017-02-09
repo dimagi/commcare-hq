@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 import json
 import urllib2
@@ -461,17 +462,14 @@ def weekly_digest():
     today = datetime.date.today()
     in_forty_days = today + datetime.timedelta(days=40)
 
-    ending_in_forty_days = filter(
-        lambda sub: not sub.is_renewed,
-        Subscription.objects.filter(
+    ending_in_forty_days = [sub for sub in Subscription.objects.filter(
             date_end__lte=in_forty_days,
             date_end__gte=today,
             is_active=True,
             is_trial=False,
         ).exclude(
             account__dimagi_contact='',
-        )
-    )
+        ) if not sub.is_renewed]
 
     if not ending_in_forty_days:
         log_accounting_info(

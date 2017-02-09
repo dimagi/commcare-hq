@@ -486,6 +486,7 @@ hqDefine('export/js/models.js', function () {
         });
 
         self.showAdvanced = ko.observable(false);
+        self.showDeleted = ko.observable(false);
         self.customPathString.subscribe(self.onCustomPathChange.bind(self));
     };
     UserDefinedTableConfiguration.prototype = Object.create(TableConfiguration.prototype);

@@ -260,11 +260,17 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def _get_case_search_action(module):
+        relevant_kwarg = {}
+        if module.search_config.search_button_display_condition:
+            relevant_kwarg = dict(
+                relevant=XPath(module.search_config.search_button_display_condition),
+            )
         action = Action(
             display=Display(
                 text=Text(locale_id=id_strings.case_search_locale(module))
             ),
-            stack=Stack()
+            stack=Stack(),
+            **relevant_kwarg
         )
         frame = PushFrame()
         frame.add_mark()

@@ -42,8 +42,7 @@ def validate_form(form_xml):
         response = requests.post(
             get_nimbus_url() + const.ENDPOINT_VALIDATE_FORM,
             data=form_xml,
-            headers={'Content-Type': 'application/xml'},
-            verify=False
+            headers={'Content-Type': 'application/xml'}
         )
     except RequestException as e:
         notify_exception(None, "Error calling Nimbus form validation endpoint")

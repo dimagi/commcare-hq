@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import re
 from base64 import b64encode
@@ -39,6 +40,7 @@ from two_factor.views import (
     ProfileView, SetupView, SetupCompleteView,
     BackupTokensView, DisableView, PhoneSetupView
 )
+import six
 
 
 @login_and_domain_required
@@ -111,7 +113,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = ugettext_lazy("My Information")
     api_key = None
-    template_name = 'settings/edit_my_account.b3.html'
+    template_name = 'settings/edit_my_account.html'
 
     @use_select2
     @method_decorator(login_required)
@@ -163,7 +165,7 @@ class MyAccountSettingsView(BaseMyAccountView):
 
     def phone_number_is_valid(self):
         return (
-            isinstance(self.phone_number, basestring) and
+            isinstance(self.phone_number, six.string_types) and
             re.compile('^\d+$').match(self.phone_number) is not None
         )
 

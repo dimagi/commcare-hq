@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import calendar
 import random
 import datetime
@@ -14,6 +15,7 @@ from corehq.apps.sms.util import get_sms_backend_classes
 from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.util.test_utils import unit_testing_only
+from six.moves import range
 
 
 # arbitrarily generated once from http://www.generatedata.com/
@@ -80,10 +82,10 @@ def arbitrary_country_code_and_prefixes(
 
 @unit_testing_only
 def _available_gateway_fee_backends():
-    return filter(
-        lambda backend: backend.get_api_id() != SQLTwilioBackend.get_api_id(),
-        get_sms_backend_classes().values()
-    )
+    return [
+        backend for backend in get_sms_backend_classes().values()
+        if backend.get_api_id() != SQLTwilioBackend.get_api_id()
+    ]
 
 
 @unit_testing_only

@@ -36,7 +36,7 @@
  
                  $('#formdesigner').vellum(VELLUM_OPTIONS);
  
-@@ -148,8 +156,59 @@
+@@ -148,14 +156,67 @@
              });
          });
          analytics.workflow('Entered the Form Builder');
@@ -96,7 +96,10 @@
  {% endblock %}
  
  {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
-@@ -159,3 +218,5 @@
+ 
+ {% block form-view %}
+-    <div id="formdesigner" class="clearfix"></div>
++    <div id="formdesigner" class="clearfix app-manager-v2"></div>
  {% endblock %}
  
  {% block column_style %}hq-flush-content{% endblock %}

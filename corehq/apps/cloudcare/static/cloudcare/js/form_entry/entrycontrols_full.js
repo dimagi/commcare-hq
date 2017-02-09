@@ -356,6 +356,8 @@ function ComboboxEntry(question, options) {
 
     self.renderAtwho = function() {
         var $input = $('#' + self.entryId);
+        $input.atwho('destroy');
+        $input.atwho('setIframe', window.frameElement, true);
         $input.atwho({
             at: '',
             data: self.options(),

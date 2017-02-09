@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, time
 from corehq.apps.reports_core.exceptions import FilterValueException
@@ -10,6 +11,8 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.conf import settings
+import six
+from six.moves import range
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
 
@@ -297,7 +300,7 @@ class ChoiceListFilter(BaseFilter):
     def value(self, **kwargs):
         raw_value = kwargs[self.name]
         choice = transform_from_datatype(self.datatype)(raw_value) if raw_value != SHOW_ALL_CHOICE else raw_value
-        choice_values = map(lambda c: c.value, self.choices)
+        choice_values = [c.value for c in self.choices]
         if choice not in choice_values:
             raise FilterValueException(_(u'Choice "{choice}" not found in choices: {choices}')
                                        .format(choice=choice,
@@ -350,7 +353,7 @@ class DynamicChoiceListFilter(BaseFilter):
             ]
 
     def value(self, **kwargs):
-        selection = unicode(kwargs.get(self.name, ""))
+        selection = six.text_type(kwargs.get(self.name, ""))
         user = kwargs.get("request_user", None)
         if selection:
             choices = selection.split(CHOICE_DELIMITER)

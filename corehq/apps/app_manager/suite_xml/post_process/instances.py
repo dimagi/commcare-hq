@@ -144,10 +144,11 @@ def commcare_fixture_instances(domain, instance_name):
 
 @register_factory('locations')
 def location_fixture_instances(domain, instance_name):
-    if toggles.FLAT_LOCATION_FIXTURE.enabled(domain):
-        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
-    else:
+    from corehq.apps.locations.models import LocationFixtureConfiguration
+    if (toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain)
+            and not LocationFixtureConfiguration.for_domain(domain).sync_flat_fixture):
         return Instance(id=instance_name, src='jr://fixture/commtrack:{}'.format(instance_name))
+    return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
 def get_all_instances_referenced_in_xpaths(domain, xpaths):

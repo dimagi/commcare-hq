@@ -926,8 +926,8 @@ class TestBulkManagement(TestCase):
 
     def test_custom_data(self):
         tree = [
-            ('State 1', 's1', 'state', '', '', False, '', '', '', {'a': 1}, {}, 0),
-            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {'b': 'test'}, {}, 0),
+            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, {}, 0),
+            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'b': u'test'}, {}, 0),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -936,4 +936,8 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(tree))
+
+        locations = SQLLocation.objects.all()
+        self.assertEqual(locations[0].metadata, {u'a': u'1'})  # test that ints are coerced to strings
+        self.assertEqual(locations[1].metadata, {u'b': u'test'})
         self.assertCouchSync()

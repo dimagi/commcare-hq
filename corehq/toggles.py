@@ -364,16 +364,29 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
 
 SYNC_ALL_LOCATIONS = StaticToggle(
     'sync_all_locations',
-    'Sync the full location hierarchy when syncing location fixtures',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    '(Deprecated) Sync the full location hierarchy when syncing location fixtures',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    description="Do not turn this feature flag. It is only used for providing compatability for old projects. "
+    "We are actively trying to remove projects from this list. This functionality is now possible by using the "
+    "Advanced Settings on the Organization Levels page and setting the Level to Expand From option."
 )
 
 FLAT_LOCATION_FIXTURE = StaticToggle(
     'flat_location_fixture',
-    'Sync the location fixture in a flat format.',
-    TAG_PRODUCT_PATH,
+    'Sync the location fixture in a flat format. ',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
+)
+
+HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
+    'hierarchical_location_fixture',
+    'Display Settings To Get Hierarchical Location Fixture',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Do not turn this feature flag.  It is only used for providing compatability for old projects.  We are actively trying to remove projects from this list."
+    ),
 )
 
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
@@ -447,7 +460,7 @@ PRODUCTS_PER_LOCATION = StaticToggle(
     'products_per_location',
     "Products Per Location: Specify products stocked at individual locations.  "
     "This doesn't actually do anything yet.",
-    TAG_PRODUCT_CORE,
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 
@@ -816,14 +829,6 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-GRID_MENUS = StaticToggle(
-    'grid_menus',
-    'Allow using grid menus on Android',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Grid+Views',
-)
-
 OLD_EXPORTS = StaticToggle(
     'old_exports',
     'Use old backend export infrastructure',
@@ -929,7 +934,7 @@ PREVIEW_APP = PredictablyRandomToggle(
     'Preview an application in the app builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.5,
+    randomness=1.0,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -1033,5 +1038,5 @@ DO_NOT_PROCESS_OLD_BUILDS = PredictablyRandomToggle(
     'Do not process old build for export generation',
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN],
-    randomness=0.2,
+    randomness=0.5,
 )

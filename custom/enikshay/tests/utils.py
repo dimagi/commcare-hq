@@ -114,9 +114,8 @@ class ENikshayCaseStructureMixin(object):
                     'patient_type_choice': 'treatment_after_lfu',
                     'person_name': 'Peregrine Took',
                     'site_choice': 'pleural_effusion',
-                    'treatment_initiation_date': '2015-03-03',
                     'treatment_supporter_designation': 'ngo_volunteer',
-                    TREATMENT_START_DATE: "2017-02-17",
+                    TREATMENT_START_DATE: "2015-03-03",
                     TREATMENT_SUPPORTER_FIRST_NAME: "Gandalf",
                     TREATMENT_SUPPORTER_LAST_NAME: "The Grey",
                     TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone,
@@ -183,15 +182,18 @@ class ENikshayLocationStructureMixin(object):
         }
         self.dto.save()
 
+        self.drtb_hiv = locations['DRTB-HIV']
+        self.drtb_hiv.save()
+
         self.tu = locations['TU']
         self.tu.metadata = {
-            'nikshay_code': '05',
+            'nikshay_code': '1',
         }
         self.tu.save()
 
         self.phi = locations['PHI']
         self.phi.metadata = {
-            'nikshay_code': '16',
+            'nikshay_code': '2',
         }
         self.phi.save()
         super(ENikshayLocationStructureMixin, self).setUp()
