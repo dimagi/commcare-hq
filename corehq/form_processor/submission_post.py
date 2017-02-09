@@ -50,7 +50,7 @@ class SubmissionPost(object):
                  domain=None, app_id=None, build_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
-                 partial_submission=False):
+                 partial_submission=False, case_db=None):
         assert domain, domain
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
@@ -71,6 +71,9 @@ class SubmissionPost(object):
         self.interface = FormProcessorInterface(domain)
         self.formdb = FormAccessors(domain)
         self.partial_submission = partial_submission
+        # always None except in the case where a system form is being processed as part of another submission
+        # e.g. for closing extension cases
+        self.case_db = case_db
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -141,7 +144,14 @@ class SubmissionPost(object):
         with result.get_locked_forms() as xforms:
             from casexml.apps.case.xform import get_and_check_xform_domain
             domain = get_and_check_xform_domain(xforms[0])
-            with self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
+            if self.case_db:
+                assert self.case_db.domain == domain
+                case_db_cache = self.case_db
+                case_db_cache.xforms.extend(xforms)
+            else:
+                case_db_cache = self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms)
+
+            with case_db_cache as case_db:
                 instance = xforms[0]
                 if instance.xmlns == DEVICE_LOG_XMLNS:
                     try:
@@ -171,6 +181,7 @@ class SubmissionPost(object):
                     else:
                         instance.initial_processing_complete = True
                         self.save_processed_models(xforms, case_stock_result)
+                        case_stock_result.case_result.close_extensions(case_db)
                         cases = case_stock_result.case_models
 
             errors = self.process_signals(instance)
@@ -220,8 +231,6 @@ class SubmissionPost(object):
 
             for case in case_stock_result.case_models:
                 case_post_save.send(case.__class__, case=case)
-
-        case_stock_result.case_result.close_extensions()
 
     def process_xforms_for_cases(self, xforms, case_db):
         from casexml.apps.case.xform import process_cases_with_casedb
