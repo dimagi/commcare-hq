@@ -728,6 +728,7 @@ class ExportInstance(BlobMixin, Document):
             CASE_HISTORY_PROPERTIES,
             PARENT_CASE_TABLE_PROPERTIES,
             STOCK_COLUMN,
+            SMS_TABLE_PROPERTIES,
         )
 
         nested_repeat_count = len([node for node in table.path if node.is_repeat])
@@ -774,7 +775,7 @@ class ExportInstance(BlobMixin, Document):
                         **column_initialization_data)
         elif export_type == SMS_EXPORT:
             if table.path == MAIN_TABLE:
-                cls.__insert_system_properties(table, [ROW_NUMBER_COLUMN], **column_initialization_data)
+                cls.__insert_system_properties(table, SMS_TABLE_PROPERTIES, **column_initialization_data)
 
     @classmethod
     def __insert_system_properties(cls, table, properties, top=True, **column_initialization_data):
@@ -940,31 +941,11 @@ class SMSExportInstance(ExportInstance):
 
     @classmethod
     def _new_from_schema(cls, schema):
-        columns = [
-            ("Contact Type", "couch_recipient_doc_type", DOC_TYPE_TRANSFORM),
-            ("Contact ID", "couch_recipient", None),
-            ("Timestamp", "date", None),
-            ("Owner Name", "couch_recipient", OWNER_ID_TRANSFORM),
-            ("Phone Number", "phone_number", None),
-            ("Direction", "direction", None),
-            ("Message", "text", None),
-            ("Type", "workflow", WORKFLOW_TRANSFORM),
-        ]
         main_table = TableConfiguration(
             label='Messages',
             path=MAIN_TABLE,
             selected=True,
-            columns=[
-                ExportColumn(
-                    label=col[0],
-                    item=ExportItem(
-                        path=[PathNode(name=col[1])],
-                        transform=col[2]
-                    ),
-                    selected=True
-                )
-                for col in columns
-            ],
+            columns=[],
         )
         if schema.include_metadata:
             main_table.columns.append(ExportColumn(
