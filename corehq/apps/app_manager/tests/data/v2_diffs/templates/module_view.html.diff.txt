@@ -84,7 +84,7 @@
      </script>
  {% endblock %}
  
-+{% block pre_page_content %}
++{% block pre_form_content %}
 +  {% include 'app_manager/v2/partials/module_view_heading.html' %}
 +{% endblock %}
 +
