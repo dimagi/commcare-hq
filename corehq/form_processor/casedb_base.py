@@ -34,7 +34,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
 
         self._populate_from_initial(initial)
         self.domain = domain
-        self.xforms = xforms if xforms is not None else []
+        self.cached_xforms = xforms if xforms is not None else []
         self.strip_history = strip_history
         self.deleted_ok = deleted_ok
         self.lock = lock
@@ -113,9 +113,10 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
 
     def get_cached_forms(self):
         """
-        Get any in-memory forms being processed.
+        Get any in-memory forms being processed. These are only used by the Couch backend
+        to fetch attachments which need to be attached to cases.
         """
-        return {xform.form_id: xform for xform in self.xforms}
+        return {xform.form_id: xform for xform in self.cached_xforms}
 
     @abstractmethod
     def get_cases_for_saving(self, now):

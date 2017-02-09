@@ -147,7 +147,7 @@ class SubmissionPost(object):
             if self.case_db:
                 assert self.case_db.domain == domain
                 case_db_cache = self.case_db
-                case_db_cache.xforms.extend(xforms)
+                case_db_cache.cached_xforms.extend(xforms)
             else:
                 case_db_cache = self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms)
 
