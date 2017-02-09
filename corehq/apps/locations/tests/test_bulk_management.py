@@ -971,12 +971,14 @@ class TestPartialBulkManagement(TestCase):
 
         # new county
         valid_upload = [
+            # user should be assigned to 's1'
             # can create a new county
             ('county13', 's1')
         ]
 
         # move to a different parent
         valid_upload = [
+            # user should be assigned to 's2'
             # can update the parent of an existing county to an existing state,
             # if user has permission to access 's2'
             ('county11', 's2')
@@ -984,6 +986,7 @@ class TestPartialBulkManagement(TestCase):
 
 
         valid_upload = [
+            # user should be assigned to 's2'
             # can create a new county, user should have permission to access 's2'
             # Question: Should the user have permission to access 's1' as well, since 'county13''s parent was 's1'
             ('county13', 's2')
@@ -998,6 +1001,7 @@ class TestPartialBulkManagement(TestCase):
         ]
 
         valid_delete_upload = [
+            # user should be assigned to 's1'
             # all subtree of 'county12' specified, so this should succeed
             ('county12', 's1', 'Yes'),
             # move 'county112' to 'county11'
@@ -1005,6 +1009,7 @@ class TestPartialBulkManagement(TestCase):
         ]
 
         valid_delete_upload = [
+            # user should be assigned to 's1'
             # all subtree of 'county12' specified, so this should succeed
             ('county12', 's1', 'Yes'),
             # delete 'county112'
