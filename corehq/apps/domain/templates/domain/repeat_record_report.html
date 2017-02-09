@@ -17,6 +17,7 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function() {
+
         var codeMirror = null;
         $('#view-record-payload-modal').on('shown.bs.modal', function(event) {
             var recordData = $(event.relatedTarget).data(),
@@ -91,6 +92,48 @@
                 },
             });
           });
+
+        $('#report-content').on('click', '.cancel-record-payload', function() {
+            var $btn = $(this),
+                recordId = $btn.data().recordId;
+            $btn.disableButton();
+
+            $.post({
+                url: "{% url 'cancel_repeat_record' domain %}",
+                data: { record_id: recordId },
+                success: function(data) {
+                    $btn.removeSpinnerFromButton();
+                    $btn.text(gettext('Success!'));
+                    $btn.addClass('btn-success');
+                },
+                error: function() {
+                    $btn.removeSpinnerFromButton();
+                    $btn.text(gettext('Failed to cancel'));
+                    $btn.addClass('btn-danger');
+                },
+            });
+          });
+
+         $('#report-content').on('click', '.requeue-record-payload', function() {
+            var $btn = $(this),
+                recordId = $btn.data().recordId;
+            $btn.disableButton();
+
+            $.post({
+                url: "{% url 'requeue_repeat_record' domain %}",
+                data: { record_id: recordId },
+                success: function(data) {
+                    $btn.removeSpinnerFromButton();
+                    $btn.text(gettext('Success!'));
+                    $btn.addClass('btn-success');
+                },
+                error: function() {
+                    $btn.removeSpinnerFromButton();
+                    $btn.text(gettext('Failed to cancel'));
+                    $btn.addClass('btn-danger');
+                },
+            });
+          });
     });
 </script>
 {% endblock js-inline %} {% block modals %}{{ block.super }}
@@ -135,4 +178,5 @@
         </div>
     </div>
 </div>
+
 {% endblock modals %}
