@@ -727,15 +727,7 @@ class ProjectDataTab(UITab):
         from corehq.apps.export.views import (
             FormExportListView,
             CaseExportListView,
-            DashboardFeedListView,
-            DailySavedExportListView,
-            DailySavedExportPaywall,
-            DashboardFeedPaywall,
         )
-        daily_saved_list_url = reverse(DailySavedExportListView.urlname, args=(self.domain,))
-        daily_saved_paywall_url = reverse(DailySavedExportPaywall.urlname, args=(self.domain,))
-        feed_list_url = reverse(DashboardFeedListView.urlname, args=(self.domain,))
-        feed_paywall_url = reverse(DashboardFeedPaywall.urlname, args=(self.domain,))
         items = []
         if self.can_view_form_exports:
             items.append(dropdown_dict(
@@ -746,18 +738,6 @@ class ProjectDataTab(UITab):
             items.append(dropdown_dict(
                 CaseExportListView.page_title,
                 url=reverse(CaseExportListView.urlname, args=(self.domain,))
-            ))
-        if self.should_see_daily_saved_export_list_view or self.should_see_daily_saved_export_paywall:
-            url = daily_saved_list_url if self.should_see_daily_saved_export_list_view else daily_saved_paywall_url
-            items.append(dropdown_dict(
-                DailySavedExportListView.page_title,
-                url=url
-            ))
-        if self.should_see_dashboard_feed_list_view or self.should_see_dashboard_feed_paywall:
-            url = feed_list_url if self.should_see_dashboard_feed_list_view else feed_paywall_url
-            items.append(dropdown_dict(
-                DashboardFeedListView.page_title,
-                url=url,
             ))
         items += [
             dropdown_dict(None, is_divider=True),
