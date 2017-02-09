@@ -1957,8 +1957,7 @@ class AdjustBalanceForm(forms.Form):
                 crispy.Field('note'),
                 crispy.Field('invoice_id'),
                 'adjust',
-                css_class='modal-body',
-                css_id="adjust-balance-form-%d" % invoice.id
+                css_class='modal-body ko-adjust-balance-form',
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(

@@ -23,9 +23,6 @@
                 }
             };
             hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
-            {% for adjust_balance_form in adjust_balance_forms %}
-            $('#adjust-balance-form-{{ adjust_balance_form.invoice.id }}').koApplyBindings(new AdjustBalanceFormModel());
-            {% endfor %}
         }());
         $(function () {
             var deselectPlanVersion = function () {
