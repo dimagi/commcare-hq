@@ -4,6 +4,7 @@ import logging
 from corehq.apps.api.resources.auth import AdminAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.serializers import XFormInstanceSerializer
+from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
@@ -11,7 +12,8 @@ from corehq.apps.es.domains import DomainES
 
 from tastypie import fields
 from tastypie.exceptions import NotFound
-from tastypie.resources import Resource
+from tastypie.resources import Resource, ModelResource
+
 from dimagi.utils.dates import force_to_datetime
 from six.moves import map
 
@@ -105,3 +107,21 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
         object_class = Domain
         resource_name = 'project_space_metadata'
         serializer = XFormInstanceSerializer(formats=['json'])
+
+
+class MaltResource(ModelResource):
+
+    class Meta(CustomResourceMeta):
+        authentication = AdminAuthentication()
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        queryset = MALTRow.objects.all().order_by('pk')
+        resource_name = 'malt_tables'
+        fields = ['id', 'month', 'user_id', 'username', 'email', 'user_type',
+                  'domain_name', 'num_of_forms', 'app_id', 'device_id',
+                  'is_app_deleted', 'wam', 'pam', 'use_threshold', 'experienced_threshold']
+        include_resource_uri = False
+        filtering = {
+            'month': ['gt', 'gte', 'lt', 'lte'],
+            'domain_name': ['exact']
+        }
