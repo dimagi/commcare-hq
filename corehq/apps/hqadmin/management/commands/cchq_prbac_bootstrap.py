@@ -57,7 +57,7 @@ class Command(BaseCommand):
         self.ensure_roles(self.BOOTSTRAP_PRIVILEGES + self.BOOTSTRAP_PLANS, dry_run)
 
         ensure_grants(
-            self.BOOTSTRAP_GRANTS.items(), # py3 iterable
+            self.BOOTSTRAP_GRANTS.items(),  # py3 iterable
             dry_run=dry_run,
             verbose=self.verbose,
             roles_by_slug=self.roles_by_slug,
@@ -76,19 +76,24 @@ class Command(BaseCommand):
         """
         Add each role if it does not already exist, otherwise skip it.
         """
+        dry_run_tag = "[DRY RUN] " if dry_run else ""
         roles_to_save = []
         for role in roles:
             if role.slug not in self.roles_by_slug:
-                if dry_run:
-                    logger.info('[DRY RUN] Creating role: %s', role.name)
-                else:
-                    if self.verbose:
-                        logger.info('Creating role: %s', role.name)
+                if self.verbose or dry_run:
+                    logger.info('%sCreating role: %s', dry_run_tag, role.name)
+                if not dry_run:
                     roles_to_save.append(role)
             else:
                 logger.info('Role already exists: %s', role.name)
         if roles_to_save:
-            Role.objects.bulk_create(roles_to_save)
+            roles = Role.objects.bulk_create(roles_to_save)
+            if roles[0].id is None:
+                # pre Django 1.10
+                self.roles_by_slug = {role.slug: role for role in Role.objects.all()}
+            else:
+                # Django 1.10 (omit extra query)
+                self.roles_by_slug.update((role.slug, role) for role in roles)
 
     BOOTSTRAP_PRIVILEGES = [
         Role(slug=privileges.API_ACCESS, name='API Access', description=''),
