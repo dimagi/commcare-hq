@@ -1,4 +1,5 @@
 import json
+from collections import namedtuple
 from datetime import datetime
 from django.test import TestCase
 
@@ -158,6 +159,21 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
 
     def _assert_case_property_equal(self, case, case_property, expected_value):
         self.assertEqual(case.dynamic_case_properties().get(case_property), expected_value)
+
+    def test_username_password(self):
+        episode_case = self._create_nikshay_enabled_case()
+        username = "arwen"
+        password = "adhafang"
+
+        MockRepeater = namedtuple('MockRepeater', 'username password')
+        MockRepeatRecord = namedtuple('MockRepeatRecord', 'repeater')
+
+        repeat_record = MockRepeatRecord(MockRepeater(username=username, password=password))
+        payload = (json.loads(
+            NikshayRegisterPatientPayloadGenerator(None).get_payload(repeat_record, episode_case))
+        )
+        self.assertEqual(payload['regBy'], username)
+        self.assertEqual(payload['password'], password)
 
     @run_with_all_backends
     def test_handle_success(self):

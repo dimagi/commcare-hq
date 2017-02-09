@@ -38,59 +38,24 @@ class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, episode_case):
         """
-        mandatory_fields for Nikshay Registration API as of now
-        scode
-        dcode
-        pname
-        pgender
-        paddress
-        pmob
-        ptbyr
-        pregdate
-        cname
-        caddress
-        cmob
-        dcpulmunory
-        dotname
-        dotdesignation
-        dotmob
-        dotpType
-        dotcenter
-        regBy # Used date_of_diagnosis instead of date_of_registration
-        IP_From # Pending
-        Local_ID
-        tcode # Pending
-        page
-        poccupation
-        dotphi
-        Ptype
-        pcategory # Pending
-        Source
+        https://docs.google.com/document/d/1yUWf3ynHRODyVVmMrhv5fDhaK_ufZSY7y0h9ke5rBxU/edit#heading=h.a9uhx3ql595c
         """
-        # properties skipped with example values
-        # "plandline": "N/A",
-        # "clandline": "N/A",
-        # "dotlandline": "N/A",
-        # "cvisitedby": "N/A",
-        # "cvisitedDate": "N/A",
-        # "dotcenter": "N/A",
-        # "dotmoname": "N/A",
-        # "mosign": "N/A",
-        # "mosigndonedate": "N/A",
-        # "atbtreatment": "N/A",
-        # "atbduration": ,
-        # "atbsource": "G",
-        # "atbregimen": "Manish-Regim",
-        # "atbyr": "2015",
-        # "dcpulmunory": "P",
-        # "IP_Address": "mk-ip-address",
-        # "IP_From": "127.0.0.1",
         person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
-
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
+
+        try:
+            username = repeat_record.repeater.username
+        except AttributeError:
+            username = "tbu-dmdmo01"
+        try:
+            password = repeat_record.repeater.password
+        except AttributeError:
+            password = ""
+
         properties_dict = {
-            "regBy": "tbu-dmdmo01",  # TODO: change this to a real username, store in localsettings
+            "regBy": username,
+            "password": password,
             "Local_ID": person_case.get_id,
             "Source": ENIKSHAY_ID,
             "dotcenter": "NA",
