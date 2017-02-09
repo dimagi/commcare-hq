@@ -13,9 +13,11 @@ $(function() {
         }
     });
 
-    // Activate latest tab on document ready
+    // Activate latest (or first) tab on document ready
     var lastTab = $.cookie('last_tab');
     if (lastTab) {
         $('a[href="' + lastTab + '"]').tab('show');
+    } else {
+        $('a[data-toggle="tab"]:first').tab('show');
     }
 });
