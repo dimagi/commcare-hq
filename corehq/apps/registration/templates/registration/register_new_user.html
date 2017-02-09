@@ -6,6 +6,19 @@
 
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
 
+{% block js %}{{ block.super }}
+    {% compress js %}
+        <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
+        <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+        <script src="{% static 'style/js/password_validators.ko.js' %}"></script>
+        <script src="{% static 'intl-tel-input/build/js/intlTelInput.min.js' %}"></script>
+        <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
+
 {% block js-inline  %}{{ block.super }}
   <script>
     $(function () {
@@ -17,25 +30,24 @@
   </script>
   {% url "eula_basic" as eula_url %}
   {% include 'style/includes/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
-  <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
-  <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
-  <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-  <script src="{% static 'style/js/password_validators.ko.js' %}"></script>
-  <script src="{% static 'intl-tel-input/build/js/intlTelInput.min.js' %}"></script>
-  <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
   <script>
     $(function () {
-      var reg = hqImport('registration/js/new_user.ko.js');
+      var reg = hqImport('registration/js/new_user.ko.js')
+          initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
       reg.onModuleLoad = function () {
         $('.loading-form-step').fadeOut(500, function () {
           $('.step-1').fadeIn(500);
         });
       };
-      reg.initRMI('{% url 'process_registration' %}');
-      {% if not hide_password_feedback %}
+      reg.initRMI(hqImport('hqwebapp/js/urllib.js').reverse('process_registration'));
+      if (!initial_page_data('hide_password_feedback')) {
         reg.showPasswordFeedback();
-      {% endif %}
-      var regForm = new reg.FormViewModel({{ reg_form_defaults|JSON }}, '#registration-form-container', ['step-1', 'step-2', 'final-step']);
+      }
+      var regForm = new reg.FormViewModel(
+        initial_page_data('reg_form_defaults'),
+        '#registration-form-container',
+        ['step-1', 'step-2', 'final-step']
+      );
       $('#registration-form-container').koApplyBindings(regForm);
 
       reg.setResetEmailFeedbackFn(function (isValidating) {
@@ -65,11 +77,11 @@
         _kmq.push(["trackClick", "create_account_success", "Account Creation was Successful"]);
       });
 
-      {% if show_number %}
+      if (initial_page_data('show_number')) {
         var $number = $('#id_phone_number');
         $number.intlTelInput({
           nationalMode: true,
-          utilsScript: "{% static 'intl-tel-input/build/js/utils.js' %}"
+          utilsScript: initial_page_data('number_utils_script'),
         });
         $number.keydown(function (e) {
           // prevents non-numeric numbers from being entered.
@@ -95,17 +107,18 @@
           }
           return phoneNumber;
         });
-      {% endif %}
-
+      }
     });
-  </script>
-  {% if ab_test %}
-    <script>
+
       $(function () {
-        _kmq.push(["set", {"{{ ab_test.name }}": "{{ ab_test.version }}"}]);
+        var ab_test = hqImport('hqwebapp/js/initial_page_data.js').get('ab_test');
+        if (ab_test) {
+            var options = {};
+            options[ab_test.name] = ab_test.version;
+            _kmq.push(["set", options]);
+        }
       })
     </script>
-  {% endif %}
 {% endblock %}
 
 {% block stylesheets %}
@@ -137,6 +150,12 @@
 {% endblock %}
 
 {% block content %}
+{% initial_page_data 'hide_password_feedback' hide_password_feedback %}
+{% initial_page_data 'show_number' show_number %}
+{% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
+{% initial_page_data 'reg_form_defaults' reg_form_defaults %}
+{% initial_page_data 'ab_test' ab_test %}
+{% registerurl 'process_registration' %}
 <div class="container">
   <div class="row">
     <div class="col-xs-8 col-xs-offset-4 col-md-7 col-md-offset-5 reg-form-column animate-height" style="min-height: 450px">

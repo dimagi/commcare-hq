@@ -100,6 +100,7 @@ except (ImportError, SyntaxError):
     resource_versions = {}
 
 
+@register.filter
 @register.simple_tag
 def static(url):
     resource_url = url
