@@ -19,6 +19,7 @@ from corehq.apps.export.views import (
     DownloadNewFormExportView,
     BulkDownloadNewFormExportView,
     DownloadNewCaseExportView,
+    DownloadNewSmsExportView,
     GenerateSchemaFromAllBuildsView,
     download_daily_saved_export,
     DashboardFeedListView,
@@ -109,6 +110,9 @@ urlpatterns = [
     url(r"^custom/dailysaved/download/(?P<export_instance_id>[\w\-]+)/$",
         download_daily_saved_export,
         name="download_daily_saved_export"),
+    url(r"^custom/new/sms/download/$",
+        DownloadNewSmsExportView.as_view(),
+        name=DownloadNewSmsExportView.urlname),
 
     # Edit export views
     url(r"^custom/new/form/edit/(?P<export_id>[\w\-]+)/$",

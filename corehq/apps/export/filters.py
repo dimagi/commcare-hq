@@ -9,6 +9,7 @@ from corehq.apps.es.cases import (
     opened_by,
     owner_type)
 from corehq.apps.es.forms import app, submitted, user_id, user_type
+from corehq.apps.es.sms import received as sms_received
 from corehq.apps.export.esaccessors import get_groups_user_ids
 from corehq.pillows.utils import USER_TYPES
 
@@ -211,3 +212,9 @@ class UserTypeFilter(ExportFilter):
 
 class GroupFormSubmittedByFilter(GroupFilter):
     base_filter = FormSubmittedByFilter
+
+
+class SmsReceivedRangeFilter(RangeExportFilter):
+
+    def to_es_filter(self):
+        return sms_received(self.gt, self.gte, self.lt, self.lte)

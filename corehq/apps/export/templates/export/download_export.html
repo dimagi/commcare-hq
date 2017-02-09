@@ -71,6 +71,7 @@
     <div ng-app="downloadExportsApp">
         <div ng-controller="DownloadExportFormController"
              ng-cloak>
+            {% if export.edit_url %}
             <div class="alert alert-info">
                 {% blocktrans %}
                     You are downloading the following exports:
@@ -85,6 +86,7 @@
                     {% endangularjs %}
                 </ul>
             </div>
+            {% endif %}
         {% if show_no_submissions_warning %}
             <div class="alert alert-warning">
                 <h4>

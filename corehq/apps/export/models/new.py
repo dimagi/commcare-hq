@@ -55,6 +55,7 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_DELETED,
     FORM_EXPORT,
     CASE_EXPORT,
+    SMS_EXPORT,
     TRANSFORM_FUNCTIONS,
     DEID_TRANSFORM_FUNCTIONS,
     PROPERTY_TAG_CASE,
@@ -62,6 +63,7 @@ from corehq.apps.export.const import (
     PLAIN_USER_DEFINED_SPLIT_TYPE,
     CASE_DATA_SCHEMA_VERSION,
     FORM_DATA_SCHEMA_VERSION,
+    SMS_DATA_SCHEMA_VERSION,
     MISSING_VALUE,
     EMPTY_VALUE,
     KNOWN_CASE_PROPERTIES,
@@ -606,7 +608,12 @@ class ExportInstance(BlobMixin, Document):
 
     @property
     def defaults(self):
-        return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
+        if self.type == FORM_EXPORT:
+            return FormExportInstanceDefaults
+        elif self.type == SMS_EXPORT:
+            return SMSExportInstanceDefaults
+        else:
+            return CaseExportInstanceDefaults
 
     def get_filters(self):
         """
@@ -718,6 +725,7 @@ class ExportInstance(BlobMixin, Document):
             CASE_HISTORY_PROPERTIES,
             PARENT_CASE_TABLE_PROPERTIES,
             STOCK_COLUMN,
+            SMS_TABLE_PROPERTIES,
         )
 
         nested_repeat_count = len([node for node in table.path if node.is_repeat])
@@ -762,6 +770,9 @@ class ExportInstance(BlobMixin, Document):
             elif table.path == PARENT_CASE_TABLE:
                 cls.__insert_system_properties(table, PARENT_CASE_TABLE_PROPERTIES,
                         **column_initialization_data)
+        elif export_type == SMS_EXPORT:
+            if table.path == MAIN_TABLE:
+                cls.__insert_system_properties(table, SMS_TABLE_PROPERTIES, **column_initialization_data)
 
     @classmethod
     def __insert_system_properties(cls, table, properties, top=True, **column_initialization_data):
@@ -920,6 +931,33 @@ class FormExportInstance(ExportInstance):
         return []
 
 
+class SMSExportInstance(ExportInstance):
+    type = SMS_EXPORT
+    identifier = None
+    name = "Messages"
+
+    @classmethod
+    def _new_from_schema(cls, schema):
+        main_table = TableConfiguration(
+            label='Messages',
+            path=MAIN_TABLE,
+            selected=True,
+            columns=[],
+        )
+        if schema.include_metadata:
+            main_table.columns.append(ExportColumn(
+                label="Message Log ID",
+                item=ExportItem(
+                    path=[PathNode(name='_id')]
+                ),
+                selected=True,
+            ))
+
+        instance = cls(domain=schema.domain, tables=[main_table])
+        cls._insert_system_properties(instance.domain, schema.type, instance.tables[0])
+        return instance
+
+
 class ExportInstanceDefaults(object):
     """
     This class is responsible for generating defaults for various aspects of the export instance
@@ -980,6 +1018,19 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
     @staticmethod
     def get_default_instance_name(schema):
         return u'{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%m-%d'))
+
+
+class SMSExportInstanceDefaults(ExportInstanceDefaults):
+    @staticmethod
+    def get_default_table_name(table_path):
+        if table_path == MAIN_TABLE:
+            return _('Messages')
+        else:
+            return _('Unknown')
+
+    @staticmethod
+    def get_default_instance_name(schema):
+        return u'Messages: {}'.format(datetime.now().strftime('%Y-%m-%d'))
 
 
 class ExportRow(object):
@@ -1753,6 +1804,27 @@ class CaseExportDataSchema(ExportDataSchema):
 
         schema.group_schemas.append(group_schema)
         return schema
+
+
+class SMSExportDataSchema(ExportDataSchema):
+    include_metadata = BooleanProperty(default=False)
+
+    @property
+    def type(self):
+        return SMS_EXPORT
+
+    @classmethod
+    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
+            only_process_current_builds=False, task=None):
+        return cls(domain=domain)
+
+    @classmethod
+    def schema_version(cls):
+        return SMS_DATA_SCHEMA_VERSION
+
+    @staticmethod
+    def get_latest_export_schema(domain, include_metadata, identifier=None):
+        return SMSExportDataSchema(domain=domain, include_metadata=include_metadata)
 
 
 def _string_path_to_list(path):
