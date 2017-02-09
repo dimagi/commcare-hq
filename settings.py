@@ -203,7 +203,6 @@ DEFAULT_APPS = (
     'two_factor',
     'ws4redis',
     'statici18n',
-    'raven.contrib.django.raven_compat',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -1961,6 +1960,9 @@ if SENTRY_PUBLIC_KEY and SENTRY_PRIVATE_KEY and SENTRY_PROJECT_ID:
     except ImportError:
         pass
     else:
+        INSTALLED_APPS += ('raven.contrib.django.raven_compat',)
+
+        SENTRY_CONFIGURED = True
 
         RAVEN_CONFIG = {
             'dsn': 'https://{pub_key}:{priv_key}@sentry.io/{project_id}'.format(
@@ -1971,6 +1973,11 @@ if SENTRY_PUBLIC_KEY and SENTRY_PRIVATE_KEY and SENTRY_PROJECT_ID:
             'release': fetch_git_sha(os.path.dirname(os.pardir)),
             'environment': SERVER_ENVIRONMENT,
             'tags': {},
+            'include_versions': False,  # performance without this is bad
+            'processors': (
+                'raven.processors.SanitizePasswordsProcessor',
+                'raven.processors.RemovePostDataProcessor',
+            )
         }
 
         breadcrumbs.ignore_logger('quickcache')

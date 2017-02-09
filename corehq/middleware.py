@@ -174,11 +174,17 @@ class SentryContextMiddleware(object):
     """Add details to Sentry context.
     Should be placed after 'corehq.apps.users.middleware.UsersMiddleware'
     """
-    def process_view(self, request, view_func, view_args, view_kwargs):
+    def __init__(self):
         try:
             from raven.contrib.django.raven_compat.models import client
         except ImportError:
             raise MiddlewareNotUsed
+
+        if not getattr(settings, 'SENTRY_CONFIGURED', None):
+            raise MiddlewareNotUsed
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        from raven.contrib.django.raven_compat.models import client
 
         if getattr(request, 'couch_user', None):
             client.extra_context({
