@@ -310,6 +310,13 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                           'amount': Decimal(post_data.get(product_type[0], 0))}
                          for product_type in SoftwareProductType.CHOICES
                          if Decimal(post_data.get(product_type[0], 0)) > 0]
+        if Decimal(post_data.get('general_credit', 0)) > 0:
+            self.general_credits = {
+                'type': 'general_credit',
+                'amount': Decimal(post_data.get('general_credit', 0))
+            }
+        else:
+            self.general_credits = None
         self.post_data = post_data
         self.account = account
         self.subscription = subscription
@@ -390,6 +397,24 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     .format(
                         account=self.account,
                         product=product['type']
+                    )
+                )
+
+        if self.general_credits:
+            amount = self.general_credits['amount']
+            if amount >= 0.5:
+                self.credit_lines.append(CreditLine.add_credit(
+                    amount,
+                    account=self.account,
+                    subscription=self.subscription,
+                    payment_record=payment_record,
+                ))
+            else:
+                log_accounting_error(
+                    "{account} tried to make a payment for Credits for less than $0.5."
+                    "You should follow up with them."
+                    .format(
+                        account=self.account,
                     )
                 )
 
