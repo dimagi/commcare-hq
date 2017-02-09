@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, date, timedelta
 from django.template.loader import render_to_string
 from corehq.apps.accounting.models import (
-    SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
+    SoftwarePlanEdition, DefaultProductPlan, BillingAccount, BillingContactInfo,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
     SubscriptionType, PreOrPostPay,
     DEFAULT_ACCOUNT_FORMAT,
@@ -102,6 +102,13 @@ def request_new_domain(request, form, is_new_user=True):
         ensure_explicit_community_subscription(new_domain.name, date.today())
 
     UserRole.init_domain_with_presets(new_domain.name)
+
+    # add user's email as contact email for billing account for the domain
+    account = BillingAccount.get_account_by_domain(new_domain.name)
+    billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account)
+    billing_contact.email_list = [current_user.email]
+    billing_contact.save()
+    account.save()
 
     dom_req.domain = new_domain.name
 
