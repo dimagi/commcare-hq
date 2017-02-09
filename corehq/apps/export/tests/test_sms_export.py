@@ -66,7 +66,7 @@ class TestSmsExport(SimpleTestCase):
         cls.export_meta.export_format = Format.JSON
         cls.export_no_meta.export_format = Format.JSON
 
-    @patch('corehq.apps.export.transforms.cached_owner_id_to_display')
+    @patch('corehq.apps.export.transforms.cached_user_id_to_username')
     @patch('corehq.apps.export.export._get_export_documents')
     def test_export(self, docs, owner_id_to_display):
         docs.return_value = self._message_docs()
@@ -83,7 +83,7 @@ class TestSmsExport(SimpleTestCase):
                             u'Contact Type',
                             u'Contact ID',
                             u'Timestamp',
-                            u'Owner Name',
+                            u'User Name',
                             u'Phone Number',
                             u'Direction',
                             u'Message',
@@ -94,7 +94,7 @@ class TestSmsExport(SimpleTestCase):
                 }
             )
 
-    @patch('corehq.apps.export.transforms.cached_owner_id_to_display')
+    @patch('corehq.apps.export.transforms.cached_user_id_to_username')
     @patch('corehq.apps.export.export._get_export_documents')
     def test_export_meta(self, docs, owner_id_to_display):
         docs.return_value = self._message_docs()
@@ -111,7 +111,7 @@ class TestSmsExport(SimpleTestCase):
                             u'Contact Type',
                             u'Contact ID',
                             u'Timestamp',
-                            u'Owner Name',
+                            u'User Name',
                             u'Phone Number',
                             u'Direction',
                             u'Message',
@@ -123,15 +123,17 @@ class TestSmsExport(SimpleTestCase):
                 }
             )
 
-    @patch('corehq.apps.export.transforms.cached_owner_id_to_display')
+    @patch('corehq.apps.export.transforms._cached_case_id_to_case_name')
+    @patch('corehq.apps.export.transforms.cached_user_id_to_username')
     @patch('corehq.apps.export.export._get_export_documents')
-    def test_export_doc_type_transform(self, docs, owner_id_to_display):
+    def test_export_doc_type_transform(self, docs, owner_id_to_display, case_id_to_casename):
         docs.return_value = [
             self._make_message(1234, couch_recipient_doc_type='WebUser'),
             self._make_message(1235, couch_recipient_doc_type='CommCareCase'),
             self._make_message(1236, couch_recipient_doc_type='Location'),
         ]
         owner_id_to_display.return_value = None
+        case_id_to_casename.return_value = None
         rows_value = self._make_message_rows(docs())
         rows_value[0][0] = 'Web User'
         rows_value[1][0] = 'Case'
@@ -148,7 +150,7 @@ class TestSmsExport(SimpleTestCase):
                             u'Contact Type',
                             u'Contact ID',
                             u'Timestamp',
-                            u'Owner Name',
+                            u'User Name',
                             u'Phone Number',
                             u'Direction',
                             u'Message',
@@ -159,7 +161,7 @@ class TestSmsExport(SimpleTestCase):
                 }
             )
 
-    @patch('corehq.apps.export.transforms.cached_owner_id_to_display')
+    @patch('corehq.apps.export.transforms.cached_user_id_to_username')
     @patch('corehq.apps.export.export._get_export_documents')
     def test_export_workflow_transform(self, docs, owner_id_to_display):
         messages = [
@@ -184,13 +186,53 @@ class TestSmsExport(SimpleTestCase):
                             u'Contact Type',
                             u'Contact ID',
                             u'Timestamp',
-                            u'Owner Name',
+                            u'User Name',
                             u'Phone Number',
                             u'Direction',
                             u'Message',
                             u'Type',
                         ],
                         u'rows': rows_value,
+                    }
+                }
+            )
+
+    @patch('corehq.apps.export.transforms._cached_case_id_to_case_name')
+    @patch('corehq.apps.export.transforms.cached_user_id_to_username')
+    @patch('corehq.apps.export.export._get_export_documents')
+    def test_export_doc_type_transform(self, docs, owner_id_to_display, case_id_to_casename):
+        docs.return_value = [
+            self._make_message(1234, couch_recipient_doc_type='WebUser'),
+            self._make_message(1235, couch_recipient_doc_type='CommCareCase'),
+            self._make_message(1236, couch_recipient_doc_type='Location'),
+        ]
+        owner_id_to_display.return_value = 'web user'
+        case_id_to_casename.return_value = 'case'
+        rows_value = self._make_message_rows(docs())
+        rows_value[0][0] = 'Web User'
+        rows_value[0][3] = 'web user'
+        rows_value[1][0] = 'Case'
+        rows_value[1][3] = 'case'
+        rows_value[2][0] = 'Unknown'
+
+        export_file = get_export_file([self.export_no_meta], [])
+
+        with export_file as export:
+            self.assertEqual(
+                json.loads(export),
+                {
+                    u'Messages': {
+                        u'headers': [
+                            u'Contact Type',
+                            u'Contact ID',
+                            u'Timestamp',
+                            u'User Name',
+                            u'Phone Number',
+                            u'Direction',
+                            u'Message',
+                            u'Type',
+                        ],
+                        u'rows': rows_value
                     }
                 }
             )

@@ -21,9 +21,9 @@ def case_id_to_case_name(case_id, doc):
 
 
 def case_or_user_id_to_name(id, doc):
-    if doc['doc_type'] == 'CommCareCase':
+    if doc['couch_recipient_doc_type'] == 'CommCareCase':
         return case_id_to_case_name(id, doc)
-    elif doc['doc_type'] in ('CommCareUser', 'WebUser'):
+    elif doc['couch_recipient_doc_type'] in ('CommCareUser', 'WebUser'):
         return user_id_to_username(id, doc)
 
 
