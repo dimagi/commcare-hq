@@ -35,9 +35,6 @@ class CaseAPIBaseTest(object):
 
         def create_user(username):
             username = format_username(username, cls.domain)
-            ccu = CommCareUser.get_by_username(username)
-            if ccu:
-                ccu.delete()
             return CommCareUser.create(cls.domain,
                                        username,
                                        cls.password)
