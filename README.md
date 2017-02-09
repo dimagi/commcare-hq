@@ -336,6 +336,17 @@ To avoid having to run the databse setup for each test run you can specify the `
     
 See `corehq.tests.nose.HqdbContext` for full description of `REUSE_DB`.
 
+### Running tests by tag
+You can run all tests with a certain tag as follows:
+
+    $ ./manage.py test --attr=tag
+
+Available tags:
+
+  * dual_backend: all tests decorated with `run_with_all_backeds`
+
+See http://nose.readthedocs.io/en/latest/plugins/attrib.html for more details.
+
 ## Javascript tests
 
 ### Setup
