@@ -37,6 +37,18 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         finally:
             self.session_helper.Session.commit()
 
+    def build_table(self):
+        self.session_helper.Session.remove()
+        try:
+            build_table(self.engine, self.get_table())
+        except ProgrammingError, e:
+            raise TableRebuildError('problem building UCR table {}: {}'.format(self.config, e))
+        finally:
+            self.session_helper.Session.commit()
+
+    def after_table_build(self):
+        pass
+
     def drop_table(self):
         # this will hang if there are any open sessions, so go ahead and close them
         self.session_helper.Session.remove()
@@ -136,3 +148,8 @@ def rebuild_table(engine, table):
     with engine.begin() as connection:
         table.drop(connection, checkfirst=True)
         table.create(connection)
+
+
+def build_table(engine, table):
+    with engine.begin() as connection:
+        table.create(connection, checkfirst=True)

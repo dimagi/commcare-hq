@@ -29,10 +29,6 @@
         data: {condition: condition, config: $data}
     }, visible: allow.condition()"></div>
     <div data-bind="if: allow.case_preload()">
-        <div data-bind="if: !allow.vellum_case_management()">
-            <div class="panel panel-appmanager case-preload"
-                 data-bind="template: 'case-config:case-transaction:case-preload'"></div>
-        </div>
         <div class="panel panel-appmanager case-properties"
              data-bind="template: 'case-config:case-transaction:case-properties'"></div>
     </div>

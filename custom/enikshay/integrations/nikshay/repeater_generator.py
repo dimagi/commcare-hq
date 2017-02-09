@@ -1,19 +1,20 @@
 import json
 import datetime
 
-from corehq.apps.locations.models import SQLLocation
-
-from corehq.apps.users.models import CouchUser
 from corehq.apps.repeaters.exceptions import RequestConnectionError
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
-from custom.enikshay import const
-from custom.enikshay.case_utils import get_person_case_from_episode
-from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
-from custom.enikshay.integrations.nikshay.exceptions import (
-    NikshayResponseException,
-    NikshayLocationNotFound,
-    NikshayCodeNotFound,
+from custom.enikshay.const import (
+    PRIMARY_PHONE_NUMBER,
+    BACKUP_PHONE_NUMBER,
+    TREATMENT_SUPPORTER_FIRST_NAME,
+    TREATMENT_SUPPORTER_LAST_NAME,
+    TREATMENT_SUPPORTER_PHONE,
+    TREATMENT_START_DATE,
 )
+from custom.enikshay.case_utils import get_person_case_from_episode, get_person_locations
+from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
+from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
+from custom.enikshay.exceptions import NikshayLocationNotFound
 from custom.enikshay.integrations.nikshay.field_mappings import (
     gender_mapping,
     occupation,
@@ -160,35 +161,6 @@ def _get_nikshay_id_from_response(response):
         raise NikshayResponseException("No Nikshay ID received: {}".format(response_json))
 
 
-def get_person_locations(person_case):
-    location_properties = {}
-    try:
-        phi_location = SQLLocation.objects.get(location_id=person_case.owner_id)
-    except SQLLocation.DoesNotExist:
-        raise NikshayLocationNotFound(
-            "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
-            .format(location_id=person_case.owner_id, person_id=person_case.case_id)
-        )
-
-    try:
-        tu_location = phi_location.parent
-        district_location = tu_location.parent
-        city_location = district_location.parent
-        state_location = city_location.parent
-    except AttributeError:
-        raise NikshayLocationNotFound("Location structure error for person: {}".format(person_case.case_id))
-    try:
-        # TODO: verify how location codes will be stored
-        location_properties['scode'] = state_location.metadata['nikshay_code']
-        location_properties['dcode'] = district_location.metadata['nikshay_code']
-        location_properties['tcode'] = tu_location.metadata['nikshay_code']
-        location_properties['dotphi'] = phi_location.metadata['nikshay_code']
-    except (KeyError, AttributeError) as e:
-        raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
-
-    return location_properties
-
-
 def _get_person_case_properties(person_case, person_case_properties):
     """
     :return: Example {'dcode': u'JLR', 'paddress': u'123, near asdf, Jalore, Rajasthan ', 'cmob': u'1234567890',
@@ -201,13 +173,21 @@ def _get_person_case_properties(person_case, person_case_properties):
         "pgender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
         "page": person_case_properties.get('age', ''),
         "paddress": person_case_properties.get('current_address', ''),
-        "pmob": person_case_properties.get(const.PRIMARY_PHONE_NUMBER, ''),
+        "pmob": person_case_properties.get(PRIMARY_PHONE_NUMBER, ''),
         "cname": person_case_properties.get('secondary_contact_name_address', ''),
         "caddress": person_case_properties.get('secondary_contact_name_address', ''),
-        "cmob": person_case_properties.get(const.BACKUP_PHONE_NUMBER, ''),
+        "cmob": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),
         "pcategory": person_category
     }
-    person_properties.update(get_person_locations(person_case))
+    person_locations = get_person_locations(person_case)
+    person_properties.update(
+        {
+            'scode': person_locations.sto,
+            'dcode': person_locations.dto,
+            'tcode': person_locations.tu,
+            'dotphi': person_locations.phi,
+        }
+    )
 
     return person_properties
 
@@ -246,17 +226,17 @@ def _get_episode_case_properties(episode_case_properties):
         "dcpulmunory": dcpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
         "dcexpulmunory": dcexpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
         "dotname": (' '.join(
-            [episode_case_properties.get('treatment_supporter_first_name', ''),
-             episode_case_properties.get('treatment_supporter_last_name', '')])
+            [episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
+             episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, '')])
         ),
-        "dotmob": episode_case_properties.get('treatment_supporter_mobile_number', ''),
+        "dotmob": episode_case_properties.get(TREATMENT_SUPPORTER_PHONE, ''),
         # Can this mandatory field be made N/A if in case we don't collect this as in spec
         "dotdesignation": episode_case_properties.get('treatment_supporter_designation', ''),
         "dotpType": treatment_support_designation.get(
             episode_case_properties.get('treatment_supporter_designation', 'other_community_volunteer'),
             treatment_support_designation['other_community_volunteer']
         ),
-        "dateofInitiation": episode_case_properties.get('treatment_initiation_date', str(datetime.date.today())),
+        "dateofInitiation": episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today())),
         "Ptype": patient_type_choice.get(episode_case_properties.get('patient_type_choice', ''), ''),
     })
 

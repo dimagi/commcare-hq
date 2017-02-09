@@ -6,7 +6,6 @@ CommCare HQ
 https://github.com/dimagi/commcare-hq
 
 [![Build Status](https://travis-ci.org/dimagi/commcare-hq.png)](https://travis-ci.org/dimagi/commcare-hq)
-[![Test Coverage](https://coveralls.io/repos/dimagi/commcare-hq/badge.svg?branch=master&service=github)](https://coveralls.io/github/dimagi/commcare-hq?branch=master)
 
 CommCare HQ is a server-side tool to help manage community health workers.
 It seamlessly integrates with CommCare mobile and CommCare ODK, as well as
@@ -329,6 +328,7 @@ To run a particular test or subset of tests
 If database tests are failing because of a `permission denied` error, give your postgres user permissions to create a database.
 In the postgres shell, run the following as a superuser: `ALTER USER commcarehq CREATEDB;`
 
+### REUSE DB
 To avoid having to run the databse setup for each test run you can specify the `REUSE_DB` environment variable
  which will use an existing test database if one exists:
  
@@ -336,6 +336,20 @@ To avoid having to run the databse setup for each test run you can specify the `
     $ REUSE_DB=reset ./manage.py test corehq.apps.app_manager  # drop the current test DB and create a fresh one
     
 See `corehq.tests.nose.HqdbContext` for full description of `REUSE_DB`.
+
+### Running tests by tag
+You can run all tests with a certain tag as follows:
+
+    $ ./manage.py test --attr=tag
+
+Available tags:
+
+  * all_backends: all tests decorated with `run_with_all_backeds`
+
+See http://nose.readthedocs.io/en/latest/plugins/attrib.html for more details.
+
+### Running only failed tests
+See https://github.com/nose-devs/nose/blob/master/nose/plugins/testid.py
 
 ## Javascript tests
 

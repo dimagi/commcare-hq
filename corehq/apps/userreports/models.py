@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from copy import copy, deepcopy
 import json
@@ -65,6 +66,9 @@ class DataSourceBuildInformation(DocumentSchema):
     finished = BooleanProperty(default=False)
     # Start time of the most recent build SQL table celery task.
     initiated = DateTimeProperty()
+    # same as previous attributes but used for rebuilding tables in place
+    finished_in_place = BooleanProperty(default=False)
+    initiated_in_place = DateTimeProperty()
 
 
 class DataSourceMeta(DocumentSchema):
@@ -395,7 +399,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
                     'XFormInstance': _('Forms'),
                     'CommCareCase': _('Cases')
                 }.get(self.config.referenced_doc_type, "Layer"),
-                'columns': filter(None, [map_col(col) for col in self.columns])
+                'columns': [x for x in (map_col(col) for col in self.columns) if x]
             }
 
     @property

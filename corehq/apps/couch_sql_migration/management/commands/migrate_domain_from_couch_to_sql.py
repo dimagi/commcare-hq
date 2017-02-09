@@ -1,8 +1,7 @@
 from itertools import izip_longest
-from optparse import make_option
 
 from django.conf import settings
-from django.core.management.base import CommandError, LabelCommand
+from django.core.management.base import BaseCommand, CommandError
 from sqlalchemy.exc import OperationalError
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
@@ -20,18 +19,18 @@ from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
 
 
-class Command(LabelCommand):
-    args = "<domain>"
-    option_list = LabelCommand.option_list + (
-        make_option('--MIGRATE', action='store_true', default=False),
-        make_option('--COMMIT', action='store_true', default=False),
-        make_option('--blow-away', action='store_true', default=False),
-        make_option('--stats-short', action='store_true', default=False),
-        make_option('--stats-long', action='store_true', default=False),
-        make_option('--show-diffs', action='store_true', default=False),
-        make_option('--no-input', action='store_true', default=False),
-        make_option('--debug', action='store_true', default=False),
-    )
+class Command(BaseCommand):
+
+    def add_arguments(self, parser):
+        parser.add_argument('domain')
+        parser.add_argument('--MIGRATE', action='store_true', default=False)
+        parser.add_argument('--COMMIT', action='store_true', default=False)
+        parser.add_argument('--blow-away', action='store_true', default=False)
+        parser.add_argument('--stats-short', action='store_true', default=False)
+        parser.add_argument('--stats-long', action='store_true', default=False)
+        parser.add_argument('--show-diffs', action='store_true', default=False)
+        parser.add_argument('--no-input', action='store_true', default=False)
+        parser.add_argument('--debug', action='store_true', default=False)
 
     @staticmethod
     def require_only_option(sole_option, options):
@@ -39,7 +38,7 @@ class Command(LabelCommand):
         assert all(not value for key, value in options.items()
                    if key in this_command_opts and key != sole_option)
 
-    def handle_label(self, domain, **options):
+    def handle(self, domain, **options):
         if should_use_sql_backend(domain):
             raise CommandError(u'It looks like {} has already been migrated.'.format(domain))
 

@@ -113,11 +113,6 @@ class ProductListView(BaseCommTrackManageView):
     @property
     def page_context(self):
         return {
-            'data_list': {
-                'page': self.page,
-                'limit': self.limit,
-                'total': self.total
-            },
             'archive_help_text': _(
                 "Archive a product to stop showing data for it in \
                 reports and on mobile applications. Archiving is \
@@ -125,7 +120,14 @@ class ProductListView(BaseCommTrackManageView):
                 it later."
             ),
             'show_inactive': self.show_only_inactive,
-            'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)
+            'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+            'program_product_options': {
+                'total': self.total,
+                'start_page': self.page,
+                'limit': self.limit,
+                'show_inactive': self.show_only_inactive,
+                'list_url': reverse('commtrack_product_fetch', args=[self.domain]),
+            },
         }
 
 

@@ -132,10 +132,11 @@ from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
 )
-from corehq.apps.repeaters.utils import get_all_repeater_types
+from corehq.apps.repeaters.utils import get_all_repeater_types, get_repeater_auth_header
 from corehq.apps.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
+    RECORD_CANCELLED_STATE,
     RECORD_SUCCESS_STATE,
 )
 from corehq.apps.reports.generic import GenericTabularReport
@@ -539,6 +540,34 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
 
 @require_POST
 @require_can_edit_web_users
+def cancel_repeat_record(request, domain):
+    try:
+        record = RepeatRecord.get(request.POST.get('record_id'))
+    except ResourceNotFound:
+        return HttpResponse(status=404)
+    record.cancel()
+    record.save()
+    if not record.cancelled:
+        return HttpResponse(status=400)
+    return HttpResponse('OK')
+
+
+@require_POST
+@require_can_edit_web_users
+def requeue_repeat_record(request, domain):
+    try:
+        record = RepeatRecord.get(request.POST.get('record_id'))
+    except ResourceNotFound:
+        return HttpResponse(status=404)
+    record.requeue()
+    record.save()
+    if record.cancelled:
+        return HttpResponse(status=400)
+    return HttpResponse('OK')
+
+
+@require_POST
+@require_can_edit_web_users
 def drop_repeater(request, domain, repeater_id):
     rep = Repeater.get(repeater_id)
     rep.retire()
@@ -553,6 +582,8 @@ def test_repeater(request, domain):
     repeater_type = request.POST['repeater_type']
     format = request.POST.get('format', None)
     repeater_class = get_all_repeater_types()[repeater_type]
+    use_basic_auth = request.POST.get('use_basic_auth')
+
     form = GenericRepeaterForm(
         {"url": url, "format": format},
         domain=domain,
@@ -565,6 +596,11 @@ def test_repeater(request, domain):
         generator = generator_class(repeater_class())
         fake_post = generator.get_test_payload(domain)
         headers = generator.get_headers()
+
+        if use_basic_auth == 'true':
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            headers.update(get_repeater_auth_header(headers, username, password))
 
         try:
             resp = simple_post(fake_post, url, headers=headers)
@@ -2175,7 +2211,7 @@ class LocationFixtureConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/location_fixture.html'
 
     @method_decorator(domain_admin_required)
-    @toggles.FLAT_LOCATION_FIXTURE.required_decorator()
+    @toggles.HIERARCHICAL_LOCATION_FIXTURE.required_decorator()
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFixtureConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -2210,6 +2246,26 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
     ]
 
+    def _make_cancel_payload_button(self, record_id):
+        return '''
+                <a
+                    class="btn btn-default cancel-record-payload"
+                    role="button"
+                    data-record-id={}>
+                    Cancel Payload
+                </a>
+                '''.format(record_id)
+
+    def _make_requeue_payload_button(self, record_id):
+        return '''
+                <a
+                    class="btn btn-default requeue-record-payload"
+                    role="button"
+                    data-record-id={}>
+                    Requeue Payload
+                </a>
+                '''.format(record_id)
+
     def _make_view_payload_button(self, record_id):
         return '''
         <a
@@ -2241,6 +2297,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         elif record.state == RECORD_PENDING_STATE:
             label_cls = 'warning'
             label_text = _('Pending')
+        elif record.state == RECORD_CANCELLED_STATE:
+            label_cls = 'danger'
+            label_text = _('Cancelled')
         elif record.state == RECORD_FAILURE_STATE:
             label_cls = 'danger'
             label_text = _('Failed')
@@ -2296,8 +2355,13 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
                 self._format_date(record.last_checked) if record.last_checked else None,
                 self._format_date(record.next_check) if record.next_check else None,
                 escape(record.failure_reason) if not record.succeeded else None,
+                record.overall_tries if record.overall_tries > 0 else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
+                self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
+                else self._make_cancel_payload_button(record.get_id) if not record.cancelled
+                and not record.succeeded
+                else None
             ],
             records
         )
@@ -2310,8 +2374,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('Last sent date')),
             DataTablesColumn(_('Retry Date')),
             DataTablesColumn(_('Failure Reason')),
+            DataTablesColumn(_('Failure Count')),
             DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
+            DataTablesColumn(_('Cancel or Requeue payload'))
         )
 
 
@@ -2483,7 +2549,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     def internal_settings_form(self):
         can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
-            return DomainInternalForm(can_edit_eula, self.request.POST)
+            return DomainInternalForm(self.request.domain, can_edit_eula, self.request.POST)
         initial = {
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
@@ -2506,6 +2572,15 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'data_access_threshold',
             'business_unit',
             'workshop_region',
+            'partner_technical_competency',
+            'support_prioritization',
+            'gs_continued_involvement',
+            'technical_complexity',
+            'app_design_comments',
+            'training_materials',
+            'partner_comments',
+            'partner_contact',
+            'dimagi_contact',
         ]
         if can_edit_eula:
             internal_attrs += [
@@ -2517,7 +2592,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             if isinstance(val, bool):
                 val = 'true' if val else 'false'
             initial[attr] = val
-        return DomainInternalForm(can_edit_eula, initial=initial)
+        return DomainInternalForm(self.request.domain, can_edit_eula, initial=initial)
 
     @property
     def page_context(self):
@@ -2526,6 +2601,23 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'form': self.internal_settings_form,
             'areas': dict([(a["name"], a["sub_areas"]) for a in settings.INTERNAL_DATA["area"]]),
         }
+
+    def send_handoff_email(self):
+        partner_contact = self.internal_settings_form.cleaned_data['partner_contact']
+        dimagi_contact = self.internal_settings_form.cleaned_data['dimagi_contact']
+        recipients = [partner_contact, dimagi_contact]
+        params = {'contact_name': CouchUser.get_by_username(dimagi_contact).human_friendly_name}
+        send_html_email_async.delay(
+            subject="Project Support Transition",
+            recipient=recipients,
+            html_content=render_to_string(
+                "domain/email/support_handoff.html", params),
+            text_content=render_to_string(
+                "domain/email/support_handoff.txt", params),
+            email_from=settings.SUPPORT_EMAIL,
+        )
+        messages.success(self.request,
+                         _("Sent hand-off email to {}.").format(" and ".join(recipients)))
 
     def post(self, request, *args, **kwargs):
         if self.internal_settings_form.is_valid():
@@ -2556,10 +2648,13 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 
             messages.success(request, _("The internal information for project %s was successfully updated!")
                                       % self.domain)
+            if self.internal_settings_form.cleaned_data['send_handoff_email']:
+                self.send_handoff_email()
+            return redirect(self.urlname, self.domain)
         else:
             messages.error(request, _(
                 "Your settings are not valid, see below for errors. Correct them and try again!"))
-        return self.get(request, *args, **kwargs)
+            return self.get(request, *args, **kwargs)
 
 
 class EditInternalCalculationsView(BaseInternalDomainSettingsView):

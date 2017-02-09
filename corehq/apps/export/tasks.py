@@ -3,7 +3,7 @@ from celery.task import task
 
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.export import get_export_file, rebuild_export
-from corehq.apps.export.dbaccessors import get_inferred_schema
+from corehq.apps.export.dbaccessors import get_case_inferred_schema
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
 from corehq.util.decorators import serial_task
 from corehq.util.files import safe_filename_header
@@ -50,7 +50,7 @@ def add_inferred_export_properties(sender, domain, case_type, properties):
 
 @quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)
 def _cached_add_inferred_export_properties(sender, domain, case_type, properties):
-    from corehq.apps.export.models import MAIN_TABLE, PathNode, InferredSchema, ScalarItem
+    from corehq.apps.export.models import MAIN_TABLE, PathNode, CaseInferredSchema, ScalarItem
     """
     Adds inferred properties to the inferred schema for a case type.
 
@@ -63,9 +63,9 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
     assert domain, 'Must have domain'
     assert case_type, 'Must have case type'
     assert all(map(lambda prop: '.' not in prop, properties)), 'Properties should not have periods'
-    inferred_schema = get_inferred_schema(domain, case_type)
+    inferred_schema = get_case_inferred_schema(domain, case_type)
     if not inferred_schema:
-        inferred_schema = InferredSchema(
+        inferred_schema = CaseInferredSchema(
             domain=domain,
             case_type=case_type,
         )

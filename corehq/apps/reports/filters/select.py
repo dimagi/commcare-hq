@@ -13,6 +13,7 @@ from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.apps.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_SUCCESS_STATE,
+    RECORD_CANCELLED_STATE,
     RECORD_PENDING_STATE,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -144,5 +145,6 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
         return [
             (RECORD_SUCCESS_STATE, _("Successful")),
             (RECORD_PENDING_STATE, _("Pending")),
+            (RECORD_CANCELLED_STATE, _("Cancelled")),
             (RECORD_FAILURE_STATE, _("Failed")),
         ]

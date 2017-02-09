@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import calendar
 import datetime
 from dateutil.relativedelta import relativedelta
@@ -29,6 +30,7 @@ from corehq.apps.reports.filters.base import (
 )
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.util.dates import iso_string_to_date
+from six.moves import range
 
 
 class BaseAccountingSingleOptionFilter(BaseSingleOptionFilter):
@@ -64,10 +66,7 @@ class DomainFilter(BaseAccountingSingleOptionFilter):
 
 
 def clean_options(options):
-    return sorted(set(filter(
-        lambda option: option[1] and option[1].strip(),
-        options
-    )))
+    return sorted({option for option in options if option[1] and option[1].strip()})
 
 
 class SalesforceAccountIDFilter(BaseAccountingSingleOptionFilter):
@@ -314,7 +313,7 @@ class OptionalMonthYearFilter(BaseReportFilter, OptionalFilterMixin):
         context.update({
             'showFilterName': self.use_filter(self.request),
             'months': self.months(),
-            'years': range(2013, datetime.date.today().year + 1),
+            'years': list(range(2013, datetime.date.today().year + 1)),
             'selected_period': self.selected_period(),
         })
         return context

@@ -167,6 +167,10 @@ class UserRegistrationView(BasePageView):
         return self.request.POST.get('xform', '')
 
     @property
+    def atypical_user(self):
+        return self.request.GET.get('internal', False)
+
+    @property
     @memoized
     def ab(self):
         return ab_tests.ABTest(ab_tests.NEW_USER_NUMBER, self.request)
@@ -176,11 +180,12 @@ class UserRegistrationView(BasePageView):
         prefills = {
             'email': self.prefilled_email,
             'xform': self.prefilled_xform,
+            'atypical_user': True if self.atypical_user else False
         }
         return {
             'reg_form': RegisterWebUserForm(
                 initial=prefills,
-                show_number=(self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM)
+                show_number=(self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM),
             ),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
@@ -251,9 +256,9 @@ class RegisterDomainView(TemplateView):
             if self.is_new_user:
                 context.update({
                     'requested_domain': domain_name,
-                    'track_domain_registration': True,
                     'current_page': {'page_name': _('Confirm Account')},
                 })
+                track_workflow(self.request.user.email, "Created new project")
                 return render(request, 'registration/confirmation_sent.html', context)
             else:
                 if nextpage:

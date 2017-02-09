@@ -1,5 +1,4 @@
 # coding=utf-8
-import os
 from collections import OrderedDict, namedtuple
 import json
 import logging
@@ -172,6 +171,8 @@ def _get_advanced_module_view_context(app, module, lang=None):
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
         'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'search_button_display_condition':
+            module.search_config.search_button_display_condition if module_offers_search(module) else "",
         'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
         'schedule_phases': [
             {
@@ -208,6 +209,8 @@ def _get_basic_module_view_context(app, module, lang=None):
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
         'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'search_button_display_condition':
+            module.search_config.search_button_display_condition if module_offers_search(module) else "",
         'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
     }
 
@@ -444,29 +447,43 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if not case_type or is_valid_case_type(case_type, module):
+        if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
+            return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
+        elif case_type and not is_valid_case_type(case_type, module):
+            return HttpResponseBadRequest("case type is improperly formatted")
+        else:
             old_case_type = module["case_type"]
             module["case_type"] = case_type
-            for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
-                if cp_mod.unique_id != module.unique_id and cp_mod.parent_select.module_id == module.unique_id:
+
+            # rename other reference to the old case type
+            other_careplan_modules = []
+            all_advanced_modules = []
+            modules_with_old_case_type_exist = False
+            for mod in app.modules:
+                if mod.unique_id != module_id:
+                    if isinstance(mod, CareplanModule):
+                        other_careplan_modules.append(mod)
+
+                if isinstance(mod, AdvancedModule):
+                    all_advanced_modules.append(mod)
+
+                modules_with_old_case_type_exist |= mod.case_type == old_case_type
+
+            for cp_mod in other_careplan_modules:
+                if cp_mod.parent_select.module_id == module_id:
                     cp_mod.case_type = case_type
 
-            def rename_action_case_type(mod):
+            for mod in all_advanced_modules:
                 for form in mod.forms:
-                    for action in form.actions.get_all_actions():
-                        if action.case_type == old_case_type:
+                    for action in form.actions.get_load_update_actions():
+                        if action.case_type == old_case_type and action.details_module == module_id:
                             action.case_type = case_type
 
-            if isinstance(module, AdvancedModule):
-                rename_action_case_type(module)
-            for ad_mod in (mod for mod in app.modules if isinstance(mod, AdvancedModule)):
-                if ad_mod.unique_id != module.unique_id and ad_mod.case_type != old_case_type:
-                    # only apply change if the module's case_type does not reference the old value
-                    rename_action_case_type(ad_mod)
-        elif case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
-            return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
-        else:
-            return HttpResponseBadRequest("case type is improperly formatted")
+                    if mod.unique_id == module_id or not modules_with_old_case_type_exist:
+                        for action in form.actions.get_open_actions():
+                            if action.case_type == old_case_type:
+                                action.case_type = case_type
+
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
     if should_edit("display_style"):
@@ -813,6 +830,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
                     else CLAIM_DEFAULT_RELEVANT_CONDITION
                 ),
                 include_closed=bool(search_properties.get('include_closed')),
+                search_button_display_condition=search_properties.get('search_button_display_condition', ""),
                 default_properties=[
                     DefaultCaseSearchProperty.wrap(p)
                     for p in search_properties.get('default_properties')
@@ -918,15 +936,14 @@ def new_module(request, domain, app_id):
             if module_type == 'case':
                 # registration form
                 register = app.new_form(module_id, "Register", lang)
-                with open(os.path.join(
-                        os.path.dirname(__file__), '..', 'static',
-                        'app_manager', 'xml', 'registration_form.xml')) as f:
-                    register.source = f.read()
-                register.actions.open_case = OpenCaseAction(
-                    condition=FormActionCondition(type='always'),
-                    name_path=u'/data/name')
+                register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
                 register.actions.update_case = UpdateCaseAction(
                     condition=FormActionCondition(type='always'))
+
+                # one followup form
+                followup = app.new_form(module_id, "Followup", lang)
+                followup.requires = "case"
+                followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
                 # make case type unique across app
                 app_case_types = set(

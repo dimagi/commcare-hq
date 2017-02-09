@@ -198,8 +198,8 @@ class TestSendToElasticsearch(SimpleTestCase):
             from elasticsearch import Elasticsearch
             return Elasticsearch(
                 [{
-                    'host': 'localhost',
-                    'port': '9000',  # bad port
+                    'host': settings.ELASTICSEARCH_HOST,
+                    'port': settings.ELASTICSEARCH_PORT - 2,  # bad port
                 }],
                 timeout=0.1,
             )

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import datetime
 import functools
@@ -90,7 +91,9 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tasks import rebuild_indicators, resume_building_indicators
+from corehq.apps.userreports.tasks import (
+    rebuild_indicators, resume_building_indicators, rebuild_indicators_in_place
+)
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
     ConfigurableDataSourceEditForm,
@@ -109,6 +112,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
 from pillowtop.dao.exceptions import DocumentNotFoundError
+import six
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -577,7 +581,7 @@ class ConfigureChartReport(ReportBuilderView):
                 'report_id': self.existing_report.get_id,
                 'is_static': self.existing_report.is_static,
                 'error_message': '',
-                'details': unicode(e)
+                'details': six.text_type(e)
             }
             return self._handle_exception(error_response, e)
 
@@ -918,7 +922,7 @@ def evaluate_expression(request, domain):
         )
     except Exception as e:
         return json_response(
-            {"error": unicode(e)},
+            {"error": six.text_type(e)},
             status_code=500,
         )
 
@@ -1117,6 +1121,27 @@ def resume_building_data_source(request, domain, config_id):
     ))
 
 
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def build_data_source_in_place(request, domain, config_id):
+    config, is_static = get_datasource_config_or_404(config_id, domain)
+    if config.is_deactivated:
+        config.is_deactivated = False
+        config.save()
+
+    messages.success(
+        request,
+        _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
+            config.display_name
+        )
+    )
+
+    rebuild_indicators_in_place.delay(config_id, request.user.username)
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config._id]
+    ))
+
+
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def data_source_json(request, domain, config_id):
@@ -1258,7 +1283,7 @@ def export_data_source(request, domain, config_id):
 
     # build export
     def get_table(q):
-        yield table.columns.keys()
+        yield list(table.columns)
         for row in q:
             yield row
 

@@ -220,15 +220,12 @@ def toggle_enabled(request, toggle_or_toggle_name):
 
 
 @register.filter
-def is_new_cloudcare(request):
-    from corehq import toggles
-    return _toggle_enabled(toggles, request, toggles.USE_FORMPLAYER_FRONTEND)
-
-
-@register.filter
 def can_use_restore_as(request):
     if not hasattr(request, 'couch_user'):
         return False
+
+    if request.couch_user.is_superuser:
+        return True
 
     return (
         request.couch_user.can_edit_commcare_users() and
@@ -416,9 +413,9 @@ def chevron(value):
     Displays a green up chevron if value > 0, and a red down chevron if value < 0
     """
     if value > 0:
-        return '<span class="fa fa-chevron-up" style="color: #006400;"></span>'
+        return format_html('<span class="fa fa-chevron-up" style="color: #006400;"></span>')
     elif value < 0:
-        return '<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>'
+        return format_html('<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>')
     else:
         return ''
 
@@ -429,9 +426,9 @@ def reverse_chevron(value):
     Displays a red up chevron if value > 0, and a green down chevron if value < 0
     """
     if value > 0:
-        return '<span class="fa fa-chevron-up" style="color: #8b0000;"></span>'
+        return format_html('<span class="fa fa-chevron-up" style="color: #8b0000;"></span>')
     elif value < 0:
-        return '<span class="fa fa-chevron-down" style="color: #006400;"> </span>'
+        return format_html('<span class="fa fa-chevron-down" style="color: #006400;"> </span>')
     else:
         return ''
 
@@ -621,7 +618,7 @@ def initial_page_data(parser, token):
             if isinstance(resolved, basestring):
                 resolved = json.dumps(resolved)[1:-1]
             else:
-                resolved = json.dumps(resolved)
+                resolved = JSON(resolved)
             return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
                     .format(name, escape(resolved)))
 

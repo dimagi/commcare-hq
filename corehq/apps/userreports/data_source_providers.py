@@ -1,10 +1,10 @@
+from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
+import six
 
 
-class DataSourceProvider(object):
-    __metaclass__ = ABCMeta
-
+class DataSourceProvider(six.with_metaclass(ABCMeta, object)):
     @abstractmethod
     def get_data_sources(self):
         pass
@@ -13,7 +13,7 @@ class DataSourceProvider(object):
 class DynamicDataSourceProvider(DataSourceProvider):
 
     def get_data_sources(self):
-        return filter(lambda config: not config.is_deactivated, DataSourceConfiguration.all())
+        return [config for config in DataSourceConfiguration.all() if not config.is_deactivated]
 
 
 class StaticDataSourceProvider(DataSourceProvider):

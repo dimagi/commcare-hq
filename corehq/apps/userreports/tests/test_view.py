@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import uuid
 
@@ -50,15 +51,10 @@ class ConfigurableReportTestMixin(object):
 
 class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
-    @classmethod
-    def _build_report_and_view(cls):
-
-        # Create Cases
-        cls._new_case({'fruit': 'apple', 'num1': 4, 'num2': 6}).save()
-
+    def _build_report_and_view(self):
         # Create report
         data_source_config = DataSourceConfiguration(
-            domain=cls.domain,
+            domain=self.domain,
             display_name='foo',
             referenced_doc_type='CommCareCase',
             table_id="woop_woop",
@@ -69,7 +65,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
                     "type": "property_name",
                     "property_name": "type"
                 },
-                "property_value": cls.case_type,
+                "property_value": self.case_type,
             },
             configured_indicators=[
                 {
@@ -104,12 +100,13 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         )
         data_source_config.validate()
         data_source_config.save()
+        self.addCleanup(data_source_config.delete)
         tasks.rebuild_indicators(data_source_config._id)
         adapter = get_indicator_adapter(data_source_config)
         adapter.refresh_table()
 
         report_config = ReportConfiguration(
-            domain=cls.domain,
+            domain=self.domain,
             config_id=data_source_config._id,
             title='foo',
             aggregation_columns=['doc_id'],
@@ -142,24 +139,28 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
             ],
         )
         report_config.save()
+        self.addCleanup(report_config.delete)
 
         view = ConfigurableReport(request=HttpRequest())
-        view._domain = cls.domain
+        view._domain = self.domain
         view._lang = "en"
         view._report_config_id = report_config._id
 
         return report_config, view
 
-    def tearDown(self):
-        self._delete_everything()
+    @classmethod
+    def tearDownClass(cls):
+        cls.case.delete()
         # todo: understand why this is necessary. the view call uses the session and the
         # signal doesn't fire to kill it.
         Session.remove()
-        super(ConfigurableReportViewTest, self).tearDown()
+        super(ConfigurableReportViewTest, cls).tearDownClass()
 
-    def setUp(self):
-        super(ConfigurableReportViewTest, self).setUp()
-        self._delete_everything()
+    @classmethod
+    def setUpClass(cls):
+        super(ConfigurableReportViewTest, cls).setUpClass()
+        cls.case = cls._new_case({'fruit': 'apple', 'num1': 4, 'num2': 6})
+        cls.case.save()
 
     @run_with_all_ucr_backends
     def test_export_table(self):
@@ -218,3 +219,15 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
             ]
         ]
         self.assertEqual(view.export_table, expected)
+
+    def test_redirect_custom_report(self):
+        report, view = self._build_report_and_view()
+        request = HttpRequest()
+        self.assertFalse(view.should_redirect_to_paywall(request))
+
+    def test_redirect_report_builder(self):
+        report, view = self._build_report_and_view()
+        report.report_meta.created_by_builder = True
+        report.save()
+        request = HttpRequest()
+        self.assertTrue(view.should_redirect_to_paywall(request))

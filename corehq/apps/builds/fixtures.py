@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 
 commcare_build_config  = json.loads("""{

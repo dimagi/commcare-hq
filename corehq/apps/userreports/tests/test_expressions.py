@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import uuid
 from datetime import date, datetime
@@ -322,6 +323,7 @@ class ArrayIndexExpressionTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ArrayIndexExpressionTest, cls).setUpClass()
         cls.expression_spec = {
             'type': 'array_index',
             'array_expression': {
@@ -1041,7 +1043,8 @@ class TestGetSubcasesExpression(TestCase):
             case_id=child_id,
             indices=[
                 CaseIndex(CaseStructure(case_id=parent_id, attrs={'create': True}))
-            ]
+            ],
+            attrs={'create': True}
         ))
         subcases = self.expression(parent.to_json(), self.context)
         self.assertEqual(len(subcases), 1)
@@ -1058,7 +1061,8 @@ class TestGetSubcasesExpression(TestCase):
                     CaseStructure(case_id=host_id, attrs={'create': True}),
                     relationship=CASE_INDEX_EXTENSION
                 )
-            ]
+            ],
+            attrs={'create': True}
         ))
         subcases = self.expression(host.to_json(), self.context)
         self.assertEqual(len(subcases), 1)
@@ -1124,6 +1128,57 @@ class TestGetCaseSharingGroupsExpression(TestCase):
 
         case_sharing_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(case_sharing_groups), 0)
+
+
+class TestGetReportingGroupsExpression(TestCase):
+
+    def setUp(self):
+        super(TestGetReportingGroupsExpression, self).setUp()
+        self.domain = uuid.uuid4().hex
+        self.second_domain = uuid.uuid4().hex
+        self.expression = ExpressionFactory.from_spec({
+            "type": "get_reporting_groups",
+            "user_id_expression": {
+                "type": "property_name",
+                "property_name": "user_id"
+            },
+        })
+        self.context = EvaluationContext({"domain": self.domain})
+
+    def tearDown(self):
+        for group in Group.by_domain(self.domain):
+            group.delete()
+        for group in Group.by_domain(self.second_domain):
+            group.delete()
+        for user in CommCareUser.all():
+            user.delete()
+        super(TestGetReportingGroupsExpression, self).tearDown()
+
+    @run_with_all_backends
+    def test_no_groups(self):
+        user = CommCareUser.create(domain=self.domain, username='test_no_group', password='123')
+        reporting_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(reporting_groups), 0)
+
+    @run_with_all_backends
+    def test_multiple_groups(self):
+        user = CommCareUser.create(domain=self.domain, username='test_multiple', password='123')
+        group1 = Group(domain=self.domain, name='group1', users=[user._id])
+        group1.save()
+        group2 = Group(domain=self.domain, name='group2', users=[user._id], case_sharing=True)
+        group2.save()
+
+        reporting_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(reporting_groups), 2)
+
+    @run_with_all_backends
+    def test_wrong_domain(self):
+        user = CommCareUser.create(domain=self.second_domain, username='test_wrong_domain', password='123')
+        group = Group(domain=self.second_domain, name='group_wrong_domain', users=[user._id], case_sharing=True)
+        group.save()
+
+        reporting_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(reporting_groups), 0)
 
 
 class TestIterationNumberExpression(SimpleTestCase):
@@ -1215,3 +1270,57 @@ class SplitStringExpressionTest(SimpleTestCase):
                 "index_expression": index
             })
             self.assertEqual(expected, split_string_expression({"string_property": string_value}))
+
+
+class TestCoalesceExpression(SimpleTestCase):
+
+    def setUp(self):
+        self.spec = {
+            'type': 'coalesce',
+            'expression': {
+                'type': 'property_name',
+                'property_name': 'expression'
+            },
+            'default_expression': {
+                'type': 'property_name',
+                'property_name': 'default_expression'
+            },
+        }
+        self.expression = ExpressionFactory.from_spec(self.spec)
+
+    def testNoCoalesce(self):
+        self.assertEqual('foo', self.expression({
+            'expression': 'foo',
+            'default_expression': 'default',
+        }))
+
+    def testNoValue(self):
+        self.assertEqual('default', self.expression({
+            'default_expression': 'default',
+        }))
+
+    def testNull(self):
+        self.assertEqual('default', self.expression({
+            'expression': None,
+            'default_expression': 'default',
+        }))
+
+    def testEmptyString(self):
+        self.assertEqual('default', self.expression({
+            'expression': '',
+            'default_expression': 'default',
+        }))
+
+    def testZero(self):
+        self.assertEqual(0, self.expression({
+            'expression': 0,
+            'default_expression': 'default',
+        }))
+
+    def testBlankDefaultValue(self):
+        self.assertEqual('foo', self.expression({
+            'expression': 'foo',
+        }))
+
+    def testBlankDefaultValue2(self):
+        self.assertEqual(None, self.expression({}))

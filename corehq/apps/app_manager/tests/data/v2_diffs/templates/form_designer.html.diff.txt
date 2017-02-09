@@ -22,7 +22,39 @@
  {% endblock %}
  
  {% block js %}{{ block.super }}
-@@ -126,12 +135,11 @@
+@@ -56,6 +65,7 @@
+                 onFormSave: function (data) {
+                     var app_manager = hqImport('app_manager/js/app_manager.js')
+                     app_manager.updateDOM(data.update);
++                    $('.js-preview-toggle').removeAttr('disabled');
+                     {% if request.couch_user.days_since_created == 0 %}
+                         analytics.workflow('Saved the Form Builder within first 24 hours');
+                     {% endif %}
+@@ -72,6 +82,11 @@
+                     {% if request.guided_tour %}
+                     form_tour_start();
+                     {% endif %}
++                    if ($('.fd-question-tree li').length > 0) {
++                      setTimeout(function () {
++                        $('.js-preview-toggle').removeAttr('disabled');
++                      }, 1500);
++                    }
+                     {% if request.couch_user.days_since_created == 0 %}
+                         $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
+                             analytics.workflow('Added question in Form Builder within first 24 hours');
+@@ -83,6 +98,11 @@
+                     {% if request.guided_tour %}
+                     form_tour_start();
+                     {% endif %}
++                    if ($('.fd-question-tree li').length > 0) {
++                      setTimeout(function () {
++                        $('.js-preview-toggle').removeAttr('disabled');
++                      }, 1500);
++                    }
+                 },
+                 {% endif %}
+                 sessionid: {{ sessionid|JSON }},
+@@ -126,12 +146,11 @@
              csrftoken: $.cookie('csrftoken')
          };
  
@@ -36,7 +68,7 @@
  
                  $('#formdesigner').vellum(VELLUM_OPTIONS);
  
-@@ -148,8 +156,57 @@
+@@ -148,14 +167,67 @@
              });
          });
          analytics.workflow('Entered the Form Builder');
@@ -74,14 +106,16 @@
  
      </script>
 +
++    {% if can_preview_form %}
 +    <script type="text/html" id="js-fd-app-preview-btn-template">
 +      <div class="btn-group js-preview-toggle-container">
-+        <a class="btn btn-purple js-preview-toggle" href="#">
++        <button class="btn btn-info js-preview-toggle" type="button" disabled="disabled">
 +          <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
 +          <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
-+        </a>
++        </button>
 +      </div>
 +    </script>
++    {% endif %}
 +
 +    <script type="text/html" id="js-fd-manage-case">
 +      <div class="btn-group pull-right">
@@ -94,7 +128,10 @@
  {% endblock %}
  
  {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
-@@ -159,3 +216,5 @@
+ 
+ {% block form-view %}
+-    <div id="formdesigner" class="clearfix"></div>
++    <div id="formdesigner" class="clearfix app-manager-v2"></div>
  {% endblock %}
  
  {% block column_style %}hq-flush-content{% endblock %}

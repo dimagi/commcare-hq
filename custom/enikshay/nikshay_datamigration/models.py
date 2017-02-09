@@ -27,7 +27,7 @@ class PatientDetail(models.Model):
     page = models.IntegerField()
     poccupation = models.CharField(max_length=255)
     paadharno = models.BigIntegerField(null=True)
-    paddress = models.CharField(max_length=255)
+    paddress = models.CharField(max_length=255, null=True)
     pmob = models.CharField(max_length=255, null=True)  # validate numerical in factory
     plandline = models.CharField(max_length=255, null=True)
     ptbyr = models.CharField(max_length=255, null=True)  # dates, but not clean
@@ -55,7 +55,7 @@ class PatientDetail(models.Model):
     dotcenter = models.CharField(max_length=255, null=True)
     PHI = models.IntegerField()
     dotmoname = models.CharField(max_length=255, null=True)
-    dotmosdone = models.CharField(max_length=255)
+    dotmosdone = models.CharField(max_length=255, null=True)
     atbtreatment = models.CharField(
         max_length=255,
         choices=(
@@ -133,18 +133,23 @@ class PatientDetail(models.Model):
             '8': 'other',
             '9': 'other',
             '10': 'other',
-        }.get(self.dcexpulmunory.strip(), '')
+        }.get(self.dcexpulmunory.strip(), 'other')
 
     @property
     def patient_type_choice(self):
+        category_to_status = {
+            '1': 'new',
+            '2': 'recurrent',
+        }
+
         return {
             '1': 'new',
             '2': 'recurrent',
             '3': 'treatment_after_failure',
             '4': 'treatment_after_lfu',
-            '5': 'transfer_in',
-            '6': 'transfer_in',
-            '7': 'transfer_in',
+            '5': category_to_status[self.pcategory],
+            '6': category_to_status[self.pcategory],
+            '7': category_to_status[self.pcategory],
         }[self.Ptype]
 
     @property
@@ -228,6 +233,10 @@ class PatientDetail(models.Model):
     def initial_home_visit_status(self):
         return 'completed' if self.ihv_date else 'pending'
 
+    @property
+    def person_id(self):
+        return 'NIK-' + self.PregId
+
 
 class Outcome(models.Model):
     PatientId = models.OneToOneField(PatientDetail, primary_key=True)
@@ -276,18 +285,58 @@ class Outcome(models.Model):
     )
     InitiatedDate = models.CharField(max_length=255, null=True)  # dates, None, and NULL
     userName = models.CharField(max_length=255)
-    loginDate = models.DateTimeField()
-    OutcomeDate1 = models.CharField(max_length=255)  # datetimes and NULL
+    # loginDate = models.DateTimeField()
+    # OutcomeDate1 = models.CharField(max_length=255)  # datetimes and NULL
 
     @property
     def hiv_status(self):
         return {
-            None: None,
-            'NULL': None,
+            None: 'unknown',
+            'NULL': 'unknown',
             'Pos': 'reactive',
             'Neg': 'non_reactive',
             'Unknown': 'unknown',
         }[self.HIVStatus]
+
+    @property
+    def treatment_outcome(self):
+        return {
+            'NULL': None,
+            '0': None,
+            '1': 'cured',
+            '2': 'treatment_completed',
+            '3': 'died',
+            '4': 'failure',
+            '5': 'loss_to_follow_up',
+            '6': 'not_evaluated',
+            '7': 'regimen_changed',
+        }[self.Outcome]
+
+    @property
+    def is_treatment_ended(self):
+        return self.treatment_outcome in [
+            'cured',
+            'treatment_completed',
+            'died',
+            'failure',
+            'loss_to_follow_up',
+            'regimen_changed',
+        ]
+
+    @property
+    def treatment_outcome_date(self):
+        if self.OutcomeDate is None or self.OutcomeDate == 'NULL':
+            return None
+        else:
+            if '-' in self.OutcomeDate:
+                return datetime.strptime(self.OutcomeDate, '%d-%m-%Y').date()
+            else:
+                format = '%d/%m/%Y'
+                try:
+                    return datetime.strptime(self.OutcomeDate, format).date()
+                except ValueError:
+                    date_string = self.OutcomeDate[:-2] + '20' + self.OutcomeDate[-2:]
+                    return datetime.strptime(date_string, format).date()
 
 
 # class Household(models.Model):

@@ -1,17 +1,6 @@
 {% extends "registration/base.html" %}
 {% load i18n %}
 
-{% if track_domain_registration %}
-{% block js-inline %}{{ block.super }}
-<script>
-    $(function () {
-        analytics.workflow("Created new project");
-        _kmq.push(["trackClick", "create_account_success", "Account Creation was Successful (old)"]);
-    });
-</script>
-{% endblock js-inline %}
-{% endif %}
-
 {% block title %}{% trans "Confirmation Email Sent" %}{% endblock title %}
 
 {% block registration-content %}

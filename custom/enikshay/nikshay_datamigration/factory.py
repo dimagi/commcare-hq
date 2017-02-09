@@ -15,6 +15,7 @@ from custom.enikshay.nikshay_datamigration.models import Outcome
 PERSON_CASE_TYPE = 'person'
 OCCURRENCE_CASE_TYPE = 'occurrence'
 EPISODE_CASE_TYPE = 'episode'
+DRTB_HIV_REFERRAL_CASE_TYPE = 'drtb-hiv-referral'
 
 MockLocation = namedtuple('MockLocation', 'name location_id location_type')
 MockLocationType = namedtuple('MockLocationType', 'name code')
@@ -25,8 +26,12 @@ def validate_phone_number(string_value):
         return ''
     else:
         phone_number = str(int(string_value))
-        assert len(phone_number) == 10
+        assert 8 <= len(phone_number) <= 10
         return phone_number
+
+
+def get_human_friendly_id():
+    return datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3]
 
 
 class EnikshayCaseFactory(object):
@@ -93,7 +98,11 @@ class EnikshayCaseFactory(object):
         person_structure = self.get_person_case_structure()
         ocurrence_structure = self.get_occurrence_case_structure(person_structure)
         episode_structure = self.get_episode_case_structure(ocurrence_structure)
-        return [episode_structure]
+        if not self._outcome or self._outcome.hiv_status in ['unknown', 'reactive']:
+            drtb_hiv_referral_structure = self.get_drtb_hiv_referral_case_structure(episode_structure)
+            return [drtb_hiv_referral_structure]
+        else:
+            return [episode_structure]
 
     def get_person_case_structure(self):
         kwargs = {
@@ -103,14 +112,18 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,
-                    'contact_phone_number': validate_phone_number(self.patient_detail.pmob),
                     'current_address': self.patient_detail.paddress,
+                    'current_episode_type': 'confirmed_tb',
+                    'current_patient_type_choice': self.patient_detail.patient_type_choice,
                     'dob': date(date.today().year - self.patient_detail.page, 7, 1),
                     'dob_known': 'no',
+                    'has_open_tests': 'no',
+                    'hiv_status': self._outcome.hiv_status if self._outcome else 'unknown',
                     'first_name': self.patient_detail.first_name,
                     'last_name': self.patient_detail.last_name,
                     'name': self.patient_detail.pname,
-                    'person_id': 'N-' + self.nikshay_id,
+                    'person_id': self.patient_detail.person_id,
+                    'phone_number': validate_phone_number(self.patient_detail.pmob),
                     'secondary_contact_name_address': (
                         (self.patient_detail.cname or '')
                         + ', '
@@ -128,22 +141,32 @@ class EnikshayCaseFactory(object):
             if self.phi.location_type.code == 'phi':
                 kwargs['attrs']['owner_id'] = self.phi.location_id
                 kwargs['attrs']['update']['phi'] = self.phi.name
-                kwargs['attrs']['update']['tu_choice'] = self.tu.name
-                kwargs['attrs']['update']['current_address_district_choice'] = self.district.location_id
-                kwargs['attrs']['update']['current_address_state_choice'] = self.state.location_id
+                kwargs['attrs']['update']['phi_assigned_to'] = self.phi.location_id
+                kwargs['attrs']['update']['tu_choice'] = self.tu.location_id
             else:
                 kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
                 kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
                 kwargs['attrs']['update']['migration_error'] = 'not_phi_location'
-                kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
+                kwargs['attrs']['update']['migration_error_details'] = self._phi_code
         else:
             kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
             kwargs['attrs']['update']['archive_reason'] = 'migration_location_not_found'
             kwargs['attrs']['update']['migration_error'] = 'location_not_found'
-            kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
+            kwargs['attrs']['update']['migration_error_details'] = self._phi_code
 
-        if self._outcome and self._outcome.hiv_status:
-            kwargs['attrs']['update']['hiv_status'] = self._outcome.hiv_status
+        if self._outcome:
+            if self._outcome.hiv_status:
+                kwargs['attrs']['update']['hiv_status'] = self._outcome.hiv_status
+            if self._outcome.is_treatment_ended:
+                kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
+                kwargs['attrs']['update']['is_active'] = 'no'
+            else:
+                kwargs['attrs']['update']['is_active'] = 'yes'
+            if self._outcome.treatment_outcome == 'died':
+                kwargs['attrs']['close'] = True
+        else:
+            kwargs['attrs']['update']['is_active'] = 'yes'
+
         if self.patient_detail.paadharno is not None:
             kwargs['attrs']['update']['aadhaar_number'] = self.patient_detail.paadharno
 
@@ -169,7 +192,7 @@ class EnikshayCaseFactory(object):
                     'initial_home_visit_status': self.patient_detail.initial_home_visit_status,
                     'name': 'Occurrence #1',
                     'occurrence_episode_count': 1,
-                    'occurrence_id': datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3],
+                    'occurrence_id': get_human_friendly_id(),
                     'migration_created_case': 'true',
                 },
             },
@@ -180,6 +203,10 @@ class EnikshayCaseFactory(object):
                 related_type=PERSON_CASE_TYPE,
             )],
         }
+
+        if self._outcome:
+            if self._outcome.is_treatment_ended:
+                kwargs['attrs']['close'] = True
 
         if self.existing_occurrence_case:
             kwargs['case_id'] = self.existing_occurrence_case.case_id
@@ -200,19 +227,35 @@ class EnikshayCaseFactory(object):
                 'date_opened': self.patient_detail.pregdate1,
                 'owner_id': '-',
                 'update': {
-                    'adherence_schedule_date_start': self.patient_detail.treatment_initiation_date,
+                    'adherence_schedule_date_start': (
+                        self.patient_detail.treatment_initiation_date
+                        if self.patient_detail.treatment_initiation_date
+                        else self.patient_detail.pregdate1
+                    ),
+                    'adherence_schedule_id': 'schedule_mwf',
                     'date_of_diagnosis': self.patient_detail.pregdate1,
-                    'date_of_mo_signature': self.patient_detail.date_of_mo_signature,
+                    'date_of_mo_signature': (
+                        self.patient_detail.date_of_mo_signature
+                        if self.patient_detail.date_of_mo_signature
+                        else self.patient_detail.pregdate1
+                    ),
                     'disease_classification': self.patient_detail.disease_classification,
                     'dots_99_enabled': 'false',
+                    'episode_id': get_human_friendly_id(),
                     'episode_pending_registration': 'no',
                     'episode_type': 'confirmed_tb',
                     'name': 'Episode #1: Confirmed TB (Patient)',
                     'nikshay_id': self.nikshay_id,
                     'occupation': self.patient_detail.occupation,
                     'patient_type_choice': self.patient_detail.patient_type_choice,
+                    'transfer_in': 'yes' if self.patient_detail.patient_type_choice == 'transfer_in' else '',
+                    'treatment_card_completed_date': self.patient_detail.pregdate1,
                     'treatment_initiated': 'yes_phi',
-                    'treatment_initiation_date': self.patient_detail.treatment_initiation_date,
+                    'treatment_initiation_date': (
+                        self.patient_detail.treatment_initiation_date
+                        if self.patient_detail.treatment_initiation_date
+                        else self.patient_detail.pregdate1
+                    ),
                     'treatment_supporter_designation': self.patient_detail.treatment_supporter_designation,
                     'treatment_supporter_first_name': self.patient_detail.treatment_supporter_first_name,
                     'treatment_supporter_last_name': self.patient_detail.treatment_supporter_last_name,
@@ -231,12 +274,38 @@ class EnikshayCaseFactory(object):
 
         if self.patient_detail.disease_classification == 'extra_pulmonary':
             kwargs['attrs']['update']['site_choice'] = self.patient_detail.site_choice
+        if self._outcome:
+            if self._outcome.treatment_outcome:
+                kwargs['attrs']['update']['treatment_outcome'] = self._outcome.treatment_outcome
+                assert self._outcome.treatment_outcome_date is not None
+                kwargs['attrs']['update']['treatment_outcome_date'] = self._outcome.treatment_outcome_date
+            if self._outcome.is_treatment_ended:
+                kwargs['attrs']['close'] = True
 
         if self.existing_episode_case:
             kwargs['case_id'] = self.existing_episode_case.case_id
             kwargs['attrs']['create'] = False
         else:
             kwargs['attrs']['create'] = True
+
+        return CaseStructure(**kwargs)
+
+    def get_drtb_hiv_referral_case_structure(self, episode_structure):
+        kwargs = {
+            'attrs': {
+                'case_type': DRTB_HIV_REFERRAL_CASE_TYPE,
+                'owner_id': self.drtb_hiv.location_id,
+                'update': {
+                    'name': self.patient_detail.pname,
+                }
+            },
+            'indices': [CaseIndex(
+                episode_structure,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=EPISODE_CASE_TYPE,
+            )],
+        }
 
         return CaseStructure(**kwargs)
 
@@ -250,33 +319,34 @@ class EnikshayCaseFactory(object):
             return None
 
     @property
-    def state(self):
-        if self.test_phi is not None:
-            return MockLocation('FAKESTATE', 'fake_state_id', MockLocationType('state', 'state'))
-        return self.nikshay_codes_to_location.get(self.patient_detail.PregId.split('-')[0])
-
-    @property
-    def district(self):
-        if self.test_phi is not None:
-            return MockLocation('FAKEDISTRICT', 'fake_district_id', MockLocationType('district', 'district'))
-
-        return self.nikshay_codes_to_location.get('-'.join(self.patient_detail.PregId.split('-')[:2]))
-
-    @property
     def tu(self):
         if self.test_phi is not None:
             return MockLocation('FAKETU', 'fake_tu_id', MockLocationType('tu', 'tu'))
-        return self.nikshay_codes_to_location.get('-'.join(self.patient_detail.PregId.split('-')[:3]))
+        return self.nikshay_codes_to_location.get('-'.join(self._phi_code.split('-')[:3]))
 
     @property
     def phi(self):
         if self.test_phi is not None:
             return MockLocation('FAKEPHI', self.test_phi, MockLocationType('phi', 'phi'))
-        return self.nikshay_codes_to_location.get(self._nikshay_code)
+        return self.nikshay_codes_to_location.get(self._phi_code)
 
     @property
-    def _nikshay_code(self):
-        return '-'.join(self.patient_detail.PregId.split('-')[:4])
+    def drtb_hiv(self):
+        if self.test_phi is not None:
+            return MockLocation('FAKEDRTBHIV', 'fake_drtb_hiv_id', MockLocationType('drtb_hiv', 'drtb_hiv'))
+        dto = self.nikshay_codes_to_location['-'.join(self._phi_code.split('-')[:2])]
+        for dto_child in dto.get_children():
+            if dto_child.location_type.code == 'drtb-hiv':
+                return dto_child
+
+    @property
+    def _phi_code(self):
+        return '%s-%s-%d-%d' % (
+            self.patient_detail.scode,
+            self.patient_detail.Dtocode,
+            self.patient_detail.Tbunitcode,
+            self.patient_detail.PHI,
+        )
 
 
 def get_nikshay_codes_to_location(domain):

@@ -2,6 +2,8 @@ from django.conf.urls import url
 from custom.enikshay.integrations.ninetyninedots.views import (
     RegisterPatientRepeaterView,
     UpdatePatientRepeaterView,
+    UpdateAdherenceRepeaterView,
+    UpdateTreatmentOutcomeRepeaterView,
     update_patient_adherence,
     update_adherence_confidence,
     update_default_confidence,
@@ -22,5 +24,17 @@ urlpatterns = [
         UpdatePatientRepeaterView.as_view(),
         {'repeater_type': 'NinetyNineDotsUpdatePatientRepeater'},
         name=UpdatePatientRepeaterView.urlname
+    ),
+    url(
+        r'^new_update_adherence_repeater$',
+        UpdateAdherenceRepeaterView.as_view(),
+        {'repeater_type': 'NinetyNineDotsAdherenceRepeater'},
+        name=UpdateAdherenceRepeaterView.urlname
+    ),
+    url(
+        r'^new_update_treatment_outcome_repeater$',
+        UpdateAdherenceRepeaterView.as_view(),
+        {'repeater_type': 'NinetyNineDotsTreatmentOutcomeRepeater'},
+        name=UpdateTreatmentOutcomeRepeaterView.urlname
     ),
 ]
