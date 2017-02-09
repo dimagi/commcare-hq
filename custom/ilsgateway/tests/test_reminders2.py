@@ -241,7 +241,7 @@ class TestStockOut(RemindersTest):
         cls.facility2 = make_loc(code="loc2", name="Test Facility 2", type="FACILITY",
                                  domain=TEST_DOMAIN, parent=cls.district)
         cls.user2 = bootstrap_user(
-            cls.facility2, username='test_user2', domain=TEST_DOMAIN, home_loc='loc2', phone_number='5551235',
+            cls.facility2, username='test_user2', domain=TEST_DOMAIN, home_loc='loc2', phone_number='5551236',
             first_name='test', last_name='Test'
         )
         SLABConfig.objects.create(
@@ -279,7 +279,7 @@ class TestStockOut(RemindersTest):
         self.assertEqual(1, len(list(StockoutReminder(TEST_DOMAIN, now).get_people())))
 
         script = """
-            5551235 > Hmk Id 0 Dp 0 Ip 0
+            5551236 > Hmk Id 0 Dp 0 Ip 0
         """
         self.run_script(script)
 
@@ -288,7 +288,7 @@ class TestStockOut(RemindersTest):
 
         StockoutReminder(TEST_DOMAIN, now).send()
         script = """
-            5551235 < %s
+            5551236 < %s
         """ % reminder_stockout % {
             'products_list': 'dp, id, ip',
             'overstocked_list': 'Test Facility 1 (dp, ip)'
