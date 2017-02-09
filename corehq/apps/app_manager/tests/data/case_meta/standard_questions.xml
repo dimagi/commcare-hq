@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+    <h:head>
+        <h:title>dummy</h:title>
+        <model>
+            <instance>
+                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/2804E61E-B4A8-44F2-ACA8-FCB34FDD84F3" uiVersion="1" version="1" name="dummy">
+                    <question1 />
+                    <question2 />
+                </data>
+            </instance>
+            <bind vellum:nodeset="#form/question1" nodeset="/data/question1" type="xsd:string" />
+            <bind vellum:nodeset="#form/question2" nodeset="/data/question2" type="xsd:string" />
+            <itext>
+                <translation lang="en" default="" />
+            </itext>
+        </model>
+    </h:head>
+    <h:body>
+        <input vellum:ref="#form/question1" ref="/data/question1" />
+        <input vellum:ref="#form/question2" ref="/data/question2" />
+    </h:body>
+</h:html>

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, date
 
 from django.http import HttpRequest
@@ -20,6 +21,7 @@ from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
 from dimagi.utils.dates import DateSpan
+import six
 
 
 class FilterTestCase(SimpleTestCase):
@@ -116,8 +118,8 @@ class DateFilterTestCase(SimpleTestCase):
             return filter.create_filter_value(reports_core_value).to_sql_values()
 
         val = get_query_value(compare_as_string=False)
-        self.assertEqual(type(val['my_slug_startdate']), date)
-        self.assertEqual(type(val['my_slug_enddate']), date)
+        self.assertEqual(type(val['my_slug_startdate']), datetime)
+        self.assertEqual(type(val['my_slug_enddate']), datetime)
 
         val = get_query_value(compare_as_string=True)
         self.assertEqual(type(val['my_slug_startdate']), str)
@@ -135,7 +137,7 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def _create_data(cls):
-        cls._new_case({"my_date": date(2017, 1, 1)}).save()
+        cls._new_case({"my_date": date(2017, 1, 1), "my_datetime": datetime(2017, 1, 1, 9)}).save()
 
     @classmethod
     def _create_data_source(cls):
@@ -180,6 +182,15 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
                         "column_id": 'date_as_date',
                         "datatype": "date"
                     },
+                    {
+                        "type": "expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "my_datetime",
+                        },
+                        "column_id": "datetime_as_datetime",
+                        "datatype": "datetime"
+                    }
                 ],
             )
             config.validate()
@@ -210,6 +221,13 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
                     "slug": "date_as_string_filter",
                     "display": "Date as String filter",
                     "compare_as_string": True,
+                },
+                {
+                    "type": "date",
+                    "field": "datetime_as_datetime",
+                    "slug": "datetime_as_datetime_filter",
+                    "display": "Datetime as Datetime filter",
+                    "compare_as_string": False,
                 }
             ],
             aggregation_columns=['doc_id'],
@@ -237,7 +255,7 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for key, adapter in cls.adapters.iteritems():
+        for key, adapter in six.iteritems(cls.adapters):
             adapter.drop_table()
         cls._delete_everything()
         super(DateFilterDBTest, cls).tearDownClass()
@@ -261,6 +279,14 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
             "date_as_string_filter": "2017-01-01 to 2017-01-01",
             "date_as_string_filter-start": "2017-01-01",
             "date_as_string_filter-end": "2017-01-01",
+        })
+        self.assertEqual(1, self.docs_returned(view.export_table))
+
+    def test_standard_datetime_filter(self):
+        view = self._create_view({
+            "datetime_as_datetime_filter": "2017-01-01 to 2017-01-01",
+            "datetime_as_datetime_filter-start": "2017-01-01",
+            "datetime_as_datetime_filter-end": "2017-01-01",
         })
         self.assertEqual(1, self.docs_returned(view.export_table))
 

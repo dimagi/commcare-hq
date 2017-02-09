@@ -48,7 +48,7 @@
                 "display_name": "opened_on",
                 "transform": {
                 },
-                "datatype": "datetime",
+                "datatype": "date",
                 "type": "expression",
                 "is_primary_key": false,
                 "is_nullable": true,

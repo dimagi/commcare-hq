@@ -36,7 +36,7 @@
  
                  $('#formdesigner').vellum(VELLUM_OPTIONS);
  
-@@ -148,8 +156,57 @@
+@@ -148,8 +156,59 @@
              });
          });
          analytics.workflow('Entered the Form Builder');
@@ -74,6 +74,7 @@
  
      </script>
 +
++    {% if can_preview_form %}
 +    <script type="text/html" id="js-fd-app-preview-btn-template">
 +      <div class="btn-group js-preview-toggle-container">
 +        <a class="btn btn-purple js-preview-toggle" href="#">
@@ -82,6 +83,7 @@
 +        </a>
 +      </div>
 +    </script>
++    {% endif %}
 +
 +    <script type="text/html" id="js-fd-manage-case">
 +      <div class="btn-group pull-right">
@@ -94,7 +96,7 @@
  {% endblock %}
  
  {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
-@@ -159,3 +216,5 @@
+@@ -159,3 +218,5 @@
  {% endblock %}
  
  {% block column_style %}hq-flush-content{% endblock %}

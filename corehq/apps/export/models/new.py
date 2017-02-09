@@ -73,7 +73,8 @@ from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
-    get_inferred_schema,
+    get_case_inferred_schema,
+    get_form_inferred_schema,
 )
 from corehq.apps.export.utils import is_occurrence_deleted
 
@@ -692,11 +693,19 @@ class ExportInstance(BlobMixin, Document):
                 prev_index = index
 
             cls._insert_system_properties(instance.domain, schema.type, table)
+            table.columns = cls._move_selected_columns_to_top(table.columns)
 
             if not instance.get_table(group_schema.path):
                 instance.tables.append(table)
 
         return instance
+
+    @classmethod
+    def _move_selected_columns_to_top(cls, columns):
+        ordered_columns = []
+        ordered_columns.extend([column for column in columns if column.selected])
+        ordered_columns.extend([column for column in columns if not column.selected])
+        return ordered_columns
 
     @classmethod
     def _insert_system_properties(cls, domain, export_type, table):
@@ -872,6 +881,10 @@ class FormExportInstance(ExportInstance):
     # static filters to limit the data in this export
     # filters are only used in daily saved and HTML (dashboard feed) exports
     filters = SchemaProperty(FormExportInstanceFilters)
+
+    @property
+    def identifier(self):
+        return self.xmlns
 
     @property
     def identifier(self):
@@ -1126,7 +1139,6 @@ class InferredSchema(Document):
     domain = StringProperty(required=True)
     created_on = DateTimeProperty(default=datetime.utcnow)
     group_schemas = SchemaListProperty(InferredExportGroupSchema)
-    case_type = StringProperty(required=True)
     version = IntegerProperty(default=1)
 
     # This normally contains a mapping of app_id to the version number. For
@@ -1157,6 +1169,27 @@ class InferredSchema(Document):
             if group_schema.path == path:
                 return group_schema
         return None
+
+    @property
+    def identifier(self):
+        raise NotImplementedError()
+
+
+class CaseInferredSchema(InferredSchema):
+    case_type = StringProperty(required=True)
+
+    @property
+    def identifier(self):
+        return self.case_type
+
+
+class FormInferredSchema(InferredSchema):
+    xmlns = StringProperty(required=True)
+    app_id = StringProperty(required=True)
+
+    @property
+    def identifier(self):
+        return self.xmlns
 
 
 class ExportDataSchema(Document):
@@ -1239,7 +1272,7 @@ class ExportDataSchema(Document):
             apps_processed += 1
             set_task_progress(task, apps_processed, len(app_build_ids))
 
-        inferred_schema = cls._get_inferred_schema(domain, identifier)
+        inferred_schema = cls._get_inferred_schema(domain, app_id, identifier)
         if inferred_schema:
             current_schema = cls._merge_schemas(current_schema, inferred_schema)
 
@@ -1360,8 +1393,8 @@ class FormExportDataSchema(ExportDataSchema):
         return FORM_DATA_SCHEMA_VERSION
 
     @classmethod
-    def _get_inferred_schema(cls, domain, xmlns):
-        return None
+    def _get_inferred_schema(cls, domain, app_id, xmlns):
+        return get_form_inferred_schema(domain, app_id, xmlns)
 
     def _set_identifier(self, form_xmlns):
         self.xmlns = form_xmlns
@@ -1596,8 +1629,8 @@ class CaseExportDataSchema(ExportDataSchema):
         return CASE_DATA_SCHEMA_VERSION
 
     @classmethod
-    def _get_inferred_schema(cls, domain, case_type):
-        return get_inferred_schema(domain, case_type)
+    def _get_inferred_schema(cls, domain, app_id, case_type):
+        return get_case_inferred_schema(domain, case_type)
 
     @classmethod
     def _get_current_app_ids_for_domain(cls, domain, app_id):

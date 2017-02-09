@@ -1,3 +1,6 @@
+/* eslint-env mocha */
+/* globals Question, DropdownEntry, ComboboxEntry, Formplayer */
+
 describe('Entries', function() {
     var questionJSON,
         spy;
@@ -47,6 +50,34 @@ describe('Entries', function() {
         assert.isFalse(valid);
     });
 
+    it('Should return DropdownEntry', function() {
+        var entry;
+
+        questionJSON.datatype = Formplayer.Const.SELECT;
+        questionJSON.style = { raw: Formplayer.Const.MINIMAL };
+        questionJSON.choices = ['a', 'b'];
+
+        entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof DropdownEntry);
+        assert.equal(entry.templateType, 'dropdown');
+        assert.deepEqual(entry.options(), [{
+            text: 'a',
+            idx: 1,
+        }, {
+            text: 'b',
+            idx: 2,
+        }]);
+
+        entry.rawAnswer(1);
+        this.clock.tick(1000);
+        assert.isTrue(spy.calledOnce);
+        assert.equal(entry.answer(), 1);
+
+        entry.rawAnswer(2);
+        this.clock.tick(1000);
+        assert.isTrue(spy.calledTwice);
+    });
+
     it('Should return FloatEntry', function() {
         questionJSON.datatype = Formplayer.Const.FLOAT;
         entry = (new Question(questionJSON)).entry;
@@ -66,6 +97,75 @@ describe('Entries', function() {
 
         valid = entry.isValid('mouse');
         assert.isFalse(valid);
+    });
+
+    it('Should return ComboboxEntry', function() {
+        var entry;
+        questionJSON.datatype = Formplayer.Const.SELECT;
+        questionJSON.style = { raw: Formplayer.Const.COMBOBOX };
+        questionJSON.choices = ['a', 'b'];
+
+        entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof ComboboxEntry);
+
+        entry.rawAnswer('a');
+        assert.equal(entry.answer(), 1);
+
+        entry.rawAnswer('');
+        assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
+
+        entry.rawAnswer('abc');
+        assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
+    });
+
+    it('Should validate Combobox properly', function() {
+        var entry,
+            question;
+        questionJSON.datatype = Formplayer.Const.SELECT;
+        questionJSON.style = { raw: Formplayer.Const.COMBOBOX };
+        questionJSON.choices = ['a', 'b'];
+        question = new Question(questionJSON);
+
+        entry = question.entry;
+        assert.isTrue(entry instanceof ComboboxEntry);
+
+        entry.rawAnswer('a');
+        assert.equal(entry.answer(), 1);
+
+        question.choices(['c', 'd']);
+        assert.isFalse(entry.isValid(entry.rawAnswer()));
+        assert.isTrue(!!question.error());
+    });
+
+    it('Should properly filter combobox', function() {
+        // Standard filter
+        assert.isTrue(ComboboxEntry.filter('o', { name: 'one two', id: 1 }, null));
+        assert.isFalse(ComboboxEntry.filter('t', { name: 'one two', id: 1 }, null));
+
+        // Multiword filter
+        assert.isTrue(
+            ComboboxEntry.filter('one three', { name: 'one two three', id: 1 }, Formplayer.Const.COMBOBOX_MULTIWORD)
+        );
+        assert.isFalse(
+            ComboboxEntry.filter('two three', { name: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_MULTIWORD)
+        );
+
+        // Fuzzy filter
+        assert.isTrue(
+            ComboboxEntry.filter('onet', { name: 'onetwo', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+        );
+        assert.isTrue(
+            ComboboxEntry.filter('OneT', { name: 'onetwo', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+        );
+        assert.isFalse(
+            ComboboxEntry.filter('one tt', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+        );
+        assert.isFalse(
+            ComboboxEntry.filter('o', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+        );
+        assert.isTrue(
+            ComboboxEntry.filter('on', { name: 'on', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+        );
     });
 
     it('Should return FreeTextEntry', function() {

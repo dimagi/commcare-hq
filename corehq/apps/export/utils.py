@@ -24,7 +24,8 @@ from corehq.apps.app_manager.dbaccessors import (
 from .dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
-    get_inferred_schema,
+    get_case_inferred_schema,
+    get_form_inferred_schema,
 )
 from .exceptions import SkipConversion
 from .const import (
@@ -58,7 +59,8 @@ def convert_saved_export_to_export_instance(
         ExportMigrationMeta,
         ConversionMeta,
         TableConfiguration,
-        InferredSchema,
+        CaseInferredSchema,
+        FormInferredSchema,
     )
 
     schema = None
@@ -120,7 +122,7 @@ def convert_saved_export_to_export_instance(
         table_path = _convert_index_to_path_nodes(old_table.index)
         new_table = instance.get_table(_convert_index_to_path_nodes(old_table.index))
         if not new_table:
-            if not is_remote_app_migration:
+            if not is_remote_app_migration and not force_convert_columns:
                 if old_table.index != '#.history.#':
                     migration_meta.skipped_tables.append(ConversionMeta(
                         path=old_table.index,
@@ -133,6 +135,7 @@ def convert_saved_export_to_export_instance(
                 is_user_defined=True,
                 path=_convert_index_to_path_nodes(old_table.index),
             )
+            instance._insert_system_properties(domain, instance.type, new_table)
             instance.tables.append(new_table)
 
         new_table.label = old_table.display
@@ -230,25 +233,37 @@ def convert_saved_export_to_export_instance(
             except SkipConversion, e:
                 if is_remote_app_migration or force_convert_columns or column.index in SKIPPABLE_PROPERTIES:
                     # In the event that we skip a column and it's a remote application,
-                    # just add a user defined column
-                    if export_type == CASE_EXPORT:
-                        inferred_schema = get_inferred_schema(domain, instance.case_type)
-                        if not inferred_schema:
-                            inferred_schema = InferredSchema(
-                                domain=domain,
-                                case_type=instance.case_type,
-                            )
-                        new_column = _create_column_from_inferred_schema(
-                            inferred_schema,
-                            new_table,
-                            column,
-                            column_path,
-                            transform,
+                    # add it to the inferred schema
+
+                    schema_kwargs = {
+                        'domain': domain
+                    }
+                    if instance.type == CASE_EXPORT:
+                        inferred_schema = get_case_inferred_schema(domain, instance.identifier)
+                        inferred_schema_cls = CaseInferredSchema
+                        schema_kwargs['case_type'] = instance.identifier
+                    elif instance.type == FORM_EXPORT:
+                        inferred_schema = get_form_inferred_schema(
+                            domain,
+                            instance.app_id,
+                            instance.identifier
                         )
-                        if not dryrun:
-                            inferred_schema.save()
-                    else:
-                        new_column = _create_user_defined_column(column, column_path, transform)
+                        inferred_schema_cls = FormInferredSchema
+                        schema_kwargs['xmlns'] = instance.identifier
+                        schema_kwargs['app_id'] = instance.app_id
+
+                    if not inferred_schema:
+                        inferred_schema = inferred_schema_cls(**schema_kwargs)
+                    new_column = _create_column_from_inferred_schema(
+                        inferred_schema,
+                        new_table,
+                        column,
+                        column_path,
+                        transform,
+                    )
+                    if not dryrun:
+                        inferred_schema.save()
+
                     new_table.columns.append(new_column)
                     ordering.append(new_column)
                 else:
@@ -515,6 +530,7 @@ def _get_normal_column(new_table, column_path, transform):
         'LabelItem',
         'ExportItem',
     ]
+
     # Since old exports had no concept of item type, we just guess all
     # the types and see if there are any matches.
     for guess_type in guess_types:

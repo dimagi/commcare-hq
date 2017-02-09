@@ -142,7 +142,7 @@ class CloudcareMain(View):
 
         else:
             # big TODO: write a new apps view for Formplayer, can likely cut most out now
-            if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+            if not toggles.USE_OLD_CLOUDCARE.enabled(domain):
                 apps = get_cloudcare_apps(domain)
             else:
                 apps = get_brief_apps_in_domain(domain)
@@ -235,7 +235,7 @@ class CloudcareMain(View):
             'use_sqlite_backend': use_sqlite_backend(domain),
         }
         context.update(_url_context())
-        if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+        if not toggles.USE_OLD_CLOUDCARE.enabled(domain):
             return render(request, "cloudcare/formplayer_home.html", context)
         else:
             return render(request, "cloudcare/cloudcare_home.html", context)
@@ -771,7 +771,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
 
     @property
     def page_title(self):
-        if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+        if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
             return _("Web Apps Permissions")
         else:
             return _("CloudCare Permissions")

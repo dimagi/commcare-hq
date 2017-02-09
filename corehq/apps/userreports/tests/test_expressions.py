@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import uuid
 from datetime import date, datetime
@@ -322,6 +323,7 @@ class ArrayIndexExpressionTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ArrayIndexExpressionTest, cls).setUpClass()
         cls.expression_spec = {
             'type': 'array_index',
             'array_expression': {

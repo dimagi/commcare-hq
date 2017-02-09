@@ -268,6 +268,11 @@ function Form(json) {
         });
     };
 
+    self.afterRender = function() {
+        // Once form has finished rendering, render all popovers
+        $('.js-form-container [data-toggle="popover"]').popover();
+    };
+
     $.unsubscribe('session');
     $.subscribe('session.reconcile', function(e, response, element) {
         // TODO where does response status parsing belong?
@@ -670,6 +675,13 @@ Formplayer.Const = {
     INFO: 'info',
     BARCODE: 'barcode',
 
+    // Appearance attributes
+    NUMERIC: 'numeric',
+    MINIMAL: 'minimal',
+    COMBOBOX: 'combobox',
+    COMBOBOX_MULTIWORD: 'multiword',
+    COMBOBOX_FUZZY: 'fuzzy',
+
     // Note it's important to differentiate these two
     NO_PENDING_ANSWER: undefined,
     NO_ANSWER: null,
@@ -765,6 +777,7 @@ Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
 
     return form;
 };
+
 
 Formplayer.Utils.getIconFromType = function(type) {
     var icon = '';

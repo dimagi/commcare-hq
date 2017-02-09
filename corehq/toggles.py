@@ -287,13 +287,6 @@ ADD_USERS_FROM_LOCATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DETAIL_LIST_TABS = StaticToggle(
-    'detail-list-tabs',
-    'Tabs in the case detail list',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
@@ -334,7 +327,11 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    description=(
+        "A feature which will allow your domain to create User Configurable Reports."
+    ),
+    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting', 
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -365,13 +362,6 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-STOCK_TRANSACTION_EXPORT = StaticToggle(
-    'ledger_export',
-    'Show "export transactions" link on case details page',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 SYNC_ALL_LOCATIONS = StaticToggle(
     'sync_all_locations',
     'Sync the full location hierarchy when syncing location fixtures',
@@ -382,6 +372,13 @@ SYNC_ALL_LOCATIONS = StaticToggle(
 FLAT_LOCATION_FIXTURE = StaticToggle(
     'flat_location_fixture',
     'Sync the location fixture in a flat format.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
+    'hierarchical_location_fixture',
+    'Allow to switch to old hierarchical location fixture',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
@@ -726,23 +723,11 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USE_FORMPLAYER_FRONTEND = PredictablyRandomToggle(
-    'use_formplayer_frontend',
-    'Use New CloudCare',
-    TAG_PRODUCT_PATH,
+USE_OLD_CLOUDCARE = StaticToggle(
+    'use_old_cloudcare',
+    'Use Old CloudCare',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
-    randomness=1.0,
-    always_disabled=[
-        'hsph-betterbirth',
-        'figo-ppiud-srilanka',
-        'broadreach-sa',
-        'goal-global',
-        'ipm-senegal',
-        'madla-malaria',
-        'myrice',
-        'pact',
-        'icrc-almanach',
-    ]
 )
 
 FIXTURE_CASE_SELECTION = StaticToggle(
@@ -824,13 +809,6 @@ LEGACY_SYNC_SUPPORT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VIEW_BUILD_SOURCE = StaticToggle(
-    'diff_builds',
-    'Allow users to view and diff build source files',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',
     'Enable EWSGhana web user extension',
@@ -843,14 +821,6 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     'Enable the use of locations as owners of call center cases',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-GRID_MENUS = StaticToggle(
-    'grid_menus',
-    'Allow using grid menus on Android',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Grid+Views',
 )
 
 OLD_EXPORTS = StaticToggle(
@@ -953,11 +923,12 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
 )
 
 
-PREVIEW_APP = StaticToggle(
+PREVIEW_APP = PredictablyRandomToggle(
     'preview_app',
     'Preview an application in the app builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    randomness=1.0,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -1028,15 +999,11 @@ LINKED_APPS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
-    'nimbus_form_validation',
-    'Use Nimbus to validate XForms',
+FORMTRANSLATE_FORM_VALIDATION = StaticToggle(
+    'formtranslate_form_validation',
+    'Use formtranslate to validate XForms',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    randomness=1.0,
-    always_disabled=[
-        'icrc-almanach'
-    ]
+    [NAMESPACE_DOMAIN]
 )
 
 USER_PROPERTY_EASY_REFS = StaticToggle(
@@ -1060,9 +1027,10 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DO_NOT_PROCESS_OLD_BUILDS = StaticToggle(
+DO_NOT_PROCESS_OLD_BUILDS = PredictablyRandomToggle(
     'do_not_process_old_builds',
     'Do not process old build for export generation',
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN],
+    randomness=0.5,
 )

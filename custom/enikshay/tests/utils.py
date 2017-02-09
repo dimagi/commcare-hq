@@ -12,7 +12,17 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
+from custom.enikshay.const import (
+    PRIMARY_PHONE_NUMBER,
+    BACKUP_PHONE_NUMBER,
+    MERM_ID,
+    PERSON_FIRST_NAME,
+    PERSON_LAST_NAME,
+    TREATMENT_START_DATE,
+    TREATMENT_SUPPORTER_FIRST_NAME,
+    TREATMENT_SUPPORTER_LAST_NAME,
+    TREATMENT_SUPPORTER_PHONE,
+)
 from corehq.apps.users.models import CommCareUser
 
 
@@ -32,6 +42,7 @@ class ENikshayCaseStructureMixin(object):
         self.episode_id = u"episode"
         self.primary_phone_number = "0123456789"
         self.secondary_phone_number = "0999999999"
+        self.treatment_supporter_phone = "066000666"
 
     def tearDown(self):
         delete_all_users()
@@ -47,11 +58,13 @@ class ENikshayCaseStructureMixin(object):
                 "create": True,
                 "owner_id": uuid.uuid4().hex,
                 "update": {
-                    'name': "Pippin",
+                    'name': "Peregrine Took",
+                    PERSON_FIRST_NAME: "Peregrine",
+                    PERSON_LAST_NAME: "Took",
                     'aadhaar_number': "499118665246",
                     PRIMARY_PHONE_NUMBER: self.primary_phone_number,
                     BACKUP_PHONE_NUMBER: self.secondary_phone_number,
-                    'merm_id': "123456789",
+                    MERM_ID: "123456789",
                     'dob': "1987-08-15",
                     'age': '20',
                     'sex': 'male',
@@ -89,24 +102,25 @@ class ENikshayCaseStructureMixin(object):
             attrs={
                 'create': True,
                 'case_type': 'episode',
-                "update": dict(
-                    name="Episode #1",
-                    person_name="Pippin",
-                    opened_on=datetime(1989, 6, 11, 0, 0),
-                    patient_type_choice="treatment_after_lfu",
-                    hiv_status="reactive",
-                    episode_type="confirmed_tb",
-                    default_adherence_confidence="high",
-                    occupation='engineer',
-                    date_of_diagnosis='2014-09-09',
-                    treatment_initiation_date='2015-03-03',
-                    disease_classification='extra_pulmonary',
-                    treatment_supporter_first_name='awesome',
-                    treatment_supporter_last_name='dot',
-                    treatment_supporter_mobile_number='123456789',
-                    treatment_supporter_designation='ngo_volunteer',
-                    site_choice='pleural_effusion',
-                )
+                "update": {
+                    'date_of_diagnosis': '2014-09-09',
+                    'default_adherence_confidence': 'high',
+                    'disease_classification': 'extra_pulmonary',
+                    'episode_type': 'confirmed_tb',
+                    'hiv_status': 'reactive',
+                    'name': 'Episode #1',
+                    'occupation': 'engineer',
+                    'opened_on': datetime(1989, 6, 11, 0, 0),
+                    'patient_type_choice': 'treatment_after_lfu',
+                    'person_name': 'Peregrine Took',
+                    'site_choice': 'pleural_effusion',
+                    'treatment_initiation_date': '2015-03-03',
+                    'treatment_supporter_designation': 'ngo_volunteer',
+                    TREATMENT_START_DATE: "2017-02-17",
+                    TREATMENT_SUPPORTER_FIRST_NAME: "Gandalf",
+                    TREATMENT_SUPPORTER_LAST_NAME: "The Grey",
+                    TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone,
+                }
             },
             indices=[CaseIndex(
                 self.occurrence,
@@ -122,7 +136,7 @@ class ENikshayCaseStructureMixin(object):
     def create_case_structure(self):
         return {case.case_id: case for case in self.factory.create_or_update_cases([self.episode])}
 
-    def create_adherence_cases(self, adherence_dates):
+    def create_adherence_cases(self, adherence_dates, adherence_source='99DOTS'):
         return self.factory.create_or_update_cases([
             CaseStructure(
                 case_id=adherence_date.strftime('%Y-%m-%d'),
@@ -132,7 +146,7 @@ class ENikshayCaseStructureMixin(object):
                     "update": {
                         "name": adherence_date,
                         "adherence_value": "unobserved_dose",
-                        "adherence_source": "99DOTS",
+                        "adherence_source": adherence_source,
                         "adherence_date": adherence_date,
                         "person_name": "Pippin",
                         "adherence_confidence": "medium",
@@ -189,7 +203,7 @@ class ENikshayLocationStructureMixin(object):
         super(ENikshayLocationStructureMixin, self).tearDown()
 
     def assign_person_to_location(self, location_id):
-        self.create_case(
+        return self.create_case(
             CaseStructure(
                 case_id=self.person_id,
                 attrs={
@@ -198,7 +212,7 @@ class ENikshayLocationStructureMixin(object):
                     )
                 }
             )
-        )
+        )[0]
 
     def _setup_enikshay_locations(self, domain_name):
         location_type_structure = [

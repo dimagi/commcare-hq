@@ -35,6 +35,7 @@ from corehq.apps.app_manager.util import (
 )
 from corehq import toggles
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.apps.cloudcare.utils import should_show_preview_app
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -286,11 +287,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     context.update({
         'live_preview_ab': live_preview_ab.context,
         'is_onboarding_domain': domain_obj.is_onboarding_domain,
-        'show_live_preview': (
-            toggles.PREVIEW_APP.enabled(domain)
-            or toggles.PREVIEW_APP.enabled(request.couch_user.username)
-            or (domain_obj.is_onboarding_domain and live_preview_ab.version == ab_tests.LIVE_PREVIEW_ENABLED)
-        )
+        'show_live_preview': should_show_preview_app(
+            request,
+            domain_obj,
+            request.couch_user.username
+        ),
+        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     })
 
     response = render(request, template, context)

@@ -257,9 +257,12 @@
             controller: function ($scope) {
                 $scope.getIcon = utils.getIcon;
                 $scope.getQuestionLabel = function(question) {
-                   return utils.translateName(question.translations, $scope.lang, question.label);
+                    return utils.translateName(question.translations, $scope.lang, question.label);
                 };
-            }
+                $scope.getSelectOptionsLabel = function(option){
+                    return utils.translateName(option.translations, $scope.lang, option.label);
+                };
+            },
         };
     }]);
     summaryModule.directive('loading', function () {

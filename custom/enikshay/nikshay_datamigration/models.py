@@ -133,18 +133,23 @@ class PatientDetail(models.Model):
             '8': 'other',
             '9': 'other',
             '10': 'other',
-        }.get(self.dcexpulmunory.strip(), '')
+        }.get(self.dcexpulmunory.strip(), 'other')
 
     @property
     def patient_type_choice(self):
+        category_to_status = {
+            '1': 'new',
+            '2': 'recurrent',
+        }
+
         return {
             '1': 'new',
             '2': 'recurrent',
             '3': 'treatment_after_failure',
             '4': 'treatment_after_lfu',
-            '5': 'transfer_in',
-            '6': 'transfer_in',
-            '7': 'transfer_in',
+            '5': category_to_status[self.pcategory],
+            '6': category_to_status[self.pcategory],
+            '7': category_to_status[self.pcategory],
         }[self.Ptype]
 
     @property
@@ -228,6 +233,10 @@ class PatientDetail(models.Model):
     def initial_home_visit_status(self):
         return 'completed' if self.ihv_date else 'pending'
 
+    @property
+    def person_id(self):
+        return 'NIK-' + self.PregId
+
 
 class Outcome(models.Model):
     PatientId = models.OneToOneField(PatientDetail, primary_key=True)
@@ -282,12 +291,47 @@ class Outcome(models.Model):
     @property
     def hiv_status(self):
         return {
-            None: None,
-            'NULL': None,
+            None: 'unknown',
+            'NULL': 'unknown',
             'Pos': 'reactive',
             'Neg': 'non_reactive',
             'Unknown': 'unknown',
         }[self.HIVStatus]
+
+    @property
+    def treatment_outcome(self):
+        return {
+            'NULL': None,
+            '0': None,
+            '1': 'cured',
+            '2': 'treatment_completed',
+            '3': 'died',
+            '4': 'failure',
+            '5': 'loss_to_follow_up',
+            '6': 'not_evaluated',
+            '7': 'regimen_changed',
+        }[self.Outcome]
+
+    @property
+    def is_treatment_ended(self):
+        return self.treatment_outcome in [
+            'cured',
+            'treatment_completed',
+            'died',
+            'failure',
+            'loss_to_follow_up',
+            'regimen_changed',
+        ]
+
+    @property
+    def treatment_outcome_date(self):
+        if self.OutcomeDate is None or self.OutcomeDate == 'NULL':
+            return None
+        else:
+            if '-' in self.OutcomeDate:
+                return datetime.strptime(self.OutcomeDate, '%d-%m-%Y').date()
+            else:
+                return datetime.strptime(self.OutcomeDate, '%d/%m/%Y').date()
 
 
 # class Household(models.Model):

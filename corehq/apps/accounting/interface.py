@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 
 from django.core.urlresolvers import reverse
@@ -71,6 +72,7 @@ from .utils import (
     make_anchor_tag,
     quantize_accounting_decimal,
 )
+from six.moves import map
 
 
 def invoice_column_cell(invoice):
@@ -158,7 +160,7 @@ class AccountingInterface(AddItemInterface):
                 account.entry_point,
             ]
 
-        return map(_account_to_row, self._accounts)
+        return list(map(_account_to_row, self._accounts))
 
     @property
     def _accounts(self):
@@ -262,7 +264,9 @@ class SubscriptionInterface(AddItemInterface):
                 ).order_by('date_created')[0]
                 created_by = dict(SubscriptionAdjustmentMethod.CHOICES).get(
                     created_by_adj.method, "Unknown")
-            except IndexError, SubscriptionAdjustment.DoesNotExist:
+            except SubscriptionAdjustment.DoesNotExist:
+                created_by = "Unknown"
+            except IndexError:
                 created_by = "Unknown"
             columns = [
                 subscription.subscriber.domain,
@@ -287,7 +291,7 @@ class SubscriptionInterface(AddItemInterface):
                 columns.append(mark_safe('<a href="./%d" class="btn btn-default">Edit</a>' % subscription.id))
             return columns
 
-        return map(_subscription_to_row, self._subscriptions)
+        return list(map(_subscription_to_row, self._subscriptions))
 
     @property
     def _subscriptions(self):
@@ -405,7 +409,7 @@ class SoftwarePlanInterface(AddItemInterface):
                 ),
             ]
 
-        return map(_plan_to_row, self._plans)
+        return list(map(_plan_to_row, self._plans))
 
     @property
     def _plans(self):
@@ -542,7 +546,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 "YES" if invoice.is_hidden else "no",
             ]
 
-        return map(_invoice_to_row, self._invoices)
+        return list(map(_invoice_to_row, self._invoices))
 
     @property
     @memoized
@@ -753,7 +757,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 )
             return columns
 
-        return map(_invoice_to_row, self._invoices)
+        return list(map(_invoice_to_row, self._invoices))
 
     @property
     @memoized
@@ -848,7 +852,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
     @property
     def report_context(self):
         context = super(InvoiceInterface, self).report_context
-        if self.request.GET.items():  # A performance improvement
+        if list(self.request.GET.items()):  # A performance improvement
             context.update(
                 adjust_balance_forms=self.adjust_balance_forms,
             )
@@ -967,7 +971,7 @@ class PaymentRecordInterface(GenericTabularReport):
                 quantize_accounting_decimal(payment_record.amount),
             ]
 
-        return map(_payment_record_to_row, self._payment_records)
+        return list(map(_payment_record_to_row, self._payment_records))
 
     @property
     def _payment_records(self):
@@ -1028,7 +1032,7 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
     def rows(self):
         def _subscription_adjustment_to_row(sub_adj):
             from corehq.apps.accounting.views import EditSubscriptionView
-            return map(lambda x: x or '', [
+            return [x or '' for x in [
                 sub_adj.date_created,
                 format_datatables_data(
                     mark_safe(make_anchor_tag(
@@ -1042,9 +1046,9 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
                 dict(SubscriptionAdjustmentMethod.CHOICES).get(sub_adj.method),
                 sub_adj.note,
                 sub_adj.web_user,
-            ])
+            ]]
 
-        return map(_subscription_adjustment_to_row, self._subscription_adjustments)
+        return list(map(_subscription_adjustment_to_row, self._subscription_adjustments))
 
     @property
     def _subscription_adjustments(self):
@@ -1150,7 +1154,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
             ] + types
 
         def _credit_adjustment_to_row(credit_adj):
-            return map(lambda x: x or '', [
+            return [x or '' for x in [
                 credit_adj.date_created,
             ] + _get_credit_line_columns_from_credit_line(credit_adj.credit_line) + [
                 (
@@ -1169,9 +1173,9 @@ class CreditAdjustmentInterface(GenericTabularReport):
                     date_created__lte=credit_adj.date_created,
                 ))),
                 credit_adj.web_user,
-            ] + _get_credit_line_columns_from_credit_line(credit_adj.related_credit))
+            ] + _get_credit_line_columns_from_credit_line(credit_adj.related_credit)]
 
-        return map(_credit_adjustment_to_row, self._credit_adjustments)
+        return list(map(_credit_adjustment_to_row, self._credit_adjustments))
 
     @property
     def _credit_adjustments(self):

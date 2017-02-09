@@ -261,6 +261,7 @@ class ParentCasePropertyBuilder(object):
                 # Currently if a property is only ever updated via parent property
                 # reference, then I think it will not appear in the schema.
                 case_properties.update(p for p in updates if "/" not in p)
+            case_properties.update(self.get_save_to_case_updates(form, case_type))
 
         parent_types, contributed_properties = self.get_parent_types_and_contributed_properties(
             case_type, include_shared_properties=include_shared_properties
@@ -289,6 +290,10 @@ class ParentCasePropertyBuilder(object):
     @memoized
     def get_case_updates(self, form, case_type):
         return form.get_case_updates(case_type)
+
+    @memoized
+    def get_save_to_case_updates(self, form, case_type):
+        return form.get_save_to_case_updates(case_type)
 
     def get_parent_type_map(self, case_types, allow_multiple_parents=False):
         """
@@ -709,10 +714,10 @@ def prefix_usercase_properties(properties):
 
 
 def module_offers_search(module):
-    from corehq.apps.app_manager.models import AdvancedModule, Module
+    from corehq.apps.app_manager.models import AdvancedModule, Module, ShadowModule
 
     return (
-        isinstance(module, (Module, AdvancedModule)) and
+        isinstance(module, (Module, AdvancedModule, ShadowModule)) and
         module.search_config and
         module.search_config.properties
     )

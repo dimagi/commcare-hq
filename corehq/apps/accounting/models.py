@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from decimal import Decimal
 import itertools
@@ -67,6 +68,7 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
+import six
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -746,18 +748,21 @@ class DefaultProductPlan(models.Model):
     )
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
     is_trial = models.BooleanField(default=False)
+    is_report_builder_enabled = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'accounting'
-        unique_together = ('edition', 'is_trial')
+        unique_together = ('edition', 'is_trial', 'is_report_builder_enabled')
 
     @classmethod
-    def get_default_plan_version(cls, edition=None, is_trial=False):
+    def get_default_plan_version(cls, edition=None, is_trial=False,
+                                 is_report_builder_enabled=False):
         edition = edition or SoftwarePlanEdition.COMMUNITY
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
-                edition=edition, is_trial=is_trial
+                edition=edition, is_trial=is_trial,
+                is_report_builder_enabled=is_report_builder_enabled
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
@@ -951,7 +956,7 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
-        _soft_assert_domain_not_loaded(isinstance(self.domain, basestring), "domain is object")
+        _soft_assert_domain_not_loaded(isinstance(self.domain, six.string_types), "domain is object")
 
 
         if new_plan_version is None:
@@ -1328,7 +1333,7 @@ class Subscription(models.Model):
         self.date_end = date_end
         self.is_active = True
         for allowed_attr in self.allowed_attr_changes:
-            if allowed_attr in kwargs.keys():
+            if allowed_attr in kwargs:
                 setattr(self, allowed_attr, kwargs[allowed_attr])
         self.save()
         self.subscriber.reactivate_subscription(
@@ -1626,7 +1631,7 @@ class Subscription(models.Model):
         if date_end is not None:
             future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
         if future_subscriptions.count() > 0:
-            raise NewSubscriptionError(unicode(
+            raise NewSubscriptionError(six.text_type(
                 _(
                     "There is already a subscription '%(sub)s' that has an end date "
                     "that conflicts with the start and end dates of this "
@@ -2426,7 +2431,7 @@ class BillingRecord(BillingRecordBase):
     @staticmethod
     def _get_total_balance(credit_lines):
         return (
-            sum(map(lambda credit_line: credit_line.balance, credit_lines))
+            sum([credit_line.balance for credit_line in credit_lines])
             if credit_lines else Decimal('0.0')
         )
 
@@ -2854,7 +2859,14 @@ class StripePaymentMethod(PaymentMethod):
 
     @property
     def all_cards(self):
-        return filter(lambda card: card is not None, self.customer.cards.data)
+        try:
+            return [card for card in self.customer.cards.data if card is not None]
+        except stripe.error.AuthenticationError:
+            if not settings.STRIPE_PRIVATE_KEY:
+                log_accounting_info("Private key is not defined in settings")
+                return []
+            else:
+                raise
 
     def all_cards_serialized(self, billing_account):
         return [{

@@ -222,13 +222,16 @@ def toggle_enabled(request, toggle_or_toggle_name):
 @register.filter
 def is_new_cloudcare(request):
     from corehq import toggles
-    return _toggle_enabled(toggles, request, toggles.USE_FORMPLAYER_FRONTEND)
+    return not _toggle_enabled(toggles, request, toggles.USE_OLD_CLOUDCARE)
 
 
 @register.filter
 def can_use_restore_as(request):
     if not hasattr(request, 'couch_user'):
         return False
+
+    if request.couch_user.is_superuser:
+        return True
 
     return (
         request.couch_user.can_edit_commcare_users() and
@@ -621,7 +624,7 @@ def initial_page_data(parser, token):
             if isinstance(resolved, basestring):
                 resolved = json.dumps(resolved)[1:-1]
             else:
-                resolved = json.dumps(resolved)
+                resolved = JSON(resolved)
             return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
                     .format(name, escape(resolved)))
 

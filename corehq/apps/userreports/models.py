@@ -65,6 +65,9 @@ class DataSourceBuildInformation(DocumentSchema):
     finished = BooleanProperty(default=False)
     # Start time of the most recent build SQL table celery task.
     initiated = DateTimeProperty()
+    # same as previous attributes but used for rebuilding tables in place
+    finished_in_place = BooleanProperty(default=False)
+    initiated_in_place = DateTimeProperty()
 
 
 class DataSourceMeta(DocumentSchema):
