@@ -186,14 +186,20 @@ class FormProcessorInterface(object):
         """
         # check across Couch & SQL to ensure global uniqueness
         # check this domains DB first to support existing bad data
+        from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
+
         case, lock = self.processor.get_case_with_lock(case_id, lock, strip_history, wrap)
         if case:
             return case, lock
 
-        case, _ = self.other_db_processor().get_case_with_lock(case_id, lock=False, strip_history=True, wrap=False)
-        if case:
-            # case exists in other database
-            raise IllegalCaseId("Bad case id")
+        if not couch_sql_migration_in_progress(self.domain):
+            # during migration we're copying from one DB to the other so this check will always fail
+            case, _ = self.other_db_processor().get_case_with_lock(
+                case_id, lock=False, strip_history=True, wrap=False
+            )
+            if case:
+                # case exists in other database
+                raise IllegalCaseId("Bad case id")
 
         return case, lock
 
