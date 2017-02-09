@@ -19,6 +19,7 @@ from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
 from corehq.apps.app_manager.util import add_odk_profile_after_build, \
     get_app_manager_template
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
+from corehq.apps.app_manager.tasks import make_async_build
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.soft_assert import soft_assert
@@ -39,6 +40,8 @@ def download_odk_profile(request, domain, app_id):
     See ApplicationBase.create_profile
 
     """
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile(is_odk=True),
         content_type="commcare/profile"
@@ -47,6 +50,8 @@ def download_odk_profile(request, domain, app_id):
 
 @safe_download
 def download_odk_media_profile(request, domain, app_id):
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True),
         content_type="commcare/profile"
@@ -60,7 +65,8 @@ def download_suite(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        request.app.set_form_versions(None)
+        previous_version = request.app.get_latest_app(released_only=False)
+        request.app.set_form_versions(previous_version)
     return HttpResponse(
         request.app.create_suite()
     )
@@ -73,7 +79,8 @@ def download_media_suite(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        request.app.set_media_versions(None)
+        previous_version = request.app.get_latest_app(released_only=False)
+        request.app.set_media_versions(previous_version)
     return HttpResponse(
         request.app.create_media_suite()
     )
@@ -311,6 +318,8 @@ def download_profile(request, domain, app_id):
     See ApplicationBase.create_profile
 
     """
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile()
     )
@@ -318,6 +327,8 @@ def download_profile(request, domain, app_id):
 
 @safe_download
 def download_media_profile(request, domain, app_id):
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile(with_media=True)
     )
