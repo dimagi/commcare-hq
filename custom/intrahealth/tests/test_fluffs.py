@@ -15,10 +15,10 @@ from testapps.test_pillowtop.utils import real_pillow_settings
 DATAPATH = os.path.join(os.path.dirname(__file__), 'data')
 
 
-@softer_assert()
 class TestFluffs(IntraHealthTestCase):
 
     @classmethod
+    @softer_assert()
     def setUpClass(cls):
         super(TestFluffs, cls).setUpClass()
         cls.table = TauxDeSatisfactionFluff._table
