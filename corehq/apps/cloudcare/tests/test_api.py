@@ -23,7 +23,7 @@ from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 TEST_DOMAIN = "test-cloudcare-domain"
 
 
-class CaseAPIBaseTest(object):
+class CaseAPITestMixin(object):
     domain = TEST_DOMAIN
     case_types = ['t1', 't2']
     user_ids = ['TEST_API1', 'TEST_API2']
@@ -205,7 +205,7 @@ class CaseAPIBaseTest(object):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
-class CaseListApiCouchTests(TestCase, CaseAPIBaseTest):
+class CaseListApiCouchTests(TestCase, CaseAPITestMixin):
 
     @classmethod
     def setUpClass(cls):
@@ -227,7 +227,7 @@ class CaseListApiCouchTests(TestCase, CaseAPIBaseTest):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class CaseListApiSQLTests(TestCase, CaseAPIBaseTest):
+class CaseListApiSQLTests(TestCase, CaseAPITestMixin):
     @classmethod
     def setUpClass(cls):
         super(CaseListApiSQLTests, cls).setUpClass()
