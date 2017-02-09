@@ -78,11 +78,10 @@ dcexpulmonory = {
     'extra_pulmonary': 'Y',
 }
 
-# this needs some serious dig in to do for correct mapping
 purpose_of_testing = {
     'end_of_ip': 1,
-    'end_of_cp': 999,
-    'posttreatment_6month': 999,
+    'end_of_cp': 4,
+    'posttreatment_6month': 3,
     'posttreatment_12month': 999,
     'posttreatment_18month': 999,
     'posttreatment_24month': 999,
