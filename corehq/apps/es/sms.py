@@ -45,7 +45,7 @@ def processed_or_incoming_messages():
     return filters.NOT(filters.AND(outgoing_messages(), processed(False)))
 
 
-def processed(proccessed=True):
+def processed(processed=True):
     return filters.term('processed', processed)
 
 
