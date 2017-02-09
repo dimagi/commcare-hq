@@ -40,14 +40,33 @@
                 }
                 return names[firstLang] + (firstLang === target_lang ? '': ' [' + firstLang + ']');
             };
+            self.getModuleName = function (formId, target_lang) {
+                var names = config.formNameMap[formId];
+                if (names) {
+                    return self.translateName(names.module_name, target_lang)
+                }
+                return formId;
+            };
             self.getFormName = function (formId, target_lang) {
                 var names = config.formNameMap[formId];
                 if (names) {
-                    return self.translateName(names.module_name, target_lang) +
-                        ' -> ' +
-                        self.translateName(names.form_name, target_lang);
+                    return self.translateName(names.form_name, target_lang)
                 }
                 return formId;
+            };
+            self.getFormUrl = function (formId, target_lang) {
+                var names = config.formNameMap[formId];
+                if (names) {
+                    return names.form_url
+                }
+                return formId;
+            };
+            self.getModuleUrl = function (FormOrModuleId, target_lang) {
+                var names = config.formNameMap[FormOrModuleId];
+                if (names) {
+                    return names.module_url
+                }
+                return FormOrModuleId;
             };
             self.isActive = function (path) {
                 return $location.path().substr(0, path.length) === path;
@@ -118,6 +137,8 @@
         $scope.showRelevance = false;
         $scope.showComments = false;
         $scope.appLangs = summaryConfig.appLangs;
+        $scope.getFormUrl = utils.getFormUrl;
+        $scope.getModuleUrl = utils.getModuleUrl;
         $scope.formDownloadURL = summaryConfig.formDownloadURL;
         $scope.appDownloadURL = summaryConfig.appDownloadURL;
 
@@ -180,6 +201,9 @@
         $scope.typeSearch = null;
         $scope.isActive = utils.isActive;
         $scope.getFormName = utils.getFormName;
+        $scope.getModuleName = utils.getModuleName;
+        $scope.getFormUrl = utils.getFormUrl;
+        $scope.getModuleUrl = utils.getModuleUrl;
         $scope.showConditions = true;
         $scope.showCalculations = true;
         $scope.showLabels = true;
