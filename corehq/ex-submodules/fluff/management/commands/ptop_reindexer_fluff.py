@@ -38,7 +38,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('pillow_name')
-        parser.add_argument('domain', nargs='*')  # TODO - check this
+        parser.add_argument('--domain', nargs='+')
 
     def handle(self, pillow_name, **options):
         fluff_configs = {config.name: config for config in get_fluff_pillow_configs()}
@@ -50,7 +50,7 @@ class Command(BaseCommand):
         pillow_getter = get_pillow_by_name(pillow_name, instantiate=False)
         pillow = pillow_getter(delete_filtered=True)
 
-        domains = options.get('domain', pillow.domains)
+        domains = options.get('domain') or pillow.domains
         domains_not_in_pillow = set(domains) - set(pillow.domains)
         if domains_not_in_pillow:
             bad_domains = ', '.join(domains_not_in_pillow)
