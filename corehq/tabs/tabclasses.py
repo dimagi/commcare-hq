@@ -1688,7 +1688,8 @@ class AdminTab(UITab):
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
             dropdown_dict(_("CommCare Builds"), url="/builds/edit_menu"),
             dropdown_dict(None, is_divider=True),
-            dropdown_dict(_("Django Admin"), url="/admin")
+            dropdown_dict(_("Django Admin"), url="/admin"),
+            dropdown_dict(_("View All"), url=self.url),
         ])
         return submenu_context
 
