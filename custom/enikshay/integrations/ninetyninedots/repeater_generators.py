@@ -45,8 +45,8 @@ class PatientPayload(jsonobject.JsonObject):
     first_name = jsonobject.StringProperty(required=False)
     last_name = jsonobject.StringProperty(required=False)
 
-    sto_code = jsonobject.StringProperty(required=False)
-    dto_code = jsonobject.StringProperty(required=False)
+    state_code = jsonobject.StringProperty(required=False)
+    district_code = jsonobject.StringProperty(required=False)
     tu_code = jsonobject.StringProperty(required=False)
     phi_code = jsonobject.StringProperty(required=False)
 
@@ -67,8 +67,8 @@ class PatientPayload(jsonobject.JsonObject):
             beneficiary_id=person_case.case_id,
             first_name=person_case_properties.get(PERSON_FIRST_NAME, None),
             last_name=person_case_properties.get(PERSON_LAST_NAME, None),
-            sto_code=person_locations.sto,
-            dto_code=person_locations.dto,
+            state_code=person_locations.sto,
+            district_code=person_locations.dto,
             tu_code=person_locations.tu,
             phi_code=person_locations.phi,
             phone_numbers=_get_phone_numbers(person_case_properties),
