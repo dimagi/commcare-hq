@@ -16,3 +16,5 @@ TREATMENT_OUTCOME = 'treatment_outcome'
 TREATMENT_OUTCOME_DATE = 'treatment_outcome_date'
 
 WEIGHT_BAND = 'weight_band'
+
+CURRENT_ADDRESS = 'current_address'

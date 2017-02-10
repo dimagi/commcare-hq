@@ -28,6 +28,7 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME,
     TREATMENT_OUTCOME_DATE,
     WEIGHT_BAND,
+    CURRENT_ADDRESS,
 )
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
@@ -268,6 +269,7 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             ),
             "treatment_supporter_phone_number": "+91{}".format(self.treatment_supporter_phone[1:]),
             "weight_band": episode_case_properties.get(WEIGHT_BAND),
+            "address": person_case_properties.get(CURRENT_ADDRESS),
         }
         actual_payload = json.loads(self._get_actual_payload(casedb))
         self.assertDictEqual(expected_payload, actual_payload)
