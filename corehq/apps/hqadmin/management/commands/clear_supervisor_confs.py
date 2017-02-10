@@ -9,9 +9,8 @@ import sys
 class Command(BaseCommand):
     help = "Clear supervisor confs for the given environment"
 
-    option_list = (
-        make_option('--conf_location', help='Supervisor configuration file path', default=None),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument('--conf_location', help='Supervisor configuration file path', default=None)
 
     def handle(self, **options):
         conf_dir = options['conf_location']
