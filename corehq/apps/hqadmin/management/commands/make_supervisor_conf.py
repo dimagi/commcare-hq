@@ -33,7 +33,7 @@ class SupervisorConfCommand(BaseCommand):
     def render_configuration_file(self, conf_template_string, params):
         return Template(conf_template_string).render(Context(params))
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         self.conf_file_template = options['conf_file']
         self.conf_dest = options['conf_destination']
         self.params = options['params']
@@ -63,5 +63,4 @@ class SupervisorConfCommand(BaseCommand):
 
 class Command(SupervisorConfCommand):
     help = "Make a supervisord conf file to deposit into a services path that supervisord knows about"
-    args = ""
 
