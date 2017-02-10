@@ -163,7 +163,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
     def test_username_password(self):
         episode_case = self._create_nikshay_enabled_case()
         username = "arwen"
-        password = "adhafang"
+        password = "Hadhafang"
 
         MockRepeater = namedtuple('MockRepeater', 'username password')
         MockRepeatRecord = namedtuple('MockRepeatRecord', 'repeater')
