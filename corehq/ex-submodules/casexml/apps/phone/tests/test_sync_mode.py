@@ -1896,7 +1896,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
     @classmethod
     def _create_ownership_cleanliness(cls, user_id):
         OwnershipCleanlinessFlag.objects.get_or_create(
-            owner_id=cls.user_id,
+            owner_id=user_id,
             domain=cls.project.name,
             defaults={'is_clean': True}
         )
