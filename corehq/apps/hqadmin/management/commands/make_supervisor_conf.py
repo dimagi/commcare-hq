@@ -32,10 +32,10 @@ class SupervisorConfCommand(BaseCommand):
         parser.add_argument(
             '--params',
             type="string",
-            action='callback',
-            callback=parse_params,
+            # action='callback',
+            # callback=parse_params,
             dest='params',
-            default={},
+            default=None,
             help='template parameters as JSON data',
         )
 
@@ -45,7 +45,9 @@ class SupervisorConfCommand(BaseCommand):
     def handle(self, **options):
         self.conf_file_template = options['conf_file']
         self.conf_dest = options['conf_destination']
-        self.params = options['params']
+        self.params = options['params'] or {}
+        if self.params:
+            self.params = json.loads(self.params)
 
         service_dir = settings.SERVICE_DIR
 
