@@ -192,7 +192,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 for name, filter in self.named_filters.items()}
 
     def get_factory_context(self):
-        return FactoryContext(self.named_expression_objects, self.named_filter_objects, self.domain)
+        return FactoryContext(self.named_expression_objects, self.named_filter_objects)
 
     @property
     @memoized

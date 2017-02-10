@@ -13,12 +13,11 @@ def TypeProperty(value):
     return StringProperty(required=True, choices=[value])
 
 
-class FactoryContext(namedtuple('FactoryContext', ('named_expressions', 'named_filters', 'domain'))):
+class FactoryContext(namedtuple('FactoryContext', ('named_expressions', 'named_filters'))):
+
     @staticmethod
     def empty():
-        return FactoryContext({}, {}, None)
-
-FactoryContext.__new__.__defaults__ = (None,)
+        return FactoryContext({}, {})
 
 
 class EvaluationContext(object):
