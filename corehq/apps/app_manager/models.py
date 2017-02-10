@@ -2103,6 +2103,7 @@ class CaseSearch(DocumentSchema):
     command_label = DictProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
     relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
+    search_button_display_condition = StringProperty()
     include_closed = BooleanProperty(default=False)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
 
@@ -5349,10 +5350,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         my_hash = _hash(self.fetch_xform(form=form))
                         if previous_hash == my_hash:
                             form_version = previous_form_version
-                    if form_version is None:
-                        form.version = None
-                    else:
-                        form.version = form_version
+
+                    form.version = form_version
                 else:
                     form.version = None
 

@@ -256,9 +256,9 @@ class RegisterDomainView(TemplateView):
             if self.is_new_user:
                 context.update({
                     'requested_domain': domain_name,
-                    'track_domain_registration': True,
                     'current_page': {'page_name': _('Confirm Account')},
                 })
+                track_workflow(self.request.user.email, "Created new project")
                 return render(request, 'registration/confirmation_sent.html', context)
             else:
                 if nextpage:

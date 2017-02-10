@@ -30,13 +30,14 @@ class AutoCloseExtensionsTest(TestCase):
         super(AutoCloseExtensionsTest, self).tearDown()
 
     def _create_extension_chain(self):
-        host = CaseStructure(case_id=self.host_id)
+        host = CaseStructure(case_id=self.host_id, attrs={'create': True})
         extension = CaseStructure(
             case_id=self.extension_ids[0],
             indices=[CaseIndex(
                 related_structure=host,
                 relationship="extension",
             )],
+            attrs={'create': True}
         )
         extension_2 = CaseStructure(
             case_id=self.extension_ids[1],
@@ -44,6 +45,7 @@ class AutoCloseExtensionsTest(TestCase):
                 related_structure=extension,
                 relationship="extension",
             )],
+            attrs={'create': True}
         )
         extension_3 = CaseStructure(
             case_id=self.extension_ids[2],
@@ -51,6 +53,7 @@ class AutoCloseExtensionsTest(TestCase):
                 related_structure=extension_2,
                 relationship="extension",
             )],
+            attrs={'create': True}
         )
         return self.factory.create_or_update_cases([extension_3])
 
@@ -66,13 +69,14 @@ class AutoCloseExtensionsTest(TestCase):
         return self.factory.create_or_update_cases([host])
 
     def _create_host_is_subcase_chain(self):
-        parent = CaseStructure(case_id='parent')
+        parent = CaseStructure(case_id='parent', attrs={'create': True})
         host = CaseStructure(
             case_id=self.host_id,
             indices=[CaseIndex(
                 related_structure=parent,
                 relationship="child",
             )],
+            attrs={'create': True}
         )
         extension = CaseStructure(
             case_id=self.extension_ids[0],
@@ -80,6 +84,7 @@ class AutoCloseExtensionsTest(TestCase):
                 related_structure=host,
                 relationship="extension",
             )],
+            attrs={'create': True}
         )
         extension_2 = CaseStructure(
             case_id=self.extension_ids[1],
@@ -87,18 +92,20 @@ class AutoCloseExtensionsTest(TestCase):
                 related_structure=extension,
                 relationship="extension",
             )],
+            attrs={'create': True}
         )
         return self.factory.create_or_update_cases([extension_2])
 
     @run_with_all_backends
     def test_get_extension_chain_simple(self):
-        host = CaseStructure(case_id=self.host_id)
+        host = CaseStructure(case_id=self.host_id, attrs={'create': True})
         extension = CaseStructure(
             case_id=self.extension_ids[0],
             indices=[CaseIndex(
                 related_structure=host,
                 relationship="extension",
             )],
+            attrs={'create': True}
         )
         self.factory.create_or_update_cases([extension])
         self.assertEqual(

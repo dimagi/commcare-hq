@@ -364,15 +364,18 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
 
 SYNC_ALL_LOCATIONS = StaticToggle(
     'sync_all_locations',
-    'Sync the full location hierarchy when syncing location fixtures',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    '(Deprecated) Sync the full location hierarchy when syncing location fixtures',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    description="Do not turn this feature flag. It is only used for providing compatability for old projects. "
+    "We are actively trying to remove projects from this list. This functionality is now possible by using the "
+    "Advanced Settings on the Organization Levels page and setting the Level to Expand From option."
 )
 
 FLAT_LOCATION_FIXTURE = StaticToggle(
     'flat_location_fixture',
-    'Sync the location fixture in a flat format.',
-    TAG_PRODUCT_PATH,
+    'Sync the location fixture in a flat format. ',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 

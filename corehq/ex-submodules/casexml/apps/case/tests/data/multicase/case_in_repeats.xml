@@ -87,6 +87,11 @@
 	<case>
 		<case_id>CMYOSI95QCED3ZWIP9ZK1QNQ6</case_id>
 		<date_modified>2011-09-19T22:31:48.902Z</date_modified>
+        <create>
+            <case_type_id>mother</case_type_id>
+            <case_name>mom</case_name>
+            <user_id>2XC1EINEJV1NZ7QXHVUMHUQQV</user_id>
+        </create>
 		<update>
 			<delivery_type>1</delivery_type>
 			<delivery_form_complete>OK</delivery_form_complete>

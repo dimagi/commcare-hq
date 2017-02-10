@@ -9,6 +9,7 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_FIRST_NAME,
     TREATMENT_SUPPORTER_LAST_NAME,
     TREATMENT_SUPPORTER_PHONE,
+    TREATMENT_START_DATE,
 )
 from custom.enikshay.case_utils import get_person_case_from_episode, get_person_locations
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
@@ -235,7 +236,7 @@ def _get_episode_case_properties(episode_case_properties):
             episode_case_properties.get('treatment_supporter_designation', 'other_community_volunteer'),
             treatment_support_designation['other_community_volunteer']
         ),
-        "dateofInitiation": episode_case_properties.get('treatment_initiation_date', str(datetime.date.today())),
+        "dateofInitiation": episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today())),
         "Ptype": patient_type_choice.get(episode_case_properties.get('patient_type_choice', ''), ''),
     })
 

@@ -603,7 +603,9 @@
         {% include 'style/includes/modal_report_issue.html' %}
 
         {# EULA #}
-        {% include 'style/includes/modal_eula.html' %}
+        {% if request.couch_user and not request.couch_user.is_eula_signed %}
+            {% include 'style/includes/modal_eula.html' with needs_agreement=True %}
+        {% endif %}
 
         {# 30 Day Trial #}
         {% include 'style/includes/modal_30_day_trial.html' %}

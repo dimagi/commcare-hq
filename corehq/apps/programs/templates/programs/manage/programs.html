@@ -1,10 +1,14 @@
 {% extends "style/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load compress %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/base_list_view_model.js' %}"></script>
-    <script src="{% static 'commtrack/js/products_and_programs.async.js' %}"></script>
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/base_list_view_model.js' %}"></script>
+        <script src="{% static 'commtrack/js/products_and_programs.async.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block stylesheets %}
@@ -15,20 +19,8 @@
     </style>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function(){
-            $('#program-list').asyncProgramProductList({
-                total: 10,
-                start_page: 1,
-                limit: 10,
-                list_url: '{% url "commtrack_program_fetch" domain %}'
-            });
-        });
-    </script>
-{% endblock %}
-
 {% block page_content %}
+{% initial_page_data 'program_product_options' program_product_options %}
 <header>
     <div class="row">
         <div class="col-sm-8">
@@ -39,7 +31,7 @@
     </div>
 </header>
 
-<div id="program-list">
+<div class="ko-program-product-list">
 
     <div class="row">
         <div class="col-sm-12">

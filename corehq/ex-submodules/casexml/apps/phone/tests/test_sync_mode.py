@@ -673,11 +673,11 @@ class SyncTokenUpdateTest(SyncBaseTest):
     def test_index_chain_with_closed_parents(self):
         grandparent = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'close': True}
+            attrs={'close': True, 'create': True}
         )
         parent = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'close': True},
+            attrs={'close': True, 'create': True},
             indices=[CaseIndex(
                 grandparent,
                 relationship=CHILD_RELATIONSHIP,
@@ -690,7 +690,8 @@ class SyncTokenUpdateTest(SyncBaseTest):
                 parent,
                 relationship=CHILD_RELATIONSHIP,
                 related_type=PARENT_TYPE,
-            )]
+            )],
+            attrs={'create': True}
         )
         parent_ref = CommCareCaseIndex(
             identifier=PARENT_TYPE,
@@ -735,25 +736,27 @@ class SyncTokenUpdateTest(SyncBaseTest):
         other_owner_id = uuid.uuid4().hex
         grandparent = CaseStructure(
             case_id="Steffon",
-            attrs={'owner_id': other_owner_id}
+            attrs={'owner_id': other_owner_id, 'create': True}
         )
         parent_1 = CaseStructure(
             case_id="Stannis",
-            attrs={'owner_id': other_owner_id},
+            attrs={'owner_id': other_owner_id, 'create': True},
             indices=[CaseIndex(grandparent)]
         )
         parent_2 = CaseStructure(
             case_id="Robert",
-            attrs={'owner_id': other_owner_id},
+            attrs={'owner_id': other_owner_id, 'create': True},
             indices=[CaseIndex(grandparent)]
         )
         child_1 = CaseStructure(
             case_id="Shireen",
-            indices=[CaseIndex(parent_1)]
+            indices=[CaseIndex(parent_1)],
+            attrs={'create': True}
         )
         child_2 = CaseStructure(
             case_id="Joffrey",
-            indices=[CaseIndex(parent_2)]
+            indices=[CaseIndex(parent_2)],
+            attrs={'create': True}
         )
         self.factory.create_or_update_cases([grandparent, parent_1, parent_2, child_1, child_2])
         assert_user_has_cases(self, self.user, [
@@ -784,7 +787,7 @@ class SyncDeletedCasesTest(SyncBaseTest):
                     'create': True,
                 },
                 indices=[CaseIndex(
-                    CaseStructure(case_id=parent_id),
+                    CaseStructure(case_id=parent_id, attrs={'create': True}),
                     relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
                 )],

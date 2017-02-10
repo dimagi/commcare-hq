@@ -323,6 +323,11 @@ class FundamentalCaseTests(TestCase):
         submit_form_locally(form.format(user_id='user_id'), DOMAIN)
         self.assertIsNone(cache.get(cache_key))
 
+    def test_update_case_without_creating_triggers_soft_assert(self):
+        case_id = uuid.uuid4().hex
+        with self.assertRaisesMessage(AssertionError, 'Case created without create block'):
+            _submit_case_block(False, case_id, user_id='user2', update={})
+
 
 def _submit_case_block(create, case_id, **kwargs):
     domain = kwargs.pop('domain', DOMAIN)

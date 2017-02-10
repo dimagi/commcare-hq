@@ -10,7 +10,7 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec, \
     IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec, \
-    CaseSharingGroupsExpressionSpec, ReportingGroupsExpressionSpec
+    CaseSharingGroupsExpressionSpec, ReportingGroupsExpressionSpec, CoalesceExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
 from corehq.apps.userreports.expressions.list_specs import FilterItemsExpressionSpec, \
@@ -190,6 +190,7 @@ def _get_case_sharing_groups_expression(spec, context):
     )
     return wrapped
 
+
 def _get_reporting_groups_expression(spec, context):
     wrapped = ReportingGroupsExpressionSpec.wrap(spec)
     wrapped.configure(
@@ -250,6 +251,15 @@ def _split_string_expression(spec, context):
     return wrapped
 
 
+def _coalesce_expression(spec, context):
+    wrapped = CoalesceExpressionSpec.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.expression, context),
+        ExpressionFactory.from_spec(wrapped.default_expression, context),
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -282,6 +292,7 @@ class ExpressionFactory(object):
         'flatten': _flatten_expression,
         'sort_items': _sort_items_expression,
         'split_string': _split_string_expression,
+        'coalesce': _coalesce_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 
