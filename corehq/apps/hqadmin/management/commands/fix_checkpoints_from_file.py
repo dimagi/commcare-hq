@@ -15,7 +15,7 @@ class Command(BaseCommand):
                     help="Disable interactive mode"),
     )
 
-    def handle(self, filename, *args, **options):
+    def handle(self, filename, **options):
         with open(filename) as f:
             checkpoint_map = json.loads(f.read())
 
