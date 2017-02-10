@@ -13,14 +13,12 @@ class Command(BaseCommand):
         parser.add_argument(
             'pillow_class',
         )
-
-    option_list = (
-        make_option('--noinput',
+        parser.add_argument('--noinput',
             action='store_true',
             dest='interactive',
             default=False,
-            help="Suppress confirmation messages - dangerous mode!"),
-    )
+            help="Suppress confirmation messages - dangerous mode!",
+        )
 
     def handle(self, pillow_class, **options):
         """
