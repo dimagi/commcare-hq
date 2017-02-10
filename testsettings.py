@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from settings import *
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of

@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,252 +1,247 @@
+@@ -1,251 +1,246 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  
@@ -146,10 +146,8 @@
 -        </div>
 -    </div>
 -    {% include 'app_manager/v1/partials/case_list_properties.html' %}
--    {% include 'app_manager/v1/partials/case_list_module_overwrite.html' %}
 -</div>
 +        {% include 'app_manager/v2/partials/case_list_properties.html' %}
-+        {% include 'app_manager/v2/partials/case_list_module_overwrite.html' %}
 +    </div>
 +  </div>
 +</div>

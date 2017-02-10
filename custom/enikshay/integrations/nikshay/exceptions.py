@@ -4,11 +4,3 @@ class NikshayAPIError(Exception):
 
 class NikshayResponseException(NikshayAPIError):
     pass
-
-
-class NikshayLocationNotFound(NikshayAPIError):
-    pass
-
-
-class NikshayCodeNotFound(NikshayAPIError):
-    pass

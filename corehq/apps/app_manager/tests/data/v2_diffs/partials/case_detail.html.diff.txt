@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,23 +1,27 @@
+@@ -1,22 +1,26 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  
@@ -21,7 +21,6 @@
 -</legend>
 -<div data-bind="with: longScreen">
 -    {% include 'app_manager/v1/partials/case_list_properties.html' %}
--    {% include 'app_manager/v1/partials/case_list_module_overwrite.html' %}
 +<div class="panel panel-appmanager">
 +    <div class="panel-heading">
 +        <h4 class="panel-title panel-title-nolink">
@@ -34,8 +33,7 @@
 +    </div>
 +    <div class="panel-body" data-bind="with: longScreen">
 +        {% include 'app_manager/v2/partials/case_list_properties.html' %}
-+        {% include 'app_manager/v2/partials/case_list_module_overwrite.html' %}
 +    </div>
  </div>
  
- {% if request|toggle_enabled:"DETAIL_LIST_TABS" %}
+ <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">

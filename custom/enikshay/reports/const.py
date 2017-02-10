@@ -2,7 +2,7 @@ TREATMENT_OUTCOMES = (
     'cured',
     'treatment_complete',
     'died',
-    'treatment_failure',
+    'failure',
     'loss_to_follow_up',
     'regimen_changed',
     'not_evaluated'

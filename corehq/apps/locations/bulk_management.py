@@ -134,16 +134,16 @@ class LocationStub(object):
                  do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
                  index):
         self.name = name
-        self.site_code = str(site_code) if isinstance(site_code, int) else site_code
+        self.site_code = (str(site_code) if isinstance(site_code, int) else site_code).lower()
         self.location_type = location_type
         self.location_id = location_id
-        self.parent_code = str(parent_code) if isinstance(parent_code, int) else parent_code or ROOT_LOCATION_TYPE
+        self.parent_code = (str(parent_code) if isinstance(parent_code, int) else parent_code).lower() or ROOT_LOCATION_TYPE
         self.latitude = latitude or None
         self.longitude = longitude or None
         self.do_delete = do_delete
         self.external_id = str(external_id) if isinstance(external_id, int) else external_id
         self.index = index
-        self.custom_data = custom_data or {}
+        self.custom_data = {key: unicode(value) for key, value in custom_data.items()} if custom_data else {}
         self.uncategorized_data = uncategorized_data or {}
         if not self.location_id and not self.site_code:
             raise LocationExcelSheetError(
@@ -846,7 +846,7 @@ def save_locations(location_stubs, types_by_code):
                     #   saves, so this is the right point to refetch the object.
                     child.parent = SQLLocation.objects.get(
                         domain=parent_location.domain,
-                        site_code=parent_code
+                        site_code__iexact=parent_code
                     )
                 else:
                     child.parent = None

@@ -150,6 +150,19 @@ def save_xform(app, form, xml):
 
     form.source = xml
 
+    # For registration forms, assume that the first question is the case name
+    # unless something else has been specified
+    if toggles.APP_MANAGER_V2.enabled(app.domain):
+        if form.is_registration_form():
+            questions = form.get_questions([app.default_language])
+            path = form.actions.open_case.name_path
+            if path:
+                name_questions = [q for q in questions if q['value'] == path]
+                if not len(name_questions):
+                    path = None
+            if not path and len(questions):
+                form.actions.open_case.name_path = questions[0]['value']
+
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
@@ -260,6 +273,7 @@ class ParentCasePropertyBuilder(object):
                 # Currently if a property is only ever updated via parent property
                 # reference, then I think it will not appear in the schema.
                 case_properties.update(p for p in updates if "/" not in p)
+            case_properties.update(self.get_save_to_case_updates(form, case_type))
 
         parent_types, contributed_properties = self.get_parent_types_and_contributed_properties(
             case_type, include_shared_properties=include_shared_properties
@@ -288,6 +302,10 @@ class ParentCasePropertyBuilder(object):
     @memoized
     def get_case_updates(self, form, case_type):
         return form.get_case_updates(case_type)
+
+    @memoized
+    def get_save_to_case_updates(self, form, case_type):
+        return form.get_save_to_case_updates(case_type)
 
     def get_parent_type_map(self, case_types, allow_multiple_parents=False):
         """

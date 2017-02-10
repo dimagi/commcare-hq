@@ -17,7 +17,6 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import logout as django_logout
 from django.core import cache
 from django.core.mail.message import EmailMessage
-from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
     HttpResponseForbidden
@@ -71,6 +70,7 @@ from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
+from corehq.util.view_utils import reverse
 
 
 def is_deploy_in_progress():
@@ -497,24 +497,8 @@ def bug_report(req):
         '500traceback',
     )])
 
-    domain_object = Domain.get_by_name(report['domain'])
-    current_project_description = domain_object.project_description if domain_object else None
-    new_project_description = req.POST.get('project_description')
-    if (domain_object and
-            req.couch_user.is_domain_admin(domain=report['domain']) and
-            new_project_description and
-            current_project_description != new_project_description):
-
-        domain_object.project_description = new_project_description
-        domain_object.save()
-
     report['user_agent'] = req.META['HTTP_USER_AGENT']
     report['datetime'] = datetime.utcnow()
-    report['feature_flags'] = toggles.toggles_dict(username=report['username'],
-                                                   domain=report['domain']).keys()
-    report['feature_previews'] = feature_previews.previews_dict(report['domain']).keys()
-    report['scale_backend'] = should_use_sql_backend(report['domain']) if report['domain'] else False
-    report['project_description'] = domain_object.project_description if domain_object else '(Not applicable)'
 
     try:
         couch_user = req.couch_user
@@ -529,32 +513,63 @@ def bug_report(req):
     report['full_name'] = full_name
     report['email'] = email or report['username']
 
-    matching_subscriptions = Subscription.objects.filter(
-        is_active=True,
-        subscriber__domain=report['domain'],
-    )
-
-    if len(matching_subscriptions) >= 1:
-        report['software_plan'] = matching_subscriptions[0].plan_version
+    if report['domain']:
+        domain = report['domain']
+    elif len(couch_user.domains) == 1:
+        # This isn't a domain page, but the user has only one domain, so let's use that
+        domain = couch_user.domains[0]
     else:
-        report['software_plan'] = u'domain has no active subscription'
+        domain = "<no domain>"
 
-    subject = u'{subject} ({domain})'.format(**report)
     message = (
         u"username: {username}\n"
         u"full name: {full_name}\n"
         u"domain: {domain}\n"
-        u"software plan: {software_plan}\n"
         u"url: {url}\n"
         u"datetime: {datetime}\n"
         u"User Agent: {user_agent}\n"
-        u"Feature Flags: {feature_flags}\n"
-        u"Feature Previews: {feature_previews}\n"
-        u"Is scale backend: {scale_backend}\n"
-        u"Project description: {project_description}\n"
-        u"Message:\n\n"
-        u"{message}\n"
-        ).format(**report)
+    ).format(**report)
+
+    domain_object = Domain.get_by_name(domain) if report['domain'] else None
+    if domain_object:
+        current_project_description = domain_object.project_description if domain_object else None
+        new_project_description = req.POST.get('project_description')
+        if (domain_object and
+                req.couch_user.is_domain_admin(domain=domain) and
+                new_project_description and
+                current_project_description != new_project_description):
+
+            domain_object.project_description = new_project_description
+            domain_object.save()
+
+        matching_subscriptions = Subscription.objects.filter(
+            is_active=True,
+            subscriber__domain=domain,
+        )
+        if len(matching_subscriptions) >= 1:
+            software_plan = matching_subscriptions[0].plan_version
+        else:
+            software_plan = u'domain has no active subscription'
+
+        message += ((
+            u"software plan: {software_plan}\n"
+            u"Feature Flags: {feature_flags}\n"
+            u"Feature Previews: {feature_previews}\n"
+            u"Is scale backend: {scale_backend}\n"
+            u"Has Support Hand-off Info: {has_handoff_info}\n"
+            u"Internal Project Information: {internal_info_link}\n"
+            u"Project description: {project_description}\n"
+        ).format(
+            software_plan=software_plan,
+            feature_flags=toggles.toggles_dict(username=report['username'], domain=domain).keys(),
+            feature_previews=feature_previews.previews_dict(domain).keys(),
+            scale_backend=should_use_sql_backend(domain),
+            has_handoff_info=bool(domain_object.internal.partner_contact),
+            internal_info_link=reverse('domain_internal_settings', args=[domain], absolute=True),
+            project_description=domain_object.project_description,
+        ))
+
+    subject = u'{subject} ({domain})'.format(subject=report['subject'], domain=domain)
     cc = report['cc'].strip().split(",")
     cc = filter(None, cc)
 
@@ -568,6 +583,7 @@ def bug_report(req):
     if settings.HQ_ACCOUNT_ROOT in reply_to:
         reply_to = settings.SERVER_EMAIL
 
+    message += u"Message:\n\n{message}\n".format(message=report['message'])
     if req.POST.get('five-hundred-report'):
         extra_message = ("This messge was reported from a 500 error page! "
                          "Please fix this ASAP (as if you wouldn't anyway)...")

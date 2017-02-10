@@ -297,6 +297,9 @@ class ESQuery(object):
         es.es_query['query']['filtered']['query'] = query
         return es
 
+    def get_query(self):
+        return self.es_query['query']['filtered']['query']
+
     def search_string_query(self, search_string, default_fields=None):
         """Accepts a user-defined search string"""
         return self.set_query(

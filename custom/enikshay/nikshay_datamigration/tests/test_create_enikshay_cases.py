@@ -20,6 +20,8 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         super(TestCreateEnikshayCases, self).setUp()
         self.patient_detail = PatientDetail.objects.create(
             PregId='MH-ABD-05-16-0001',
+            scode='MH',
+            Dtocode='ABD',
             Tbunitcode=1,
             pname='A B C',
             pgender='M',
@@ -49,7 +51,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
             PatientId=self.patient_detail,
             Outcome='NULL',
             HIVStatus='Neg',
-            loginDate=datetime(2016, 1, 2),
+            # loginDate=datetime(2016, 1, 2),
         )
         # Household.objects.create(
         #     PatientID=patient_detail,
@@ -154,7 +156,6 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occupation', 'physical_mathematical_and_engineering'),
                 ('patient_type_choice', 'treatment_after_lfu'),
-                ('person_id', 'NIK-MH-ABD-05-16-0001'),
                 ('site_choice', 'abdominal'),
                 ('transfer_in', ''),
                 ('treatment_card_completed_date', '2016-12-13'),
@@ -184,8 +185,32 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         # make sure the case is only created/modified by a single form
         self.assertEqual(1, len(episode_case.xform_ids))
 
+        drtb_hiv_referral_case_ids = self.case_accessor.get_case_ids_in_domain(type='drtb_hiv_referral')
+        self.assertEqual(0, len(drtb_hiv_referral_case_ids))
+
+    @run_with_all_backends
+    def test_drtb_hiv_referral(self):
+        self.outcome.HIVStatus = None
+        self.outcome.save()
+        call_command('create_enikshay_cases', self.domain)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(1, len(person_case_ids))
+        occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(1, len(occurrence_case_ids))
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(1, len(episode_case_ids))
+
+        drtb_hiv_referral_case_ids = self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')
+        self.assertEqual(1, len(drtb_hiv_referral_case_ids))
+        drtb_hiv_referral_case = self.case_accessor.get_case(drtb_hiv_referral_case_ids[0])
+        self.assertEqual('A B C', drtb_hiv_referral_case.name)
+        self.assertEqual(self.drtb_hiv.location_id, drtb_hiv_referral_case.owner_id)
+
     @run_with_all_backends
     def test_case_update(self):
+        self.outcome.HIVStatus = None
+        self.outcome.save()
         call_command('create_enikshay_cases', self.domain)
 
         new_addhaar_number = 867386000001
@@ -225,7 +250,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
         self.assertEqual(person_case.dynamic_case_properties()['archive_reason'], 'migration_location_not_found')
         self.assertEqual(person_case.dynamic_case_properties()['migration_error'], 'location_not_found')
-        self.assertEqual(person_case.dynamic_case_properties()['migration_error_details'], 'MH-ABD-05-16')
+        self.assertEqual(person_case.dynamic_case_properties()['migration_error_details'], 'MH-ABD-1-2')
 
     @run_with_all_backends
     def test_outcome_cured(self):

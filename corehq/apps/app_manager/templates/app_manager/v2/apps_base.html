@@ -121,12 +121,7 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
 {% endblock %}
 
 {% block page_content %}
-<div class="appmanager-loading-container">
-  <div class="appmanager-loading appmanager-loading-body">
-    <i class="fa fa-spin fa-spinner"></i>
-  </div>
-</div>
-<div class="appmanager-content appmanager-content-animate-preview"
+<div class="appmanager-content appmanager-content-animate-preview{% if not formdesigner %} appmanager-content-not-formdesigner{% endif %}"
      id="js-appmanager-body">
     {% if app %}
         {% if error %}

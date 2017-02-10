@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 import random
 import datetime
@@ -16,6 +17,7 @@ from corehq.apps.accounting.tasks import deactivate_subscriptions
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
+from six.moves import range
 
 
 class TestCreditLines(BaseInvoiceTestCase):

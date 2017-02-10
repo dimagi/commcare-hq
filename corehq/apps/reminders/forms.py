@@ -17,7 +17,7 @@ from django import forms
 from django.forms import Field, Widget
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
+from corehq.apps.casegroups.dbaccessors import get_case_group_meta_in_domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import get_locations_from_ids
 from corehq.apps.reminders.event_handlers import TRIAL_MAX_EMAILS
@@ -136,11 +136,6 @@ def user_group_choices(domain):
     ids = Group.ids_by_domain(domain)
     return [(doc['_id'], doc['name'])
             for doc in iter_docs(Group.get_db(), ids)]
-
-
-def case_group_choices(domain):
-    return [(group._id, group.name)
-            for group in get_case_groups_in_domain(domain)]
 
 
 def form_choices(domain):
@@ -2441,7 +2436,7 @@ class BroadcastForm(Form):
             ])
 
         self.fields['form_unique_id'].choices = form_choices(self.domain)
-        self.fields['case_group_id'].choices = case_group_choices(self.domain)
+        self.fields['case_group_id'].choices = get_case_group_meta_in_domain(self.domain)
         self.fields['user_group_id'].choices = user_group_choices(self.domain)
         self.fields['location_ids'].widget = SupplyPointSelectWidget(
             self.domain,
