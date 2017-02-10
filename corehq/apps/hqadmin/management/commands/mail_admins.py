@@ -11,6 +11,12 @@ class Command(BaseCommand):
     args = '[message]'
     help = 'Send args as a one-shot email to the admins.'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'message',
+            nargs='*',
+        )
+
     option_list = (
         make_option('--subject', help='Subject', default='Mail from the console'),
         make_option('--stdin', action='store_true', default=False, help='Read message body from stdin'),
@@ -19,11 +25,11 @@ class Command(BaseCommand):
         make_option('--environment', default='', help='The environment we are mailing about'),
     )
 
-    def handle(self, *args, **options):
+    def handle(self, message, **options):
         if options['stdin']:
             message = sys.stdin.read()
         else:
-            message = ' '.join(args)
+            message = ' '.join(message)
 
         html = None
         if options['html']:
