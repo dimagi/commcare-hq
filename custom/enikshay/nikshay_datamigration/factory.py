@@ -7,7 +7,8 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence
+from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence, \
+    get_open_drtb_hiv_case_from_episode
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.nikshay_datamigration.models import Outcome
 
@@ -90,6 +91,20 @@ class EnikshayCaseFactory(object):
             try:
                 return get_open_episode_case_from_occurrence(
                     self.domain, self.existing_occurrence_case.case_id
+                )
+            except ENikshayCaseNotFound:
+                return None
+
+    @property
+    @memoized
+    def existing_drtb_hiv_case(self):
+        """
+        Get the existing episode case for this nikshay ID, or None if no episode case exists
+        """
+        if self.existing_episode_case:
+            try:
+                return get_open_drtb_hiv_case_from_episode(
+                    self.domain, self.existing_episode_case.case_id
                 )
             except ENikshayCaseNotFound:
                 return None
@@ -306,7 +321,11 @@ class EnikshayCaseFactory(object):
                 related_type=EPISODE_CASE_TYPE,
             )],
         }
-
+        if self.existing_drtb_hiv_case:
+            kwargs['case_id'] = self.existing_drtb_hiv_case.case_id
+            kwargs['attrs']['create'] = False
+        else:
+            kwargs['attrs']['create'] = True
         return CaseStructure(**kwargs)
 
     @property
