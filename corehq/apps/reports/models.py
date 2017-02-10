@@ -8,6 +8,7 @@ import json
 import logging
 from urllib import urlencode
 
+from django.db import models
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
@@ -15,6 +16,7 @@ from django.conf import settings
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from jsonfield import JSONField
 
 from sqlalchemy.util import immutabledict
 
@@ -1097,3 +1099,21 @@ class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfigurat
     def clear_caches(self):
         super(HQGroupExportConfiguration, self).clear_caches()
         self.by_domain.clear(self.__class__, self.domain)
+
+
+class ReportsSidebarOrdering(models.Model):
+    domain = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        unique=True
+    )
+    config = JSONField(
+        default=list,
+        help_text=(
+            "An array of arrays. Each array represents a heading in the sidebar navigation. "
+            "The first item in each array is a string, which will be the title of the heading. The second item in "
+            "the array is another array, each item of which is the name of a report class. Each of these reports "
+            "will be listed under the given heading in the sidebar nav."
+        )
+    )

@@ -1,4 +1,7 @@
+from collections import namedtuple
 from urllib import urlencode
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.http import Http404
@@ -21,7 +24,7 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
-from corehq.apps.reports.models import ReportConfig
+from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
@@ -59,8 +62,36 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = tools + report_builder_nav + custom_reports + project_reports
+        sidebar_items = tools + report_builder_nav + self._regroup_sidebar_items(custom_reports + project_reports)
         return self._filter_sidebar_items(sidebar_items)
+
+    def _regroup_sidebar_items(self, sidebar_items):
+        SidebarPosition = namedtuple("SidebarPosition", ["heading", "index"])
+        try:
+            ordering = ReportsSidebarOrdering.objects.get(domain=self.domain)
+        except ObjectDoesNotExist:
+            return sidebar_items
+
+        reports_to_move = {}
+        for heading, reports in ordering.config:
+            for i, report_class_name in enumerate(reports):
+                reports_to_move[report_class_name] = SidebarPosition(heading, i)
+
+        new_sections = {x[0]: [] for x in ordering.config}  # "some heading": [(2, item), (1, item), ...]
+        old_sections = {x[0]: [] for x in sidebar_items}  # "some heading": [item, item, ...]
+
+        for heading, items in sidebar_items:
+            for item in items:
+                new_position = reports_to_move.get(item['class_name'], None)
+                if new_position:
+                    new_sections[new_position.heading].append((new_position.index, item))
+                else:
+                    old_sections[heading].append(item)
+
+        flat_new_sections = [(x[0], [y[1] for y in sorted(new_sections[x[0]])]) for x in ordering.config]
+        flat_old_sections = [(x[0], old_sections[x[0]]) for x in sidebar_items]
+        return flat_new_sections + flat_old_sections
+
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
