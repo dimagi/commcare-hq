@@ -36,7 +36,7 @@ from django_prbac.utils import has_privilege
 
 class ProjectReportsTab(UITab):
     title = ugettext_noop("Reports")
-    view = "corehq.apps.reports.views.default"
+    view = "reports_home"
 
     url_prefix_formats = ('/a/{domain}/reports/',)
 
@@ -47,7 +47,7 @@ class ProjectReportsTab(UITab):
     @property
     def view(self):
         if self.domain in WORLD_VISION_DOMAINS:
-            return "corehq.apps.reports.views.default"
+            return "reports_home"
         from corehq.apps.reports.views import MySavedReportsView
         return MySavedReportsView.urlname
 
@@ -216,7 +216,7 @@ class IndicatorAdminTab(UITab):
 
 class DashboardTab(UITab):
     title = ugettext_noop("Dashboard")
-    view = 'corehq.apps.dashboard.views.dashboard_default'
+    view = 'dashboard_default'
 
     url_prefix_formats = ('/a/{domain}/dashboard/project/',)
 
@@ -252,7 +252,7 @@ class ProjectInfoTab(UITab):
 
 class SetupTab(UITab):
     title = ugettext_noop("Setup")
-    view = "corehq.apps.commtrack.views.default"
+    view = "default_commtrack_setup"
 
     url_prefix_formats = (
         '/a/{domain}/settings/products/',
@@ -378,7 +378,7 @@ class SetupTab(UITab):
 
 class ProjectDataTab(UITab):
     title = ugettext_noop("Data")
-    view = "corehq.apps.data_interfaces.views.default"
+    view = "data_interfaces_default"
     url_prefix_formats = (
         '/a/{domain}/data/',
         '/a/{domain}/fixtures/',
@@ -815,7 +815,7 @@ class CloudcareTab(UITab):
         if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
             return FormplayerMain.urlname
         else:
-            return "corehq.apps.cloudcare.views.default"
+            return "cloudcare_default"
 
     @property
     def title(self):
@@ -835,7 +835,7 @@ class CloudcareTab(UITab):
 
 class MessagingTab(UITab):
     title = ugettext_noop("Messaging")
-    view = "corehq.apps.sms.views.default"
+    view = "sms_default"
 
     url_prefix_formats = (
         '/a/{domain}/sms/',
@@ -1628,7 +1628,7 @@ class SMSAdminTab(UITab):
 
 class AdminTab(UITab):
     title = ugettext_noop("Admin")
-    view = "corehq.apps.hqadmin.views.default"
+    view = "default_admin_report"
 
     url_prefix_formats = ('/hq/admin/',)
 
