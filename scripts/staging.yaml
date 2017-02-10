@@ -52,6 +52,12 @@ branches:
   - nh/new_rb  # Norman 11/22
   - refresh-to-same-tab # Jenny 2/9
   - je/sms-export-final # emord 2/9
+
+  # django 1.10 dependencies - NP 2/10
+  - np/110/djangorest
+  - np/110/iln8
+  - np/110/request-context_processor
+  - np/110/two-factor
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
