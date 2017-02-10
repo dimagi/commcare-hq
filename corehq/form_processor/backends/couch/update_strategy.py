@@ -382,6 +382,13 @@ def _action_sort_key_function(case):
         else:
             form_ids = list(case.xform_ids)
 
+            if first_action.xform_id == second_action.xform_id:
+                # short circuit if they are from the same form
+                return cmp(
+                    _type_sort(first_action.action_type),
+                    _type_sort(second_action.action_type)
+                )
+
             def _sortkey(action):
                 if not action.server_date or not action.date:
                     raise MissingServerDate()
