@@ -95,7 +95,7 @@ def _build_choice_list_indicator(spec, context):
 
 def _build_ledger_balances_indicator(spec, context):
     wrapped_spec = LedgerBalancesIndicatorSpec.wrap(spec)
-    return LedgerBalancesIndicator(wrapped_spec, context.domain)
+    return LedgerBalancesIndicator(wrapped_spec)
 
 
 def _build_repeat_iteration_indicator(spec, context):

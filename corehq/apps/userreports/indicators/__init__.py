@@ -104,12 +104,11 @@ class CompoundIndicator(ConfigurableIndicator):
 
 class LedgerBalancesIndicator(ConfigurableIndicator):
 
-    def __init__(self, spec, domain):
+    def __init__(self, spec):
         self.product_codes = spec.product_codes
         self.column_id = spec.column_id
         self.ledger_section = spec.ledger_section
         self.case_id_expression = spec.get_case_id_expression()
-        self.domain = domain
         super(LedgerBalancesIndicator, self).__init__(spec.display_name)
 
     def _make_column(self, product_code):
@@ -132,6 +131,7 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
 
     def get_values(self, item, context=None):
         case_id = self.case_id_expression(item)
-        values = self._get_values_by_product(self.ledger_section, case_id, self.product_codes, self.domain)
+        domain = context.root_doc['domain']
+        values = self._get_values_by_product(self.ledger_section, case_id, self.product_codes, domain)
         return [ColumnValue(self._make_column(product_code), values[product_code])
                 for product_code in self.product_codes]

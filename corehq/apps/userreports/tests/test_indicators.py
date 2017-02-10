@@ -523,16 +523,12 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
         }
         self.stock_states = {'abc': 32, 'def': 85, 'ghi': 11}
 
-    def _factory_context(self):
-        Context = namedtuple('Context', ('domain'))
-        return Context('test-domain')
-
     @patch.object(LedgerBalancesIndicator, '_get_values_by_product')
     def test_ledger_balances_indicator(self, get_values_by_product):
         get_values_by_product.return_value = self.stock_states
-        indicator = IndicatorFactory.from_spec(self.spec, self._factory_context())
+        indicator = IndicatorFactory.from_spec(self.spec)
 
-        doc = {'_id': 'case1'}
+        doc = {'_id': 'case1', 'domain': 'domain'}
         values = indicator.get_values(doc, EvaluationContext(doc, 0))
 
         self.assertEqual(
