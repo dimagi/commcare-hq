@@ -1379,7 +1379,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             'company_name',
             'first_name',
             'last_name',
-            crispy.Field('email_list', css_class='input-xxlarge'),
+            crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
             'phone_number'
         ]
 
@@ -1426,7 +1426,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large",
+                crispy.Field('country', css_class="input-large ko-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.FormActions(
@@ -1489,7 +1489,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1499,7 +1499,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large",
+                crispy.Field('country', css_class="input-large ko-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
@@ -1598,7 +1598,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1608,7 +1608,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large",
+                crispy.Field('country', css_class="input-large ko-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             crispy.Fieldset(

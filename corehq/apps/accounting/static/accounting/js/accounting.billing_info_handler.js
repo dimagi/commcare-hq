@@ -1,32 +1,5 @@
 /* globals django */
 hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
-    var BillingContactInfoHandler = function () {
-        'use strict';
-        var self = this;
-
-        self.country = new AsyncSelect2Handler('country');
-        self.country.initSelection = function (element, callback) {
-            var data = {
-                text: element.data('countryname'),
-                id: element.val(),
-            };
-            callback(data);
-        };
-        self.emails = new EmailSelect2Handler('email_list');
-        self.active_accounts = new AsyncSelect2Handler('active_accounts');
-
-        self.init = function () {
-            self.country.init();
-            self.emails.init();
-            self.active_accounts.init();
-        };
-    };
-
-    var initBillingContactInfoHandler = function () {
-        var billingContactInfoHandler = new BillingContactInfoHandler();
-        billingContactInfoHandler.init();
-    };
-
     var AsyncSelect2Handler = function (field, multiple) {
         'use strict';
         var self = this;
@@ -35,35 +8,33 @@ hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
         self.multiple = !! multiple;
 
         self.init = function () {
-            $(function () {
-                var $field = $('form [name="' + self.fieldName + '"]');
-                if ($field.attr('type') !== 'hidden') {
-                    $field.select2({
-                        minimumInputLength: 0,
-                        allowClear: true,
-                        ajax: {
-                            quietMillis: 150,
-                            url: '',
-                            dataType: 'json',
-                            type: 'post',
-                            data: function (term) {
-                                return {
-                                    handler: 'select2_billing',
-                                    action: self.fieldName,
-                                    searchString: term,
-                                    existing: $('form [name="' + self.fieldName + '"]').val().split(','),
-                                    additionalData: self.getAdditionalData(),
-                                };
-                            },
-                            results: function (data) {
-                                return data;
-                            },
+            var $field = $('form [name="' + self.fieldName + '"]');
+            if ($field.attr('type') !== 'hidden') {
+                $field.select2({
+                    minimumInputLength: 0,
+                    allowClear: true,
+                    ajax: {
+                        quietMillis: 150,
+                        url: '',
+                        dataType: 'json',
+                        type: 'post',
+                        data: function (term) {
+                            return {
+                                handler: 'select2_billing',
+                                action: self.fieldName,
+                                searchString: term,
+                                existing: $('form [name="' + self.fieldName + '"]').val().split(','),
+                                additionalData: self.getAdditionalData(),
+                            };
                         },
-                        multiple: self.multiple,
-                        initSelection: self.initSelection,
-                    });
-                }
-            });
+                        results: function (data) {
+                            return data;
+                        },
+                    },
+                    multiple: self.multiple,
+                    initSelection: self.initSelection,
+                });
+            }
         };
 
         self.initSelection = function (element, callback) {
@@ -85,28 +56,26 @@ hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
         self.validEmailText = django.gettext("Please enter a valid email.");
 
         self.init = function () {
-            $(function () {
-                $('form [name="' + self.fieldName + '"]').select2({
-                    createSearchChoice: function (term, data) {
-                        var matchedData = $(data).filter(function() {
-                            return this.text.localeCompare(term) === 0;
-                        });
+            $('form [name="' + self.fieldName + '"]').select2({
+                createSearchChoice: function (term, data) {
+                    var matchedData = $(data).filter(function() {
+                        return this.text.localeCompare(term) === 0;
+                    });
 
-                        var isEmailValid = self.utils.validateEmail(term);
+                    var isEmailValid = self.utils.validateEmail(term);
 
-                        if (matchedData.length === 0 && isEmailValid) {
-                            return { id: term, text: term };
-                        }
-                    },
-                    multiple: true,
-                    data: [],
-                    formatNoMatches: function () {
-                        return self.validEmailText;
-                    },
-                    initSelection: function (element, callback) {
-                        callback(billingInfoUtils.getMultiResultsFromElement(element));
-                    },
-                });
+                    if (matchedData.length === 0 && isEmailValid) {
+                        return { id: term, text: term };
+                    }
+                },
+                multiple: true,
+                data: [],
+                formatNoMatches: function () {
+                    return self.validEmailText;
+                },
+                initSelection: function (element, callback) {
+                    callback(billingInfoUtils.getMultiResultsFromElement(element));
+                },
             });
         };
 
@@ -142,10 +111,21 @@ hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
             var handler = new AsyncSelect2Handler($(input).attr("name"));
             handler.init();
         });
+
+        _.each($(".ko-country-select2"), function(form) {
+            var country = new AsyncSelect2Handler('country');
+            country.initSelection = function (element, callback) {
+                var data = {
+                    text: element.data('countryname'),
+                    id: element.val(),
+                };
+                callback(data);
+            };
+            country.init();
+        });
     });
 
     return {
-        initBillingContactInfoHandler: initBillingContactInfoHandler,
         AsyncSelect2Handler: AsyncSelect2Handler,
         EmailSelect2Handler: EmailSelect2Handler,
     };

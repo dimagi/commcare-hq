@@ -9,7 +9,6 @@
             'current_version': hqImport('hqwebapp/js/initial_page_data.js').get('current_version'),
         }
     };
-    hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
 }());
 
 $(function () {
