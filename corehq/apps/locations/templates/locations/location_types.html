@@ -4,14 +4,16 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
     <script src="{% static 'locations/js/location_types.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
     <script>
         $(function() {
-            var loc_types = {{ location_types|JSON }};
-            var commtrack_enabled = {{ commtrack_enabled|JSON }};
+            var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+                loc_types = initial_page_data('location_types'),
+                commtrack_enabled = initial_page_data('commtrack_enabled');
 
             var locationSettingsModel = hqImport('locations/js/location_types.js').LocationSettingsViewModel
             var model = new locationSettingsModel(loc_types, commtrack_enabled);
@@ -19,7 +21,7 @@
             var $settings = $('#settings');
 
             var warnBeforeUnload = function() {
-                return "{% trans "You have unsaved changes." %}";
+                return gettext("You have unsaved changes.");
             };
 
             $settings.submit(function() {
@@ -47,6 +49,8 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'location_types' location_types %}
+    {% initial_page_data 'commtrack_enabled' commtrack_enabled %}
     <div class="row">
         <div class="col-sm-8">
             <h2>{% trans "Organization Levels" %}</h2>
