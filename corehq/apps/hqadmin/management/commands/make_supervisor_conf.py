@@ -1,7 +1,6 @@
 import json
 import os
 import sys
-from optparse import make_option
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -18,17 +17,27 @@ def parse_params(option, opt, value, parser):
 
 
 class SupervisorConfCommand(BaseCommand):
-    option_list = (
-        make_option('--conf_file', help='Config template file to use', default=False),
-        make_option('--conf_destination', help='Rendered supervisor configuration file path destination', default=None),
-        make_option('--params',
-                    type="string",
-                    action='callback',
-                    callback=parse_params,
-                    dest='params',
-                    default={},
-                    help='template parameters as JSON data'),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--conf_file',
+            help='Config template file to use',
+            default=False,
+        )
+        parser.add_argument(
+            '--conf_destination',
+            help='Rendered supervisor configuration file path destination',
+            default=None,
+        )
+        parser.add_argument(
+            '--params',
+            type="string",
+            action='callback',
+            callback=parse_params,
+            dest='params',
+            default={},
+            help='template parameters as JSON data',
+        )
 
     def render_configuration_file(self, conf_template_string, params):
         return Template(conf_template_string).render(Context(params))
