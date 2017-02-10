@@ -11,7 +11,7 @@ from django.core.management.base import BaseCommand
 
 # External imports
 from corehq import privileges
-from corehq.apps.accounting.utils import ensure_grant, remove_grant
+from corehq.apps.accounting.utils import ensure_grants, log_removed_grants
 from django_prbac.models import Grant, Role
 
 logger = logging.getLogger(__name__)
@@ -53,39 +53,47 @@ class Command(BaseCommand):
             if confirm_fresh_start == 'yes':
                 self.flush_roles()
 
-        for role in self.BOOTSTRAP_PRIVILEGES + self.BOOTSTRAP_PLANS:
-            self.ensure_role(role, dry_run=dry_run)
+        self.roles_by_slug = {role.slug: role for role in Role.objects.all()}
+        self.ensure_roles(self.BOOTSTRAP_PRIVILEGES + self.BOOTSTRAP_PLANS, dry_run)
 
-        for (plan_role_slug, privs) in self.BOOTSTRAP_GRANTS.items():
-            for priv_role_slug in privs:
-                ensure_grant(plan_role_slug, priv_role_slug, dry_run=dry_run, verbose=self.verbose)
+        ensure_grants(
+            self.BOOTSTRAP_GRANTS.items(),  # py3 iterable
+            dry_run=dry_run,
+            verbose=self.verbose,
+            roles_by_slug=self.roles_by_slug,
+        )
 
-        for old_priv in self.OLD_PRIVILEGES:
-            remove_grant(old_priv, dry_run=dry_run)
-            if not dry_run:
-                Role.objects.filter(slug=old_priv).delete()
+        if verbose or dry_run:
+            log_removed_grants(self.OLD_PRIVILEGES, dry_run=dry_run)
+        if not dry_run:
+            Role.objects.filter(slug__in=self.OLD_PRIVILEGES).delete()
 
     def flush_roles(self):
         logger.info('Flushing ALL Roles...')
         Role.objects.all().delete()
 
-    def ensure_role(self, role, dry_run=False):
+    def ensure_roles(self, roles, dry_run=False):
         """
-        Adds the role if it does not already exist, otherwise skips it.
+        Add each role if it does not already exist, otherwise skip it.
         """
-
-        existing_roles = Role.objects.filter(slug=role.slug)
-
-        if existing_roles:
-            logger.info('Role already exists: %s', role.name)
-            return existing_roles[0]
-        else:
-            if dry_run:
-                logger.info('[DRY RUN] Creating role: %s', role.name)
+        dry_run_tag = "[DRY RUN] " if dry_run else ""
+        roles_to_save = []
+        for role in roles:
+            if role.slug not in self.roles_by_slug:
+                if self.verbose or dry_run:
+                    logger.info('%sCreating role: %s', dry_run_tag, role.name)
+                if not dry_run:
+                    roles_to_save.append(role)
             else:
-                if self.verbose:
-                    logger.info('Creating role: %s', role.name)
-                role.save()
+                logger.info('Role already exists: %s', role.name)
+        if roles_to_save:
+            roles = Role.objects.bulk_create(roles_to_save)
+            if roles[0].id is None:
+                # pre Django 1.10
+                self.roles_by_slug = {role.slug: role for role in Role.objects.all()}
+            else:
+                # Django 1.10 (omit extra query)
+                self.roles_by_slug.update((role.slug, role) for role in roles)
 
     BOOTSTRAP_PRIVILEGES = [
         Role(slug=privileges.API_ACCESS, name='API Access', description=''),
