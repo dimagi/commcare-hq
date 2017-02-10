@@ -10,33 +10,6 @@ from corehq.apps.accounting.models import SoftwarePlanVersion
 class Command(BaseCommand):
     help = 'Grandfather privileges to all roles above a certain plan level and custom roles'
 
-    option_list = (
-        make_option(
-            '--dry-run',
-            action='store_true',
-            default=False,
-            help='Do not actually modify the database, just verbosely log what would happen'
-        ),
-        make_option(
-            '--noinput',
-            action='store_true',
-            default=False,
-            help='Whether to skip confirmation dialogs'
-        ),
-        make_option(
-            "-s",
-            "--skip",
-            dest="skip",
-            help="A comma separated list of plan roles to skip if any",
-        ),
-        make_option(
-            "--verbose",
-            dest="verbose",
-            help="Verbose logging",
-            default=True,
-        )
-    )
-
     def handle(self, privs, **kwargs):
         dry_run = kwargs.get('dry_run')
         verbose = kwargs.get('verbose')
@@ -66,6 +39,30 @@ class Command(BaseCommand):
         parser.add_argument(
             'privs',
             nargs='+',
+        )
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            default=False,
+            help='Do not actually modify the database, just verbosely log what would happen'
+        ),
+        parser.add_argument(
+            '--noinput',
+            action='store_true',
+            default=False,
+            help='Whether to skip confirmation dialogs'
+        ),
+        parser.add_argument(
+            "-s",
+            "--skip",
+            dest="skip",
+            help="A comma separated list of plan roles to skip if any",
+        ),
+        parser.add_argument(
+            "--verbose",
+            dest="verbose",
+            help="Verbose logging",
+            default=True,
         )
 
 
