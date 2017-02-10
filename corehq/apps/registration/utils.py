@@ -108,7 +108,6 @@ def request_new_domain(request, form, is_new_user=True):
     billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account)
     billing_contact.email_list = [current_user.email]
     billing_contact.save()
-    account.save()
 
     dom_req.domain = new_domain.name
 
