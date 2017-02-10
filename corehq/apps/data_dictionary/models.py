@@ -22,6 +22,18 @@ class CaseType(models.Model):
     class Meta:
         unique_together = ('domain', 'name')
 
+    @classmethod
+    def get_or_create(cls, domain, case_type):
+        key = 'data-dict-case-type-{domain}-{type}'.format(
+            domain=domain, type=case_type
+        )
+        with CriticalSection([key]):
+            try:
+                case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
+            except CaseType.DoesNotExist:
+                case_type_obj = CaseType.objects.create(domain=domain, name=case_type)
+            return case_type_obj
+
 
 class CaseProperty(models.Model):
     case_type = models.ForeignKey(
@@ -55,9 +67,6 @@ class CaseProperty(models.Model):
                     name=name, case_type__name=case_type, case_type__domain=domain
                 )
             except CaseProperty.DoesNotExist:
-                try:
-                    case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
-                except CaseType.DoesNotExist:
-                    case_type_obj = CaseType.objects.create(domain=domain, name=case_type)
+                case_type_obj = CaseType.get_or_create(domain, case_type)
                 prop = CaseProperty.objects.create(case_type=case_type_obj, name=name)
             return prop
