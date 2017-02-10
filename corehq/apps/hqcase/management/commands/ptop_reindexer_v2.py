@@ -101,7 +101,12 @@ class Command(BaseCommand):
             key: value for key, value in options.items()
             if value is not None and key in ['reset', 'chunksize', 'in-place']  # TODO - don't hardcode
         }
-        reindexer.consume_options(reindexer_options)
+        unconsumed = reindexer.consume_options(reindexer_options)
+        if unconsumed:
+            raise CommandError(
+                """The following options don't apply to the reindexer you're calling: {}
+                """.format(unconsumed.keys())
+            )
 
         if cleanup and (noinput or confirm()):
             reindexer.clean()
