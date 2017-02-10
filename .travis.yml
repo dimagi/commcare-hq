@@ -7,12 +7,9 @@ env:
   matrix:
     - TEST=javascript
     # need node installs for app_manager.XpathValidatorTest
-    # Numbers are based off of divided we run plugin
-    # https://github.com/dimagi/commcare-hq/blob/b4b36a9bcae86523f54dd656c55e503a3a6ca193/corehq/tests/noseplugins/dividedwerun.py#L26-L32
-    - TEST=python NOSE_DIVIDED_WE_RUN=03 JS_SETUP=yes
-    - TEST=python NOSE_DIVIDED_WE_RUN=47 JS_SETUP=yes
-    - TEST=python NOSE_DIVIDED_WE_RUN=8a JS_SETUP=yes
-    - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=04 JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=59 JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=af JS_SETUP=yes
     - TEST=python-sharded
   global:
     # TRAVIS_HQ_USERNAME
