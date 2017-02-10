@@ -26,7 +26,6 @@ before_install:
   - sudo mv -v docker-compose /usr/local/bin/
 install:
   - mkdir -p $TRAVIS_BUILD_DIR/docker-volumes
-  - pip install coverage coveralls
 before_script:
   - docker version
   - docker-compose version
@@ -34,9 +33,9 @@ script:
   # workaround for env vars
   - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
   - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
-  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1"
+  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
 after_success:
-  # create symlink so coverage report can find source files
+  # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro
 services:
   - docker

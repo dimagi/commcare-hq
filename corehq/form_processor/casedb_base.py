@@ -19,6 +19,13 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
     A temp object we use to keep a cache of in-memory cases around
     so we can get the latest updates even if they haven't been saved
     to the database. Also provides some type checking safety.
+
+    This class can be used as a re-entrant context manager:
+
+    with case_db:
+        case_db.get('case1')
+        with case_db:
+            case_db.get('case2')
     """
 
     @abstractproperty
@@ -37,7 +44,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
 
         self._populate_from_initial(initial)
         self.domain = domain
-        self.xforms = xforms if xforms is not None else []
+        self.cached_xforms = xforms if xforms is not None else []
         self.strip_history = strip_history
         self.deleted_ok = deleted_ok
         self.lock = lock
@@ -46,6 +53,9 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
             raise ValueError('Currently locking only supports explicitly wrapping cases!')
         self.locks = []
         self._changed = set()
+        # this is used to allow casedb to be re-entrant. Each new context pushes the parent context locks
+        # onto this stack and restores them when the context exits
+        self.lock_stack = []
 
     def _populate_from_initial(self, initial_cases):
         if initial_cases:
@@ -54,12 +64,20 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
             self.cache = {}
 
     def __enter__(self):
+        if self.locks:
+            self.lock_stack.append(self.locks)
+            self.locks = []
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         for lock in self.locks:
-            if lock:
+            if lock is not None:
                 release_lock(lock, True)
+        self.locks = []
+
+        if self.lock_stack:
+            self.locks = self.lock_stack.pop()
 
     @abstractmethod
     def _validate_case(self, case):
@@ -116,9 +134,10 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
 
     def get_cached_forms(self):
         """
-        Get any in-memory forms being processed.
+        Get any in-memory forms being processed. These are only used by the Couch backend
+        to fetch attachments which need to be attached to cases.
         """
-        return {xform.form_id: xform for xform in self.xforms}
+        return {xform.form_id: xform for xform in self.cached_xforms}
 
     @abstractmethod
     def get_cases_for_saving(self, now):
