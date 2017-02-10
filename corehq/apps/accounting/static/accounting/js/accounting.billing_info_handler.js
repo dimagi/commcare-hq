@@ -132,6 +132,18 @@ hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
         },
     };
 
+    $(function() {
+        _.each($(".ko-email-select2"), function(input) {
+            var handler = new EmailSelect2Handler($(input).attr("name"));
+            handler.init();
+        });
+
+        _.each($(".ko-async-select2"), function(input) {
+            var handler = new AsyncSelect2Handler($(input).attr("name"));
+            handler.init();
+        });
+    });
+
     return {
         initBillingContactInfoHandler: initBillingContactInfoHandler,
         AsyncSelect2Handler: AsyncSelect2Handler,

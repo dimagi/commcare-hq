@@ -1749,7 +1749,7 @@ class TriggerInvoiceForm(forms.Form):
                 'Trigger Invoice Details',
                 crispy.Field('month', css_class="input-large"),
                 crispy.Field('year', css_class="input-large"),
-                crispy.Field('domain', css_class="input-xxlarge",
+                crispy.Field('domain', css_class="input-xxlarge ko-async-select2",
                              placeholder="Search for Project")
             ),
             hqcrispy.FormActions(
@@ -1828,7 +1828,7 @@ class TriggerBookkeeperEmailForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Trigger Bookkeeper Email Details',
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('emails', css_class='input-xxlarge ko-email-select2'),
                 crispy.Field('month', css_class="input-large"),
                 crispy.Field('year', css_class="input-large"),
             ),
