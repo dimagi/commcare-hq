@@ -16,15 +16,20 @@
 
 
 {% block page_content %}
+    {% initial_page_data 'areas' areas %}
     <form id="update-project-info" class="form-horizontal disable-on-submit" method="post">
         {% crispy form %}
     </form>
 {% endblock %}
 
+{% block js %} {{ block.super }}
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %} {{ block.super }}
     <script>
 
-    var areas = {{ areas|JSON }};
+    var areas = hqImport('hqwebapp/js/initial_page_data.js').get('areas');
     function update_subareas() {
         var $subarea = $subarea || $('[name="sub_area"]');
         var chosen_sub_area = $subarea.val();
