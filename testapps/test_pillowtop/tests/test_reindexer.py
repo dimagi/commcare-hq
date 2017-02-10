@@ -200,13 +200,13 @@ class UserReindexerTest(TestCase):
     def test_user_reindexer_v2(self):
         username = 'reindex-test-username-v2'
         CommCareUser.create(DOMAIN, username, 'secret')
-        call_command('ptop_reindexer_v2', **{'index': 'user', 'cleanup': True, 'noinput': True})
+        call_command('ptop_reindexer_v2', 'user', cleanup=True, noinput=True)
         self._assert_user_in_es(username)
 
     def test_web_user_reindexer_v2(self):
         username = 'test-v2@example.com'
         WebUser.create(DOMAIN, username, 'secret')
-        call_command('ptop_reindexer_v2', **{'index': 'user', 'cleanup': True, 'noinput': True})
+        call_command('ptop_reindexer_v2', 'user', cleanup=True, noinput=True)
         self._assert_user_in_es(username, is_webuser=True)
 
     def _assert_user_in_es(self, username, is_webuser=False):
@@ -240,7 +240,7 @@ class GroupReindexerTest(TestCase):
     def test_group_reindexer(self):
         group = Group(domain=DOMAIN, name='g1')
         group.save()
-        call_command('ptop_reindexer_v2', **{'index': 'group', 'cleanup': True, 'noinput': True})
+        call_command('ptop_reindexer_v2', 'group', cleanup=True, noinput=True)
         self._assert_group_in_es(group)
 
     def _assert_group_in_es(self, group):
