@@ -91,7 +91,10 @@ class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
         except ENikshayCaseNotFound:
             return False
 
-        return phone_number_changed(case) and registered_episode
+        return (
+            registered_episode
+            and case_properties_changed(case, [PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER])
+        )
 
 
 class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
@@ -156,40 +159,30 @@ class NinetyNineDotsTreatmentOutcomeRepeater(Base99DOTSRepeater):
         episode_case_properties = episode_case.dynamic_case_properties()
         enabled = episode_case_properties.get('dots_99_enabled') == 'true'
         registered = episode_case_properties.get('dots_99_registered') == 'true'
-        return enabled and registered and treatment_outcome_changed(episode_case)
+        return enabled and registered and case_properties_changed(episode_case, [TREATMENT_OUTCOME])
 
 
 def episode_registered_with_99dots(episode):
     return episode.dynamic_case_properties().get('dots_99_registered', False) == 'true'
 
 
-def treatment_outcome_changed(case):
+def case_properties_changed(case, case_properties):
+    if isinstance(case_properties, basestring):
+        case_properties = [case_properties]
+
     last_case_action = case.actions[-1]
     if last_case_action.is_case_create:
         return False
 
     update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
-    treatment_outcome_changed = any(
+    property_changed = any(
         action for action in update_actions
         if isinstance(action, CaseUpdateAction)
-        and (TREATMENT_OUTCOME in action.dynamic_properties)
+        and any(
+            case_property in action.dynamic_properties for case_property in case_properties
+        )
     )
-    return treatment_outcome_changed
-
-
-def phone_number_changed(case):
-    last_case_action = case.actions[-1]
-    if last_case_action.is_case_create:
-        return False
-
-    update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
-    phone_number_changed = any(
-        action for action in update_actions
-        if isinstance(action, CaseUpdateAction)
-        and (PRIMARY_PHONE_NUMBER in action.dynamic_properties or
-             BACKUP_PHONE_NUMBER in action.dynamic_properties)
-    )
-    return phone_number_changed
+    return property_changed
 
 
 def create_case_repeat_records(sender, case, **kwargs):
