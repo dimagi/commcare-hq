@@ -47,7 +47,10 @@ class Command(BaseCommand):
     help = 'Reindex a pillowtop index'
 
     def add_arguments(self, parser):
-        parser.add_argument('index')
+        parser.add_argument(
+            'index',
+            choices=list(REINDEX_FNS),
+        )
         parser.add_argument(
             '--cleanup',
             action='store_true',
@@ -89,8 +92,6 @@ class Command(BaseCommand):
     def handle(self, index, **options):
         cleanup = options.pop('cleanup')
         noinput = options.pop('noinput')
-        if index not in REINDEX_FNS:
-            raise CommandError('Supported indices to reindex are: {}'.format(','.join(REINDEX_FNS.keys())))
 
         def confirm():
             return raw_input("Are you sure you want to delete the current index (if it exists)? y/n\n") == 'y'
