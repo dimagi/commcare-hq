@@ -15,10 +15,12 @@ from corehq.util.files import safe_filename
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
+    get_sms_export_base_query,
 )
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
+    SMSExportInstance,
 )
 
 
@@ -200,6 +202,8 @@ def _get_base_query(export_instance):
         return get_case_export_base_query(
             export_instance.domain, export_instance.case_type
         )
+    if isinstance(export_instance, SMSExportInstance):
+        return get_sms_export_base_query(export_instance.domain)
     else:
         raise Exception(
             "Unknown base query for export instance type {}".format(type(export_instance))
