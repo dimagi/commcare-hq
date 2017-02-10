@@ -99,7 +99,7 @@ class Command(BaseCommand):
         reindexer = REINDEX_FNS[index]()
         reindexer_options = {
             key: value for key, value in options.items()
-            if value is not None and key in ['reset', 'chunksize', 'in-place']  # TODO - don't hardcode
+            if value and key in ['reset', 'chunksize', 'in-place']  # TODO - don't hardcode
         }
         unconsumed = reindexer.consume_options(reindexer_options)
         if unconsumed:
