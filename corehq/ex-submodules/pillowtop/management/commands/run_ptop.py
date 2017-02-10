@@ -1,44 +1,53 @@
 from pillowtop.run_pillowtop import start_pillows, start_pillow
 
-from optparse import make_option
 import sys
 from django.conf import settings
 from pillowtop.utils import get_all_pillow_instances, get_all_pillow_configs, \
     get_pillow_config_from_setting, get_pillow_by_name
-from django.core.management.base import NoArgsCommand
+from django.core.management.base import BaseCommand
 
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     help = "Run pillows pillows listed in settings."
-    option_list = NoArgsCommand.option_list + (
-        make_option('--all',
-                    action='store_true',
-                    dest='run_all',
-                    default=False,
-                    help="Run all pillows from settings - use for local dev"),
-        make_option('--list',
-                    action='store_true',
-                    dest='list_all',
-                    default=False,
-                    help="List pillowtop names"),
-        make_option('--list-checkpoints',
-                    action='store_true',
-                    dest='list_checkpoints',
-                    default=False,
-                    help="Print all pillow doc ids."),
-        make_option('--pillow-key',
-                    action='store',
-                    dest='pillow_key',
-                    default=None,
-                    help="Run a specific key of a group of pillows from settings.PILLOWTOPS list"),
-        make_option('--pillow-name',
-                    action='store',
-                    dest='pillow_name',
-                    default=None,
-                    help="Run a single specific pillow name from settings.PILLOWTOPS list"),
-    )
 
-    def handle_noargs(self, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--all',
+            action='store_true',
+            dest='run_all',
+            default=False,
+            help="Run all pillows from settings - use for local dev",
+        )
+        parser.add_argument(
+            '--list',
+            action='store_true',
+            dest='list_all',
+            default=False,
+            help="List pillowtop names",
+        )
+        parser.add_argument(
+            '--list-checkpoints',
+            action='store_true',
+            dest='list_checkpoints',
+            default=False,
+            help="Print all pillow doc ids.",
+        )
+        parser.add_argument(
+            '--pillow-key',
+            action='store',
+            dest='pillow_key',
+            default=None,
+            help="Run a specific key of a group of pillows from settings.PILLOWTOPS list",
+        )
+        parser.add_argument(
+            '--pillow-name',
+            action='store',
+            dest='pillow_name',
+            default=None,
+            help="Run a single specific pillow name from settings.PILLOWTOPS list",
+        )
+
+    def handle(self, **options):
         run_all = options['run_all']
         list_all = options['list_all']
         list_checkpoints = options['list_checkpoints']
