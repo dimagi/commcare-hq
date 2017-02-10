@@ -8,13 +8,12 @@ import sys
 
 class Command(BaseCommand):
     help = "Clear supervisor confs for the given environment"
-    args = ""
 
     option_list = (
         make_option('--conf_location', help='Supervisor configuration file path', default=None),
     )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         conf_dir = options['conf_location']
         environment = settings.SERVER_ENVIRONMENT
         if not os.path.exists(conf_dir):
