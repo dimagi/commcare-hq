@@ -36,6 +36,7 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_PHONE,
     TREATMENT_OUTCOME,
     TREATMENT_OUTCOME_DATE,
+    WEIGHT_BAND,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
@@ -82,7 +83,8 @@ class PatientPayload(jsonobject.JsonObject):
                 _format_number(
                     _parse_number(episode_case_properties.get(TREATMENT_SUPPORTER_PHONE))
                 )
-            )
+            ),
+            weight_band=episode_case_properties.get(WEIGHT_BAND),
         )
 
 
