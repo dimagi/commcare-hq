@@ -42,21 +42,26 @@ class SyncBaseTest(TestCase):
     """
     Shared functionality among tests
     """
+    @classmethod
+    def setUpClass(cls):
+        super(SyncBaseTest, cls).setUpClass()
+        delete_all_users()
+
+        cls.project = Domain(name=TEST_DOMAIN_NAME)
+        cls.project.save()
+        cls.user = create_restore_user(
+            cls.project.name,
+            USERNAME,
+        )
+        cls.user_id = cls.user.user_id
+        # this creates the initial blank sync token in the database
 
     def setUp(self):
         super(SyncBaseTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()
         FormProcessorTestUtils.delete_all_sync_logs()
-        delete_all_users()
-        self.project = Domain(name=TEST_DOMAIN_NAME)
-        self.project.save()
-        self.user = create_restore_user(
-            self.project.name,
-            USERNAME,
-        )
-        self.user_id = self.user.user_id
-        # this creates the initial blank sync token in the database
+
         restore_config = RestoreConfig(
             self.project,
             restore_user=self.user,
@@ -77,9 +82,12 @@ class SyncBaseTest(TestCase):
     def tearDown(self):
         restore_config = RestoreConfig(project=self.project, restore_user=self.user)
         restore_config.cache.delete(restore_config._initial_cache_key)
-        self.user._couch_user.delete()
-
         super(SyncBaseTest, self).tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_users()
+        super(SyncBaseTest, cls).tearDownClass()
 
     def _createCaseStubs(self, id_list, **kwargs):
         case_attrs = {'create': True}
@@ -1291,40 +1299,43 @@ class MultiUserSyncTest(SyncBaseTest):
     Tests the interaction of two users in sync mode doing various things
     """
 
-    def setUp(self):
-        super(MultiUserSyncTest, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        super(MultiUserSyncTest, cls).setUpClass()
         # the other user is an "owner" of the original users cases as well,
         # for convenience
-        self.other_user = create_restore_user(
-            self.project.name,
+        cls.other_user = create_restore_user(
+            cls.project.name,
             username=OTHER_USERNAME,
         )
-        self.other_user_id = self.other_user.user_id
+        cls.other_user_id = cls.other_user.user_id
 
-        self.shared_group = Group(
-            domain=self.project.name,
+        cls.shared_group = Group(
+            domain=cls.project.name,
             name='shared_group',
             case_sharing=True,
-            users=[self.other_user.user_id, self.user.user_id]
+            users=[cls.other_user.user_id, cls.user.user_id]
         )
-        self.shared_group.save()
+        cls.shared_group.save()
 
+    def setUp(self):
+        super(MultiUserSyncTest, self).setUp()
         # this creates the initial blank sync token in the database
         self.other_sync_log = synclog_from_restore_payload(
             generate_restore_payload(self.project, self.other_user)
         )
 
-        self.assertTrue(self.shared_group._id in self.other_sync_log.owner_ids_on_phone)
-        self.assertTrue(self.other_user_id in self.other_sync_log.owner_ids_on_phone)
-
         self.sync_log = synclog_from_restore_payload(
             generate_restore_payload(self.project, self.user)
         )
-        self.assertTrue(self.shared_group._id in self.sync_log.owner_ids_on_phone)
-        self.assertTrue(self.user_id in self.sync_log.owner_ids_on_phone)
         # since we got a new sync log, have to update the factory as well
         self.factory.form_extras = {'last_sync_token': self.sync_log._id}
         self.factory.case_defaults.update({'owner_id': self.shared_group._id})
+
+        self.assertTrue(self.shared_group._id in self.other_sync_log.owner_ids_on_phone)
+        self.assertTrue(self.other_user_id in self.other_sync_log.owner_ids_on_phone)
+        self.assertTrue(self.shared_group._id in self.sync_log.owner_ids_on_phone)
+        self.assertTrue(self.user_id in self.sync_log.owner_ids_on_phone)
 
     @run_with_all_backends
     def testSharedCase(self):
