@@ -260,6 +260,7 @@ def get_apps_base_context(request, domain, app):
         'langs': langs,
         'domain': domain,
         'app': app,
+        'form_counts_by_module': [len(m.forms) for m in app.modules],
         'timezone': timezone,
     }
 

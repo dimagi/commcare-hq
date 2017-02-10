@@ -16,12 +16,13 @@
 {% block js-inline %}
     {{ block.super }}
     <script>
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
         $(function () {
             var init = hqImport('app_manager/js/app_manager.js').init;
             init({
-                appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-                commcareVersion: {{ app.commcare_minor_release|JSON }},
-                latestCommcareVersion: {% if latest_commcare_version %}{{ latest_commcare_version|JSON }}{% else %}null{% endif %}
+                appVersion: initial_page_data('app_version') || -1,
+                commcareVersion: initial_page_data('app_commcare_minor_release'),
+                latestCommcareVersion: initial_page_data('latest_commcare_version') || null,
             });
         });
         $(function () {
@@ -42,29 +43,29 @@
             });
         });
     </script>
-    {% if app.get_doc_type == "Application" %}
     <script>
         $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-            $('.edit-form-pencil').tooltip({
-                title: "{% trans "Edit in form builder" %}",
-                placement: 'auto'
-            });
-            $('.edit-form-li').each(function () {
-                var $this = $(this);
-                if (!{{ formdesigner|JSON }} || !$this.hasClass("active")) {
-                    var $pencil = $this.find('.edit-form-pencil');
-                    $pencil.addClass('no-data');
-                    $this.hover(function() {
-                        $pencil.removeClass('no-data');
-                    }, function() {
+            if (initial_page_data('app_doc_type') == 'Application') {
+                $('[data-toggle="tooltip"]').tooltip()
+                $('.edit-form-pencil').tooltip({
+                    title: gettext("Edit in form builder"),
+                    placement: 'auto'
+                });
+                $('.edit-form-li').each(function () {
+                    var $this = $(this);
+                    if (!initial_page_data('formdesigner') || !$this.hasClass("active")) {
+                        var $pencil = $this.find('.edit-form-pencil');
                         $pencil.addClass('no-data');
-                    });
-                }
-            });
+                        $this.hover(function() {
+                            $pencil.removeClass('no-data');
+                        }, function() {
+                            $pencil.addClass('no-data');
+                        });
+                    }
+                });
+            }
         });
     </script>
-    {% endif %}
     <script>
         $(function () {
             // https://github.com/twitter/bootstrap/issues/6122
@@ -96,12 +97,12 @@
     <script>
         $(function() {
             gaTrackLink($('#edit_label'), 'App Builder', 'Open Form', 'Edit Label');
-            {% for module in app.get_modules %}
-                {% for form in module.get_forms %}
-                    gaTrackLink($('#view_form_{{ module.id }}_{{ form.id }}_sidebar'), 'App Builder', 'View Form', 'Sidebar');
-                    gaTrackLink($('#edit_pen_{{ module.id }}_{{ form.id }}'), 'App Builder', 'Open Form', 'Edit Pen');
-                {% endfor %}
-            {% endfor %}
+            _.each(initial_page_data('form_counts_by_module'), function(form_count, module_id) {
+                _.each(_.range(form_count), function(form_id) {
+                    gaTrackLink($('#view_form_' + module_id + '_' + form_id + '_sidebar'), 'App Builder', 'View Form', 'Sidebar');
+                    gaTrackLink($('#edit_pen_' + module_id + '_' + form_id), 'App Builder', 'Open Form', 'Edit Pen');
+                });
+            });
         });
     </script>
 {% endblock %}
@@ -350,5 +351,11 @@
 {% endblock %}
 
 {% block app-content %}
+    {% initial_page_data 'form_counts_by_module' form_counts_by_module %}
+    {% initial_page_data 'app_version' app.version %}
+    {% initial_page_data 'app_commcare_minor_release' app.commcare_minor_release %}
+    {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
+    {% initial_page_data 'app_doc_type' app.get_doc_type %}
+    {% initial_page_data 'formdesigner' formdesigner %}
     {% block form-view %}{% endblock %}
 {% endblock %}
