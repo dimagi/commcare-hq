@@ -29,6 +29,7 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME_DATE,
     WEIGHT_BAND,
     CURRENT_ADDRESS,
+    TREATMENT_SUPPORTER_PHONE,
 )
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
@@ -136,7 +137,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
             domain=self.domain,
             url='case-repeater-url',
         )
-        self.repeater.white_listed_case_types = ['person']
+        self.repeater.white_listed_case_types = ['person', 'episode']
         self.repeater.save()
 
     @run_with_all_backends
@@ -153,6 +154,9 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
 
         self._update_case(self.person_id, {PRIMARY_PHONE_NUMBER: '999999999', })
         self.assertEqual(1, len(self.repeat_records().all()))
+
+        self._update_case(self.episode_id, {TREATMENT_SUPPORTER_PHONE: '999999999', })
+        self.assertEqual(2, len(self.repeat_records().all()))
 
     @run_with_all_backends
     def test_trigger_multiple_cases(self):

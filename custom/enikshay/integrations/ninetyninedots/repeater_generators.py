@@ -23,6 +23,8 @@ from custom.enikshay.case_utils import (
     update_case,
     get_person_locations,
     get_episode_case_from_adherence,
+    CASE_TYPE_PERSON,
+    CASE_TYPE_EPISODE,
 )
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
@@ -150,13 +152,25 @@ class UpdatePatientPayloadGenerator(BasePayloadGenerator):
             phone_numbers=_format_number(_parse_number("0123456789"))
         ).to_json())
 
-    def get_payload(self, repeat_record, person_case):
-        episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+    def _get_cases(self, episode_or_person):
+        if episode_or_person.type == CASE_TYPE_PERSON:
+            person_case = episode_or_person
+            episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+        elif episode_or_person.type == CASE_TYPE_EPISODE:
+            episode_case = episode_or_person
+            occurrence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.case_id)
+            person_case = get_person_case_from_occurrence(episode_case.domain, occurrence_case.case_id)
+        else:
+            raise ENikshayCaseNotFound("wrong case passed to repeater")
+        return person_case, episode_case
+
+    def get_payload(self, repeat_record, episode_or_person):
+        person_case, episode_case = self._get_cases(episode_or_person)
         return json.dumps(PatientPayload.create(person_case, episode_case).to_json())
 
-    def handle_success(self, response, person_case, repeat_record):
+    def handle_success(self, response, episode_or_person, repeat_record):
         try:
-            episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+            person_case, episode_case = self._get_cases(episode_or_person)
         except ENikshayCaseNotFound as e:
             self.handle_exception(e, repeat_record)
 
@@ -169,9 +183,9 @@ class UpdatePatientPayloadGenerator(BasePayloadGenerator):
                 }
             )
 
-    def handle_failure(self, response, person_case, repeat_record):
+    def handle_failure(self, response, episode_or_person, repeat_record):
         try:
-            episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+            person_case, episode_case = self._get_cases(episode_or_person)
         except ENikshayCaseNotFound as e:
             self.handle_exception(e, repeat_record)
 

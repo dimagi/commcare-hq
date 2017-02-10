@@ -13,9 +13,19 @@ from casexml.apps.case.xform import get_case_updates
 
 from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
-    get_episode_case_from_adherence
+    get_episode_case_from_adherence,
+    CASE_TYPE_EPISODE,
+    CASE_TYPE_PERSON,
 )
-from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER, TREATMENT_OUTCOME
+from custom.enikshay.const import (
+    TREATMENT_OUTCOME,
+    NINETYNINEDOTS_EPISODE_PROPERTIES,
+    NINETYNINEDOTS_PERSON_PROPERTIES,
+)
+from custom.enikshay.case_utils import (
+    get_occurrence_case_from_episode,
+    get_person_case_from_occurrence,
+)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
@@ -65,15 +75,15 @@ class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
 
 class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
     """Update patient records a patient in 99DOTS
-    Case Type: Person
-    Trigger: When phone number changes
+    Case Type: Person, Episode
+    Trigger: When any pertinent property changes
     Side Effects:
         Error: dots_99_error = 'error message'
     Endpoint: https://www.99dots.org/Dimagi99DOTSAPI/updatePatient
 
     """
 
-    friendly_name = _("99DOTS Patient Update (person case type)")
+    friendly_name = _("99DOTS Patient Update (person & episode case type)")
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -85,16 +95,22 @@ class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
             return False
 
         try:
-            registered_episode = episode_registered_with_99dots(
-                get_open_episode_case_from_person(case.domain, case.case_id)
-            )
+            if case.type == CASE_TYPE_PERSON:
+                person_case = case
+                episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+                props_changed = case_properties_changed(person_case, NINETYNINEDOTS_PERSON_PROPERTIES)
+                registered_episode = episode_registered_with_99dots(episode_case)
+            elif case.type == CASE_TYPE_EPISODE:
+                episode_case = case
+                props_changed = case_properties_changed(episode_case, NINETYNINEDOTS_EPISODE_PROPERTIES)
+                registered_episode = (episode_registered_with_99dots(episode_case)
+                                      and not case_properties_changed(episode_case, 'dots_99_registered'))
+            else:
+                return False
         except ENikshayCaseNotFound:
             return False
 
-        return (
-            registered_episode
-            and case_properties_changed(case, [PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER])
-        )
+        return registered_episode and props_changed
 
 
 class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
