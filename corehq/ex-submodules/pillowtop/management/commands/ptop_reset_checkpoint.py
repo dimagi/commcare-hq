@@ -9,6 +9,11 @@ class Command(BaseCommand):
     args = '<pillow_class>'
     label = 'Pillow class'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'pillow_class',
+        )
+
     option_list = (
         make_option('--noinput',
             action='store_true',
@@ -17,21 +22,15 @@ class Command(BaseCommand):
             help="Suppress confirmation messages - dangerous mode!"),
     )
 
-    def handle(self, *labels, **options):
+    def handle(self, pillow_class, **options):
         """
         More targeted pillow checkpoint reset system - must specify the pillow class_name to reset the checkpoint
         """
 
-        if not labels:
-            pillow_names = [config.name for config in get_all_pillow_configs()]
-            print "\nNo pillow specified, options are:\n\t%s\n" % ('\n\t'.join(pillow_names))
-            sys.exit()
-
-        pillow_name = labels[0]
-        pillow_to_use = get_pillow_by_name(pillow_name)
+        pillow_to_use = get_pillow_by_name(pillow_class)
         if not pillow_to_use:
             print ""
-            print "\n\tPillow class [%s] not in configuration, what are you trying to do?\n" % pillow_name
+            print "\n\tPillow class [%s] not in configuration, what are you trying to do?\n" % pillow_class
             sys.exit()
 
         if not options.get('interactive'):
@@ -40,7 +39,7 @@ class Command(BaseCommand):
             operation, and may take a long time, and cause extraneous updates to the requisite
             consumers of the _changes feeds  Are you sure you want to do this?
 
-Type 'yes' to continue, or 'no' to cancel: """ % pillow_name)
+Type 'yes' to continue, or 'no' to cancel: """ % pillow_class)
         else:
             confirm = 'yes'
 
