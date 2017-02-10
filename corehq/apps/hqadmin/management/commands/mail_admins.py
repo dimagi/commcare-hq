@@ -8,7 +8,6 @@ from django.core.mail import mail_admins
 
 
 class Command(BaseCommand):
-    args = '[message]'
     help = 'Send args as a one-shot email to the admins.'
 
     def add_arguments(self, parser):
