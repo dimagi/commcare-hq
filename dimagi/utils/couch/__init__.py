@@ -72,13 +72,16 @@ class ReleaseOnError(object):
 
 
 def acquire_lock(lock, degrade_gracefully, **kwargs):
+    acquired = False
     try:
-        lock.acquire(**kwargs)
+        acquired = lock.acquire(**kwargs)
     except RedisError:
         if degrade_gracefully:
             lock = None
         else:
             raise
+    if lock and not acquired and not degrade_gracefully:
+        raise RedisError("Unable to acquire lock")
     return lock
 
 
