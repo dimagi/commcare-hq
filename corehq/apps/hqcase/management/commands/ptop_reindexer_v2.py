@@ -86,7 +86,7 @@ class Command(BaseCommand):
             help='Run the reindex in place - assuming it is against a live index.'
         )
 
-    def handle(self, index, *args, **options):
+    def handle(self, index, **options):
         cleanup = options.pop('cleanup')
         noinput = options.pop('noinput')
         if index not in REINDEX_FNS:
