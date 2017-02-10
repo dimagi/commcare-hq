@@ -1,4 +1,3 @@
-from optparse import make_option
 from django.core.management.base import BaseCommand
 import sys
 from pillowtop import get_pillow_by_name, get_all_pillow_configs
@@ -6,8 +5,6 @@ from pillowtop import get_pillow_by_name, get_all_pillow_configs
 
 class Command(BaseCommand):
     help = "Reset checkpoints for pillowtop"
-    args = '<pillow_class>'
-    label = 'Pillow class'
 
     def add_arguments(self, parser):
         parser.add_argument(
