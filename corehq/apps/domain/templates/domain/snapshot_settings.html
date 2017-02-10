@@ -1,13 +1,18 @@
 {% extends "style/base_section.html" %}
 {% load hqstyle_tags %}
+{% load hq_shared_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+{% endblock %}
+
 {% block js-inline  %}{{ block.super }}
-    {% url "cda_basic" as cda_url %}
     <script type="application/javascript">
         $(function() {
             $("#contentDistributionAgreement").on("show.bs.modal", function() {
-                $(this).find(".modal-body").load("{{ cda_url }}");
+                $(this).find(".modal-body").load(hqImport('hqwebapp/js/urllib.js').reverse('cda_basic'));
             });
         });
     </script>
@@ -41,19 +46,21 @@
         }
 
         $(function() {
-            {% for snapshot in snapshots %}
-                $('#publish_{{ snapshot.name }}').click(function() {
-                    ga_track_event('Exchange', 'Publish Previous Version', '{{ snapshot.name }}');
+            _.each(hqImport('hqwebapp/js/initial_page_data.js').get('snapshots'), function(snapshot) {
+                $('#publish_' + snapshot.name).click(function() {
+                    ga_track_event('Exchange', 'Publish Previous Version', snapshot.name);
                 });
-                $('#view_{{ snapshot.name }}').click(function() {
-                    gaTrackLink($('#view_{{ snapshot.name }}'), 'Exchange', 'View', '{{ snapshot.name }}');
+                $('#view_' + snapshot.name).click(function() {
+                    gaTrackLink($('#view_' + snapshot.name), 'Exchange', 'View', snapshot.name);
                 });
-            {% endfor %}
+            });
         });
     </script>
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl "cda_basic" %}
+    {% initial_page_data 'snapshots' snapshots %}
 <div>
     {% if published_snapshot %}
         {% include 'domain/partials/project_version_display.html' with version=published_snapshot published=1 %}
