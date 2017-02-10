@@ -413,9 +413,9 @@ def chevron(value):
     Displays a green up chevron if value > 0, and a red down chevron if value < 0
     """
     if value > 0:
-        return '<span class="fa fa-chevron-up" style="color: #006400;"></span>'
+        return format_html('<span class="fa fa-chevron-up" style="color: #006400;"></span>')
     elif value < 0:
-        return '<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>'
+        return format_html('<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>')
     else:
         return ''
 
@@ -426,9 +426,9 @@ def reverse_chevron(value):
     Displays a red up chevron if value > 0, and a green down chevron if value < 0
     """
     if value > 0:
-        return '<span class="fa fa-chevron-up" style="color: #8b0000;"></span>'
+        return format_html('<span class="fa fa-chevron-up" style="color: #8b0000;"></span>')
     elif value < 0:
-        return '<span class="fa fa-chevron-down" style="color: #006400;"> </span>'
+        return format_html('<span class="fa fa-chevron-down" style="color: #006400;"> </span>')
     else:
         return ''
 

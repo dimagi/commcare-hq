@@ -2,6 +2,8 @@
 from django.test.testcases import TestCase
 
 from django.conf import settings
+
+from casexml.apps.case.tests.util import delete_all_xforms
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, Location
 from corehq.apps.products.models import Product
@@ -57,4 +59,5 @@ class IntraHealthTestCase(TestCase):
         cls.district_type.delete()
         cls.pps_type.delete()
         cls.domain.delete()
+        delete_all_xforms()
         super(IntraHealthTestCase, cls).tearDownClass()

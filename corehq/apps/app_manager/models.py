@@ -5350,10 +5350,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         my_hash = _hash(self.fetch_xform(form=form))
                         if previous_hash == my_hash:
                             form_version = previous_form_version
-                    if form_version is None:
-                        form.version = None
-                    else:
-                        form.version = form_version
+
+                    form.version = form_version
                 else:
                     form.version = None
 

@@ -16,7 +16,7 @@
     });
   </script>
   {% url "eula_basic" as eula_url %}
-  {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
+  {% include 'style/includes/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
   <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
   <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
   <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
@@ -172,5 +172,5 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% include 'registration/partials/eula_modal.html' %}
+    {% include 'style/includes/modal_eula.html' %}
 {% endblock %}

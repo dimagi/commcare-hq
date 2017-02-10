@@ -162,7 +162,8 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         from django_countries.data import COUNTRIES
         countries = sorted(list(COUNTRIES.items()), key=lambda x: x[1].encode('utf-8'))
         if self.search_string:
-            return [x for x in countries if x[1].lower().startswith(self.search_string.lower())]
+            search_string = self.search_string.lower()
+            return [x for x in countries if x[1].lower().startswith(search_string)]
         return countries
 
     @property
@@ -176,7 +177,8 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
     def domain_response(self):
         domain_names = [domain['key'] for domain in Domain.get_all(include_docs=False)]
         if self.search_string:
-            domain_names = [x for x in domain_names if x.lower().startswith(self.search_string.lower())]
+            search_string = self.search_string.lower()
+            domain_names = [x for x in domain_names if x.lower().startswith(search_string)]
         return [(name, name) for name in domain_names]
 
     @property
@@ -215,7 +217,8 @@ class Select2InvoiceTriggerHandler(BaseSelect2AsyncHandler):
     def domain_response(self):
         domain_names = [domain['key'] for domain in Domain.get_all(include_docs=False)]
         if self.search_string:
-            domain_names = [x for x in domain_names if x.lower().startswith(self.search_string.lower())]
+            search_string = self.search_string.lower()
+            domain_names = [x for x in domain_names if x.lower().startswith(search_string)]
         return [(d, d) for d in domain_names]
 
 

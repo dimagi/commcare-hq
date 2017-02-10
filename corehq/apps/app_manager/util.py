@@ -148,16 +148,20 @@ def save_xform(app, form, xml):
         if not xform.data_node.tag_xmlns or xform.data_node.tag_xmlns == GENERIC_XMLNS:  #no xmlns
             xform, xml = change_xmlns(xform, GENERIC_XMLNS)
 
+    form.source = xml
+
     # For registration forms, assume that the first question is the case name
     # unless something else has been specified
     if toggles.APP_MANAGER_V2.enabled(app.domain):
         if form.is_registration_form():
-            if not form.actions.open_case.name_path:
-                questions = form.get_questions([app.default_language])
-                if len(questions):
-                    form.actions.open_case.name_path = questions[0]['value']
-
-    form.source = xml
+            questions = form.get_questions([app.default_language])
+            path = form.actions.open_case.name_path
+            if path:
+                name_questions = [q for q in questions if q['value'] == path]
+                if not len(name_questions):
+                    path = None
+            if not path and len(questions):
+                form.actions.open_case.name_path = questions[0]['value']
 
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
