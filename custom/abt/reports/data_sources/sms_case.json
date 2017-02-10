@@ -377,7 +377,7 @@
                 }
               }
             },
-            "Kenya": {
+            "kenya": {
               "default": 0,
               "cases": {
                 "migori": 226827
@@ -758,7 +758,7 @@
                 }
               }
             },
-            "Kenya": {
+            "kenya": {
               "default": 0,
               "cases": {
                 "awendo": 34320,
@@ -1177,7 +1177,7 @@
                 }
               }
             },
-            "Kenya": {
+            "kenya": {
               "default": 0,
               "cases": {
                 "agenga_dispensary": 7810,
@@ -1496,7 +1496,7 @@
                 }
               }
             },
-            "Kenya": {
+            "kenya": {
               "default": 0,
               "cases": {
                 "agenga_dispensary": 7810,
@@ -1583,7 +1583,7 @@
             "Mali": 242684,
             "Madagascar": 311916,
             "Tanzania": 615393,
-            "Kenya": 226827,
+            "kenya": 226827,
             "benin": 270141
           },
           "type": "switch",
