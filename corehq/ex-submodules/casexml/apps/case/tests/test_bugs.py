@@ -161,6 +161,17 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual('not_bar', case.dynamic_case_properties()['foo'])
         self.assertTrue(case.is_deleted)
 
+    @run_with_all_backends
+    def test_case_block_ordering(self):
+        case_id = uuid.uuid4().hex
+        blocks = [
+            CaseBlock(create=False, case_id=case_id, update={'p': '2'}).as_xml(),  # update before create
+            CaseBlock(create=True, case_id=case_id, update={'p': '1'}).as_xml()
+        ]
+
+        xform, cases = post_case_blocks(blocks)
+        self.assertEqual(cases[0].get_case_property('p'), '2')
+
 
 class TestCaseHierarchy(TestCase):
     @classmethod
