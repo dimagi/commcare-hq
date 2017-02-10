@@ -39,7 +39,7 @@ def get_parent_of_case(domain, case_id, parent_case_type):
     parent_cases = case_accessor.get_cases(parent_case_ids)
     open_parent_cases = [
         parent_case for parent_case in parent_cases
-        if not parent_case.closed and parent_case.referenced_type == parent_case_type
+        if not parent_case.closed and parent_case.type == parent_case_type
     ]
 
     if not open_parent_cases:
@@ -64,11 +64,11 @@ def get_person_case_from_occurrence(domain, occurrence_case_id):
     return get_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
 
 
-def get_episode_case_from_test(domain, test_case_id):
+def get_occurence_case_from_test(domain, test_case_id):
     """
         Gets the first open episode case for a test
         """
-    return get_parent_of_case(domain, test_case_id, CASE_TYPE_EPISODE)
+    return get_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
 
 
 def get_person_case_from_episode(domain, episode_case_id):

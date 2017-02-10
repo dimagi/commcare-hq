@@ -14,9 +14,11 @@ from custom.enikshay.const import (
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_person_locations,
-    get_episode_case_from_test,
+    get_open_episode_case_from_occurrence,
     get_open_episode_case_from_person,
     get_lab_referral_from_test,
+    get_occurence_case_from_test,
+    get_person_case_from_occurrence
 )
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
@@ -172,11 +174,12 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
         :param episode_case:
         :return:
         """
-        lab_referral_case = get_lab_referral_from_test(test_case.get_id)
+        lab_referral_case = get_lab_referral_from_test(test_case.domain, test_case.get_id)
         dmc = SQLLocation.active_objects.get(location_id=lab_referral_case.owner_id)
         dmc_code = dmc.metadata.get('nikshay_code')
-        episode_case = get_episode_case_from_test(test_case.get_id)
-        person_case = get_person_case_from_episode(episode_case.get_id)
+        occurence_case = get_occurence_case_from_test(test_case.domain, test_case.get_id)
+        episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
+        person_case = get_person_case_from_occurrence(test_case.domain, occurence_case.get_id)
 
         test_case_properties = test_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
@@ -186,11 +189,18 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
         else:
             interval_id = purpose_of_testing.get(test_case_properties.get('follow_up_test_reason'))
 
+        # example output for
+        # https://india.commcarehq.org/a/enikshay/reports/case_data/39d45f04-3005-4ea1-8692-a5bf1e7ff685/
+        # weird smear result: test_case_properties.get('result_grade') was 'scanty'
+        # LabNo to be integrated as case property
+        # DMC code seems off for this record. its a string on characters
+        # {'LabNo': 0, 'Local_ID': u'89e14931-4930-4862-9ce7-723856cf27f1', 'RegBy': 'tbu-dmdmo01',
+        # 'DMC': u'XXQADMC', 'Source': 8, 'TestDate': '06/08/2016', 'SmearResult': 0, 'PatientID': None,
+        # 'IntervalId': 0, 'IP_From': '127.0.0.1'}
         properties_dict = {
             "PatientID": episode_case_properties.get('nikshay_id'),
             "TestDate": datetime.datetime.strptime(test_case_properties.get('date_tested'),
                                                    '%Y-%m-%d').strftime('%d/%m/%Y'),
-            # MK to test if there is a limit of length of this number and truncate for that accordingly
             "LabNo": test_case_properties.get('lab_serial_number', 0),
             "RegBy": "tbu-dmdmo01",
             "Local_ID": person_case.get_id,
