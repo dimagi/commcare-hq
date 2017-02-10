@@ -17,18 +17,18 @@
 
 {% endblock %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %} {{ block.super }}
 {% url "cda_basic" as cda_url %}
 {% include 'style/includes/load_into_modal.html' with modal_id="cda-modal" load_from=cda_url %}
 <script>
     $(function(){
-        var ids = [];
-        {% for app, app_form in app_forms %}
-        ids.push({{app.id|JSON}});
-        {% endfor %}
-        {% for fixture, fixture_form in fixture_forms %}
-        ids.push({{fixture.id|JSON}});
-        {% endfor %}
+        debugger;
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+            ids = initial_page_data('app_ids').concat(initial_page_data('fixture_ids'));
 
         _.each(ids, function (id) {
             var publish = $('#id_' + id + '-publish');
@@ -71,6 +71,9 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'app_ids' app_ids %}
+    {% initial_page_data 'fixture_ids' fixture_ids %}
+
         {% bootstrap_form_errors form %}
     <form
         id="snapshot-form"
