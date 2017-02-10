@@ -22,11 +22,6 @@
     <script src="{% static 'domain/js/create_snapshot.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %} {{ block.super }}
-{% url "cda_basic" as cda_url %}
-{% include 'style/includes/load_into_modal.html' with modal_id="cda-modal" load_from=cda_url %}
-{% endblock %}
-
 {% block page_content %}
     {% initial_page_data 'app_ids' app_ids %}
     {% initial_page_data 'fixture_ids' fixture_ids %}
