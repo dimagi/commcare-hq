@@ -16,14 +16,11 @@ class Command(BaseCommand):
             'message',
             nargs='*',
         )
-
-    option_list = (
-        make_option('--subject', help='Subject', default='Mail from the console'),
-        make_option('--stdin', action='store_true', default=False, help='Read message body from stdin'),
-        make_option('--html', action='store_true', default=False, help='HTML payload'),
-        make_option('--slack', action='store_true', default=False, help='Whether to send subject to slack'),
-        make_option('--environment', default='', help='The environment we are mailing about'),
-    )
+        parser.add_argument('--subject', help='Subject', default='Mail from the console'),
+        parser.add_argument('--stdin', action='store_true', default=False, help='Read message body from stdin'),
+        parser.add_argument('--html', action='store_true', default=False, help='HTML payload'),
+        parser.add_argument('--slack', action='store_true', default=False, help='Whether to send subject to slack'),
+        parser.add_argument('--environment', default='', help='The environment we are mailing about'),
 
     def handle(self, message, **options):
         if options['stdin']:
