@@ -1882,20 +1882,22 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
     Test that doing multiple clean syncs with extensions does what we think it will
     """
 
-    def setUp(self):
-        super(SteadyStateExtensionSyncTest, self).setUp()
-        self.other_user = create_restore_user(
-            self.project.name,
+    @classmethod
+    def setUpClass(cls):
+        super(SteadyStateExtensionSyncTest, cls).setUpClass()
+        cls.other_user = create_restore_user(
+            cls.project.name,
             username=OTHER_USERNAME,
         )
-        self.other_user_id = self.other_user.user_id
-        self._create_ownership_cleanliness(self.user_id)
-        self._create_ownership_cleanliness(self.other_user_id)
+        cls.other_user_id = cls.other_user.user_id
+        cls._create_ownership_cleanliness(cls.user_id)
+        cls._create_ownership_cleanliness(cls.other_user_id)
 
-    def _create_ownership_cleanliness(self, user_id):
+    @classmethod
+    def _create_ownership_cleanliness(cls, user_id):
         OwnershipCleanlinessFlag.objects.get_or_create(
-            owner_id=self.user_id,
-            domain=self.project.name,
+            owner_id=cls.user_id,
+            domain=cls.project.name,
             defaults={'is_clean': True}
         )
 
