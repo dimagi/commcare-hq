@@ -16,16 +16,15 @@
 {% block js-inline %}
     {{ block.super }}
     <script>
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
         $(function () {
-            var init = hqImport('app_manager/js/app_manager.js').init;
+            var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+                init = hqImport('app_manager/js/app_manager.js').init;
             init({
                 appVersion: initial_page_data('app_version') || -1,
-                commcareVersion: initial_page_data('app_commcare_minor_release'),
+                commcareVersion: String(initial_page_data('app_commcare_minor_release')),
                 latestCommcareVersion: initial_page_data('latest_commcare_version') || null,
             });
-        });
-        $(function () {
+
             $('.btn-langcode-preprocessed').each( function () {
                 langcodeTag.button_tag($(this), $(this).text());
                 if ($(this).hasClass('langcode-input')) {
@@ -41,10 +40,7 @@
                     }
                 }
             });
-        });
-    </script>
-    <script>
-        $(function () {
+
             if (initial_page_data('app_doc_type') == 'Application') {
                 $('[data-toggle="tooltip"]').tooltip()
                 $('.edit-form-pencil').tooltip({
@@ -64,10 +60,7 @@
                     }
                 });
             }
-        });
-    </script>
-    <script>
-        $(function () {
+
             // https://github.com/twitter/bootstrap/issues/6122
             // this is necessary to get popovers to be able to extend
             // outside the borders of their containing div
@@ -92,10 +85,7 @@
             $tabContent.on('blur', '.collapse', function() {
                 inSelectElement = false;
             });
-        });
-    </script>
-    <script>
-        $(function() {
+
             gaTrackLink($('#edit_label'), 'App Builder', 'Open Form', 'Edit Label');
             _.each(initial_page_data('form_counts_by_module'), function(form_count, module_id) {
                 _.each(_.range(form_count), function(form_id) {
