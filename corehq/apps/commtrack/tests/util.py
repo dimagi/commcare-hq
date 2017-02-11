@@ -140,7 +140,6 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, paren
 
 
 class CommTrackTest(TestCase):
-    requisitions_enabled = False  # can be overridden
     user_definitions = []
 
     def setUp(self):
@@ -157,10 +156,6 @@ class CommTrackTest(TestCase):
             optimal_window=60,
             min_periods=0,
         )
-        # todo: remove?
-        if self.requisitions_enabled:
-            self.ct_settings.requisition_config = get_default_requisition_config()
-
         self.ct_settings.save()
 
         self.domain = Domain.get(self.domain._id)
