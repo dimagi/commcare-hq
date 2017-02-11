@@ -6,60 +6,7 @@
  {% load xforms_extras %}
  {% load url_extras %}
  {% load hq_shared_tags %}
-@@ -46,13 +46,10 @@
-     <script>
-         $(function () {
-             $('[data-toggle="tooltip"]').tooltip()
--            $('.edit-form-pencil').tooltip({
--                title: "{% trans "Edit in form builder" %}",
--                placement: 'auto'
--            });
-+
-             $('.edit-form-li').each(function () {
-                 var $this = $(this);
--                if (!{{ formdesigner|JSON }} || !$this.hasClass("active")) {
-+                if ({{ formdesigner|JSON }} || !$this.hasClass("active")) {
-                     var $pencil = $this.find('.edit-form-pencil');
-                     $pencil.addClass('no-data');
-                     $this.hover(function() {
-@@ -62,6 +59,7 @@
-                     });
-                 }
-             });
-+
-         });
-     </script>
-     {% endif %}
-@@ -104,6 +102,28 @@
-             {% endfor %}
-         });
-     </script>
-+
-+    <script type="text/html" id="js-popover-template-add-item">
-+      <div class="popover popover-additem" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>
-+    </script>
-+
-+    <script type="text/html" id="js-popover-template-add-item-content">
-+      <div class="row">
-+        <div class="col-xs-6">
-+          <button type="button" class="popover-additem-option new-module" data-type="survey">
-+            <i class="fa fa-file-o"></i>
-+            {% trans "Surveys" %}
-+          </button>
-+        </div>
-+        <div class="col-xs-6">
-+          <button type="button" class="popover-additem-option new-module" data-type="case">
-+            <i class="fa fa-bars"></i>
-+            {% trans "Case List" %}
-+          </button>
-+        </div>
-+      </div>
-+    </script>
-+
- {% endblock %}
- 
- {% block breadcrumbs %}
-@@ -117,238 +137,54 @@
+@@ -25,236 +25,51 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -334,6 +281,30 @@
  {% endblock %}
  
  {% block app-content %}
+@@ -264,5 +79,26 @@
+     {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
+     {% initial_page_data 'app_doc_type' app.get_doc_type %}
+     {% initial_page_data 'formdesigner' formdesigner %}
 +    {% block pre_form_content %}{% endblock %}
      {% block form-view %}{% endblock %}
++    <script type="text/html" id="js-popover-template-add-item">
++      <div class="popover popover-additem" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>
++    </script>
++
++    <script type="text/html" id="js-popover-template-add-item-content">
++      <div class="row">
++        <div class="col-xs-6">
++          <button type="button" class="popover-additem-option new-module" data-type="survey">
++            <i class="fa fa-file-o"></i>
++            {% trans "Surveys" %}
++          </button>
++        </div>
++        <div class="col-xs-6">
++          <button type="button" class="popover-additem-option new-module" data-type="case">
++            <i class="fa fa-bars"></i>
++            {% trans "Case List" %}
++          </button>
++        </div>
++      </div>
++    </script>
  {% endblock %}
