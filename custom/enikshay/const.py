@@ -15,6 +15,8 @@ TREATMENT_SUPPORTER_PHONE = 'treatment_supporter_mobile_number'
 TREATMENT_OUTCOME = 'treatment_outcome'
 TREATMENT_OUTCOME_DATE = 'treatment_outcome_date'
 
+EPISODE_PENDING_REGISTRATION = "episode_pending_registration"
+
 WEIGHT_BAND = 'weight_band'
 
 CURRENT_ADDRESS = 'current_address'
