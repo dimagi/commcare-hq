@@ -1,6 +1,8 @@
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
-        init = hqImport('app_manager/js/app_manager.js').init;
+        init = hqImport('app_manager/js/app_manager.js').init,
+        v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2');
+
     init({
         appVersion: initial_page_data('app_version') || -1,
         commcareVersion: String(initial_page_data('app_commcare_minor_release')),
@@ -24,23 +26,39 @@ $(function () {
     });
 
     if (initial_page_data('app_doc_type') == 'Application') {
-        $('[data-toggle="tooltip"]').tooltip()
-        $('.edit-form-pencil').tooltip({
-            title: gettext("Edit in form builder"),
-            placement: 'auto'
-        });
-        $('.edit-form-li').each(function () {
-            var $this = $(this);
-            if (!initial_page_data('formdesigner') || !$this.hasClass("active")) {
-                var $pencil = $this.find('.edit-form-pencil');
-                $pencil.addClass('no-data');
-                $this.hover(function() {
-                    $pencil.removeClass('no-data');
-                }, function() {
+        $('[data-toggle="tooltip"]').tooltip();
+        if (v2) {
+            $('.edit-form-li').each(function () {
+                var $this = $(this);
+                if (initial_page_data('formdesigner') || !$this.hasClass("active")) {
+                    var $pencil = $this.find('.edit-form-pencil');
                     $pencil.addClass('no-data');
-                });
-            }
-        });
+                    $this.hover(function() {
+                        $pencil.removeClass('no-data');
+                    }, function() {
+                        $pencil.addClass('no-data');
+                    });
+                }
+            });
+        } else {
+            $('.edit-form-pencil').tooltip({
+                title: gettext("Edit in form builder"),
+                placement: 'auto'
+            });
+
+            $('.edit-form-li').each(function () {
+                var $this = $(this);
+                if (!initial_page_data('formdesigner') || !$this.hasClass("active")) {
+                    var $pencil = $this.find('.edit-form-pencil');
+                    $pencil.addClass('no-data');
+                    $this.hover(function() {
+                        $pencil.removeClass('no-data');
+                    }, function() {
+                        $pencil.addClass('no-data');
+                    });
+                }
+            });
+        }
     }
 
     // https://github.com/twitter/bootstrap/issues/6122
