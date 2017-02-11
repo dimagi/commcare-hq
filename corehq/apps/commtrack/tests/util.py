@@ -145,14 +145,6 @@ class CommTrackTest(TestCase):
 
     def setUp(self):
         super(CommTrackTest, self).setUp()
-        # might as well clean house before doing anything
-        delete_all_xforms()
-        delete_all_cases()
-        delete_all_sync_logs()
-
-        StockReport.objects.all().delete()
-        StockTransaction.objects.all().delete()
-
         self.backend, self.backend_mapping = setup_default_sms_test_backend()
 
         self.domain = bootstrap_domain(TEST_DOMAIN)
