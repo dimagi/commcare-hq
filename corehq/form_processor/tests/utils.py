@@ -160,7 +160,7 @@ def _conditionally_run_with_all_backends():
     to run couch backend as well.
     '''
 
-    should_run_sql_only = os.environ.get('USE_SQL_BACKEND_ONLY') == '1'
+    should_run_sql_only = os.environ.get('USE_SQL_BACKEND_ONLY') == 'yes'
     run_configs = [
         # run with default setting
         RunConfig(
