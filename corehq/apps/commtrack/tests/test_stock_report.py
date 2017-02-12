@@ -14,7 +14,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
-from corehq.form_processor.tests.utils import
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.form_processor.utils import get_simple_wrapped_form
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import TestFormMetadata

@@ -9,7 +9,7 @@ from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, CaseAc
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests.utils import
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 
 LEDGER_BLOCKS_SIMPLE = """
 <transfer xmlns="http://commcarehq.org/ledger/v1" dest="{case_id}" date="2000-01-02" section-id="stock">

@@ -20,7 +20,7 @@ from django.test import TestCase
 from django.core import cache
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.sql_db.connections import connection_manager
 from corehq.sql_db.tests.utils import temporary_database
 

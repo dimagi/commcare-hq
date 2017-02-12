@@ -6,7 +6,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.tests.utils import
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 
 
 def _count_locations(domain):
