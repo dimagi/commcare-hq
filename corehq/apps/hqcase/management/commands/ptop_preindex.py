@@ -62,7 +62,11 @@ def do_reindex(alias_name, reset):
             kwargs = {"reset": True} if reset else {}
             reindex_command, command_kwargs = reindex_command
             kwargs.update(command_kwargs)
-            call_command(reindex_command, **kwargs)
+            if reindex_command == 'ptop_reindexer_v2':
+                index = kwargs.pop('index')
+                call_command(reindex_command, index, **kwargs)
+            else:
+                call_command(reindex_command, **kwargs)
         else:
             reindex_command()
     print "Pillow preindex finished %s" % alias_name
