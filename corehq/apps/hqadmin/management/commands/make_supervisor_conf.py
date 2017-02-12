@@ -31,7 +31,7 @@ class SupervisorConfCommand(BaseCommand):
         )
         parser.add_argument(
             '--params',
-            type=basestring,
+            type=str,
             # action='callback',
             # callback=parse_params,
             dest='params',
