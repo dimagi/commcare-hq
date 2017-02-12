@@ -202,7 +202,8 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
             "TestDate": datetime.datetime.strptime(test_case_properties.get('date_tested'),
                                                    '%Y-%m-%d').strftime('%d/%m/%Y'),
             "LabNo": test_case_properties.get('lab_serial_number', 0),
-            "RegBy": "tbu-dmdmo01",
+            "RegBy": repeat_record.repeater.username,
+            "password": repeat_record.repeater.password,
             "Local_ID": person_case.get_id,
             "IP_From": "127.0.0.1",
             "IntervalId": interval_id,
@@ -270,7 +271,8 @@ class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
             "InitiatedDate": datetime.datetime.strptime(person_case_properties.get('art_initiation_date'),
                                                         '%Y-%m-%d').strftime('%d/%m/%Y'),
             "Source": ENIKSHAY_ID,
-            "regby": "tbu-dmdmo01",  # TODO: change this to a real username, store in localsettings
+            "regby": repeat_record.repeater.username,
+            "password": repeat_record.repeater.password,
             "IP_FROM": "127.0.0.1",
         }
 

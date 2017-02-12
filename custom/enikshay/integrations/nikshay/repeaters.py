@@ -8,7 +8,7 @@ from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.repeaters.signals import create_repeat_records
-from ...case_utils import (
+from custom.enikshay.case_utils import (
     get_occurence_case_from_test,
     get_open_episode_case_from_person,
     get_open_episode_case_from_occurrence,
@@ -130,6 +130,7 @@ def person_hiv_status_changed(case):
     if last_case_action.is_case_create:
         return False
 
+    # Notify only when hiv_status changes to a not "unknown" value or to a set of expected values
     last_update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
     value_changed = any(
         action for action in last_update_actions
@@ -168,5 +169,5 @@ case_post_save.connect(create_hiv_test_repeat_records, CommCareCaseSQL)
 
 # TODO: Remove this when eNikshay gets migrated to SQL
 case_post_save.connect(create_case_repeat_records, CommCareCase)
-case_post_save.connect(create_followup_repeat_records, CommCareCaseSQL)
-case_post_save.connect(create_hiv_test_repeat_records, CommCareCaseSQL)
+case_post_save.connect(create_followup_repeat_records, CommCareCase)
+case_post_save.connect(create_hiv_test_repeat_records, CommCareCase)
