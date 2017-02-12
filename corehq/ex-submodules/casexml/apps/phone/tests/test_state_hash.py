@@ -22,18 +22,25 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class StateHashTest(TestCase):
     
+    @classmethod
+    def setUpClass(cls):
+        cls.project = Domain(name='state-hash-tests-project')
+        cls.project.save()
+        cls.user = create_restore_user(domain=cls.project.name)
+
     def setUp(self):
         delete_all_cases()
         delete_all_xforms()
         delete_all_sync_logs()
-        delete_all_users()
-        self.project = Domain(name='state-hash-tests-project')
-        self.project.save()
-        self.user = create_restore_user(domain=self.project.name)
 
         # this creates the initial blank sync token in the database
         generate_restore_payload(self.project, self.user)
         self.sync_log = get_exactly_one_wrapped_sync_log()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+        delete_all_users()
 
     @run_with_all_backends
     def testEmpty(self):

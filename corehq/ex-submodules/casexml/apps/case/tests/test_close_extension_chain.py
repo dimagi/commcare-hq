@@ -13,24 +13,26 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 class AutoCloseExtensionsTest(TestCase):
 
-    def setUp(self):
-        super(AutoCloseExtensionsTest, self).setUp()
-        FormProcessorTestUtils.delete_all_cases()
-        FormProcessorTestUtils.delete_all_xforms()
+    @classmethod
+    def setUpClass(cls):
+        super(AutoCloseExtensionsTest, cls).setUpClass()
         delete_all_users()
-        self.domain = "domain"
-        self.project = Domain(name=self.domain)
-        self.user = create_restore_user(self.domain, username='name', password="changeme")
-        self.factory = CaseFactory(domain=self.domain)
-        self.extension_ids = ['1', '2', '3']
-        self.host_id = 'host-{}'.format(uuid.uuid4().hex)
-        self.parent_id = 'parent-{}'.format(uuid.uuid4().hex)
+        cls.domain = "domain"
+        cls.project = Domain(name=cls.domain)
+        cls.user = create_restore_user(cls.domain, username='name', password="changeme")
+        cls.factory = CaseFactory(domain=cls.domain)
+        cls.extension_ids = ['1', '2', '3']
+        cls.host_id = 'host-{}'.format(uuid.uuid4().hex)
+        cls.parent_id = 'parent-{}'.format(uuid.uuid4().hex)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()
+
+    @classmethod
+    def tearDownClass(cls):
         delete_all_users()
-        super(AutoCloseExtensionsTest, self).tearDown()
+        super(AutoCloseExtensionsTest, cls).tearDownClass()
 
     def _create_extension_chain(self):
         host = CaseStructure(case_id=self.host_id, attrs={'create': True})
