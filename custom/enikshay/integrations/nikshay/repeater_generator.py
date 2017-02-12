@@ -216,17 +216,14 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
 
     def handle_success(self, response, payload_doc, repeat_record):
         # Simple success message that has {"Nikshay_Message": "Success"...}
-        try:
-            update_case(
-                payload_doc.domain,
-                payload_doc.case_id,
-                {
-                    "nikshay_registered": "true",
-                    "nikshay_error": "",
-                },
-            )
-        except NikshayResponseException as e:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, e.message)
+        update_case(
+            payload_doc.domain,
+            payload_doc.case_id,
+            {
+                "nikshay_registered": "true",
+                "nikshay_error": "",
+            },
+        )
 
     def handle_failure(self, response, payload_doc, repeat_record):
         _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
@@ -280,7 +277,15 @@ class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
 
     def handle_success(self, response, payload_doc, repeat_record):
         # Simple success message that has {"Nikshay_Message": "Success"...}
-        pass
+        # Simple success message that has {"Nikshay_Message": "Success"...}
+        update_case(
+            payload_doc.domain,
+            payload_doc.case_id,
+            {
+                "hiv_test_nikshay_registered": "true",
+                "nikshay_error": "",
+            },
+        )
 
     def handle_failure(self, response, payload_doc, repeat_record):
         _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
