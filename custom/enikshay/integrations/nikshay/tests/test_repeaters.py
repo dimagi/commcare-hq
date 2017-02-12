@@ -349,7 +349,6 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
 
     @run_with_all_backends
     def test_payload_properties(self):
-        # episode_case = self._create_nikshay_enabled_case()
         payload = (json.loads(
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case))
         )

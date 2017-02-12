@@ -17,7 +17,7 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_occurrence,
     get_open_episode_case_from_person,
     get_lab_referral_from_test,
-    get_occurence_case_from_test,
+    get_occurrence_case_from_test,
     get_person_case_from_occurrence
 )
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
@@ -177,7 +177,7 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
         lab_referral_case = get_lab_referral_from_test(test_case.domain, test_case.get_id)
         dmc = SQLLocation.active_objects.get(location_id=lab_referral_case.owner_id)
         dmc_code = dmc.metadata.get('nikshay_code')
-        occurence_case = get_occurence_case_from_test(test_case.domain, test_case.get_id)
+        occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
         episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
         person_case = get_person_case_from_occurrence(test_case.domain, occurence_case.get_id)
 
@@ -277,7 +277,6 @@ class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
         return json.dumps(properties_dict)
 
     def handle_success(self, response, payload_doc, repeat_record):
-        # Simple success message that has {"Nikshay_Message": "Success"...}
         # Simple success message that has {"Nikshay_Message": "Success"...}
         update_case(
             payload_doc.domain,

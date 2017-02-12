@@ -9,7 +9,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.repeaters.signals import create_repeat_records
 from custom.enikshay.case_utils import (
-    get_occurence_case_from_test,
+    get_occurrence_case_from_test,
     get_open_episode_case_from_person,
     get_open_episode_case_from_occurrence,
 )
@@ -67,7 +67,7 @@ class NikshayFollowupRepeater(CaseRepeater):
         # and episode.nikshay_registered is true
         allowed_case_types_and_users = self._allowed_case_type(test_case) and self._allowed_user(test_case)
         if allowed_case_types_and_users:
-            occurence_case = get_occurence_case_from_test(test_case.domain, test_case.get_id)
+            occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
             episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
             test_case_properties = test_case.dynamic_case_properties()
             episode_case_properties = episode_case.dynamic_case_properties()
