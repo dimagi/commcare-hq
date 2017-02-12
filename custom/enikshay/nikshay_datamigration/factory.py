@@ -130,6 +130,7 @@ class EnikshayCaseFactory(object):
                     'current_address': self.patient_detail.paddress,
                     'current_episode_type': 'confirmed_tb',
                     'current_patient_type_choice': self.patient_detail.patient_type_choice,
+                    'dataset': 'real',
                     'dob': date(date.today().year - self.patient_detail.page, 7, 1),
                     'dob_known': 'no',
                     'has_open_tests': 'no',

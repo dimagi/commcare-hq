@@ -82,6 +82,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('current_address', 'Cambridge MA'),
                 ('current_episode_type', 'confirmed_tb'),
                 ('current_patient_type_choice', 'treatment_after_lfu'),
+                ('dataset', 'real'),
                 ('dob', '{}-07-01'.format(datetime.utcnow().year - 18)),
                 ('dob_known', 'no'),
                 ('first_name', 'A B'),
