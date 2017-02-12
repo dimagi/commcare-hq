@@ -14,13 +14,13 @@ urlpatterns = [
         name=RegisterNikshayPatientRepeaterView.urlname
     ),
     url(
-        r'^new_register_patient_repeater$',
+        r'^patient_followup_repeater$',
         NikshayPatientFollowupRepeaterView.as_view(),
         {'repeater_type': 'NikshayFollowupRepeater'},
         name=NikshayPatientFollowupRepeaterView.urlname
     ),
     url(
-        r'^new_register_patient_repeater$',
+        r'^patient_hiv_test_repeater$',
         NikshayHIVTestRepeaterView.as_view(),
         {'repeater_type': 'NikshayHIVTestRepeater'},
         name=NikshayHIVTestRepeaterView.urlname
