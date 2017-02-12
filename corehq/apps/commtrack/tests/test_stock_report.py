@@ -14,7 +14,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import
 from corehq.form_processor.utils import get_simple_wrapped_form
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import TestFormMetadata
@@ -107,7 +107,7 @@ class StockReportDomainTest(TestCase):
         self.assertEquals(stock_report.form_id, self.form._id)
         self.assertEquals(stock_report.domain, self.domain)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_case_ledger_state(self):
         for case_id in self.case_ids:
             state = LedgerAccessors(self.domain).get_case_ledger_state(case_id)
@@ -153,7 +153,7 @@ class StockReportDomainTest(TestCase):
 
         tester_fn(new_trans)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_case_ledger_state_1(self):
         def test_transactions(expected):
             for case_id in self.case_ids:
@@ -164,7 +164,7 @@ class StockReportDomainTest(TestCase):
 
         self.assertEqual({}, LedgerAccessors(self.domain).get_case_ledger_state('non-existent'))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_current_ledger_state(self):
         def test_transactions(expected):
             state = LedgerAccessors(self.domain).get_current_ledger_state(self.case_ids.keys())

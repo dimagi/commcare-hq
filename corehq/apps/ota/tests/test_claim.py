@@ -7,7 +7,7 @@ from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 
 DOMAIN = 'test_domain'
 USERNAME = 'lina.stern@ras.ru'
@@ -62,7 +62,7 @@ class CaseClaimTests(TestCase):
             'relationship': 'extension',
         }])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_claim_case(self):
         """
         claim_case should create an extension case
@@ -71,7 +71,7 @@ class CaseClaimTests(TestCase):
                               host_type=self.host_case_type, host_name=self.host_case_name)
         self.assert_claim(claim_id=claim_id)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_claim_case_id_only(self):
         """
         claim_case should look up host case details if only ID is passed
@@ -79,7 +79,7 @@ class CaseClaimTests(TestCase):
         claim_id = claim_case(DOMAIN, self.user.user_id, self.host_case_id)
         self.assert_claim(claim_id=claim_id)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_first_claim_one(self):
         """
         get_first_claim should return one claim
@@ -89,7 +89,7 @@ class CaseClaimTests(TestCase):
         claim = get_first_claim(DOMAIN, self.user.user_id, self.host_case_id)
         self.assert_claim(claim, claim_id)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_first_claim_none(self):
         """
         get_first_claim should return None if not found
@@ -97,7 +97,7 @@ class CaseClaimTests(TestCase):
         claim = get_first_claim(DOMAIN, self.user.user_id, self.host_case_id)
         self.assertIsNone(claim)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_closed_claim(self):
         """
         get_first_claim should return None if claim case is closed

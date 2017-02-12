@@ -14,7 +14,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, conditionally_run_with_all_backends
 from corehq.form_processor.utils.general import should_use_sql_backend
 
 DOMAIN = 'ledger-tests'
@@ -67,7 +67,7 @@ class LedgerTests(TestCase):
             get_single_transfer_block(self.case.case_id, None, self.product_a._id, amount)
         ])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_balance_submission(self):
         orignal_form_count = len(self.interface.get_case_forms(self.case.case_id))
         self._set_balance(100)
@@ -78,7 +78,7 @@ class LedgerTests(TestCase):
             self._expected_val(100, 100)
         ])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_balance_submission_multiple(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
         balances = {
@@ -105,7 +105,7 @@ class LedgerTests(TestCase):
 
         self._assert_transactions(expected_transactions, ignore_ordering=True)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_balance_submission_with_prior_balance(self):
         self._set_balance(100)
         self._assert_ledger_state(100)
@@ -120,7 +120,7 @@ class LedgerTests(TestCase):
             self._expected_val(100, 150),
         ])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_transfer_submission(self):
         orignal_form_count = len(self.interface.get_case_forms(self.case.case_id))
         self._transfer_in(100)
@@ -132,7 +132,7 @@ class LedgerTests(TestCase):
             self._expected_val(100, 100, type_=LedgerTransaction.TYPE_TRANSFER),
         ])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_transfer_submission_with_prior_balance(self):
         self._set_balance(100)
         self._transfer_in(100)
@@ -143,7 +143,7 @@ class LedgerTests(TestCase):
             self._expected_val(100, 200, type_=LedgerTransaction.TYPE_TRANSFER),
         ])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_full_combination(self):
         self._set_balance(100)
         self._transfer_in(100)
@@ -164,7 +164,7 @@ class LedgerTests(TestCase):
             self._expected_val(-30, 140, type_=LedgerTransaction.TYPE_TRANSFER),
         ])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_ledger_update_with_case_update(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
         submit_case_blocks([

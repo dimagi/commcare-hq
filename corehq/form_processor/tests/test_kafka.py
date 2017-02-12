@@ -7,7 +7,7 @@ from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, conditionally_run_with_all_backends
 from corehq.form_processor.utils import get_simple_form_xml, should_use_sql_backend
 from corehq.util.test_utils import create_and_save_a_case, create_and_save_a_form
 from pillowtop.pillow.interface import ConstructedPillow
@@ -47,7 +47,7 @@ class KafkaPublishingTest(TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_form_is_published(self):
         with process_kafka_changes(self.form_pillow):
             with process_couch_changes('DefaultChangeFeedPillow'):
@@ -58,7 +58,7 @@ class KafkaPublishingTest(TestCase):
         self.assertEqual(form.form_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_duplicate_form_published(self):
         form_id = uuid.uuid4().hex
         form_xml = get_simple_form_xml(form_id)
@@ -87,7 +87,7 @@ class KafkaPublishingTest(TestCase):
             self.assertEqual(self.domain, orig_form_meta.domain)
             self.assertEqual(dupe_form.domain, dupe_form.domain)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_form_soft_deletions(self):
         form = create_and_save_a_form(self.domain)
         with process_kafka_changes(self.form_pillow):
@@ -99,7 +99,7 @@ class KafkaPublishingTest(TestCase):
         self.assertEqual(form.form_id, change_meta.document_id)
         self.assertTrue(change_meta.is_deletion)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_is_published(self):
         with process_kafka_changes(self.case_pillow):
             with process_couch_changes('DefaultChangeFeedPillow'):
@@ -110,7 +110,7 @@ class KafkaPublishingTest(TestCase):
         self.assertEqual(case.case_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_deletions(self):
         case = create_and_save_a_case(self.domain, case_id=uuid.uuid4().hex, case_name='test case')
         with process_kafka_changes(self.case_pillow):

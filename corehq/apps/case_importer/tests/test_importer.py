@@ -12,7 +12,7 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import
 from corehq.util.workbook_reading import make_worksheet
 
 
@@ -53,14 +53,14 @@ class ImporterTest(TestCase):
             create_new_cases=create_new_cases,
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testImportNone(self):
         res = bulk_import_async(self._config(['anything']), self.domain, None)
         self.assertEqual('Sorry, your session has expired. Please start over and try again.',
                          unicode(res['errors']))
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testImportBasic(self):
         config = self._config(['case_id', 'age', 'sex', 'location'])
         file = make_worksheet_wrapper(
@@ -89,7 +89,7 @@ class ImporterTest(TestCase):
                 self.assertFalse(case.get_case_property(prop) in properties_seen)
                 properties_seen.add(case.get_case_property(prop))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testImportNamedColumns(self):
         config = self._config(['case_id', 'age', 'sex', 'location'])
         file = make_worksheet_wrapper(
@@ -104,7 +104,7 @@ class ImporterTest(TestCase):
         self.assertEqual(4, res['created_count'])
         self.assertEqual(4, len(self.accessor.get_case_ids_in_domain()))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testImportTrailingWhitespace(self):
         cols = ['case_id', 'age', u'sex\xa0', 'location']
         config = self._config(cols)
@@ -120,7 +120,7 @@ class ImporterTest(TestCase):
         case = self.accessor.get_case(case_ids[0])
         self.assertTrue(bool(case.get_case_property('sex')))  # make sure the value also got properly set
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testCaseIdMatching(self):
         # bootstrap a stub case
         [case] = self.factory.create_or_update_case(CaseStructure(attrs={
@@ -151,7 +151,7 @@ class ImporterTest(TestCase):
         # shouldn't touch existing properties
         self.assertEqual('foo', case.get_case_property('importer_test_prop'))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testCaseLookupTypeCheck(self):
         [case] = self.factory.create_or_update_case(CaseStructure(attrs={
             'create': True,
@@ -171,7 +171,7 @@ class ImporterTest(TestCase):
         self.assertEqual(0, res['match_count'])
         self.assertEqual(4, len(self.accessor.get_case_ids_in_domain()))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testCaseLookupDomainCheck(self):
         self.factory.domain = 'wrong-domain'
         [case] = self.factory.create_or_update_case(CaseStructure(attrs={
@@ -192,7 +192,7 @@ class ImporterTest(TestCase):
         self.assertEqual(0, res['match_count'])
         self.assertEqual(3, len(self.accessor.get_case_ids_in_domain()))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testExternalIdMatching(self):
         # bootstrap a stub case
         external_id = 'importer-test-external-id'
@@ -220,7 +220,7 @@ class ImporterTest(TestCase):
         # shouldn't create any more cases, just the one
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_external_id_matching_on_create_with_custom_column_name(self):
         headers = ['id_column', 'age', 'sex', 'location']
         external_id = 'external-id-test'
@@ -288,7 +288,7 @@ class ImporterTest(TestCase):
         self.assertEqual(5, res['created_count'])
         self.assertEqual(5, len(get_case_ids_in_domain(self.domain)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testExternalIdChunking(self):
         # bootstrap a stub case
         external_id = 'importer-test-external-id'
@@ -317,7 +317,7 @@ class ImporterTest(TestCase):
         for prop in ['age', 'sex', 'location']:
             self.assertTrue(prop in case.get_case_property(prop))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testParentCase(self):
         headers = ['parent_id', 'name', 'case_id']
         config = self._config(headers, create_new_cases=True, search_column='case_id')
@@ -354,7 +354,7 @@ class ImporterTest(TestCase):
         xls_file = make_worksheet_wrapper(*rows)
         return do_import(xls_file, config, self.domain)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testLocationOwner(self):
         # This is actually testing several different things, but I figure it's
         # worth it, as each of these tests takes a non-trivial amount of time.

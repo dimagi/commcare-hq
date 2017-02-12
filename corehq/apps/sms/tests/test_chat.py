@@ -3,7 +3,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS, SQLLastReadMessage, OUTGOING, INCOMING
 from corehq.apps.sms.views import ChatMessageHistory
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.util.test_utils import softer_assert, create_test_case
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
@@ -213,7 +213,7 @@ class ChatHistoryTestCase(TestCase):
     def create_contact2(self):
         return create_test_case('another-domain', 'contact', 'test-case2', case_id=self.contact2_id)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_contact(self):
         with self.create_contact1() as contact1, self.create_contact2() as contact2:
             with self.patch_contact_id(contact1.case_id):
@@ -222,7 +222,7 @@ class ChatHistoryTestCase(TestCase):
             with self.patch_contact_id(contact2.case_id):
                 self.assertIsNone(self.new_view.contact)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_contact_name(self):
         with self.create_contact1() as contact1:
             self.set_custom_case_username(None)
@@ -309,7 +309,7 @@ class ChatHistoryTestCase(TestCase):
         self.assertEqual(lrm.message_id, sms.couch_id)
         self.assertEqual(lrm.message_timestamp, sms.date)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_response_data(self):
         with self.create_contact1() as contact1:
             with self.patch_contact_id(contact1.case_id):
@@ -355,7 +355,7 @@ class ChatHistoryTestCase(TestCase):
 
                 self.set_survey_filter_option(False, False)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_update_last_read_message(self):
         SQLLastReadMessage.objects.all().delete()
         self.assertEqual(self.get_last_read_message_count(), 0)

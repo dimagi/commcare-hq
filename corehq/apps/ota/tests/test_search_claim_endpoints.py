@@ -14,7 +14,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.pillows.case_search import get_case_search_reindexer
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO, CASE_SEARCH_INDEX
 from corehq.util.elastic import ensure_index_deleted
@@ -63,7 +63,7 @@ class CaseClaimEndpointTests(TestCase):
         for query_addition in CaseSearchQueryAddition.objects.all():
             query_addition.delete()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_claim_case(self):
         """
         A claim case request should create an extension case
@@ -81,7 +81,7 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(claim.owner_id, self.user.get_id)
         self.assertEqual(claim.name, CASE_NAME)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_duplicate_client_claim(self):
         """
         Server should not allow the same client to claim the same case more than once
@@ -97,7 +97,7 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.content, 'You have already claimed that case')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_duplicate_user_claim(self):
         """
         Server should not allow the same user to claim the same case more than once
@@ -115,7 +115,7 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.content, 'You have already claimed that case')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_search_endpoint(self):
         known_result = (
             '<results id="case">'  # ("case" is not the case type)

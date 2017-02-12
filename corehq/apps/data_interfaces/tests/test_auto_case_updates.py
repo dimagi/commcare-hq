@@ -11,7 +11,7 @@ from datetime import datetime, date
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import (run_with_all_backends, FormProcessorTestUtils,
+from corehq.form_processor.tests.utils import (conditionally_run_with_all_backends, FormProcessorTestUtils,
     set_case_property_directly)
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.signals import sql_case_post_save
@@ -154,7 +154,7 @@ class AutomaticCaseUpdateTest(TestCase):
             doc = self._get_case()
             self.assertTrue(doc['_rev'].startswith('%s-' % rev_number))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_rule(self):
         now = datetime(2015, 10, 22, 0, 0)
         with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.get_case_ids', new=self._get_case_ids):
@@ -206,7 +206,7 @@ class AutomaticCaseUpdateTest(TestCase):
             self.assertEqual(case.get_case_property('update_flag'), 'C')
             self.assertEqual(case.closed, True)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_match_days_after(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
             AutomaticUpdateRuleCriteria.objects.create(
@@ -229,7 +229,7 @@ class AutomaticCaseUpdateTest(TestCase):
             set_case_property_directly(case, 'last_visit_date', '2015-11-01')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_match_days_before(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
             AutomaticUpdateRuleCriteria.objects.create(
@@ -256,7 +256,7 @@ class AutomaticCaseUpdateTest(TestCase):
             set_case_property_directly(case, 'last_visit_date', '2016-03-01')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_match_equal(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
             AutomaticUpdateRuleCriteria.objects.create(
@@ -273,7 +273,7 @@ class AutomaticCaseUpdateTest(TestCase):
             set_case_property_directly(case, 'property1', 'value1')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_match_not_equal(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
             AutomaticUpdateRuleCriteria.objects.create(
@@ -290,7 +290,7 @@ class AutomaticCaseUpdateTest(TestCase):
             set_case_property_directly(case, 'property2', 'x')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_date_case_properties_for_equality(self):
         """
         Date case properties are automatically converted from string to date
@@ -311,7 +311,7 @@ class AutomaticCaseUpdateTest(TestCase):
             set_case_property_directly(case, 'property1', '2016-02-25')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_date_case_properties_for_inequality(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
             AutomaticUpdateRuleCriteria.objects.create(
@@ -327,7 +327,7 @@ class AutomaticCaseUpdateTest(TestCase):
             set_case_property_directly(case, 'property1', '2016-02-25')
             self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_match_has_value(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
             AutomaticUpdateRuleCriteria.objects.create(
@@ -343,7 +343,7 @@ class AutomaticCaseUpdateTest(TestCase):
             set_case_property_directly(case, 'property3', '')
             self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_and_criteria(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
 
@@ -427,7 +427,7 @@ class AutomaticCaseUpdateTest(TestCase):
             rules_by_case_type['test-case-type-2'], datetime(2016, 1, 1))
         self.assertEqual(boundary_date, datetime(2015, 12, 2))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_parent_cases(self):
         with _with_case(self.domain, 'test-child-case-type', datetime(2016, 1, 1)) as child, \
                 _with_case(self.domain, 'test-parent-case-type', datetime(2016, 1, 1), case_name='abc') as parent:
@@ -483,13 +483,13 @@ class AutomaticCaseUpdateTest(TestCase):
 
             self.assertFalse(rule.rule_matches_case(child, datetime(2016, 3, 1)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_no_server_boundary(self):
         with _with_case(self.domain, 'test-case-type-3', datetime(2016, 1, 1), case_name='signal') as case:
             # no filtering on server modified date so same day matches
             self.assertTrue(self.rule5.rule_matches_case(case, datetime(2016, 1, 1)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_run_on_save(self):
         with _with_case(self.domain, 'test-case-type-3', datetime(2016, 1, 1), case_name='signal') as case:
             with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.apply_rule') as apply:
@@ -497,7 +497,7 @@ class AutomaticCaseUpdateTest(TestCase):
                 update_case(self.domain, case.case_id, {})
                 apply.assert_called_once()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_early_task_exit(self):
         with _with_case(self.domain, 'test-case-type-3', datetime(2016, 1, 1), case_name='signal') as case:
             with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.apply_rule') as apply:

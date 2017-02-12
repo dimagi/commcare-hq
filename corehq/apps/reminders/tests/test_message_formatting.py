@@ -5,7 +5,7 @@ from corehq.apps.reminders.event_handlers import get_message_template_params
 from corehq.apps.reminders.models import Message
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.util.test_utils import create_test_case, set_parent_case
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -127,7 +127,7 @@ class MessageTestCase(TestCase):
             'site_code': self.location.site_code,
         }
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_template_params(self):
         with self.create_child_case() as child_case, self.create_parent_case() as parent_case:
             set_parent_case(self.domain, child_case, parent_case)
@@ -145,7 +145,7 @@ class MessageTestCase(TestCase):
             parent_expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
             self.assertEqual(get_message_template_params(parent_case), parent_expected_result)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_owner_template_params(self):
         with self.create_parent_case(owner=self.mobile_user) as case:
             expected_result = {'case': case.to_json()}
@@ -171,7 +171,7 @@ class MessageTestCase(TestCase):
             expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
             self.assertEqual(get_message_template_params(case), expected_result)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_modified_by_template_params(self):
         with self.create_parent_case(modified_by=self.mobile_user, owner=self.location) as case:
             expected_result = {'case': case.to_json()}

@@ -17,7 +17,7 @@ from corehq.form_processor.utils.xform import (
     TestFormMetadata,
     get_simple_wrapped_form,
 )
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from casexml.apps.case.tests.util import delete_all_xforms
 
 from ..views import LocationsListView, EditLocationView
@@ -41,20 +41,20 @@ class FormEditRestrictionsMixin(object):
         ])
     ]
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_can_edit_form_in_county(self):
         self.assertCanEdit(self.middlesex_web_user, self.cambridge_form)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_cant_edit_out_of_county(self):
         self.assertCannotEdit(self.middlesex_web_user, self.boston_form)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_can_edit_any_form(self):
         self.assertCanEdit(self.massachusetts_web_user, self.cambridge_form)
         self.assertCanEdit(self.massachusetts_web_user, self.boston_form)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_project_admin_can_edit_anything(self):
         self.project_admin.get_domain_membership(self.domain).is_admin = True
         self.project_admin.save()
@@ -62,13 +62,13 @@ class FormEditRestrictionsMixin(object):
         self.assertCanEdit(self.project_admin, self.cambridge_form)
         self.assertCanEdit(self.project_admin, self.boston_form)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_unassigned_web_user_cant_edit_anything(self):
         self.assertCannotEdit(self.locationless_web_user, self.cambridge_form)
         self.assertCannotEdit(self.locationless_web_user, self.boston_form)
 
     @flag_enabled('MULTIPLE_LOCATIONS_PER_USER')
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_multiple_locations_per_user(self):
         # Note also that location types must not be administrative for multiple
         # locations per domain to work.  This was a pain to figure out...

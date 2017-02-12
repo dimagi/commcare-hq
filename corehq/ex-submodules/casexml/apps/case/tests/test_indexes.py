@@ -12,7 +12,7 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, conditionally_run_with_all_backends
 
 
 class IndexSimpleTest(SimpleTestCase):
@@ -143,7 +143,7 @@ class IndexTest(TestCase):
 
         check_user_has_case(self, self.user, update_index_expected)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testRelationshipGetsSet(self):
         parent_case_id = uuid.uuid4().hex
         post_case_blocks(

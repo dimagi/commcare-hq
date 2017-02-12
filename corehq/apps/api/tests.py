@@ -51,7 +51,7 @@ from custom.ilsgateway.resources.v0_1 import ILSLocationResource
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from custom.hope.models import CC_BIHAR_PREGNANCY
@@ -361,7 +361,7 @@ class TestXFormInstanceResource(APIResourceTest):
         ]
         self._test_es_query({'include_archived': 'true'}, expected)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_fetching_xform_cases(self):
         fake_xform_es = FakeXFormES(ESXFormInstance)
         v0_4.MOCK_XFORM_ES = fake_xform_es
@@ -425,7 +425,7 @@ class TestCommCareCaseResource(APIResourceTest):
         api_case = api_cases[0]
         self.assertEqual(api_case['server_date_modified'], json_format_datetime(backend_case.server_modified_on))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_parent_and_child_cases(self):
         fake_case_es = FakeXFormES(ESCase)
         v0_4.MOCK_CASE_ES = fake_case_es

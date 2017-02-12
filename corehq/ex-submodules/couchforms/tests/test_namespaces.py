@@ -1,7 +1,7 @@
 import os
 from django.test import TestCase
 
-from corehq.form_processor.tests.utils import run_with_all_backends, post_xform
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends, post_xform
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -13,7 +13,7 @@ class TestNamespaces(TestCase, TestFileMixin):
         result = xform.get_data(xpath)
         self.assertEqual(xmlns, result['@xmlns'] if expect_xmlns_index else result)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testClosed(self):
         xml_data = self.get_xml('namespaces')
         xform = post_xform(xml_data)

@@ -6,7 +6,7 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, conditionally_run_with_all_backends
 from django.test import TestCase
 
 
@@ -23,7 +23,7 @@ class TestExtensionCaseIds(TestCase):
         FormProcessorTestUtils.delete_all_xforms()
         super(TestExtensionCaseIds, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_no_extensions(self):
         """ Returns empty when there are other index types """
         parent_id = uuid.uuid4().hex
@@ -42,7 +42,7 @@ class TestExtensionCaseIds(TestCase):
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([parent_id])
         self.assertEqual(returned_cases, [])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_simple_extension_returned(self):
         """ Should return extension if it exists """
         host_id = uuid.uuid4().hex
@@ -61,7 +61,7 @@ class TestExtensionCaseIds(TestCase):
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id])
         self.assertItemsEqual(returned_cases, [extension_id])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_extension_of_multiple_hosts_returned(self):
         """ Should return an extension from any host if there are multiple indices """
         host_id = uuid.uuid4().hex
@@ -89,7 +89,7 @@ class TestExtensionCaseIds(TestCase):
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id])
         self.assertItemsEqual(returned_cases, [extension_id])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_host_with_multiple_extensions(self):
         """ Return all extensions from a single host """
         host_id = uuid.uuid4().hex
@@ -119,7 +119,7 @@ class TestExtensionCaseIds(TestCase):
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id])
         self.assertItemsEqual(returned_cases, [extension_id, extension_2_id])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_extensions_from_list(self):
         """ Given a list of hosts, should return all extensions """
         host_id = uuid.uuid4().hex
@@ -163,7 +163,7 @@ class TestIndexedCaseIds(TestCase):
         FormProcessorTestUtils.delete_all_xforms()
         super(TestIndexedCaseIds, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_indexed_case_ids_returns_extensions(self):
         """ When getting indices, also return extensions """
         host_id = uuid.uuid4().hex

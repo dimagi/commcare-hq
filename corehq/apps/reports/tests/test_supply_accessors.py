@@ -26,7 +26,7 @@ class TestSupplyAccessors(TestCase):
                                                               case_id='missing', section_id='stock',
                                                               as_of=datetime.utcnow()))
 
-    # @run_with_all_backends
+    # @conditionally_run_with_all_backends
     def test_get_ledger_values_for_case_as_of(self):
         case_id = uuid.uuid4().hex
         form_xml = get_simple_form_xml(uuid.uuid4().hex, case_id)

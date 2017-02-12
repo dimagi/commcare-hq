@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.test import Client
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, conditionally_run_with_all_backends
 from corehq.form_processor.utils.xform import TestFormMetadata, get_simple_wrapped_form
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.workbook_json.excel import WorkbookJSONReader
@@ -123,7 +123,7 @@ class BulkArchiveFormsUnit(TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(DOMAIN_NAME)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_archive_forms_basic(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
 
@@ -137,7 +137,7 @@ class BulkArchiveFormsUnit(TestCase):
 
         self.assertEqual(len(response['success']), len(self.xforms))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_archive_forms_missing(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, MISSING_XLSX))
 
@@ -151,7 +151,7 @@ class BulkArchiveFormsUnit(TestCase):
         self.assertEqual(len(response['errors']), 1,
                          "One error for trying to archive a missing form")
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_archive_forms_wrong_domain(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
 

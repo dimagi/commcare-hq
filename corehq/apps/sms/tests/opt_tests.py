@@ -6,7 +6,7 @@ from corehq.apps.sms.messages import MSG_OPTED_IN, MSG_OPTED_OUT, get_message
 from corehq.apps.sms.models import PhoneBlacklist, SMS, PhoneNumber
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends, FormProcessorTestUtils
 
 
 class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
@@ -25,7 +25,7 @@ class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
     def get_last_sms(self, phone_number):
         return SMS.objects.filter(domain=self.domain, phone_number=phone_number).order_by('-date')[0]
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_opt_out_and_opt_in(self):
         self.assertEqual(PhoneBlacklist.objects.count(), 0)
 
@@ -57,7 +57,7 @@ class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
         self.assertEqual(sms.direction, 'O')
         self.assertEqual(sms.text, get_message(MSG_OPTED_IN, context=('STOP',)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_sending_to_opted_out_number(self):
         self.assertEqual(PhoneBlacklist.objects.count(), 0)
 

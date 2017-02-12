@@ -6,7 +6,7 @@ from corehq.apps.reminders.models import (CaseReminderHandler,
     CaseReminderEvent, FIRE_TIME_DEFAULT,
     EVENT_AS_SCHEDULE, MATCH_EXACT)
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends, FormProcessorTestUtils
 from corehq.messaging.ivrbackends.kookoo.models import SQLKooKooBackend
 from mock import patch
 from datetime import datetime, time
@@ -103,7 +103,7 @@ class KooKooTestCase(TouchformsTestCase):
         url = "%s/kookoo/ivr_finished/" % self.live_server_url
         return urllib2.urlopen(url, params).read()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testOutbound(self):
         # Send an outbound call using self.reminder1 to self.case
         # and answer it

@@ -14,7 +14,7 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, conditionally_run_with_all_backends
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
@@ -41,7 +41,7 @@ class FundamentalCaseTests(TestCase):
         self.interface = FormProcessorInterface()
         self.casedb = CaseAccessors()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_create_case(self):
         case_id = uuid.uuid4().hex
         modified_on = datetime.utcnow()
@@ -73,7 +73,7 @@ class FundamentalCaseTests(TestCase):
 
         self.assertEqual(case.dynamic_case_properties()['dynamic'], '123')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_create_case_unicode_name(self):
         """
         Submit case blocks with unicode names
@@ -93,7 +93,7 @@ class FundamentalCaseTests(TestCase):
         case = self.casedb.get_case(case_id)
         self.assertEqual(case.name, case_name)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_update_case(self):
         case_id = uuid.uuid4().hex
         opened_on = datetime.utcnow()
@@ -124,7 +124,7 @@ class FundamentalCaseTests(TestCase):
         self.assertIsNone(case.closed_on)
         self.assertEqual(case.dynamic_case_properties()['dynamic'], '1234')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_close_case(self):
         # same as update, closed, closed on, closed by
         case_id = uuid.uuid4().hex
@@ -148,7 +148,7 @@ class FundamentalCaseTests(TestCase):
         self.assertEqual(case.closed_by, 'user2')
         self.assertTrue(case.server_modified_on > modified_on)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_empty_update(self):
         case_id = uuid.uuid4().hex
         opened_on = datetime.utcnow()
@@ -167,7 +167,7 @@ class FundamentalCaseTests(TestCase):
         case = self.casedb.get_case(case_id)
         self.assertEqual(case.dynamic_case_properties(), {'dynamic': '123'})
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_with_index(self):
         # same as update, indexes
         mother_case_id = uuid.uuid4().hex
@@ -192,7 +192,7 @@ class FundamentalCaseTests(TestCase):
         self.assertEqual(index.referenced_type, 'mother')
         self.assertEqual(index.relationship, 'child')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_update_index(self):
         mother_case_id = uuid.uuid4().hex
         _submit_case_block(
@@ -219,7 +219,7 @@ class FundamentalCaseTests(TestCase):
         case = self.casedb.get_case(child_case_id)
         self.assertEqual(case.indices[0].referenced_type, 'other_mother')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_delete_index(self):
         mother_case_id = uuid.uuid4().hex
         _submit_case_block(
@@ -246,7 +246,7 @@ class FundamentalCaseTests(TestCase):
         case = self.casedb.get_case(child_case_id)
         self.assertEqual(len(case.indices), 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_invalid_index(self):
         invalid_case_id = uuid.uuid4().hex
         child_case_id = uuid.uuid4().hex
@@ -260,7 +260,7 @@ class FundamentalCaseTests(TestCase):
         self.assertTrue(form.is_error)
         self.assertTrue('InvalidCaseIndex' in form.problem)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_invalid_index_cross_domain(self):
         mother_case_id = uuid.uuid4().hex
         _submit_case_block(
@@ -285,7 +285,7 @@ class FundamentalCaseTests(TestCase):
         # same as update, attachments
         pass
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_date_opened_coercion(self):
         delete_all_users()
         self.project = Domain(name='some-domain')
@@ -307,7 +307,7 @@ class FundamentalCaseTests(TestCase):
         case.date_opened = case.date_opened.date()
         check_user_has_case(self, user, case.as_xml())
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_restore_caches_cleared(self):
         cache = get_redis_default_cache()
         cache_key = restore_cache_key(RESTORE_CACHE_KEY_PREFIX, 'user_id', version="2.0")

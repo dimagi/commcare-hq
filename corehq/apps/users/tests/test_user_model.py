@@ -4,7 +4,7 @@ from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import get_simple_wrapped_form, TestFormMetadata
-from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends, FormProcessorTestUtils
 
 
 class UserModelTest(TestCase):
@@ -31,7 +31,7 @@ class UserModelTest(TestCase):
         self.domain_obj.delete()
         super(UserModelTest, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_form_ids(self):
         form_ids = list(self.user._get_form_ids())
         self.assertEqual(len(form_ids), 1)

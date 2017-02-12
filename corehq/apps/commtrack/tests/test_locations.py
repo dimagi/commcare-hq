@@ -6,7 +6,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import
 
 
 def _count_locations(domain):
@@ -25,7 +25,7 @@ class LocationsTest(CommTrackTest):
         self.accessor = SupplyInterface(self.domain.name)
         self.user = self.users[0]
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_sync(self):
         test_state = make_loc(
             'teststate',
@@ -49,7 +49,7 @@ class LocationsTest(CommTrackTest):
         except SQLLocation.DoesNotExist:
             self.fail("Synced SQL object does not exist")
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_archive(self):
         test_state = make_loc(
             'teststate',
@@ -86,7 +86,7 @@ class LocationsTest(CommTrackTest):
             1
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_archive_flips_sp_cases(self):
         loc = make_loc('someloc').sql_location
         sp = loc.linked_supply_point()
@@ -100,7 +100,7 @@ class LocationsTest(CommTrackTest):
         sp = loc.linked_supply_point()
         self.assertFalse(sp.closed)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_full_delete(self):
         test_loc = make_loc(
             'test_loc',
@@ -129,7 +129,7 @@ class LocationsTest(CommTrackTest):
             0
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_delete_closes_sp_cases(self):
         loc = make_loc('test_loc').sql_location
         sp = loc.linked_supply_point()

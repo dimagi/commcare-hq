@@ -7,7 +7,7 @@ from corehq.apps.reminders.tests.utils import BaseReminderTestCase
 from corehq.apps.sms.models import ExpectedCallback, CALLBACK_RECEIVED, CALLBACK_PENDING, CALLBACK_MISSED
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.util.test_utils import create_test_case, update_case
 from datetime import datetime, date, time, timedelta
 from django.test import TestCase
@@ -51,7 +51,7 @@ class ReminderTestCase(BaseReminderTestCase):
         self.user.delete()
         super(ReminderTestCase, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_ok(self):
         with create_test_case(self.domain, self.case_type, 'test-case', drop_signals=False,
                 user_id=self.user.get_id) as case:
@@ -177,7 +177,7 @@ class ReminderIrregularScheduleTestCase(BaseReminderTestCase):
         self.user.delete()
         super(ReminderIrregularScheduleTestCase, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_ok(self):
 
         with create_test_case(self.domain, self.case_type, 'test-case', drop_signals=False,
@@ -336,7 +336,7 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
             date
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_ok(self):
         with create_test_case(self.domain, self.case_type, 'test-case', drop_signals=False,
                 user_id=self.user.get_id) as case:
@@ -640,7 +640,7 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
             domain=self.domain
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_ok(self):
         with self.create_case_1() as case1, self.create_case_2() as case2:
 
@@ -780,7 +780,7 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
         self.user.delete()
         super(StartConditionReminderTestCase, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_ok(self):
         with create_test_case(self.domain, 'case_type_a', 'test-case', drop_signals=False,
                 user_id=self.user.get_id) as case:
@@ -905,7 +905,7 @@ class ReminderDefinitionCalculationsTestCase(TestCase):
     def setUp(self):
         self.domain = 'reminder-calculation-test'
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_calculate_start_date_without_today_option(self):
         now = datetime.utcnow()
 
@@ -968,7 +968,7 @@ class ReminderDefinitionCalculationsTestCase(TestCase):
                 (datetime(2016, 1, 12), True, False)
             )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_calculate_start_date_with_today_option(self):
         now = datetime.utcnow()
 

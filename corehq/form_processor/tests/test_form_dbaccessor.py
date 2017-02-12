@@ -19,7 +19,7 @@ from corehq.form_processor.models import (XFormInstanceSQL, XFormOperationSQL,
     XFormAttachmentSQL, DisabledDbMixin)
 from corehq.form_processor.parsers.form import apply_deprecation
 from corehq.form_processor.tests.utils import (create_form_for_test,
-    FormProcessorTestUtils, run_with_all_backends)
+    FormProcessorTestUtils, conditionally_run_with_all_backends)
 from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
 from corehq.form_processor.utils.xform import TestFormMetadata
 from corehq.sql_db.routers import db_for_read_write
@@ -318,7 +318,7 @@ class FormAccessorsTests(TestCase):
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
         super(FormAccessorsTests, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_soft_delete(self):
         meta = TestFormMetadata(domain=DOMAIN)
         get_simple_wrapped_form('f1', metadata=meta)

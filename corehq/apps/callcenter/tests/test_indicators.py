@@ -20,7 +20,7 @@ from django.test import TestCase
 from django.core import cache
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import
 from corehq.sql_db.connections import connection_manager
 from corehq.sql_db.tests.utils import temporary_database
 
@@ -467,7 +467,7 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
         self.domain.delete()
         super(CallCenterSupervisorGroupTest, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_users_assigned_via_group(self):
         """
         Ensure that users who are assigned to the supervisor via a group are also included
@@ -526,7 +526,7 @@ class CallCenterCaseSharingTest(BaseCCTests):
         clear_data(self.domain.name)
         self.domain.delete()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_cases_owned_by_group(self):
         """
         Ensure that indicators include cases owned by a case sharing group the user is part of.
@@ -572,7 +572,7 @@ class CallCenterTestOpenedClosed(BaseCCTests):
         clear_data(self.domain.name)
         self.domain.delete()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_opened_closed(self):
         """
         Test that cases_closed and cases_opened indicators count based on the user that
@@ -619,7 +619,7 @@ class TestSavingToUCRDatabase(BaseCCTests):
         connection_manager.dispose_engine('ucr')
         self.db_context.__exit__(None, None, None)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_standard_indicators(self):
         with override_settings(UCR_DATABASE_URL=self.ucr_db_url):
             load_data(self.cc_domain.name, self.cc_user.user_id)

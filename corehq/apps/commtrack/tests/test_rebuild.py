@@ -9,7 +9,7 @@ from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, CaseAc
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import
 
 LEDGER_BLOCKS_SIMPLE = """
 <transfer xmlns="http://commcarehq.org/ledger/v1" dest="{case_id}" date="2000-01-02" section-id="stock">
@@ -62,7 +62,7 @@ class RebuildStockStateTest(TestCase):
         return submit_case_blocks(
             ledger_blocks.format(**self._stock_state_key), self.domain)[0].form_id
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_simple(self):
         self._submit_ledgers(LEDGER_BLOCKS_SIMPLE)
         self._assert_stats(2, 100, 100)
@@ -88,7 +88,7 @@ class RebuildStockStateTest(TestCase):
 
         self._assert_stats(2, 150, 150)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_actions(self):
         # make sure that when a case is rebuilt (using rebuild_case)
         # stock transactions show up as well
@@ -99,7 +99,7 @@ class RebuildStockStateTest(TestCase):
         self.assertEqual(case.xform_ids[1:], [form_id])
         self.assertTrue(form_id in [action.form_id for action in case.actions])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_edit_submissions_simple(self):
         initial_quantity = 100
         form = submit_case_blocks(
