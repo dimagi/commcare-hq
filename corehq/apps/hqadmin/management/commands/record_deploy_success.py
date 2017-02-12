@@ -45,7 +45,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--minutes',
             help='The number of minutes it took to deploy',
-            type='int',
+            type=int,
             default=None,
         )
 
