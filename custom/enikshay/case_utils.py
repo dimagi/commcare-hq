@@ -118,7 +118,6 @@ def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
         )
 
 
-# MK: Should lab referral be a open case or a closed case as well like in referenced method above?
 def get_lab_referral_from_test(domain, test_case_id):
     """
     Gets the first open 'episode' case for the occurrence
