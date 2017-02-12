@@ -72,15 +72,16 @@ class Command(BaseCommand):
     help = ("Preindex ES pillows. "
             "Only run reindexer if the index doesn't exist.")
 
-    option_list = (
-        make_option('--reset',
-                    action='store_true',
-                    dest='reset',
-                    default=False,
-                    help='Reset resumable indices.'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--reset',
+            action='store_true',
+            dest='reset',
+            default=False,
+            help='Reset resumable indices.',
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         runs = []
         all_es_indices = get_all_expected_es_indices()
         es = get_es_new()
