@@ -161,11 +161,18 @@ def _conditionally_run_with_all_backends():
     '''
 
     should_run_sql_only = os.environ.get('USE_SQL_BACKEND_ONLY') == 'yes'
+
+    def sql_pre_run(*args, **kwargs):
+        # When running just SQL tests we need to tear down the couch setup and setup for sql
+        with args[0].settings(TESTS_SHOULD_USE_SQL_BACKEND=False):
+            args[0].tearDown()
+        args[0].setUp()
     run_configs = [
         # run with default setting
         RunConfig(
+            pre_run=sql_pre_run if should_run_sql_only else None,
             settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': True,
+                'TESTS_SHOULD_USE_SQL_BACKEND': should_run_sql_only,
             },
             post_run=lambda *args, **kwargs: args[0].tearDown() if not should_run_sql_only else None,
         ),
