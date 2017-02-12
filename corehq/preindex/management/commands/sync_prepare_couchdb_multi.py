@@ -16,28 +16,28 @@ POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 8)
 class Command(BaseCommand):
     help = 'Sync design docs to temporary ids...but multithreaded'
 
-    option_list = (
-        make_option(
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'num_pool',
+            default=POOL_SIZE,
+            nargs='?',
+            type=int,
+        )
+        parser.add_argument(
+            'username',
+            default='unknown',
+            nargs='?',
+        )
+        parser.add_argument(
             '--no-mail',
             help="Don't send email confirmation",
             action='store_true',
             default=False,
-        ),
-    )
+        )
 
-    def handle(self, *args, **options):
-
+    def handle(self, num_pool, username, **options):
         start = datetime.utcnow()
-        if len(args) == 0:
-            self.num_pool = POOL_SIZE
-        else:
-            self.num_pool = int(args[0])
-
-        if len(args) > 1:
-            username = args[1]
-        else:
-            username = 'unknown'
-
+        self.num_pool = num_pool
         no_email = options['no_mail']
 
         self.handle_sync()
