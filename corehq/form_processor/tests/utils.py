@@ -1,3 +1,4 @@
+import os
 import functools
 import logging
 from datetime import datetime
@@ -168,6 +169,49 @@ run_with_all_backends = functools.partial(
     ],
     nose_tags={'all_backends': True}
 )
+
+
+def _conditionally_run_with_all_backends():
+    '''
+    Conditionally runs both backends. By default will run both backends, if
+    USE_SQL_BACKEND_ONLY=1, then it will only run the sql backend.
+
+    This is particularly useful for travis. We want to be able to test
+    both couch and sql on a single database. However, we also want to be
+    able to test the sql backend on a sharded backend. It's redundant
+    to run couch backend as well.
+    '''
+
+    should_run_sql_only = os.environ.get('USE_SQL_BACKEND_ONLY') == '1'
+    run_configs = [
+        # run with default setting
+        RunConfig(
+            settings={
+                'TESTS_SHOULD_USE_SQL_BACKEND': True,
+            },
+            post_run=lambda *args, **kwargs: args[0].tearDown() if not should_run_sql_only else None,
+        ),
+    ]
+
+    if not should_run_sql_only:
+        run_configs.append(
+            # run with inverse of default setting
+            RunConfig(
+                settings={
+                    'TESTS_SHOULD_USE_SQL_BACKEND': False,
+                },
+                pre_run=lambda *args, **kwargs: args[0].setUp(),
+            ),
+        )
+
+    return functools.partial(
+        run_with_multiple_configs,
+        run_configs=run_configs,
+        nose_tags={'all_backends': True}
+    )
+
+
+conditionally_run_with_all_backends = _conditionally_run_with_all_backends()
 
 
 @unit_testing_only
