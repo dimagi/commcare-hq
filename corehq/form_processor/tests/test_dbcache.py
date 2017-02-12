@@ -8,7 +8,7 @@ from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 
 
 class CaseDbCacheTest(TestCase):
@@ -20,7 +20,7 @@ class CaseDbCacheTest(TestCase):
         super(CaseDbCacheTest, self).setUp()
         self.interface = FormProcessorInterface()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testDomainCheck(self):
         id = uuid.uuid4().hex
         post_case_blocks([
@@ -56,7 +56,7 @@ class CaseDbCacheTest(TestCase):
         except IllegalCaseId:
             pass
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testGetPopulatesCache(self):
         case_ids = _make_some_cases(3)
         cache = self.interface.casedb_cache()
@@ -70,7 +70,7 @@ class CaseDbCacheTest(TestCase):
         for id in case_ids:
             self.assertTrue(cache.in_cache(id))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testSetPopulatesCache(self):
         case_ids = _make_some_cases(3)
         cache = self.interface.casedb_cache()
@@ -85,7 +85,7 @@ class CaseDbCacheTest(TestCase):
             case = cache.get(id)
             self.assertEqual(str(i), case.dynamic_case_properties()['my_index'])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testPopulate(self):
         case_ids = _make_some_cases(3)
         cache = self.interface.casedb_cache()

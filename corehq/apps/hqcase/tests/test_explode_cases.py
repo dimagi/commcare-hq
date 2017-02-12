@@ -16,7 +16,7 @@ from corehq.apps.hqcase.utils import make_creating_casexml, submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 
 
 TESTS = (
@@ -130,7 +130,7 @@ class ExplodeCasesDbTest(TestCase):
         cls.user.delete()
         cls.domain.delete()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_simple(self):
         caseblock = CaseBlock(
             create=True,
@@ -149,7 +149,7 @@ class ExplodeCasesDbTest(TestCase):
         for case in cases_back:
             self.assertEqual(self.user_id, case.owner_id)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_skip_user_case(self):
         caseblock = CaseBlock(
             create=True,
@@ -168,7 +168,7 @@ class ExplodeCasesDbTest(TestCase):
         for case in cases_back:
             self.assertEqual(self.user_id, case.owner_id)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_parent_child(self):
         parent_id = uuid.uuid4().hex
         parent_type = 'exploder-parent-type'

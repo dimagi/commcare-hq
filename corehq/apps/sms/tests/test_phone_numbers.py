@@ -11,7 +11,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from datetime import datetime, timedelta
 from django.test import TestCase
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.test_utils import create_test_case
 from mock import patch
@@ -120,7 +120,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
         if pk:
             self.assertEqual(v.pk, pk)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_phone_number_updates(self):
         extra_number = PhoneNumber.objects.create(
             domain=self.domain,
@@ -177,7 +177,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
         self.assertEqual(PhoneNumber.get_two_way_number('999123'), extra_number)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_close_case(self):
         extra_number = PhoneNumber.objects.create(
             domain=self.domain,
@@ -202,7 +202,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
         self.assertEqual(PhoneNumber.get_two_way_number('999123'), extra_number)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_soft_delete(self):
         extra_number = PhoneNumber.objects.create(
             domain=self.domain,
@@ -227,7 +227,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
         self.assertEqual(PhoneNumber.get_two_way_number('999123'), extra_number)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_zero_phone_number(self):
         extra_number = PhoneNumber.objects.create(
             domain=self.domain,
@@ -252,7 +252,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
         self.assertEqual(PhoneNumber.get_two_way_number('999123'), extra_number)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_invalid_phone_format(self):
         extra_number = PhoneNumber.objects.create(
             domain=self.domain,
@@ -277,7 +277,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
         self.assertEqual(PhoneNumber.get_two_way_number('999123'), extra_number)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_phone_number_already_in_use(self):
         self.assertEqual(PhoneNumber.count_by_domain(self.domain), 0)
 
@@ -302,7 +302,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
             self.assertPhoneNumberDetails(case1, '99987658765', None, None, True, False, True)
             self.assertPhoneNumberDetails(case2, '99987658765', None, None, False, False, False)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_multiple_entries(self):
         extra_number = PhoneNumber.objects.create(
             domain=self.domain,
@@ -376,7 +376,7 @@ class SQLPhoneNumberTestCase(TestCase):
         number.backend_id = '  '
         self.assertEqual(number.backend, backend1)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_owner(self):
         with create_test_case(self.domain, 'participant', 'test') as case:
             number = PhoneNumber(owner_doc_type='CommCareCase', owner_id=case.case_id)
@@ -637,7 +637,7 @@ class SQLPhoneNumberTestCase(TestCase):
             drop_signals=False
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_delete_phone_numbers_for_owners(self):
         with self.create_case_contact('9990001') as case1, \
                 self.create_case_contact('9990002') as case2, \

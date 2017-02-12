@@ -9,7 +9,7 @@ from django.test.utils import override_settings
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
@@ -129,7 +129,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.es.indices.refresh(GROUP_INDEX_INFO.index)
         return group
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_forms(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -157,7 +157,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(paged_result.hits[0]['form']['meta']['userID'], user_id)
         self.assertEqual(paged_result.hits[0]['received_on'], '2013-07-02T00:00:00.000000Z')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_form_ids_having_multimedia(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -192,7 +192,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(len(form_ids), 1)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_form_ids_having_multimedia_with_user_types(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -252,7 +252,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(len(form_ids), 2)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_form_ids_having_multimedia_with_group(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -294,7 +294,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(len(form_ids), 1)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_forms_multiple_apps_xmlnss(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -361,7 +361,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(paged_result.total, 1)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_basic_completed_by_user(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -371,7 +371,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         results = get_completed_counts_by_user(self.domain, DateSpan(start, end))
         self.assertEquals(results['cruella_deville'], 1)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_completed_out_of_range_by_user(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -392,7 +392,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         results = get_completed_counts_by_user(self.domain, DateSpan(start, end))
         self.assertEquals(results['cruella_deville'], 1)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_basic_submission_by_user(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -403,7 +403,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
         self.assertEquals(results['cruella_deville'], 1)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_last_form_submission_by_xmlns(self):
         xmlns = 'http://a.b.org'
         kwargs = {
@@ -426,11 +426,11 @@ class TestFormESAccessors(BaseESAccessorsTest):
         form = get_last_form_submission_for_xmlns(self.domain, 'missing')
         self.assertIsNone(form)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_guess_form_name_from_xmlns_not_found(self):
         self.assertEqual(None, guess_form_name_from_submissions_using_xmlns('missing', 'missing'))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_guess_form_name_from_xmlns(self):
         form_name = 'my cool form'
         xmlns = 'http://a.b.org'
@@ -440,7 +440,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(form_name, guess_form_name_from_submissions_using_xmlns(self.domain, xmlns))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_submission_out_of_range_by_user(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -452,7 +452,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
         self.assertEquals(results['cruella_deville'], 1)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_submission_different_domain_by_user(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -464,7 +464,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
         self.assertEquals(results['cruella_deville'], 1)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_basic_submission_by_date(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -481,7 +481,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEquals(results['2013-07-15'], 1)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_paged_forms_by_type(self):
         self._send_form_to_es()
         self._send_form_to_es()
@@ -490,7 +490,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(len(paged_result.hits), 1)
         self.assertEqual(paged_result.total, 2)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_timezone_differences(self):
         """
         Our received_on dates are always in UTC, so if we submit a form right at midnight UTC, then the report
@@ -511,7 +511,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEquals(results['2013-07-14'], 1)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_last_form_submission_for_user_for_app(self):
         kwargs_u1 = {
             'user_id': 'u1',
@@ -556,7 +556,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(result['u1'][0]['xmlns'], 'third')
         self.assertEqual(result[None][0]['xmlns'], 'third')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_form_counts_by_user_xmlns(self):
         user1, user2 = 'u1', 'u2'
         app1, app2 = '123', '567'
@@ -603,7 +603,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             (None, app2, xmlns2): 1,
         })
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_form_duration_stats_by_user(self):
         """
         Tests the get_form_duration_stats_by_user basic ability to get duration stats
@@ -658,7 +658,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(results[MISSING_KEY]['count'], 1)
         self.assertEqual(timedelta(milliseconds=results[MISSING_KEY]['max']), completion_time - time_start)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_form_duration_stats_by_user_decoys(self):
         """
         Tests the get_form_duration_stats_by_user ability to filter out forms that
@@ -729,7 +729,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(timedelta(milliseconds=results[user1]['max']), completion_time - time_start)
         self.assertIsNone(results.get('user2'))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_form_duration_stats_for_users(self):
         """
         Tests the get_form_duration_stats_for_users basic ability to get duration stats
@@ -779,7 +779,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(results['count'], 3)
         self.assertEqual(timedelta(milliseconds=results['max']), completion_time - time_start)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_form_duration_stats_for_users_decoys(self):
         """
         Tests the get_form_duration_stats_for_users ability to filter out forms that
@@ -849,7 +849,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(results['count'], 1)
         self.assertEqual(timedelta(milliseconds=results['max']), completion_time - time_start)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_all_user_ids_submitted_without_app_id(self):
         user1, user2 = 'u1', 'u2'
         app1, app2 = '123', '567'
@@ -863,7 +863,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         user_ids = get_all_user_ids_submitted(self.domain)
         self.assertEqual(user_ids, ['u1', 'u2'])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_all_user_ids_submitted_with_app_id(self):
         user1, user2 = 'u1', 'u2'
         app1, app2 = '123', '567'
@@ -879,7 +879,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         user_ids = get_all_user_ids_submitted(self.domain, app2)
         self.assertEqual(user_ids, ['u2'])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_username_in_last_form_submitted(self):
         user1, user2 = 'u1', 'u2'
         app1 = '123'

@@ -4,7 +4,7 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.reminders.models import (CaseReminder, CaseReminderHandler,
     RECIPIENT_CASE_OWNER_LOCATION_PARENT)
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.util.test_utils import create_test_case
 from mock import patch
 
@@ -37,7 +37,7 @@ class ReminderRecipientTest(TestCase):
         self.user.delete()
         self.domain_obj.delete()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_recipient_case_owner_location_parent(self):
         parent_location = SQLLocation.objects.create(
             domain=self.domain,

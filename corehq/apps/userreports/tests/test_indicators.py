@@ -20,7 +20,7 @@ from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.form_processor.utils import get_simple_wrapped_form
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import TestFormMetadata
@@ -615,7 +615,7 @@ class TestGetValuesByProduct(TestCase):
         StockTransaction.objects.all().delete()
         super(TestGetValuesByProduct, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_soh_values_by_product(self):
         values = LedgerBalancesIndicator._get_values_by_product(
             'soh', self.case_id, ['coke', 'surge', 'new_coke'], self.domain_name
@@ -624,7 +624,7 @@ class TestGetValuesByProduct(TestCase):
         self.assertEqual(values['surge'], 85)
         self.assertEqual(values['new_coke'], 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_consumption_by_product(self):
         values = LedgerBalancesIndicator._get_values_by_product(
             'consumption', self.case_id, ['coke', 'surge', 'new_coke'], self.domain_name

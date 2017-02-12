@@ -21,7 +21,7 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.util.test_utils import generate_cases, create_and_save_a_form, create_and_save_a_case
 
 
@@ -758,14 +758,14 @@ class RelatedDocExpressionTest(SimpleTestCase):
 class RelatedDocExpressionDbTest(TestCase):
     domain = 'related-doc-db-test-domain'
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_form_lookups(self):
         form = create_and_save_a_form(domain=self.domain)
         expression = self._get_expression('XFormInstance')
         doc = self._get_doc(form.form_id)
         self.assertEqual(form.form_id, expression(doc, EvaluationContext(doc, 0)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_lookups(self):
         case_id = uuid.uuid4().hex
         create_and_save_a_case(domain=self.domain, case_id=case_id, case_name='related doc test case')
@@ -773,7 +773,7 @@ class RelatedDocExpressionDbTest(TestCase):
         doc = self._get_doc(case_id)
         self.assertEqual(case_id, expression(doc, EvaluationContext(doc, 0)))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_other_lookups(self):
         user_id = uuid.uuid4().hex
         CommCareUser.get_db().save_doc({'_id': user_id, 'domain': self.domain})
@@ -994,7 +994,7 @@ class TestFormsExpressionSpec(TestCase):
         delete_all_cases()
         super(TestFormsExpressionSpec, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_evaluation(self):
         context = EvaluationContext({"domain": self.domain}, 0)
         forms = self.expression(self.case.to_json(), context)
@@ -1002,7 +1002,7 @@ class TestFormsExpressionSpec(TestCase):
         self.assertEqual(len(forms), 1)
         self.assertEqual(forms, self.forms)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_wrong_domain(self):
         context = EvaluationContext({"domain": "wrong-domain"}, 0)
         forms = self.expression(self.case.to_json(), context)
@@ -1029,13 +1029,13 @@ class TestGetSubcasesExpression(TestCase):
         delete_all_cases()
         super(TestGetSubcasesExpression, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_no_subcases(self):
         case = self.factory.create_case()
         subcases = self.expression(case.to_json(), self.context)
         self.assertEqual(len(subcases), 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_single_child(self):
         parent_id = uuid.uuid4().hex
         child_id = uuid.uuid4().hex
@@ -1050,7 +1050,7 @@ class TestGetSubcasesExpression(TestCase):
         self.assertEqual(len(subcases), 1)
         self.assertEqual(child.case_id, subcases[0]['_id'])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_single_extension(self):
         host_id = uuid.uuid4().hex
         extension_id = uuid.uuid4().hex
@@ -1093,13 +1093,13 @@ class TestGetCaseSharingGroupsExpression(TestCase):
             user.delete()
         super(TestGetCaseSharingGroupsExpression, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_no_groups(self):
         user = CommCareUser.create(domain=self.domain, username='test_no_group', password='123')
         case_sharing_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(case_sharing_groups), 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_single_group(self):
         user = CommCareUser.create(domain=self.domain, username='test_single', password='123')
         group = Group(domain=self.domain, name='group_single', users=[user._id], case_sharing=True)
@@ -1109,7 +1109,7 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         self.assertEqual(len(case_sharing_groups), 1)
         self.assertEqual(group._id, case_sharing_groups[0]['_id'])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_multiple_groups(self):
         user = CommCareUser.create(domain=self.domain, username='test_multiple', password='123')
         group1 = Group(domain=self.domain, name='group1', users=[user._id], case_sharing=True)
@@ -1120,7 +1120,7 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         case_sharing_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(case_sharing_groups), 2)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_wrong_domain(self):
         user = CommCareUser.create(domain=self.second_domain, username='test_wrong_domain', password='123')
         group = Group(domain=self.second_domain, name='group_wrong_domain', users=[user._id], case_sharing=True)
@@ -1154,13 +1154,13 @@ class TestGetReportingGroupsExpression(TestCase):
             user.delete()
         super(TestGetReportingGroupsExpression, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_no_groups(self):
         user = CommCareUser.create(domain=self.domain, username='test_no_group', password='123')
         reporting_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(reporting_groups), 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_multiple_groups(self):
         user = CommCareUser.create(domain=self.domain, username='test_multiple', password='123')
         group1 = Group(domain=self.domain, name='group1', users=[user._id])
@@ -1171,7 +1171,7 @@ class TestGetReportingGroupsExpression(TestCase):
         reporting_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(reporting_groups), 2)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_wrong_domain(self):
         user = CommCareUser.create(domain=self.second_domain, username='test_wrong_domain', password='123')
         group = Group(domain=self.second_domain, name='group_wrong_domain', users=[user._id], case_sharing=True)

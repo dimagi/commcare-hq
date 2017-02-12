@@ -4,7 +4,7 @@ from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.util import (clean_phone_number,
     get_contact, ContactNotFoundException, is_contact_active)
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.test_utils import create_test_case
 from django.test import TestCase
@@ -24,7 +24,7 @@ class UtilTestCase(TestCase):
         cleaned = clean_phone_number(phone_number)
         self.assertEquals(cleaned, "+3242323421241")
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_contact_for_case(self):
         with create_test_case(self.domain, 'contact', 'test-case') as case:
             contact = get_contact(self.domain, case.case_id)
@@ -46,7 +46,7 @@ class UtilTestCase(TestCase):
         with self.assertRaises(ContactNotFoundException):
             get_contact(self.domain, 'this-id-should-not-be-found')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_is_contact_active_for_case(self):
         with create_test_case(self.domain, 'contact', 'test-case') as case:
             self.assertTrue(is_contact_active(self.domain, 'CommCareCase', case.case_id))

@@ -18,7 +18,7 @@ from django.test import TestCase, SimpleTestCase
 
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import ensure_index_deleted
@@ -53,7 +53,7 @@ class CallCenterUtilsTests(TestCase):
     def tearDown(self):
         delete_all_cases()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_sync(self):
         sync_call_center_user_case(self.user)
         case = self._get_user_case()
@@ -63,7 +63,7 @@ class CallCenterUtilsTests(TestCase):
         self.assertIsNotNone(case.get_case_property('language'))
         self.assertIsNotNone(case.get_case_property('phone_number'))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_sync_full_name(self):
         name = 'Ricky Bowwood'
         self.user.set_full_name(name)
@@ -72,7 +72,7 @@ class CallCenterUtilsTests(TestCase):
         self.assertIsNotNone(case)
         self.assertEquals(case.name, name)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_sync_inactive(self):
         sync_call_center_user_case(self.user)
         case = self._get_user_case()
@@ -83,7 +83,7 @@ class CallCenterUtilsTests(TestCase):
         case = self._get_user_case()
         self.assertTrue(case.closed)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_sync_retired(self):
         sync_call_center_user_case(self.user)
         case = self._get_user_case()
@@ -94,7 +94,7 @@ class CallCenterUtilsTests(TestCase):
         case = self._get_user_case()
         self.assertTrue(case.closed)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_sync_update_update(self):
         sync_call_center_user_case(self.user)
         case = self._get_user_case()
@@ -107,7 +107,7 @@ class CallCenterUtilsTests(TestCase):
         case = self._get_user_case()
         self.assertEquals(case.name, name)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_sync_custom_user_data(self):
         self.user.user_data = {
             '': 'blank_key',
@@ -124,7 +124,7 @@ class CallCenterUtilsTests(TestCase):
         self.assertEquals(case.get_case_property('blank_val'), '')
         self.assertEquals(case.get_case_property('ok'), 'good')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_call_center_cases_for_user(self):
         factory = CaseFactory(domain=TEST_DOMAIN, case_defaults={
             'user_id': self.user_id,
@@ -144,7 +144,7 @@ class CallCenterUtilsTests(TestCase):
         self.assertEqual(case_ids, set([c1.case_id, c2.case_id]))
         self.assertEqual(user_ids, set([self.user_id]))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_call_center_cases_all(self):
         factory = CaseFactory(domain=TEST_DOMAIN, case_defaults={
             'user_id': self.user_id,
@@ -160,7 +160,7 @@ class CallCenterUtilsTests(TestCase):
         cases = get_call_center_cases(TEST_DOMAIN, CASE_TYPE)
         self.assertEqual(len(cases), 3)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_call_center_not_default_case_owner(self):
         """
         call center case owner should not change on sync
@@ -194,7 +194,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         delete_all_cases()
         self.domain.delete()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_sync_usercase_custom_user_data_on_create(self):
         """
         Custom user data should be synced when the user is created
@@ -207,7 +207,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.assertIsNotNone(case)
         self.assertEquals(case.dynamic_case_properties()['completed_training'], 'yes')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_sync_usercase_custom_user_data_on_update(self):
         """
         Custom user data should be synced when the user is updated
@@ -223,7 +223,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertEquals(case.dynamic_case_properties()['completed_training'], 'yes')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_reactivate_user(self):
         """Confirm that reactivating a user re-opens its user case."""
         self.user.save()
@@ -240,7 +240,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertFalse(user_case.closed)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_update_deactivated_user(self):
         """
         Confirm that updating a deactivated user also updates the user case.
@@ -260,7 +260,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.assertTrue(user_case.closed)
         self.assertEquals(user_case.dynamic_case_properties()['foo'], 'bar')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_update_and_reactivate_in_one_save(self):
         """
         Confirm that a usercase can be updated and reactived in a single save of the user model

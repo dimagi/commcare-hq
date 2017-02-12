@@ -1,3 +1,4 @@
+import os
 import functools
 import logging
 from datetime import datetime
@@ -148,26 +149,54 @@ class FormProcessorTestUtils(object):
                     pass
 
 
-run_with_all_backends = functools.partial(
-    run_with_multiple_configs,
-    run_configs=[
+def _conditionally_run_with_all_backends():
+    '''
+    Conditionally runs both backends. By default will run both backends, if
+    USE_SQL_BACKEND_ONLY=1, then it will only run the sql backend.
+
+    This is particularly useful for travis. We want to be able to test
+    both couch and sql on a single database. However, we also want to be
+    able to test the sql backend on a sharded backend. It's redundant
+    to run couch backend as well.
+    '''
+
+    should_run_sql_only = os.environ.get('USE_SQL_BACKEND_ONLY') == 'yes'
+
+    def sql_pre_run(*args, **kwargs):
+        # When running just SQL tests we need to tear down the couch setup and setup for sql
+        with args[0].settings(TESTS_SHOULD_USE_SQL_BACKEND=False):
+            args[0].tearDown()
+        args[0].setUp()
+    run_configs = [
         # run with default setting
         RunConfig(
+            pre_run=sql_pre_run if should_run_sql_only else None,
             settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
+                'TESTS_SHOULD_USE_SQL_BACKEND': should_run_sql_only,
             },
-            post_run=lambda *args, **kwargs: args[0].tearDown()
+            post_run=lambda *args, **kwargs: args[0].tearDown() if not should_run_sql_only else None,
         ),
-        # run with inverse of default setting
-        RunConfig(
-            settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
-            },
-            pre_run=lambda *args, **kwargs: args[0].setUp(),
-        ),
-    ],
-    nose_tags={'all_backends': True}
-)
+    ]
+
+    if not should_run_sql_only:
+        run_configs.append(
+            # run with inverse of default setting
+            RunConfig(
+                settings={
+                    'TESTS_SHOULD_USE_SQL_BACKEND': False,
+                },
+                pre_run=lambda *args, **kwargs: args[0].setUp(),
+            ),
+        )
+
+    return functools.partial(
+        run_with_multiple_configs,
+        run_configs=run_configs,
+        nose_tags={'all_backends': True}
+    )
+
+
+conditionally_run_with_all_backends = _conditionally_run_with_all_backends()
 
 
 @unit_testing_only

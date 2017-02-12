@@ -15,7 +15,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
-    run_with_all_backends
+    conditionally_run_with_all_backends
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
@@ -59,7 +59,7 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual('Domain', domain_doc['doc_type'])
         delete_es_index(DOMAIN_INDEX)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
@@ -69,7 +69,7 @@ class PillowtopReindexerTest(TestCase):
 
         self._assert_case_is_in_es(case)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_search_reindexer(self):
         es = get_es_new()
         FormProcessorTestUtils.delete_all_cases()
@@ -91,7 +91,7 @@ class PillowtopReindexerTest(TestCase):
         es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_case_is_in_es(case, esquery=CaseSearchES())
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_xform_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_xforms()
         form = create_and_save_a_form(DOMAIN)

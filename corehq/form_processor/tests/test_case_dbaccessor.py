@@ -12,7 +12,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo, CaseAcce
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, conditionally_run_with_all_backends
 from corehq.form_processor.tests.test_basic_cases import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
 
@@ -669,7 +669,7 @@ class CaseAccessorsTests(TestCase):
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_soft_delete(self):
         _submit_case_block(True, 'c1', domain=DOMAIN)
         _submit_case_block(True, 'c2', domain=DOMAIN)

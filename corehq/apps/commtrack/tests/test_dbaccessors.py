@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
@@ -36,7 +36,7 @@ class SupplyPointDBAccessorsTest(TestCase):
         }
         self.assertEqual(actual, expected)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_supply_point_by_location_id(self):
         actual = self.interface.get_closed_and_open_by_location_id_and_domain(
             self.domain,

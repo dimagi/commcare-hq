@@ -12,7 +12,7 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
@@ -45,7 +45,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         with self.assertRaises(BulkSaveError):
             submit_form_locally(xml_data, 'test-domain')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_empty_case_id(self):
         """
         Ensure that form processor fails on empty id
@@ -77,26 +77,26 @@ class CaseBugTest(TestCase, TestFileMixin):
         _test({'case_type': value})
         _test({'user_id': value})
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testDateInCasePropertyBug(self):
         """
         Submits a case name/case type/user_id that looks like a date
         """
         self._testCornerCaseDatatypeBugs('2011-11-16')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testIntegerInCasePropertyBug(self):
         """
         Submits a case name/case type/user_id that looks like a number
         """
         self._testCornerCaseDatatypeBugs('42')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testDecimalInCasePropertyBug(self):
         # Submits a case name/case type/user_id that looks like a decimal
         self._testCornerCaseDatatypeBugs('4.06')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testDuplicateCasePropertiesBug(self):
         # Submit multiple values for the same property in an update block
         case_id = '061ecbae-d9be-4bb5-bdd4-e62abd5eaf7b'
@@ -111,7 +111,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         response, form, [case] = submit_form_locally(xml_data, 'test-domain')
         self.assertEqual("2", case.dynamic_case_properties()['bar'])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testMultipleCaseBlocks(self):
         # How do we do when submitting a form with multiple blocks for the same case?
         case_id = 'MCLPZ69ON942EKNIBR5WF1G2L'
@@ -129,14 +129,14 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual(2, len(ids))
         self.assertEqual([create_form.form_id, form.form_id], ids)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testLotsOfSubcases(self):
         # How do we do when submitting a form with multiple blocks for the same case?
         xml_data = self.get_xml('lots_of_subcases')
         response, form, cases = submit_form_locally(xml_data, 'test-domain')
         self.assertEqual(11, len(cases))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testSubmitToDeletedCase(self):
         # submitting to a deleted case should succeed and affect the case
         case_id = uuid.uuid4().hex
@@ -163,7 +163,7 @@ class TestCaseHierarchy(TestCase):
         super(TestCaseHierarchy, self).setUp()
         delete_all_cases()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_normal_index(self):
         factory = CaseFactory()
         [cp] = factory.create_or_update_case(
@@ -181,7 +181,7 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(2, len(hierarchy['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases']))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_extension_index(self):
         factory = CaseFactory()
         [case] = factory.create_or_update_case(
@@ -207,7 +207,7 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(2, len(hierarchy['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases']))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_recursive_indexes(self):
         factory = CaseFactory()
         [case] = factory.create_or_update_case(CaseStructure(
@@ -221,7 +221,7 @@ class TestCaseHierarchy(TestCase):
         hierarchy = get_case_hierarchy(case, {})
         self.assertEqual(1, len(hierarchy['case_list']))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_complex_index(self):
         factory = CaseFactory()
         cp = factory.create_or_update_case(CaseStructure(case_id='parent', attrs={

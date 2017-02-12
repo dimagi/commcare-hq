@@ -10,7 +10,7 @@ from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.elastic import get_es_new
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, conditionally_run_with_all_backends
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.ledger import get_ledger_to_elasticsearch_pillow
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
@@ -46,7 +46,7 @@ class LedgerPillowTest(TestCase):
         FormProcessorTestUtils.delete_all_cases(self.domain)
         super(LedgerPillowTest, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_ledger_pillow(self):
         factory = CaseFactory(domain=self.domain)
         case = factory.create_case()
@@ -82,7 +82,7 @@ class LedgerPillowTest(TestCase):
         # confirm change made it to elasticserach
         self._assert_ledger_in_es(ref)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_ledger_reindexer(self):
         factory = CaseFactory(domain=self.domain)
         case = factory.create_case()

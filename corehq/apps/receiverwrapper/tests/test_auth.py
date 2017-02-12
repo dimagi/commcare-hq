@@ -5,7 +5,7 @@ from urllib import urlencode
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.form_processor.submission_post import SubmissionPost
 import django_digest.test
 from django.test import TestCase
@@ -117,7 +117,7 @@ class _AuthTest(TestCase):
             self.assertEqual(xform.auth_context, expected_auth_context)
             return xform
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_digest(self):
         client = django_digest.test.Client()
         client.set_authorization(self.user.username, '1234',
@@ -171,7 +171,7 @@ class _AuthTest(TestCase):
             expected_response=accepted_response
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_basic(self):
         client = django_digest.test.Client()
         client.set_authorization(self.user.username, '1234',
@@ -197,7 +197,7 @@ class _AuthTest(TestCase):
             expected_auth_context=expected_auth_context
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_noauth_nometa(self):
         self._test_post(
             file_path=self.bare_form,
@@ -205,7 +205,7 @@ class _AuthTest(TestCase):
             expected_status=403,
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_noauth_demomode(self):
         self._test_post(
             file_path=self.bare_form,
@@ -215,7 +215,7 @@ class _AuthTest(TestCase):
             expected_response=SubmissionPost.submission_ignored_response().content,
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_noauth_devicelog(self):
         self._test_post(
             file_path=self.device_log,
@@ -223,7 +223,7 @@ class _AuthTest(TestCase):
             expected_status=201,
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_bad_noauth(self):
         """
         if someone submits a form in noauth mode, but it creates or updates
@@ -236,7 +236,7 @@ class _AuthTest(TestCase):
             expected_status=403,
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_noauth(self):
         self._test_post(
             file_path=self.form_with_demo_case,

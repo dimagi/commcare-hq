@@ -9,7 +9,7 @@ from casexml.apps.case.tests.util import assert_user_doesnt_have_cases, \
     assert_user_has_cases
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.util.test_utils import softer_assert
 
 
@@ -44,7 +44,7 @@ def test_generator(test_name, skip=False):
         assert_user_doesnt_have_cases(self, self.user, undesired_cases)
 
     test.__name__ = get_test_name(test_name)
-    return run_with_all_backends(test)
+    return conditionally_run_with_all_backends(test)
 
 
 class TestSequenceMeta(type):

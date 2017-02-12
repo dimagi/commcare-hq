@@ -7,7 +7,7 @@ from corehq.apps.tzmigration.test_utils import \
     run_pre_and_post_timezone_migration
 
 from corehq.util.test_utils import TestFileMixin
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends, post_xform
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, conditionally_run_with_all_backends, post_xform
 
 
 class PostTest(TestCase, TestFileMixin):
@@ -64,30 +64,30 @@ class PostTest(TestCase, TestFileMixin):
         self._test('cloudant-template', tz_differs=True)
         FormProcessorTestUtils.delete_all_xforms()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_decimalmeta(self):
         self._test('decimalmeta', any_id_ok=True)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_duplicate(self):
         self._test('duplicate')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_meta(self):
         self._test('meta', any_id_ok=True)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_meta_bad_username(self):
         self._test('meta_bad_username')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_meta_dict_appversion(self):
         self._test('meta_dict_appversion')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_namespaces(self):
         self._test('namespaces', any_id_ok=True)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_unicode(self):
         self._test('unicode', any_id_ok=True)

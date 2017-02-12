@@ -11,7 +11,7 @@ from corehq.apps.sms.models import (SMS, QueuedSMS,
 from corehq.apps.sms.tasks import handle_outgoing
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
@@ -275,14 +275,14 @@ class AllBackendTest(BaseSMSTest):
         self._test_outbound_backend(self.push_backend, 'push test', push_send)
         self._test_outbound_backend(self.icds_backend, 'icds test', icds_send)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_unicel_inbound_sms(self):
         self._simulate_inbound_request('/unicel/in/', phone_param=InboundParams.SENDER,
             msg_param=InboundParams.MESSAGE, msg_text='unicel test')
 
         self._verify_inbound_request(self.unicel_backend.get_api_id(), 'unicel test')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_tropo_inbound_sms(self):
         tropo_data = {'session': {'from': {'id': self.test_phone_number}, 'initialText': 'tropo test'}}
         self._simulate_inbound_request_with_payload('/tropo/sms/',
@@ -290,7 +290,7 @@ class AllBackendTest(BaseSMSTest):
 
         self._verify_inbound_request(self.tropo_backend.get_api_id(), 'tropo test')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_telerivet_inbound_sms(self):
         additional_params = {
             'event': 'incoming_message',
@@ -303,7 +303,7 @@ class AllBackendTest(BaseSMSTest):
 
         self._verify_inbound_request(self.telerivet_backend.get_api_id(), 'telerivet test')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     @override_settings(SIMPLE_API_KEYS={'grapevine-test': 'grapevine-api-key'})
     def test_grapevine_inbound_sms(self):
         xml = """
@@ -320,7 +320,7 @@ class AllBackendTest(BaseSMSTest):
 
         self._verify_inbound_request(self.grapevine_backend.get_api_id(), 'grapevine test')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_twilio_inbound_sms(self):
         url = '/twilio/sms/%s' % self.twilio_backend.inbound_api_key
         self._simulate_inbound_request(url, phone_param='From',
@@ -329,7 +329,7 @@ class AllBackendTest(BaseSMSTest):
         self._verify_inbound_request(self.twilio_backend.get_api_id(), 'twilio test',
             backend_couch_id=self.twilio_backend.couch_id)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_twilio_401_response(self):
         start_count = SMS.objects.count()
 
@@ -341,28 +341,28 @@ class AllBackendTest(BaseSMSTest):
 
         self.assertEqual(start_count, end_count)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_megamobile_inbound_sms(self):
         self._simulate_inbound_request('/megamobile/sms/', phone_param='cel',
             msg_param='msg', msg_text='megamobile test', is_megamobile=True)
 
         self._verify_inbound_request(self.megamobile_backend.get_api_id(), 'megamobile test')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_sislog_inbound_sms(self):
         self._simulate_inbound_request('/sislog/in/', phone_param='sender',
             msg_param='msgdata', msg_text='sislog test')
 
         self._verify_inbound_request(self.sislog_backend.get_api_id(), 'sislog test')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_yo_inbound_sms(self):
         self._simulate_inbound_request('/yo/sms/', phone_param='sender',
             msg_param='message', msg_text='yo test')
 
         self._verify_inbound_request(self.yo_backend.get_api_id(), 'yo test')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_smsgh_inbound_sms(self):
         self._simulate_inbound_request(
             '/smsgh/sms/{}/'.format(self.smsgh_backend.inbound_api_key),
@@ -373,7 +373,7 @@ class AllBackendTest(BaseSMSTest):
 
         self._verify_inbound_request('SMSGH', 'smsgh test')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_apposit_inbound_sms(self):
         self._simulate_inbound_request_with_payload(
             '/apposit/in/%s/' % self.apposit_backend.inbound_api_key,
@@ -386,7 +386,7 @@ class AllBackendTest(BaseSMSTest):
         self._verify_inbound_request('APPOSIT', 'apposit test',
             backend_couch_id=self.apposit_backend.couch_id)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_push_inbound_sms(self):
         xml = """<?xml version="1.0" encoding="UTF-8"?>
         <bspostevent>

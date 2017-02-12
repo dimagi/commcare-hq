@@ -4,7 +4,7 @@ from django.test.utils import override_settings
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 
 TEST_DOMAIN = 'test-domain'
 
@@ -19,7 +19,7 @@ class CaseExclusionTest(TestCase):
         super(CaseExclusionTest, self).setUp()
         delete_all_cases()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testTopLevelExclusion(self):
         """
         Entire forms tagged as device logs should be excluded
@@ -31,7 +31,7 @@ class CaseExclusionTest(TestCase):
         submit_form_locally(xml_data, TEST_DOMAIN)
         self.assertEqual(0, len(CaseAccessors(TEST_DOMAIN).get_case_ids_in_domain()))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testNestedExclusion(self):
         """
         Blocks inside forms tagged as device logs should be excluded

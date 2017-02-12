@@ -3,7 +3,7 @@ from datetime import datetime
 from django.test import TestCase
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from casexml.apps.case.mock import CaseStructure
 from corehq.apps.repeaters.models import RepeatRecord
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
@@ -111,7 +111,7 @@ class TestRegisterPatientRepeater(ENikshayRepeaterTestBase):
         self.repeater.white_listed_case_types = ['episode']
         self.repeater.save()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_trigger(self):
         # 99dots not enabled
         self.create_case(self.episode)
@@ -137,7 +137,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
         self.repeater.white_listed_case_types = ['person']
         self.repeater.save()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_trigger(self):
         self.create_case_structure()
         self._update_case(self.person_id, {PRIMARY_PHONE_NUMBER: '999999999', })
@@ -152,7 +152,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
         self._update_case(self.person_id, {PRIMARY_PHONE_NUMBER: '999999999', })
         self.assertEqual(1, len(self.repeat_records().all()))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_trigger_multiple_cases(self):
         """Submitting a form with noop case blocks was throwing an exception
         """
@@ -173,7 +173,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
         self.factory.create_or_update_cases([empty_case, person_case])
         self.assertEqual(1, len(self.repeat_records().all()))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_create_person_no_episode(self):
         """On registration this was failing hard if a phone number was added but no episode was created
         http://manage.dimagi.com/default.asp?241290#1245284
@@ -193,7 +193,7 @@ class TestAdherenceRepeater(ENikshayRepeaterTestBase):
         self.repeater.white_listed_case_types = ['adherence']
         self.repeater.save()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_trigger(self):
         self.create_case_structure()
         self._create_99dots_registered_case()
@@ -221,7 +221,7 @@ class TestTreatmentOutcomeRepeater(ENikshayRepeaterTestBase):
         self.repeater.white_listed_case_types = ['episode']
         self.repeater.save()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_trigger(self):
         self.create_case_structure()
         self._create_99dots_registered_case()
@@ -276,7 +276,7 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
     def _get_actual_payload(self, casedb):
         return RegisterPatientPayloadGenerator(None).get_payload(None, casedb[self.episode_id])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_payload(self):
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
@@ -287,7 +287,7 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         )
         self._assert_payload_equal(cases, expected_numbers)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_payload_no_numbers(self):
         self.primary_phone_number = None
         self.secondary_phone_number = None
@@ -295,14 +295,14 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         self._assert_payload_equal(cases, None)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_payload_secondary_number_only(self):
         self.primary_phone_number = None
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         self._assert_payload_equal(cases, u"+91{}".format(self.secondary_phone_number.replace("0", "")))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_handle_success(self):
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
@@ -318,7 +318,7 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
             ''
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_handle_failure(self):
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
@@ -343,7 +343,7 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
     def _get_actual_payload(self, casedb):
         return UpdatePatientPayloadGenerator(None).get_payload(None, casedb[self.person_id])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_payload(self):
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
@@ -353,7 +353,7 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
         )
         self._assert_payload_equal(cases, expected_numbers)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_handle_success(self):
         cases = self.create_case_structure()
         self.factory.create_or_update_case(CaseStructure(
@@ -371,7 +371,7 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
             ''
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_handle_failure(self):
         cases = self.create_case_structure()
         payload_generator = UpdatePatientPayloadGenerator(None)
@@ -390,7 +390,7 @@ class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
     def _get_actual_payload(self, casedb):
         return AdherencePayloadGenerator(None).get_payload(None, casedb['adherence'])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_payload(self):
         date = datetime(2017, 2, 20)
         cases = self.create_case_structure()
@@ -405,7 +405,7 @@ class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
         )
         self.assertEqual(self._get_actual_payload(cases), expected_payload)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_handle_success(self):
         date = datetime(2017, 2, 20)
         cases = self.create_case_structure()
@@ -430,7 +430,7 @@ class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
             'true'
         )
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_handle_failure(self):
         date = datetime(2017, 2, 20)
         cases = self.create_case_structure()
@@ -452,7 +452,7 @@ class TestTreatmentOutcomePayloadGenerator(TestPayloadGeneratorBase):
     def _get_actual_payload(self, casedb):
         return TreatmentOutcomePayloadGenerator(None).get_payload(None, casedb[self.episode_id])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_payload(self):
         cases = self.create_case_structure()
         cases[self.episode_id] = self.create_case(

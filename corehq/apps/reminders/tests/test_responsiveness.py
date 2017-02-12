@@ -5,7 +5,7 @@ from corehq.util.test_utils import set_parent_case
 from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder, MATCH_EXACT,
     MATCH_REGEX, MATCH_ANY_VALUE, REPEAT_SCHEDULE_INDEFINITELY, FIRE_TIME_CASE_PROPERTY,
     DAY_MON, DAY_TUE)
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from corehq.util.test_utils import create_test_case
 from datetime import datetime, date, time
 from django.test import TestCase
@@ -32,7 +32,7 @@ class ReminderResponsivenessTest(TestCase):
         self.assertEqual(len(reminder_instances), 1)
         return reminder_instances[0]
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_property_match_equal(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -70,7 +70,7 @@ class ReminderResponsivenessTest(TestCase):
             update_case(self.domain, case.case_id, case_properties={'status': 'red'})
             self.assertEqual(self.get_reminders(), [])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_property_match_regex(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -110,7 +110,7 @@ class ReminderResponsivenessTest(TestCase):
             update_case(self.domain, case.case_id, case_properties={'status': 'red'})
             self.assertEqual(self.get_reminders(), [])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_property_match_any_value(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -147,7 +147,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertIsNone(reminder_instance.start_condition_datetime)
             self.assertEqual(reminder_instance.callback_try_count, 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_property_start_date(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -244,7 +244,7 @@ class ReminderResponsivenessTest(TestCase):
             update_case(self.domain, case.case_id, case_properties={'start_date': ''})
             self.assertEqual(self.get_reminders(), [])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_property_start_date_with_blank_option(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -351,7 +351,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertIsNone(reminder_instance.start_condition_datetime)
             self.assertEqual(reminder_instance.callback_try_count, 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_type_match(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -394,7 +394,7 @@ class ReminderResponsivenessTest(TestCase):
             reminder.save()
             self.assertEqual(self.get_reminders(), [])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_parent_case_property_criteria(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -441,7 +441,7 @@ class ReminderResponsivenessTest(TestCase):
             update_case(self.domain, parent_case.case_id, case_properties={'status': 'red'})
             self.assertEqual(self.get_reminders(), [])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_reminder_delete(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -475,7 +475,7 @@ class ReminderResponsivenessTest(TestCase):
         self.assertEqual(r2.doc_type, 'CaseReminder')
         self.assertEqual(r3.doc_type, 'CaseReminder')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_property_reminder_time(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -511,7 +511,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_property_reminder_time_default(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -546,7 +546,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_time_zone(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -582,7 +582,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_property_start_date_with_start_offset(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -639,7 +639,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2016, 1, 8))
             self.assertEqual(reminder_instance.callback_try_count, 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_property_start_date_with_start_day_of_week(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -696,7 +696,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.start_condition_datetime, datetime(2016, 1, 8))
             self.assertEqual(reminder_instance.callback_try_count, 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_user_recipient(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -751,7 +751,7 @@ class ReminderResponsivenessTest(TestCase):
             )
             self.assertEqual(self.get_reminders(), [])
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_until_condition(self):
         reminder = (CaseReminderHandler
             .create(self.domain, 'test')
@@ -826,7 +826,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.current_event_sequence_num, 0)
             self.assertEqual(reminder_instance.callback_try_count, 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_datetime_condition(self):
         with create_test_case(self.domain, 'participant', 'bob', drop_signals=False) as case, \
                 patch('corehq.apps.reminders.models.CaseReminderHandler.get_now') as now_mock:

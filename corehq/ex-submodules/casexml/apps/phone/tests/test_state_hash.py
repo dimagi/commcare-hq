@@ -16,7 +16,7 @@ from casexml.apps.phone.tests.utils import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -35,7 +35,7 @@ class StateHashTest(TestCase):
         generate_restore_payload(self.project, self.user)
         self.sync_log = get_exactly_one_wrapped_sync_log()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testEmpty(self):
         empty_hash = CaseStateHash(EMPTY_HASH)
         wrong_hash = CaseStateHash("thisisntright")
@@ -63,7 +63,7 @@ class StateHashTest(TestCase):
                                              state_hash=str(wrong_hash))
         self.assertEqual(412, response.status_code)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def testMismatch(self):
         self.assertEqual(CaseStateHash(EMPTY_HASH), self.sync_log.get_state_hash())
         

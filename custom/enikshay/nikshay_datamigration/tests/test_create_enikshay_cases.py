@@ -9,7 +9,7 @@ from mock import patch
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends
 from custom.enikshay.nikshay_datamigration.models import Outcome, PatientDetail
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
 
@@ -65,7 +65,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
 
         super(TestCreateEnikshayCases, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     @patch('custom.enikshay.nikshay_datamigration.factory.datetime')
     def test_case_creation(self, mock_datetime):
         mock_datetime.utcnow.return_value = datetime(2016, 9, 8, 1, 2, 3, 4123)
@@ -188,7 +188,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         drtb_hiv_referral_case_ids = self.case_accessor.get_case_ids_in_domain(type='drtb_hiv_referral')
         self.assertEqual(0, len(drtb_hiv_referral_case_ids))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_drtb_hiv_referral(self):
         self.outcome.HIVStatus = None
         self.outcome.save()
@@ -207,7 +207,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual('A B C', drtb_hiv_referral_case.name)
         self.assertEqual(self.drtb_hiv.location_id, drtb_hiv_referral_case.owner_id)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_update(self):
         self.outcome.HIVStatus = None
         self.outcome.save()
@@ -239,7 +239,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertEqual(episode_case.dynamic_case_properties()['disease_classification'], 'extra_pulmonary')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_location_not_found(self):
         self.phi.delete()
         call_command('create_enikshay_cases', self.domain)
@@ -252,7 +252,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(person_case.dynamic_case_properties()['migration_error'], 'location_not_found')
         self.assertEqual(person_case.dynamic_case_properties()['migration_error_details'], 'MH-ABD-1-2')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_outcome_cured(self):
         self.outcome.Outcome = '1'
         self.outcome.OutcomeDate = '2/01/2017'
@@ -278,7 +278,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome'], 'cured')
         self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome_date'], '2017-01-02')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_outcome_died(self):
         self.outcome.Outcome = '3'
         self.outcome.OutcomeDate = '2-01-2017'

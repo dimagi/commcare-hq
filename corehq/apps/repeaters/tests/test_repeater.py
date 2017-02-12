@@ -20,7 +20,7 @@ from corehq.apps.repeaters.models import (
 )
 from corehq.apps.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records
-from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import conditionally_run_with_all_backends, FormProcessorTestUtils
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.const import DEVICE_LOG_XMLNS
 
@@ -114,7 +114,7 @@ class RepeaterTest(BaseRepeaterTest):
         delete_all_repeat_records()
         super(RepeaterTest, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_skip_device_logs(self):
         devicelog_xml = XFORM_XML_TEMPLATE.format(DEVICE_LOG_XMLNS, USER_ID, '1234', '')
         self.post_xml(devicelog_xml, self.domain)
@@ -122,7 +122,7 @@ class RepeaterTest(BaseRepeaterTest):
         for repeat_record in repeat_records:
             self.assertNotEqual(repeat_record.payload_id, '1234')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_repeater_failed_sends(self):
         """
         This tests records that fail to send three times
@@ -155,7 +155,7 @@ class RepeaterTest(BaseRepeaterTest):
         )
         self.assertEqual(len(repeat_records), 2)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_update_failure_next_check(self):
         now = datetime.utcnow()
         record = RepeatRecord(domain=self.domain, next_check=now)
@@ -165,7 +165,7 @@ class RepeaterTest(BaseRepeaterTest):
         self.assertTrue(record.last_checked > now)
         self.assertEqual(record.next_check, record.last_checked + MIN_RETRY_WAIT)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_repeater_successful_send(self):
 
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
@@ -206,7 +206,7 @@ class RepeaterTest(BaseRepeaterTest):
         self.post_xml(self.update_xform_xml, self.domain)
         self.assertEqual(len(self.repeat_records(self.domain)), 2)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_check_repeat_records(self):
         self.assertEqual(len(RepeatRecord.all()), 2)
 
@@ -218,7 +218,7 @@ class RepeaterTest(BaseRepeaterTest):
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_process_repeat_record_locking(self):
         self.assertEqual(len(RepeatRecord.all()), 2)
 
@@ -239,7 +239,7 @@ class RepeaterTest(BaseRepeaterTest):
             check_repeaters()
             self.assertEqual(mock_process.delay.call_count, 2)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_automatic_cancel_repeat_record(self):
         repeat_record = self.case_repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
         repeat_record.overall_tries = 1
@@ -282,7 +282,7 @@ class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
         delete_all_repeat_records()
         super(FormPayloadGeneratorTest, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_payload(self):
         self.post_xml(self.xform_xml, self.domain_name)
         payload_doc = FormAccessors(self.domain_name).get_form(INSTANCE_ID)
@@ -315,7 +315,7 @@ class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         delete_all_repeat_records()
         super(FormRepeaterTest, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_payload(self):
         self.post_xml(self.xform_xml, self.domain_name)
         payload = self.repeat_records(self.domain_name).all()[0].get_payload()
@@ -347,7 +347,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         delete_all_repeat_records()
         super(CaseRepeaterTest, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_case_close_format(self):
         # create a case
         self.post_xml(self.xform_xml, self.domain_name)
@@ -361,7 +361,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertXmlHasXpath(close_payload, '//*[local-name()="case"]')
         self.assertXmlHasXpath(close_payload, '//*[local-name()="close"]')
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_excluded_case_types_are_not_forwarded(self):
         self.repeater.white_listed_case_types = ['planet']
         self.repeater.save()
@@ -382,7 +382,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         CaseFactory(self.domain_name).post_case_blocks([non_white_listed_case])
         self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_black_listed_user_cases_do_not_forward(self):
         self.repeater.black_listed_users = ['black_listed_user']
         self.repeater.save()
@@ -477,7 +477,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
         delete_all_repeat_records()
         super(RepeaterFailureTest, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_get_payload_exception(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain_name).get_case(CASE_ID))
         with self.assertRaises(Exception):
@@ -487,7 +487,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
         self.assertEquals(repeat_record.failure_reason, 'Boom!')
         self.assertFalse(repeat_record.succeeded)
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_failure(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain_name).get_case(CASE_ID))
         with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout', side_effect=Exception('Boom!')):
@@ -532,7 +532,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
         delete_all_repeat_records()
         super(IgnoreDocumentTest, self).tearDown()
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_ignore_document(self):
         """
         When get_payload raises IgnoreDocument, fire should call update_success
@@ -595,7 +595,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 def get_payload(self, repeat_record, payload_doc):
                     return self.payload
 
-    @run_with_all_backends
+    @conditionally_run_with_all_backends
     def test_new_format_payload(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
         with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_post:
