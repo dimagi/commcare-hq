@@ -142,10 +142,10 @@
 
 {% block page_content %}
     <p class="lead">
-        {% blocktrans %}
-            Web Users can manage and view data on CommCare HQ.
+        {% blocktrans with hq_name=django_settings.COMMCARE_HQ_NAME cc_name=django_settings.COMMCARE_NAME %}
+            Web Users can manage and view data on {{ hq_name }}.
             However, these users cannot submit forms from phones
-            using the CommCare Application.
+            using the {{ cc_name }} Application.
         {% endblocktrans %}
         <div class="btn-toolbar">
             <a class="btn btn-success"

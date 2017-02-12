@@ -91,3 +91,9 @@ def enterprise_mode(request):
     return {
         'enterprise_mode': settings.ENTERPRISE_MODE
     }
+
+
+def django_settings(request):
+    return {
+        'django_settings': settings
+    }

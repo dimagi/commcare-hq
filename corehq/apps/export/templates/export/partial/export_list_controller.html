@@ -15,8 +15,8 @@
     </p>
     {% endif %}
     <p>
-        {% blocktrans %}
-            Exports are a way to download data from CommCare HQ
+        {% blocktrans with hq_name=django_settings.COMMCARE_HQ_NAME %}
+            Exports are a way to download data from {{ hq_name }}
             in a variety of formats (CSV, Excel, etc.) for use in
             third-party data analysis tools.
         {% endblocktrans %}

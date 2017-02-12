@@ -922,6 +922,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.websockets_override',
+                'corehq.util.context_processors.django_settings',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1391,6 +1392,10 @@ MESSAGE_TAGS = {
 
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
+# CommCare HQ - To indicate server
+COMMCARE_HQ_NAME = "CommCare HQ"
+# CommCare - To Indicate mobile
+COMMCARE_NAME = "CommCare"
 
 DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
