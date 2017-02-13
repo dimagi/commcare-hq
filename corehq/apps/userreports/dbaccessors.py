@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND

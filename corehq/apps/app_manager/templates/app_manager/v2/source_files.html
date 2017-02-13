@@ -1,11 +1,24 @@
 {% extends "style/full_screen.html" %}
 
+{% load hq_shared_tags %}
+{% load compress %}
+
 {% block page_content %}
-    <p>
+    {% registerurl 'diff' app.domain app.id '---' %}
+    {% initial_page_data 'built_versions' built_versions %}
+    {% initial_page_data 'current_version' app.built_with.build_number %}
+
+    <p class="form-inline" id="compare-form">
       See
       <a href="{% url "view_app" app.domain app.copy_of|default_if_none:app.get_id %}">
         current app
       </a> for the latest work in progress.
+
+    {% if not other_app %}
+        Or compare with another version:
+        <input type="text" class="form-control input-sm" placeholder="version" />
+        <button class="btn btn-default btn-sm">Compare</button>
+    {% endif %}
     </p>
 
     {% block downloads %}{% endblock %}
@@ -41,13 +54,15 @@
     {% block post_files %}{% endblock %}
 {% endblock page_content %}
 
-{% block js-inline %}
-<script>
-    $(function(){
-        $('.toggle-next').click(function(e){
-            e.preventDefault();
-            $(this).parents('tr').next('tr').toggleClass("hide");
-        });
-    });
-</script>
-{% endblock js-inline %}
+{% block js %}{{ block.super }}
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+        <script src="{% static 'app_manager/js/source_files.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
+
+{% block stylesheets %}{{ block.super }}
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}" />
+{% endblock %}

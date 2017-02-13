@@ -7,8 +7,10 @@ from corehq import toggles
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.apps.users.models import CommCareUser
 from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.util.test_utils import flag_enabled
 
 
+@flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
 class LocationGroupTest(LocationTestBase):
 
     def setUp(self):

@@ -256,10 +256,12 @@ def call_with_settings(fn, settings_dict, args, kwargs):
             setattr(settings, key, value)
 
 
-def run_with_multiple_configs(fn, run_configs):
+def run_with_multiple_configs(fn, run_configs, nose_tags=None):
+    from nose.plugins.attrib import attr
     helper = RunWithMultipleConfigs(fn, run_configs)
 
     @functools.wraps(fn)
+    @attr(**(nose_tags or {}))
     def inner(*args, **kwargs):
         return helper(*args, **kwargs)
 

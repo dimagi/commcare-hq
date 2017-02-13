@@ -9,7 +9,7 @@
  
  <script type="text/html" id="remove-subcase-modal-template">
      <div class="modal-dialog">
-@@ -28,101 +28,125 @@
+@@ -28,101 +28,121 @@
          name: 'case-config:condition',
          data: {condition: condition, config: $data}
      }, visible: allow.condition()"></div>
@@ -18,17 +18,9 @@
 -            <div class="panel panel-default case-properties"
 -                 data-bind="template: 'case-config:case-transaction:case-properties'"></div>
 +    <div data-bind="if: allow.case_preload()">
-+        <div data-bind="if: !allow.vellum_case_management()">
-+            <div class="panel panel-appmanager case-preload"
-+                 data-bind="template: 'case-config:case-transaction:case-preload'"></div>
-         </div>
 +        <div class="panel panel-appmanager case-properties"
 +             data-bind="template: 'case-config:case-transaction:case-properties'"></div>
-     </div>
--    <div data-bind="if: !allow.case_preload()" class="row">
--        <div class="col-sm-9">
--            <div class="panel panel-default"
--                 data-bind="template: 'case-config:case-transaction:case-properties'"></div>
++    </div>
 +    <div data-bind="if: !allow.case_preload()">
 +        <div class="panel panel-appmanager"
 +             data-bind="template: 'case-config:case-transaction:case-properties'"></div>
@@ -46,6 +38,12 @@
 +                if: $data.close_condition
 +            }"></div>
          </div>
+-    </div>
+-    <div data-bind="if: !allow.case_preload()" class="row">
+-        <div class="col-sm-9">
+-            <div class="panel panel-default"
+-                 data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+-        </div>
 -    </div>
 -    <div class="panel panel-default">
 -        <label class="panel-body">

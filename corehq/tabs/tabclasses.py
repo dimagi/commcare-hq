@@ -718,6 +718,10 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 
+        if toggles.DATA_DICTIONARY.enabled(self.domain):
+            items.append([_('Data Dictionary'),
+                          [{'title': 'Data Dictionary',
+                            'url': reverse('data_dictionary', args=[self.domain])}]])
         return items
 
     @property
@@ -727,15 +731,7 @@ class ProjectDataTab(UITab):
         from corehq.apps.export.views import (
             FormExportListView,
             CaseExportListView,
-            DashboardFeedListView,
-            DailySavedExportListView,
-            DailySavedExportPaywall,
-            DashboardFeedPaywall,
         )
-        daily_saved_list_url = reverse(DailySavedExportListView.urlname, args=(self.domain,))
-        daily_saved_paywall_url = reverse(DailySavedExportPaywall.urlname, args=(self.domain,))
-        feed_list_url = reverse(DashboardFeedListView.urlname, args=(self.domain,))
-        feed_paywall_url = reverse(DashboardFeedPaywall.urlname, args=(self.domain,))
         items = []
         if self.can_view_form_exports:
             items.append(dropdown_dict(
@@ -746,18 +742,6 @@ class ProjectDataTab(UITab):
             items.append(dropdown_dict(
                 CaseExportListView.page_title,
                 url=reverse(CaseExportListView.urlname, args=(self.domain,))
-            ))
-        if self.should_see_daily_saved_export_list_view or self.should_see_daily_saved_export_paywall:
-            url = daily_saved_list_url if self.should_see_daily_saved_export_list_view else daily_saved_paywall_url
-            items.append(dropdown_dict(
-                DailySavedExportListView.page_title,
-                url=url
-            ))
-        if self.should_see_dashboard_feed_list_view or self.should_see_dashboard_feed_paywall:
-            url = feed_list_url if self.should_see_dashboard_feed_list_view else feed_paywall_url
-            items.append(dropdown_dict(
-                DashboardFeedListView.page_title,
-                url=url,
             ))
         items += [
             dropdown_dict(None, is_divider=True),
@@ -1506,7 +1490,7 @@ def _get_feature_flag_items(domain):
             'title': _('Calendar Fixture'),
             'url': reverse(CalendarFixtureConfigView.urlname, args=[domain])
         })
-    if toggles.FLAT_LOCATION_FIXTURE.enabled(domain):
+    if toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
         feature_flag_items.append({
             'title': _('Location Fixture'),
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
@@ -1667,8 +1651,6 @@ class AdminTab(UITab):
             dropdown_dict(_("System Info"), url=reverse("system_info")),
             dropdown_dict(_("Submission Map"), url=reverse("dimagisphere")),
             dropdown_dict(_("Management"), is_header=True),
-            dropdown_dict(mark_for_escaping(_("Commands")),
-                          url=reverse("management_commands")),
             # dropdown_dict(mark_for_escaping("HQ Announcements"),
             #                      url=reverse("default_announcement_admin")),
         ]
@@ -1690,7 +1672,8 @@ class AdminTab(UITab):
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
             dropdown_dict(_("CommCare Builds"), url="/builds/edit_menu"),
             dropdown_dict(None, is_divider=True),
-            dropdown_dict(_("Django Admin"), url="/admin")
+            dropdown_dict(_("Django Admin"), url="/admin"),
+            dropdown_dict(_("View All"), url=self.url),
         ])
         return submenu_context
 
