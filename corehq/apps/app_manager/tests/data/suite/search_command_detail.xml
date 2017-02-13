@@ -17,6 +17,18 @@
         </text>
       </template>
     </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_whatever_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="instance('reports')/report[1]/name"/>
+        </text>
+      </template>
+    </field>
     <action>
       <display>
         <text>
