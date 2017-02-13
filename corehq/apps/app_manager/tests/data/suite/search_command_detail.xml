@@ -5,7 +5,7 @@
         <locale id="m0.case_short.title"/>
       </text>
     </title>
-    <field sort="default">
+    <field>
       <header>
         <text>
           <locale id="m0.case_short.case_name_1.header"/>
