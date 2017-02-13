@@ -13,12 +13,13 @@
         var edit_context = {{ edit_context|JSON }};
         var uses_sql_backend = {{ use_sqlite_backend|JSON }};
         var username = "{{ username }}";
+        var edit_formplayer = {{ edit_formplayer|JSON }};
         $('#edit-container').inlineTouchform({
             formUrl: edit_context.formUrl,
             submitUrl: edit_context.submitUrl,
             sessionData: edit_context.sessionData,
             uses_sql_backend: uses_sql_backend,
-            formplayerEnabled: true,
+            formplayerEnabled: edit_formplayer,
             domain: edit_context.domain,
             username: username,
             onsubmit: function () {

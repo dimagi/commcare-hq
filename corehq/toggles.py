@@ -928,6 +928,13 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+EDIT_FORMPLAYER = PredictablyRandomToggle(
+    'edit_formplayer',
+    'Edit forms on Formplayer',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    randomness=0.1,
+)
 
 PREVIEW_APP = PredictablyRandomToggle(
     'preview_app',
