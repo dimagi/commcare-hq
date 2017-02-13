@@ -79,7 +79,7 @@ django-formtools==1.0
 # django-two-factor-auth==1.5.0
 git+git://github.com/emord/django-two-factor-auth.git@cea4533f6048fe4de7431a182a44490c84d0486c
 datadog==0.10.0
-django-websocket-redis==0.4.6
+django-websocket-redis==0.4.8
 django-redis-sessions==0.5.0
 SQLAlchemy==1.0.14
 alembic==0.8.6
