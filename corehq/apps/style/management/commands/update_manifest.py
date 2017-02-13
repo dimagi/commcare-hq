@@ -18,9 +18,14 @@ class ResourceCompressError(Exception):
 
 class Command(BaseCommand):
     help = "Prints the paths of all the static files"
-    args = "save or soft"
 
     root_dir = settings.FILEPATH
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'params',
+            nargs='*',
+        )
 
     @property
     def manifest_file(self):
@@ -49,18 +54,18 @@ class Command(BaseCommand):
             print manifest_data
             rcache.set(COMPRESS_PREFIX % self.current_sha, manifest_data, 86400)
 
-    def handle(self, *args, **options):
+    def handle(self, params, **options):
         current_snapshot = gitinfo.get_project_snapshot(self.root_dir, submodules=False)
         self.current_sha = current_snapshot['commits'][0]['sha']
         print "Current commit SHA: %s" % self.current_sha
 
-        if 'save' in args:
+        if 'save' in params:
             self.save_manifest()
         else:
             existing_resource_str = rcache.get(COMPRESS_PREFIX % self.current_sha, None)
             if existing_resource_str:
                 self.output_manifest(existing_resource_str,
-                                     is_soft_update='soft' in args)
+                                     is_soft_update='soft' in params)
             else:
                 raise ResourceCompressError(
                     "Could not find manifest.json in redis! Deploying under this "
