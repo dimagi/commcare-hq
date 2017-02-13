@@ -24,6 +24,7 @@ class StateHashTest(TestCase):
     
     @classmethod
     def setUpClass(cls):
+        super(StateHashTest, cls).setUpClass()
         delete_all_users()
         cls.project = Domain(name='state-hash-tests-project')
         cls.project.save()
@@ -42,6 +43,7 @@ class StateHashTest(TestCase):
     def tearDownClass(cls):
         cls.project.delete()
         delete_all_users()
+        super(StateHashTest, cls).tearDownClass()
 
     @run_with_all_backends
     def testEmpty(self):
