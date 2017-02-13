@@ -73,11 +73,8 @@
 {% endblock %}
 
 {% block app-content %}
-    {% initial_page_data 'form_counts_by_module' form_counts_by_module %}
-    {% initial_page_data 'app_version' app.version %}
-    {% initial_page_data 'app_commcare_minor_release' app.commcare_minor_release %}
     {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
-    {% initial_page_data 'app_doc_type' app.get_doc_type %}
+    {% initial_page_data 'app_subset' app_subset %}
     {% initial_page_data 'formdesigner' formdesigner %}
     {% block pre_form_content %}{% endblock %}
     {% block form-view %}{% endblock %}

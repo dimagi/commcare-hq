@@ -1,11 +1,12 @@
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
         init = hqImport('app_manager/js/app_manager.js').init,
-        v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2');
+        v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
+        app = initial_page_data('app_subset');
 
     init({
-        appVersion: initial_page_data('app_version') || -1,
-        commcareVersion: String(initial_page_data('app_commcare_minor_release')),
+        appVersion: app.version || -1,
+        commcareVersion: String(app.commcare_minor_release),
         latestCommcareVersion: initial_page_data('latest_commcare_version') || null,
     });
 
@@ -25,7 +26,7 @@ $(function () {
         }
     });
 
-    if (initial_page_data('app_doc_type') == 'Application') {
+    if (app.doc_type === 'Application') {
         $('[data-toggle="tooltip"]').tooltip();
         if (v2) {
             $('.edit-form-li').each(function () {
@@ -87,7 +88,7 @@ $(function () {
     });
 
     gaTrackLink($('#edit_label'), 'App Builder', 'Open Form', 'Edit Label');
-    _.each(initial_page_data('form_counts_by_module'), function(form_count, module_id) {
+    _.each(app.form_counts_by_module, function(form_count, module_id) {
         _.each(_.range(form_count), function(form_id) {
             gaTrackLink($('#view_form_' + module_id + '_' + form_id + '_sidebar'), 'App Builder', 'View Form', 'Sidebar');
             gaTrackLink($('#edit_pen_' + module_id + '_' + form_id), 'App Builder', 'Open Form', 'Edit Pen');

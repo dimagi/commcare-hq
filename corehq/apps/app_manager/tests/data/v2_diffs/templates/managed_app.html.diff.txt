@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load url_extras %}
  {% load hq_shared_tags %}
-@@ -25,236 +25,51 @@
+@@ -25,241 +25,77 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -281,9 +281,8 @@
  {% endblock %}
  
  {% block app-content %}
-@@ -264,5 +79,26 @@
      {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
-     {% initial_page_data 'app_doc_type' app.get_doc_type %}
+     {% initial_page_data 'app_subset' app_subset %}
      {% initial_page_data 'formdesigner' formdesigner %}
 +    {% block pre_form_content %}{% endblock %}
      {% block form-view %}{% endblock %}
