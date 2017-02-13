@@ -391,7 +391,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "county_code"
+                    "level_1_name"
                   ]
                 },
                 "type": "related_doc",
@@ -776,7 +776,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "sub_county_code"
+                    "level_2_name"
                   ]
                 },
                 "type": "related_doc",
@@ -1357,7 +1357,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "ward_code"
+                    "level_3_name"
                   ]
                 },
                 "type": "related_doc",
