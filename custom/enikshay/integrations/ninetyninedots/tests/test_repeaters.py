@@ -27,6 +27,9 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_LAST_NAME,
     TREATMENT_OUTCOME,
     TREATMENT_OUTCOME_DATE,
+    WEIGHT_BAND,
+    CURRENT_ADDRESS,
+    TREATMENT_SUPPORTER_PHONE,
 )
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
@@ -134,7 +137,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
             domain=self.domain,
             url='case-repeater-url',
         )
-        self.repeater.white_listed_case_types = ['person']
+        self.repeater.white_listed_case_types = ['person', 'episode']
         self.repeater.save()
 
     @run_with_all_backends
@@ -151,6 +154,9 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
 
         self._update_case(self.person_id, {PRIMARY_PHONE_NUMBER: '999999999', })
         self.assertEqual(1, len(self.repeat_records().all()))
+
+        self._update_case(self.episode_id, {TREATMENT_SUPPORTER_PHONE: '999999999', })
+        self.assertEqual(2, len(self.repeat_records().all()))
 
     @run_with_all_backends
     def test_trigger_multiple_cases(self):
@@ -254,8 +260,8 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             "beneficiary_id": self.person_id,
             "first_name": person_case_properties.get(PERSON_FIRST_NAME, None),
             "last_name": person_case_properties.get(PERSON_LAST_NAME, None),
-            "sto_code": person_locations.sto,
-            "dto_code": person_locations.dto,
+            "state_code": person_locations.sto,
+            "district_code": person_locations.dto,
             "tu_code": person_locations.tu,
             "phi_code": person_locations.phi,
             "phone_numbers": expected_numbers,
@@ -266,6 +272,8 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
                 episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, ''),
             ),
             "treatment_supporter_phone_number": "+91{}".format(self.treatment_supporter_phone[1:]),
+            "weight_band": episode_case_properties.get(WEIGHT_BAND),
+            "address": person_case_properties.get(CURRENT_ADDRESS),
         }
         actual_payload = json.loads(self._get_actual_payload(casedb))
         self.assertDictEqual(expected_payload, actual_payload)
