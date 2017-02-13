@@ -373,6 +373,9 @@ function ComboboxEntry(question, options) {
                 matcher: function() {
                     return $input.val();
                 },
+                sorter: function(query, data) {
+                    return data;
+                },
             },
         });
     };
@@ -392,6 +395,7 @@ function ComboboxEntry(question, options) {
 }
 
 ComboboxEntry.filter = function(query, d, matchType) {
+    var match;
     if (matchType === Formplayer.Const.COMBOBOX_MULTIWORD) {
         // Multiword filter, matches any choice that contains all of the words in the query
         //
@@ -400,19 +404,24 @@ ComboboxEntry.filter = function(query, d, matchType) {
         var wordsInQuery = query.split(' ');
         var wordsInChoice = d.name.split(' ');
 
-        return _.all(wordsInQuery, function(word) {
+        match = _.all(wordsInQuery, function(word) {
             return _.include(wordsInChoice, word);
         });
     } else if (matchType === Formplayer.Const.COMBOBOX_FUZZY) {
         // Fuzzy filter, matches if query is "close" to answer
-        return (
+        match = (
             (window.Levenshtein.get(d.name.toLowerCase(), query.toLowerCase()) <= 2 && query.length > 3) ||
             d.name.toLowerCase() === query.toLowerCase()
         );
-    } else {
-        // Standard filter, matches only start of word
-        return d.name.startsWith(query);
     }
+
+    // If we've already matched, return true
+    if (match) {
+        return true;
+    }
+
+    // Standard filter, matches only start of word
+    return d.name.toLowerCase().startsWith(query.toLowerCase());
 };
 
 ComboboxEntry.prototype = Object.create(EntrySingleAnswer.prototype);
