@@ -54,10 +54,10 @@ branches:
   - je/sms-export-final # emord 2/9
 
   # django 1.10 dependencies - NP 2/10
-  - np/110/djangorest
-  - np/110/iln8
-  - np/110/request-context_processor
-  - np/110/two-factor
+  #- np/110/djangorest
+  #- np/110/iln8
+  #- np/110/request-context_processor
+  #- np/110/two-factor
 
   # django 1.10 mgmt cmd updates - NP 2/10
   #- np/110/2
@@ -78,6 +78,7 @@ branches:
   #- np/110/validate_kafka_pillow_checkpoints
 
   #- np/django1.10 # NP 2/12  ## breaking celery on staging
+  - nh/uninstall_django110
   - sk/sentry  # SK 2/13
 submodules:
   submodules/touchforms-src:
