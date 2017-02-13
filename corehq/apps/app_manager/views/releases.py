@@ -40,7 +40,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
-from corehq.apps.app_manager.exceptions import ModuleIdMissingException
+from corehq.apps.app_manager.exceptions import ModuleIdMissingException, ModuleNotFoundException
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.download import source_files
@@ -190,6 +190,10 @@ def save_copy(request, domain, app_id):
         # For apps (mainly Exchange apps) that lost unique_id attributes on Module
         app.ensure_module_unique_ids(should_save=True)
         errors = app.validate_app()
+    except ModuleNotFoundException:
+        errors = [{
+            "type": "missing module",
+        }]
 
     if not errors:
         try:

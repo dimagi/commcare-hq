@@ -83,11 +83,6 @@
             var previewApp = hqImport('app_manager/js/preview_app.js');
             previewApp.initPreviewWindow(hqLayout);
         {% endif %}
-
-        // push LIVE PREVIEW ab test state to kissmetrics
-      {% if is_onboarding_domain %}
-        analytics.workflow("Set live preview A/B test state", {"{{ live_preview_ab.name }}": "{{ live_preview_ab.version }}"});
-      {% endif %}
     });
     $(function () {
        $('.appmanager-content').fadeIn();

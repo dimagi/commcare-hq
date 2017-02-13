@@ -1,8 +1,0 @@
-<script>
-    $(function() {
-        $("#{{ modal_id }}").on("show.bs.modal", function() {
-            console.log('shown');
-            $(this).find(".modal-body .fetched-data").load("{{ load_from }}");
-        });
-    });
-</script>

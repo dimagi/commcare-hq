@@ -42,21 +42,26 @@ class SyncBaseTest(TestCase):
     """
     Shared functionality among tests
     """
+    @classmethod
+    def setUpClass(cls):
+        super(SyncBaseTest, cls).setUpClass()
+        delete_all_users()
+
+        cls.project = Domain(name=TEST_DOMAIN_NAME)
+        cls.project.save()
+        cls.user = create_restore_user(
+            cls.project.name,
+            USERNAME,
+        )
+        cls.user_id = cls.user.user_id
+        # this creates the initial blank sync token in the database
 
     def setUp(self):
         super(SyncBaseTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()
         FormProcessorTestUtils.delete_all_sync_logs()
-        delete_all_users()
-        self.project = Domain(name=TEST_DOMAIN_NAME)
-        self.project.save()
-        self.user = create_restore_user(
-            self.project.name,
-            USERNAME,
-        )
-        self.user_id = self.user.user_id
-        # this creates the initial blank sync token in the database
+
         restore_config = RestoreConfig(
             self.project,
             restore_user=self.user,
@@ -77,9 +82,12 @@ class SyncBaseTest(TestCase):
     def tearDown(self):
         restore_config = RestoreConfig(project=self.project, restore_user=self.user)
         restore_config.cache.delete(restore_config._initial_cache_key)
-        self.user._couch_user.delete()
-
         super(SyncBaseTest, self).tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_users()
+        super(SyncBaseTest, cls).tearDownClass()
 
     def _createCaseStubs(self, id_list, **kwargs):
         case_attrs = {'create': True}
@@ -673,11 +681,11 @@ class SyncTokenUpdateTest(SyncBaseTest):
     def test_index_chain_with_closed_parents(self):
         grandparent = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'close': True}
+            attrs={'close': True, 'create': True}
         )
         parent = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'close': True},
+            attrs={'close': True, 'create': True},
             indices=[CaseIndex(
                 grandparent,
                 relationship=CHILD_RELATIONSHIP,
@@ -690,7 +698,8 @@ class SyncTokenUpdateTest(SyncBaseTest):
                 parent,
                 relationship=CHILD_RELATIONSHIP,
                 related_type=PARENT_TYPE,
-            )]
+            )],
+            attrs={'create': True}
         )
         parent_ref = CommCareCaseIndex(
             identifier=PARENT_TYPE,
@@ -735,25 +744,27 @@ class SyncTokenUpdateTest(SyncBaseTest):
         other_owner_id = uuid.uuid4().hex
         grandparent = CaseStructure(
             case_id="Steffon",
-            attrs={'owner_id': other_owner_id}
+            attrs={'owner_id': other_owner_id, 'create': True}
         )
         parent_1 = CaseStructure(
             case_id="Stannis",
-            attrs={'owner_id': other_owner_id},
+            attrs={'owner_id': other_owner_id, 'create': True},
             indices=[CaseIndex(grandparent)]
         )
         parent_2 = CaseStructure(
             case_id="Robert",
-            attrs={'owner_id': other_owner_id},
+            attrs={'owner_id': other_owner_id, 'create': True},
             indices=[CaseIndex(grandparent)]
         )
         child_1 = CaseStructure(
             case_id="Shireen",
-            indices=[CaseIndex(parent_1)]
+            indices=[CaseIndex(parent_1)],
+            attrs={'create': True}
         )
         child_2 = CaseStructure(
             case_id="Joffrey",
-            indices=[CaseIndex(parent_2)]
+            indices=[CaseIndex(parent_2)],
+            attrs={'create': True}
         )
         self.factory.create_or_update_cases([grandparent, parent_1, parent_2, child_1, child_2])
         assert_user_has_cases(self, self.user, [
@@ -784,7 +795,7 @@ class SyncDeletedCasesTest(SyncBaseTest):
                     'create': True,
                 },
                 indices=[CaseIndex(
-                    CaseStructure(case_id=parent_id),
+                    CaseStructure(case_id=parent_id, attrs={'create': True}),
                     relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
                 )],
@@ -1288,40 +1299,43 @@ class MultiUserSyncTest(SyncBaseTest):
     Tests the interaction of two users in sync mode doing various things
     """
 
-    def setUp(self):
-        super(MultiUserSyncTest, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        super(MultiUserSyncTest, cls).setUpClass()
         # the other user is an "owner" of the original users cases as well,
         # for convenience
-        self.other_user = create_restore_user(
-            self.project.name,
+        cls.other_user = create_restore_user(
+            cls.project.name,
             username=OTHER_USERNAME,
         )
-        self.other_user_id = self.other_user.user_id
+        cls.other_user_id = cls.other_user.user_id
 
-        self.shared_group = Group(
-            domain=self.project.name,
+        cls.shared_group = Group(
+            domain=cls.project.name,
             name='shared_group',
             case_sharing=True,
-            users=[self.other_user.user_id, self.user.user_id]
+            users=[cls.other_user.user_id, cls.user.user_id]
         )
-        self.shared_group.save()
+        cls.shared_group.save()
 
+    def setUp(self):
+        super(MultiUserSyncTest, self).setUp()
         # this creates the initial blank sync token in the database
         self.other_sync_log = synclog_from_restore_payload(
             generate_restore_payload(self.project, self.other_user)
         )
 
-        self.assertTrue(self.shared_group._id in self.other_sync_log.owner_ids_on_phone)
-        self.assertTrue(self.other_user_id in self.other_sync_log.owner_ids_on_phone)
-
         self.sync_log = synclog_from_restore_payload(
             generate_restore_payload(self.project, self.user)
         )
-        self.assertTrue(self.shared_group._id in self.sync_log.owner_ids_on_phone)
-        self.assertTrue(self.user_id in self.sync_log.owner_ids_on_phone)
         # since we got a new sync log, have to update the factory as well
         self.factory.form_extras = {'last_sync_token': self.sync_log._id}
         self.factory.case_defaults.update({'owner_id': self.shared_group._id})
+
+        self.assertTrue(self.shared_group._id in self.other_sync_log.owner_ids_on_phone)
+        self.assertTrue(self.other_user_id in self.other_sync_log.owner_ids_on_phone)
+        self.assertTrue(self.shared_group._id in self.sync_log.owner_ids_on_phone)
+        self.assertTrue(self.user_id in self.sync_log.owner_ids_on_phone)
 
     @run_with_all_backends
     def testSharedCase(self):
@@ -1868,20 +1882,22 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
     Test that doing multiple clean syncs with extensions does what we think it will
     """
 
-    def setUp(self):
-        super(SteadyStateExtensionSyncTest, self).setUp()
-        self.other_user = create_restore_user(
-            self.project.name,
+    @classmethod
+    def setUpClass(cls):
+        super(SteadyStateExtensionSyncTest, cls).setUpClass()
+        cls.other_user = create_restore_user(
+            cls.project.name,
             username=OTHER_USERNAME,
         )
-        self.other_user_id = self.other_user.user_id
-        self._create_ownership_cleanliness(self.user_id)
-        self._create_ownership_cleanliness(self.other_user_id)
+        cls.other_user_id = cls.other_user.user_id
+        cls._create_ownership_cleanliness(cls.user_id)
+        cls._create_ownership_cleanliness(cls.other_user_id)
 
-    def _create_ownership_cleanliness(self, user_id):
+    @classmethod
+    def _create_ownership_cleanliness(cls, user_id):
         OwnershipCleanlinessFlag.objects.get_or_create(
-            owner_id=self.user_id,
-            domain=self.project.name,
+            owner_id=user_id,
+            domain=cls.project.name,
             defaults={'is_clean': True}
         )
 

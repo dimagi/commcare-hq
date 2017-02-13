@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import datetime
 import functools
@@ -111,6 +112,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
 from pillowtop.dao.exceptions import DocumentNotFoundError
+import six
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -579,7 +581,7 @@ class ConfigureChartReport(ReportBuilderView):
                 'report_id': self.existing_report.get_id,
                 'is_static': self.existing_report.is_static,
                 'error_message': '',
-                'details': unicode(e)
+                'details': six.text_type(e)
             }
             return self._handle_exception(error_response, e)
 
@@ -920,7 +922,7 @@ def evaluate_expression(request, domain):
         )
     except Exception as e:
         return json_response(
-            {"error": unicode(e)},
+            {"error": six.text_type(e)},
             status_code=500,
         )
 
@@ -1281,7 +1283,7 @@ def export_data_source(request, domain, config_id):
 
     # build export
     def get_table(q):
-        yield table.columns.keys()
+        yield list(table.columns)
         for row in q:
             yield row
 

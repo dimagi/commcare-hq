@@ -70,9 +70,9 @@ class LoadtestUserTest(TestCase):
         self.user.save()
         child, parent = self.factory.create_or_update_case(
             CaseStructure(
-                attrs={'case_name': 'parent'},
+                attrs={'case_name': 'parent', 'create': True},
                 indices=[
-                    CaseIndex(CaseStructure(attrs={'case_name': 'child'})),
+                    CaseIndex(CaseStructure(attrs={'case_name': 'child', 'create': True})),
                 ]
             )
         )

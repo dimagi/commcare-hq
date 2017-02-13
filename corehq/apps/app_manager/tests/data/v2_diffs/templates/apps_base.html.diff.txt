@@ -88,7 +88,7 @@
  {% endblock %}
  
  {% block js-inline %}{{ block.super }}
-@@ -79,37 +98,26 @@
+@@ -79,41 +98,30 @@
          }).on('hide.bs.modal', function () {
              window.location = "{% url "default_app" domain %}";
          });
@@ -96,11 +96,7 @@
 -            var previewApp = hqImport('app_manager/js/preview_app.js');
 -            previewApp.initPreviewWindow(hqLayout);
 -        {% endif %}
- 
--        // push LIVE PREVIEW ab test state to kissmetrics
--      {% if is_onboarding_domain %}
--        analytics.workflow("Set live preview A/B test state", {"{{ live_preview_ab.name }}": "{{ live_preview_ab.version }}"});
--      {% endif %}
++
 +        var previewApp = hqImport('app_manager/js/preview_app.js');
 +        previewApp.initPreviewWindow(hqLayout);
 +
@@ -134,7 +130,17 @@
  {% endblock %}
  
  {% block page_content %}
-@@ -143,7 +151,7 @@
+-<div class="appmanager-loading-container">
+-  <div class="appmanager-loading appmanager-loading-body">
+-    <i class="fa fa-spin fa-spinner"></i>
+-  </div>
+-</div>
+-<div class="appmanager-content appmanager-content-animate-preview"
++<div class="appmanager-content appmanager-content-animate-preview{% if not formdesigner %} appmanager-content-not-formdesigner{% endif %}"
+      id="js-appmanager-body">
+     {% if app %}
+         {% if error %}
+@@ -138,7 +146,7 @@
                  {% endblocktrans %}
              </p>
              <br>
