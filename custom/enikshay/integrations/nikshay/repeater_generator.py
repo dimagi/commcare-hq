@@ -292,8 +292,7 @@ class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
         "MORemark": "This is dev test", (Optional)
         "IP_FROM": "Servers IP address or Mobile device MAC Address",
         """
-
-        episode_case = get_open_episode_case_from_person(person_case.get_id)
+        episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
         properties_dict = {

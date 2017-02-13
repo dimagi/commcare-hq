@@ -103,14 +103,21 @@ class NikshayHIVTestRepeater(CaseRepeater):
         return reverse(NikshayHIVTestRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, person_case):
+        def all_initiation_dates_available(case):
+            case_properties = case.dynamic_case_properties()
+            return case_properties.get('cpt_initiation_date') and case_properties.get('art_initiation_date')
+
         # person.hiv_status changed
         # episode.nikshay_registered is true
         allowed_case_types_and_users = self._allowed_case_type(person_case) and self._allowed_user(person_case)
         episode_case = get_open_episode_case_from_person(person_case)
         episode_case_properties = episode_case.dynamic_case_properties()
+
         return allowed_case_types_and_users and (
+            all_initiation_dates_available(person_case) and
             person_hiv_status_changed(person_case) and
-            episode_case_properties.get('nikshay_registered', 'false') == 'true'
+            episode_case_properties.get('nikshay_registered', 'false') == 'true' and
+            episode_case_properties.get('nikshay_id')
         )
 
 
@@ -134,7 +141,6 @@ def person_hiv_status_changed(case):
     if last_case_action.is_case_create:
         return False
 
-    # Notify only when hiv_status changes to a not "unknown" value or to a set of expected values
     last_update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
     value_changed = any(
         action for action in last_update_actions

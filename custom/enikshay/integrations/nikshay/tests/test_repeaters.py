@@ -16,6 +16,7 @@ from custom.enikshay.tests.utils import ENikshayCaseStructureMixin, ENikshayLoca
 from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator,
     NikshayFollowupPayloadGenerator,
+    NikshayHIVTestPayloadGenerator,
     ENIKSHAY_ID,
 )
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -329,7 +330,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
 
         self.dummy_nikshay_id = "MH-PRL-01-17-0054"
         self._create_nikshay_registered_case()
-        self.test_case = self.cases['test']
+
         MockRepeater = namedtuple('MockRepeater', 'username password')
         MockRepeatRecord = namedtuple('MockRepeatRecord', 'repeater')
         self.repeat_record = MockRepeatRecord(MockRepeater(username="arwen", password="Hadhafang"))
@@ -477,3 +478,62 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
                         lab_referral_case_id=lab_referral_case.case_id)
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case)
+
+
+class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
+    def setUp(self):
+        super(TestNikshayHIVTestPayloadGenerator, self).setUp()
+        self.cases = self.create_case_structure()
+        self.person_case = self.cases['person']
+        self.set_up_person_case()
+        self.person_case = CaseAccessors(self.domain).get_case(self.person_id)
+        self.episode_case = self.cases['episode']
+
+        self.dummy_nikshay_id = "MH-PRL-01-17-0054"
+        self._create_nikshay_registered_case()
+        MockRepeater = namedtuple('MockRepeater', 'username password')
+        MockRepeatRecord = namedtuple('MockRepeatRecord', 'repeater')
+        self.repeat_record = MockRepeatRecord(MockRepeater(username="arwen", password="Hadhafang"))
+
+    def create_case_structure(self):
+        return {case.get_id: case for case in filter(None, self.factory.create_or_update_cases(
+            [self.person, self.episode]))}
+
+    def set_up_person_case(self):
+        update_case(
+            self.domain, self.person_id,
+            {
+                "hiv_status": "reactive",
+                "hiv_test_date": "2016-01-01",
+                "cpt_initiation_date": "2016-01-02",
+                "art_initiation_date": "2016-01-03",
+                "art_initiated": "yes"
+            }
+        )
+
+    def _create_nikshay_registered_case(self):
+        update_case(
+            self.domain,
+            self.episode_id,
+            {
+                "nikshay_id": self.dummy_nikshay_id,
+            },
+            external_id=self.dummy_nikshay_id,
+        )
+
+    @run_with_all_backends
+    def test_payload_properties(self):
+        payload = (json.loads(
+            NikshayHIVTestPayloadGenerator(None).get_payload(self.repeat_record, self.person_case))
+        )
+
+        self.assertEqual(payload['Source'], ENIKSHAY_ID)
+        self.assertEqual(payload['regby'], "arwen")
+        self.assertEqual(payload['password'], "Hadhafang")
+        self.assertEqual(payload['IP_FROM'], "127.0.0.1")
+        self.assertEqual(payload["PatientID"], self.dummy_nikshay_id)
+        self.assertEqual(payload["HIVStatus"], "Pos")
+        self.assertEqual(payload["HIVTestDate"], "01/01/2016")
+        self.assertEqual(payload["CPTDeliverDate"], "02/01/2016")
+        self.assertEqual(payload["InitiatedDate"], "03/01/2016")
+        self.assertEqual(payload["ARTCentreDate"], "03/01/2016")
