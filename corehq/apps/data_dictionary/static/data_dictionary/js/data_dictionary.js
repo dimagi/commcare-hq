@@ -35,6 +35,19 @@
             {value: 'number', display: django.gettext('Number')},
             {value: 'select', display: django.gettext('Select')},
             {value: 'integer', display: django.gettext('Integer')},
+            {value: 'audio', display: django.gettext('Audio')},
+            {value: 'barcode', display: django.gettext('Barcode')},
+            {value: 'gps', display: django.gettext('GPS')},
+            {value: 'image', display: django.gettext('Image')},
+            {value: 'phone_number', display: django.gettext('Phone Number')},
+            {value: 'password', display: django.gettext('Password')},
+            {value: 'signature', display: django.gettext('Signature')},
+            {value: 'video', display: django.gettext('Video')},
+            {value: 'balance', display: django.gettext('Balance')},
+            {value: 'transfer', display: django.gettext('Transfer')},
+            {value: 'dispense', display: django.gettext('Dispense')},
+            {value: 'receive', display: django.gettext('Receive')},
+            {value: 'save_to_case', display: django.gettext('Save To Case')},
         ]);
 
         self.toggle = function () {
