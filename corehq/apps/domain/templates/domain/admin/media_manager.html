@@ -4,16 +4,8 @@
 {% load i18n %}
 
 {% block js %} {{ block.super }}
+<script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
 <script src="{% static 'domain/js/media_manager.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-<script>
-(function () {
-    var MediaManager = hqImport('domain/js/media_manager.js').MediaManager;
-    $('#update-media-sharing-settings').koApplyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
-}());
-</script>
 {% endblock %}
 
 {% block stylesheets %}
@@ -25,6 +17,8 @@
 {% endblock %}
 
 {% block page_content %}
+{% initial_page_data 'media' media %}
+{% initial_page_data 'licenses' licenses %}
 <form id="update-media-sharing-settings" class="disable-on-submit" method="post">
     {% csrf_token %}
     <fieldset>
