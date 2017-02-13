@@ -6,6 +6,7 @@ from django.test import TestCase
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import flag_enabled
+from custom.enikshay.exceptions import RequiredValueMissing, NikshayLocationNotFound
 from custom.enikshay.integrations.nikshay.repeaters import (
     NikshayRegisterPatientRepeater,
     NikshayFollowupRepeater,
@@ -383,3 +384,96 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case))
         )
         self.assertEqual(payload['IntervalId'], 4)
+
+    def test_mandatory_field_interval_id(self):
+        update_case(self.domain,
+                    self.test_id,
+                    {
+                        "purpose_of_testing": "testing",
+                        "follow_up_test_reason": "unknown_reason"
+                    },
+                    external_id=self.dummy_nikshay_id,
+                    )
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+
+        # raises error when purpose_of_testing is not diagnostic and test reason is not known to system
+        with self.assertRaisesMessage(RequiredValueMissing,
+                                      "Value missing for intervalID, purpose_of_testing: {testing_purpose}, "
+                                      "follow_up_test_reason: {follow_up_test_reason}".format(
+                                        testing_purpose="testing",
+                                        follow_up_test_reason="unknown_reason"
+                                      )):
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
+
+        # does not raise error with purpose_of_testing being diagnostic since test reason is not relevant
+        update_case(self.domain,
+                    self.test_id,
+                    {
+                        "purpose_of_testing": "diagnostic",
+                        "follow_up_test_reason": "unknown_reason"
+                    },
+                    external_id=self.dummy_nikshay_id,
+                    )
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
+
+    def test_mandatory_field_smear_result(self):
+        update_case(self.domain,
+                    self.test_id,
+                    {
+                        "result_grade": "999++"
+                    },
+                    )
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+
+        with self.assertRaisesMessage(
+                RequiredValueMissing,
+                "Mandatory value missing in one of the following LabSerialNo: {lab_serial_number}, ResultGrade: "
+                "{result_grade}"
+                .format(
+                    lab_serial_number=test_case.dynamic_case_properties().get('lab_serial_number'),
+                    result_grade="999++")
+                ):
+
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
+
+    def test_mandatory_field_dmc_code(self):
+        lab_referral_case = CaseAccessors(self.domain).get_case(self.lab_referral_id)
+
+        # valid
+        self.dmc_location.metadata['nikshay_code'] = "123"
+        self.dmc_location.save()
+        NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case)
+
+        # invalid since nikshay_code needs to be a code
+        self.dmc_location.metadata['nikshay_code'] = "BARACK-OBAMA"
+        self.dmc_location.save()
+        with self.assertRaisesMessage(
+                RequiredValueMissing,
+                "InAppt value for dmc, got value: BARACK-OBAMA"
+        ):
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case)
+
+        # missing location id as owner_id
+        lab_referral_case.owner_id = ''
+        lab_referral_case.save()
+        with self.assertRaisesMessage(
+                NikshayLocationNotFound,
+                "Location with id: {location_id} not found."
+                "This is the owner for lab referral with id: {lab_referral_case_id}"
+                .format(location_id=lab_referral_case.owner_id,
+                        lab_referral_case_id=lab_referral_case.case_id)
+        ):
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case)
+
+        # missing location
+        lab_referral_case.owner_id = '123456'
+        lab_referral_case.save()
+        with self.assertRaisesMessage(
+                NikshayLocationNotFound,
+                "Location with id: {location_id} not found."
+                "This is the owner for lab referral with id: {lab_referral_case_id}"
+                .format(location_id=123456,
+                        lab_referral_case_id=lab_referral_case.case_id)
+        ):
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case)
