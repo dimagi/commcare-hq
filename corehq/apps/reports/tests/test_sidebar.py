@@ -26,6 +26,7 @@ class TestReportsTabSidebar(SimpleTestCase):
                 ["new section", ["qux", "foo", "dne"]]
             ],
         )
+
         def mock_get(*args, **kwargs):
             return mock_ordering
         mock_class = MagicMock(objects=MagicMock(get=mock_get))
