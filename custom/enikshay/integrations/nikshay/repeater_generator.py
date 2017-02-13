@@ -254,7 +254,7 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
                 .format(location_id=lab_referral_case.owner_id, lab_referral_case_id=lab_referral_case.case_id)
             )
         nikshay_code = dmc.metadata.get('nikshay_code')
-        if not nikshay_code or not nikshay_code.isdigit():
+        if not nikshay_code or (isinstance(nikshay_code, (str, unicode)) and not nikshay_code.isdigit()):
             raise RequiredValueMissing("InAppt value for dmc, got value: {}".format(nikshay_code))
         return dmc.metadata.get('nikshay_code')
 
