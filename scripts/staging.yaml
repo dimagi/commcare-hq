@@ -78,6 +78,7 @@ branches:
   - np/110/validate_kafka_pillow_checkpoints
 
   - np/django1.10 # NP 2/12
+  - sk/sentry  # SK 2/13
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
