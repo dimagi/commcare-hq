@@ -54,7 +54,6 @@ branches:
   - je/sms-export-final # emord 2/9
 
   # django 1.10 dependencies - NP 2/10
-  #- np/110/request-context_processor
   #- np/110/two-factor
 
   # django 1.10 mgmt cmd updates - NP 2/10
