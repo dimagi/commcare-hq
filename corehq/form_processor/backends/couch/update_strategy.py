@@ -394,7 +394,7 @@ def _action_sort_key_function(case):
                     raise MissingServerDate()
 
                 form_cmp = lambda form_id: (form_ids.index(form_id)
-                                            if form_id in form_ids else sys.maxint, form_id)
+                                            if form_id in form_ids else sys.maxint)
                 # if the user is the same you should compare with the special logic below
                 # if the user is not the same you should compare just using received_on
                 return (
