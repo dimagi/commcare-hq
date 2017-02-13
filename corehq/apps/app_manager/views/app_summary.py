@@ -396,7 +396,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         case_metadata = self.app.get_case_metadata()
         language = request.GET.get('lang', 'en')
 
-        headers = [('All Case Properties', ('case_type', 'case_property'))]
+        headers = [('All Case Properties', ('case_type', 'case_property', 'description'))]
         headers += list((
             case_type.name,
             tuple(CASE_SUMMARY_EXPORT_HEADER_NAMES)
@@ -424,7 +424,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         )
 
     def get_case_property_rows(self, case_type):
-        return tuple((case_type.name, prop.name) for prop in case_type.properties)
+        return tuple((case_type.name, prop.name, prop.description) for prop in case_type.properties)
 
     def get_case_questions_rows(self, case_type, language):
         rows = []
