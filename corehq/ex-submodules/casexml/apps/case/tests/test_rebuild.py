@@ -576,7 +576,10 @@ class TestActionSortKey(SimpleTestCase):
 EMPTY_DATE = object()
 
 
-def _make_action(server_date, phone_date=EMPTY_DATE, action_type=const.CASE_ACTION_UPDATE, user_id='someuserid'):
+def _make_action(server_date, phone_date=EMPTY_DATE, action_type=const.CASE_ACTION_UPDATE, user_id='someuserid', form_id=None):
     if phone_date == EMPTY_DATE:
         phone_date = server_date
-    return CommCareCaseAction(action_type=action_type, server_date=server_date, date=phone_date, user_id=user_id)
+    form_id = form_id or uuid.uuid4().hex
+    return CommCareCaseAction(
+        action_type=action_type, server_date=server_date, date=phone_date, user_id=user_id, xform_id=form_id
+    )
