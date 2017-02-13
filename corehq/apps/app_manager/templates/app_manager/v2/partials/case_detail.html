@@ -29,7 +29,8 @@
 </button>
 <span class="hq-help-template"
       data-title="{% trans "Case Detail Tabs" %}"
-      data-content="{% trans "Do you have a lot of case properties? Try splitting them into tabs, which will appear as separate screens that mobile users can swipe through." %}"></span>
+      data-content="{% blocktrans %}Do you have a lot of case properties? Try splitting them into tabs, which will appear as separate screens that mobile users can swipe through. Read more on the <a href='https://help.commcarehq.org/display/commcarepublic/Tabs+on+Case+Detail+Screen' target='_blank'>Help Site</a>.{% endblocktrans %}"
+</span>
 
 {% if request|toggle_enabled:"DETAIL_LIST_TAB_NODESETS" %}
     <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(true); }">
