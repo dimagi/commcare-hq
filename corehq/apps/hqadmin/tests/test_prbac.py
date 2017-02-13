@@ -28,22 +28,9 @@ class TestCchqPrbacBootstrap(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestCchqPrbacBootstrap, cls).setUpClass()
         Grant.objects.all().delete()
         Role.objects.all().delete()
-
-    @classmethod
-    def tearDownClass(cls):
-        # re-bootstrap for other tests
-        call_command('cchq_prbac_bootstrap', testing=True)
-
-        DefaultProductPlan.objects.all().delete()
-        SoftwarePlanVersion.objects.all().delete()
-        SoftwarePlan.objects.all().delete()
-        SoftwareProductRate.objects.all().delete()
-        SoftwareProduct.objects.all().delete()
-        FeatureRate.objects.all().delete()
-        Feature.objects.all().delete()
-        call_command('cchq_software_plan_bootstrap', testing=True)
 
     def test_dry_run(self):
         """
