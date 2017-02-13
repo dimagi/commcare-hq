@@ -24,6 +24,7 @@ class StateHashTest(TestCase):
     
     @classmethod
     def setUpClass(cls):
+        delete_all_users()
         cls.project = Domain(name='state-hash-tests-project')
         cls.project.save()
         cls.user = create_restore_user(domain=cls.project.name)
