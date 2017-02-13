@@ -96,4 +96,4 @@ django-bulk-update==1.1.10
 csiphash==0.0.4
 json-delta==2.0
 email_validator==1.0.1
-dnspython==1.13.0
+dnspython==1.15.0
