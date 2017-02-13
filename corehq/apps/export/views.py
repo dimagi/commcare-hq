@@ -10,7 +10,7 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from corehq.toggles import DO_NOT_PROCESS_OLD_BUILDS, MESSAGE_LOG_METADATA
+from corehq.toggles import MESSAGE_LOG_METADATA
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod
 from corehq.apps.locations.models import SQLLocation
@@ -1839,7 +1839,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
             domain,
             app_id,
             identifier,
-            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
+            only_process_current_builds=True,
         )
 
     @property
