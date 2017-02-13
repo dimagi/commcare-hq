@@ -224,28 +224,30 @@
         </div>
       </div>
       <!-- ko if: recentXPathQueries().length -->
-      <table class="table table-striped table-hover">
-        <tbody data-bind="foreach: recentXPathQueries">
-          <tr class="query-container" data-bind="click: $parent.onClickSavedQuery">
-            <td class="col-sm-1 query-status">
-              <span><i class="fa" data-bind="
-                  css: {
-                    'fa-check': $parent.isSuccess($data),
-                    'fa-times': !$parent.isSuccess($data),
-                    'text-success': $parent.isSuccess($data),
-                    'text-danger': !$parent.isSuccess($data)
-                  }
-                  "></i></span>
-            </td>
-            <td class="col-sm-8 debugger-code">
-              <span data-bind="text: xpath"></span>
-            </td>
-            <td class="col-sm-3">
-              <span data-bind="text: output"></span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <tbody data-bind="foreach: recentXPathQueries">
+            <tr class="query-container" data-bind="click: $parent.onClickSavedQuery">
+              <td class="col-sm-1 query-status">
+                <span><i class="fa" data-bind="
+                    css: {
+                      'fa-check': $parent.isSuccess($data),
+                      'fa-times': !$parent.isSuccess($data),
+                      'text-success': $parent.isSuccess($data),
+                      'text-danger': !$parent.isSuccess($data)
+                    }
+                    "></i></span>
+              </td>
+              <td class="col-sm-8 debugger-code">
+                <span data-bind="text: xpath"></span>
+              </td>
+              <td class="col-sm-3">
+                <span data-bind="text: output"></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <!-- /ko -->
       <!-- ko ifnot: recentXPathQueries().length -->
       <div class="row">
