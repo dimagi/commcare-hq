@@ -8,7 +8,8 @@ from corehq.apps.app_manager.models import (
     Module,
     CaseSearch,
     CaseSearchProperty,
-    DefaultCaseSearchProperty
+    DefaultCaseSearchProperty,
+    DetailColumn
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin, SuiteMixin, parse_normalize
 
@@ -23,6 +24,15 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.module = self.app.add_module(Module.new_module("Untitled Module", None))
         self.app.new_form(0, "Untitled Form", None)
         self.module.case_type = 'case'
+        # chosen xpath just used to reference more instances - not considered valid to use in apps
+        self.module.case_details.short.columns.append(
+            DetailColumn(header={"en": "report_name"}, model="case", field="whatever",
+                         calc_xpath="instance('reports')/report[1]/name")
+        )
+        self.module.case_details.long.columns.append(
+            DetailColumn(header={"en": "ledger_name"}, model="case", field="whatever",
+                         calc_xpath="instance('ledgerdb')/ledgers/name/name")
+        )
         self.module.search_config = CaseSearch(
             command_label={'en': 'Search Patients Nationally'},
             properties=[
