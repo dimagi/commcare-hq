@@ -1,4 +1,5 @@
 import os
+import traceback
 
 from django.core.management.base import CommandError, BaseCommand
 
@@ -15,7 +16,7 @@ from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, Case
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
-from corehq.util.markup import shell_green
+from corehq.util.markup import shell_green, SimpleTableWriter, TableRowFormatter
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
 
@@ -24,6 +25,7 @@ class Command(BaseCommand):
     args = "<path to domain list>"
 
     def handle(self, *args, **options):
+        with_traceback = options['traceback']
         path = args[0]
         if not os.path.isfile(path):
             raise CommandError("Couldn't locate domain list: {}".format(path))
@@ -38,6 +40,8 @@ class Command(BaseCommand):
             try:
                 self.migrate_domain(domain)
             except Exception as e:
+                if with_traceback:
+                    traceback.print_exc()
                 self.stderr.write("Error migrating domain {}: {}".format(domain, e))
                 self.abort(domain)
 
@@ -52,8 +56,11 @@ class Command(BaseCommand):
         stats = self.get_diff_stats(domain)
         if stats:
             self.stderr.write("Migration has diffs, aborting for domain {}".format(domain))
-            self.stderr.write(stats)
             self.abort(domain)
+            writer = SimpleTableWriter(self.stdout, TableRowFormatter([50, 10, 10, 10]))
+            writer.write_table(['Doc Type', '# Couch', '# SQL', '# Diffs'], [
+                (doc_type,) + stat for doc_type, stat in stats.items()
+            ])
         else:
             assert couch_sql_migration_in_progress(domain)
             set_couch_sql_migration_complete(domain)

@@ -14,8 +14,8 @@ from corehq.apps.export.transforms import (
 
 # When fixing a bug that requires existing schemas to be rebuilt,
 # bump the version number.
-FORM_DATA_SCHEMA_VERSION = 8
-CASE_DATA_SCHEMA_VERSION = 7
+FORM_DATA_SCHEMA_VERSION = 9
+CASE_DATA_SCHEMA_VERSION = 8
 
 DEID_ID_TRANSFORM = "deid_id"
 DEID_DATE_TRANSFORM = "deid_date"

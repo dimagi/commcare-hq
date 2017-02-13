@@ -21,6 +21,8 @@
                     }
                 });
             }]);
+            drilldownApp.constant('staticModelType', false);
+            drilldownApp.constant('modelType', null);
             module('ngtest.AppDataDrilldownApp');
             // Kickstart the injectors previously registered with calls to angular.mock.module
             inject(function () {

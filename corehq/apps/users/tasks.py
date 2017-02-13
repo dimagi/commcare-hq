@@ -13,7 +13,6 @@ from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import json_format_datetime
 from soil import DownloadBase
 from casexml.apps.case.xform import get_case_ids_from_form
 
@@ -172,3 +171,9 @@ def reset_demo_user_restore_task(couch_user, domain):
 
     DownloadBase.set_progress(reset_demo_user_restore_task, 100, 100)
     return {'messages': results}
+
+
+@task
+def remove_unused_custom_fields_from_users_task(domain):
+    from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
+    remove_unused_custom_fields_from_users(domain)

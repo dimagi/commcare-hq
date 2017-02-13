@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, override as override_language
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
@@ -36,7 +36,7 @@ from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
+from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers, guess_domain_language
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
     user_display_string,
@@ -837,6 +837,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             return self.username
 
+    @property
+    def username_in_report(self):
+        return user_display_string(self.username, self.first_name, self.last_name)
+
     def html_username(self):
         username = self.raw_username
         if '@' in username:
@@ -1088,13 +1092,19 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             django_user = User(username=self.username)
         for attr in DjangoUserMixin.ATTRS:
             attr_val = getattr(self, attr)
-            if not attr_val and attr != 'last_login':
+            if attr in [
+                'is_active',
+                'is_staff',
+                'is_superuser',
+            ]:
+                attr_val = attr_val if attr_val is True else False
+            elif not attr_val and attr != 'last_login':
                 attr_val = ''
             # truncate names when saving to django
             if attr == 'first_name' or attr == 'last_name':
                 attr_val = attr_val[:30]
             setattr(django_user, attr, attr_val)
-        django_user.DO_NOT_SAVE_COUCH_USER= True
+        django_user.DO_NOT_SAVE_COUCH_USER = True
         return django_user
 
     def sync_from_old_couch_user(self, old_couch_user):
@@ -1470,10 +1480,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def project(self):
         return Domain.get_by_name(self.domain)
 
-    @property
-    def username_in_report(self):
-        return user_display_string(self.username, self.first_name, self.last_name)
-
     def is_commcare_user(self):
         return True
 
@@ -1559,6 +1565,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
         return groups
+
+    def get_reporting_groups(self):
+        from corehq.apps.groups.models import Group
+        return [group for group in Group.by_user(self) if group.reporting]
 
     @classmethod
     def cannot_share(cls, domain, limit=None, skip=0):
@@ -2012,6 +2022,10 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     login_attempts = IntegerProperty(default=0)
     attempt_date = DateProperty()
     fcm_device_token = StringProperty()
+    # this property is used to mark users who signed up from internal invitations
+    # such as those going through the recruiting pipeline
+    # to better mark them in our analytics
+    atypical_user = BooleanProperty(default=False)
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)
@@ -2295,14 +2309,16 @@ class Invitation(QuickCachedDocumentMixin, Document):
                   "inviter": self.get_inviter().formatted_name}
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
-        if domain_request is None:
-            text_content = render_to_string("domain/email/domain_invite.txt", params)
-            html_content = render_to_string("domain/email/domain_invite.html", params)
-            subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
-        else:
-            text_content = render_to_string("domain/email/domain_request_approval.txt", params)
-            html_content = render_to_string("domain/email/domain_request_approval.html", params)
-            subject = _('Request to join CommCareHQ approved')
+        lang = guess_domain_language(self.domain)
+        with override_language(lang):
+            if domain_request is None:
+                text_content = render_to_string("domain/email/domain_invite.txt", params)
+                html_content = render_to_string("domain/email/domain_invite.html", params)
+                subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
+            else:
+                text_content = render_to_string("domain/email/domain_request_approval.txt", params)
+                html_content = render_to_string("domain/email/domain_request_approval.html", params)
+                subject = _('Request to join CommCareHQ approved')
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
                                     cc=[self.get_inviter().get_email()],

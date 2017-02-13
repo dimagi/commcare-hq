@@ -116,7 +116,6 @@ def _enable_commtrack_previews(domain):
     for toggle_class in (
         toggles.COMMTRACK,
         feature_previews.VELLUM_ADVANCED_ITEMSETS,
-        toggles.STOCK_TRANSACTION_EXPORT,
     ):
         toggle_class.set(domain, True, toggles.NAMESPACE_DOMAIN)
 

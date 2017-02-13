@@ -23,7 +23,7 @@ def ensure_plans(config, dry_run, verbose, apps):
     Role = apps.get_model('django_prbac', 'Role')
 
     for plan_key, plan_deets in config.iteritems():
-        edition, is_trial = plan_key
+        edition, is_trial, is_report_builder_enabled = plan_key
         features = _ensure_features(edition, dry_run, verbose, apps)
         try:
             role = _ensure_role(plan_deets['role'], apps)
@@ -40,8 +40,12 @@ def ensure_plans(config, dry_run, verbose, apps):
         )
 
         software_plan = SoftwarePlan(
-            name='%s Edition' % product.name, edition=edition, visibility=SoftwarePlanVisibility.PUBLIC
+            name='%s Edition' % product.name,
+            edition=edition,
+            visibility=SoftwarePlanVisibility.PUBLIC
         )
+        if is_report_builder_enabled:
+            software_plan.name = '%s - Report Builder (5 Reports)' % software_plan.name
 
         if dry_run:
             log_accounting_info("[DRY RUN] Creating Software Plan: %s" % software_plan.name)
@@ -86,6 +90,9 @@ def ensure_plans(config, dry_run, verbose, apps):
         default_product_plan = DefaultProductPlan(
             edition=edition, is_trial=is_trial
         )
+        if hasattr(default_product_plan, 'is_report_builder_enabled'):
+            default_product_plan.is_report_builder_enabled = is_report_builder_enabled
+
         # TODO - squash migrations and remove this
         if hasattr(default_product_plan, 'product_type'):
             default_product_plan.product_type = SoftwareProductType.COMMCARE
@@ -97,7 +104,18 @@ def ensure_plans(config, dry_run, verbose, apps):
         else:
             try:
                 if not hasattr(default_product_plan, 'product_type'):
-                    default_product_plan = DefaultProductPlan.objects.get(edition=edition, is_trial=is_trial)
+                    if hasattr(default_product_plan, 'is_report_builder_enabled'):
+                        default_product_plan = DefaultProductPlan.objects.get(
+                            edition=edition,
+                            is_trial=is_trial,
+                            is_report_builder_enabled=is_report_builder_enabled,
+                        )
+                    else:
+                        # TODO - squash migrations and remove this
+                        default_product_plan = DefaultProductPlan.objects.get(
+                            edition=edition,
+                            is_trial=is_trial,
+                        )
                 else:
                     # TODO - squash migrations and remove this
                     default_product_plan = DefaultProductPlan.objects.get(

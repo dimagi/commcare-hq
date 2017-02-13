@@ -16,8 +16,7 @@ class PartitionRouter(object):
     def db_for_write(self, model, **hints):
         return db_for_read_write(model)
 
-    def allow_migrate(self, db, model):
-        app_label = model._meta.app_label
+    def allow_migrate(self, db, app_label, model=None, **hints):
         return allow_migrate(db, app_label)
 
 

@@ -110,14 +110,14 @@
         <ul>
             <li ng-repeat="module in modules|filter:moduleSearch">
                  <h4>
-                     <i class="hq-icon fa fa-folder-open"></i> {% verbatim %}{{ getFormModuleLabel(module) }}{% endverbatim %}
+                     <i class="hq-icon fa fa-folder-open"></i> {% verbatim %}<a ng-href="{{ getModuleUrl(module.id, lang) }}">{{ getFormModuleLabel(module) }}</a>{% endverbatim %}
                      <span class="text-muted" ng-show="showComments"> &nbsp; {{ module.short_comment }}</span>
                  </h4>
 
                 <ul>
                     <li ng-repeat="form in module.forms|filter:formSearch">
                     <h5>
-                        {% verbatim %}{{ getFormModuleLabel(form) }}{% endverbatim %}
+                        {% verbatim %}<a ng-href="{{ getFormUrl(form.id, lang) }}"> {{ getFormModuleLabel(form) }}</a>{% endverbatim %}
                         <span class="text-muted" ng-show="showComments"> &nbsp; {{ form.short_comment }}</span>
                     </h5>
                         <ol>

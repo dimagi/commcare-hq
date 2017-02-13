@@ -6,6 +6,7 @@ from django.test import SimpleTestCase
 from requests.auth import HTTPDigestAuth
 
 from corehq.apps.app_manager.models import Application
+from corehq.util.test_utils import flag_enabled
 
 
 class TestRealBuild(SimpleTestCase):
@@ -34,5 +35,6 @@ class TestRealBuild(SimpleTestCase):
         app = Application.wrap(response.json())
         app.create_all_files()
 
+    @flag_enabled('FORMTRANSLATE_FORM_VALIDATION')
     def test_real_build(self):
         self.fetch_and_build_app('commcare-tests', 'ae3c6e073262360f89d2630cfd220bd3')

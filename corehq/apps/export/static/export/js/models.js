@@ -26,6 +26,7 @@ hqDefine('export/js/models.js', function () {
         self.showBuildSchemaProgressBar = ko.observable(false);
         self.errorOnBuildSchema = ko.observable(false);
         self.schemaProgressText = ko.observable(gettext('Process'));
+        self.numberOfAppsToProcess = options.numberOfAppsToProcess || 0;
 
         // Detetrmines the state of the save. Used for controlling the presentaiton
         // of the Save button.
@@ -43,6 +44,10 @@ hqDefine('export/js/models.js', function () {
         self.saveUrl = options.saveUrl;
         self.hasExcelDashboardAccess = Boolean(options.hasExcelDashboardAccess);
         self.hasDailySavedAccess = Boolean(options.hasDailySavedAccess);
+
+        self.formatOptions = options.formatOptions !== undefined ? options.formatOptions : _.map(constants.EXPORT_FORMATS, function(format){
+            return format;
+        });
 
         // If any column has a deid transform, show deid column
         self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function(table) {
@@ -152,7 +157,9 @@ hqDefine('export/js/models.js', function () {
     };
 
     ExportInstance.prototype.getFormatOptionValues = function() {
-        return _.map(constants.EXPORT_FORMATS, function(value) { return value; });
+        return _.filter(constants.EXPORT_FORMATS, function(format) {
+            return this.formatOptions.indexOf(format) !== -1;
+        }, this);
     };
 
     ExportInstance.prototype.getFormatOptionText = function(format) {
@@ -238,6 +245,14 @@ hqDefine('export/js/models.js', function () {
             analytics.workflow("Clicked 'Create' in export edit page", callback);
         } else if (this.export_format !== constants.EXPORT_FORMATS.HTML) {
             callback();
+        }
+    };
+
+    ExportInstance.prototype.toggleShowDeleted = function(table) {
+        table.showDeleted(!table.showDeleted());
+
+        if (this.numberOfAppsToProcess > 0 && table.showDeleted()) {
+            $('#export-process-deleted-applications').modal('show');
         }
     };
 
@@ -334,6 +349,7 @@ hqDefine('export/js/models.js', function () {
         var self = this;
         // Whether or not to show advanced columns in the UI
         self.showAdvanced = ko.observable(false);
+        self.showDeleted = ko.observable(false);
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
     };
 
@@ -470,6 +486,7 @@ hqDefine('export/js/models.js', function () {
         });
 
         self.showAdvanced = ko.observable(false);
+        self.showDeleted = ko.observable(false);
         self.customPathString.subscribe(self.onCustomPathChange.bind(self));
     };
     UserDefinedTableConfiguration.prototype = Object.create(TableConfiguration.prototype);
@@ -589,7 +606,23 @@ hqDefine('export/js/models.js', function () {
      * @returns {Boolean} - True if the column is visible false otherwise.
      */
     ExportColumn.prototype.isVisible = function(table) {
-        return table.showAdvanced() || (!this.is_advanced() || this.selected());
+        if (this.selected()) {
+            return true;
+        }
+
+        if (!this.is_advanced() && !this.is_deleted()) {
+            return true;
+        }
+
+        if (table.showAdvanced() && this.is_advanced()) {
+            return true;
+        }
+
+        if (table.showDeleted() && this.is_deleted()) {
+            return true;
+        }
+
+        return false;
     };
 
     /**
@@ -616,6 +649,7 @@ hqDefine('export/js/models.js', function () {
             'item',
             'label',
             'is_advanced',
+            'is_deleted',
             'selected',
             'tags',
             'deid_transform',

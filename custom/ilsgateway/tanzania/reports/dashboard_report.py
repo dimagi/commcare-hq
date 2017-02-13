@@ -88,22 +88,3 @@ class DashboardReport(MultiReport):
             '?location_id=%s&filter_by_program=%s&datespan_type=%s&datespan_first=%s&datespan_second=%s',
             (config['location_id'], config['program'], self.type, self.first, self.second)
         )
-
-
-class NewDashboardReport(DashboardReport):
-    slug = 'new_ils_dashboard_report'
-
-    @property
-    def report_config(self):
-        report_config = super(NewDashboardReport, self).report_config
-        report_config['data_config'] = DashboardConfig(
-            self.domain,
-            self.location.location_id,
-            self.datespan.startdate,
-            self.datespan.enddate
-        )
-        return report_config
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return False

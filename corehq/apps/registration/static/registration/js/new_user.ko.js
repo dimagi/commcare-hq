@@ -186,6 +186,7 @@ hqDefine('registration/js/new_user.ko.js', function () {
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: _private.getPhoneNumberFn() || self.phoneNumber(),
                 xform: defaults.xform,
+                atypical_user: defaults.atypical_user
             };
         };
 

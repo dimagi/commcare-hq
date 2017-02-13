@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import os
 
@@ -100,20 +101,20 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         app_build.save()
         self.assertEqual(self.project.name, app_build.domain)
 
-        self.assertTrue(LOGO_HOME in app_standard.logo_refs.keys())
-        self.assertTrue(LOGO_LOGIN in app_standard.logo_refs.keys())
-        self.assertTrue(LOGO_HOME in app_build.logo_refs.keys())
-        self.assertTrue(LOGO_LOGIN in app_build.logo_refs.keys())
+        self.assertTrue(LOGO_HOME in app_standard.logo_refs)
+        self.assertTrue(LOGO_LOGIN in app_standard.logo_refs)
+        self.assertTrue(LOGO_HOME in app_build.logo_refs)
+        self.assertTrue(LOGO_LOGIN in app_build.logo_refs)
 
         community_sub = advanced_sub.change_plan(DefaultProductPlan.get_default_plan_version())
 
         app_standard = Application.get(app_standard._id)
         app_build = Application.get(app_build._id)
 
-        self.assertFalse(LOGO_HOME in app_standard.logo_refs.keys())
-        self.assertFalse(LOGO_LOGIN in app_standard.logo_refs.keys())
-        self.assertFalse(LOGO_HOME in app_build.logo_refs.keys())
-        self.assertFalse(LOGO_LOGIN in app_build.logo_refs.keys())
+        self.assertFalse(LOGO_HOME in app_standard.logo_refs)
+        self.assertFalse(LOGO_LOGIN in app_standard.logo_refs)
+        self.assertFalse(LOGO_HOME in app_build.logo_refs)
+        self.assertFalse(LOGO_LOGIN in app_build.logo_refs)
 
         community_sub.change_plan(
             DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
@@ -122,10 +123,10 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         app_standard = Application.get(app_standard._id)
         app_build = Application.get(app_build._id)
 
-        self.assertTrue(LOGO_HOME in app_standard.logo_refs.keys())
-        self.assertTrue(LOGO_LOGIN in app_standard.logo_refs.keys())
-        self.assertTrue(LOGO_HOME in app_build.logo_refs.keys())
-        self.assertTrue(LOGO_LOGIN in app_build.logo_refs.keys())
+        self.assertTrue(LOGO_HOME in app_standard.logo_refs)
+        self.assertTrue(LOGO_LOGIN in app_standard.logo_refs)
+        self.assertTrue(LOGO_HOME in app_build.logo_refs)
+        self.assertTrue(LOGO_LOGIN in app_build.logo_refs)
 
     def test_report_builder_datasource_deactivation(self):
 

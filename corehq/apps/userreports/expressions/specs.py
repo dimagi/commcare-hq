@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from simpleeval import InvalidExpression
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
@@ -15,6 +16,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from .utils import eval_statements
 from corehq.util.quickcache import quickcache
+import six
 
 
 class IdentityExpressionSpec(JsonObject):
@@ -57,7 +59,7 @@ class PropertyNameGetterSpec(JsonObject):
 
 class PropertyPathGetterSpec(JsonObject):
     type = TypeProperty('property_path')
-    property_path = ListProperty(unicode, required=True)
+    property_path = ListProperty(six.text_type, required=True)
     datatype = DataTypeProperty(required=False)
 
     def __call__(self, item, context=None):
@@ -236,7 +238,7 @@ class DictExpressionSpec(JsonObject):
 
     def configure(self, compiled_properties):
         for key in compiled_properties:
-            if not isinstance(key, basestring):
+            if not isinstance(key, six.string_types):
                 raise BadSpecError("Properties in a dict expression must be strings!")
         self._compiled_properties = compiled_properties
 
@@ -328,8 +330,7 @@ class SubcasesExpressionSpec(JsonObject):
         return subcases
 
 
-class CaseSharingGroupsExpressionSpec(JsonObject):
-    type = TypeProperty('get_case_sharing_groups')
+class _GroupsExpressionSpec(JsonObject):
     user_id_expression = DictProperty(required=True)
 
     def configure(self, user_id_expression):
@@ -341,9 +342,9 @@ class CaseSharingGroupsExpressionSpec(JsonObject):
             return []
 
         assert context.root_doc['domain']
-        return self._get_case_sharing_groups(user_id, context)
+        return self._get_groups(user_id, context)
 
-    def _get_case_sharing_groups(self, user_id, context):
+    def _get_groups(self, user_id, context):
         domain = context.root_doc['domain']
         cache_key = (self.__class__.__name__, domain, user_id)
         if context.get_cache_value(cache_key) is not None:
@@ -353,10 +354,27 @@ class CaseSharingGroupsExpressionSpec(JsonObject):
         if not user:
             return []
 
-        case_sharing_groups = user.get_case_sharing_groups()
-        case_sharing_groups = [g.to_json() for g in case_sharing_groups]
-        context.set_cache_value(cache_key, case_sharing_groups)
-        return case_sharing_groups
+        groups = self._get_groups_from_user(user)
+        groups = [g.to_json() for g in groups]
+        context.set_cache_value(cache_key, groups)
+        return groups
+
+    def _get_groups_from_user(self, user):
+        raise NotImplementedError
+
+
+class CaseSharingGroupsExpressionSpec(_GroupsExpressionSpec):
+    type = TypeProperty('get_case_sharing_groups')
+
+    def _get_groups_from_user(self, user):
+        return user.get_case_sharing_groups()
+
+
+class ReportingGroupsExpressionSpec(_GroupsExpressionSpec):
+    type = TypeProperty('get_reporting_groups')
+
+    def _get_groups_from_user(self, user):
+        return user.get_reporting_groups()
 
 
 class SplitStringExpressionSpec(JsonObject):
@@ -371,7 +389,7 @@ class SplitStringExpressionSpec(JsonObject):
 
     def __call__(self, item, context=None):
         string_value = self._string_expression(item, context)
-        if not isinstance(string_value, basestring):
+        if not isinstance(string_value, six.string_types):
             return None
 
         index_value = self._index_expression(item, context)
@@ -382,3 +400,21 @@ class SplitStringExpressionSpec(JsonObject):
             return string_value.split(self.delimiter)[index_value]
         except IndexError:
             return None
+
+
+class CoalesceExpressionSpec(JsonObject):
+    type = TypeProperty('coalesce')
+    expression = DictProperty(required=True)
+    default_expression = DictProperty(required=True)
+
+    def configure(self, expression, default_expression):
+        self._expression = expression
+        self._default_expression = default_expression
+
+    def __call__(self, item, context=None):
+        expression_value = self._expression(item, context)
+        default_value = self._default_expression(item, context)
+        if expression_value is None or expression_value == '':
+            return default_value
+        else:
+            return expression_value

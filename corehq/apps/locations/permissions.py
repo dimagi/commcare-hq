@@ -214,6 +214,9 @@ def can_edit_form_location(domain, web_user, form):
         if not form.user_id:
             return False
         form_user = CouchUser.get_by_user_id(form.user_id)
+        if not form_user:
+            # form most likely submitted by a system user
+            return False
         if domain_obj.supports_multiple_locations_per_user:
             form_locations = [loc.sql_location for loc in form_user.locations]
         else:

@@ -86,6 +86,22 @@ class TestCloneDomain(TestCase):
             locations_snapshot(self.new_domain),
         )
 
+        # Make sure parents and types are in the same domain
+        for location in SQLLocation.objects.filter(domain__in=[self.old_domain, self.new_domain]):
+            if location.parent is not None:
+                self.assertEqual(location.domain, location.parent.domain)
+            self.assertEqual(location.domain, location.location_type.domain)
+
+        # Make sure the locations are only related to locations in the same domain
+        for domain in (self.old_domain, self.new_domain):
+            locs_in_domain = SQLLocation.objects.filter(domain=domain)
+            related_locs = (SQLLocation.objects.get_queryset_descendants(locs_in_domain, include_self=True)
+                            | SQLLocation.objects.get_queryset_descendants(locs_in_domain, include_self=True))
+            self.assertItemsEqual(
+                related_locs.order_by('domain').distinct('domain').values_list('domain', flat=True),
+                [domain]
+            )
+
     def test_clone_repeaters(self):
         from corehq.apps.repeaters.models import Repeater
         from corehq.apps.repeaters.models import CaseRepeater

@@ -71,7 +71,6 @@ class TestDefaultLandingPages(TestCase):
         response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)
         self.assertEqual(response.status_code, 404)
 
-    @flag_enabled('USE_FORMPLAYER_FRONTEND')
     def test_formplayer_default_override(self):
         web_user = self._make_web_user('elodin@theuniversity.com', role=self.webapps_role)
         self.addCleanup(web_user.delete)
@@ -89,7 +88,7 @@ class TestDefaultLandingPages(TestCase):
 @generate_cases([
     (None, DomainDashboardView.urlname),
     ('reports_role', MySavedReportsView.urlname),
-    ('webapps_role', 'cloudcare_main', ['']),
+    ('webapps_role', FormplayerMain.urlname),
 ], TestDefaultLandingPages)
 def test_web_user_landing_page(self, role, expected_urlname, extra_url_args=None):
     if role is not None:
@@ -106,9 +105,9 @@ def test_web_user_landing_page(self, role, expected_urlname, extra_url_args=None
 
 
 @generate_cases([
-    (None, 'cloudcare_main', ['']),
+    (None, FormplayerMain.urlname),
     ('reports_role', MySavedReportsView.urlname),
-    ('webapps_role', 'cloudcare_main', ['']),
+    ('webapps_role', FormplayerMain.urlname),
 ], TestDefaultLandingPages)
 def test_mobile_worker_landing_page(self, role, expected_urlname, extra_url_args=None):
     if role is not None:

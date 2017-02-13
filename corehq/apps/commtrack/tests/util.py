@@ -2,7 +2,7 @@ from datetime import datetime
 from django.test import TestCase
 from lxml import etree
 
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms, delete_all_ledgers
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
@@ -191,6 +191,7 @@ class CommTrackTest(TestCase):
         self.backend_mapping.delete()
         self.backend.delete()
         delete_all_xforms()
+        delete_all_ledgers()
         delete_all_cases()
         delete_all_sync_logs()
         delete_all_users()

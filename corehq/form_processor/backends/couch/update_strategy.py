@@ -14,7 +14,6 @@ from casexml.apps.case.util import primary_actions
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from django.utils.translation import ugettext as _
 from corehq.form_processor.update_strategy_base import UpdateStrategy
-from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import StringProperty
@@ -354,29 +353,19 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             if v.is_present:
                 update_attachments[k] = v
 
-        if self.case._attachments:
-            attachment_builder = CouchAttachmentsBuilder(
-                self.case['_attachments'])
-        else:
-            attachment_builder = CouchAttachmentsBuilder()
-
         for k, v in attachment_action.attachments.items():
             # grab xform_attachments
             # copy over attachments from form onto case
             update_attachments[k] = v
             if v.is_present:
-                #fetch attachment from xform
+                # add attachment from xform
                 identifier = v.identifier
-                attach = attach_dict[identifier]
-                attachment_builder.add(name=k, content=attach,
-                                       content_type=v.server_mime)
+                content = attach_dict[identifier]
+                self.case.deferred_put_attachment(
+                    content, k, content_type=v.server_mime)
             else:
-                try:
-                    attachment_builder.remove(k)
-                except KeyError:
-                    pass
+                self.case.deferred_delete_attachment(k)
                 del update_attachments[k]
-        self.case._attachments = attachment_builder.to_json()
         self.case.case_attachments = update_attachments
 
     def _apply_close_action(self, close_action):

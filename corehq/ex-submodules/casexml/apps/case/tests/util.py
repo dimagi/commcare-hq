@@ -207,3 +207,8 @@ def delete_all_xforms():
 @unit_testing_only
 def delete_all_sync_logs():
     FormProcessorTestUtils.delete_all_sync_logs()
+
+
+@unit_testing_only
+def delete_all_ledgers():
+    FormProcessorTestUtils.delete_all_ledgers()

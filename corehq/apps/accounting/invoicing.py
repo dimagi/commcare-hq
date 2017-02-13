@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import calendar
 import datetime
 from decimal import Decimal
@@ -306,7 +307,6 @@ class DomainWireInvoiceFactory(object):
             date_end=date_end,
             date_due=date_due,
             balance=balance,
-            account=account
         )
 
         record = WireBillingRecord.generate_record(wire_invoice)

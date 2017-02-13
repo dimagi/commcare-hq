@@ -539,7 +539,14 @@ class EntriesHelper(object):
                              error=_("Could not find target module used by form '{}'").format(form.default_name()))
                     if target.case_type != case_type:
                         raise ParentModuleReferenceError(
-                            "Module '%s' has incorrect case type" % module.default_name()
+                            _("Form '%s' in module '%s' references a module with an incorrect case type: "
+                              "module '%s' expected '%s', found '%s'") % (
+                                form.default_name(),
+                                module.default_name(),
+                                target.default_name(),
+                                case_type,
+                                target.case_type,
+                            )
                         )
                     if with_product_details and not hasattr(target, 'product_details'):
                         raise ParentModuleReferenceError(

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.http import HttpRequest
 from django.test import TestCase
@@ -11,6 +12,7 @@ from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
 from corehq.apps.userreports.util import get_indicator_adapter
+import six
 
 
 class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
@@ -91,7 +93,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for key, adapter in cls.adapters.iteritems():
+        for key, adapter in six.iteritems(cls.adapters):
             adapter.drop_table()
         cls._delete_everything()
         super(TestReportAggregation, cls).tearDownClass()
@@ -670,7 +672,7 @@ class TestReportMultipleAggregations(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for key, adapter in cls.adapters.iteritems():
+        for key, adapter in six.iteritems(cls.adapters):
             adapter.drop_table()
         cls._delete_everything()
         super(TestReportMultipleAggregations, cls).tearDownClass()

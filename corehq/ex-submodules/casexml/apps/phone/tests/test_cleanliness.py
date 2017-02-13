@@ -558,9 +558,9 @@ class GetCaseFootprintInfoTest(TestCase):
     @run_with_all_backends
     def test_simple_footprint(self):
         """ should only return open cases from user """
-        case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.owner_id})
-        closed_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.owner_id, 'close': True})
-        other_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.other_owner_id})
+        case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.owner_id, 'create': True})
+        closed_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.owner_id, 'close': True, 'create': True})
+        other_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.other_owner_id, 'create': True})
         self.factory.create_or_update_cases([case, other_case, closed_case])
 
         footprint_info = get_case_footprint_info(self.domain, self.owner_id)
@@ -571,11 +571,11 @@ class GetCaseFootprintInfoTest(TestCase):
         """ should return open cases with parents """
         parent = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.other_owner_id, 'close': True}
+            attrs={'owner_id': self.other_owner_id, 'close': True, 'create': True}
         )
         child = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.owner_id},
+            attrs={'owner_id': self.owner_id, 'create': True},
             indices=[CaseIndex(parent)]
         )
 
@@ -593,11 +593,11 @@ class GetCaseFootprintInfoTest(TestCase):
         """
         host = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.owner_id}
+            attrs={'owner_id': self.owner_id, 'create': True}
         )
         extension = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.other_owner_id},
+            attrs={'owner_id': self.other_owner_id, 'create': True},
             indices=[CaseIndex(host, relationship=CASE_INDEX_EXTENSION)]
         )
 
@@ -615,16 +615,16 @@ class GetCaseFootprintInfoTest(TestCase):
         """ Extensions of parents should be included """
         parent = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.other_owner_id, 'close': True}
+            attrs={'owner_id': self.other_owner_id, 'close': True, 'create': True}
         )
         child = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.owner_id},
+            attrs={'owner_id': self.owner_id, 'create': True},
             indices=[CaseIndex(parent)]
         )
         extension = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.other_owner_id},
+            attrs={'owner_id': self.other_owner_id, 'create': True},
             indices=[CaseIndex(parent, relationship=CASE_INDEX_EXTENSION)]
         )
         self.factory.create_or_update_cases([parent, child, extension])
@@ -636,16 +636,16 @@ class GetCaseFootprintInfoTest(TestCase):
         """ Extensions of children should be included """
         parent = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.other_owner_id, 'close': True}
+            attrs={'owner_id': self.other_owner_id, 'create': True, 'close': True}
         )
         child = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.owner_id},
+            attrs={'owner_id': self.owner_id, 'create': True},
             indices=[CaseIndex(parent)]
         )
         extension = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.other_owner_id},
+            attrs={'owner_id': self.other_owner_id, 'create': True},
             indices=[CaseIndex(child, relationship=CASE_INDEX_EXTENSION)]
         )
         self.factory.create_or_update_cases([parent, child, extension])
@@ -654,30 +654,29 @@ class GetCaseFootprintInfoTest(TestCase):
 
     @run_with_all_backends
     def test_cousins(self):
-        """http://manage.dimagi.com/default.asp?189528
-        """
+        # http://manage.dimagi.com/default.asp?189528
         grandparent = CaseStructure(
             case_id="Steffon",
-            attrs={'owner_id': self.other_owner_id}
+            attrs={'owner_id': self.other_owner_id, 'create': True}
         )
         parent_1 = CaseStructure(
             case_id="Stannis",
-            attrs={'owner_id': self.other_owner_id},
+            attrs={'owner_id': self.other_owner_id, 'create': True},
             indices=[CaseIndex(grandparent)]
         )
         parent_2 = CaseStructure(
             case_id="Robert",
-            attrs={'owner_id': self.other_owner_id},
+            attrs={'owner_id': self.other_owner_id, 'create': True},
             indices=[CaseIndex(grandparent)]
         )
         child_1 = CaseStructure(
             case_id="Shireen",
-            attrs={'owner_id': self.owner_id},
+            attrs={'owner_id': self.owner_id, 'create': True},
             indices=[CaseIndex(parent_1)]
         )
         child_2 = CaseStructure(
             case_id="Joffrey",
-            attrs={'owner_id': self.owner_id},
+            attrs={'owner_id': self.owner_id, 'create': True},
             indices=[CaseIndex(parent_2)]
         )
         self.factory.create_or_update_cases([grandparent, parent_1, parent_2, child_1, child_2])
@@ -708,19 +707,18 @@ class GetDependentCasesTest(TestCase):
 
     @run_with_all_backends
     def test_returns_nothing_with_no_dependencies(self):
-        case = CaseStructure()
-        self.factory.create_or_update_case(case)
+        case = self.factory.create_case()
         self.assertEqual(set(), get_dependent_case_info(self.domain, [case.case_id]).all_ids)
 
     @run_with_all_backends
     def test_returns_simple_extension(self):
         host = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.owner_id}
+            attrs={'owner_id': self.owner_id, 'create': True}
         )
         extension = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.other_owner_id},
+            attrs={'owner_id': self.other_owner_id, 'create': True},
             indices=[CaseIndex(host, relationship=CASE_INDEX_EXTENSION)]
         )
         all_ids = set([host.case_id, extension.case_id])
@@ -735,16 +733,17 @@ class GetDependentCasesTest(TestCase):
     def test_returns_extension_of_extension(self):
         host = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.owner_id}
+            attrs={'owner_id': self.owner_id, 'create': True}
         )
         extension = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.other_owner_id},
+            attrs={'owner_id': self.other_owner_id, 'create': True},
             indices=[CaseIndex(host, relationship=CASE_INDEX_EXTENSION)]
         )
         extension_2 = CaseStructure(
             case_id=uuid.uuid4().hex,
-            indices=[CaseIndex(extension, relationship=CASE_INDEX_EXTENSION)]
+            indices=[CaseIndex(extension, relationship=CASE_INDEX_EXTENSION)],
+            attrs={'create': True}
         )
         all_ids = set([host.case_id, extension.case_id, extension_2.case_id])
 
@@ -759,16 +758,16 @@ class GetDependentCasesTest(TestCase):
     def test_children_and_extensions(self):
         parent = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.other_owner_id, 'close': True}
+            attrs={'owner_id': self.other_owner_id, 'close': True, 'create': True}
         )
         child = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.owner_id},
+            attrs={'owner_id': self.owner_id, 'create': True},
             indices=[CaseIndex(parent)]
         )
         extension = CaseStructure(
             case_id=uuid.uuid4().hex,
-            attrs={'owner_id': self.other_owner_id},
+            attrs={'owner_id': self.other_owner_id, 'create': True},
             indices=[CaseIndex(child, relationship=CASE_INDEX_EXTENSION)]
         )
         self.factory.create_or_update_cases([parent, child, extension])

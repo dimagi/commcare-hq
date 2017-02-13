@@ -20,14 +20,12 @@
             fetch: '{% url "paginate_releases" domain app.id %}',
             delete: '{% url "delete_copy" domain app.id %}',
             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
-            compare: '{% url "diff" domain '___' '___' %}',
             jad: '{% url "download_jad" domain '___' %}',
             jar: '{% url "download_jar" domain '___' %}',
             ccz: '{% url "download_ccz" domain '___' %}',
             odk: '{% url "odk_install" domain '___' %}',
             odk_media: '{% url "odk_media_install" domain '___' %}',
             source: '{% url "download_index" domain '___' %}',
-            summary: '{% url "app_summary" domain '___' %}',
             release: '{% url "release_build" domain app.id '___' %}',
             newBuild: '{% url "save_copy" domain app.id %}',
             revertBuild: '{% url "revert_to_copy" domain app.id %}',
@@ -208,39 +206,6 @@
                         saveValueName: 'comment',
                         errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
                     "></inline-edit>
-                    {% if request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
-                        <h6>
-                            {% blocktrans %}
-                                View
-                                <a data-bind="attr: {href: $root.url('summary', id)}">app summary</a>
-                                or
-                                <a data-bind="attr: {href: $root.url('source', id)}" class="view-source-files-link">source files</a>
-                                <br />
-                                <a href="#" class="hide" data-bind="click: function() {
-                                        $root.selectingVersion(id());
-                                    }, visible: !$root.selectingVersion(),
-                                    css: {hide: false}
-                                ">
-                                    Compare with another version
-                                </a>
-                                <a href="#" class="hide" data-bind="
-                                    visible: $root.selectingVersion() === id(),
-                                    click: function() {$root.selectingVersion('')},
-                                    css: {hide: false}
-                                ">
-                                    Cancel
-                                </a>
-                                <a href="#" class="btn btn-xs btn-success hide"
-                                   data-bind="
-                                        attr: {href: $root.url('compare', $root.selectingVersion(), id())},
-                                        visible: $root.selectingVersion() && $root.selectingVersion() != id(),
-                                        css: {hide: false}
-                                    ">
-                                    Compare
-                                </a>
-                            {% endblocktrans %}
-                        </h6>
-                    {% endif %}
                 </td>
                 {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
                 <td>

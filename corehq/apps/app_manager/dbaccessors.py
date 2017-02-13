@@ -7,7 +7,7 @@ from django.http import Http404
 
 from corehq.apps.es import AppES
 
-AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version'])
+AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version', 'comment'])
 
 
 @quickcache(['domain'], timeout=1 * 60 * 60)
@@ -235,6 +235,23 @@ def get_built_app_ids_with_submissions_for_app_id(domain, app_id, version=None):
     return [result['id'] for result in results]
 
 
+def get_built_app_ids_with_submissions_for_app_ids_and_versions(domain, app_ids_and_versions=None):
+    """
+    Returns all the built app_ids for a domain that has submissions.
+    If version is specified returns all apps after that version.
+    :domain:
+    :app_ids_and_versions: A dictionary mapping an app_id to build version
+    """
+    app_ids_and_versions = app_ids_and_versions or {}
+    app_ids = get_app_ids_in_domain(domain)
+    results = []
+    for app_id in app_ids:
+        results.extend(
+            get_built_app_ids_with_submissions_for_app_id(domain, app_id, app_ids_and_versions.get(app_id))
+        )
+    return results
+
+
 def get_latest_app_ids_and_versions(domain, app_id=None):
     """
     Returns all the latest app_ids and versions in a dictionary.
@@ -302,22 +319,29 @@ def get_all_app_ids(domain):
     return [result['id'] for result in results]
 
 
-def get_all_built_app_ids_and_versions(domain):
+def get_all_built_app_ids_and_versions(domain, app_id=None):
     """
     Returns a list of all the app_ids ever built and their version.
-    [[AppBuildVersion(app_id, build_id, version)], ...]
+    [[AppBuildVersion(app_id, build_id, version, comment)], ...]
+    If app_id is provided, limit to bulds for that app.
     """
     from .models import Application
+    startkey = [domain]
+    endkey = [domain, {}]
+    if app_id:
+        startkey = [domain, app_id]
+        endkey = [domain, app_id, {}]
     results = Application.get_db().view(
         'app_manager/saved_app',
-        startkey=[domain],
-        endkey=[domain, {}],
-        include_docs=False,
+        startkey=startkey,
+        endkey=endkey,
+        include_docs=True,
     ).all()
     return map(lambda result: AppBuildVersion(
         app_id=result['key'][1],
         build_id=result['id'],
         version=result['key'][2],
+        comment=result['value']['build_comment'],
     ), results)
 
 

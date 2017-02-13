@@ -14,7 +14,7 @@ class LandingPage(namedtuple('LandingPage', ['id', 'name', 'urlname'])):
 
 def get_cloudcare_urlname(domain):
     from corehq.apps.cloudcare.views import FormplayerMain
-    if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+    if not toggles.USE_OLD_CLOUDCARE.enabled(domain):
         return FormplayerMain.urlname
     else:
         return 'corehq.apps.cloudcare.views.default'

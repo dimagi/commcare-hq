@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 
 from celery.task import task
@@ -58,6 +59,23 @@ def rebuild_indicators(indicator_config_id, initiated_by=None):
         _iteratively_build_table(config)
 
 
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
+    config = _get_config_by_id(indicator_config_id)
+    success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
+    failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
+    send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
+    with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
+        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+        if not id_is_static(indicator_config_id):
+            config.meta.build.initiated_in_place = datetime.datetime.utcnow()
+            config.meta.build.finished_in_place = False
+            config.save()
+
+        adapter.build_table()
+        _iteratively_build_table(config, in_place=True)
+
+
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def resume_building_indicators(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)
@@ -75,7 +93,7 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
             _iteratively_build_table(config, last_id, resume_helper)
 
 
-def _iteratively_build_table(config, last_id=None, resume_helper=None):
+def _iteratively_build_table(config, last_id=None, resume_helper=None, in_place=False):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
 
@@ -94,15 +112,24 @@ def _iteratively_build_table(config, last_id=None, resume_helper=None):
 
     if not id_is_static(indicator_config_id):
         resume_helper.clear_ids()
-        config.meta.build.finished = True
+        if in_place:
+            config.meta.build.finished_in_place = True
+        else:
+            config.meta.build.finished = True
         try:
             config.save()
         except ResourceConflict:
             current_config = DataSourceConfiguration.get(config._id)
             # check that a new build has not yet started
-            if config.meta.build.initiated == current_config.meta.build.initiated:
-                current_config.meta.build.finished = True
-                current_config.save()
+            if in_place:
+                if config.meta.build.initiated_in_place == current_config.meta.build.initiated_in_place:
+                    current_config.meta.build.finished_in_place = True
+            else:
+                if config.meta.build.initiated == current_config.meta.build.initiated:
+                    current_config.meta.build.finished = True
+            current_config.save()
+        adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
+        adapter.after_table_build()
 
 
 @task(queue=UCR_CELERY_QUEUE)

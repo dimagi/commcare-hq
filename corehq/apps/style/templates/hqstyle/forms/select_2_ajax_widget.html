@@ -2,6 +2,7 @@
 <script>
     $(function(){
         $('#{{ id }}').select2({
+                multiple: {{ multiple|JSON }},
                 ajax: {
                     url: "{{ endpoint }}",
                     dataType: 'json',
@@ -18,7 +19,18 @@
                     }
                 },
                 initSelection: function (element, callback) {
-                    var initial = {{ initial|JSON }};
+                    /*
+                        Initialize the selection based on the value of the element select2 is attached to.
+                        Essentially this is an id->object mapping function.
+                    */
+                    // Note that if you want to use `val("someid")` with this select2, then this function needs to
+                    // be improved because this function doesn't actually look at the element's value.
+                    // You can use `data({"id": "someid", "text": "sometext"})` as is though.
+
+                    var initial = null;
+                    {% if initial %}
+                        initial = {{ initial|JSON }};
+                    {% endif %}
                     callback(initial);
                 },
                 escapeMarkup: function (m) { return m; }

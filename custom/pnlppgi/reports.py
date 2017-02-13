@@ -386,7 +386,7 @@ class CumulativeMalaria(MalariaReport):
             denom = (x or 0) + (y or 0) + (z or 0) + (w or 0)
             if not denom:
                 return {'sort_key': 'NA', 'html': 0}
-            div = (num or 1) / float(denom)
+            div = (num or 0) / float(denom)
             return {'sort_key': div, 'html': '%.2f%%' % (div * 100)}
 
         return [
