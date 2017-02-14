@@ -124,6 +124,8 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             models: tileModels,
         });
 
+        console.log ("GenerateCaseTileStyles case-tiles-style " + caseTileStyle);
+
         // need to remove this attribute so the grid style is re-evaluated
         $("#case-tiles-style").html(caseTileStyle).data("css-polyfilled", false);
         $("#inner-tiles-container-style").data("css-polyfilled", false);
@@ -144,12 +146,13 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             widthPercentage: widthPercentage,
             heightPercentage: heightPercentage,
         };
-        outerGridTemplateString = $("#case-grid-style-template").html();
+        outerGridTemplateString = $("#cell-container-style-template").html();
         outerGridStyleTemplate = _.template(outerGridTemplateString);
         outerGridStyle = outerGridStyleTemplate({
             model: outerGridModel,
         });
         // need to remove this attribute so the grid style is re-evaluated
+        console.log ("makeOuterGridStyle outer-tiles-container-style " + outerGridStyle);
         $("#outer-tiles-container-style").html(outerGridStyle).data("css-polyfilled", false);
     };
 
@@ -178,12 +181,13 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             widthPixels: widthPixels,
             heightPixels: heightPixels,
         };
-        templateString = $("#grid-inner-style-template").html();
+        templateString = $("#cell-grid-style-template").html();
         template = _.template(templateString);
         view = template({
             model: model,
         });
         // need to remove this attribute so the grid style is re-evaluated
+        console.log ("MakeInnerGridStyle inner-tiles-container-style " + view);
         $("#inner-tiles-container-style").html(view).data("css-polyfilled", false);
 
         // If we have multiple cases per line, need to generate the outer grid style as well
@@ -318,7 +322,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
     Views.GridCaseTileViewItem = Views.CaseTileView.extend({
         tagName: "div",
-        className: "formplayer-request case-tile-grid-item",
+        className: "formplayer-request cell-container-style",
         template: "#case-tile-view-item-template",
     });
 
