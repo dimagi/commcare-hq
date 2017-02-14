@@ -624,9 +624,8 @@ class TestBulkManagement(TestCase):
     @flag_enabled('STUPIDLY_DANGEROUS_UPLOAD')
     def test_dangerous_upload(self):
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
+        self.create_locations(self.basic_tree, lt_by_code)
 
-        _loc_id = lambda x: locations_by_code[x].location_id
         add_new_stuff = [
             ('S3', 's3', 'state', '', '', False) + extra_stub_args,
             ('County33', 'county33', 'county', 's3', '', False) + extra_stub_args,
