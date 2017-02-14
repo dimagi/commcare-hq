@@ -74,21 +74,19 @@
    {% endif %}
  
  {% endblock %}
-@@ -64,9 +81,11 @@
+@@ -64,10 +81,9 @@
      <script src="{% static 'style/js/ui-element.js' %}"></script>
      <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
++
+     <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
 -    {% if show_live_preview %}
-+
-+
      <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
 -    {% endif %}
-+
-+
  {% endblock %}
  
  {% block js-inline %}{{ block.super }}
-@@ -79,41 +98,30 @@
+@@ -80,41 +96,30 @@
          }).on('hide.bs.modal', function () {
              window.location = "{% url "default_app" domain %}";
          });
@@ -140,7 +138,7 @@
       id="js-appmanager-body">
      {% if app %}
          {% if error %}
-@@ -138,7 +146,7 @@
+@@ -139,7 +144,7 @@
                  {% endblocktrans %}
              </p>
              <br>
