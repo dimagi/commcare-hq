@@ -210,7 +210,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             var appId = Util.currentUrlToObject().appId;
             var data = this.options.model.get('data');
             for (var i =0; i < data.length; i++) {
-                data[i] = data[i].replace(/\"/g, "'");
+                data[i] = data[i];
             }
             return {
                 data: data,

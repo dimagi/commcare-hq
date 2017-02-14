@@ -122,7 +122,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             // we need to map the details and headers JSON to a list for a Backbone Collection
             for (var i = 0; i < headers.length; i++) {
                 var obj = {};
-                obj.data = details[i].replace(/\"/g, "'");
+                obj.data = details[i];
                 obj.header = headers[i];
                 obj.style = styles[i];
                 obj.id = i;
