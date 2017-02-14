@@ -78,7 +78,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         },
 
         showPersistentCaseTile: function (persistentCaseTile) {
-            return;
             var detailView = Menus.Controller.getCaseTile(persistentCaseTile);
             FormplayerFrontend.regions.persistentCaseTile.show(detailView.render());
         },
@@ -145,7 +144,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             detailModel.push(obj);
             var detailCollection = new Backbone.Collection();
             detailCollection.reset(detailModel);
-            console.log("Getting Persistent Case Tile for tiles " + detailObject.tiles);
             return new Menus.Views.CaseTileListView({
                 collection: detailCollection,
                 styles: detailObject.styles,
@@ -202,7 +200,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
                     return new Menus.Views.CaseListView(menuData);
                 } else {
-                    console.log("Getting case list for menuData " + menuData);
                     if (menuResponse.numEntitiesPerRow > 1) {
                         return new Menus.Views.GridCaseTileListView(menuData);
                     } else {

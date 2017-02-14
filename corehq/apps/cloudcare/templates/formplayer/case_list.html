@@ -113,7 +113,7 @@
 </script>
 
 <script type="text/template" id="case-tile-view-item-template">
-    <div class="cell-grid-style">
+    <div class="grid-wrapper">
     <% _.each(data, function(datum, index) { %>
     <div class="grid-style-<%= index %> box">
         <% if (styles[index].displayFormat === 'Image') {
@@ -137,8 +137,8 @@
     <% }); %>
 </script>
 
-<script type="text/template" id="cell-container-style-template">
-    .cell-container-style {
+<script type="text/template" id="case-grid-style-template">
+    .case-tile-grid-item {
         width: <%= model.widthPercentage %>%;
         height: 0;
         padding-bottom: <%= model.heightPercentage %>%;
@@ -148,8 +148,8 @@
     }
 </script>
 
-<script type="text/template" id="cell-grid-style-template">
-    .cell-grid-style {
+<script type="text/template" id="grid-inner-style-template">
+    .grid-wrapper {
         display: grid;
         grid-template-columns: repeat(<%= model.numColumns %>, <%= model.widthPixels %>px) min-content 5px;
         grid-template-rows: repeat(<%= model.numRows %>, <%= model.heightPixels %>px) min-content 5px;
