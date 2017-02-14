@@ -226,7 +226,7 @@
     "SqlSMSPillow": {
         "advertised_name": "SqlSMSPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "SqlSMSPillow-test_smslogs_708c77f8e5fe00286fa5791e9fa7d45f",
+        "checkpoint_id": "SqlSMSPillow-test_smslogs_2017-02-09",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "SqlSMSPillow"
     },
