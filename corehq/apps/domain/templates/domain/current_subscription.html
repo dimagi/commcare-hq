@@ -159,33 +159,26 @@
                 <legend>{% trans 'Subscription Credit' %}</legend>
                 {% endif %}
                 <div class="form form-horizontal">
+                    {% if plan.has_credits_in_non_general_credit_line %}
                     <div data-bind="foreach: products">
                         <div class="form-group">
                             <label class="control-label col-sm-2">
-                            {% if plan.has_credits_in_non_general_credit_line %}
                                 {% trans 'Plan Credit' %}
-                            {% endif %}
                             </label>
                             <div class="col-sm-10">
                                 <p class="form-control-text" data-bind="text: amount"></p>
                             </div>
                         </div>
                     </div>
-                    {% if not plan.has_credits_in_non_general_credit_line %}
+                    {% endif %}
+                    {% if plan.general_credit and plan.general_credit.is_visible or not plan.has_credits_in_non_general_credit_line %}
                     <div class="form-group">
                         <label class="control-label col-sm-2">
-                            {% trans 'Credits Remaining' %}
-                            <div class="hq-help">
-                                <a href="#"
-                                   data-content="This is credit that can be applied to either your software
-                                    plan or the features below. It's likely that someone from Dimagi added
-                                    these credits for you."
-                                   data-title="Credits Remaining"
-                                   data-original-title=""
-                                   title="">
-                                    <i class="fa fa-question-circle"></i>
-                                </a>
-                            </div>
+                            {% if plan.has_credits_in_non_general_credit_line %}
+                                {% trans 'General Credit' %}
+                            {% else %}
+                                {% trans 'Credits Remaining' %}
+                            {% endif %}
                         </label>
                         <div class="col-sm-10">
                             <p class="form-control-text">{{ plan.general_credit.amount }}</p>
@@ -228,9 +221,7 @@
                     <div data-bind="foreach: products">
                         <div class="form-group" data-bind="visible: isAccountVisible">
                             <label class="control-label col-sm-2">
-                                {% if plan.has_credits_in_non_general_credit_line %}
-                                    {% trans 'Plan Credit' %}
-                                {% endif %}
+                                {% trans 'Plan Credit' %}
                                 <div class="hq-help">
                                     <a href="#"
                                        data-content="This is credit that can be applied to your software plan.
@@ -247,16 +238,16 @@
                             </div>
                         </div>
                     </div>
-                    {% if not plan.has_credits_in_non_general_credit_line %}
+                    {% if plan.account_general_credit and plan.account_general_credit.is_visible %}
                     <div class="form-group">
                         <label class="control-label col-sm-2">
-                            {% trans 'Credits Remaining' %}
+                            {% trans 'General Credit' %}
                             <div class="hq-help">
                                 <a href="#"
                                    data-content="This is credit that can be applied to either your software
                                     plan or the features below. It's likely that someone from Dimagi added
                                     these credits for you."
-                                   data-title="Account Credits Remaining"
+                                   data-title="Account General Credit"
                                    data-original-title=""
                                    title="">
                                     <i class="fa fa-question-circle"></i>
@@ -308,13 +299,19 @@
                             <th>{% trans "Feature" %}</th>
                             <th>{% trans "Included in Software Plan" %}</th>
                             <th>{% trans "Current Usage" %}</th>
+                            {% if not plan.is_trial and show_account_credits %}
+                            <th>{% trans "Account Credits Available" %}</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody data-bind="foreach: features">
                         <tr>
                             <td data-bind="text: name"></td>
-                            <td data-bind="text: remaining"></td>
+                            <td data-bind="text: limit"></td>
                             <td data-bind="text: usage"></td>
+                            {% if not plan.is_trial and show_account_credits %}
+                            <td data-bind="text: accountAmount"></td>
+                            {% endif %}
                         </tr>
                     </tbody>
                 </table>
