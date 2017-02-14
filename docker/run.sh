@@ -42,7 +42,7 @@ function setup() {
 
 function run_tests() {
     TEST="$1"
-    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" ]; then
+    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" -a "$TEST" != "python-sharded-and-javascript" ]; then
         echo "Unknown test suite: $TEST"
         exit 1
     fi
@@ -54,7 +54,7 @@ function run_tests() {
 function _run_tests() {
     TEST=$1
     shift
-    if [ "$TEST" == "python-sharded" ]; then
+    if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript" ]; then
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
         TESTS=" \
@@ -69,7 +69,20 @@ function _run_tests() {
         TESTS=""
     fi
 
-    if [ "$TEST" != "javascript" ]; then
+    if [ "$TEST" == "python-sharded-and-javascript" ]; then
+        ./manage.py create_kafka_topics
+        echo "coverage run manage.py test $@ $TESTS"
+        /vendor/bin/coverage run manage.py test "$@" $TESTS
+
+        ./manage.py migrate --noinput
+        ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
+        host=127.0.0.1 /mnt/wait.sh hq:8000
+        # HACK curl to avoid
+        # Warning: PhantomJS timed out, possibly due to a missing Mocha run() call.
+        curl http://localhost:8000/mocha/app_manager/ &> /dev/null
+        echo "grunt mocha $@"
+        grunt mocha "$@"
+    elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
         echo "coverage run manage.py test $@ $TESTS"
         /vendor/bin/coverage run manage.py test "$@" $TESTS

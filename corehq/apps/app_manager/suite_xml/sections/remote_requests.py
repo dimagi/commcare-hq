@@ -1,6 +1,6 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
-from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
+from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper, get_instances_for_module
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
@@ -76,6 +76,9 @@ class RemoteRequestFactory(object):
             self.domain,
             query_xpaths + claim_relevant_xpaths
         )
+        # we use the module's case list/details view to select the datum so also
+        # need these instances to be available
+        instances |= get_instances_for_module(self.app, self.module)
         # sorted list to prevent intermittent test failures
         return sorted(list(instances), key=lambda i: i.id)
 

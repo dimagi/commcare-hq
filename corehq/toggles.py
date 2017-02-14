@@ -928,6 +928,13 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+EDIT_FORMPLAYER = PredictablyRandomToggle(
+    'edit_formplayer',
+    'Edit forms on Formplayer',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    randomness=0.1,
+)
 
 PREVIEW_APP = PredictablyRandomToggle(
     'preview_app',
@@ -1033,10 +1040,9 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DO_NOT_PROCESS_OLD_BUILDS = PredictablyRandomToggle(
-    'do_not_process_old_builds',
-    'Do not process old build for export generation',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN],
-    randomness=0.5,
+INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
+    'include_metadata_in_ucr_excel_exports',
+    'Include metadata in UCR excel exports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
 )
