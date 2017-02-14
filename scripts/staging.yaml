@@ -47,6 +47,7 @@ name: autostaging
 branches:
   - app_manager.translations  # Danny 2/3
   - general-credits-sr # sreddy 1/10
+  - general-credits-sr+np # NP 2/13
   - vellum-staging # J$ 11/13  
   - bmb/currentind-string # Biyeun 11/12
   - nh/new_rb  # Norman 11/22
