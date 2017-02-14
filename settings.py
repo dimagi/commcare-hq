@@ -1970,7 +1970,7 @@ if SENTRY_PUBLIC_KEY and SENTRY_PRIVATE_KEY and SENTRY_PROJECT_ID:
                 priv_key=SENTRY_PRIVATE_KEY,
                 project_id=SENTRY_PROJECT_ID
             ),
-            'release': fetch_git_sha(os.path.dirname(os.pardir)),
+            'release': fetch_git_sha(BASE_DIR),
             'environment': SERVER_ENVIRONMENT,
             'tags': {},
             'include_versions': False,  # performance without this is bad
