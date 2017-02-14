@@ -286,39 +286,25 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    var buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits) {
-        var cellLayoutStyle = buildCellLayout(tiles);
-        var cellGridStyle = buildCellGridStyle(numRows,
-            numColumns,
-            numEntitiesPerRow,
-            useUniformUnits);
-        if (numEntitiesPerRow > 1) {
-            var cellContainerStyle = buildCellContainerStyle(numRows, numColumns, numEntitiesPerRow);
-            return [cellLayoutStyle, cellGridStyle, cellContainerStyle];
-        } else {
-            return [cellLayoutStyle, cellGridStyle];
-        }
-    };
-
     Views.CaseTileListView = Views.CaseListView.extend({
         childView: Views.CaseTileView,
         initialize: function (options) {
             Views.CaseTileListView.__super__.initialize.apply(this, arguments);
-
-            var numEntitiesPerRow = options.numEntitiesPerRow || 1;
-            var numRows = options.maxHeight;
-            var numColumns = options.maxWidth;
-            var useUniformUnits = options.useUniformUnits;
-
-            var caseTileStyles = buildCaseTileStyles(options.tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits);
-
             var gridPolyfillPath = FormplayerFrontend.request('gridPolyfillPath');
-            $("#cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
-            $("#cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
+            var caseTileStyle = buildCellLayout(options.tiles);
+            // need to remove this attribute so the grid style is re-evaluated
+            $("#cell-layout-style").html(caseTileStyle).data("css-polyfilled", false);
+
+            var cellGridStyle = buildCellGridStyle(options.maxHeight,
+                options.maxWidth,
+                options.numEntitiesPerRow || 1,
+                options.useUniformUnits);
+            $("#cell-grid-style").html(cellGridStyle).data("css-polyfilled", false);
 
             // If we have multiple cases per line, need to generate the outer grid style as well
-            if (caseTileStyles.length > 2) {
-                $("#cell-container-style").html(caseTileStyles[2]).data("css-polyfilled", false);
+            if (options.numEntitiesPerRow || 1 > 1) {
+                var cellContainerStyle = buildCellContainerStyle(options.maxHeight, options.maxWidth, options.numEntitiesPerRow || 1);
+                $("#cell-container-style").html(cellContainerStyle).data("css-polyfilled", false);
             }
 
             $.getScript(gridPolyfillPath);
