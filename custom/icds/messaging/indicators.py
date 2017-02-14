@@ -10,7 +10,22 @@ DEFAULT_LANGUAGE = 'hin'
 
 
 class SMSIndicator(object):
+    # The name of the template to be used when rendering the message(s) to be sent
+    # This should not be the full path, just the name of the file, since the path
+    # is determined at runtime by language code
     template = None
+
+    # The domain this indicator is being run in
+    domain = None
+
+    # The user the indicator is being run for
+    # For AWWIndicator, this is the AWW CommCareUser
+    # For LSIndicator, this is the LS CommCareUser
+    user = None
+
+    def __init__(self, domain, user):
+        self.domain = domain
+        self.user = user
 
     @property
     @memoized
@@ -29,31 +44,33 @@ class SMSIndicator(object):
         """
         raise NotImplementedError()
 
-    def get_messages(self):
+    def get_messages(self, language_code=None):
         """
         Should return a list of messages that should be sent. This is only relevant
         if self.should_send() returns True.
         """
         raise NotImplementedError()
 
-    def render_template(self, language_code, context):
-        try:
-            return self._render_template(language_code, context)
-        except TemplateDoesNotExist:
-            return self._render_template(DEFAULT_LANGUAGE, context)
+    def render_template(self, context, language_code=None):
+        if not language_code:
+            return self._render_template(context, DEFAULT_LANGUAGE)
 
-    def _render_template(self, language_code, context):
+        try:
+            return self._render_template(context, language_code)
+        except TemplateDoesNotExist:
+            return self._render_template(context, DEFAULT_LANGUAGE)
+
+    def _render_template(self, context, language_code):
         template_name = 'icds/messaging/indicators/%s/%s' % (language_code, self.template)
         return render_to_string(template_name, context).strip()
 
 
 class AWWIndicator(SMSIndicator):
-    domain = None
-    user = None
+    pass
 
-    def __init__(self, domain, user):
-        self.domain = domain
-        self.user = user
+
+class LSIndicator(SMSIndicator):
+    pass
 
 
 class AWWSubmissionPerformanceIndicator(AWWIndicator):
@@ -78,7 +95,7 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
             (self.now.date() - self.last_submission_date).days > 7
         )
 
-    def get_messages(self, language_code):
+    def get_messages(self, language_code=None):
         more_than_one_week = False
         more_than_one_month = False
 
@@ -95,6 +112,6 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
             'awc': self.user.sql_location.name,
         }
 
-        message = self.render_template(language_code, context)
+        message = self.render_template(context, language_code=language_code)
 
         return [message]
