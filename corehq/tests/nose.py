@@ -15,21 +15,21 @@ import logging
 import os
 import sys
 import threading
-import types
 from fnmatch import fnmatch
-
-from django.apps import apps
 
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
 from django.core.management import call_command
 from mock import patch, Mock
 from nose.plugins import Plugin
-from django.apps import AppConfig
 from django.conf import settings
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.db.utils import OperationalError
 from django_nose.plugin import DatabaseContext
+
+from dimagi.utils.couch.database import iter_bulk_delete
+from corehq.util.test_utils import unit_testing_only
+from corehq.preindex import get_preindex_plugin
 
 log = logging.getLogger(__name__)
 
@@ -173,11 +173,13 @@ class HqdbContext(DatabaseContext):
     Other supported `REUSE_DB` values:
 
     - `REUSE_DB=reset` : drop existing, then create and migrate new test
-      databses, but do not teardown after running tests. This is
+      databases, but do not teardown after running tests. This is
       convenient when the existing databases are outdated and need to be
       rebuilt.
     - `REUSE_DB=teardown` : skip database setup; do normal teardown after
       running tests.
+    - `REUSE_DB=wipe` : same as `REUSE_DB=1` except delete all objects from the
+      databases before running tests.  Much faster than `reset`.
     - `REUSE_DB=migrate` : same as `REUSE_DB=1` except migrate databases
       before running tests.
     """
@@ -215,6 +217,8 @@ class HqdbContext(DatabaseContext):
         if self.skip_setup_for_reuse_db and self._databases_ok():
             if self.reuse_db == "migrate":
                 call_command('migrate_multi', interactive=False)
+            if self.reuse_db == "wipe":
+                empty_databases()
             return  # skip remaining setup
 
         if self.reuse_db == "reset":
@@ -296,6 +300,24 @@ def print_imports_until_thread_change():
 
     # Register the import hook. See https://www.python.org/dev/peps/pep-0302/
     sys.meta_path.append(InfoImporter())
+
+
+@unit_testing_only
+def empty_databases():
+    """
+    Best effort at emptying all documents from all databases.
+    Useful when you break a test and it doesn't clean up properly. This took
+    about 5 seconds to run when trying it out.
+    """
+    for db in get_preindex_plugin('couchapps').get_dbs('all_docs'):
+        all_ids = [result['id'] for result in db.view(
+            '_all_docs',
+            include_docs=False,
+            reduce=False,
+        ) if '_design' not in result['id']]  # don't delete design docs
+        iter_bulk_delete(db, all_ids, chunksize=500)
+    call_command('flush', interactive=False)
+
 
 if os.environ.get("HQ_TESTS_PRINT_IMPORTS"):
     print_imports_until_thread_change()
