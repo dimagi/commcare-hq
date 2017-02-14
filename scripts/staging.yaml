@@ -75,7 +75,7 @@ branches:
 
   #- np/django1.10 # NP 2/12  ## breaking celery on staging
   - nh/uninstall_django110
-  - sk/sentry  # SK 2/13
+#  - sk/sentry  # SK 2/13
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
