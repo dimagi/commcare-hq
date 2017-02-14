@@ -12,7 +12,7 @@ from corehq.apps.userreports.reports.builder.columns import CountColumn, Multise
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
-    ConfigurePieChartReportForm)
+)
 
 
 def read(rel_path):
@@ -33,7 +33,7 @@ class ConfigureReportFormsTest(SimpleTestCase):
     def test_count_column_existence(self, _, __):
         """
         Confirm that aggregated reports have a count column option, and that
-        non aggregated reports do not.
+        non aggregated reports ... also do.
         """
 
         def get_count_column_columns(configuration_form):
@@ -48,7 +48,7 @@ class ConfigureReportFormsTest(SimpleTestCase):
             "form",
             form1.unique_id,
         )
-        self.assertEqual(get_count_column_columns(list_report_form), 0)
+        self.assertEqual(get_count_column_columns(list_report_form), 1)
 
         table_report_form = ConfigureTableReportForm(
             "my report",
@@ -132,7 +132,8 @@ class ReportBuilderTest(ReportBuilderDBTest):
             "some_case_type",
             existing_report=None,
             data={
-                'group_by': 'closed',
+                'group_by': ['closed'],
+                'chart': 'bar',
                 'user_filters': '[]',
                 'default_filters': '[]',
                 'columns': '[{"property": "closed", "display_text": "closed", "calculation": "Count per Choice"}]',
@@ -151,7 +152,8 @@ class ReportBuilderTest(ReportBuilderDBTest):
             "some_case_type",
             existing_report=report,
             data={
-                'group_by': 'user_id',
+                'group_by': ['user_id'],
+                'chart': 'bar',
                 'user_filters': '[]',
                 'default_filters': '[]',
                 # Note that a "Sum" calculation on the closed case property isn't very sensical, but doing it so
@@ -262,36 +264,3 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
         self.assertEqual(len(mselect_indicators), 1)
         mselect_indicator = mselect_indicators[0]
         self.assertEqual(set(mselect_indicator['choices']), {'MA', 'MN', 'VT'})
-
-    def testGraphDataSource(self):
-        """
-        Confirm that data sources for chart reports aggregated by a multiselect question use a base_item_expression
-        and that the columns use root_doc expressions
-        """
-        builder_form = ConfigurePieChartReportForm(
-            "My Report",
-            self.app._id,
-            "form",
-            self.form.unique_id,
-            data={
-                'user_filters': '[]',
-                'default_filters': '[]',
-                'group_by': '/data/state'
-            }
-        )
-        self.assertTrue(builder_form.is_valid())
-        report = builder_form.create_report()
-        data_source = report.config
-        mselect_indicators = [i for i in data_source.configured_indicators if i["type"] == "choice_list"]
-        self.assertEqual(len(mselect_indicators), 1)
-        mselect_indicator = mselect_indicators[0]
-
-        self.assertTrue(data_source.base_item_expression)
-        for indicator in data_source.configured_indicators:
-            if (
-                indicator.get('expression', {}).get('property_path', None) != mselect_indicator['property_path']
-                and indicator != mselect_indicator
-                and indicator['type'] != "count"
-            ):
-                self.assertTrue(indicator['type'] == 'expression')
-                self.assertTrue(indicator['expression']['type'] == 'root_doc')
