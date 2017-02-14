@@ -79,7 +79,7 @@ def get_users_location_ids(domain, user_ids):
 
 
 def user_ids_at_locations(location_ids):
-    return UserES().location(location_ids).exclude_source().run().hits
+    return UserES().location(location_ids).get_ids()
 
 
 def user_ids_at_locations_and_descendants(location_ids):
