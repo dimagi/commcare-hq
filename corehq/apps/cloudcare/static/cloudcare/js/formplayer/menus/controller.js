@@ -79,7 +79,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
         showPersistentCaseTile: function (persistentCaseTile) {
             var detailView = Menus.Controller.getCaseTile(persistentCaseTile);
-            debugger;
             FormplayerFrontend.regions.persistentCaseTile.show(detailView.render());
         },
 
@@ -142,12 +141,21 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 data: detailObject.details,
                 id: 0,
             });
+            var numEntitiesPerRow = detailObject.numEntitiesPerRow || 1;
+            var numRows = detailObject.maxHeight;
+            var numColumns = detailObject.maxWidth;
+            var useUniformUnits = detailObject.useUniformUnits || false;
+            var caseTileStyles = Menus.Views.buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
+                numEntitiesPerRow, useUniformUnits, 'persistent');
+            $("#persistent-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
+            $("#persistent-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
             return new Menus.Views.CaseTileView({
                 model: detailModel,
                 styles: detailObject.styles,
                 tiles: detailObject.tiles,
                 maxWidth: detailObject.maxWidth,
                 maxHeight: detailObject.maxHeight,
+                prefix: 'persistent',
             });
         },
     };
