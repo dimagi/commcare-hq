@@ -5,7 +5,7 @@ from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
 from django import template
-from django.utils.html import escape
+from django.utils.html import format_html
 from couchdbkit.exceptions import ResourceNotFound
 from corehq import privileges
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
@@ -37,8 +37,8 @@ def render_form_xml(form):
     if isinstance(xml, unicode):
         xml.encode('utf-8', errors='replace')
     formatted_xml = indent_xml(xml) if xml else ''
-    return '<pre class="prettyprint linenums"><code class="no-border language-xml">%s</code></pre>' \
-           % escape(formatted_xml)
+    return format_html('<pre class="prettyprint linenums"><code class="no-border language-xml">{}</code></pre>',
+                       formatted_xml)
 
 
 def sorted_case_update_keys(keys):

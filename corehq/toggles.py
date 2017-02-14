@@ -1046,3 +1046,10 @@ ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
+
+INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
+    'include_metadata_in_ucr_excel_exports',
+    'Include metadata in UCR excel exports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
