@@ -12,7 +12,7 @@ def run_indicator(domain, user_id, indicator_class):
 
     :param domain: The domain the indicator is being run for
     :param user_id: The id of either an AWW or LS CommCareUser
-    :param indicator_class: a subclass of AWWIndicator or LSIndicator 
+    :param indicator_class: a subclass of AWWIndicator or LSIndicator
     """
     user = CommCareUser.get_by_user_id(user_id, domain=domain)
     indicator = indicator_class(domain, user)
