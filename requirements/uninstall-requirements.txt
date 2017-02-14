@@ -1,1 +1,4 @@
 django-nose
+django
+celery
+django-celery
