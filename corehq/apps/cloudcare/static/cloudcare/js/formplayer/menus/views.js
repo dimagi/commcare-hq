@@ -118,17 +118,17 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 return tile !== null;
             }).value();
 
-        templateString = $("#case-tile-style-template").html();
+        templateString = $("#cell-layout-style-template").html();
         caseTileStyleTemplate = _.template(templateString);
         caseTileStyle = caseTileStyleTemplate({
             models: tileModels,
         });
 
-        console.log ("GenerateCaseTileStyles case-tiles-style " + caseTileStyle);
+        console.log ("GenerateCaseTileStyles cell-layout-style " + caseTileStyle);
 
         // need to remove this attribute so the grid style is re-evaluated
-        $("#case-tiles-style").html(caseTileStyle).data("css-polyfilled", false);
-        $("#inner-tiles-container-style").data("css-polyfilled", false);
+        $("#cell-layout-style").html(caseTileStyle).data("css-polyfilled", false);
+        $("#cell-grid-style").data("css-polyfilled", false);
     };
 
     // Dynamically generate the CSS style to display multiple tiles per line
@@ -152,8 +152,8 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             model: outerGridModel,
         });
         // need to remove this attribute so the grid style is re-evaluated
-        console.log ("makeOuterGridStyle outer-tiles-container-style " + outerGridStyle);
-        $("#outer-tiles-container-style").html(outerGridStyle).data("css-polyfilled", false);
+        console.log ("makeOuterGridStyle cell-container-style " + outerGridStyle);
+        $("#cell-container-style").html(outerGridStyle).data("css-polyfilled", false);
     };
 
     // Dynamically generate the CSS style for the grid polyfill to use for the case tile
@@ -187,8 +187,8 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             model: model,
         });
         // need to remove this attribute so the grid style is re-evaluated
-        console.log ("MakeInnerGridStyle inner-tiles-container-style " + view);
-        $("#inner-tiles-container-style").html(view).data("css-polyfilled", false);
+        console.log ("MakeInnerGridStyle cell-grid-style " + view);
+        $("#cell-grid-style").html(view).data("css-polyfilled", false);
 
         // If we have multiple cases per line, need to generate the outer grid style as well
         if (numCasesPerRow > 1) {
