@@ -78,8 +78,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         },
 
         showPersistentCaseTile: function (persistentCaseTile) {
-            return;
             var detailView = Menus.Controller.getCaseTile(persistentCaseTile);
+            debugger;
             FormplayerFrontend.regions.persistentCaseTile.show(detailView.render());
         },
 
@@ -138,16 +138,12 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
         // return a case tile from a detail object (for persistent case tile)
         getCaseTile: function (detailObject) {
-            var detailModel = [];
-            var obj = {};
-            obj.data = detailObject.details;
-            obj.id = 0;
-            detailModel.push(obj);
-            var detailCollection = new Backbone.Collection();
-            detailCollection.reset(detailModel);
-            console.log("Getting Persistent Case Tile for tiles " + detailObject.tiles);
-            return new Menus.Views.CaseTileListView({
-                collection: detailCollection,
+            var detailModel = new Backbone.Model({
+                data: detailObject.details,
+                id: 0,
+            });
+            return new Menus.Views.CaseTileView({
+                model: detailModel,
                 styles: detailObject.styles,
                 tiles: detailObject.tiles,
                 maxWidth: detailObject.maxWidth,
@@ -202,7 +198,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
                     return new Menus.Views.CaseListView(menuData);
                 } else {
-                    console.log("Getting case list for menuData " + menuData);
                     if (menuResponse.numEntitiesPerRow > 1) {
                         return new Menus.Views.GridCaseTileListView(menuData);
                     } else {
