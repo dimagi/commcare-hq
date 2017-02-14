@@ -1,6 +1,8 @@
 from collections import namedtuple
 import logging
+from itertools import groupby
 
+import itertools
 from couchdbkit import ResourceNotFound
 from django.db.models import Q
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTENSION
@@ -382,7 +384,30 @@ def _extract_case_blocks(data, path=None, form_id=Ellipsis):
 
 
 def get_case_updates(xform):
-    return [case_update_from_block(cb) for cb in extract_case_blocks(xform)]
+    updates = [case_update_from_block(cb) for cb in extract_case_blocks(xform)]
+    by_case_id = groupby(updates, lambda update: update.id)
+    return list(itertools.chain(
+        *[order_updates(updates) for case_id, updates in by_case_id]
+    ))
+
+
+def order_updates(case_updates):
+    """Order case updates for a single case according to the actions
+    they contain.
+
+    This is to ensure create actions are applied before update actions.
+    """
+    return sorted(case_updates, key=_update_order_index)
+
+
+def _update_order_index(update):
+    """
+    Consistent order index based on the types of actions in the update.
+    """
+    return min(
+        const.CASE_ACTIONS.index(action.action_type_slug)
+        for action in update.actions
+    )
 
 
 def get_case_ids_from_form(xform):
