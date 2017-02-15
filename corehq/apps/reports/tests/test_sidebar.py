@@ -1,8 +1,5 @@
 from django.test import SimpleTestCase
-from mock import patch, MagicMock
 
-from corehq.apps.reports.models import ReportsSidebarOrdering
-from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.tabs.utils import regroup_sidebar_items
 
 
