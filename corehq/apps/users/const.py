@@ -1,3 +1,0 @@
-ANONYMOUS_USERNAME = 'anonymous_user'
-ANONYMOUS_FIRSTNAME = 'Anonymous'
-ANONYMOUS_LASTNAME = 'User'
