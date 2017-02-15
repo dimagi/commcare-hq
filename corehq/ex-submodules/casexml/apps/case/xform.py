@@ -384,7 +384,10 @@ def _extract_case_blocks(data, path=None, form_id=Ellipsis):
 
 
 def get_case_updates(xform):
-    updates = [case_update_from_block(cb) for cb in extract_case_blocks(xform)]
+    updates = sorted(
+        [case_update_from_block(cb) for cb in extract_case_blocks(xform)],
+        key=lambda update: update.id
+    )
     by_case_id = groupby(updates, lambda update: update.id)
     return list(itertools.chain(
         *[order_updates(updates) for case_id, updates in by_case_id]
