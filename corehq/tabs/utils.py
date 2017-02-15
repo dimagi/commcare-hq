@@ -167,9 +167,9 @@ def regroup_sidebar_items(ordering, sidebar_items):
             reports_to_move[report_class_name] = SidebarPosition(heading, i)
 
     # A mapping of headings to lists of 2-tuples. The tuples are index (under the heading) and the item itself.
-    new_sections = {x[0]: [] for x in ordering}
+    new_sections = {heading: [] for heading, _ in ordering}
     # A mapping of headings to lists of sidebar items.
-    old_sections = {x[0]: [] for x in sidebar_items}
+    old_sections = {heading: [] for heading, _ in sidebar_items}
 
     # extract the sidebar items that to their new heading sections (or their old sections)
     for heading, items in sidebar_items:
