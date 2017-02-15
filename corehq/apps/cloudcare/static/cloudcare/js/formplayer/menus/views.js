@@ -288,6 +288,12 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
+    // Return a two- or three-length array of case tile CSS styles
+    //
+    // styles[0] - the grid layout of the cells within a case list tile
+    // styles[1] - the layout of the grid itself, IE how many rows/columns each tile should have and their size
+    // styles[2] (optional) - If showing multiple cases per line, sets the style of how to layout the case tiles in the
+    //                        outer grid
     Views.buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
         var cellLayoutStyle = buildCellLayout(tiles, prefix);
         var cellGridStyle = buildCellGridStyle(numRows,
@@ -330,13 +336,13 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
         childViewOptions: function () {
             var dict = Views.CaseTileListView.__super__.childViewOptions.apply(this, arguments);
-            dict['prefix'] = 'list';
+            dict.prefix = 'list';
             return dict;
         },
 
         templateHelpers: function () {
             var dict = Views.CaseTileListView.__super__.templateHelpers.apply(this, arguments);
-            dict['useTiles'] = true;
+            dict.useTiles = true;
             return dict;
         },
     });

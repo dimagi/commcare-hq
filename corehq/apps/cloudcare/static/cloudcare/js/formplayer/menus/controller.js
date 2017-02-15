@@ -145,7 +145,9 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var useUniformUnits = detailObject.useUniformUnits || false;
             var caseTileStyles = Menus.Views.buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
                 numEntitiesPerRow, useUniformUnits, 'persistent');
+            // Style the positioning of the elements within a tile (IE element 1 at grid position 1 / 2 / 4 / 3
             $("#persistent-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
+            // Style the grid (IE each tile has 6 rows, 12 columns)
             $("#persistent-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
             return new Menus.Views.CaseTileView({
                 model: detailModel,
