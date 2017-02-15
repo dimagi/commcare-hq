@@ -163,14 +163,19 @@ class CaseBugTest(TestCase, TestFileMixin):
 
     @run_with_all_backends
     def test_case_block_ordering(self):
-        case_id = uuid.uuid4().hex
+        case_id1 = uuid.uuid4().hex
+        case_id2 = uuid.uuid4().hex
+        # updates before create and case blocks for different cases interleaved
         blocks = [
-            CaseBlock(create=False, case_id=case_id, update={'p': '2'}).as_xml(),  # update before create
-            CaseBlock(create=True, case_id=case_id, update={'p': '1'}).as_xml()
+            CaseBlock(create=False, case_id=case_id1, update={'p': '2'}).as_xml(),
+            CaseBlock(create=False, case_id=case_id2, update={'p': '2'}).as_xml(),
+            CaseBlock(create=True, case_id=case_id1, update={'p': '1'}).as_xml(),
+            CaseBlock(create=True, case_id=case_id2, update={'p': '1'}).as_xml()
         ]
 
         xform, cases = post_case_blocks(blocks)
         self.assertEqual(cases[0].get_case_property('p'), '2')
+        self.assertEqual(cases[1].get_case_property('p'), '2')
 
 
 class TestCaseHierarchy(TestCase):

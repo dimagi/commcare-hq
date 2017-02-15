@@ -295,6 +295,13 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
 )
 
+DHIS2_INTEGRATION = StaticToggle(
+    'dhis2_integration',
+    'DHIS2 Integration',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
@@ -1030,6 +1037,13 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'Configure a custom xpath calculation for Sort Property in Case Lists',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
+)
+
+ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
+    'anonymous_web_apps_usage',
+    'Allow anonymous users to access web apps applications',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(

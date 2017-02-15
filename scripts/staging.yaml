@@ -55,7 +55,6 @@ branches:
 
   # django 1.10 dependencies - NP 2/10
   #- np/110/two-factor
-  - np/110/djcelery # NP 2/14
 
   # django 1.10 mgmt cmd updates - NP 2/10
   #- np/110/clean_supervisor_confs
@@ -75,8 +74,8 @@ branches:
   #- np/110/validate_kafka_pillow_checkpoints
 
   #- np/django1.10 # NP 2/12  ## breaking celery on staging
-  - nh/uninstall_django110
   - sk/sentry  # SK 2/13
+  - clmi-reg-from-case-list # Jenny 2/15
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
