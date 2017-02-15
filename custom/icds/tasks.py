@@ -16,15 +16,14 @@ def run_indicator(domain, user_id, indicator_class):
     """
     user = CommCareUser.get_by_user_id(user_id, domain=domain)
     indicator = indicator_class(domain, user)
+    # The user's phone number and preferred language is stored on the usercase
+    usercase = user.get_usercase()
     messages = indicator.get_messages(language_code=usercase.get_language_code())
 
     if not isinstance(messages, list):
         raise ValueError("Expected a list of messages")
 
     if messages:
-        # The user's phone number and preferred language is stored on the usercase
-        usercase = user.get_usercase()
-
         phone_number = get_one_way_number_for_recipient(usercase)
         if not phone_number:
             return

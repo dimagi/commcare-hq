@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from django.test import TestCase
 from mock import patch
 import pytz
