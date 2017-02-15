@@ -61,16 +61,23 @@ class IndexTest(TestCase):
     MOTHER_CASE_ID = 'text-index-mother-case'
     FATHER_CASE_ID = 'text-index-father-case'
 
-    def setUp(self):
-        super(IndexTest, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        super(IndexTest, cls).setUpClass()
         delete_all_users()
-        self.project = Domain(name='index-test')
-        self.project.save()
-        self.user = create_restore_user(domain=self.project.name)
+        cls.project = Domain(name='index-test')
+        cls.project.save()
+        cls.user = create_restore_user(domain=cls.project.name)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
         super(IndexTest, self).tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_users()
+        cls.project.delete()
+        super(IndexTest, cls).tearDownClass()
 
     def testIndexes(self):
         # Step 0. Create mother and father cases

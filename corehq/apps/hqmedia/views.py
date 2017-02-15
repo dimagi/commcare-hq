@@ -24,6 +24,7 @@ from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
 
+from corehq.middleware import always_allow_browser_caching
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
@@ -563,6 +564,10 @@ class MultimediaUploadStatusView(View):
 
 class ViewMultimediaFile(View):
     name = "hqmedia_download"
+
+    @always_allow_browser_caching
+    def dispatch(self, request, *args, **kwargs):
+        return super(ViewMultimediaFile, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
