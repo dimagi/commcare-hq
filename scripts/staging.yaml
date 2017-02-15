@@ -75,7 +75,6 @@ branches:
   #- np/110/validate_kafka_pillow_checkpoints
 
   #- np/django1.10 # NP 2/12  ## breaking celery on staging
-  - nh/uninstall_django110
   - sk/sentry  # SK 2/13
   - clmi-reg-from-case-list # Jenny 2/15
 submodules:
