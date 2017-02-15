@@ -1422,7 +1422,7 @@ class ProjectSettingsTab(UITab):
 
 
 def _get_administration_section(domain):
-    from corehq.apps.domain.views import FeaturePreviewsView, TransferDomainView
+    from corehq.apps.domain.views import FeaturePreviewsView, TransferDomainView, Dhis2ConnectionView
 
     administration = []
     if not settings.ENTERPRISE_MODE:
@@ -1474,6 +1474,13 @@ def _get_administration_section(domain):
             'title': _(TransferDomainView.page_title),
             'url': reverse(TransferDomainView.urlname, args=[domain])
         })
+
+    if toggles.DHIS2_INTEGRATION.enabled(domain):
+        administration.append({
+            'title': _(Dhis2ConnectionView.page_title),
+            'url': reverse(Dhis2ConnectionView.urlname, args=[domain])
+        })
+
     return administration
 
 
