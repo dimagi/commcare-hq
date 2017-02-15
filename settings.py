@@ -1088,7 +1088,7 @@ LOGGING = {
             'propagate': False,
         },
         'django': {
-            'handlers': ['mail_admins'],
+            'handlers': ['mail_admins', 'sentry'],
             'level': 'ERROR',
             'propagate': True,
         },
