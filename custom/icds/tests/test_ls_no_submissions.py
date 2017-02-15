@@ -72,43 +72,41 @@ class TestLSSubmissionPerformanceIndicator(TestCase):
     def test_form_sent_today(self, last_sub_time):
         last_sub_time.return_value = {self.aww.get_id: self.today}
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
-        self.assertFalse(indicator.should_send())
-        self.assertEqual(indicator.get_messages(), [u'', u''])
+        self.assertEqual(len(indicator.get_messages()), 0)
 
     def test_form_sent_seven_days_ago(self, last_sub_time):
         last_sub_time.return_value = {self.aww.get_id: self.today - timedelta(days=7)}
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
-        self.assertFalse(indicator.should_send())
-        self.assertEqual(indicator.get_messages(), [u'', u''])
+        self.assertEqual(len(indicator.get_messages()), 0)
 
     def test_form_sent_eight_days_ago(self, last_sub_time):
         last_sub_time.return_value = {self.aww.get_id: self.today - timedelta(days=8)}
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
-        self.assertTrue(indicator.should_send())
         messages = indicator.get_messages()
-        self.assertTrue('one week' in messages[0])
-        self.assertTrue('AWC' in messages[0])
-        self.assertEqual(messages[1], u'')
+        self.assertEqual(len(messages), 1)
+        message = messages[0]
+        self.assertTrue('one week' in message)
+        self.assertTrue('AWC' in message)
 
     def test_form_sent_thirty_one_days_ago(self, last_sub_time):
         # last submissions only looks 30 days into past
         last_sub_time.return_value = {self.aww.get_id: None}
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
-        self.assertTrue(indicator.should_send())
         messages = indicator.get_messages()
-        self.assertEqual(messages[0], u'')
-        self.assertTrue('one month' in messages[1])
-        self.assertTrue('AWC' in messages[1])
+        self.assertEqual(len(messages), 1)
+        message = messages[0]
+        self.assertTrue('one month' in message)
+        self.assertTrue('AWC' in message)
 
     def test_nothing_from_last_sub(self, last_sub_time):
         # last submissions only looks 30 days into past
         last_sub_time.return_value = {}
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
-        self.assertTrue(indicator.should_send())
         messages = indicator.get_messages()
-        self.assertEqual(messages[0], u'')
-        self.assertTrue('one month' in messages[1])
-        self.assertTrue('AWC' in messages[1])
+        self.assertEqual(len(messages), 1)
+        message = messages[0]
+        self.assertTrue('one month' in message)
+        self.assertTrue('AWC' in message)
 
     def test_multiple_awc_eight_days_ago(self, last_sub_time):
         aww_2 = self._make_user('aww_2', self.locs['AWC2'])
@@ -118,9 +116,9 @@ class TestLSSubmissionPerformanceIndicator(TestCase):
             aww_2.get_id: self.today - timedelta(days=8)
         }
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
-        self.assertTrue(indicator.should_send())
         messages = indicator.get_messages()
-        self.assertTrue('one week' in messages[0])
-        self.assertTrue('AWC, ' in messages[0])
-        self.assertTrue('AWC2' in messages[0])
-        self.assertEqual(messages[1], u'')
+        self.assertEqual(len(messages), 1)
+        message = messages[0]
+        self.assertTrue('one week' in message)
+        self.assertTrue('AWC, ' in message)
+        self.assertTrue('AWC2' in message)

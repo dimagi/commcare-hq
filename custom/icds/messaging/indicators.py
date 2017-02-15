@@ -43,17 +43,9 @@ class SMSIndicator(object):
     def now(self):
         return datetime.now(tz=self.timezone)
 
-    def should_send(self):
-        """
-        Should return True if the indicator requires a notification that should
-        be sent, False if not.
-        """
-        raise NotImplementedError()
-
     def get_messages(self, language_code=None):
         """
-        Should return a list of messages that should be sent. This is only relevant
-        if self.should_send() returns True.
+        Should return a list of messages that should be sent.
         """
         raise NotImplementedError()
 
@@ -95,12 +87,6 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
         start_date = today - timedelta(days=30)
         return DateSpan(start_date, end_date, timezone=self.timezone)
 
-    def should_send(self):
-        return (
-            not self.last_submission_date or
-            (self.now.date() - self.last_submission_date).days > 7
-        )
-
     def get_messages(self, language_code=None):
         more_than_one_week = False
         more_than_one_month = False
@@ -118,9 +104,10 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
             'awc': self.user.sql_location.name,
         }
 
-        message = self.render_template(context, language_code=language_code)
+        if more_than_one_week or more_than_one_month:
+            return [self.render_template(context, language_code=language_code)]
 
-        return [message]
+        return []
 
 
 class LSSubmissionPerformanceIndicator(LSIndicator):
@@ -141,19 +128,8 @@ class LSSubmissionPerformanceIndicator(LSIndicator):
         start_date = today - timedelta(days=30)
         return DateSpan(start_date, end_date, timezone=self.timezone)
 
-    def should_send(self):
-        if len(self.aww_user_ids) != len(self.last_submission_dates):
-            # some users did not submit in the datespan
-            return True
-
-        now_date = self.now.date()
-        for user, date in self.last_submission_dates.items():
-            if not date or (now_date - date).days > 7:
-                return True
-
-        return False
-
     def get_messages(self, language_code=None):
+        messages = []
         one_week_user_ids = []
         one_month_user_ids = []
 
@@ -167,15 +143,20 @@ class LSSubmissionPerformanceIndicator(LSIndicator):
                 if days_since_submission > 7:
                     one_week_user_ids.append(user_id)
 
-        one_week_loc_ids = get_users_location_ids(self.domain, one_week_user_ids)
-        one_month_loc_ids = get_users_location_ids(self.domain, one_month_user_ids)
-        one_week_loc_names = SQLLocation.objects.filter(location_id__in=one_week_loc_ids).values_list('name', flat=True)
-        one_month_loc_names = SQLLocation.objects.filter(location_id__in=one_month_loc_ids).values_list('name', flat=True)
+        if one_week_user_ids:
+            one_week_loc_ids = get_users_location_ids(self.domain, one_week_user_ids)
+            one_week_loc_names = (
+                SQLLocation.objects.filter(location_id__in=one_week_loc_ids).values_list('name', flat=True)
+            )
+            week_context = {'location_names': ', '.join(one_week_loc_names), 'timeframe': 'week'}
+            messages.append(self.render_template(week_context, language_code=language_code))
 
-        week_context = {'location_names': ', '.join(one_week_loc_names), 'timeframe': 'week'}
-        month_context = {'location_names': ','.join(one_month_loc_names), 'timeframe': 'month'}
+        if one_month_user_ids:
+            one_month_loc_ids = get_users_location_ids(self.domain, one_month_user_ids)
+            one_month_loc_names = (
+                SQLLocation.objects.filter(location_id__in=one_month_loc_ids).values_list('name', flat=True)
+            )
+            month_context = {'location_names': ','.join(one_month_loc_names), 'timeframe': 'month'}
+            messages.append(self.render_template(month_context, language_code=language_code))
 
-        week_message = self.render_template(week_context, language_code=language_code)
-        month_message = self.render_template(month_context, language_code=language_code)
-
-        return [week_message, month_message]
+        return messages
