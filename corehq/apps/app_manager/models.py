@@ -51,6 +51,7 @@ from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
+from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
@@ -5902,6 +5903,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         builder = ParentCasePropertyBuilder(self)
         case_relationships = builder.get_parent_type_map(self.get_case_types())
         meta = AppCaseMetadata()
+        descriptions_dict = get_case_property_description_dict(self.domain)
 
         for case_type, relationships in case_relationships.items():
             type_meta = meta.get_type(case_type)
@@ -5928,6 +5930,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if type_.name not in seen_types:
                 meta.type_hierarchy[type_.name] = {}
                 type_.error = _("Error in case type hierarchy")
+            for prop in type_.properties:
+                prop.description = descriptions_dict.get(type_.name, {}).get(prop.name, '')
 
         return meta
 

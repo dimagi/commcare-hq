@@ -8,8 +8,6 @@ from mock import patch
 
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from nose.tools import nottest
-
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from custom.enikshay.nikshay_datamigration.models import Outcome, PatientDetail
@@ -84,6 +82,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('current_address', 'Cambridge MA'),
                 ('current_episode_type', 'confirmed_tb'),
                 ('current_patient_type_choice', 'treatment_after_lfu'),
+                ('dataset', 'real'),
                 ('dob', '{}-07-01'.format(datetime.utcnow().year - 18)),
                 ('dob_known', 'no'),
                 ('first_name', 'A B'),
@@ -190,7 +189,6 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         drtb_hiv_referral_case_ids = self.case_accessor.get_case_ids_in_domain(type='drtb_hiv_referral')
         self.assertEqual(0, len(drtb_hiv_referral_case_ids))
 
-    @nottest  # TODO - remove
     @run_with_all_backends
     def test_drtb_hiv_referral(self):
         self.outcome.HIVStatus = None
@@ -210,7 +208,6 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual('A B C', drtb_hiv_referral_case.name)
         self.assertEqual(self.drtb_hiv.location_id, drtb_hiv_referral_case.owner_id)
 
-    @nottest  # TODO - remove
     @run_with_all_backends
     def test_case_update(self):
         self.outcome.HIVStatus = None
@@ -218,7 +215,9 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         call_command('create_enikshay_cases', self.domain)
 
         new_addhaar_number = 867386000001
+        new_pname = 'Bubbles'
         self.patient_detail.paadharno = new_addhaar_number
+        self.patient_detail.pname = new_pname
         self.patient_detail.cvisitedDate1 = '2016-12-31 00:00:00.000'
         self.patient_detail.dcpulmunory = 'N'
         self.patient_detail.save()
@@ -230,6 +229,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(1, len(person_case_ids))
         person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertEqual(person_case.name, new_pname)
         self.assertEqual(person_case.dynamic_case_properties()['aadhaar_number'], str(new_addhaar_number))
         self.assertEqual(person_case.dynamic_case_properties()['hiv_status'], 'reactive')
 
@@ -242,6 +242,11 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(1, len(episode_case_ids))
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertEqual(episode_case.dynamic_case_properties()['disease_classification'], 'extra_pulmonary')
+
+        drtb_hiv_referral_case_ids = self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')
+        self.assertEqual(1, len(drtb_hiv_referral_case_ids))
+        drtb_hiv_referral_case = self.case_accessor.get_case(drtb_hiv_referral_case_ids[0])
+        self.assertEqual(drtb_hiv_referral_case.name, new_pname)
 
     @run_with_all_backends
     def test_location_not_found(self):

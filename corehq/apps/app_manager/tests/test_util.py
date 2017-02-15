@@ -91,6 +91,7 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
 
 
 @flag_enabled('USER_PROPERTY_EASY_REFS')
+@patch('corehq.apps.app_manager.util.get_case_property_description_dict', MagicMock(return_value={}))
 @patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=False))
 @patch('corehq.apps.app_manager.util.is_usercase_in_use', MagicMock(return_value=False))
 @patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))
@@ -118,7 +119,7 @@ class SchemaTest(SimpleTestCase):
         self.assert_has_kv_pairs(schema["subsets"][0], {
             'id': 'case',
             'name': 'village',
-            'structure': {'case_name': {}},
+            'structure': {'case_name': {"description": ""}},
             'related': None,
         })
 
@@ -145,7 +146,7 @@ class SchemaTest(SimpleTestCase):
         subsets = {s["id"]: s for s in schema["subsets"]}
         self.assertTrue(re.match(r'^parent \((pregnancy|child) or (pregnancy|child)\)$',
                         subsets["parent"]["name"]))
-        self.assertEqual(subsets["parent"]["structure"], {"case_name": {}})
+        self.assertEqual(subsets["parent"]["structure"], {"case_name": {"description": ""}})
 
     def test_get_casedb_schema_with_deep_hierarchy(self):
         child = self.add_form("child")
@@ -176,7 +177,7 @@ class SchemaTest(SimpleTestCase):
             "subset": "parent",
             "key": "@case_id",
         }})
-        self.assertEqual(subsets["case"]["structure"]["case_name"], {})
+        self.assertEqual(subsets["case"]["structure"]["case_name"], {"description": ""})
         #self.assertEqual(subsets["parent"]["structure"]["has_well"], {}) TODO
         self.assertNotIn("parent/has_well", subsets["case"]["structure"])
 
@@ -247,7 +248,9 @@ class SchemaTest(SimpleTestCase):
         expected_casedb_schema_subsets = [
             {
                 "structure": {
-                    "case_name": {}
+                    "case_name": {
+                        "description": "",
+                    }
                 },
                 "related": {
                     "parent": {
@@ -261,8 +264,12 @@ class SchemaTest(SimpleTestCase):
             },
             {
                 "structure": {
-                    "name": {},
-                    "case_name": {}
+                    "name": {
+                        "description": "",
+                    },
+                    "case_name": {
+                        "description": "",
+                    }
                 },
                 "related": None,
                 "id": "parent",
@@ -289,7 +296,7 @@ class SchemaTest(SimpleTestCase):
             subsets = {s["id"]: s for s in schema["subsets"]}
             self.assertTrue(re.match(r'^parent \((pregnancy|child) or (pregnancy|child)\)$',
                             subsets["parent"]["name"]))
-            self.assertEqual(subsets["parent"]["structure"], {"case_name": {}})
+            self.assertEqual(subsets["parent"]["structure"], {"case_name": {"description": ""}})
 
     def test_get_session_schema_with_user_case(self):
         module, form = self.factory.new_basic_module('village', 'village')
@@ -366,6 +373,7 @@ class SchemaTest(SimpleTestCase):
         return form
 
 
+@patch('corehq.apps.app_manager.util.get_case_property_description_dict', MagicMock(return_value={}))
 @patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=True))
 @patch('corehq.apps.app_manager.util.is_usercase_in_use', MagicMock(return_value=True))
 @patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))

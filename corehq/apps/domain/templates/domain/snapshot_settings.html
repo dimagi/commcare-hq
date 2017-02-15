@@ -1,59 +1,17 @@
 {% extends "style/base_section.html" %}
 {% load hqstyle_tags %}
+{% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js-inline  %}{{ block.super }}
-    {% url "cda_basic" as cda_url %}
-    <script type="application/javascript">
-        $(function() {
-            $("#contentDistributionAgreement").on("show.bs.modal", function() {
-                $(this).find(".modal-body").load("{{ cda_url }}");
-            });
-        });
-    </script>
-
-    <script>
-        $(function() {
-            $('[data-target="#contentDistributionAgreement"]').click(function() {
-                var new_action = $(this).attr('data-action');
-                $('#cda-agree').attr('action', new_action);
-            });
-        });
-    </script>
-    <script>
-        $(function() {
-            $('#toggle-snapshots').click(function() {
-                if ($(this).text() === 'Show previous versions') {
-                    $('#snapshots').show(500);
-                    $(this).text(django.gettext('Hide previous versions'));
-                }
-                else {
-                    $('#snapshots').hide(500);
-                    $(this).text(django.gettext('Show previous versions'));
-                }
-            });
-        });
-    </script>
-    <script>
-        function view_on_exchange(version_name) {
-            gaTrackLink($('#view-on-exchange'), 'Exchange', 'View on exchange', version_name);
-            return false;
-        }
-
-        $(function() {
-            {% for snapshot in snapshots %}
-                $('#publish_{{ snapshot.name }}').click(function() {
-                    ga_track_event('Exchange', 'Publish Previous Version', '{{ snapshot.name }}');
-                });
-                $('#view_{{ snapshot.name }}').click(function() {
-                    gaTrackLink($('#view_{{ snapshot.name }}'), 'Exchange', 'View', '{{ snapshot.name }}');
-                });
-            {% endfor %}
-        });
-    </script>
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+    <script src="{% static 'domain/js/snapshot_settings.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl "cda_basic" %}
+    {% initial_page_data 'snapshots' snapshots %}
 <div>
     {% if published_snapshot %}
         {% include 'domain/partials/project_version_display.html' with version=published_snapshot published=1 %}

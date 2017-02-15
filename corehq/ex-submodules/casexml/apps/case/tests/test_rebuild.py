@@ -560,6 +560,15 @@ class TestActionSortKey(SimpleTestCase):
         )
         self._test(expected_actions)
 
+    def test_type_order_in_same_form(self):
+        expected_actions = (
+            (3, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_CLOSE, form_id='1')),
+            (1, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_UPDATE, form_id='1')),
+            (0, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_CREATE, form_id='1')),
+            (2, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_UPDATE, form_id='1')),
+        )
+        self._test(expected_actions)
+
     def _test(self, action_tuples):
         """
         Takes in an iterable of tuples of the form: (expected_index, action).
@@ -576,7 +585,10 @@ class TestActionSortKey(SimpleTestCase):
 EMPTY_DATE = object()
 
 
-def _make_action(server_date, phone_date=EMPTY_DATE, action_type=const.CASE_ACTION_UPDATE, user_id='someuserid'):
+def _make_action(server_date, phone_date=EMPTY_DATE, action_type=const.CASE_ACTION_UPDATE, user_id='someuserid', form_id=None):
     if phone_date == EMPTY_DATE:
         phone_date = server_date
-    return CommCareCaseAction(action_type=action_type, server_date=server_date, date=phone_date, user_id=user_id)
+    form_id = form_id or uuid.uuid4().hex
+    return CommCareCaseAction(
+        action_type=action_type, server_date=server_date, date=phone_date, user_id=user_id, xform_id=form_id
+    )
