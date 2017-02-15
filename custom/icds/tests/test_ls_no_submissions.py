@@ -26,13 +26,13 @@ class TestLSSubmissionPerformanceIndicator(TestCase):
         cls.domain_obj = create_domain(cls.domain)
 
         location_type_structure = [
-            LocationTypeStructure('lsl', [
+            LocationTypeStructure('supervisor', [
                 LocationTypeStructure('awc', [])
             ])
         ]
         location_structure = [
-            LocationStructure('LSL', 'lsl', [
-                LocationStructure('AWC', 'awc', []),
+            LocationStructure('LSL', 'supervisor', [
+                LocationStructure('AWC1', 'awc', []),
                 LocationStructure('AWC2', 'awc', []),
             ])
         ]
@@ -43,7 +43,7 @@ class TestLSSubmissionPerformanceIndicator(TestCase):
         for l in cls.locs.values():
             l.save()
         cls.ls = cls._make_user('ls', cls.locs['LSL'])
-        cls.aww = cls._make_user('aww', cls.locs['AWC'])
+        cls.aww = cls._make_user('aww', cls.locs['AWC1'])
 
     @classmethod
     def tearDownClass(cls):
@@ -86,19 +86,18 @@ class TestLSSubmissionPerformanceIndicator(TestCase):
         self.assertEqual(len(messages), 1)
         message = messages[0]
         self.assertTrue('one week' in message)
-        self.assertTrue('AWC' in message)
+        self.assertTrue('AWC1' in message)
 
-    def test_form_sent_thirty_one_days_ago(self, last_sub_time):
-        # last submissions only looks 30 days into past
-        last_sub_time.return_value = {self.aww.get_id: None}
+    def test_form_sent_thirty_days_ago(self, last_sub_time):
+        last_sub_time.return_value = {self.aww.get_id: self.today - timedelta(days=30)}
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
         messages = indicator.get_messages()
         self.assertEqual(len(messages), 1)
         message = messages[0]
-        self.assertTrue('one month' in message)
-        self.assertTrue('AWC' in message)
+        self.assertTrue('one week' in message)
+        self.assertTrue('AWC1' in message)
 
-    def test_nothing_from_last_sub(self, last_sub_time):
+    def test_form_sent_thirty_one_days_ago(self, last_sub_time):
         # last submissions only looks 30 days into past
         last_sub_time.return_value = {}
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
@@ -106,7 +105,7 @@ class TestLSSubmissionPerformanceIndicator(TestCase):
         self.assertEqual(len(messages), 1)
         message = messages[0]
         self.assertTrue('one month' in message)
-        self.assertTrue('AWC' in message)
+        self.assertTrue('AWC1' in message)
 
     def test_multiple_awc_eight_days_ago(self, last_sub_time):
         aww_2 = self._make_user('aww_2', self.locs['AWC2'])
@@ -120,5 +119,5 @@ class TestLSSubmissionPerformanceIndicator(TestCase):
         self.assertEqual(len(messages), 1)
         message = messages[0]
         self.assertTrue('one week' in message)
-        self.assertTrue('AWC, ' in message)
+        self.assertTrue('AWC1' in message)
         self.assertTrue('AWC2' in message)

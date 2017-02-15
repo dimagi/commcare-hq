@@ -60,9 +60,16 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
         self.assertEqual(len(messages), 1)
         self.assertTrue('one week' in messages[0])
 
+    def test_form_sent_thirty_days_ago(self, aww_user_ids):
+        aww_user_ids.return_value = {self.user.get_id: self.today - timedelta(days=30)}
+        indicator = AWWSubmissionPerformanceIndicator(self.domain, self.user)
+        messages = indicator.get_messages()
+        self.assertEqual(len(messages), 1)
+        self.assertTrue('one week' in messages[0])
+
     def test_form_sent_thirty_one_days_ago(self, aww_user_ids):
         # last submissions only looks 30 days into past
-        aww_user_ids.return_value = {self.user.get_id: None}
+        aww_user_ids.return_value = {}
         indicator = AWWSubmissionPerformanceIndicator(self.domain, self.user)
         messages = indicator.get_messages()
         self.assertEqual(len(messages), 1)
