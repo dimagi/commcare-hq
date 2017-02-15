@@ -51,6 +51,7 @@ from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
+from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
@@ -69,6 +70,7 @@ from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import get_url_base
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -89,6 +91,7 @@ from dimagi.utils.web import get_url_base, parse_int
 import commcare_translations
 from corehq.util import bitly
 from corehq.util import view_utils
+from corehq.util.string_utils import random_string
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -5215,6 +5218,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
+
+    anonymous_cloudcare_enabled = BooleanProperty(default=False)
+    anonymous_cloudcare_hash = StringProperty(default=random_string)
+
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
@@ -5230,6 +5237,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def assert_app_v2(self):
         assert self.application_version == APP_V2
+
+    @property
+    def anonymous_cloudcare_url(self):
+        from corehq.apps.cloudcare.views import SingleAppLandingPageView
+
+        return view_utils.absolute_reverse(SingleAppLandingPageView.urlname, args=[
+            self.domain,
+            self.anonymous_cloudcare_hash
+        ])
 
     @property
     @memoized
@@ -5350,10 +5366,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         my_hash = _hash(self.fetch_xform(form=form))
                         if previous_hash == my_hash:
                             form_version = previous_form_version
-                    if form_version is None:
-                        form.version = None
-                    else:
-                        form.version = form_version
+
+                    form.version = form_version
                 else:
                     form.version = None
 
@@ -5904,6 +5918,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         builder = ParentCasePropertyBuilder(self)
         case_relationships = builder.get_parent_type_map(self.get_case_types())
         meta = AppCaseMetadata()
+        descriptions_dict = get_case_property_description_dict(self.domain)
 
         for case_type, relationships in case_relationships.items():
             type_meta = meta.get_type(case_type)
@@ -5930,6 +5945,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if type_.name not in seen_types:
                 meta.type_hierarchy[type_.name] = {}
                 type_.error = _("Error in case type hierarchy")
+            for prop in type_.properties:
+                prop.description = descriptions_dict.get(type_.name, {}).get(prop.name, '')
 
         return meta
 

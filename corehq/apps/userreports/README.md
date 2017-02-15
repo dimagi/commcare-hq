@@ -316,6 +316,23 @@ This expression returns the value of the expression for the case that matches th
 }
 ```
 
+##### Coalesce Expression
+
+This expression returns the value of the expression provided, or the value of the default_expression if the expression provided evalutes to a null or blank string.
+```json
+{
+    "type": "coalesce",
+    "expression": {
+        "type": "property_name",
+        "property_name": "district"
+    },
+    "default_expression": {
+    	"type": "constant",
+        "constant": "default_district"
+    }
+}
+```
+
 ##### Array Index Expression
 
 This expression returns `doc["siblings"][0]`:

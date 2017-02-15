@@ -185,6 +185,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'rest_framework.authtoken',
     'djcelery',
     'djtables',
     'django_prbac',
@@ -911,10 +912,10 @@ TEMPLATES = [
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.core.context_processors.request',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
                 'django.template.context_processors.media',
+                'django.template.context_processors.request',
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
 
@@ -1076,7 +1077,7 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        'django.request': {
+        'django': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
@@ -1935,5 +1936,5 @@ else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
 
 REST_FRAMEWORK = {
-    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
+    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
 }

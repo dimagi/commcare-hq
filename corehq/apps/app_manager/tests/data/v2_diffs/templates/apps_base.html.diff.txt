@@ -74,39 +74,20 @@
    {% endif %}
  
  {% endblock %}
-@@ -64,10 +81,9 @@
+@@ -64,40 +81,24 @@
      <script src="{% static 'style/js/ui-element.js' %}"></script>
      <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-+
-     <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
+-    <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
+     <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+     <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
 -    {% if show_live_preview %}
++
++    <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
      <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
 -    {% endif %}
- {% endblock %}
- 
- {% block js-inline %}{{ block.super }}
-@@ -80,41 +96,30 @@
-         }).on('hide.bs.modal', function () {
-             window.location = "{% url "default_app" domain %}";
-         });
--        {% if show_live_preview %}
--            var previewApp = hqImport('app_manager/js/preview_app.js');
--            previewApp.initPreviewWindow(hqLayout);
--        {% endif %}
+     <script src="{% static 'app_manager/js/apps_base.js' %}"></script>
 +
-+        var previewApp = hqImport('app_manager/js/preview_app.js');
-+        previewApp.initPreviewWindow(hqLayout);
-+
-     });
-     $(function () {
-        $('.appmanager-content').fadeIn();
-        $('.appmanager-loading').fadeOut();
-     });
-+
-+    hqLayout.utils.setIsAppbuilderResizing(true);
-+
-     </script>
  {% endblock %}
  
 -{% block page_breadcrumbs %}
@@ -119,8 +100,11 @@
 -{% endblock %}
 +{% block page_breadcrumbs %}{% endblock %}
  
- {% block content %}
-   {{ block.super }}
+-{% block content %}
+-  {{ block.super }}
++{% block content %}{{ block.super }}
+   {% registerurl "default_app" domain %}
+-  {% initial_page_data 'show_live_preview' show_live_preview %}
 -  {% if show_live_preview %}
 -    {% include 'app_manager/v1/partials/preview_app.html'%}
 -  {% endif %}
@@ -138,7 +122,7 @@
       id="js-appmanager-body">
      {% if app %}
          {% if error %}
-@@ -139,7 +144,7 @@
+@@ -122,7 +123,7 @@
                  {% endblocktrans %}
              </p>
              <br>

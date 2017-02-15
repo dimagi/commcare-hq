@@ -7,7 +7,8 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence
+from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence, \
+    get_open_drtb_hiv_case_from_episode
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.nikshay_datamigration.models import Outcome
 
@@ -94,6 +95,20 @@ class EnikshayCaseFactory(object):
             except ENikshayCaseNotFound:
                 return None
 
+    @property
+    @memoized
+    def existing_drtb_hiv_case(self):
+        """
+        Get the existing episode case for this nikshay ID, or None if no episode case exists
+        """
+        if self.existing_episode_case:
+            try:
+                return get_open_drtb_hiv_case_from_episode(
+                    self.domain, self.existing_episode_case.case_id
+                )
+            except ENikshayCaseNotFound:
+                return None
+
     def get_case_structures_to_create(self):
         person_structure = self.get_person_case_structure()
         ocurrence_structure = self.get_occurrence_case_structure(person_structure)
@@ -115,6 +130,7 @@ class EnikshayCaseFactory(object):
                     'current_address': self.patient_detail.paddress,
                     'current_episode_type': 'confirmed_tb',
                     'current_patient_type_choice': self.patient_detail.patient_type_choice,
+                    'dataset': 'real',
                     'dob': date(date.today().year - self.patient_detail.page, 7, 1),
                     'dob_known': 'no',
                     'has_open_tests': 'no',
@@ -306,7 +322,11 @@ class EnikshayCaseFactory(object):
                 related_type=EPISODE_CASE_TYPE,
             )],
         }
-
+        if self.existing_drtb_hiv_case:
+            kwargs['case_id'] = self.existing_drtb_hiv_case.case_id
+            kwargs['attrs']['create'] = False
+        else:
+            kwargs['attrs']['create'] = True
         return CaseStructure(**kwargs)
 
     @property

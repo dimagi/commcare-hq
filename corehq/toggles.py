@@ -295,6 +295,13 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
 )
 
+DHIS2_INTEGRATION = StaticToggle(
+    'dhis2_integration',
+    'DHIS2 Integration',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
@@ -446,14 +453,6 @@ MOBILE_PRIVILEGES_FLAG = StaticToggle(
     'Offer "Enable Privileges on Mobile" flag.',
     TAG_EXPERIMENTAL,
     [NAMESPACE_USER]
-)
-
-MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
-    'multiple_locations',
-    "(Deprecated) Enable multiple locations per user on domain.",
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    description="Don't enable this flag."
 )
 
 PRODUCTS_PER_LOCATION = StaticToggle(
@@ -928,6 +927,13 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+EDIT_FORMPLAYER = PredictablyRandomToggle(
+    'edit_formplayer',
+    'Edit forms on Formplayer',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    randomness=0.1,
+)
 
 PREVIEW_APP = PredictablyRandomToggle(
     'preview_app',
@@ -1033,10 +1039,16 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DO_NOT_PROCESS_OLD_BUILDS = PredictablyRandomToggle(
-    'do_not_process_old_builds',
-    'Do not process old build for export generation',
-    TAG_PRODUCT_CORE,
+ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
+    'anonymous_web_apps_usage',
+    'Allow anonymous users to access web apps applications',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
-    randomness=0.5,
+)
+
+INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
+    'include_metadata_in_ucr_excel_exports',
+    'Include metadata in UCR excel exports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
 )

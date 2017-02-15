@@ -160,7 +160,7 @@ describe('Entries', function() {
         assert.isFalse(
             ComboboxEntry.filter('one tt', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
         );
-        assert.isFalse(
+        assert.isTrue(
             ComboboxEntry.filter('o', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(

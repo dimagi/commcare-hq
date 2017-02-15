@@ -65,31 +65,12 @@
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
     {% if show_live_preview %}
     <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
     {% endif %}
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-    $(function () {
-        $('#deleted-app-modal').modal({
-            backdrop: 'static',
-            keyboard: false,
-            show: true
-        }).on('hide.bs.modal', function () {
-            window.location = "{% url "default_app" domain %}";
-        });
-        {% if show_live_preview %}
-            var previewApp = hqImport('app_manager/js/preview_app.js');
-            previewApp.initPreviewWindow(hqLayout);
-        {% endif %}
-    });
-    $(function () {
-       $('.appmanager-content').fadeIn();
-       $('.appmanager-loading').fadeOut();
-    });
-    </script>
+    <script src="{% static 'app_manager/js/apps_base.js' %}"></script>
 {% endblock %}
 
 {% block page_breadcrumbs %}
@@ -103,6 +84,8 @@
 
 {% block content %}
   {{ block.super }}
+  {% registerurl "default_app" domain %}
+  {% initial_page_data 'show_live_preview' show_live_preview %}
   {% if show_live_preview %}
     {% include 'app_manager/v1/partials/preview_app.html'%}
   {% endif %}

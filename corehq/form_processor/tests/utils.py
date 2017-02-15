@@ -166,7 +166,7 @@ run_with_all_backends = functools.partial(
             pre_run=lambda *args, **kwargs: args[0].setUp(),
         ),
     ],
-    nose_tags={'dual_backend': True}
+    nose_tags={'all_backends': True}
 )
 
 

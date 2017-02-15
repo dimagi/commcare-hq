@@ -344,7 +344,7 @@ You can run all tests with a certain tag as follows:
 
 Available tags:
 
-  * dual_backend: all tests decorated with `run_with_all_backeds`
+  * all_backends: all tests decorated with `run_with_all_backeds`
 
 See http://nose.readthedocs.io/en/latest/plugins/attrib.html for more details.
 

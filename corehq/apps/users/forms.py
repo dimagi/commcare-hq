@@ -23,6 +23,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.users.models import CouchUser
+from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
@@ -228,7 +229,7 @@ class BaseUserInfoForm(forms.Form):
         help_text=mark_safe_lazy(
             ugettext_lazy(
                 "<i class=\"fa fa-info-circle\"></i> "
-                "Becomes default language seen in CloudCare and reports (if applicable), "
+                "Becomes default language seen in Web Apps and reports (if applicable), "
                 "but does not affect mobile applications. "
                 "Supported languages for reports are en, fr (partial), and hin (partial)."
             )
@@ -345,10 +346,10 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
         self.fields['role'].help_text = _(mark_safe(
-            "<i class=\"fa fa-info-circle\"></i> "
-            "Only applies to mobile workers that will be entering data using "
-            "<a href='https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry'>"
-            "CloudCare</a>"
+            '<i class="fa fa-info-circle"></i> '
+            'Only applies to mobile workers who will be entering data using '
+            '<a href="https://wiki.commcarehq.org/display/commcarepublic/Web+Apps">'
+            'Web Apps</a>'
         ))
 
     @property
@@ -642,6 +643,60 @@ class NewMobileWorkerForm(forms.Form):
         if self.project.strong_mobile_passwords:
             return clean_password(self.cleaned_data.get('password'))
         return self.cleaned_data.get('password')
+
+
+class NewAnonymousMobileWorkerForm(forms.Form):
+    location_id = forms.CharField(
+        label=ugettext_noop("Location"),
+        required=False,
+    )
+    username = forms.CharField(
+        max_length=50,
+        label=ugettext_noop("Username"),
+        initial=ANONYMOUS_USERNAME,
+    )
+    password = forms.CharField(
+        required=True,
+        min_length=1,
+    )
+
+    def __init__(self, project, user, *args, **kwargs):
+        super(NewAnonymousMobileWorkerForm, self).__init__(*args, **kwargs)
+        self.project = project
+        self.user = user
+        self.can_access_all_locations = user.has_permission(self.project.name, 'access_all_locations')
+        if not self.can_access_all_locations:
+            self.fields['location_id'].required = True
+
+        if project.uses_locations:
+            self.fields['location_id'].widget = AngularLocationSelectWidget(
+                require=not self.can_access_all_locations)
+            location_field = crispy.Field(
+                'location_id',
+                ng_model='mobileWorker.location_id',
+            )
+        else:
+            location_field = crispy.Hidden(
+                'location_id',
+                '',
+                ng_model='mobileWorker.location_id',
+            )
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-4'
+        self.helper.field_class = 'col-sm-8'
+        self.helper.layout = Layout(
+            Fieldset(
+                _('Basic Information'),
+                crispy.Field(
+                    'username',
+                    readonly=True,
+                ),
+                location_field,
+                crispy.Hidden('is_anonymous', 'yes'),
+            )
+        )
 
 
 class MultipleSelectionForm(forms.Form):

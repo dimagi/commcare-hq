@@ -400,3 +400,21 @@ class SplitStringExpressionSpec(JsonObject):
             return string_value.split(self.delimiter)[index_value]
         except IndexError:
             return None
+
+
+class CoalesceExpressionSpec(JsonObject):
+    type = TypeProperty('coalesce')
+    expression = DictProperty(required=True)
+    default_expression = DictProperty(required=True)
+
+    def configure(self, expression, default_expression):
+        self._expression = expression
+        self._default_expression = default_expression
+
+    def __call__(self, item, context=None):
+        expression_value = self._expression(item, context)
+        default_value = self._default_expression(item, context)
+        if expression_value is None or expression_value == '':
+            return default_value
+        else:
+            return expression_value
