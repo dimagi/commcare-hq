@@ -1,4 +1,3 @@
-from collections import namedtuple
 from urllib import urlencode
 
 from django.core.urlresolvers import reverse
@@ -30,12 +29,10 @@ from corehq.apps.users.permissions import can_view_form_exports, can_view_case_e
 from corehq.form_processor.utils import use_new_exports
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
-from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
+from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
-
-SidebarPosition = namedtuple("SidebarPosition", ["heading", "index"])
 
 
 class ProjectReportsTab(UITab):
@@ -71,33 +68,7 @@ class ProjectReportsTab(UITab):
             ordering = ReportsSidebarOrdering.objects.get(domain=self.domain)
         except ReportsSidebarOrdering.DoesNotExist:
             return sidebar_items
-
-        reports_to_move = {}  # report class name to SidebarPosition mapping
-        for heading, reports in ordering.config:
-            for i, report_class_name in enumerate(reports):
-                reports_to_move[report_class_name] = SidebarPosition(heading, i)
-
-        # A mapping of headings to lists of 2-tuples. The tuples are index (under the heading) and the item itself.
-        new_sections = {x[0]: [] for x in ordering.config}
-        # A mapping of headings to lists of sidebar items.
-        old_sections = {x[0]: [] for x in sidebar_items}
-
-        # extract the sidebar items that to their new heading sections (or their old sections)
-        for heading, items in sidebar_items:
-            for item in items:
-                new_position = reports_to_move.get(item['class_name'], None)
-                if new_position:
-                    new_sections[new_position.heading].append((new_position.index, item))
-                else:
-                    old_sections[heading].append(item)
-
-        # Flatten the intermediary data structures
-        flat_new_sections = [
-            (heading, [item for index, item in sorted(new_sections[heading])])
-            for heading, _ in ordering.config
-        ]
-        flat_old_sections = [(heading, old_sections[heading]) for heading, _ in sidebar_items]
-        return flat_new_sections + flat_old_sections
+        return regroup_sidebar_items(ordering.config, sidebar_items)
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView

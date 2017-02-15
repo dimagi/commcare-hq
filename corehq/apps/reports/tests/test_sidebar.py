@@ -3,12 +3,12 @@ from mock import patch, MagicMock
 
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.tabs.tabclasses import ProjectReportsTab
+from corehq.tabs.utils import regroup_sidebar_items
 
 
 class TestReportsTabSidebar(SimpleTestCase):
 
     def test_custom_reordering(self):
-        tab = ProjectReportsTab(None)
         original_items = [
             ("Custom reports", [
                 {"class_name": "foo"},
@@ -20,19 +20,9 @@ class TestReportsTabSidebar(SimpleTestCase):
             ]),
         ]
 
-        mock_ordering = ReportsSidebarOrdering(
-            domain="wut",
-            config=[
-                ["new section", ["qux", "foo", "dne"]]
-            ],
-        )
+        ordering = [["new section", ["qux", "foo", "dne"]]]
+        reordered = regroup_sidebar_items(ordering, original_items)
 
-        def mock_get(*args, **kwargs):
-            return mock_ordering
-        mock_class = MagicMock(objects=MagicMock(get=mock_get))
-
-        with patch("corehq.tabs.tabclasses.ReportsSidebarOrdering", new=mock_class):
-            reordered = tab._regroup_sidebar_items(original_items)
         self.assertEqual(reordered, [
             ("new section", [
                 {"class_name": "qux"},
