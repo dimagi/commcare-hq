@@ -228,7 +228,7 @@ class BaseUserInfoForm(forms.Form):
         help_text=mark_safe_lazy(
             ugettext_lazy(
                 "<i class=\"fa fa-info-circle\"></i> "
-                "Becomes default language seen in CloudCare and reports (if applicable), "
+                "Becomes default language seen in Web Apps and reports (if applicable), "
                 "but does not affect mobile applications. "
                 "Supported languages for reports are en, fr (partial), and hin (partial)."
             )
@@ -345,10 +345,10 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
         self.fields['role'].help_text = _(mark_safe(
-            "<i class=\"fa fa-info-circle\"></i> "
-            "Only applies to mobile workers that will be entering data using "
-            "<a href='https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry'>"
-            "CloudCare</a>"
+            '<i class="fa fa-info-circle"></i> '
+            'Only applies to mobile workers who will be entering data using '
+            '<a href="https://wiki.commcarehq.org/display/commcarepublic/Web+Apps">'
+            'Web Apps</a>'
         ))
 
     @property
