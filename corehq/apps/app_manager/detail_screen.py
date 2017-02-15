@@ -27,7 +27,7 @@ CASE_PROPERTY_MAP = {
 
 def get_column_generator(app, module, detail, column, sort_element=None,
                          order=None, detail_type=None):
-    cls = get_class_for_format(column.format)
+    cls = get_class_for_format(column.format)  # cls will be FormattedDetailColumn or a subclass of it
     return cls(app, module, detail, column, sort_element, order, detail_type=detail_type)
 
 
@@ -47,7 +47,7 @@ class register_format_type(object):
 
 
 def get_column_xpath_generator(app, module, detail, column):
-    cls = get_class_for_type(column.field_type)
+    cls = get_class_for_type(column.field_type)  # cls will be BaseXpathGenerator or a subclass
     return cls(app, module, detail, column)
 
 
