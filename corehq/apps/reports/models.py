@@ -8,6 +8,7 @@ import json
 import logging
 from urllib import urlencode
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.http import Http404
 from django.utils import html
@@ -1101,6 +1102,27 @@ class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfigurat
         self.by_domain.clear(self.__class__, self.domain)
 
 
+def ordering_config_validator(value):
+
+    error = ValidationError(
+        _('The config format is invalid'),
+        params={'value': value}
+    )
+
+    if not isinstance(value, list):
+        raise error
+    for group in value:
+        if not isinstance(group, list) or len(group) != 2:
+            raise error
+        if not isinstance(group[0], basestring):
+            raise error
+        if not isinstance(group[1], list):
+            raise error
+        for report in group[1]:
+            if not isinstance(report, basestring):
+                raise error
+
+
 class ReportsSidebarOrdering(models.Model):
     domain = models.CharField(
         max_length=256,
@@ -1108,7 +1130,19 @@ class ReportsSidebarOrdering(models.Model):
         blank=False,
         unique=True
     )
+    # Example config value:
+    # [
+    #     ["Adherence", [
+    #         "DynamicReport7613ac1402e2c41db782526e9c43e040",
+    #         "DynamicReport1233ac1402e2c41db782526e9c43e040"
+    #     ]],
+    #     ["Test Results", [
+    #         "DynamicReport4563ac1402e2c41db782526e9c43e040",
+    #         "DynamicReportmy-static-ucr-id"
+    #     ]]
+    # ]
     config = JSONField(
+        validators=[ordering_config_validator],
         default=list,
         help_text=(
             "An array of arrays. Each array represents a heading in the sidebar navigation. "
