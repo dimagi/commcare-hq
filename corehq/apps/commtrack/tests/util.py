@@ -1,33 +1,24 @@
 from datetime import datetime
-from django.test import TestCase
 from lxml import etree
 
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms, delete_all_ledgers
-from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
-from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
-from casexml.apps.stock.models import StockReport, StockTransaction
 from dimagi.utils.couch.database import get_safe_write_kwargs
+from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import Location, LocationType, SQLLocation
+from corehq.apps.locations.models import Location, LocationType
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 from corehq.util.decorators import require_debug_true
-from dimagi.utils.parsing import json_format_datetime
 
 from ..const import StockActions
-from ..models import CommtrackConfig, ConsumptionConfig
 from ..sms import to_instance
-from ..util import (get_default_requisition_config,
-                    get_or_create_default_program,
+from ..util import (get_or_create_default_program,
                     get_supply_point_and_location)
 
 
@@ -137,53 +128,6 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, paren
     loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
     loc.save()
     return loc
-
-
-class CommTrackTest(TestCase):
-    user_definitions = []
-
-    def setUp(self):
-        super(CommTrackTest, self).setUp()
-        self.backend, self.backend_mapping = setup_default_sms_test_backend()
-
-        self.domain = bootstrap_domain(TEST_DOMAIN)
-        bootstrap_location_types(self.domain.name)
-        bootstrap_products(self.domain.name)
-        self.ct_settings = CommtrackConfig.for_domain(self.domain.name)
-        self.ct_settings.consumption_config = ConsumptionConfig(
-            min_transactions=0,
-            min_window=0,
-            optimal_window=60,
-            min_periods=0,
-        )
-        self.ct_settings.save()
-
-        self.domain = Domain.get(self.domain._id)
-
-        self.loc = make_loc('loc1')
-        self.sp = self.loc.linked_supply_point()
-        self.users = [bootstrap_user(self, **user_def) for user_def in self.user_definitions]
-
-        # everyone should be in a group.
-        self.group = Group(domain=TEST_DOMAIN, name='commtrack-folks',
-                           users=[u._id for u in self.users],
-                           case_sharing=True)
-        self.group._id = self.sp.owner_id
-        self.group.save()
-        self.products = sorted(Product.by_domain(self.domain.name), key=lambda p: p._id)
-        self.assertEqual(3, len(self.products))
-
-    def tearDown(self):
-        SQLLocation.objects.all().delete()
-        self.backend_mapping.delete()
-        self.backend.delete()
-        delete_all_xforms()
-        delete_all_ledgers()
-        delete_all_cases()
-        delete_all_sync_logs()
-        delete_all_users()
-        self.domain.delete()  # domain delete cascades to everything else
-        super(CommTrackTest, self).tearDown()
 
 
 def get_ota_balance_xml(project, user):
