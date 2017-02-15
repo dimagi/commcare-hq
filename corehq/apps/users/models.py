@@ -44,7 +44,6 @@ from corehq.apps.users.util import (
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices
-from corehq.apps.users.exceptions import InvalidLocationConfig
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -1688,16 +1687,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 'commtrack-supply-point': sp.case_id
             })
 
-        if self.project.supports_multiple_locations_per_user:
-            # TODO is it possible to only remove this
-            # access if it was not previously granted by
-            # the bulk upload?
-
-            # we only add the new one because we don't know
-            # if we can actually remove the old..
-            self.add_location_delegate(location)
-        else:
-            self.create_location_delegates([location])
+        self.create_location_delegates([location])
 
         self.user_data.update({
             'commcare_primary_case_sharing_id':
@@ -1805,34 +1795,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             self.save()
 
-    @property
-    def locations(self):
-        """
-        This method is only used for domains with the multiple
-        locations per user flag set. It will error if you try
-        to call it on a normal domain.
-        """
-        from corehq.apps.locations.models import SQLLocation
-        if not self.project.supports_multiple_locations_per_user:
-            raise InvalidLocationConfig(
-                "Attempting to access multiple locations for a user in a domain that does not support this."
-            )
-
-        def _get_linked_supply_point_ids():
-            mapping = self.get_location_map_case()
-            if mapping:
-                return [index.referenced_id for index in mapping.indices]
-            return []
-
-        def _get_linked_supply_points():
-            return SupplyInterface(self.domain).get_supply_points(_get_linked_supply_point_ids())
-
-        location_ids = [sp.location_id for sp in _get_linked_supply_points()]
-        return list(SQLLocation.objects
-                    .filter(domain=self.domain,
-                            location_id__in=location_ids)
-                    .couch_locations())
-
     def supply_point_index_mapping(self, supply_point, clear=False):
         from corehq.apps.commtrack.exceptions import (
             LinkedSupplyPointNotFoundError
@@ -1907,16 +1869,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         Submit the case blocks creating the delgate case access
         for the location(s).
         """
-        if self.project.supports_multiple_locations_per_user:
-            new_locs_set = set([loc.location_id for loc in locations])
-            old_locs_set = set([loc.location_id for loc in self.locations])
-
-            if new_locs_set == old_locs_set:
-                # don't do anything if the list passed is the same
-                # as the users current locations. the check is a little messy
-                # as we can't compare the location objects themself
-                return
-
         self.clear_location_delegates()
 
         if not locations:

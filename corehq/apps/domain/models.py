@@ -1060,17 +1060,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                      or LocationType.objects.filter(domain=self.name).exists()))
 
     @property
-    def supports_multiple_locations_per_user(self):
-        """
-        This method is a wrapper around the toggle that
-        enables multiple location functionality. Callers of this
-        method should know that this is special functionality
-        left around for special applications, and not a feature
-        flag that should be set normally.
-        """
-        return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self.name)
-
-    @property
     def is_onboarding_domain(self):
         # flag used for case management onboarding analytics
         if not settings.ONBOARDING_DOMAIN_TEST_DATE:
