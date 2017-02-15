@@ -208,8 +208,12 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
         templateHelpers: function () {
             var appId = Util.currentUrlToObject().appId;
+            var data = this.options.model.get('data');
+            for (var i =0; i < data.length; i++) {
+                data[i] = data[i].replace(/\"/g, "'");
+            }
             return {
-                data: this.options.model.get('data'),
+                data: data,
                 styles: this.options.styles,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.request('resourceMap', uri, appId);
