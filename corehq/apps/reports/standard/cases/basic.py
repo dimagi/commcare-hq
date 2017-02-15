@@ -1,7 +1,9 @@
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
-from corehq.apps.es.users import user_ids_at_locations, user_ids_at_locations_and_descendants
+from corehq.apps.locations.dbaccessors import (
+    user_ids_at_locations, user_ids_at_locations_and_descendants
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.const import SERVER_DATETIME_FORMAT

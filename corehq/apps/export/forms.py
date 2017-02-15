@@ -12,7 +12,9 @@ from corehq.apps.export.filters import (
     ModifiedOnRangeFilter, FormSubmittedByFilter, NOT
 )
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.es.users import user_ids_at_locations_and_descendants, user_ids_at_locations
+from corehq.apps.locations.dbaccessors import (
+    user_ids_at_locations_and_descendants, user_ids_at_locations
+)
 from corehq.apps.export.models.new import (
     DatePeriod,
     CaseExportInstance,
