@@ -608,7 +608,7 @@
         {% endcompress %}
 
         {# EULA #}
-        {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
+        {% if request.couch_user and not request.couch_user.is_eula_signed %}
             {% include 'style/includes/modal_eula.html' with needs_agreement=True %}
         {% endif %}
 

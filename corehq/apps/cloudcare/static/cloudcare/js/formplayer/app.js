@@ -27,7 +27,6 @@ FormplayerFrontend.on("before:start", function () {
     });
 
     FormplayerFrontend.regions = new RegionContainer();
-    FormplayerFrontend.router = new FormplayerFrontend.SessionNavigate.start();
 });
 
 FormplayerFrontend.navigate = function (route, options) {
@@ -187,7 +186,6 @@ FormplayerFrontend.on("start", function (options) {
     );
     user.displayOptions = _.defaults(savedDisplayOptions, {
         singleAppMode: options.singleAppMode,
-        landingPageAppMode: options.landingPageAppMode,
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
     });
@@ -200,7 +198,7 @@ FormplayerFrontend.on("start", function (options) {
                 model: user,
             })
         );
-        if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
+        if (user.displayOptions.singleAppMode) {
             appId = options.apps[0]['_id'];
         }
 
@@ -209,9 +207,6 @@ FormplayerFrontend.on("start", function (options) {
             if (user.displayOptions.singleAppMode) {
                 FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
-            } else if (user.displayOptions.landingPageAppMode) {
-                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
-                FormplayerFrontend.trigger("app:landingPageApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }
