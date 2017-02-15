@@ -98,13 +98,12 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
             if days_since_submission > 7:
                 more_than_one_week = True
 
-        context = {
-            'more_than_one_week': more_than_one_week,
-            'more_than_one_month': more_than_one_month,
-            'awc': self.user.sql_location.name,
-        }
-
         if more_than_one_week or more_than_one_month:
+            context = {
+                'more_than_one_week': more_than_one_week,
+                'more_than_one_month': more_than_one_month,
+                'awc': self.user.sql_location.name,
+            }
             return [self.render_template(context, language_code=language_code)]
 
         return []
