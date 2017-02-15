@@ -1,7 +1,6 @@
 from collections import namedtuple
 from urllib import urlencode
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.http import Http404
@@ -70,7 +69,7 @@ class ProjectReportsTab(UITab):
     def _regroup_sidebar_items(self, sidebar_items):
         try:
             ordering = ReportsSidebarOrdering.objects.get(domain=self.domain)
-        except ObjectDoesNotExist:
+        except ReportsSidebarOrdering.DoesNotExist:
             return sidebar_items
 
         reports_to_move = {}  # report class name to SidebarPosition mapping
