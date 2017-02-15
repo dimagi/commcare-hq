@@ -203,6 +203,7 @@ DEFAULT_APPS = (
     'two_factor',
     'ws4redis',
     'statici18n',
+    'raven.contrib.django.raven_compat',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -1960,8 +1961,6 @@ if SENTRY_PUBLIC_KEY and SENTRY_PRIVATE_KEY and SENTRY_PROJECT_ID:
     except ImportError:
         pass
     else:
-        INSTALLED_APPS += ('raven.contrib.django.raven_compat',)
-
         SENTRY_CONFIGURED = True
 
         RAVEN_CONFIG = {
