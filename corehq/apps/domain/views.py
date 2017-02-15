@@ -43,6 +43,7 @@ from corehq.apps.case_search.models import (
     enable_case_search,
     disable_case_search,
 )
+from corehq.apps.dhis2.dbaccessors import get_dhis2_connection
 from corehq.apps.dhis2.forms import Dhis2ConnectionForm
 from corehq.apps.dhis2.models import Dhis2Connection
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
@@ -3071,7 +3072,7 @@ class Dhis2ConnectionView(BaseAdminProjectSettingsView):
     @property
     @memoized
     def dhis2_connection_form(self):
-        dhis2_conn = Dhis2Connection.for_domain(self.request.domain)
+        dhis2_conn = get_dhis2_connection(self.request.domain)
         initial = dict(dhis2_conn) if dhis2_conn else {}
         if self.request.method == 'POST':
             return Dhis2ConnectionForm(self.request.POST, initial=initial)
