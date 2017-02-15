@@ -91,7 +91,7 @@ class ProjectReportsTab(UITab):
                 else:
                     old_sections[heading].append(item)
 
-        # Flatten the itermediary data structures
+        # Flatten the intermediary data structures
         flat_new_sections = [
             (heading, [item for index, item in sorted(new_sections[heading])])
             for heading, _ in ordering.config
