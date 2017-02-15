@@ -177,8 +177,6 @@ def get_all_locations_to_sync(user):
         all_locations = set()
 
         user_locations = set(user.get_sql_locations(user.domain))
-        # old flagged multi-locations, ToDo remove in next phase
-        user_locations |= {location for location in _gather_multiple_locations(user)}
         for user_location in user_locations:
             location_type = user_location.location_type
             expand_from = location_type.expand_from or location_type
@@ -197,16 +195,6 @@ def get_all_locations_to_sync(user):
             all_locations |= _get_include_without_expanding_locations(user.domain, location_type)
 
         return LocationSet(all_locations)
-
-
-def _gather_multiple_locations(user):
-    """If the project has multiple locations enabled, returns all the extra
-    locations the user is assigned to.
-    """
-    if user.project.supports_multiple_locations_per_user:
-        location_ids = [loc.location_id for loc in user.locations]
-        for location in SQLLocation.active_objects.filter(location_id__in=location_ids):
-            yield location
 
 
 def _get_expand_from_level(domain, user_location, expand_from):
