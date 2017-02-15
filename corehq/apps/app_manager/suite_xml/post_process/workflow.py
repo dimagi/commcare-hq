@@ -384,6 +384,8 @@ class CaseListFormWorkflow(object):
         :param source_form_datums: List of datums from the source form.
         """
         ids_on_stack = stack_frames.ids_on_stack
+        if not len(target_module.forms):
+            return
         target_frame_children = self.helper.get_frame_children(target_module.get_form(0), module_only=True)
         remaining_target_frame_children = [fc for fc in target_frame_children if fc.id not in ids_on_stack]
         frame_children = WorkflowHelper.get_datums_matched_to_source(
