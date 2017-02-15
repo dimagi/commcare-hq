@@ -55,7 +55,6 @@ branches:
 
   # django 1.10 dependencies - NP 2/10
   #- np/110/two-factor
-  - np/110/djcelery # NP 2/14
 
   # django 1.10 mgmt cmd updates - NP 2/10
   #- np/110/clean_supervisor_confs
