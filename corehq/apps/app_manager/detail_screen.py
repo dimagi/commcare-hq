@@ -74,6 +74,9 @@ class BaseXpathGenerator(object):
         self.detail = detail
         self.column = column
         self.id_strings = id_strings
+        # The first index of a case list column XPath needs to be absolute. cf. PropertyXpathGenerator.xpath
+        # This is an awful way to pass this, and I'm sure Simon will have a more obvious and more functional way.
+        self.is_case_list_column = False
 
     @property
     def xpath(self):
@@ -179,8 +182,9 @@ class FormattedDetailColumn(object):
 
     @property
     def xpath(self):
-        return get_column_xpath_generator(self.app, self.module, self.detail,
-                                          self.column).xpath
+        column_xpath_generator = get_column_xpath_generator(self.app, self.module, self.detail, self.column)
+        column_xpath_generator.is_case_list_column = True
+        return column_xpath_generator.xpath
 
     XPATH_FUNCTION = u"{xpath}"
 
@@ -568,7 +572,10 @@ class PropertyXpathGenerator(BaseXpathGenerator):
         property = parts.pop()
         indexes = parts
 
-        use_relative = property != '#owner_name'
+        if property == '#owner_name' or self.is_case_list_column:
+            use_relative = False
+        else:
+            use_relative = True
         if use_relative:
             case = CaseXPath('')
         else:
