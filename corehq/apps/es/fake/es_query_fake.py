@@ -94,6 +94,9 @@ class ESQueryFake(object):
         clone._sort_desc = desc
         return clone
 
+    def get_ids(self):
+        return [h['_id'] for h in self.run().hits]
+
     def run(self):
         result_docs = list(self._result_docs)
         total = len(result_docs)
