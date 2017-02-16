@@ -36,22 +36,20 @@ def make_link(style, label, url):
 
 class Command(BaseCommand):
     help = "Creates an HqDeploy document to record a successful deployment."
-    args = "[user]"
 
-    option_list = (
-        make_option('--user', help='User', default=False),
-        make_option('--environment', help='Environment {production|staging etc...}', default=settings.SERVER_ENVIRONMENT),
-        make_option('--mail_admins', help='Mail Admins', default=False, action='store_true'),
-        make_option('--url', help='A link to a URL for the deploy', default=False),
-        make_option(
+    def add_arguments(self, parser):
+        parser.add_argument('--user', help='User', default=False)
+        parser.add_argument('--environment', help='Environment {production|staging etc...}', default=settings.SERVER_ENVIRONMENT)
+        parser.add_argument('--mail_admins', help='Mail Admins', default=False, action='store_true')
+        parser.add_argument('--url', help='A link to a URL for the deploy', default=False)
+        parser.add_argument(
             '--minutes',
             help='The number of minutes it took to deploy',
-            type='int',
+            type=int,
             default=None,
-        ),
-    )
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         compare_url = options.get('url', None)
         minutes = options.get('minutes', None)
 
