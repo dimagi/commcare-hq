@@ -92,3 +92,23 @@ def user_ids_at_accessible_locations(domain_name, user):
     from corehq.apps.locations.models import SQLLocation
     accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(domain_name, user)
     return user_ids_at_locations(accessible_location_ids)
+
+
+def assigned_location_by_user_id(domain, location_ids):
+    """Get the ids of the locations the users are assigned to"""
+    result = (
+        UserES()
+        .domain(domain)
+        .location(location_ids)
+        .non_null('assigned_location_ids')
+        .fields(['assigned_location_ids', '_id'])
+        .run().hits
+    )
+    ret = {}
+    for r in result:
+        if 'assigned_location_ids' in r:
+            locs = r['assigned_location_ids']
+            if not isinstance(locs, list):
+                locs = [r['assigned_location_ids']]
+            ret[r['_id']] = locs
+    return ret
