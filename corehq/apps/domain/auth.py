@@ -1,8 +1,12 @@
 import base64
 import re
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.exceptions import AuthenticationFailed
+from functools import wraps
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
+from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
 
 
 J2ME = 'j2me'
@@ -11,6 +15,7 @@ ANDROID = 'android'
 BASIC = 'basic'
 DIGEST = 'digest'
 API_KEY = 'api_key'
+TOKEN = 'token'
 
 
 def determine_authtype_from_header(request, default=None):
@@ -22,6 +27,8 @@ def determine_authtype_from_header(request, default=None):
         return BASIC
     elif auth_header.startswith('digest '):
         return DIGEST
+    elif auth_header.startswith('token '):
+        return TOKEN
     elif all(ApiKeyAuthentication().extract_credentials(request)):
         return API_KEY
 
@@ -87,3 +94,22 @@ def basicauth(realm=''):
             return response
         return wrapper
     return real_decorator
+
+
+def tokenauth(view):
+
+    @wraps(view)
+    def _inner(request, *args, **kwargs):
+        if not ANONYMOUS_WEB_APPS_USAGE.enabled(request.domain):
+            return HttpResponse(status=401)
+        try:
+            user, token = TokenAuthentication().authenticate(request)
+        except AuthenticationFailed, e:
+            return HttpResponse(e, status=401)
+
+        if user.is_active:
+            request.user = user
+            return view(request, *args, **kwargs)
+        else:
+            return HttpResponse('Inactive user', status=401)
+    return _inner
