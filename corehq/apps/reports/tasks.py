@@ -17,7 +17,7 @@ from celery.task import task
 from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
+from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instance_ids
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
 from couchexport.files import Temp
@@ -142,10 +142,10 @@ def saved_exports():
     for group_config in get_all_hq_group_export_configs():
         export_for_group_async.delay(group_config)
 
-    for daily_saved_export in get_all_daily_saved_export_instances():
+    for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
         from corehq.apps.export.tasks import rebuild_export_task
         last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-        rebuild_export_task.delay(daily_saved_export, last_access_cutoff)
+        rebuild_export_task.delay(daily_saved_export_id, last_access_cutoff)
 
 
 @task(queue='background_queue', ignore_result=True)

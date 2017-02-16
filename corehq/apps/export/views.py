@@ -1216,8 +1216,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     def update_emailed_es_export_data(self, in_data):
         from corehq.apps.export.tasks import rebuild_export_task
         export_instance_id = in_data['export']['id']
-        export_instance = get_properly_wrapped_export_instance(export_instance_id)
-        rebuild_export_task.delay(export_instance)
+        rebuild_export_task.delay(export_instance_id)
         return format_angular_success({})
 
     @allow_remote_invocation
@@ -1432,7 +1431,7 @@ class DailySavedExportListView(BaseExportListView):
                     export.filters = filters
                     export.save()
                     from corehq.apps.export.tasks import rebuild_export_task
-                    rebuild_export_task.delay(export)
+                    rebuild_export_task.delay(export_id)
                 return format_angular_success()
             else:
                 return format_angular_error("Problem saving dashboard feed filters: Invalid form")
@@ -2345,7 +2344,7 @@ def download_daily_saved_export(req, domain, export_instance_id):
     if should_update_export(export_instance.last_accessed):
         try:
             from corehq.apps.export.tasks import rebuild_export_task
-            rebuild_export_task.delay(export_instance)
+            rebuild_export_task.delay(export_instance_id)
         except Exception:
             notify_exception(
                 req,
