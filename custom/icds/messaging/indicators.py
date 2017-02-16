@@ -215,8 +215,6 @@ class LSVHNDSurveyIndicator(LSIndicator):
             if (now_date - vhnd_date).days < 37:
                 user_ids_with_forms_in_time_frame.add(user_id)
 
-        user_ids_without_forms = self.aww_user_ids - user_ids_with_forms_in_time_frame
-
         awc_ids = {
             loc
             for loc, user_ids in self.user_ids_by_location_id.items()

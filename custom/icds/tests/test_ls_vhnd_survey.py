@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from django.test import TestCase
 from mock import patch
 import pytz
@@ -78,7 +78,7 @@ class TestLSVHNDSurveyIndicator(TestCase):
                 u'meta': {
                     u'user_id': user_id
                 },
-                u'vhsnd_date_planned':  date,
+                u'vhsnd_date_planned': date,
             }
         }
 
