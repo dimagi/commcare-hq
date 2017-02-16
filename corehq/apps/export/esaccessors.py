@@ -2,6 +2,7 @@ from elasticsearch import ElasticsearchException
 
 from corehq.apps.es import CaseES, GroupES, LedgerES
 from corehq.apps.es import FormES
+from corehq.apps.es.sms import SMSES
 from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
 from corehq.elastic import get_es_new
 
@@ -24,6 +25,12 @@ def get_case_export_base_query(domain, case_type):
             .domain(domain)
             .case_type(case_type)
             .sort("opened_on"))
+
+
+def get_sms_export_base_query(domain):
+    return (SMSES()
+            .domain(domain)
+            .sort("date"))
 
 
 def get_groups_user_ids(group_ids):
