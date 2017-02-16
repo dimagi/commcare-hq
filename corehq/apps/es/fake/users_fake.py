@@ -16,6 +16,9 @@ class UserESFake(HQESQueryFake):
     def mobile_users(self):
         return self.term("doc_type", "CommCareUser")
 
+    def user_ids(self, user_ids):
+        return self.term('_id', user_ids)
+
     @staticmethod
     def transform_doc(doc):
         doc['username.exact'] = doc.get('username', '')
