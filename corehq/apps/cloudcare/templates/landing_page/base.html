@@ -11,10 +11,12 @@
 {% endblock %}
 
 {% block css %}
+{% compress css %}
 <link type="text/less"
       rel="stylesheet"
       media="all"
       href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
+{% endcompress %}
 {% endblock %}
 
 {% block body %}
