@@ -69,11 +69,11 @@
                   rel="stylesheet"
                   media="all"
                   href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
-	    {% block css %}{% endblock %}
-
             <link rel="stylesheet"
                   href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}" />
           {% endcompress %}
+          {% block css %}{% endblock %}
+
         {% endif %}
         <link rel="stylesheet"
               href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
