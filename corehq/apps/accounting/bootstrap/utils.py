@@ -60,10 +60,9 @@ def ensure_plans(config, dry_run, verbose, apps):
                 if verbose:
                     log_accounting_info("Creating Software Plan: %s" % software_plan.name)
 
-            software_plan_version = SoftwarePlanVersion(role=role, plan=software_plan)
-
             product_rate.save()
-            software_plan_version.product_rate = product_rate
+            software_plan_version = SoftwarePlanVersion(role=role, plan=software_plan, product_rate=product_rate)
+            software_plan_version.save()
 
             for feature_rate in feature_rates:
                 feature_rate.save()
