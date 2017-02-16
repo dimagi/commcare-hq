@@ -113,8 +113,8 @@
                                 <tr data-bind='click: $root.clickRow, css: { info: $data.id() == $root.selected_xform_doc_id() }'>
                                     <td>
                                         <span data-bind="text: received_on"></span>
-                                    <td class="overflow-container">
-                                        <span class="overflow-content" data-bind="text: readable_name"></span>
+                                    <td>
+                                        <span data-bind="text: readable_name, css: { 'break-all-words': readable_name.match(/\s/) }"></span>
                                     </td>
                                     <td>
                                         <span data-bind="text: username"></span>
