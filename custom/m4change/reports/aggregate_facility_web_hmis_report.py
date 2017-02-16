@@ -53,7 +53,8 @@ class AggregateFacilityWebHmisReport(MonthYearMixin, CaseListReport, M4ChangeRep
             row_data = report_map[facility_hmis_filter].get_report_data({
                 "location_id": self.request.GET.get("location_id", None),
                 "datespan": self.datespan,
-                "domain": str(self.domain)
+                "domain": str(self.domain),
+                "user": self.request.couch_user
             })
 
         for row in row_data:

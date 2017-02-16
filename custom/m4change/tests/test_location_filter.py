@@ -43,7 +43,7 @@ class TestLocationFilter(LocationHierarchyTestCase):
 
         locations = RestrictedLocationDrillDown(self.domain, self.web_user).get_locations_json()
         self.assertEqual(len(locations), 1)
-        self.assertEqual(locations[0]['name'], 'Boston')
+        self.assertEqual(locations[0]['name'], 'Massachusetts')
 
     def test_user_with_multiple_locations(self):
         self.web_user.add_to_assigned_locations(self.domain, self.locations['Boston'])
