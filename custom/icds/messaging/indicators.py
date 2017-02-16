@@ -1,8 +1,13 @@
+from collections import defaultdict
 import pytz
 from datetime import datetime, timedelta
-from corehq.apps.reports.analytics.esaccessors import get_last_submission_time_for_users
+from corehq.apps.reports.analytics.esaccessors import (
+    get_last_submission_time_for_users,
+    get_last_form_submissions_by_user,
+)
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import string_to_datetime
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 
@@ -11,6 +16,7 @@ from corehq.apps.locations.dbaccessors import (
     get_users_location_ids,
 )
 from corehq.apps.locations.models import SQLLocation
+from custom.icds.const import VHND_SURVEY_XMLNS
 
 DEFAULT_LANGUAGE = 'hin'
 
@@ -87,6 +93,16 @@ class LSIndicator(SMSIndicator):
     @memoized
     def aww_user_ids(self):
         return set(self.locations_by_user_id.keys())
+
+    @property
+    @memoized
+    def user_ids_by_location_id(self):
+        user_ids_by_location_id = defaultdict(set)
+        for u_id, locations in self.locations_by_user_id.items():
+            for loc_id in locations:
+                user_ids_by_location_id[loc_id].add(u_id)
+
+        return user_ids_by_location_id
 
     def location_names_from_user_id(self, user_ids):
         loc_names = set()
@@ -174,5 +190,43 @@ class LSSubmissionPerformanceIndicator(LSIndicator):
             one_month_loc_names = self.location_names_from_user_id(one_month_user_ids)
             month_context = {'location_names': ','.join(one_month_loc_names), 'timeframe': 'month'}
             messages.append(self.render_template(month_context, language_code=language_code))
+
+        return messages
+
+
+class LSVHNDSurveyIndicator(LSIndicator):
+    template = 'ls_vhnd_survey.txt'
+
+    def __init__(self, domain, user):
+        super(LSVHNDSurveyIndicator, self).__init__(domain, user)
+
+        self.forms = get_last_form_submissions_by_user(
+            domain, self.aww_user_ids, xmlns=VHND_SURVEY_XMLNS
+        )
+
+    def get_messages(self, language_code=None):
+        def convert_to_date(date):
+            return string_to_datetime(date).date() if date else None
+
+        now_date = self.now.date()
+        user_ids_with_forms_in_time_frame = set()
+        for user_id, form in self.forms.items():
+            vhnd_date = convert_to_date(form['form']['vhsnd_date_planned'])
+            if (now_date - vhnd_date).days < 37:
+                user_ids_with_forms_in_time_frame.add(user_id)
+
+        user_ids_without_forms = self.aww_user_ids - user_ids_with_forms_in_time_frame
+
+        awc_ids = {
+            loc
+            for loc, user_ids in self.user_ids_by_location_id.items()
+            if user_ids.isdisjoint(user_ids_with_forms_in_time_frame)
+        }
+        messages = []
+
+        if awc_ids:
+            awc_names = {self.awc_locations[awc] for awc in awc_ids}
+            context = {'location_names': ', '.join(awc_names)}
+            messages.append(self.render_template(context, language_code=language_code))
 
         return messages
