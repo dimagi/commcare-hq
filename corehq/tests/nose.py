@@ -27,9 +27,8 @@ from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.db.utils import OperationalError
 from django_nose.plugin import DatabaseContext
 
-from dimagi.utils.couch.database import iter_bulk_delete
+from corehq.util.couchdb_management import couch_config
 from corehq.util.test_utils import unit_testing_only
-from corehq.preindex import get_preindex_plugin
 
 log = logging.getLogger(__name__)
 
@@ -178,7 +177,7 @@ class HqdbContext(DatabaseContext):
       rebuilt.
     - `REUSE_DB=teardown` : skip database setup; do normal teardown after
       running tests.
-    - `REUSE_DB=wipe` : same as `REUSE_DB=1` except delete all objects from the
+    - `REUSE_DB=flush` : same as `REUSE_DB=1` except delete all objects from the
       databases before running tests.  Much faster than `reset`.
     - `REUSE_DB=migrate` : same as `REUSE_DB=1` except migrate databases
       before running tests.
@@ -217,7 +216,7 @@ class HqdbContext(DatabaseContext):
         if self.skip_setup_for_reuse_db and self._databases_ok():
             if self.reuse_db == "migrate":
                 call_command('migrate_multi', interactive=False)
-            if self.reuse_db == "wipe":
+            if self.reuse_db == "flush":
                 empty_databases()
             return  # skip remaining setup
 
@@ -309,13 +308,8 @@ def empty_databases():
     Useful when you break a test and it doesn't clean up properly. This took
     about 5 seconds to run when trying it out.
     """
-    for db in get_preindex_plugin('couchapps').get_dbs('all_docs'):
-        all_ids = [result['id'] for result in db.view(
-            '_all_docs',
-            include_docs=False,
-            reduce=False,
-        ) if '_design' not in result['id']]  # don't delete design docs
-        iter_bulk_delete(db, all_ids, chunksize=500)
+    for db in couch_config.all_dbs_by_slug.values():
+        db.flush()
     call_command('flush', interactive=False)
 
 
