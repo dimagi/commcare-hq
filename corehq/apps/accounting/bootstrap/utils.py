@@ -1,7 +1,6 @@
 # Use modern Python
 from __future__ import absolute_import, print_function, unicode_literals
 
-from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition,
@@ -63,24 +62,8 @@ def ensure_plans(config, dry_run, verbose, apps):
 
             software_plan_version = SoftwarePlanVersion(role=role, plan=software_plan)
 
-            # TODO - squash migrations and remove this
-            # must save before assigning many-to-many relationship
-            if hasattr(SoftwarePlanVersion, 'product_rates'):
-                software_plan_version.save()
-
             product_rate.save()
-            # TODO - squash migrations and remove this
-            if hasattr(SoftwarePlanVersion, 'product_rates'):
-                software_plan_version.product_rates.add(product_rate)
-            elif hasattr(SoftwarePlanVersion, 'product_rate'):
-                software_plan_version.product_rate = product_rate
-            else:
-                raise AccountingError('SoftwarePlanVersion does not have product_rate or product_rates field')
-
-            # TODO - squash migrations and remove this
-            # must save before assigning many-to-many relationship
-            if hasattr(SoftwarePlanVersion, 'product_rate'):
-                software_plan_version.save()
+            software_plan_version.product_rate = product_rate
 
             for feature_rate in feature_rates:
                 feature_rate.save()
@@ -90,12 +73,8 @@ def ensure_plans(config, dry_run, verbose, apps):
         default_product_plan = DefaultProductPlan(
             edition=edition, is_trial=is_trial
         )
-        if hasattr(default_product_plan, 'is_report_builder_enabled'):
-            default_product_plan.is_report_builder_enabled = is_report_builder_enabled
+        default_product_plan.is_report_builder_enabled = is_report_builder_enabled
 
-        # TODO - squash migrations and remove this
-        if hasattr(default_product_plan, 'product_type'):
-            default_product_plan.product_type = SoftwareProductType.COMMCARE
         if dry_run:
             log_accounting_info(
                 "[DRY RUN] Setting plan as default for edition '%s' with is_trial='%s'."
@@ -103,24 +82,11 @@ def ensure_plans(config, dry_run, verbose, apps):
             )
         else:
             try:
-                if not hasattr(default_product_plan, 'product_type'):
-                    if hasattr(default_product_plan, 'is_report_builder_enabled'):
-                        default_product_plan = DefaultProductPlan.objects.get(
-                            edition=edition,
-                            is_trial=is_trial,
-                            is_report_builder_enabled=is_report_builder_enabled,
-                        )
-                    else:
-                        # TODO - squash migrations and remove this
-                        default_product_plan = DefaultProductPlan.objects.get(
-                            edition=edition,
-                            is_trial=is_trial,
-                        )
-                else:
-                    # TODO - squash migrations and remove this
-                    default_product_plan = DefaultProductPlan.objects.get(
-                        edition=edition, is_trial=is_trial, product_type=SoftwareProductType.COMMCARE
-                    )
+                default_product_plan = DefaultProductPlan.objects.get(
+                    edition=edition,
+                    is_trial=is_trial,
+                    is_report_builder_enabled=is_report_builder_enabled,
+                )
                 if verbose:
                     log_accounting_info(
                         "Default for edition '%s' with is_trial='%s' already exists."
