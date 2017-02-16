@@ -15,3 +15,14 @@
 .ko-template {
   display: none;
 }
+
+.overflow-container {
+    position: relative;
+
+    .overflow-content {
+        position: absolute;
+        width: 100%;
+        overflow-x: hidden;
+        text-overflow: ellipsis;
+    }
+}
