@@ -58,6 +58,10 @@ class ESQueryFake(object):
         del cls._get_all_docs()[:]
 
     @classmethod
+    def remove_doc(cls, doc_id):
+        cls._all_docs = [doc for doc in cls._all_docs if doc['_id'] != doc_id]
+
+    @classmethod
     def _get_all_docs(cls):
         cls_name = cls.__name__
         try:
