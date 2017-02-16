@@ -22,7 +22,7 @@ def _cchq_software_plan_bootstrap(apps, schema_editor):
     pricing_config = self_service_config
     pricing_config.update(report_builder_config)
     pricing_config.update(resellers_config)
-    ensure_plans(pricing_config, dry_run=False, verbose=True, apps=apps)
+    ensure_plans(pricing_config, verbose=True, apps=apps)
 
 
 class Migration(migrations.Migration):
