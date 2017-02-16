@@ -1,4 +1,3 @@
-from optparse import make_option
 from django.core.management import BaseCommand
 from django_countries.data import COUNTRIES
 from corehq.apps.change_feed import topics
@@ -12,25 +11,31 @@ from corehq.util.quickcache import quickcache
 
 
 class Command(BaseCommand):
-    option_list = (
-        make_option('--from',
-                    action='store',
-                    dest='from',
-                    default=None,
-                    help="Start at this point in the changes feed (defaults to the end)"),
-        make_option('--sleep',
-                    action='store',
-                    dest='sleep',
-                    default=None,
-                    help="Sleep this long between emissions (useful for demos)"),
-        make_option('--compact',
-                    action='store_true',
-                    dest='compact',
-                    default=False,
-                    help="Use 'compact' mode - don't include additional domain metadata (faster)"),
-    )
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--from',
+            action='store',
+            dest='from',
+            default=None,
+            help="Start at this point in the changes feed (defaults to the end)",
+        )
+        parser.add_argument(
+            '--sleep',
+            action='store',
+            dest='sleep',
+            default=None,
+            help="Sleep this long between emissions (useful for demos)",
+        )
+        parser.add_argument(
+            '--compact',
+            action='store_true',
+            dest='compact',
+            default=False,
+            help="Use 'compact' mode - don't include additional domain metadata (faster)",
+        )
+
+    def handle(self, **options):
         since = options['from']
         sleep = float(options['sleep'] or '.01')
         last_domain = None
