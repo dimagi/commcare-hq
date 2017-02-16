@@ -185,6 +185,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'rest_framework.authtoken',
     'djcelery',
     'djtables',
     'django_prbac',
@@ -1935,5 +1936,5 @@ else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
 
 REST_FRAMEWORK = {
-    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
+    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
 }
