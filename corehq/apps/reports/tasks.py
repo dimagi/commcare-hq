@@ -18,6 +18,7 @@ from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instance_ids
+from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
 from couchexport.files import Temp
@@ -51,7 +52,6 @@ from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
 )
-from .dbaccessors import get_all_hq_group_export_configs
 from .export import save_metadata_export_to_tempfile
 from .models import (
     FormExportSchema,
@@ -139,8 +139,8 @@ def monthly_reports():
 
 @periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def saved_exports():
-    for group_config in get_all_hq_group_export_configs():
-        export_for_group_async.delay(group_config)
+    for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
+        export_for_group_async.delay(group_config_id)
 
     for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
         from corehq.apps.export.tasks import rebuild_export_task
@@ -156,9 +156,10 @@ def rebuild_export_task(groupexport_id, index, last_access_cutoff=None, filter=N
 
 
 @task(queue='saved_exports_queue', ignore_result=True)
-def export_for_group_async(group_config):
+def export_for_group_async(group_config_id):
     # exclude exports not accessed within the last 7 days
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+    group_config = HQGroupExportConfiguration.get(group_config_id)
     export_for_group(group_config, last_access_cutoff=last_access_cutoff)
 
 
