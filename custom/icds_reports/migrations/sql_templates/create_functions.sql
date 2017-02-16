@@ -685,12 +685,16 @@ DECLARE
 	_all_text text;
 	_null_value text;
 	_rollup_text text;
+	_yes_text text;
+	_no_text text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 day')::DATE;
 	_previous_month_date = (date_trunc('MONTH', _start_date) + INTERVAL '- 1 MONTH')::DATE;
 	_all_text = 'All';
 	_null_value = NULL;
+	_yes_text = 'yes';
+	_no_text = 'no';
 	_tablename := 'agg_awc' || '_' || _start_date;
 	_child_health_tablename := 'agg_child_health' || '_' || _start_date;
 	_ccs_record_tablename := 'agg_ccs_record' || '_' || _start_date;
@@ -706,7 +710,7 @@ BEGIN
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
 		' (state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, thr_score, thr_eligible_ccs, ' ||
-		'thr_eligible_child, thr_rations_21_plus_distributed_ccs, thr_rations_21_plus_distributed_child, wer_score, pse_score, awc_not_open_no_data, num_launched_awcs) ' ||
+		'thr_eligible_child, thr_rations_21_plus_distributed_ccs, thr_rations_21_plus_distributed_child, wer_score, pse_score, awc_not_open_no_data, is_launched) ' ||
 		'(SELECT ' ||
 			'state_id, ' ||
 			'district_id, ' ||
@@ -723,7 +727,7 @@ BEGIN
 			'0, ' ||
 			'0, ' ||
 			'25, ' ||
-			'0 ' ||
+			quote_literal(_no_text) || ' ' ||
 		'FROM ' || quote_ident(_awc_location_tablename) ||')';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -846,7 +850,7 @@ BEGIN
 		'usage_num_gmp = ut.usage_num_gmp, ' ||
 		'usage_num_thr = ut.usage_num_thr, ' ||
 		'usage_num_hh_reg = ut.usage_num_hh_reg, ' ||
-		'num_launched_awcs = ut.num_launched_awcs, ' ||
+		'is_launched = ut.is_launched, ' ||
 		'usage_num_add_person = ut.usage_num_add_person, ' ||
 		'usage_num_add_pregnancy = ut.usage_num_add_pregnancy, ' ||
 		'usage_num_home_visit = ut.usage_num_home_visit, ' ||
@@ -875,7 +879,7 @@ BEGIN
 		'sum(gmp) AS usage_num_gmp, ' ||
 		'sum(thr) AS usage_num_thr, ' ||
 		'sum(add_household) AS usage_num_hh_reg, ' ||
-		'CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs, '
+		'CASE WHEN sum(add_household) > 0 THEN ' || quote_literal(_yes_text) || ' ELSE ' || quote_literal(_no_text) || ' END as is_launched, '
 		'sum(add_person) AS usage_num_add_person, ' ||
 		'sum(add_pregnancy) AS usage_num_add_pregnancy, ' ||
 		'sum(home_visit) AS usage_num_home_visit, ' ||
@@ -903,10 +907,10 @@ BEGIN
 
 	-- Update num launched AWCs based on previous month as well
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
-	   'num_launched_awcs = ut.num_launched_awcs ' ||
-    'FROM (SELECT num_launched_awcs, awc_id ' ||
+	   'is_launched = ut.is_launched ' ||
+    'FROM (SELECT is_launched, awc_id ' ||
        'FROM agg_awc ' ||
-	'WHERE month = ' || quote_literal(_previous_month_date) || ' AND num_launched_awcs = 1 AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
+	'WHERE month = ' || quote_literal(_previous_month_date) || ' AND is_launched = ' || quote_literal(_yes_text) || ' AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
 
 	-- Aggregate data from VHND table
@@ -1098,7 +1102,7 @@ BEGIN
 		'sum(usage_num_hh_reg), ' ||
 		'sum(usage_num_add_person), ' ||
 		'sum(usage_num_add_pregnancy), ' ||
-		'sum(num_launched_awcs) ';
+		'is_launched ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1109,7 +1113,7 @@ BEGIN
 		'month, ' ||
 		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, month)';
+		'GROUP BY state_id, district_id, block_id, supervisor_id, month, is_launched)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1121,7 +1125,7 @@ BEGIN
 		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, month)';
+		'GROUP BY state_id, district_id, block_id, month, is_launched)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1133,7 +1137,7 @@ BEGIN
 		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, district_id, month)';
+		'GROUP BY state_id, district_id, month, is_launched)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1145,7 +1149,7 @@ BEGIN
 		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, month)';
+		'GROUP BY state_id, month, is_launched)';
 
 END;
 $BODY$
