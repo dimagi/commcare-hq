@@ -45,7 +45,6 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.dhis2.dbaccessors import get_dhis2_connection
 from corehq.apps.dhis2.forms import Dhis2ConnectionForm
-from corehq.apps.dhis2.models import Dhis2Connection
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
