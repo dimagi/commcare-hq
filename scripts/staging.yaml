@@ -55,6 +55,7 @@ branches:
 
   # django 1.10 dependencies - NP 2/10
   - np/110/two-factor
+  - revert-14997-revert-14712-br/anonymous-formplayer  # BR 2/16
 
   # django 1.10 mgmt cmd updates - NP 2/10
   - np/110/clean_supervisor_confs
