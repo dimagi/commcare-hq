@@ -4,7 +4,7 @@ import importlib
 from collections import defaultdict
 
 import os
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 from django.contrib import messages
 import settingshelper as helper
 
