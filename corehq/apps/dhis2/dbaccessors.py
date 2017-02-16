@@ -1,7 +1,7 @@
 from corehq.util.quickcache import quickcache
 
 
-@quickcache(['domain'])
+@quickcache(['domain_name'])
 def get_dhis2_connection(domain_name):
     from corehq.apps.dhis2.models import Dhis2Connection
 
