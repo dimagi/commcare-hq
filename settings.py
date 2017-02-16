@@ -1955,7 +1955,6 @@ REST_FRAMEWORK = {
 }
 
 if SENTRY_PUBLIC_KEY and SENTRY_PRIVATE_KEY and SENTRY_PROJECT_ID:
-    import os
     try:
         from raven import breadcrumbs, fetch_git_sha
     except ImportError:
