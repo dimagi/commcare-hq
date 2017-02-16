@@ -119,7 +119,7 @@
                             {% elif module.module_type == 'shadow' %}class="fa fa-folder-open-o appmanager-icon-type"
                             {% else %}class="fa fa-folder-open"{% endif %}
 
-                            {% if module.case_type and request|toggle_enabled:"SUPPORT" %}
+                            {% if module.case_type and app.get_case_types|length > 1 %}
                             title="Case Type: {{ module.case_type }}"
                             data-toggle="tooltip"
                             data-placement="top"
