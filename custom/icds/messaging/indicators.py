@@ -7,8 +7,8 @@ from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 
 from corehq.apps.locations.dbaccessors import (
+    assigned_location_by_user_id,
     get_users_location_ids,
-    user_ids_at_locations,
 )
 from corehq.apps.locations.models import SQLLocation
 
@@ -68,7 +68,32 @@ class AWWIndicator(SMSIndicator):
 
 
 class LSIndicator(SMSIndicator):
-    pass
+    @property
+    @memoized
+    def child_locations(self):
+        return self.user.sql_location.child_locations()
+
+    @property
+    @memoized
+    def awc_locations(self):
+        return {l.location_id: l.name for l in self.child_locations}
+
+    @property
+    @memoized
+    def locations_by_user_id(self):
+        return assigned_location_by_user_id(self.domain, set(self.awc_locations))
+
+    @property
+    @memoized
+    def aww_user_ids(self):
+        return set(self.locations_by_user_id.keys())
+
+    def location_names_from_user_id(self, user_ids):
+        loc_names = set()
+        for u_id in user_ids:
+            for l_id in self.locations_by_user_id.get(u_id, []):
+                loc_names.add(self.awc_locations[l_id])
+        return loc_names
 
 
 class AWWSubmissionPerformanceIndicator(AWWIndicator):
@@ -115,8 +140,6 @@ class LSSubmissionPerformanceIndicator(LSIndicator):
     def __init__(self, domain, user):
         super(LSSubmissionPerformanceIndicator, self).__init__(domain, user)
 
-        child_locations = [l.location_id for l in self.user.sql_location.child_locations()]
-        self.aww_user_ids = user_ids_at_locations(child_locations)
         self.last_submission_dates = get_last_submission_time_for_users(
             self.domain, self.aww_user_ids, self.get_datespan()
         )
@@ -143,18 +166,12 @@ class LSSubmissionPerformanceIndicator(LSIndicator):
                     one_week_user_ids.append(user_id)
 
         if one_week_user_ids:
-            one_week_loc_ids = get_users_location_ids(self.domain, one_week_user_ids)
-            one_week_loc_names = (
-                SQLLocation.objects.filter(location_id__in=one_week_loc_ids).values_list('name', flat=True)
-            )
+            one_week_loc_names = self.location_names_from_user_id(one_week_user_ids)
             week_context = {'location_names': ', '.join(one_week_loc_names), 'timeframe': 'week'}
             messages.append(self.render_template(week_context, language_code=language_code))
 
         if one_month_user_ids:
-            one_month_loc_ids = get_users_location_ids(self.domain, one_month_user_ids)
-            one_month_loc_names = (
-                SQLLocation.objects.filter(location_id__in=one_month_loc_ids).values_list('name', flat=True)
-            )
+            one_month_loc_names = self.location_names_from_user_id(one_month_user_ids)
             month_context = {'location_names': ','.join(one_month_loc_names), 'timeframe': 'month'}
             messages.append(self.render_template(month_context, language_code=language_code))
 
