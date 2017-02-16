@@ -1954,28 +1954,12 @@ REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
 }
 
-if SENTRY_PUBLIC_KEY and SENTRY_PRIVATE_KEY and SENTRY_PROJECT_ID:
-    try:
-        from raven import breadcrumbs, fetch_git_sha
-    except ImportError:
-        pass
-    else:
-        SENTRY_CONFIGURED = True
-
-        RAVEN_CONFIG = {
-            'dsn': 'https://{pub_key}:{priv_key}@sentry.io/{project_id}'.format(
-                pub_key=SENTRY_PUBLIC_KEY,
-                priv_key=SENTRY_PRIVATE_KEY,
-                project_id=SENTRY_PROJECT_ID
-            ),
-            'release': fetch_git_sha(BASE_DIR),
-            'environment': SERVER_ENVIRONMENT,
-            'tags': {},
-            'include_versions': False,  # performance without this is bad
-            'processors': (
-                'raven.processors.SanitizePasswordsProcessor',
-                'raven.processors.RemovePostDataProcessor',
-            )
-        }
-
-        breadcrumbs.ignore_logger('quickcache')
+_raven_config = helper.configure_sentry(
+    BASE_DIR,
+    SERVER_ENVIRONMENT,
+    SENTRY_PUBLIC_KEY,
+    SENTRY_PRIVATE_KEY,
+    SENTRY_PROJECT_ID
+)
+if _raven_config:
+    RAVEN_CONFIG = _raven_config

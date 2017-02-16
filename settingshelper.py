@@ -6,6 +6,7 @@ import sys
 import tempfile
 import uuid
 
+import re
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 import six
 
@@ -199,3 +200,31 @@ def fix_logger_obfuscation(fix_logger_obfuscation_, logging_config):
                         'logging.StreamHandler'
                     ), file=sys.stderr)
                 handler["class"] = "logging.StreamHandler"
+
+
+def configure_sentry(base_dir, server_env, pub_key, priv_key, project_id):
+    if not (pub_key and priv_key and project_id):
+        return
+
+    try:
+        from raven import breadcrumbs, fetch_git_sha
+    except ImportError:
+        return
+
+    breadcrumbs.ignore_logger('quickcache')
+
+    return {
+        'dsn': 'https://{pub_key}:{priv_key}@sentry.io/{project_id}'.format(
+            pub_key=pub_key,
+            priv_key=priv_key,
+            project_id=project_id
+        ),
+        'release': fetch_git_sha(base_dir),
+        'environment': server_env,
+        'tags': {},
+        'include_versions': False,  # performance without this is bad
+        'processors': (
+            'raven.processors.SanitizePasswordsProcessor',
+            'raven.processors.RemovePostDataProcessor',
+        )
+    }
