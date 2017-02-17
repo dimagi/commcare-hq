@@ -1121,6 +1121,7 @@ class Subscription(models.Model):
         """Raises a subscription Adjustment error if the specified date range
         conflicts with other subscriptions related to this subscriber.
         """
+        assert date_start is not None
         for sub in Subscription.objects.filter(
             subscriber=self.subscriber
         ).exclude(id=self.id).all():
