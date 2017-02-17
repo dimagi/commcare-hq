@@ -62,11 +62,7 @@ branches:
   - np/110/preindex_everything
   - np/110/ptop_es_manage
   - np/110/ptop_reset_checkpoint
-  - np/110/record_deploy_success
-  - np/110/reset_pillow_seq_store
-  - np/110/run_form_websocket_feed.py
   - np/110/run_ptop
-  - np/110/shutdown_celery_worker_by_hostname
   - np/110/update_manifest-same
 
   - np/django1.10 # NP 2/12
