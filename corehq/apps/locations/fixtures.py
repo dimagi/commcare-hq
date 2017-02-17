@@ -104,19 +104,13 @@ class FlatLocationSerializer(object):
             'code', flat=True
         )
         location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
+        attrs_to_index = location_type_attrs + ['id', 'type']
 
-        if toggles.INDEX_LOCATIONS_FIXTURE.enabled(restore_user.domain):
-            attrs_to_index = location_type_attrs + ['id', 'type']
-            return [self._get_schema_node(fixture_id, attrs_to_index),
-                    self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs)]
-
-        return [self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs)]
+        return [self._get_schema_node(fixture_id, attrs_to_index),
+                self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs)]
 
     def _get_fixture_node(self, fixture_id, restore_user, all_locations, location_type_attrs):
-        root_attrs = {'id': fixture_id, 'user_id': restore_user.user_id}
-        if toggles.INDEX_LOCATIONS_FIXTURE.enabled(restore_user.domain):
-            root_attrs['indexed'] = 'true'
-        root_node = Element('fixture', root_attrs)
+        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id, 'indexed': 'true'})
         outer_node = Element('locations')
         root_node.append(outer_node)
         for location in sorted(all_locations.by_id.values(), key=lambda l: l.site_code):
