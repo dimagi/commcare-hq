@@ -87,8 +87,11 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
 
     def setUp(self):
         super(LocationFixturesTest, self).setUp()
-        delete_all_users()
         self.user = create_restore_user(self.domain, 'user', '123')
+
+    def tearDown(self):
+        self.user._couch_user.delete()
+        super(LocationFixturesTest, self).tearDown()
 
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
@@ -283,7 +286,6 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
     def setUpClass(cls):
         super(LocationFixturesDataTest, cls).setUpClass()
         cls.user = create_restore_user(cls.domain, 'user', '123')
-        # cls.addCleanup(cls.user._couch_user.delete)
         cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
         cls.loc_fields.fields = [
             CustomDataField(slug='baseball_team'),
