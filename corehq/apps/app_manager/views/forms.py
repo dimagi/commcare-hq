@@ -24,7 +24,7 @@ from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
 
 from corehq.apps.app_manager.views.utils import back_to_main, \
-    CASE_TYPE_CONFLICT_MSG, get_langs, get_blank_form_xml
+    CASE_TYPE_CONFLICT_MSG, get_langs
 
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -374,7 +374,7 @@ def new_form(request, domain, app_id, module_id):
     app = get_app(domain, app_id)
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
-    form = app.new_form(module_id, name, lang, attachment=get_blank_form_xml(name, lang))
+    form = app.new_form(module_id, name, lang)
 
     if toggles.APP_MANAGER_V2.enabled(domain):
         case_action = request.POST.get('case_action', 'none')

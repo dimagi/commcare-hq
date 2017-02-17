@@ -17,7 +17,7 @@ from corehq.apps.reports.daterange import get_simple_dateranges
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs, get_blank_form_xml
+from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs
 from corehq import toggles, feature_previews
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import (
@@ -581,8 +581,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
 def _new_advanced_module(request, domain, app, name, lang):
     module = app.add_module(AdvancedModule.new_module(name, lang))
     module_id = module.id
-    name = _("Untitled Form")
-    app.new_form(module_id, name, lang, attachment=get_blank_form_xml(name, lang))
+    app.new_form(module_id, _("Untitled Form"), lang)
 
     app.save()
     response = back_to_main(request, domain, app_id=app.id, module_id=module_id)
@@ -936,17 +935,13 @@ def new_module(request, domain, app_id):
         if toggles.APP_MANAGER_V2.enabled(domain):
             if module_type == 'case':
                 # registration form
-                register_name = "Register"
-                register_xml = get_blank_form_xml(register_name, lang)
-                register = app.new_form(module_id, register_name, lang, attachment=register_xml)
+                register = app.new_form(module_id, "Register", lang)
                 register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
                 register.actions.update_case = UpdateCaseAction(
                     condition=FormActionCondition(type='always'))
 
                 # one followup form
-                followup_name = "Followup"
-                followup_xml = get_blank_form_xml(followup_name, lang)
-                followup = app.new_form(module_id, followup_name, lang, attachment=followup_xml)
+                followup = app.new_form(module_id, "Followup", lang)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
@@ -960,14 +955,10 @@ def new_module(request, domain, app_id):
                     suffix = suffix + 1
                     module.case_type = 'case-{}'.format(suffix)
             else:
-                survey_name = "Survey"
-                survey_xml = get_blank_form_xml(survey_name, lang)
-                app.new_form(module_id, survey_name, lang, attachment=survey_xml)
+                app.new_form(module_id, "Survey", lang)
             form_id = 0
         else:
-            untitled = "Untitled Form"
-            untitled_xml = get_blank_form_xml(untitled, lang)
-            app.new_form(module_id, untitled, lang, attachment=untitled_xml)
+            app.new_form(module_id, "Untitled Form", lang)
 
         app.save()
         response = back_to_main(request, domain, app_id=app_id,
