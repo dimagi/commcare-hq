@@ -26,6 +26,7 @@ from django.conf import settings
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.db.utils import OperationalError
 from django_nose.plugin import DatabaseContext
+from dimagi.utils.parsing import string_to_boolean
 
 from corehq.tests.noseplugins.cmdline_params import CmdLineParametersPlugin
 from corehq.util.couchdb_management import couch_config
@@ -180,7 +181,7 @@ class HqdbContext(DatabaseContext):
     """
 
     def __init__(self, tests, runner):
-        reuse_db = CmdLineParametersPlugin.get('db_action') or os.environ.get("REUSE_DB")
+        reuse_db = CmdLineParametersPlugin.get('db_action') or string_to_boolean(os.environ.get("REUSE_DB"))
         self.reuse_db = reuse_db
         self.skip_setup_for_reuse_db = reuse_db and reuse_db != "reset_db"
         self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown_db"
