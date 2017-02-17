@@ -322,7 +322,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
             tags = {n.tag for n in location_data_nodes}
             self.assertEqual(tags, self.field_slugs)
 
-    def test_additional_metadata_included(self):
+    def test_additional_metadata_not_included(self):
         mass = self.locations['Massachusetts']
         mass.metadata = {'driver_friendliness': 'poor'}
         mass.save()
@@ -337,14 +337,8 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
         mass_data = [
             field for field in fixture.find('locations/location[@id="{}"]/location_data'.format(mass.location_id))
         ]
-        self.assertEqual(3, len(mass_data))
-        self.assertEqual(self.field_slugs | set(['driver_friendliness']), set([f.tag for f in mass_data]))
-        self.assertEqual(
-            'poor',
-            fixture.find(
-                'locations/location[@id="{}"]/location_data/driver_friendliness'.format(mass.location_id)
-            ).text
-        )
+        self.assertEqual(2, len(mass_data))
+        self.assertEqual(self.field_slugs, set([f.tag for f in mass_data]))
 
     def test_existing_metadata_works(self):
         mass = self.locations['Massachusetts']

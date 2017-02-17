@@ -278,13 +278,10 @@ def _types_to_fixture(location_db, type, locs, data_fields):
 
 def _get_metadata_node(location, data_fields):
     node = Element('location_data')
-    for key, value in location.metadata.items():
-        element = Element(key)
-        element.text = unicode(value)
-        node.append(element)
     # add default empty nodes for all known fields: http://manage.dimagi.com/default.asp?247786
-    for key in data_fields - set(location.metadata.keys()):
+    for key in data_fields:
         element = Element(key)
+        element.text = unicode(location.metadata.get(key, ''))
         node.append(element)
     return node
 
