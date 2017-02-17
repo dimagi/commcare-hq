@@ -1,4 +1,5 @@
 import pytz
+import uuid
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
@@ -6,7 +7,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.scheduling.dbaccessors import save_schedule_instance
-from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from datetime import datetime, tzinfo
 from dimagi.utils.decorators.memoized import memoized
@@ -62,12 +62,9 @@ class ScheduleForeignKeyMixin(models.Model):
             raise self.UnknownScheduleType()
 
 
-class ScheduleInstance(UUIDGeneratorMixin, ScheduleForeignKeyMixin):
-    UUIDS_TO_GENERATE = ['schedule_instance_id']
-    CONVERT_UUID_TO_HEX = False
-
+class ScheduleInstance(ScheduleForeignKeyMixin):
+    schedule_instance_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     domain = models.CharField(max_length=126)
-    schedule_instance_id = models.UUIDField()
     recipient_type = models.CharField(max_length=126)
     recipient_id = models.CharField(max_length=126)
     start_date = models.DateField(null=True)
