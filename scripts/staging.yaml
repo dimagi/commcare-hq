@@ -50,7 +50,7 @@ branches:
   - vellum-staging # J$ 11/13  
   - bmb/currentind-string # Biyeun 11/12
   - nh/new_rb  # Norman 11/22
-  #- refresh-to-same-tab # Jenny 2/9
+  - refresh-to-same-tab # Jenny 2/9
   - je/sms-export-final # emord 2/9
 
   # django 1.10 dependencies - NP 2/10
