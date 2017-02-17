@@ -18,7 +18,6 @@
     {% if linked_apps_enabled %}
         <script src="{% static 'app_manager/js/linked_whitelist.js' %}"></script>
     {% endif %}
-    <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
 {% endblock js %}
 
 {% block js-inline %}{{ block.super }}
@@ -108,9 +107,6 @@
           }
         }
       );
-    }
-    function anonymousAppUrl() {
-        return '{{ app.anonymous_cloudcare_url }}';
     }
   </script>
   <script>

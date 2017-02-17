@@ -23,7 +23,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
@@ -645,60 +644,6 @@ class NewMobileWorkerForm(forms.Form):
         return self.cleaned_data.get('password')
 
 
-class NewAnonymousMobileWorkerForm(forms.Form):
-    location_id = forms.CharField(
-        label=ugettext_noop("Location"),
-        required=False,
-    )
-    username = forms.CharField(
-        max_length=50,
-        label=ugettext_noop("Username"),
-        initial=ANONYMOUS_USERNAME,
-    )
-    password = forms.CharField(
-        required=True,
-        min_length=1,
-    )
-
-    def __init__(self, project, user, *args, **kwargs):
-        super(NewAnonymousMobileWorkerForm, self).__init__(*args, **kwargs)
-        self.project = project
-        self.user = user
-        self.can_access_all_locations = user.has_permission(self.project.name, 'access_all_locations')
-        if not self.can_access_all_locations:
-            self.fields['location_id'].required = True
-
-        if project.uses_locations:
-            self.fields['location_id'].widget = AngularLocationSelectWidget(
-                require=not self.can_access_all_locations)
-            location_field = crispy.Field(
-                'location_id',
-                ng_model='mobileWorker.location_id',
-            )
-        else:
-            location_field = crispy.Hidden(
-                'location_id',
-                '',
-                ng_model='mobileWorker.location_id',
-            )
-
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-4'
-        self.helper.field_class = 'col-sm-8'
-        self.helper.layout = Layout(
-            Fieldset(
-                _('Basic Information'),
-                crispy.Field(
-                    'username',
-                    readonly=True,
-                ),
-                location_field,
-                crispy.Hidden('is_anonymous', 'yes'),
-            )
-        )
-
-
 class MultipleSelectionForm(forms.Form):
     """
     Form for selecting groups (used by the group UI on the user page)
@@ -1025,7 +970,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1035,7 +980,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large",
+                crispy.Field('country', css_class="input-large ko-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.B3MultiField(

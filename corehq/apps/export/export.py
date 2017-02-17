@@ -75,7 +75,10 @@ class _Writer(object):
                     (t, (t.get_headers(split_columns=instance.split_multiselects),))
                     for t in instance.selected_tables
                 ]
-                table_titles.update({t: t.label for t in instance.selected_tables})
+                table_titles.update({
+                    t: t.label or "Sheet{}".format(i+1)
+                    for i, t in enumerate(instance.selected_tables)
+                })
             self.writer.open(headers, file, table_titles=table_titles, archive_basepath=name)
             yield
             self.writer.close()

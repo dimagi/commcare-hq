@@ -997,6 +997,17 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     ),
 )
 
+INDEX_LOCATIONS_FIXTURE = StaticToggle(
+    'index_locations_fixture',
+    'Turn on the index schema for the flat locations fixture',
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=(
+        "There have been reports of issues with this, so we're sticking it "
+        "behind a feature flag until those are resolved."
+    ),
+)
+
 DATA_DICTIONARY = StaticToggle(
     'data_dictionary',
     'Domain level data dictionary of cases',
@@ -1037,13 +1048,6 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'Configure a custom xpath calculation for Sort Property in Case Lists',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
-)
-
-ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
-    'anonymous_web_apps_usage',
-    'Allow anonymous users to access web apps applications',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
 )
 
 INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
