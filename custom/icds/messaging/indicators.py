@@ -16,6 +16,7 @@ from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProvider
 from corehq.apps.locations.dbaccessors import (
     get_user_ids_from_primary_location_ids,
     get_users_location_ids,
+    get_users_by_location_id,
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.analytics.esaccessors import (
@@ -83,7 +84,11 @@ class SMSIndicator(object):
 
 
 class AWWIndicator(SMSIndicator):
-    pass
+    @property
+    @memoized
+    def supervisor(self):
+        supervisor_location = self.user.sql_location.parent
+        return get_users_by_location_id(self.domain, supervisor_location.location_id).first()
 
 
 class LSIndicator(SMSIndicator):
@@ -119,6 +124,11 @@ class LSIndicator(SMSIndicator):
     def location_names_from_user_id(self, user_ids):
         loc_ids = {self.locations_by_user_id.get(u) for u in user_ids}
         return {self.awc_locations[l] for l in loc_ids}
+
+
+class AWWAggregatePerformanceIndicator(AWWIndicator):
+    def get_messages(self, language_code=None):
+        return LSAggregatePerformanceIndicator(self.domain, self.supervisor).get_messages(language_code)
 
 
 class AWWSubmissionPerformanceIndicator(AWWIndicator):
