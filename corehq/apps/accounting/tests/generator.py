@@ -67,7 +67,7 @@ def unique_name():
 
 
 @unit_testing_only
-def arbitrary_web_user(save=True, is_dimagi=False):
+def arbitrary_web_user(is_dimagi=False):
     domain = Domain(name=unique_name()[:25])
     domain.save()
     username = "%s@%s.com" % (unique_name(), 'dimagi' if is_dimagi else 'gmail')
@@ -76,8 +76,7 @@ def arbitrary_web_user(save=True, is_dimagi=False):
     except Exception:
         web_user = WebUser.get_by_username(username)
     web_user.is_active = True
-    if save:
-        web_user.save()
+    web_user.save()
     return web_user
 
 
