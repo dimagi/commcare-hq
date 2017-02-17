@@ -24,7 +24,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             'params',
-            choices=['save', 'soft'],
+            choices=['save', 'soft', ''],
+            default='',
             nargs='*',
         )
 
