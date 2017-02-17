@@ -189,12 +189,6 @@ class HqdbContext(DatabaseContext):
         self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown"
         super(HqdbContext, self).__init__(tests, runner)
 
-    @classmethod
-    def verify_test_db(cls, app, uri):
-        if '/test_' not in uri:
-            raise ValueError("not a test db url: app=%s url=%r" % (app, uri))
-        return app, uri
-
     def should_skip_test_setup(self):
         # FRAGILE look in sys.argv; can't get nose config from here
         return "--collect-only" in sys.argv
@@ -205,13 +199,6 @@ class HqdbContext(DatabaseContext):
 
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
         self.blob_db = TemporaryFilesystemBlobDB()
-
-        # get/verify list of apps with databases to be deleted on teardown
-        databases = getattr(settings, "COUCHDB_DATABASES", [])
-        if isinstance(databases, (list, tuple)):
-            # Convert old style to new style
-            databases = {app_name: uri for app_name, uri in databases}
-        self.apps = [self.verify_test_db(*item) for item in databases.items()]
 
         if self.skip_setup_for_reuse_db and self._databases_ok():
             if self.reuse_db == "migrate":
@@ -244,19 +231,13 @@ class HqdbContext(DatabaseContext):
         return True
 
     def delete_couch_databases(self):
-        deleted_databases = []
-        for app, uri in self.apps:
-            if uri in deleted_databases:
-                continue
-            app_label = app.split('.')[-1]
-            db = loading.get_db(app_label)
+        for db in get_all_test_dbs():
             try:
                 db.server.delete_db(db.dbname)
-                deleted_databases.append(uri)
-                log.info("deleted database %s for %s", db.dbname, app_label)
+                log.info("deleted database %s", db.dbname)
             except ResourceNotFound:
-                log.info("database %s not found for %s! it was probably already deleted.",
-                         db.dbname, app_label)
+                log.info("database %s not found! it was probably already deleted.",
+                         db.dbname)
 
     def teardown(self):
         if self.should_skip_test_setup():
@@ -302,14 +283,27 @@ def print_imports_until_thread_change():
 
 
 @unit_testing_only
+def get_all_test_dbs():
+    all_dbs = couch_config.all_dbs_by_db_name.values()
+    for db in all_dbs:
+        if '/test_' not in db.uri:
+            raise ValueError("not a test db url: db=%s url=%r" % (db.dbname, db.uri))
+    return all_dbs
+
+
+@unit_testing_only
 def empty_databases():
     """
     Best effort at emptying all documents from all databases.
     Useful when you break a test and it doesn't clean up properly. This took
     about 5 seconds to run when trying it out.
     """
-    for db in couch_config.all_dbs_by_slug.values():
-        db.flush()
+    sys.__stdout__.write("Flushing test databases, check yourself before you wreck yourself!\n")
+    for db in get_all_test_dbs():
+        try:
+            db.flush()
+        except ResourceNotFound:
+            pass
     call_command('flush', interactive=False)
 
 
