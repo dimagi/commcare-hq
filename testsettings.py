@@ -73,6 +73,9 @@ ENABLE_PRELOGIN_SITE = True
 # override dev_settings
 CACHE_REPORTS = True
 
+TESTS_SHOULD_USE_SQL_BACKEND = False
+
+
 def _set_logging_levels(levels):
     import logging
     for path, level in levels.items():
