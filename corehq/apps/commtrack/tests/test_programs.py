@@ -9,6 +9,7 @@ from couchdbkit import ResourceNotFound
 class ProgramsTest(TestCase):
     def test_programs(self):
         self.domain = bootstrap_domain(TEST_DOMAIN)
+        self.addCleanup(self.domain.delete)
         bootstrap_products(self.domain.name)
         self.products = sorted(Product.by_domain(self.domain.name), key=lambda p: p._id)
         self.default_program = Program.by_domain(self.domain.name, wrap=True).one()
@@ -62,4 +63,3 @@ class ProgramsTest(TestCase):
             self.default_program._id,
             SQLProduct.objects.get(product_id=self.products[0]._id).program_id
         )
-        self.domain.delete()
