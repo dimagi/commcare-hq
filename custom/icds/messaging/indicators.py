@@ -12,7 +12,7 @@ from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 
 from corehq.apps.locations.dbaccessors import (
-    assigned_location_by_user_id,
+    primary_location_by_user_id,
     get_users_location_ids,
 )
 from corehq.apps.locations.models import SQLLocation
@@ -87,7 +87,7 @@ class LSIndicator(SMSIndicator):
     @property
     @memoized
     def locations_by_user_id(self):
-        return assigned_location_by_user_id(self.domain, set(self.awc_locations))
+        return primary_location_by_user_id(self.domain, set(self.awc_locations))
 
     @property
     @memoized
@@ -98,18 +98,14 @@ class LSIndicator(SMSIndicator):
     @memoized
     def user_ids_by_location_id(self):
         user_ids_by_location_id = defaultdict(set)
-        for u_id, locations in self.locations_by_user_id.items():
-            for loc_id in locations:
-                user_ids_by_location_id[loc_id].add(u_id)
+        for u_id, loc_id in self.locations_by_user_id.items():
+            user_ids_by_location_id[loc_id].add(u_id)
 
         return user_ids_by_location_id
 
     def location_names_from_user_id(self, user_ids):
-        loc_names = set()
-        for u_id in user_ids:
-            for l_id in self.locations_by_user_id.get(u_id, []):
-                loc_names.add(self.awc_locations[l_id])
-        return loc_names
+        loc_ids = {self.locations_by_user_id.get(u) for u in user_ids}
+        return {self.awc_locations[l] for l in loc_ids}
 
 
 class AWWSubmissionPerformanceIndicator(AWWIndicator):

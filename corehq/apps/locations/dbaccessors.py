@@ -95,7 +95,9 @@ def user_ids_at_accessible_locations(domain_name, user):
 
 
 def assigned_location_by_user_id(domain, location_ids):
-    """Get the ids of the locations the users are assigned to"""
+    """
+    Returns {user_id: [location_id, location_id, ...], ...}
+    """
     result = (
         UserES()
         .domain(domain)
@@ -111,4 +113,24 @@ def assigned_location_by_user_id(domain, location_ids):
             if not isinstance(locs, list):
                 locs = [r['assigned_location_ids']]
             ret[r['_id']] = locs
+    return ret
+
+
+def primary_location_by_user_id(domain, location_ids):
+    """
+    Returns {user_id: primary_location_id, ...}
+    """
+    result = (
+        UserES()
+        .domain(domain)
+        .primary_location(location_ids)
+        .non_null('location_id')
+        .fields(['location_id', '_id'])
+        .run().hits
+    )
+    ret = {}
+    for r in result:
+        if 'location_id' in r:
+            loc = r['location_id']
+            ret[r['_id']] = loc
     return ret
