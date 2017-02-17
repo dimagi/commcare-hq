@@ -65,16 +65,6 @@ class BaseInvoiceTestCase(BaseAccountingTest):
 
     @classmethod
     def tearDownClass(cls):
-        CreditAdjustment.objects.all().delete()
-        CreditLine.objects.all().delete()
-
-        BillingRecord.objects.all().delete()
-        LineItem.objects.all().delete()
-        SubscriptionAdjustment.objects.all().delete()
-        Invoice.objects.all().delete()
-        generator.delete_all_subscriptions()
-        generator.delete_all_accounts()
-
         cls.billing_contact.delete()
         cls.dimagi_user.delete()
         cls.domain.delete()

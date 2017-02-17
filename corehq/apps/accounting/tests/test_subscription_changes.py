@@ -161,8 +161,6 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
     def tearDown(self):
         self.domain.delete()
         self.admin_user.delete()
-        generator.delete_all_subscriptions()
-        generator.delete_all_accounts()
         super(TestUserRoleSubscriptionChanges, self).tearDown()
 
 

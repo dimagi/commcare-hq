@@ -47,8 +47,6 @@ class TestRenewSubscriptions(BaseAccountingTest):
         self.subscription.save()
 
     def tearDown(self):
-        generator.delete_all_subscriptions()
-        generator.delete_all_accounts()
         super(TestRenewSubscriptions, self).tearDown()
         self.admin_user.delete()
 

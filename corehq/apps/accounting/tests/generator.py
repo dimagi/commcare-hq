@@ -115,12 +115,6 @@ def arbitrary_contact_info(account, web_user_creator):
 
 
 @unit_testing_only
-def delete_all_accounts():
-    BillingContactInfo.objects.all().delete()
-    BillingAccount.objects.all().delete()
-
-
-@unit_testing_only
 def subscribable_plan(edition=SoftwarePlanEdition.STANDARD):
     return DefaultProductPlan.get_default_plan_version(edition)
 
