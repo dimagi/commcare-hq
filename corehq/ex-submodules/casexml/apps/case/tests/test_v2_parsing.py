@@ -49,7 +49,7 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("v2_case_type", case.type)
         self.assertEqual("test case name", case.name)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(1, len(case.actions))
             [action] = case.actions
             self.assertEqual("http://openrosa.org/case/test/create", action.xform_xmlns)
@@ -71,7 +71,7 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("updated case name", case.name)
         self.assertEqual("something dynamic", case.dynamic_case_properties()['dynamic'])
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(2, len(case.actions))
             self.assertEqual("bar-user-id", case.actions[1].user_id)
 
@@ -87,7 +87,7 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual(datetime(2011, 12, 7, 13, 44, 50), case.modified_on)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(2, len(case.actions))
             self.assertEqual("bar-user-id", case.actions[1].user_id)
 
@@ -116,7 +116,7 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("cc_bihar_pregnancy", case.type)
         self.assertEqual("TEST", case.name)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(2, len(case.actions))
 
     def testParseWithIndices(self):
@@ -144,7 +144,7 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("bop", case.get_index("baz_ref").referenced_type)
         self.assertEqual("some_other_referenced_id", case.get_index("baz_ref").referenced_id)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             # check the action
             self.assertEqual(2, len(case.actions))
             [_, index_action] = case.actions

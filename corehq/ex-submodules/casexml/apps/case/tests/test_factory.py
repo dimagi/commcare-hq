@@ -159,7 +159,7 @@ class CaseFactoryTest(TestCase):
         [regular, child, parent] = cases
         self.assertEqual(1, len(child.indices))
         self.assertEqual(parent_case_id, child.indices[0].referenced_id)
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(2, len(regular.actions))  # create + update
             self.assertEqual(2, len(parent.actions))  # create + update
             self.assertEqual(3, len(child.actions))  # create + update + index

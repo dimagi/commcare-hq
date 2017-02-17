@@ -22,7 +22,7 @@ class CaseFromXFormTest(TestCase):
         self._check_static_properties(case)
         self.assertEqual(False, case.closed)
 
-        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self._check_transactions(case, [xform])
             self.assertTrue(case.transactions[0].is_case_create)
         else:
@@ -46,7 +46,7 @@ class CaseFromXFormTest(TestCase):
         case = CaseAccessors().get_case(case.case_id)
         self.assertEqual(False, case.closed)
 
-        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self._check_transactions(case, [xform1, xform2])
             self.assertTrue(case.transactions[0].is_case_create)
         else:
@@ -89,7 +89,7 @@ class CaseFromXFormTest(TestCase):
         xform2, case = bootstrap_case_from_xml(self, "close.xml", case.case_id)
         self.assertEqual(True, case.closed)
 
-        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self._check_transactions(case, [xform1, xform2])
             self.assertTrue(case.transactions[0].is_case_create)
             self.assertTrue(case.transactions[1].is_case_close)
@@ -110,7 +110,7 @@ class CaseFromXFormTest(TestCase):
         self.assertEqual(CLOSE_DATE, case.modified_on)
 
     def _check_static_properties(self, case):
-        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(CommCareCaseSQL, type(case))
         else:
             self.assertEqual(CommCareCase, type(case))

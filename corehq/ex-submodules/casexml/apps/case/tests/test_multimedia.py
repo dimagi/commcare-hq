@@ -183,7 +183,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             self._calc_file_hash(single_attach),
             hashlib.md5(case.get_attachment(single_attach)).hexdigest()
         )
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
 
     def testArchiveAfterAttach(self):
@@ -209,7 +209,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
         self.assertEqual(0, len(case.case_attachments))
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
             self.assertEqual(2, len(attach_actions))
             last_action = attach_actions[-1]
@@ -224,7 +224,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
         self.assertEqual(sorted(new_attachments), sorted(case.case_attachments.keys()))
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
             self.assertEqual(2, len(attach_actions))
 
@@ -268,7 +268,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
         # 1 plus the 2 we had
         self.assertEqual(len(new_attachments) + 1, len(case.case_attachments))
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
             self.assertEqual(2, len(attach_actions))
             last_action = attach_actions[-1]
