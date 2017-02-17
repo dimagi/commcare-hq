@@ -53,8 +53,8 @@ class JsonApiRequest(object):
     Wrap requests with URL, header and authentication for DHIS2 API
     """
 
-    def __init__(self, host, username, password):
-        self.baseurl = host + '/api/'
+    def __init__(self, server_url, username, password):
+        self.server_url = server_url  # e.g. "https://dhis2.example.com/api/26/"
         self.headers = {'Accept': 'application/json'}
         self.auth = (username, password)
 
@@ -76,16 +76,16 @@ class JsonApiRequest(object):
             'DHIS2: GET %s: \n'
             '    Headers: %s\n'
             '    kwargs: %s',
-            self.baseurl + path, self.headers, kwargs
+            self.server_url + path, self.headers, kwargs
         )
         try:
-            response = requests.get(self.baseurl + path, headers=self.headers, auth=self.auth, **kwargs)
+            response = requests.get(self.server_url + path, headers=self.headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
             logging.exception(
                 'JSON API raised HTTP or socket error.\n'
                 'Request details: %s\n'
                 'Error: %s',
-                {'method': 'get', 'url': self.baseurl + path, 'headers': self.headers},
+                {'method': 'get', 'url': self.server_url + path, 'headers': self.headers},
                 err)
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
@@ -100,16 +100,16 @@ class JsonApiRequest(object):
             '    Headers: %s\n'
             '    Data: %s\n'
             '    kwargs: %s',
-            self.baseurl + path, self.headers, json_data, kwargs
+            self.server_url + path, self.headers, json_data, kwargs
         )
         try:
-            response = requests.post(self.baseurl + path, json_data, headers=headers, auth=self.auth, **kwargs)
+            response = requests.post(self.server_url + path, json_data, headers=headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
             logging.exception(
                 'JSON API raised HTTP or socket error.\n'
                 'Request details: %s\n'
                 'Error: %s',
-                {'method': 'post', 'url': self.baseurl + path, 'data': json_data, 'headers': headers},
+                {'method': 'post', 'url': self.server_url + path, 'data': json_data, 'headers': headers},
                 err
             )
             raise JsonApiError(str(err))
@@ -124,16 +124,16 @@ class JsonApiRequest(object):
             '    Headers: %s\n'
             '    Data: %s\n'
             '    kwargs: %s',
-            self.baseurl + path, self.headers, json_data, kwargs
+            self.server_url + path, self.headers, json_data, kwargs
         )
         try:
-            response = requests.put(self.baseurl + path, json_data, headers=headers, auth=self.auth, **kwargs)
+            response = requests.put(self.server_url + path, json_data, headers=headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
             logging.exception(
                 'JSON API raised HTTP or socket error.\n'
                 'Request details: %s\n'
                 'Error: %s',
-                {'method': 'put', 'url': self.baseurl + path, 'data': json_data, 'headers': headers},
+                {'method': 'put', 'url': self.server_url + path, 'data': json_data, 'headers': headers},
                 err
             )
             raise JsonApiError(str(err))
