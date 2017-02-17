@@ -2,7 +2,7 @@ from itertools import groupby
 from collections import defaultdict
 from xml.etree.ElementTree import Element
 from casexml.apps.phone.models import OTARestoreUser
-from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
 from corehq import toggles
 
@@ -317,7 +317,10 @@ def _fill_in_location_element(xml_root, location, data_fields):
 
 def _get_location_data_fields(domain):
     from corehq.apps.locations.views import LocationFieldsView
-    fields_definition = CustomDataFieldsDefinition.get_or_create(domain, LocationFieldsView.field_type)
-    return {
-        f.slug for f in fields_definition.fields
-    }
+    fields_definition = get_by_domain_and_type(domain, LocationFieldsView.field_type)
+    if fields_definition:
+        return {
+            f.slug for f in fields_definition.fields
+        }
+    else:
+        return set()

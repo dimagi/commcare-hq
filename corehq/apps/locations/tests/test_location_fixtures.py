@@ -307,6 +307,9 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
     def test_utility_method(self):
         self.assertEqual(self.field_slugs, _get_location_data_fields(self.domain))
 
+    def test_utility_method_empty(self):
+        self.assertEqual(set(), _get_location_data_fields('no-fields-defined'))
+
     def test_metadata_added_to_all_nodes(self):
         mass = self.locations['Massachusetts']
         self.user._couch_user.set_location(mass)
