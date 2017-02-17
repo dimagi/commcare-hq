@@ -68,6 +68,7 @@ branches:
   - np/django1.10 # NP 2/12
   - sk/sentry  # SK 2/13
   - xmlns-overflow  # Jenny 2/16
+  - np/tb/migration-filter  # NP 2/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
