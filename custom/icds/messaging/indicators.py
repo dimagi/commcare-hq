@@ -1,21 +1,24 @@
 from collections import defaultdict
-import pytz
 from datetime import datetime, timedelta
-from corehq.apps.reports.analytics.esaccessors import (
-    get_last_submission_time_for_users,
-    get_last_form_submissions_by_user,
-)
+
+import pytz
+
+from django.template import TemplateDoesNotExist
+from django.template.loader import render_to_string
+
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime
-from django.template import TemplateDoesNotExist
-from django.template.loader import render_to_string
 
 from corehq.apps.locations.dbaccessors import (
     get_user_ids_from_primary_location_ids,
     get_users_location_ids,
 )
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.analytics.esaccessors import (
+    get_last_submission_time_for_users,
+    get_last_form_submissions_by_user,
+)
 from custom.icds.const import VHND_SURVEY_XMLNS
 
 DEFAULT_LANGUAGE = 'hin'
