@@ -997,6 +997,17 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     ),
 )
 
+INDEX_LOCATIONS_FIXTURE = StaticToggle(
+    'index_locations_fixture',
+    'Turn on the index schema for the flat locations fixture',
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=(
+        "There have been reports of issues with this, so we're sticking it "
+        "behind a feature flag until those are resolved."
+    ),
+)
+
 DATA_DICTIONARY = StaticToggle(
     'data_dictionary',
     'Domain level data dictionary of cases',

@@ -35,9 +35,9 @@ register = template.Library()
 def render_form_xml(form):
     xml = form.get_xml()
     if isinstance(xml, unicode):
-        xml.encode('utf-8', errors='replace')
+        xml = xml.encode('utf-8', errors='replace')
     formatted_xml = indent_xml(xml) if xml else ''
-    return format_html('<pre class="prettyprint linenums"><code class="no-border language-xml">{}</code></pre>',
+    return format_html(u'<pre class="prettyprint linenums"><code class="no-border language-xml">{}</code></pre>',
                        formatted_xml)
 
 

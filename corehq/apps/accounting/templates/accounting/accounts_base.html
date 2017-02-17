@@ -7,14 +7,6 @@
     <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-    $(function () {
-        hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
-    });
-    </script>
-{% endblock %}
-
 {% block page_content %}
     {% crispy basic_form %}
 {% endblock %}
