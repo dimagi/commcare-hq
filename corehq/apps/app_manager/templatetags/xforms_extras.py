@@ -31,11 +31,11 @@ def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False):
     for lang in langs:
         if lang in name and name[lang]:
             affix = ("" if langs and lang == langs[0] else tag(lang))
-            return affix + str(name[lang]) if prefix else str(name[lang]) + affix
+            return affix + unicode(name[lang]) if prefix else unicode(name[lang]) + affix
         # ok, nothing yet... just return anything in name
     for lang, n in sorted(name.items()):
         affix = tag(lang)
-        return affix + str(n) if prefix else str(n) + affix
+        return affix + unicode(n) if prefix else unicode(n) + affix
     return ""
 
 
