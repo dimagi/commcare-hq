@@ -60,7 +60,7 @@ class TestReminders(TestCase):
         cls.sms_backend_mapping.delete()
         cls.sms_backend.delete()
         Domain.get_by_name(TEST_DOMAIN).delete()
-        generator.delete_all_subscriptions()
+        super(TestReminders, cls).tearDownClass()
 
     def tearDown(self):
         SMS.objects.all().delete()
