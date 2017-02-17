@@ -26,6 +26,7 @@ from corehq.apps.app_manager.views.schedules import get_schedule_context
 from corehq.apps.app_manager.views.utils import back_to_main, \
     CASE_TYPE_CONFLICT_MSG, get_langs
 
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
@@ -62,7 +63,7 @@ from dimagi.utils.web import json_response
 from corehq.apps.domain.decorators import (
     login_or_digest, api_domain_view
 )
-from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.const import USERCASE_PREFIX, USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     AdvancedForm,
@@ -546,12 +547,19 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         form.get_unique_id()
         app.save()
 
+    allow_usercase = (domain_has_privilege(request.domain, privileges.USER_CASE)
+                      and not toggles.USER_TESTING_SIMPLIFY.enabled(request.domain))
+    valid_index_names = DEFAULT_CASE_INDEX_IDENTIFIERS.values()
+    if allow_usercase and USERCASE_PREFIX[-1] == "/":
+        valid_index_names.append(USERCASE_PREFIX[0:-1])
+
     form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
     context = {
         'nav_form': form,
         'xform_languages': languages,
         "xform_questions": xform_questions,
         'case_reserved_words_json': load_case_reserved_words(),
+        'valid_index_names': valid_index_names,
         'module_case_types': module_case_types,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
@@ -561,10 +569,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
         'allow_form_workflow': not isinstance(form, CareplanForm),
         'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
-        'allow_usercase': (
-            domain_has_privilege(request.domain, privileges.USER_CASE)
-            and not toggles.USER_TESTING_SIMPLIFY.enabled(request.domain)
-        ),
+        'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
         'is_case_list_form': form.is_case_list_form,
