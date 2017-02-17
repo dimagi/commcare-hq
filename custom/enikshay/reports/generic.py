@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from sqlagg.filters import IN, AND, GTE, LT, RawFilter
+from sqlagg.filters import IN, AND, GTE, LT, RawFilter, EQ
 
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericReportView
@@ -9,12 +9,12 @@ from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import UCR_ENGINE_ID
-from custom.enikshay.reports.filters import EnikshayLocationFilter, QuarterFilter
+from custom.enikshay.reports.filters import EnikshayLocationFilter, QuarterFilter, EnikshayMigrationFilter
 from custom.utils.utils import clean_IN_filter_value
 
 TABLE_ID = 'episode'
 
-EnikshayReportConfig = namedtuple('ReportConfig', ['domain', 'locations_id', 'start_date', 'end_date'])
+EnikshayReportConfig = namedtuple('ReportConfig', ['domain', 'locations_id', 'is_migrated', 'start_date', 'end_date'])
 
 
 class MultiReport(CustomProjectReport, GenericReportView):
@@ -76,9 +76,13 @@ class EnikshayReport(DatespanMixin, CustomProjectReport, SqlTabularReport):
 
     @property
     def report_config(self):
+        is_migrated = EnikshayMigrationFilter.get_value(self.request, self.domain)
+        if is_migrated is not None:
+            is_migrated = int(is_migrated)
         return EnikshayReportConfig(
             domain=self.domain,
             locations_id=EnikshayLocationFilter.get_value(self.request, self.domain),
+            is_migrated=is_migrated,
             start_date=self.datespan.startdate,
             end_date=self.datespan.end_of_end_day
         )
@@ -99,7 +103,8 @@ class EnikshaySqlData(SqlData):
         filter_values = {
             'start_date': self.config.start_date,
             'end_date': self.config.end_date,
-            'locations_id': self.config.locations_id
+            'locations_id': self.config.locations_id,
+            'is_migrated': self.config.is_migrated,
         }
         clean_IN_filter_value(filter_values, 'locations_id')
         return filter_values
@@ -120,5 +125,10 @@ class EnikshaySqlData(SqlData):
             filters.append(
                 IN('person_owner_id', get_INFilter_bindparams('locations_id', locations_id))
             )
+
+        is_migrated = self.config.is_migrated
+
+        if is_migrated is not None:
+            filters.append(EQ('case_created_by_migration', 'is_migrated'))
 
         return filters
