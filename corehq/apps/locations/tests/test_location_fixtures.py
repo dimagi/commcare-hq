@@ -113,7 +113,8 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             },
         )
         location_db = LocationSet([location])
-        fixture = _location_to_fixture(location_db, location, location_type, set())
+        data_fields = ['best_swordsman', 'in_westeros', 'appeared_in_num_episodes']
+        fixture = _location_to_fixture(location_db, location, location_type, data_fields)
         location_data = {
             e.tag: e.text for e in fixture.find('location_data')
         }
