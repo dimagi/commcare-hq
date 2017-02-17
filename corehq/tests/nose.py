@@ -171,13 +171,9 @@ class HqdbContext(DatabaseContext):
     database in `settings.DATABASES` all databases will be re-created
     and migrated.
 
-    Other supported `REUSE_DB` values:
-
-    The following flags are also useful in conjunction with REUSE_DB=1:
-        --reset-db
-        --flush-db
-        --migrate-db
-        --teardown-db
+    When using REUSE_DB=1, you may also want to provide a value for the
+    --reuse_db option, either reset, flush, migrate, or teardown.
+    ./manage.py test --help will give you a description of these.
     """
 
     def __init__(self, tests, runner):
