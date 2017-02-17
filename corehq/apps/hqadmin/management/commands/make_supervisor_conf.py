@@ -32,8 +32,6 @@ class SupervisorConfCommand(BaseCommand):
         parser.add_argument(
             '--params',
             type=str,
-            # action='callback',
-            # callback=parse_params,
             dest='params',
             default=None,
             help='template parameters as JSON data',
