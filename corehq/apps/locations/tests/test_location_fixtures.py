@@ -87,8 +87,8 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
 
     def setUp(self):
         super(LocationFixturesTest, self).setUp()
+        delete_all_users()
         self.user = create_restore_user(self.domain, 'user', '123')
-        self.addCleanup(self.user._couch_user.delete)
 
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
