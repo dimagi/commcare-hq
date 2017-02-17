@@ -31,7 +31,6 @@ class OtaWebUserFixtureTest(TestCase):
         cls.domain.delete()
         delete_all_users()
 
-    @run_with_all_backends
     def test_basic_fixture_generation(self):
         fixture_xml = list(generator.get_fixtures(self.restore_user, version=V2))
         self.assertEqual(len(fixture_xml), 1)
@@ -95,17 +94,14 @@ class OtaFixtureTest(TestCase):
                 expected = _get_item_list_fixture(self.user.get_id, data_type.tag, data_item)
                 check_xml_line_by_line(self, expected, item_list_xml[0])
 
-    @run_with_all_backends
     def test_fixture_gen_v1(self):
         fixture_xml = generator.get_fixtures(self.restore_user, version=V1)
         self.assertEqual(list(fixture_xml), [])
 
-    @run_with_all_backends
     def test_basic_fixture_generation(self):
         fixture_xml = generator.get_fixtures(self.restore_user, version=V2)
         self._check_fixture(fixture_xml, item_lists=[SA_PROVINCES, FR_PROVINCES])
 
-    @run_with_all_backends
     def test_fixtures_by_group(self):
         fixture_xml = generator.get_fixtures(self.restore_user, version=V2, group='case')
         self.assertEqual(list(fixture_xml), [])
@@ -113,7 +109,6 @@ class OtaFixtureTest(TestCase):
         fixture_xml = generator.get_fixtures(self.restore_user, version=V2, group='standalone')
         self._check_fixture(fixture_xml, item_lists=[SA_PROVINCES, FR_PROVINCES])
 
-    @run_with_all_backends
     def test_fixtures_by_id(self):
         fixture_xml = generator.get_fixture_by_id('user-groups', self.restore_user, version=V2)
         self._check_fixture([fixture_xml])
@@ -129,6 +124,11 @@ class OtaFixtureTest(TestCase):
 
         fixture_xml = generator.get_fixture_by_id('bad ID', self.restore_user, version=V2)
         self.assertIsNone(fixture_xml)
+
+
+@sql_backend_case
+class OtaFixtureTestSQL(OtaFixtureTest):
+    pass
 
 
 def _get_group_fixture(user_id, groups):
