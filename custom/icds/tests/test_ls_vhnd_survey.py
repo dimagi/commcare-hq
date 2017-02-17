@@ -132,6 +132,7 @@ class TestLSVHNDSurveyIndicator(TestCase):
         messages = indicator.get_messages()
         self.assertEqual(len(messages), 1)
         message = messages[0]
+        self.assertFalse('AWC1' in message)
         self.assertTrue('AWC2' in message)
 
     def test_no_form_submitted(self, last_subs):
