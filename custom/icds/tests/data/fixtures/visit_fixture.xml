@@ -1,0 +1,55 @@
+<report id="id">
+	<filters/>
+	<rows>
+		<row index="0" is_total_row="False">
+			<column id="count">6</column>
+			<column id="owner_id">AWW 8's Center</column>
+			<column id="visit_on_time">2</column>
+		</row>
+		<row index="1" is_total_row="False">
+			<column id="count">17</column>
+			<column id="owner_id">AWW 7's Center</column>
+			<column id="visit_on_time">0</column>
+		</row>
+		<row index="2" is_total_row="False">
+			<column id="count">18</column>
+			<column id="owner_id">AWW 6's Center</column>
+			<column id="visit_on_time">2</column>
+		</row>
+		<row index="3" is_total_row="False">
+			<column id="count">47</column>
+			<column id="owner_id">AWW 3's Center</column>
+			<column id="visit_on_time">1</column>
+		</row>
+		<row index="4" is_total_row="False">
+			<column id="count">65</column>
+			<column id="owner_id">AWW 2's Center</column>
+			<column id="visit_on_time">3</column>
+		</row>
+		<row index="5" is_total_row="False">
+			<column id="count">23</column>
+			<column id="owner_id">AWW 5's Center</column>
+			<column id="visit_on_time">5</column>
+		</row>
+		<row index="6" is_total_row="False">
+			<column id="count">2</column>
+			<column id="owner_id">AWW 9's Center</column>
+			<column id="visit_on_time">0</column>
+		</row>
+		<row index="7" is_total_row="False">
+			<column id="count">28</column>
+			<column id="owner_id">AWW 4's Center</column>
+			<column id="visit_on_time">6</column>
+		</row>
+		<row index="8" is_total_row="False">
+			<column id="count">63</column>
+			<column id="owner_id">AWW 1's Center</column>
+			<column id="visit_on_time">3</column>
+		</row>
+		<row index="9" is_total_row="True">
+			<column id="count">269</column>
+			<column id="owner_id">Total</column>
+			<column id="visit_on_time">22</column>
+		</row>
+	</rows>
+</report>

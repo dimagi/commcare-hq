@@ -1,0 +1,55 @@
+<report id="id">
+	<filters/>
+	<rows>
+		<row index="0" is_total_row="False">
+			<column id="open_count">2</column>
+			<column id="open_weighed">2</column>
+			<column id="owner_id">AWW 8's Center</column>
+		</row>
+		<row index="1" is_total_row="False">
+			<column id="open_count">7</column>
+			<column id="open_weighed">7</column>
+			<column id="owner_id">AWW 7's Center</column>
+		</row>
+		<row index="2" is_total_row="False">
+			<column id="open_count">2</column>
+			<column id="open_weighed">2</column>
+			<column id="owner_id">AWW 6's Center</column>
+		</row>
+		<row index="3" is_total_row="False">
+			<column id="open_count">2</column>
+			<column id="open_weighed">2</column>
+			<column id="owner_id">AWW 3's Center</column>
+		</row>
+		<row index="4" is_total_row="False">
+			<column id="open_count">3</column>
+			<column id="open_weighed">3</column>
+			<column id="owner_id">AWW 2's Center</column>
+		</row>
+		<row index="5" is_total_row="False">
+			<column id="open_count">6</column>
+			<column id="open_weighed">6</column>
+			<column id="owner_id">AWW 5's Center</column>
+		</row>
+		<row index="6" is_total_row="False">
+			<column id="open_count">5</column>
+			<column id="open_weighed">5</column>
+			<column id="owner_id">AWW 9's Center</column>
+		</row>
+		<row index="7" is_total_row="False">
+			<column id="open_count">2</column>
+			<column id="open_weighed">2</column>
+			<column id="owner_id">AWW 4's Center</column>
+		</row>
+		<row index="8" is_total_row="False">
+			<column id="open_count">4</column>
+			<column id="open_weighed">4</column>
+			<column id="owner_id">AWW 1's Center</column>
+		</row>
+		<row index="9" is_total_row="True">
+			<column id="open_count">33</column>
+			<column id="open_weighed">33</column>
+			<column id="owner_id">Total</column>
+		</row>
+	</rows>
+</report>
