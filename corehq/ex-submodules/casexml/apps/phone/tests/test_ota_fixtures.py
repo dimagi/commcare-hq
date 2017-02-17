@@ -12,7 +12,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from corehq.form_processor.tests.utils import sql_backend_test_case
+from corehq.form_processor.tests.utils import sql_backend_case
 
 DOMAIN = 'fixture-test'
 SA_PROVINCES = 'sa_provinces'
@@ -38,7 +38,7 @@ class OtaWebUserFixtureTest(TestCase):
         self.assertEqual(fixture_xml[0].findall('./groups/group'), [])
 
 
-@sql_backend_test_case
+@sql_backend_case
 class OtaWebUserFixtureTestSQL(OtaWebUserFixtureTest):
     pass
 
