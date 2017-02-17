@@ -63,7 +63,7 @@ branches:
   - np/110/ptop_es_manage
   - np/110/ptop_reset_checkpoint
   - np/110/run_ptop
-  - np/110/update_manifest-same
+  - np/update_manifest-2
 
   - np/django1.10 # NP 2/12
   - sk/sentry  # SK 2/13
