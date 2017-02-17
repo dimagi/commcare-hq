@@ -110,7 +110,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             },
         )
         location_db = LocationSet([location])
-        fixture = _location_to_fixture(location_db, location, location_type)
+        fixture = _location_to_fixture(location_db, location, location_type, set())
         location_data = {
             e.tag: e.text for e in fixture.find('location_data')
         }
