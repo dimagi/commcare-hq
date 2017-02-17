@@ -79,6 +79,23 @@ def tag_system_forms_as_deleted(domain, deleted_forms, deleted_cases, deletion_i
         xform_ids = CaseAccessors(domain).get_case_xform_ids(case_id)
         form_ids_to_delete |= set(xform_ids) - deleted_forms
 
+    def _is_safe_to_delete(form):
+        if form.domain != domain:
+            return False
+
+        case_ids = get_case_ids_from_form(form)
+        cases_touched_by_form_not_deleted = case_ids - deleted_cases
+        for case in CaseAccessors(domain).iter_cases(cases_touched_by_form_not_deleted):
+            if not case.is_deleted:
+                return False
+
+        # all cases touched by this form are deleted
+        return True
+
+    for form in FormAccessors(domain).iter_forms(form_ids_to_delete):
+        if not _is_safe_to_delete(form):
+            form_ids_to_delete.remove(form.form_id)
+
     FormAccessors(domain).soft_delete_forms(list(form_ids_to_delete), deletion_date, deletion_id)
 
 

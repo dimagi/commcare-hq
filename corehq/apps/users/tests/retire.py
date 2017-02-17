@@ -201,14 +201,40 @@ class RetireUserTestCase(TestCase):
         self.assertItemsEqual(rebuild_case.call_args_list, expected_call_args)
 
     @run_with_all_backends
-    def test_system_forms_deleted(self):
+    def test_all_case_forms_deleted(self):
         domain = create_domain(self.domain)
         self.addCleanup(domain.delete)
+
         from corehq.apps.callcenter.utils import sync_user_case
         sync_user_case(self.commcare_user, USERCASE_TYPE, self.commcare_user.get_id)
 
-        user_case = self.commcare_user.get_usercase()
+        user_case_id = self.commcare_user.get_usercase_id()
 
+        # other user submits form against the case (should get deleted)
+        caseblock = CaseBlock(
+            create=False,
+            case_id=user_case_id,
+        )
+        submit_case_blocks(caseblock.as_string(), self.domain, user_id=self.other_user._id)
+
+        case_ids = CaseAccessors(self.domain).get_case_ids_by_owners([self.commcare_user._id])
+        self.assertEqual(1, len(case_ids))
+
+        form_ids = FormAccessors(self.domain).get_form_ids_for_user(self.commcare_user._id)
+        self.assertEqual(0, len(form_ids))
+
+        user_case = self.commcare_user.get_usercase()
+        self.assertEqual(2, len(user_case.xform_ids))
+
+        self.commcare_user.retire()
+
+        for form_id in user_case.xform_ids:
+            self.assertTrue(FormAccessors(self.domain).get_form(form_id).is_deleted)
+
+        self.assertTrue(CaseAccessors(self.domain).get_case(user_case_id).is_deleted)
+
+    @run_with_all_backends
+    def test_forms_touching_live_case_not_deleted(self):
         case_id = uuid.uuid4().hex
         caseblock = CaseBlock(
             create=True,
@@ -218,16 +244,27 @@ class RetireUserTestCase(TestCase):
         )
         xform, _ = submit_case_blocks(caseblock.as_string(), self.domain)
 
-        case_ids = CaseAccessors(self.domain).get_case_ids_by_owners([self.commcare_user._id])
-        self.assertEqual(2, len(case_ids))
-
-        form_ids = FormAccessors(self.domain).get_form_ids_for_user(self.commcare_user._id)
-        self.assertEqual(0, len(form_ids))
+        # other user submits form against the case and another case not owned by the user
+        # should NOT get deleted since this form touches a case that's still 'alive'
+        double_case_xform, _ = submit_case_blocks([
+            CaseBlock(
+                create=False,
+                case_id=case_id,
+            ).as_string(),
+            CaseBlock(
+                create=True,
+                case_id=uuid.uuid4().hex,
+                owner_id=self.other_user._id,
+                user_id=self.other_user._id,
+            ).as_string()
+        ], self.domain, user_id=self.other_user._id)
 
         self.commcare_user.retire()
 
-        for form_id in user_case.xform_ids + [xform.form_id]:
-            self.assertTrue(FormAccessors(self.domain).get_form(form_id).is_deleted)
+        self.assertTrue(FormAccessors(self.domain).get_form(xform.form_id).is_deleted)
+        self.assertFalse(FormAccessors(self.domain).get_form(double_case_xform.form_id).is_deleted)
 
-        for case_id in case_ids:
-            self.assertTrue(CaseAccessors(self.domain).get_case(case_id).is_deleted)
+        # When the other user is deleted then the form should get deleted since it no-longer touches
+        # any 'live' cases.
+        self.other_user.retire()
+        self.assertTrue(FormAccessors(self.domain).get_form(double_case_xform.form_id).is_deleted)
