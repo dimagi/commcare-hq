@@ -236,7 +236,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             ['Massachusetts', 'New York', 'Middlesex', 'Suffolk', 'New York City', 'Boston', 'Revere']
         )  # (New York City is of type "county")
 
-    @flag_enabled('FLAT_LOCATION_FIXTURE')
+    @flag_enabled('INDEX_LOCATIONS_FIXTURE')
     def test_index_location_fixtures(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'])
         expected_result = self._assemble_expected_fixture(
