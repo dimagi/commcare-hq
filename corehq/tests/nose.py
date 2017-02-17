@@ -181,10 +181,10 @@ class HqdbContext(DatabaseContext):
     """
 
     def __init__(self, tests, runner):
-        reuse_db = CmdLineParametersPlugin.get('db_action') or string_to_boolean(os.environ.get("REUSE_DB"))
+        reuse_db = CmdLineParametersPlugin.get('reuse_db') or string_to_boolean(os.environ.get("REUSE_DB"))
         self.reuse_db = reuse_db
-        self.skip_setup_for_reuse_db = reuse_db and reuse_db != "reset_db"
-        self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown_db"
+        self.skip_setup_for_reuse_db = reuse_db and reuse_db != "reset"
+        self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown"
         super(HqdbContext, self).__init__(tests, runner)
 
     def should_skip_test_setup(self):
@@ -198,13 +198,13 @@ class HqdbContext(DatabaseContext):
         self.blob_db = TemporaryFilesystemBlobDB()
 
         if self.skip_setup_for_reuse_db and self._databases_ok():
-            if self.reuse_db == "migrate_db":
+            if self.reuse_db == "migrate":
                 call_command('migrate_multi', interactive=False)
-            if self.reuse_db == "flush_db":
+            if self.reuse_db == "flush":
                 flush_databases()
             return  # skip remaining setup
 
-        if self.reuse_db == "reset_db":
+        if self.reuse_db == "reset":
             self.delete_couch_databases()
 
         sys.__stdout__.write("\n")  # newline for creating database message
