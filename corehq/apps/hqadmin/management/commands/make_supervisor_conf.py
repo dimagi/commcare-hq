@@ -7,15 +7,6 @@ from django.conf import settings
 from django.template import Context, Template
 
 
-def parse_params(option, opt, value, parser):
-    try:
-        args_dict = json.loads(value)
-    except ValueError:
-        print "argument error, %s should be valid JSON" % value
-
-    setattr(parser.values, option.dest, args_dict)
-
-
 class SupervisorConfCommand(BaseCommand):
 
     def add_arguments(self, parser):
