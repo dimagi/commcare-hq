@@ -1127,16 +1127,9 @@ class Subscription(models.Model):
         ).exclude(id=self.id).all():
             related_has_no_end = sub.date_end is None
             current_has_no_end = date_end is None
-            start_before_related_end = (
-                date_start is not None and sub.date_end is not None
-                and date_start < sub.date_end
-            )
-            start_before_related_start = (
-                date_start is not None and date_start < sub.date_start
-            )
-            start_after_related_start = (
-                date_start is not None and date_start > sub.date_start
-            )
+            start_before_related_end = sub.date_end is not None and date_start < sub.date_end
+            start_before_related_start = date_start < sub.date_start
+            start_after_related_start = date_start > sub.date_start
             end_before_related_end = (
                 date_end is not None and sub.date_end is not None
                 and date_end < sub.date_end
@@ -1145,9 +1138,7 @@ class Subscription(models.Model):
                 date_end is not None and sub.date_end is not None
                 and date_end > sub.date_end
             )
-            end_after_related_start = (
-                date_end is not None and date_end > sub.date_start
-            )
+            end_after_related_start = date_end is not None and date_end > sub.date_start
 
             if (
                 (start_before_related_end and start_after_related_start)
