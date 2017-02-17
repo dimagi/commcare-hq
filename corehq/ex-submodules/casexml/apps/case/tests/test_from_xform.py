@@ -8,7 +8,7 @@ from casexml.apps.case.tests.util import bootstrap_case_from_xml
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import sql_backend_test_case
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -17,7 +17,6 @@ class CaseFromXFormTest(TestCase):
     def setUp(self):
         self.interface = FormProcessorInterface()
 
-    @run_with_all_backends
     def testCreate(self):
         xform, case = bootstrap_case_from_xml(self, "create.xml")
         self._check_static_properties(case)
@@ -34,7 +33,6 @@ class CaseFromXFormTest(TestCase):
             self.assertEqual(xform.form_id, create_action.xform_id)
             self.assertEqual("test create", create_action.xform_name)
 
-    @run_with_all_backends
     def testCreateThenUpdateInSeparateForms(self):
         # recycle our previous test's form
         xform1, original_case = bootstrap_case_from_xml(self, "create_update.xml")
@@ -84,7 +82,6 @@ class CaseFromXFormTest(TestCase):
         # case should have a new modified date
         self.assertEqual(MODIFY_DATE, case.modified_on)
         
-    @run_with_all_backends
     def testCreateThenClose(self):
         xform1, case = bootstrap_case_from_xml(self, "create.xml")
 
@@ -132,3 +129,8 @@ class CaseFromXFormTest(TestCase):
             self.assertTrue(CaseTransaction.is_form_transaction)
             self.assertEqual(xform.form_id, transaction.form_id)
             self.assertFalse(transaction.revoked)
+
+
+@sql_backend_test_case
+class CaseFromXFormTestSQL(CaseFromXFormTest):
+    pass

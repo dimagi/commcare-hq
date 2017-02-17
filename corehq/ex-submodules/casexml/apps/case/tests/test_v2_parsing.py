@@ -13,7 +13,7 @@ from datetime import datetime
 from casexml.apps.case.xml import V2, V2_NAMESPACE
 from casexml.apps.case import const
 from casexml.apps.phone import xml
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import sql_backend_test_case
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -31,7 +31,6 @@ class Version2CaseParsingTest(TestCase):
         delete_all_cases()
         super(Version2CaseParsingTest, cls).tearDownClass()
 
-    @run_with_all_backends
     def testParseCreate(self):
         self._test_parse_create()
 
@@ -57,7 +56,6 @@ class Version2CaseParsingTest(TestCase):
             self.assertEqual("v2 create", action.xform_name)
             self.assertEqual("bar-user-id", case.actions[0].user_id)
 
-    @run_with_all_backends
     def testParseUpdate(self):
         self._test_parse_create()
         
@@ -77,7 +75,6 @@ class Version2CaseParsingTest(TestCase):
             self.assertEqual(2, len(case.actions))
             self.assertEqual("bar-user-id", case.actions[1].user_id)
 
-    @run_with_all_backends
     def testParseNoop(self):
         self._test_parse_create()
 
@@ -96,7 +93,6 @@ class Version2CaseParsingTest(TestCase):
 
         self.assertEqual(2, len(case.xform_ids))
 
-    @run_with_all_backends
     def testParseClose(self):
         self._test_parse_create()
         
@@ -108,7 +104,6 @@ class Version2CaseParsingTest(TestCase):
         self.assertTrue(case.closed)
         self.assertEqual("bar-user-id", case.closed_by)
 
-    @run_with_all_backends
     def testParseNamedNamespace(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "named_namespace.xml")
         with open(file_path, "rb") as f:
@@ -124,7 +119,6 @@ class Version2CaseParsingTest(TestCase):
         if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
             self.assertEqual(2, len(case.actions))
 
-    @run_with_all_backends
     def testParseWithIndices(self):
         self._test_parse_create()
 
@@ -175,6 +169,11 @@ class Version2CaseParsingTest(TestCase):
                 </index>
             </case>"""
         check_xml_line_by_line(self, expected_v2_response, v2response)
+
+
+@sql_backend_test_case
+class Version2CaseParsingTestSQL(Version2CaseParsingTest):
+    pass
 
 
 class SimpleParsingTests(SimpleTestCase):

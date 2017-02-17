@@ -12,7 +12,7 @@ from casexml.apps.case.tests.util import (
     delete_all_sync_logs,
 )
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import sql_backend_test_case
 from casexml.apps.phone.restore import (
     RestoreConfig,
     RestoreParams,
@@ -65,7 +65,7 @@ class BaseAsyncRestoreTest(TestCase):
         return restore_config
 
 
-class AsyncRestoreTest(BaseAsyncRestoreTest):
+class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
     def test_regular_restore_doesnt_start_task(self, task):
         """
@@ -146,7 +146,36 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         self.assertTrue(restore_config.force_cache)
 
     @flag_enabled('ASYNC_RESTORE')
-    @run_with_all_backends
+    def test_submit_form_no_userid(self):
+        form = """
+        <data xmlns="http://openrosa.org/formdesigner/blah">
+            <meta>
+                <deviceID>test</deviceID>
+            </meta>
+        </data>
+        """
+        submit_form_locally(form, self.domain)
+
+    @mock.patch.object(CachedPayload, 'finalize')  # fake that a cached payload exists
+    @mock.patch.object(RestoreConfig, 'cache')
+    @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
+    def test_clears_cache(self, task, cache, _):
+        delay = mock.MagicMock()
+        delay.id = 'random_task_id'
+        task.delay.return_value = delay
+        cache_get = mock.MagicMock().return_value = StringIO('<restore_id>123</restore_id>')
+        cache.get.return_value = cache_get
+
+        self._restore_config(async=True, overwrite_cache=False).get_payload()
+        self.assertFalse(cache.delete.called)
+
+        self._restore_config(async=True, overwrite_cache=True).get_payload()
+        self.assertTrue(cache.delete.called)
+
+
+class AsyncRestoreTest(BaseAsyncRestoreTest):
+
+    @flag_enabled('ASYNC_RESTORE')
     def test_restore_in_progress_form_submitted_kills_old_jobs(self):
         """If the user submits a form somehow while a job is running, the job should be terminated
         """
@@ -180,7 +209,6 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
             self.assertIsNone(restore_config.cache.get(initial_sync_cache_id))
 
     @flag_enabled('ASYNC_RESTORE')
-    @run_with_all_backends
     def test_submit_form_no_userid(self):
         form = """
         <data xmlns="http://openrosa.org/formdesigner/blah">
@@ -191,7 +219,6 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         """
         submit_form_locally(form, self.domain)
 
-    @run_with_all_backends
     @mock.patch.object(CachedPayload, 'finalize')  # fake that a cached payload exists
     @mock.patch.object(RestoreConfig, 'cache')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
@@ -207,6 +234,11 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
 
         self._restore_config(async=True, overwrite_cache=True).get_payload()
         self.assertTrue(cache.delete.called)
+
+
+@sql_backend_test_case
+class AsyncRestoreTestSQL(AsyncRestoreTest):
+    pass
 
 
 class TestAsyncRestoreResponse(TestXmlMixin, SimpleTestCase):
