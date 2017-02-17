@@ -883,6 +883,7 @@ SENTRY_PUBLIC_KEY = None
 SENTRY_PRIVATE_KEY = None
 SENTRY_PROJECT_ID = None
 SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
+SENTRY_API_KEY = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1954,6 +1955,7 @@ REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
 }
 
+SENTRY_CONFIGURED = False
 _raven_config = helper.configure_sentry(
     BASE_DIR,
     SERVER_ENVIRONMENT,
@@ -1963,3 +1965,4 @@ _raven_config = helper.configure_sentry(
 )
 if _raven_config:
     RAVEN_CONFIG = _raven_config
+    SENTRY_CONFIGURED = True

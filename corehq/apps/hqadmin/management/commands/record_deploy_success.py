@@ -131,3 +131,24 @@ class Command(BaseCommand):
                 environment=options['environment'], user=options['user'],
                 compare_url=compare_url)
             call_command('mail_admins', message_body, **{'subject': 'Deploy successful', 'html': True})
+
+        if settings.SENTRY_CONFIGURED and settings.SENTRY_API_KEY:
+            create_update_sentry_release()
+
+
+def create_update_sentry_release():
+    from settingshelper import get_release_name
+    from raven import fetch_git_sha
+    release = get_release_name(settings.BASE_DIR, settings.SERVER_ENVIRONMENT)
+    headers = {'Authorization': 'Bearer {}'.format(settings.SENTRY_API_KEY), }
+    payload = {
+        'version': release,
+        'ref': fetch_git_sha(settings.BASE_DIR),
+        'url': 'https://github.com/dimagi/commcare-hq/releases/tag/{}'.format(release)
+    }
+    releases_url = 'https://sentry.io/api/0/projects/dimagi/commcarehq/releases/'
+    response = requests.post(releases_url, headers=headers, json=payload)
+    if response.status_code == 208:
+        # already created so update
+        payload.pop('version')
+        requests.put('{}{}/'.format(releases_url, release), headers=headers, json=payload)
