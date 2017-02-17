@@ -33,7 +33,7 @@ class TestReports(IntraHealthTestCase):
         with real_pillow_settings():
             management.call_command(
                 'ptop_reindexer_fluff',
-                'TauxDeSatisfactionFluffPillow',
+                'TauxDeSatisfactionFluffPillow'
             )
 
     def test_disp_des_products_report(self):

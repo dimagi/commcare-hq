@@ -877,7 +877,7 @@ class DownloadFormExportView(BaseDownloadExportView):
             from corehq.apps.reports.tasks import build_form_multimedia_zip
             download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
         except Exception as e:
-            return format_angular_error(e)
+            return format_angular_error(str(e))
         return format_angular_success({
             'download_id': download.download_id,
         })
@@ -2246,7 +2246,7 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
         return form_filters
 
     def get_multimedia_task_kwargs(self, in_data, filter_form, export_object, download_id):
-        filter_slug = in_data['form_data']['emw']
+        filter_slug = in_data['form_data'][LocationRestrictedMobileWorkerFilter.slug]
         mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(filter_slug)
         return filter_form.get_multimedia_task_kwargs(export_object, download_id, mobile_user_and_group_slugs)
 
