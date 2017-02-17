@@ -27,7 +27,7 @@ class SimpleCaseBugTests(SimpleTestCase):
             CommCareCase(_id='test').to_xml(version)
 
 
-class CaseBugTestCouch(TestCase, TestFileMixin):
+class CaseBugTestCouchOnly(TestCase, TestFileMixin):
 
     file_path = ('data', 'bugs')
     root = os.path.dirname(__file__)
