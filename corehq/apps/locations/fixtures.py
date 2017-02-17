@@ -291,8 +291,8 @@ def _get_metadata_node(location, data_fields):
 
 def _location_to_fixture(location_db, location, type, data_fields):
     root = Element(type.code, {'id': location.location_id})
-    _fill_in_location_element(root, location)
-    _append_children(root, location_db, location_db.by_parent[location.location_id])
+    _fill_in_location_element(root, location, data_fields)
+    _append_children(root, location_db, location_db.by_parent[location.location_id], data_fields)
     return root
 
 
