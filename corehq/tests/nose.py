@@ -27,6 +27,7 @@ from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.db.utils import OperationalError
 from django_nose.plugin import DatabaseContext
 
+from corehq.tests.noseplugins.cmdline_params import CmdLineParametersPlugin
 from corehq.util.couchdb_management import couch_config
 from corehq.util.test_utils import unit_testing_only
 
@@ -171,27 +172,22 @@ class HqdbContext(DatabaseContext):
 
     Other supported `REUSE_DB` values:
 
-    - `REUSE_DB=reset` : drop existing, then create and migrate new test
-      databases, but do not teardown after running tests. This is
-      convenient when the existing databases are outdated and need to be
-      rebuilt.
-    - `REUSE_DB=teardown` : skip database setup; do normal teardown after
-      running tests.
-    - `REUSE_DB=flush` : same as `REUSE_DB=1` except delete all objects from the
-      databases before running tests.  Much faster than `reset`.
-    - `REUSE_DB=migrate` : same as `REUSE_DB=1` except migrate databases
-      before running tests.
+    The following flags are also useful in conjunction with REUSE_DB=1:
+        --reset-db
+        --flush-db
+        --migrate-db
+        --teardown-db
     """
 
     def __init__(self, tests, runner):
-        self.reuse_db = reuse_db = os.environ.get("REUSE_DB")
-        self.skip_setup_for_reuse_db = reuse_db and reuse_db != "reset"
-        self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown"
+        reuse_db = CmdLineParametersPlugin.get('db_action') or os.environ.get("REUSE_DB")
+        self.reuse_db = reuse_db
+        self.skip_setup_for_reuse_db = reuse_db and reuse_db != "reset_db"
+        self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown_db"
         super(HqdbContext, self).__init__(tests, runner)
 
     def should_skip_test_setup(self):
-        # FRAGILE look in sys.argv; can't get nose config from here
-        return "--collect-only" in sys.argv
+        return CmdLineParametersPlugin.get('collect_only')
 
     def setup(self):
         if self.should_skip_test_setup():
@@ -201,13 +197,13 @@ class HqdbContext(DatabaseContext):
         self.blob_db = TemporaryFilesystemBlobDB()
 
         if self.skip_setup_for_reuse_db and self._databases_ok():
-            if self.reuse_db == "migrate":
+            if self.reuse_db == "migrate_db":
                 call_command('migrate_multi', interactive=False)
-            if self.reuse_db == "flush":
-                empty_databases()
+            if self.reuse_db == "flush_db":
+                flush_databases()
             return  # skip remaining setup
 
-        if self.reuse_db == "reset":
+        if self.reuse_db == "reset_db":
             self.delete_couch_databases()
 
         sys.__stdout__.write("\n")  # newline for creating database message
@@ -292,7 +288,7 @@ def get_all_test_dbs():
 
 
 @unit_testing_only
-def empty_databases():
+def flush_databases():
     """
     Best effort at emptying all documents from all databases.
     Useful when you break a test and it doesn't clean up properly. This took
