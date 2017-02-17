@@ -12,7 +12,7 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, sql_backend_case
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 
 
 class IndexSimpleTest(SimpleTestCase):
@@ -167,7 +167,7 @@ class IndexTest(TestCase):
         check_user_has_case(self, self.user, create_index)
 
 
-@sql_backend_case
+@use_sql_backend
 class IndexTestSQL(IndexTest):
     pass
 

@@ -18,7 +18,7 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    sql_backend_case,
+    use_sql_backend,
 )
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from corehq.util.test_utils import flag_enabled
@@ -749,7 +749,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         ])
 
 
-@sql_backend_case
+@use_sql_backend
 class SyncTokenUpdateTestSQL(SyncTokenUpdateTest):
     pass
 
@@ -783,7 +783,7 @@ class SyncDeletedCasesTest(SyncBaseTest):
         assert_user_has_case(self, self.user, child_id)
 
 
-@sql_backend_case
+@use_sql_backend
 class SyncDeletedCasesTestSQL(SyncDeletedCasesTest):
     pass
 
@@ -1048,7 +1048,7 @@ class ExtensionCasesFirstSync(SyncBaseTest):
         self.assertFalse(config.restore_state.is_first_extension_sync)
 
 
-@sql_backend_case
+@use_sql_backend
 class ExtensionCasesFirstSyncSQL(ExtensionCasesFirstSync):
     pass
 
@@ -1122,7 +1122,7 @@ class ChangingOwnershipTest(SyncBaseTest):
         return synclog_from_restore_payload(incremental_restore_config.get_payload().as_string())
 
 
-@sql_backend_case
+@use_sql_backend
 class ChangingOwnershipTestSQL(ChangingOwnershipTest):
     pass
 
@@ -1269,7 +1269,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertNotEqual(original_payload.get_filename(), next_file.get_filename())
 
 
-@sql_backend_case
+@use_sql_backend
 class SyncTokenCachingTestSQL(SyncTokenCachingTest):
     pass
 
@@ -1845,7 +1845,7 @@ class MultiUserSyncTest(SyncBaseTest):
         })
 
 
-@sql_backend_case
+@use_sql_backend
 class MultiUserSyncTestSQL(MultiUserSyncTest):
     pass
 
@@ -1968,7 +1968,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
         self.assertItemsEqual(third_sync_log.case_ids_on_phone, ['host', 'extension'])
 
 
-@sql_backend_case
+@use_sql_backend
 class SteadyStateExtensionSyncTestSQL(SteadyStateExtensionSyncTest):
     pass
 
@@ -2066,7 +2066,7 @@ class SyncTokenReprocessingTest(SyncBaseTest):
             pass
 
 
-@sql_backend_case
+@use_sql_backend
 class SyncTokenReprocessingTestSQL(SyncTokenReprocessingTest):
     pass
 
@@ -2133,6 +2133,6 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
             _test()
 
 
-@sql_backend_case
+@use_sql_backend
 class LooseSyncTokenValidationTestSQL(LooseSyncTokenValidationTest):
     pass

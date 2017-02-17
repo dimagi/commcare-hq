@@ -14,7 +14,7 @@ from casexml.apps.case.xml import V2, V1
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    sql_backend_case,
+    use_sql_backend,
 )
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
@@ -188,7 +188,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual(cases[1].get_case_property('p'), '2')
 
 
-@sql_backend_case
+@use_sql_backend
 class CaseBugTestSQL(CaseBugTest):
     pass
 
@@ -306,6 +306,6 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(1, len(hierarchy['child_cases'][0]['child_cases']))
 
 
-@sql_backend_case
+@use_sql_backend
 class TestCaseHierarchySQL(TestCaseHierarchy):
     pass

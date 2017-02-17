@@ -15,7 +15,7 @@ from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdate
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import RebuildWithReason
-from corehq.form_processor.tests.utils import sql_backend_case
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
 from couchforms.models import XFormInstance
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
@@ -462,7 +462,7 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
         self.assertTrue(case.is_deleted)
 
 
-@sql_backend_case
+@use_sql_backend
 class CaseRebuildTestSQL(CaseRebuildTest):
     pass
 

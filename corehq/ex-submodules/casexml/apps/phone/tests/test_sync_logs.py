@@ -7,7 +7,7 @@ from casexml.apps.phone.restore import RestoreParams, RestoreConfig
 from casexml.apps.phone.tests.utils import create_restore_user, generate_restore_payload
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import sql_backend_case
+from corehq.form_processor.tests.utils import use_sql_backend
 
 
 class PhoneFootprintTest(SimpleTestCase):
@@ -110,7 +110,7 @@ class CachingReponseTest(TestCase):
         self.assertEqual(None, log.get_cached_payload(V2))
 
 
-@sql_backend_case
+@use_sql_backend
 class CachingReponseTestSQL(CachingReponseTest):
     pass
 

@@ -10,7 +10,7 @@ from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog, LOG_FORMAT_SIM
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload, create_restore_user
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import sql_backend_case
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request.api import set_request
 
@@ -186,6 +186,6 @@ class TestNewSyncSpecifics(TestCase):
         ], form_extras={'last_sync_token': sync_log._id})
 
 
-@sql_backend_case
+@use_sql_backend
 class TestNewSyncSpecificsSQL(TestNewSyncSpecifics):
     pass

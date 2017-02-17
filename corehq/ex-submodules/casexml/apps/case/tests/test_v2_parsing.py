@@ -13,7 +13,7 @@ from datetime import datetime
 from casexml.apps.case.xml import V2, V2_NAMESPACE
 from casexml.apps.case import const
 from casexml.apps.phone import xml
-from corehq.form_processor.tests.utils import sql_backend_case
+from corehq.form_processor.tests.utils import use_sql_backend
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -171,7 +171,7 @@ class Version2CaseParsingTest(TestCase):
         check_xml_line_by_line(self, expected_v2_response, v2response)
 
 
-@sql_backend_case
+@use_sql_backend
 class Version2CaseParsingTestSQL(Version2CaseParsingTest):
     pass
 

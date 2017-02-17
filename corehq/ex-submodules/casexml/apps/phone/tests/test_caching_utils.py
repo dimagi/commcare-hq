@@ -9,7 +9,7 @@ from casexml.apps.phone.exceptions import SyncLogCachingError
 from casexml.apps.phone.models import SimplifiedSyncLog, get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.dummy import dummy_restore_xml
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
-from corehq.form_processor.tests.utils import sql_backend_case
+from corehq.form_processor.tests.utils import use_sql_backend
 
 
 class CacheUtilsTest(SimpleTestCase):
@@ -75,7 +75,7 @@ class CacheUtilsDbTest(TestCase):
         self.assertEqual(updated_log.case_ids_on_phone, sync_log.case_ids_on_phone)
 
 
-@sql_backend_case
+@use_sql_backend
 class CacheUtilsDbTestSQL(CacheUtilsDbTest):
     pass
 

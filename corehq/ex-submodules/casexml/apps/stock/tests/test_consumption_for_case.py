@@ -2,7 +2,7 @@ from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_da
     compute_consumption_or_default)
 from casexml.apps.stock.tests.mock_consumption import now
 from casexml.apps.stock.tests.base import StockTestBase
-from corehq.form_processor.tests.utils import sql_backend_case
+from corehq.form_processor.tests.utils import use_sql_backend
 
 
 class ConsumptionCaseTest(StockTestBase):
@@ -44,7 +44,7 @@ class ConsumptionCaseTest(StockTestBase):
         ))
 
 
-@sql_backend_case
+@use_sql_backend
 class ConsumptionCaseTestSQL(ConsumptionCaseTest):
     pass
 

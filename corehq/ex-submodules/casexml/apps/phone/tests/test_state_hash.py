@@ -16,7 +16,7 @@ from casexml.apps.phone.tests.utils import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.form_processor.tests.utils import sql_backend_case
+from corehq.form_processor.tests.utils import use_sql_backend
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -104,6 +104,6 @@ class StateHashTest(TestCase):
 
 
 
-@sql_backend_case
+@use_sql_backend
 class StateHashTestSQL(StateHashTest):
     pass
