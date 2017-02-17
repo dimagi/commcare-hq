@@ -67,8 +67,9 @@ class CaseRebuildTestMixin(object):
 class CouchCaseRebuildTest(TestCase, CaseRebuildTestMixin):
 
     @classmethod
-    def setUpClass(cls):
-        super(CouchCaseRebuildTest, cls).setUpClass()
+    def tearDownClass(cls):
+        delete_all_cases()
+        super(CouchCaseRebuildTest, cls).tearDownClass()
 
     def test_couch_action_equality(self):
         case_id = _post_util(create=True)
