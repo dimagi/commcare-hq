@@ -256,10 +256,8 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
         super(CaseRebuildTest, cls).setUpClass()
         delete_all_cases()
 
-    @run_with_all_backends
     def test_rebuild_empty(self):
         self.assertEqual(None, rebuild_case_from_forms('anydomain', 'notarealid', RebuildWithReason(reason='test')))
-    @run_with_all_backends
     def test_archiving_only_form(self):
         """
         Checks that archiving the only form associated with the case archives
@@ -291,7 +289,6 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
         self.assertEqual(3, len(case.actions))
         self.assertTrue(case.actions[-1].is_case_rebuild)
 
-    @run_with_all_backends
     def test_form_archiving(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
@@ -420,7 +417,6 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
         self.assertFalse('p5' in case.dynamic_case_properties())  # should disappear entirely
         _reset(f3)
 
-    @run_with_all_backends
     def test_archie_modified_on(self):
         case_id = uuid.uuid4().hex
         now = datetime.utcnow().replace(microsecond=0)
@@ -445,7 +441,6 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
         case = case_accessors.get_case(case_id)
         self.assertEqual(way_earlier, case.modified_on)
 
-    @run_with_all_backends
     def test_archive_against_deleted_case(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order

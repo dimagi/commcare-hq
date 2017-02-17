@@ -140,6 +140,34 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
                                 sync_token, date=date)
 
 
+class CaseMultimediaTestCouch(BaseCaseMultimediaTest):
+
+    def testUpdateWithNoNewAttachment(self):
+        _, case = self._doCreateCaseWithMultimedia()
+        bulk_save = XFormInstance.get_db().bulk_save
+        bulk_save_attachments = []
+
+        # pull out and record attachments to docs being bulk saved
+        def new_bulk_save(docs, *args, **kwargs):
+            for doc in docs:
+                if doc['_id'] == TEST_CASE_ID:
+                    bulk_save_attachments.append(doc._deferred_blobs)
+            bulk_save(docs, *args, **kwargs)
+
+        self._doSubmitUpdateWithMultimedia(
+            new_attachments=[], removes=[])
+
+        with patch('couchforms.models.XFormInstance._db.bulk_save', new_bulk_save):
+            # submit from the 2 min in the past to trigger a rebuild
+            self._doSubmitUpdateWithMultimedia(
+                new_attachments=[], removes=[],
+                date=datetime.utcnow() - timedelta(minutes=2))
+
+        # make sure there's exactly one bulk save recorded
+        # and none of the attachments were re-saved in rebuild
+        self.assertEqual(bulk_save_attachments, [{}])
+
+
 class CaseMultimediaTest(BaseCaseMultimediaTest):
     """
     Tests new attachments for cases and case properties
@@ -252,31 +280,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
                 self._calc_file_hash(attach_name),
                 hashlib.md5(case.get_attachment(attach_name)).hexdigest()
             )
-
-    def testUpdateWithNoNewAttachment(self):
-        _, case = self._doCreateCaseWithMultimedia()
-        bulk_save = XFormInstance.get_db().bulk_save
-        bulk_save_attachments = []
-
-        # pull out and record attachments to docs being bulk saved
-        def new_bulk_save(docs, *args, **kwargs):
-            for doc in docs:
-                if doc['_id'] == TEST_CASE_ID:
-                    bulk_save_attachments.append(doc._deferred_blobs)
-            bulk_save(docs, *args, **kwargs)
-
-        self._doSubmitUpdateWithMultimedia(
-            new_attachments=[], removes=[])
-
-        with patch('couchforms.models.XFormInstance._db.bulk_save', new_bulk_save):
-            # submit from the 2 min in the past to trigger a rebuild
-            self._doSubmitUpdateWithMultimedia(
-                new_attachments=[], removes=[],
-                date=datetime.utcnow() - timedelta(minutes=2))
-
-        # make sure there's exactly one bulk save recorded
-        # and none of the attachments were re-saved in rebuild
-        self.assertEqual(bulk_save_attachments, [{}])
 
     def test_sync_log_invalidation_bug(self):
         sync_log = FormProcessorInterface().sync_log_model(

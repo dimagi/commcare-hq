@@ -27,13 +27,7 @@ class SimpleCaseBugTests(SimpleTestCase):
             CommCareCase(_id='test').to_xml(version)
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-class CaseBugTest(TestCase, TestFileMixin):
-    """
-    Tests bugs that come up in case processing
-    """
-    file_path = ('data', 'bugs')
-    root = os.path.dirname(__file__)
+class CaseBugTestCouch(TestCase, TestFileMixin):
 
     @classmethod
     def setUpClass(cls):
@@ -52,6 +46,25 @@ class CaseBugTest(TestCase, TestFileMixin):
         xml_data = self.get_xml('id_conflicts')
         with self.assertRaises(BulkSaveError):
             submit_form_locally(xml_data, 'test-domain')
+
+
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
+class CaseBugTest(TestCase, TestFileMixin):
+    """
+    Tests bugs that come up in case processing
+    """
+    file_path = ('data', 'bugs')
+    root = os.path.dirname(__file__)
+
+    @classmethod
+    def setUpClass(cls):
+        super(CaseBugTest, cls).setUpClass()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        super(CaseBugTest, cls).tearDownClass()
 
     def test_empty_case_id(self):
         """
