@@ -1155,6 +1155,7 @@ class Subscription(models.Model):
                 or (end_after_related_start and related_has_no_end)
                 or (start_before_related_start and end_after_related_end)
                 or (start_before_related_end and current_has_no_end)
+                or (current_has_no_end and related_has_no_end)
             ):
                 raise SubscriptionAdjustmentError(
                     "The start date of %(start_date)s conflicts with the "
