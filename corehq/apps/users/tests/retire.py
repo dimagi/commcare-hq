@@ -4,6 +4,8 @@ import mock
 import uuid
 from xml.etree import ElementTree
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -197,3 +199,35 @@ class RetireUserTestCase(TestCase):
 
         self.assertEqual(rebuild_case.call_count, len(case_ids) - 1)
         self.assertItemsEqual(rebuild_case.call_args_list, expected_call_args)
+
+    @run_with_all_backends
+    def test_system_forms_deleted(self):
+        domain = create_domain(self.domain)
+        self.addCleanup(domain.delete)
+        from corehq.apps.callcenter.utils import sync_user_case
+        sync_user_case(self.commcare_user, USERCASE_TYPE, self.commcare_user.get_id)
+
+        user_case = self.commcare_user.get_usercase()
+
+        case_id = uuid.uuid4().hex
+        caseblock = CaseBlock(
+            create=True,
+            case_id=case_id,
+            owner_id=self.commcare_user._id,
+            user_id=self.commcare_user._id,
+        )
+        xform, _ = submit_case_blocks(caseblock.as_string(), self.domain)
+
+        case_ids = CaseAccessors(self.domain).get_case_ids_by_owners([self.commcare_user._id])
+        self.assertEqual(2, len(case_ids))
+
+        form_ids = FormAccessors(self.domain).get_form_ids_for_user(self.commcare_user._id)
+        self.assertEqual(0, len(form_ids))
+
+        self.commcare_user.retire()
+
+        for form_id in user_case.xform_ids + [xform.form_id]:
+            self.assertTrue(FormAccessors(self.domain).get_form(form_id).is_deleted)
+
+        for case_id in case_ids:
+            self.assertTrue(CaseAccessors(self.domain).get_case(case_id).is_deleted)
