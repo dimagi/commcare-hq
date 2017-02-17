@@ -20,7 +20,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, sql_backend_test_case
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sql_backend_case
 from corehq.util.test_utils import TestFileMixin, trap_extra_setup
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
@@ -295,7 +295,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
                                            sync_token=sync_log._id)
 
 
-@sql_backend_test_case
+@sql_backend_case
 class CaseMultimediaTestSQL(CaseMultimediaTest):
     pass
 
@@ -330,7 +330,7 @@ class CaseMultimediaS3DBTest(BaseCaseMultimediaTest):
         )
 
 
-@sql_backend_test_case
+@sql_backend_case
 class CaseMultimediaS3DBTestSQL(CaseMultimediaS3DBTest):
     pass
 

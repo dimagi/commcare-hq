@@ -5,7 +5,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.case.xform import process_cases_with_casedb
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
-from corehq.form_processor.tests.utils import sql_backend_test_case
+from corehq.form_processor.tests.utils import sql_backend_case
 
 
 CASE_ID = 'a0cd5e6c5fb84695a4f729d3b1996a93'
@@ -41,7 +41,7 @@ class StrictDatetimesTest(TestCase):
                     process_cases_with_casedb(xforms, case_db)
 
 
-@sql_backend_test_case
+@sql_backend_case
 class StrictDatetimesTestSQL(StrictDatetimesTest):
     pass
 

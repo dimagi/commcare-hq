@@ -5,7 +5,7 @@ from casexml.apps.case.const import CASE_ACTION_UPDATE
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLog, CaseState, SimplifiedSyncLog
-from corehq.form_processor.tests.utils import sql_backend_test_case
+from corehq.form_processor.tests.utils import sql_backend_case
 from couchforms.models import XFormInstance
 
 
@@ -53,6 +53,6 @@ class SyncLogAssertionTest(TestCase):
                 self.assertIn(dependent_case_state, log.test_only_get_dependent_cases_on_phone())
 
 
-@sql_backend_test_case
+@sql_backend_case
 class SyncLogAssertionTestSQL(SyncLogAssertionTest):
     pass

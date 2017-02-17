@@ -172,7 +172,7 @@ run_with_all_backends = functools.partial(
 )
 
 
-def sql_backend_test_case(cls):
+def sql_backend_case(cls):
     return attr(sql_backend=True)(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
 
 

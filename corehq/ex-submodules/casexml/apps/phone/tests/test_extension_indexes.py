@@ -9,7 +9,7 @@ from casexml.apps.case.tests.util import assert_user_doesnt_have_cases, \
     assert_user_has_cases
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
-from corehq.form_processor.tests.utils import sql_backend_test_case
+from corehq.form_processor.tests.utils import sql_backend_case
 from corehq.util.test_utils import softer_assert
 
 
@@ -140,6 +140,6 @@ class IndexTreeTest(SyncBaseTest):
         self.factory.create_or_update_cases(case_structures)
 
 
-@sql_backend_test_case
+@sql_backend_case
 class IndexTreeTestSQL(IndexTreeTest):
     pass

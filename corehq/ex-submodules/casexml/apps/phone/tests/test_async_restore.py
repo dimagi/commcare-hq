@@ -12,7 +12,7 @@ from casexml.apps.case.tests.util import (
     delete_all_sync_logs,
 )
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import sql_backend_test_case
+from corehq.form_processor.tests.utils import sql_backend_case
 from casexml.apps.phone.restore import (
     RestoreConfig,
     RestoreParams,
@@ -236,7 +236,7 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         self.assertTrue(cache.delete.called)
 
 
-@sql_backend_test_case
+@sql_backend_case
 class AsyncRestoreTestSQL(AsyncRestoreTest):
     pass
 

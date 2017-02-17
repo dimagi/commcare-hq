@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.tests.utils import sql_backend_test_case
+from corehq.form_processor.tests.utils import sql_backend_case
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 
 
@@ -205,6 +205,6 @@ class CaseFactoryTest(TestCase):
         self.assertEqual('differenttoken', form.last_sync_token)
 
 
-@sql_backend_test_case
+@sql_backend_case
 class CaseFactoryTestSQL(CaseFactoryTest):
     pass

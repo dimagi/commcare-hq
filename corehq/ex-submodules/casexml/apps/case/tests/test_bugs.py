@@ -14,7 +14,7 @@ from casexml.apps.case.xml import V2, V1
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
-    sql_backend_test_case,
+    sql_backend_case,
 )
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
@@ -29,15 +29,18 @@ class SimpleCaseBugTests(SimpleTestCase):
 
 class CaseBugTestCouch(TestCase, TestFileMixin):
 
+    file_path = ('data', 'bugs')
+    root = os.path.dirname(__file__)
+
     @classmethod
     def setUpClass(cls):
-        super(CaseBugTest, cls).setUpClass()
+        super(CaseBugTestCouch, cls).setUpClass()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
 
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
-        super(CaseBugTest, cls).tearDownClass()
+        super(CaseBugTestCouch, cls).tearDownClass()
 
     def test_conflicting_ids(self):
         """
@@ -185,7 +188,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual(cases[1].get_case_property('p'), '2')
 
 
-@sql_backend_test_case
+@sql_backend_case
 class CaseBugTestSQL(CaseBugTest):
     pass
 
@@ -303,6 +306,6 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(1, len(hierarchy['child_cases'][0]['child_cases']))
 
 
-@sql_backend_test_case
+@sql_backend_case
 class TestCaseHierarchySQL(TestCaseHierarchy):
     pass

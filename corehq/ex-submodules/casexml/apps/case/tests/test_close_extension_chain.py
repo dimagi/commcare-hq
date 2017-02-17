@@ -6,7 +6,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from casexml.apps.case.xform import get_extensions_to_close
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, sql_backend_test_case
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sql_backend_case
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
@@ -241,6 +241,6 @@ class AutoCloseExtensionsTest(TestCase):
         self.assertTrue(cases[self.extension_ids[1]])
 
 
-@sql_backend_test_case
+@sql_backend_case
 class AutoCloseExtensionsTestSQL(AutoCloseExtensionsTest):
     pass

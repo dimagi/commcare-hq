@@ -6,7 +6,7 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, sql_backend_test_case
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sql_backend_case
 from django.test import TestCase
 
 
@@ -146,7 +146,7 @@ class TestExtensionCaseIds(TestCase):
         self.assertItemsEqual(returned_cases, [extension_id, extension_2_id])
 
 
-@sql_backend_test_case
+@sql_backend_case
 class TestExtensionCaseIdsSQL(TestExtensionCaseIds):
     pass
 
@@ -182,7 +182,7 @@ class TestIndexedCaseIds(TestCase):
         self.assertItemsEqual(returned_cases, [host_id])
 
 
-@sql_backend_test_case
+@sql_backend_case
 class TestIndexedCaseIdsSQL(TestIndexedCaseIds):
     pass
 

@@ -10,7 +10,7 @@ from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
-from corehq.form_processor.tests.utils import sql_backend_test_case
+from corehq.form_processor.tests.utils import sql_backend_case
 
 
 @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)
@@ -483,7 +483,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self._verify_set_cleanliness_flags()
 
 
-@sql_backend_test_case
+@sql_backend_case
 class OwnerCleanlinessTestSQL(OwnerCleanlinessTest):
     pass
 
@@ -503,7 +503,7 @@ class SetCleanlinessFlagsTest(TestCase):
                 set_cleanliness_flags('whatever', invalid_owner)
 
 
-@sql_backend_test_case
+@sql_backend_case
 class SetCleanlinessFlagsTestSQL(SetCleanlinessFlagsTest):
     pass
 
@@ -669,7 +669,7 @@ class GetCaseFootprintInfoTest(TestCase):
         )
 
 
-@sql_backend_test_case
+@sql_backend_case
 class GetCaseFootprintInfoTestSQL(GetCaseFootprintInfoTest):
     pass
 
@@ -759,6 +759,6 @@ class GetDependentCasesTest(TestCase):
                          get_dependent_case_info(self.domain, [parent.case_id]).extension_ids)
 
 
-@sql_backend_test_case
+@sql_backend_case
 class GetDependentCasesTestSQL(GetDependentCasesTest):
     pass
