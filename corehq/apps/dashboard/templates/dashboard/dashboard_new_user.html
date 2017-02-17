@@ -5,22 +5,13 @@
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-<script>
-    $(function() {
-        analytics.workflow('Visited new user dashboard');
-        var $links = [];
-        {% for template in templates %}
-            $links.push($('.dashboard-link[data-index="{{ forloop.counter0 }}"]'));
-            gaTrackLink($links[{{ forloop.counter0 }}], 'Dashboard', 'Welcome Tile', '{{ template.action }}');
-            analytics.trackWorkflowLink($links[{{ forloop.counter0 }}], '{{ template.description }}');
-            analytics.trackWorkflowLink($links[{{ forloop.counter0 }}], 'Clicked App Template Tile');
-        {% endfor %}
-    });
-</script>
+{% block js %}
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+    <script src="{% static 'dashboard/js/dashboard_new_user.js' %}"></script>
 {% endblock %}
 
 {% block dashboard-content %}
+{% initial_page_data 'templates' templates %}
 <div class="page-header">
     {% if request|toggle_enabled:"APP_MANAGER_V2" %}
         <h1>{% trans 'Would you like to work on an existing app or create a new one?' %}</h1>

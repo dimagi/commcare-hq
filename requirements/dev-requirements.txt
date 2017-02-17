@@ -15,7 +15,7 @@ fixture
 sniffer
 psutil  # for memory profiling
 django-extensions
-ipython==4.2.1
+ipython==5.2.2
 ipdb==0.9.4
 wheel==0.29.0
 

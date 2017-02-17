@@ -98,19 +98,25 @@ class HierarchicalLocationSerializer(object):
 class FlatLocationSerializer(object):
 
     def get_xml_nodes(self, fixture_id, restore_user, all_locations):
-        if not should_sync_flat_fixture(restore_user.domain):
+        if not should_sync_flat_fixture(restore_user.project):
             return []
         all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
             'code', flat=True
         )
         location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
-        attrs_to_index = location_type_attrs + ['id', 'type']
 
-        return [self._get_schema_node(fixture_id, attrs_to_index),
-                self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs)]
+        if toggles.INDEX_LOCATIONS_FIXTURE.enabled(restore_user.domain):
+            attrs_to_index = location_type_attrs + ['id', 'type']
+            return [self._get_schema_node(fixture_id, attrs_to_index),
+                    self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs)]
+
+        return [self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs)]
 
     def _get_fixture_node(self, fixture_id, restore_user, all_locations, location_type_attrs):
-        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id, 'indexed': 'true'})
+        root_attrs = {'id': fixture_id, 'user_id': restore_user.user_id}
+        if toggles.INDEX_LOCATIONS_FIXTURE.enabled(restore_user.domain):
+            root_attrs['indexed'] = 'true'
+        root_node = Element('fixture', root_attrs)
         outer_node = Element('locations')
         root_node.append(outer_node)
         for location in sorted(all_locations.by_id.values(), key=lambda l: l.site_code):
@@ -143,16 +149,22 @@ class FlatLocationSerializer(object):
 
 
 def should_sync_hierarchical_fixture(project):
+    # Sync hierarchical fixture for domains with fixture toggle enabled for migration and
+    # configuration set to use hierarchical fixture
+    # Even if both fixtures are set up, this one takes priority for domains with toggle enabled
     return (
         project.uses_locations and
+        toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(project.name) and
         LocationFixtureConfiguration.for_domain(project.name).sync_hierarchical_fixture
     )
 
 
-def should_sync_flat_fixture(domain):
+def should_sync_flat_fixture(project):
+    # Sync flat fixture for domains with conf for flat fixture enabled
+    # This does not check for toggle for migration to allow domains those domains to migrate to flat fixture
     return (
-        toggles.FLAT_LOCATION_FIXTURE.enabled(domain) and
-        LocationFixtureConfiguration.for_domain(domain).sync_flat_fixture
+        project.uses_locations and
+        LocationFixtureConfiguration.for_domain(project.name).sync_flat_fixture
     )
 
 
@@ -171,8 +183,6 @@ def get_all_locations_to_sync(user):
         all_locations = set()
 
         user_locations = set(user.get_sql_locations(user.domain))
-        # old flagged multi-locations, ToDo remove in next phase
-        user_locations |= {location for location in _gather_multiple_locations(user)}
         for user_location in user_locations:
             location_type = user_location.location_type
             expand_from = location_type.expand_from or location_type
@@ -191,16 +201,6 @@ def get_all_locations_to_sync(user):
             all_locations |= _get_include_without_expanding_locations(user.domain, location_type)
 
         return LocationSet(all_locations)
-
-
-def _gather_multiple_locations(user):
-    """If the project has multiple locations enabled, returns all the extra
-    locations the user is assigned to.
-    """
-    if user.project.supports_multiple_locations_per_user:
-        location_ids = [loc.location_id for loc in user.locations]
-        for location in SQLLocation.active_objects.filter(location_id__in=location_ids):
-            yield location
 
 
 def _get_expand_from_level(domain, user_location, expand_from):
@@ -284,7 +284,7 @@ def _get_metadata_node(location):
     node = Element('location_data')
     for key, value in location.metadata.items():
         element = Element(key)
-        element.text = value
+        element.text = unicode(value)
         node.append(element)
     return node
 

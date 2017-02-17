@@ -24,8 +24,9 @@
     <script src="{% static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
-    {% endcompress %}
     <script src="{% static 'style/js/knockout_subscribables.ko.js' %}"></script>
+    <script src="{% static 'app_manager/js/value-or-none-ui.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -323,7 +324,7 @@
             {% trans "Edit" %}
         </button>
         {% endif %}
-        {% if allow_cloudcare %}
+        {% if can_preview_form and allow_cloudcare %}
             {% if form.source %}
             <a id="cloudcare-preview-url" href="#" target="_blank" class="btn btn-default">
                 <i class="fa fa-play"></i>

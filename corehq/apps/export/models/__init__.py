@@ -23,6 +23,8 @@ from .new import (
     CaseExportDataSchema,
     InferredSchema,
     InferredExportGroupSchema,
+    FormInferredSchema,
+    CaseInferredSchema,
     ExportGroupSchema,
     TableConfiguration,
     LabelItem,

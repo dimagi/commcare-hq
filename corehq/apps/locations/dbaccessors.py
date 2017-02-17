@@ -76,3 +76,19 @@ def get_users_location_ids(domain, user_ids):
               .run())
     location_ids = [r['assigned_location_ids'] for r in result.hits if 'assigned_location_ids' in r]
     return list(chain(*location_ids))
+
+
+def user_ids_at_locations(location_ids):
+    return UserES().location(location_ids).get_ids()
+
+
+def user_ids_at_locations_and_descendants(location_ids):
+    from corehq.apps.locations.models import SQLLocation
+    location_ids_and_children = SQLLocation.objects.get_locations_and_children_ids(location_ids)
+    return user_ids_at_locations(location_ids_and_children)
+
+
+def user_ids_at_accessible_locations(domain_name, user):
+    from corehq.apps.locations.models import SQLLocation
+    accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(domain_name, user)
+    return user_ids_at_locations(accessible_location_ids)

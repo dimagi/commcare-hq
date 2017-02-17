@@ -289,6 +289,12 @@ hqDefine('app_manager/js/app_manager.js', function () {
         }
 
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+            $('.appnav-responsive').on('click', function () {
+                $('#js-appmanager-body').addClass('hide')
+            });
+        }
+
+        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
 
             $('#js-add-new-item').popover({
                 title: django.gettext("Add"),

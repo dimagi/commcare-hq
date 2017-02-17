@@ -1,4 +1,5 @@
 from urllib import urlencode
+
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.http import Http404
@@ -21,14 +22,14 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
-from corehq.apps.reports.models import ReportConfig
+from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
 from corehq.form_processor.utils import use_new_exports
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
-from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
+from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
@@ -36,7 +37,7 @@ from django_prbac.utils import has_privilege
 
 class ProjectReportsTab(UITab):
     title = ugettext_noop("Reports")
-    view = "corehq.apps.reports.views.default"
+    view = "reports_home"
 
     url_prefix_formats = ('/a/{domain}/reports/',)
 
@@ -47,7 +48,7 @@ class ProjectReportsTab(UITab):
     @property
     def view(self):
         if self.domain in WORLD_VISION_DOMAINS:
-            return "corehq.apps.reports.views.default"
+            return "reports_home"
         from corehq.apps.reports.views import MySavedReportsView
         return MySavedReportsView.urlname
 
@@ -59,8 +60,15 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = tools + report_builder_nav + custom_reports + project_reports
+        sidebar_items = tools + report_builder_nav + self._regroup_sidebar_items(custom_reports + project_reports)
         return self._filter_sidebar_items(sidebar_items)
+
+    def _regroup_sidebar_items(self, sidebar_items):
+        try:
+            ordering = ReportsSidebarOrdering.objects.get(domain=self.domain)
+        except ReportsSidebarOrdering.DoesNotExist:
+            return sidebar_items
+        return regroup_sidebar_items(ordering.config, sidebar_items)
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
@@ -216,7 +224,7 @@ class IndicatorAdminTab(UITab):
 
 class DashboardTab(UITab):
     title = ugettext_noop("Dashboard")
-    view = 'corehq.apps.dashboard.views.dashboard_default'
+    view = 'dashboard_default'
 
     url_prefix_formats = ('/a/{domain}/dashboard/project/',)
 
@@ -252,7 +260,7 @@ class ProjectInfoTab(UITab):
 
 class SetupTab(UITab):
     title = ugettext_noop("Setup")
-    view = "corehq.apps.commtrack.views.default"
+    view = "default_commtrack_setup"
 
     url_prefix_formats = (
         '/a/{domain}/settings/products/',
@@ -378,7 +386,7 @@ class SetupTab(UITab):
 
 class ProjectDataTab(UITab):
     title = ugettext_noop("Data")
-    view = "corehq.apps.data_interfaces.views.default"
+    view = "data_interfaces_default"
     url_prefix_formats = (
         '/a/{domain}/data/',
         '/a/{domain}/fixtures/',
@@ -718,6 +726,10 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 
+        if toggles.DATA_DICTIONARY.enabled(self.domain):
+            items.append([_('Data Dictionary'),
+                          [{'title': 'Data Dictionary',
+                            'url': reverse('data_dictionary', args=[self.domain])}]])
         return items
 
     @property
@@ -727,15 +739,7 @@ class ProjectDataTab(UITab):
         from corehq.apps.export.views import (
             FormExportListView,
             CaseExportListView,
-            DashboardFeedListView,
-            DailySavedExportListView,
-            DailySavedExportPaywall,
-            DashboardFeedPaywall,
         )
-        daily_saved_list_url = reverse(DailySavedExportListView.urlname, args=(self.domain,))
-        daily_saved_paywall_url = reverse(DailySavedExportPaywall.urlname, args=(self.domain,))
-        feed_list_url = reverse(DashboardFeedListView.urlname, args=(self.domain,))
-        feed_paywall_url = reverse(DashboardFeedPaywall.urlname, args=(self.domain,))
         items = []
         if self.can_view_form_exports:
             items.append(dropdown_dict(
@@ -746,18 +750,6 @@ class ProjectDataTab(UITab):
             items.append(dropdown_dict(
                 CaseExportListView.page_title,
                 url=reverse(CaseExportListView.urlname, args=(self.domain,))
-            ))
-        if self.should_see_daily_saved_export_list_view or self.should_see_daily_saved_export_paywall:
-            url = daily_saved_list_url if self.should_see_daily_saved_export_list_view else daily_saved_paywall_url
-            items.append(dropdown_dict(
-                DailySavedExportListView.page_title,
-                url=url
-            ))
-        if self.should_see_dashboard_feed_list_view or self.should_see_dashboard_feed_paywall:
-            url = feed_list_url if self.should_see_dashboard_feed_list_view else feed_paywall_url
-            items.append(dropdown_dict(
-                DashboardFeedListView.page_title,
-                url=url,
             ))
         items += [
             dropdown_dict(None, is_divider=True),
@@ -835,7 +827,7 @@ class CloudcareTab(UITab):
         if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
             return FormplayerMain.urlname
         else:
-            return "corehq.apps.cloudcare.views.default"
+            return "cloudcare_default"
 
     @property
     def title(self):
@@ -855,7 +847,7 @@ class CloudcareTab(UITab):
 
 class MessagingTab(UITab):
     title = ugettext_noop("Messaging")
-    view = "corehq.apps.sms.views.default"
+    view = "sms_default"
 
     url_prefix_formats = (
         '/a/{domain}/sms/',
@@ -1506,7 +1498,7 @@ def _get_feature_flag_items(domain):
             'title': _('Calendar Fixture'),
             'url': reverse(CalendarFixtureConfigView.urlname, args=[domain])
         })
-    if toggles.FLAT_LOCATION_FIXTURE.enabled(domain):
+    if toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
         feature_flag_items.append({
             'title': _('Location Fixture'),
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
@@ -1648,7 +1640,7 @@ class SMSAdminTab(UITab):
 
 class AdminTab(UITab):
     title = ugettext_noop("Admin")
-    view = "corehq.apps.hqadmin.views.default"
+    view = "default_admin_report"
 
     url_prefix_formats = ('/hq/admin/',)
 
@@ -1667,8 +1659,6 @@ class AdminTab(UITab):
             dropdown_dict(_("System Info"), url=reverse("system_info")),
             dropdown_dict(_("Submission Map"), url=reverse("dimagisphere")),
             dropdown_dict(_("Management"), is_header=True),
-            dropdown_dict(mark_for_escaping(_("Commands")),
-                          url=reverse("management_commands")),
             # dropdown_dict(mark_for_escaping("HQ Announcements"),
             #                      url=reverse("default_announcement_admin")),
         ]
@@ -1690,7 +1680,8 @@ class AdminTab(UITab):
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
             dropdown_dict(_("CommCare Builds"), url="/builds/edit_menu"),
             dropdown_dict(None, is_divider=True),
-            dropdown_dict(_("Django Admin"), url="/admin")
+            dropdown_dict(_("Django Admin"), url="/admin"),
+            dropdown_dict(_("View All"), url=self.url),
         ])
         return submenu_context
 

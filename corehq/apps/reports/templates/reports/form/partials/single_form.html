@@ -175,7 +175,7 @@ requires imports/proptable.html to be included in the main template
         <br/>
         <ul class="list-inline">
             {% if instance.app_id %}<li><a href="{% url "view_app" domain instance.app_id %}">{% trans "View app" %}</a></li>{% endif %}
-            {% if instance.build_id and request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
+            {% if instance.build_id and request.user.is_superuser %}
                 <a href="{% url "download_index" domain instance.build_id %}">{% trans "View build" %}</a>
             {% endif %}
         </ul>

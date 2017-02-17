@@ -158,9 +158,9 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
 
         pre_cases = self.factory.create_or_update_case(
             CaseStructure(
-                attrs={'case_name': 'child', 'update': {'age': 3, 'diabetic': False}},
+                attrs={'case_name': 'child', 'update': {'age': 3, 'diabetic': False}, 'create': True},
                 indices=[
-                    CaseIndex(CaseStructure(attrs={'case_name': 'parent', 'update': {'age': 42}})),
+                    CaseIndex(CaseStructure(attrs={'case_name': 'parent', 'update': {'age': 42}, 'create': True})),
                 ]
             )
         )

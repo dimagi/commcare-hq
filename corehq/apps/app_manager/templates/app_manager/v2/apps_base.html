@@ -81,52 +81,25 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
     <script src="{% static 'style/js/ui-element.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
 
 
     <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
+    <script src="{% static 'app_manager/js/apps_base.js' %}"></script>
 
 
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-    $(function () {
-        $('#deleted-app-modal').modal({
-            backdrop: 'static',
-            keyboard: false,
-            show: true
-        }).on('hide.bs.modal', function () {
-            window.location = "{% url "default_app" domain %}";
-        });
-
-        var previewApp = hqImport('app_manager/js/preview_app.js');
-        previewApp.initPreviewWindow(hqLayout);
-
-    });
-    $(function () {
-       $('.appmanager-content').fadeIn();
-       $('.appmanager-loading').fadeOut();
-    });
-
-    hqLayout.utils.setIsAppbuilderResizing(true);
-
-    </script>
 {% endblock %}
 
 {% block page_breadcrumbs %}{% endblock %}
 
-{% block content %}
-  {{ block.super }}
+{% block content %}{{ block.super }}
+  {% registerurl "default_app" domain %}
   {% include 'app_manager/v2/partials/preview_app.html'%}
 {% endblock %}
 
 {% block page_content %}
-<div class="appmanager-loading-container">
-  <div class="appmanager-loading appmanager-loading-body">
-    <i class="fa fa-spin fa-spinner"></i>
-  </div>
-</div>
-<div class="appmanager-content appmanager-content-animate-preview"
+<div class="appmanager-content appmanager-content-animate-preview{% if not formdesigner %} appmanager-content-not-formdesigner{% endif %}"
      id="js-appmanager-body">
     {% if app %}
         {% if error %}

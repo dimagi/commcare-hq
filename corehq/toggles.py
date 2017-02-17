@@ -287,19 +287,19 @@ ADD_USERS_FROM_LOCATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DETAIL_LIST_TABS = StaticToggle(
-    'detail-list-tabs',
-    'Tabs in the case detail list',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
+)
+
+DHIS2_INTEGRATION = StaticToggle(
+    'dhis2_integration',
+    'DHIS2 Integration',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )
 
 GRAPH_CREATION = StaticToggle(
@@ -334,7 +334,11 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    description=(
+        "A feature which will allow your domain to create User Configurable Reports."
+    ),
+    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting', 
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -365,25 +369,31 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-STOCK_TRANSACTION_EXPORT = StaticToggle(
-    'ledger_export',
-    'Show "export transactions" link on case details page',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 SYNC_ALL_LOCATIONS = StaticToggle(
     'sync_all_locations',
-    'Sync the full location hierarchy when syncing location fixtures',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    '(Deprecated) Sync the full location hierarchy when syncing location fixtures',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    description="Do not turn this feature flag. It is only used for providing compatability for old projects. "
+    "We are actively trying to remove projects from this list. This functionality is now possible by using the "
+    "Advanced Settings on the Organization Levels page and setting the Level to Expand From option."
 )
 
 FLAT_LOCATION_FIXTURE = StaticToggle(
     'flat_location_fixture',
-    'Sync the location fixture in a flat format.',
-    TAG_PRODUCT_PATH,
+    'Sync the location fixture in a flat format. ',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
+)
+
+HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
+    'hierarchical_location_fixture',
+    'Display Settings To Get Hierarchical Location Fixture',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Do not turn this feature flag.  It is only used for providing compatability for old projects.  We are actively trying to remove projects from this list."
+    ),
 )
 
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
@@ -445,19 +455,11 @@ MOBILE_PRIVILEGES_FLAG = StaticToggle(
     [NAMESPACE_USER]
 )
 
-MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
-    'multiple_locations',
-    "(Deprecated) Enable multiple locations per user on domain.",
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    description="Don't enable this flag."
-)
-
 PRODUCTS_PER_LOCATION = StaticToggle(
     'products_per_location',
     "Products Per Location: Specify products stocked at individual locations.  "
     "This doesn't actually do anything yet.",
-    TAG_PRODUCT_CORE,
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 
@@ -812,13 +814,6 @@ LEGACY_SYNC_SUPPORT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VIEW_BUILD_SOURCE = StaticToggle(
-    'diff_builds',
-    'Allow users to view and diff build source files',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',
     'Enable EWSGhana web user extension',
@@ -831,14 +826,6 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     'Enable the use of locations as owners of call center cases',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-GRID_MENUS = StaticToggle(
-    'grid_menus',
-    'Allow using grid menus on Android',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Grid+Views',
 )
 
 OLD_EXPORTS = StaticToggle(
@@ -940,13 +927,20 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+EDIT_FORMPLAYER = PredictablyRandomToggle(
+    'edit_formplayer',
+    'Edit forms on Formplayer',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    randomness=0.1,
+)
 
 PREVIEW_APP = PredictablyRandomToggle(
     'preview_app',
     'Preview an application in the app builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.2,
+    randomness=1.0,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -1003,6 +997,17 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     ),
 )
 
+INDEX_LOCATIONS_FIXTURE = StaticToggle(
+    'index_locations_fixture',
+    'Turn on the index schema for the flat locations fixture',
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=(
+        "There have been reports of issues with this, so we're sticking it "
+        "behind a feature flag until those are resolved."
+    ),
+)
+
 DATA_DICTIONARY = StaticToggle(
     'data_dictionary',
     'Domain level data dictionary of cases',
@@ -1017,16 +1022,11 @@ LINKED_APPS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
-    'nimbus_form_validation',
-    'Use Nimbus to validate XForms',
+FORMTRANSLATE_FORM_VALIDATION = StaticToggle(
+    'formtranslate_form_validation',
+    'Use formtranslate to validate XForms',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    randomness=1.0,
-    always_disabled=[
-        'icrc-almanach',
-        'mikolo'
-    ]
+    [NAMESPACE_DOMAIN]
 )
 
 USER_PROPERTY_EASY_REFS = StaticToggle(
@@ -1050,10 +1050,9 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DO_NOT_PROCESS_OLD_BUILDS = PredictablyRandomToggle(
-    'do_not_process_old_builds',
-    'Do not process old build for export generation',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN],
-    randomness=0.2,
+INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
+    'include_metadata_in_ucr_excel_exports',
+    'Include metadata in UCR excel exports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
 )

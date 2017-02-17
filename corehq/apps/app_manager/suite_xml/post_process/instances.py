@@ -110,18 +110,20 @@ class register_factory(object):
         return fn
 
 
-INSTANCE_BY_ID = {
-    'groups': Instance(id='groups', src='jr://fixture/user-groups'),
-    'reports': Instance(id='reports', src='jr://fixture/commcare:reports'),
-    'ledgerdb': Instance(id='ledgerdb', src='jr://instance/ledgerdb'),
-    'casedb': Instance(id='casedb', src='jr://instance/casedb'),
-    'commcaresession': Instance(id='commcaresession', src='jr://instance/session'),
+INSTANCE_KWARGS_BY_ID = {
+    'groups': dict(id='groups', src='jr://fixture/user-groups'),
+    'reports': dict(id='reports', src='jr://fixture/commcare:reports'),
+    'ledgerdb': dict(id='ledgerdb', src='jr://instance/ledgerdb'),
+    'casedb': dict(id='casedb', src='jr://instance/casedb'),
+    'commcaresession': dict(id='commcaresession', src='jr://instance/session'),
 }
 
 
-@register_factory(*INSTANCE_BY_ID.keys())
+@register_factory(*INSTANCE_KWARGS_BY_ID.keys())
 def preset_instances(domain, instance_name):
-    return INSTANCE_BY_ID.get(instance_name, None)
+    kwargs = INSTANCE_KWARGS_BY_ID.get(instance_name, None)
+    if kwargs:
+        return Instance(**kwargs)
 
 
 @register_factory('item-list', 'schedule', 'indicators', 'commtrack')
@@ -144,10 +146,11 @@ def commcare_fixture_instances(domain, instance_name):
 
 @register_factory('locations')
 def location_fixture_instances(domain, instance_name):
-    if toggles.FLAT_LOCATION_FIXTURE.enabled(domain):
-        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
-    else:
+    from corehq.apps.locations.models import LocationFixtureConfiguration
+    if (toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain)
+            and not LocationFixtureConfiguration.for_domain(domain).sync_flat_fixture):
         return Instance(id=instance_name, src='jr://fixture/commtrack:{}'.format(instance_name))
+    return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
 def get_all_instances_referenced_in_xpaths(domain, xpaths):

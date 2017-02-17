@@ -1,5 +1,4 @@
 # coding=utf-8
-import os
 from collections import OrderedDict, namedtuple
 import json
 import logging
@@ -172,6 +171,8 @@ def _get_advanced_module_view_context(app, module, lang=None):
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
         'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'search_button_display_condition':
+            module.search_config.search_button_display_condition if module_offers_search(module) else "",
         'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
         'schedule_phases': [
             {
@@ -208,6 +209,8 @@ def _get_basic_module_view_context(app, module, lang=None):
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
         'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'search_button_display_condition':
+            module.search_config.search_button_display_condition if module_offers_search(module) else "",
         'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
     }
 
@@ -827,6 +830,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
                     else CLAIM_DEFAULT_RELEVANT_CONDITION
                 ),
                 include_closed=bool(search_properties.get('include_closed')),
+                search_button_display_condition=search_properties.get('search_button_display_condition', ""),
                 default_properties=[
                     DefaultCaseSearchProperty.wrap(p)
                     for p in search_properties.get('default_properties')
@@ -932,15 +936,14 @@ def new_module(request, domain, app_id):
             if module_type == 'case':
                 # registration form
                 register = app.new_form(module_id, "Register", lang)
-                with open(os.path.join(
-                        os.path.dirname(__file__), '..', 'static',
-                        'app_manager', 'xml', 'registration_form.xml')) as f:
-                    register.source = f.read()
-                register.actions.open_case = OpenCaseAction(
-                    condition=FormActionCondition(type='always'),
-                    name_path=u'/data/name')
+                register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
                 register.actions.update_case = UpdateCaseAction(
                     condition=FormActionCondition(type='always'))
+
+                # one followup form
+                followup = app.new_form(module_id, "Followup", lang)
+                followup.requires = "case"
+                followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
                 # make case type unique across app
                 app_case_types = set(

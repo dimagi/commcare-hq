@@ -24,6 +24,15 @@ def get_all_usernames_by_domain(domain):
     return (row['key'][3] for row in _get_all_user_rows(domain, include_web_users=True))
 
 
+def get_all_user_id_username_pairs_by_domain(domain, include_web_users=True, include_mobile_users=True):
+    """Return pairs of user IDs and usernames by domain."""
+    return ((row['id'], row['key'][3]) for row in _get_all_user_rows(
+        domain,
+        include_web_users=include_web_users,
+        include_mobile_users=include_mobile_users
+    ))
+
+
 def get_web_user_count(domain, include_inactive=True):
     return sum([
         row['value']

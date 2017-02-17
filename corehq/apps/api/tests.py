@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import base64
 import json
 import uuid
@@ -54,6 +55,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from custom.hope.models import CC_BIHAR_PREGNANCY
+from six.moves import range
 
 
 class FakeXFormES(object):
@@ -80,7 +82,7 @@ class FakeXFormES(object):
         return {
             'hits': {
                 'total': len(self.docs),
-                'hits': [{'_source': doc} for doc in self.docs.values()[start:end]]
+                'hits': [{'_source': doc} for doc in list(self.docs.values())[start:end]]
             }
         }
 
@@ -460,7 +462,7 @@ class TestCommCareCaseResource(APIResourceTest):
             200,
             "Status code was not 200. Response content was {}".format(response.content)
         )
-        parent_cases = json.loads(response.content)['parent_cases'].values()
+        parent_cases = list(json.loads(response.content)['parent_cases'].values())
 
         # Confirm that the case appears in the resource
         self.assertEqual(len(parent_cases), 1)
@@ -474,7 +476,7 @@ class TestCommCareCaseResource(APIResourceTest):
             200,
             "Status code was not 200. Response content was {}".format(response.content)
         )
-        child_cases = json.loads(response.content)['child_cases'].values()
+        child_cases = list(json.loads(response.content)['child_cases'].values())
 
         # Confirm that the case appears in the resource
         self.assertEqual(len(child_cases), 1)
@@ -988,7 +990,7 @@ class TestElasticAPIQuerySet(TestCase):
 
     def test_slice(self):
         es = FakeXFormES()
-        for i in xrange(0, 1300):
+        for i in range(0, 1300):
             es.add_doc(i, {'i': i})
         
         queryset = ElasticAPIQuerySet(es_client=es, payload={})
@@ -1014,7 +1016,7 @@ class TestElasticAPIQuerySet(TestCase):
 
     def test_order_by(self):
         es = FakeXFormES()
-        for i in xrange(0, 1300):
+        for i in range(0, 1300):
             es.add_doc(i, {'i': i})
         
         queryset = ElasticAPIQuerySet(es_client=es, payload={})

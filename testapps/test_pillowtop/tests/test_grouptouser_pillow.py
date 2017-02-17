@@ -24,6 +24,7 @@ class GroupToUserPillowTest(SimpleTestCase):
     domain = 'grouptouser-pillowtest-domain'
 
     def setUp(self):
+        super(GroupToUserPillowTest, self).setUp()
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(USER_INDEX)
         self.es_client = get_es_new()
@@ -33,6 +34,7 @@ class GroupToUserPillowTest(SimpleTestCase):
 
     def tearDown(self):
         ensure_index_deleted(USER_INDEX)
+        super(GroupToUserPillowTest, self).tearDown()
 
     def _check_es_user(self, group_ids=None, group_names=None):
         _assert_es_user_and_groups(
@@ -201,6 +203,6 @@ class GroupsToUserReindexerTest(TestCase):
         group = Group(domain=domain, name='g1', users=[user_id])
         group.save()
 
-        call_command('ptop_reindexer_v2', **{'index': 'groups-to-user', 'noinput': True})
+        call_command('ptop_reindexer_v2', 'groups-to-user', noinput=True)
         self.es.indices.refresh(USER_INDEX)
         _assert_es_user_and_groups(self, self.es, user_id, [group._id], [group.name])

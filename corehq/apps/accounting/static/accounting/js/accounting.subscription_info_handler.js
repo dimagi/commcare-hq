@@ -29,10 +29,12 @@ hqDefine('accounting/js/accounting.subscription_info_handler.js', function () {
         };
     };
 
-    return {
-        initSubscriptionInfoHandler: function () {
-            var subscriptionInfoHandler = new SubscriptionInfoHandler();
-            subscriptionInfoHandler.init();
-        },
-    };
+    $(function() {
+        $( "#id_start_date" ).datepicker({ dateFormat: "yy-mm-dd" });
+        $( "#id_end_date" ).datepicker({ dateFormat: "yy-mm-dd" });
+        $( "#id_delay_invoice_until" ).datepicker({ dateFormat: "yy-mm-dd" });
+
+       var subscriptionInfoHandler = new SubscriptionInfoHandler();
+       subscriptionInfoHandler.init();
+    });
 });

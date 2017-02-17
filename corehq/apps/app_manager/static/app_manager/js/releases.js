@@ -205,7 +205,6 @@ hqDefine('app_manager/js/releases.js', function () {
         self.deployAnyway = {};
         self.currentAppVersion = ko.observable(self.options.currentAppVersion);
         self.lastAppVersion = ko.observable();
-        self.selectingVersion = ko.observable("");
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = new AsyncDownloader(self.download_modal);

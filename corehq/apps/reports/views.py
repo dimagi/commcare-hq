@@ -1277,7 +1277,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
                 "timezone": get_timezone_for_user(self.request.couch_user, self.domain),
                 "get_case_url": lambda case_id: absolute_reverse(
                     self.urlname, args=[self.domain, case_id]),
-                "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(
+                "show_transaction_export": toggles.COMMTRACK.enabled(
                     self.request.user.username),
             },
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
@@ -1782,6 +1782,8 @@ class EditFormInstance(View):
             'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
             'form_name': _('Edit Submission'),  # used in breadcrumbs
             'use_sqlite_backend': use_sqlite_backend(domain),
+            'username': context.get('user').username,
+            'edit_formplayer': toggles.EDIT_FORMPLAYER.enabled(domain),
             'edit_context': {
                 'formUrl': self._form_instance_to_context_url(domain, instance),
                 'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),

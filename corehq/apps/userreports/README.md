@@ -316,6 +316,23 @@ This expression returns the value of the expression for the case that matches th
 }
 ```
 
+##### Coalesce Expression
+
+This expression returns the value of the expression provided, or the value of the default_expression if the expression provided evalutes to a null or blank string.
+```json
+{
+    "type": "coalesce",
+    "expression": {
+        "type": "property_name",
+        "property_name": "district"
+    },
+    "default_expression": {
+    	"type": "constant",
+        "constant": "default_district"
+    }
+}
+```
+
 ##### Array Index Expression
 
 This expression returns `doc["siblings"][0]`:
@@ -1206,7 +1223,8 @@ owner                | Select a possible case owner owner (user, group, or locat
 Location choice providers also support two additional configuration options:
 
 * "include_descendants" - Include descendant locations in the results. Defaults to `false`.
-* "show_full_path" - display the full path to the location in the filter.  Defaults to `false`.
+* "show_full_path" - Display the full path to the location in the filter.  Defaults to `false`.
+* "order_by_hierarchy" - By default, locations show up in alphabetical order.  Set this to `true` to instead order by their position in the organization hierarchy.
 
 Example assuming "village" is a location ID, which is converted to names using the location `choice_provider`:
 ```json

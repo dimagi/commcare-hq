@@ -2,7 +2,10 @@
 {% load hq_shared_tags %}
 
 <script type="text/html" id="sub-group-fullform-ko-template">
-    <div class="gr">
+      <div class="gr" data-bind="
+        css: {
+          'gr-no-children': $data.children().length === 0
+        }">
         <fieldset class="gr-header">
             <legend>
                 <span class="caption" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
@@ -224,28 +227,30 @@
         </div>
       </div>
       <!-- ko if: recentXPathQueries().length -->
-      <table class="table table-striped table-hover">
-        <tbody data-bind="foreach: recentXPathQueries">
-          <tr class="query-container" data-bind="click: $parent.onClickSavedQuery">
-            <td class="col-sm-1 query-status">
-              <span><i class="fa" data-bind="
-                  css: {
-                    'fa-check': $parent.isSuccess($data),
-                    'fa-times': !$parent.isSuccess($data),
-                    'text-success': $parent.isSuccess($data),
-                    'text-danger': !$parent.isSuccess($data)
-                  }
-                  "></i></span>
-            </td>
-            <td class="col-sm-8 debugger-code">
-              <span data-bind="text: xpath"></span>
-            </td>
-            <td class="col-sm-3">
-              <span data-bind="text: output"></span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <tbody data-bind="foreach: recentXPathQueries">
+            <tr class="query-container" data-bind="click: $parent.onClickSavedQuery">
+              <td class="col-sm-1 query-status">
+                <span><i class="fa" data-bind="
+                    css: {
+                      'fa-check': $parent.isSuccess($data),
+                      'fa-times': !$parent.isSuccess($data),
+                      'text-success': $parent.isSuccess($data),
+                      'text-danger': !$parent.isSuccess($data)
+                    }
+                    "></i></span>
+              </td>
+              <td class="col-sm-8 debugger-code">
+                <span data-bind="text: xpath"></span>
+              </td>
+              <td class="col-sm-3">
+                <span data-bind="text: output"></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <!-- /ko -->
       <!-- ko ifnot: recentXPathQueries().length -->
       <div class="row">
@@ -386,6 +391,7 @@
         valueUpdate: valueUpdate,
         attr: {
             maxlength: lengthLimit,
+            id: entryId,
         }
     "/>
     <span class="help-block type" data-bind="
