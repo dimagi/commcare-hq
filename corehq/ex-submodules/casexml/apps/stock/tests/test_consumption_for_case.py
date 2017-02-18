@@ -47,4 +47,3 @@ class ConsumptionCaseTest(StockTestBase):
 @use_sql_backend
 class ConsumptionCaseTestSQL(ConsumptionCaseTest):
     pass
-

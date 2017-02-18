@@ -333,4 +333,3 @@ class CaseMultimediaS3DBTest(BaseCaseMultimediaTest):
 @use_sql_backend
 class CaseMultimediaS3DBTestSQL(CaseMultimediaS3DBTest):
     pass
-

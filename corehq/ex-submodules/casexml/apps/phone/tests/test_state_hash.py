@@ -103,7 +103,6 @@ class StateHashTest(TestCase):
             self.assertTrue("123abc" in e.case_ids)
 
 
-
 @use_sql_backend
 class StateHashTestSQL(StateHashTest):
     pass

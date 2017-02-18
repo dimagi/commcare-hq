@@ -34,13 +34,13 @@ class CaseBugTestCouchOnly(TestCase, TestFileMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(CaseBugTestCouch, cls).setUpClass()
+        super(CaseBugTestCouchOnly, cls).setUpClass()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
 
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
-        super(CaseBugTestCouch, cls).tearDownClass()
+        super(CaseBugTestCouchOnly, cls).tearDownClass()
 
     def test_conflicting_ids(self):
         """

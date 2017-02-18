@@ -44,6 +44,7 @@ def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
     post_case_blocks([block], form_extras)
     return case_id
 
+
 class CaseRebuildTestMixin(object):
 
     def _assertListEqual(self, l1, l2, include_ordering=True):
@@ -258,7 +259,11 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
         delete_all_cases()
 
     def test_rebuild_empty(self):
-        self.assertEqual(None, rebuild_case_from_forms('anydomain', 'notarealid', RebuildWithReason(reason='test')))
+        self.assertEqual(
+            None,
+            rebuild_case_from_forms('anydomain', 'notarealid', RebuildWithReason(reason='test'))
+        )
+
     def test_archiving_only_form(self):
         """
         Checks that archiving the only form associated with the case archives
