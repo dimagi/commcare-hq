@@ -43,7 +43,7 @@ class MultiReport(CustomProjectReport, GenericReportView):
 
 
 class EnikshayMultiReport(MultiReport):
-    fields = (DatespanFilter, EnikshayLocationFilter)
+    fields = (DatespanFilter, EnikshayLocationFilter, EnikshayMigrationFilter)
 
     @property
     def export_table(self):
