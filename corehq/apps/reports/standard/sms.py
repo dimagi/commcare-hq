@@ -53,6 +53,10 @@ from corehq.apps.sms.models import (
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reminders.models import CaseReminderHandler
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseSQL
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -177,57 +181,45 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
             recipient_id or ""])
         return ret
 
-    def get_orm_recipient_info(self, recipient_type, recipient_id, contact_cache):
-        cache_key = "%s-%s" % (recipient_type, recipient_id)
-        if cache_key in contact_cache:
-            return contact_cache[cache_key]
-
-        obj = None
-        try:
-            if recipient_type == 'SQLLocation':
-                obj = SQLLocation.objects.get(location_id=recipient_id)
-        except Exception:
-            pass
-
-        if obj:
-            obj_info = get_object_info(obj)
-        else:
-            obj_info = None
-
-        contact_cache[cache_key] = obj_info
-        return obj_info
-
     def get_recipient_info(self, recipient_doc_type, recipient_id, contact_cache):
-        if recipient_doc_type in ['SQLLocation']:
-            return self.get_orm_recipient_info(recipient_doc_type, recipient_id, contact_cache)
-
         if recipient_id in contact_cache:
             return contact_cache[recipient_id]
 
-        doc = None
-        if recipient_id not in [None, ""]:
+        couch_object = None
+        sql_object = None
+
+        if recipient_id:
             try:
                 if recipient_doc_type.startswith('CommCareCaseGroup'):
-                    doc = CommCareCaseGroup.get(recipient_id)
+                    couch_object = CommCareCaseGroup.get(recipient_id)
                 elif recipient_doc_type.startswith('CommCareCase'):
-                    doc = CommCareCase.get(recipient_id)
+                    obj = CaseAccessors(self.domain).get_case(recipient_id)
+                    if isinstance(obj, CommCareCase):
+                        couch_object = obj
+                    elif isinstance(obj, CommCareCaseSQL):
+                        sql_object = obj
                 elif recipient_doc_type in ('CommCareUser', 'WebUser'):
-                    doc = CouchUser.get_by_user_id(recipient_id)
+                    couch_object = CouchUser.get_by_user_id(recipient_id)
                 elif recipient_doc_type.startswith('Group'):
-                    doc = Group.get(recipient_id)
-            except Exception:
+                    couch_object = Group.get(recipient_id)
+                elif recipient_type == 'SQLLocation':
+                    sql_object = SQLLocation.objects.get(location_id=recipient_id)
+            except (ResourceNotFound, CaseNotFound, ObjectDoesNotExist):
                 pass
 
         doc_info = None
-        if doc:
+        if couch_object:
             try:
-                doc_info = get_doc_info(doc.to_json(), self.domain)
+                doc_info = get_doc_info(couch_object.to_json(), self.domain)
             except DomainMismatchException:
                 # This can happen, for example, if a WebUser was sent an SMS
                 # and then they unsubscribed from the domain. If that's the
                 # case, we'll just leave doc_info as None and no contact link
                 # will be displayed.
                 pass
+
+        if sql_object:
+            doc_info = get_object_info(sql_object)
 
         contact_cache[recipient_id] = doc_info
 
