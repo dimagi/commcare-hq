@@ -121,10 +121,16 @@ class ESQueryFake(object):
 
     def term(self, field, value):
         if isinstance(value, (list, tuple, set)):
-            valid_terms = list(value)
+            valid_terms = set(value)
         else:
-            valid_terms = [value]
-        return self._filtered(lambda doc: doc[field] in valid_terms)
+            valid_terms = set([value])
+
+        def _term_query(doc):
+            if isinstance(doc[field], list):
+                return set(doc[field]).intersection(valid_terms)
+            return doc[field] in valid_terms
+
+        return self._filtered(_term_query)
 
     def __getattr__(self, item):
         """
