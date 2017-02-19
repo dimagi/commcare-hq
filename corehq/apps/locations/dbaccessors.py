@@ -94,7 +94,7 @@ def user_ids_at_accessible_locations(domain_name, user):
     return user_ids_at_locations(accessible_location_ids)
 
 
-def assigned_location_by_user_id(domain, location_ids):
+def get_user_ids_from_assigned_location_ids(domain, location_ids):
     """
     Returns {user_id: [location_id, location_id, ...], ...}
     """
@@ -116,7 +116,7 @@ def assigned_location_by_user_id(domain, location_ids):
     return ret
 
 
-def primary_location_by_user_id(domain, location_ids):
+def get_user_ids_from_primary_location_ids(domain, location_ids):
     """
     Returns {user_id: primary_location_id, ...}
     """

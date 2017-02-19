@@ -12,7 +12,7 @@ from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 
 from corehq.apps.locations.dbaccessors import (
-    primary_location_by_user_id,
+    get_user_ids_from_primary_location_ids,
     get_users_location_ids,
 )
 from corehq.apps.locations.models import SQLLocation
@@ -87,7 +87,7 @@ class LSIndicator(SMSIndicator):
     @property
     @memoized
     def locations_by_user_id(self):
-        return primary_location_by_user_id(self.domain, set(self.awc_locations))
+        return get_user_ids_from_primary_location_ids(self.domain, set(self.awc_locations))
 
     @property
     @memoized
