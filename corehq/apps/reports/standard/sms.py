@@ -181,7 +181,11 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
             recipient_id or ""])
         return ret
 
-    def get_recipient_info(self, recipient_doc_type, recipient_id, contact_cache):
+    def get_recipient_info(self, domain, recipient_doc_type, recipient_id, contact_cache):
+        """
+        We need to accept domain as an arg here for admin reports that extend this base.
+        """
+
         if recipient_id in contact_cache:
             return contact_cache[recipient_id]
 
@@ -193,7 +197,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
                 if recipient_doc_type.startswith('CommCareCaseGroup'):
                     couch_object = CommCareCaseGroup.get(recipient_id)
                 elif recipient_doc_type.startswith('CommCareCase'):
-                    obj = CaseAccessors(self.domain).get_case(recipient_id)
+                    obj = CaseAccessors(domain).get_case(recipient_id)
                     if isinstance(obj, CommCareCase):
                         couch_object = obj
                     elif isinstance(obj, CommCareCaseSQL):
@@ -210,7 +214,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         doc_info = None
         if couch_object:
             try:
-                doc_info = get_doc_info(couch_object.to_json(), self.domain)
+                doc_info = get_doc_info(couch_object.to_json(), domain)
             except DomainMismatchException:
                 # This can happen, for example, if a WebUser was sent an SMS
                 # and then they unsubscribed from the domain. If that's the
@@ -410,7 +414,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             return table_cell['html']
 
         def get_contact_link(couch_recipient, couch_recipient_doc_type, raw=False):
-            doc_info = self.get_recipient_info(couch_recipient_doc_type, couch_recipient, contact_cache)
+            doc_info = self.get_recipient_info(self.domain, couch_recipient_doc_type, couch_recipient, contact_cache)
             table_cell = self._fmt_contact_link(couch_recipient, doc_info)
             return table_cell['raw'] if raw else table_cell['html']
 
@@ -801,7 +805,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
             data = data[self.pagination.start:self.pagination.start + self.pagination.count]
 
         for event in data:
-            doc_info = self.get_recipient_info(event.get_recipient_doc_type(),
+            doc_info = self.get_recipient_info(self.domain, event.get_recipient_doc_type(),
                 event.recipient_id, contact_cache)
 
             timestamp = ServerTime(event.date).user_time(self.timezone).done()
@@ -896,7 +900,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
         result = []
         contact_cache = {}
         for messaging_subevent in self.messaging_subevents:
-            doc_info = self.get_recipient_info(messaging_subevent.get_recipient_doc_type(),
+            doc_info = self.get_recipient_info(self.domain, messaging_subevent.get_recipient_doc_type(),
                 messaging_subevent.recipient_id, contact_cache)
 
             if messaging_subevent.content_type in (MessagingEvent.CONTENT_SMS,
@@ -1176,8 +1180,8 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return domain and toggles.PHONE_NUMBERS_REPORT.enabled(domain)
 
-    def _fmt_owner(self, owner_doc_type, owner_id, owner_cache, link_user=True):
-        doc_info = self.get_recipient_info(owner_doc_type, owner_id, owner_cache)
+    def _fmt_owner(self, domain, owner_doc_type, owner_id, owner_cache, link_user=True):
+        doc_info = self.get_recipient_info(domain, owner_doc_type, owner_id, owner_cache)
         table_cell = self._fmt_contact_link(owner_id, doc_info)
         return table_cell['html'] if link_user else table_cell['raw']
 
@@ -1196,14 +1200,14 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     def _fmt_row(self, number, owner_cache, link_user):
         if isinstance(number, PhoneNumber):
             return [
-                self._fmt_owner(number.owner_doc_type, number.owner_id, owner_cache, link_user),
+                self._fmt_owner(number.domain, number.owner_doc_type, number.owner_id, owner_cache, link_user),
                 number.phone_number,
                 self._fmt_status(number),
                 "Yes" if number.is_two_way else "No",
             ]
 
         return [
-            self._fmt_owner(number.owner_doc_type, number.owner_id, owner_cache, link_user),
+            self._fmt_owner(number.domain, number.owner_doc_type, number.owner_id, owner_cache, link_user),
             '---',
             '---',
             '---',
