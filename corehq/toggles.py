@@ -5,6 +5,7 @@ from django.http import Http404
 import math
 
 from django.conf import settings
+from couchdbkit import ResourceNotFound
 from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
 
@@ -94,6 +95,15 @@ class StaticToggle(object):
                 raise Http404()
             return wrapped_view
         return decorator
+
+    def get_enabled_domains(self):
+        from toggle.models import Toggle
+        try:
+            toggle = Toggle.get(self.slug)
+            enabled_users = toggle.enabled_users
+            return [user.split('domain:')[1] for user in enabled_users if 'domain:' in user]
+        except ResourceNotFound:
+            return []
 
 
 def deterministic_random(input_string):
