@@ -2,6 +2,7 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load app_manager_extras %}
 {% block head %}{{ block.super }}
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
@@ -68,7 +69,7 @@
     </li>
     {% endif %}
     {% endfor %}
-    {% if details %}
+    {% if details and app|get_available_modules_for_case_list_configuration:module %}
         <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
     {% endif %}
     {% endblock %}{# endblock tab-headers #}
@@ -96,9 +97,13 @@
     {% endif %}
     {% endfor %}
     {% if details %}
-        <div class="tab-pane" id="module-actions">
-            {% include 'app_manager/v1/partials/module_actions.html' %}
-        </div>
+        {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
+        {% if available_modules %}
+            <div class="tab-pane" id="module-actions">
+                {% include 'app_manager/v1/partials/module_actions.html' %}
+            </div>
+        {% endif %}
+        {% endwith %}
     {% endif %}
     {% endblock %}{# endblock tab-content #}
 </div>
