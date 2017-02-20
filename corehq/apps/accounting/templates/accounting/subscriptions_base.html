@@ -10,18 +10,6 @@
     <script src="{% static 'accounting/js/invoices.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %} {{ block.super }}
- <script>
-    $( "#id_start_date" ).datepicker({ dateFormat: "yy-mm-dd" });
-    $( "#id_end_date" ).datepicker({ dateFormat: "yy-mm-dd" });
-    $( "#id_delay_invoice_until" ).datepicker({ dateFormat: "yy-mm-dd" });
-</script>
-
-    <script>
-        hqImport('accounting/js/accounting.subscription_info_handler.js').initSubscriptionInfoHandler();
-    </script>
-{% endblock %}
-
 {% block page_content %}
     <form class="form form-horizontal" method="post">
         {% crispy form %}

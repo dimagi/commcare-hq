@@ -9,7 +9,6 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
         $(function () {
             $('#id_confirm_product_agreement').click(function () {
                 var $submit = $('#submit-button-pa'),

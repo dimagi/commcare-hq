@@ -242,7 +242,8 @@ class SnapshotSettingsForm(forms.Form):
     old_image = forms.BooleanField(required=False)
 
     video = CharField(label=ugettext_noop("Youtube Video"), required=False,
-        help_text=ugettext_noop("An optional youtube clip to tell users about your app. Please copy and paste a URL to a youtube video"))
+        help_text=ugettext_noop("An optional YouTube clip to tell users about your app. Please copy and paste a "
+                                "URL to a YouTube video"))
     documentation_file = forms.FileField(label=ugettext_noop("Documentation File"), required=False,
         help_text=ugettext_noop("An optional file to tell users more about your app."))
     old_documentation_file = forms.BooleanField(required=False)
@@ -309,7 +310,8 @@ class SnapshotSettingsForm(forms.Form):
         data_cda = self.cleaned_data['cda_confirmed']
         data_publish = self.data.get('publish_on_submit', "no") == "yes"
         if data_publish and data_cda is False:
-            raise forms.ValidationError('You must agree to our Content Distribution Agreement to publish your project.')
+            raise forms.ValidationError('You must agree to our Content Distribution Agreement to publish your '
+                                        'project.')
         return data_cda
 
     def clean_video(self):
@@ -342,7 +344,8 @@ class SnapshotSettingsForm(forms.Form):
 
         v_id = video_id(video)
         if not v_id:
-            raise forms.ValidationError('This is not a correctly formatted youtube URL. Please use a different URL.')
+            raise forms.ValidationError('This is not a correctly formatted YouTube URL. Please use a different '
+                                        'URL.')
         return v_id
 
     def clean(self):
@@ -451,7 +454,8 @@ class SubAreaMixin():
 
         if sub_area:
             if not area:
-                raise forms.ValidationError(_('You may not specify a sub area when the project has no specified area'))
+                raise forms.ValidationError(_('You may not specify a sub area when the project has no specified '
+                                              'area'))
         else:
             return None
 
@@ -671,16 +675,15 @@ class DomainGlobalSettingsForm(forms.Form):
 class DomainMetadataForm(DomainGlobalSettingsForm):
 
     cloudcare_releases = ChoiceField(
-        label=ugettext_lazy("CloudCare should use"),
+        label=ugettext_lazy("Web Apps should use"),
         initial=None,
         required=False,
         choices=(
             ('stars', ugettext_lazy('Latest starred version')),
             ('nostars', ugettext_lazy('Highest numbered version (not recommended)')),
         ),
-        help_text=ugettext_lazy("Choose whether CloudCare should use the latest "
-                    "starred build or highest numbered build in your "
-                    "application.")
+        help_text=ugettext_lazy("Choose whether Web Apps should use the latest starred build or highest numbered "
+                                "build in your application.")
     )
 
     def __init__(self, *args, **kwargs):
@@ -719,9 +722,9 @@ class PrivacySecurityForm(forms.Form):
     restrict_superusers = BooleanField(
         label=ugettext_lazy("Restrict Dimagi Staff Access"),
         required=False,
-        help_text=ugettext_lazy("Dimagi staff sometimes require access to projects to provide support. " + 
-                                "Checking this box may restrict your ability to receive this support in the event " +
-                                "you report an issue. You may also miss out on important communications and updates.")
+        help_text=ugettext_lazy("Dimagi staff sometimes require access to projects to provide support. Checking "
+                                "this box may restrict your ability to receive this support in the event you "
+                                "report an issue. You may also miss out on important communications and updates.")
     )
     secure_submissions = BooleanField(
         label=ugettext_lazy("Secure submissions"),
@@ -750,7 +753,8 @@ class PrivacySecurityForm(forms.Form):
     two_factor_auth = BooleanField(
         label=ugettext_lazy("Two Factor Authentication"),
         required=False,
-        help_text=ugettext_lazy("All web users on this project will be required to enable two factor authentication")
+        help_text=ugettext_lazy("All web users on this project will be required to enable two factor "
+                                "authentication")
     )
     strong_mobile_passwords = BooleanField(
         label=ugettext_lazy("Require Strong Passwords for Mobile Workers"),
@@ -861,7 +865,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     notes = CharField(label="Notes*", required=False, widget=forms.Textarea)
     phone_model = CharField(
         label="Device Model",
-        help_text="Add CloudCare, if this project is using CloudCare as well",
+        help_text="Add Web Apps, if this project is using Web Apps as well",
         required=False,
     )
     business_unit = forms.ChoiceField(
@@ -1120,7 +1124,9 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             self.add_error('dimagi_contact', msg)
 
     def save(self, domain):
-        kwargs = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
+        kwargs = {
+            "workshop_region": self.cleaned_data["workshop_region"]
+        } if self.cleaned_data["workshop_region"] else {}
         if self.can_edit_eula:
             kwargs['custom_eula'] = self.cleaned_data['custom_eula'] == 'true'
             kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
@@ -1234,10 +1240,10 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
     error_messages = {
-        'unknown': ugettext_lazy("That email address doesn't have an associated "
-                     "user account. Are you sure you've registered?"),
-        'unusable': ugettext_lazy("The user account associated with this email "
-                       "address cannot reset the password."),
+        'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
+                                 "registered?"),
+        'unusable': ugettext_lazy("The user account associated with this email address cannot reset the "
+                                  "password."),
     }
 
     def clean_email(self):
@@ -1379,7 +1385,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             'company_name',
             'first_name',
             'last_name',
-            crispy.Field('email_list', css_class='input-xxlarge'),
+            crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
             'phone_number'
         ]
 
@@ -1426,7 +1432,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large",
+                crispy.Field('country', css_class="input-large ko-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.FormActions(
@@ -1472,10 +1478,12 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         widget=forms.HiddenInput,
     )
 
-    def __init__(self, account, domain, creating_user, plan_version, current_subscription, data=None, *args, **kwargs):
+    def __init__(self, account, domain, creating_user, plan_version, current_subscription, data=None,
+                 *args, **kwargs):
         self.plan_version = plan_version
         self.current_subscription = current_subscription
-        super(ConfirmNewSubscriptionForm, self).__init__(account, domain, creating_user, data=data, *args, **kwargs)
+        super(ConfirmNewSubscriptionForm, self).__init__(account, domain, creating_user, data=data,
+                                                         *args, **kwargs)
 
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
 
@@ -1489,7 +1497,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1499,7 +1507,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large",
+                crispy.Field('country', css_class="input-large ko-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
@@ -1598,7 +1606,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1608,7 +1616,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large",
+                crispy.Field('country', css_class="input-large ko-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             crispy.Fieldset(

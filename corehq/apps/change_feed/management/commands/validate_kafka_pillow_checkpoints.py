@@ -10,15 +10,16 @@ class Command(BaseCommand):
     help = ("Validates that all pillows that use kafka have checkpoints that still exist "
             "in the kafka feed.")
 
-    option_list = (
-        make_option('--print-only',
-                    action='store_true',
-                    dest='print_only',
-                    default=False,
-                    help="Only print information, don't fail if checkpoints aren't valid."),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--print-only',
+            action='store_true',
+            dest='print_only',
+            default=False,
+            help="Only print information, don't fail if checkpoints aren't valid.",
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         print_only = options['print_only']
         validate_checkpoints(print_only)
 

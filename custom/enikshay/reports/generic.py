@@ -45,6 +45,31 @@ class MultiReport(CustomProjectReport, GenericReportView):
 class EnikshayMultiReport(MultiReport):
     fields = (DatespanFilter, EnikshayLocationFilter)
 
+    @property
+    def export_table(self):
+        export_table = []
+
+        for report in self.reports:
+            report_instance = report(self.request, domain=self.domain)
+            rows = [
+                [header.html for header in report_instance.headers.header]
+            ]
+            report_table = [
+                unicode(report.name[:28] + '...'),
+                rows
+            ]
+            export_table.append(report_table)
+
+            for row in report_instance.rows:
+                row_formatted = []
+                for element in row:
+                    if isinstance(element, dict):
+                        row_formatted.append(element['sort_key'])
+                    else:
+                        row_formatted.append(unicode(element))
+                rows.append(row_formatted)
+        return export_table
+
 
 class EnikshayReport(DatespanMixin, CustomProjectReport, SqlTabularReport):
     use_datatables = False

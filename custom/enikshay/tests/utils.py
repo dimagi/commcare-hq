@@ -22,6 +22,7 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_FIRST_NAME,
     TREATMENT_SUPPORTER_LAST_NAME,
     TREATMENT_SUPPORTER_PHONE,
+    WEIGHT_BAND,
 )
 from corehq.apps.users.models import CommCareUser
 
@@ -180,7 +181,10 @@ class ENikshayCaseStructureMixin(object):
         return get_episode_case_structure(
             self.episode_id,
             self.occurrence,
-            extra_update={TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone}
+            extra_update={
+                TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone,
+                WEIGHT_BAND: "adult_55-69"
+            }
         )
 
     def create_case(self, case):

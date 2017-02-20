@@ -1806,10 +1806,14 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
+        app_forms = self.app_forms
+        fixture_forms = self.fixture_forms
         context = {
             'form': self.snapshot_settings_form,
-            'app_forms': self.app_forms,
-            'fixture_forms': self.fixture_forms,
+            'app_forms': app_forms,
+            'app_ids': [app.id for app, form in app_forms],
+            'fixture_forms': fixture_forms,
+            'fixture_ids': [data.id for data, form in fixture_forms],
             'can_publish_as_org': self.can_publish_as_org,
             'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'countries', 'region'),
         }

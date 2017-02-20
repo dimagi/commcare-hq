@@ -7,11 +7,10 @@ from corehq.apps.hqadmin.models import PillowCheckpointSeqStore
 class Command(BaseCommand):
     help = 'Reset a PillowCheckpointSeqStore back to 0'
 
-    option_list = (
-        make_option('--pillow_name', action='store', default=None, help='Pillow name to reset store'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument('--pillow_name', action='store', default=None, help='Pillow name to reset store')
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
 
         pillow_name = options.get('pillow_name', None)
         if not pillow_name:

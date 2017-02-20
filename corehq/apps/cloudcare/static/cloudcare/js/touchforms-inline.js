@@ -64,6 +64,7 @@
                 data.formplayerEnabled = options.formplayerEnabled;
                 data.post_url = options.submitUrl;
                 data.domain = options.domain;
+                data.username = options.username;
                 var sess = new WebFormSession(data);
                 sess.load($target, options.lang);
             }

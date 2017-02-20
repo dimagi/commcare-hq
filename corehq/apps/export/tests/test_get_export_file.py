@@ -513,6 +513,43 @@ class WriterTest(SimpleTestCase):
                 }
             )
 
+    def test_empty_table_label(self):
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            domain=DOMAIN,
+            case_type=DEFAULT_CASE_TYPE,
+            split_multiselects=True,
+            tables=[TableConfiguration(
+                label="",
+                selected=True,
+                path=[],
+                columns=[
+                    ExportColumn(
+                        label="Q1",
+                        item=ScalarItem(
+                            path=[PathNode(name='form'), PathNode(name='q1')],
+                        ),
+                        selected=True
+                    ),
+                ]
+            )]
+        )
+        writer = _get_writer([export_instance])
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, self.docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export),
+                {
+                    u'Sheet1': {
+                        u'headers': [u'Q1'],
+                        u'rows': [[u'foo'], [u'bip']],
+
+                    }
+                }
+            )
+
 
 class ExportTest(SimpleTestCase):
 
