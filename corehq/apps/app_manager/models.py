@@ -50,7 +50,6 @@ from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
-from corehq.apps.app_manager.views.utils import get_blank_form_xml
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
@@ -2531,6 +2530,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
         return module
 
     def new_form(self, name, lang, attachment=Ellipsis):
+        from corehq.apps.app_manager.views.utils import get_blank_form_xml
         lang = lang if lang else "en"
         name = name if name else _("Untitled Form")
         form = Form(
@@ -3079,6 +3079,7 @@ class AdvancedModule(ModuleBase):
         return module
 
     def new_form(self, name, lang, attachment=Ellipsis):
+        from corehq.apps.app_manager.views.utils import get_blank_form_xml
         lang = lang if lang else "en"
         name = name if name else _("Untitled Form")
         form = AdvancedForm(
