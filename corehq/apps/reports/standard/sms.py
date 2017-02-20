@@ -201,7 +201,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
                     couch_object = CouchUser.get_by_user_id(recipient_id)
                 elif recipient_doc_type.startswith('Group'):
                     couch_object = Group.get(recipient_id)
-                elif recipient_type == 'SQLLocation':
+                elif recipient_doc_type == 'SQLLocation':
                     sql_object = SQLLocation.objects.get(location_id=recipient_id)
             except (ResourceNotFound, CaseNotFound, ObjectDoesNotExist):
                 pass
