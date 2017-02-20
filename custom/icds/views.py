@@ -11,7 +11,6 @@ from crispy_forms.helper import FormHelper
 
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.es.filters import term
 from corehq.apps.es.users import UserES
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.decorators import use_select2
