@@ -2,6 +2,13 @@
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
+{% load compress %}
+
+{% block js %}{{ block.super }}
+    {% compress js %}
+        <script src="{% static 'appstore/js/project_info.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
     <style type="text/css">
@@ -32,49 +39,6 @@
     </style>
 {%  endblock %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        function update_import_into_button() {
-            var project = $('#project_select option:selected').text();
-            $("#import-into-button").text("Import into " + project);
-        }
-        $(function () {
-            update_import_into_button();
-
-            $("#import-app-button").click(function() {
-                $('#import-app').removeClass('hide');
-            });
-
-            $('#project_select').change(update_import_into_button);
-        });
-
-        $(function() {
-            $('[data-target="#licenseAgreement"]').click(function() {
-                var new_form = $(this).attr('data-form');
-                $('#agree-button').attr('data-form', new_form);
-            });
-            $('#agree-button').click(function() {
-                $('#agree-button').unbind()
-                                  .addClass('disabled');
-                $('#download-new-project').removeProp('data-toggle');
-                $('#download-new-project').removeProp('href');
-                $('#import-into-button').removeProp('data-toggle');
-                $('#import-into-button').removeProp('href');
-                var form = $("#" + $(this).attr('data-form'));
-                form.submit();
-            });
-        });
-
-        $('#download-new-project').click(function() {
-            ga_track_event('Exchange', 'Download As New Project', '{{ project }}');
-        });
-
-        $('#import-app-button').click(function() {
-            ga_track_event('Exchange', 'Download to Existing Project', '{{ project }}');
-        });
-    </script>
-{% endblock %}
-
 {% block breadcrumb %}
 <li>{{ project.title }}</li>
 {% endblock %}
@@ -83,6 +47,7 @@
 {% block page_breadcrumbs %}
     {{ block.super }}
 {% endblock page_breadcrumbs %}
+{% initial_page_data 'project' project %}
 <div class="container">
     <div class="row" style="margin-top: 20px; margin-bottom:20px;">
         <div class="col-sm-4 app-pic-container">

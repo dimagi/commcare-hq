@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 
 from sqlagg import SumWhen
@@ -23,6 +24,7 @@ from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
+from six.moves import range
 
 
 class TestFieldColumn(SimpleTestCase):

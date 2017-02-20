@@ -104,7 +104,7 @@ import json
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.elastic import ES_META, ESError, run_query, scroll_query, SIZE_LIMIT, \
-    ScanResult
+    ScanResult, SCROLL_PAGE_SIZE_LIMIT
 
 from . import aggregations
 from . import filters
@@ -222,10 +222,13 @@ class ESQuery(object):
         Run the query against the scroll api. Returns an iterator yielding each
         document that matches the query.
         """
-        result = scroll_query(self.index, self.raw_query)
+        query = deepcopy(self)
+        if query._size is None:
+            query._size = SCROLL_PAGE_SIZE_LIMIT
+        result = scroll_query(query.index, query.raw_query)
         return ScanResult(
             result.count,
-            (ESQuerySet.normalize_result(deepcopy(self), r) for r in result)
+            (ESQuerySet.normalize_result(query, r) for r in result)
         )
 
     @property
@@ -293,6 +296,9 @@ class ESQuery(object):
         es = deepcopy(self)
         es.es_query['query']['filtered']['query'] = query
         return es
+
+    def get_query(self):
+        return self.es_query['query']['filtered']['query']
 
     def search_string_query(self, search_string, default_fields=None):
         """Accepts a user-defined search string"""

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import uuid
 from datetime import date, datetime
@@ -322,6 +323,7 @@ class ArrayIndexExpressionTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ArrayIndexExpressionTest, cls).setUpClass()
         cls.expression_spec = {
             'type': 'array_index',
             'array_expression': {
@@ -1041,7 +1043,8 @@ class TestGetSubcasesExpression(TestCase):
             case_id=child_id,
             indices=[
                 CaseIndex(CaseStructure(case_id=parent_id, attrs={'create': True}))
-            ]
+            ],
+            attrs={'create': True}
         ))
         subcases = self.expression(parent.to_json(), self.context)
         self.assertEqual(len(subcases), 1)
@@ -1058,7 +1061,8 @@ class TestGetSubcasesExpression(TestCase):
                     CaseStructure(case_id=host_id, attrs={'create': True}),
                     relationship=CASE_INDEX_EXTENSION
                 )
-            ]
+            ],
+            attrs={'create': True}
         ))
         subcases = self.expression(host.to_json(), self.context)
         self.assertEqual(len(subcases), 1)
@@ -1266,3 +1270,57 @@ class SplitStringExpressionTest(SimpleTestCase):
                 "index_expression": index
             })
             self.assertEqual(expected, split_string_expression({"string_property": string_value}))
+
+
+class TestCoalesceExpression(SimpleTestCase):
+
+    def setUp(self):
+        self.spec = {
+            'type': 'coalesce',
+            'expression': {
+                'type': 'property_name',
+                'property_name': 'expression'
+            },
+            'default_expression': {
+                'type': 'property_name',
+                'property_name': 'default_expression'
+            },
+        }
+        self.expression = ExpressionFactory.from_spec(self.spec)
+
+    def testNoCoalesce(self):
+        self.assertEqual('foo', self.expression({
+            'expression': 'foo',
+            'default_expression': 'default',
+        }))
+
+    def testNoValue(self):
+        self.assertEqual('default', self.expression({
+            'default_expression': 'default',
+        }))
+
+    def testNull(self):
+        self.assertEqual('default', self.expression({
+            'expression': None,
+            'default_expression': 'default',
+        }))
+
+    def testEmptyString(self):
+        self.assertEqual('default', self.expression({
+            'expression': '',
+            'default_expression': 'default',
+        }))
+
+    def testZero(self):
+        self.assertEqual(0, self.expression({
+            'expression': 0,
+            'default_expression': 'default',
+        }))
+
+    def testBlankDefaultValue(self):
+        self.assertEqual('foo', self.expression({
+            'expression': 'foo',
+        }))
+
+    def testBlankDefaultValue2(self):
+        self.assertEqual(None, self.expression({}))

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from zipfile import ZipFile
 from couchdbkit.exceptions import ResourceNotFound, BadValueError
@@ -159,7 +160,7 @@ class CommCareBuild(Document):
 
     @classmethod
     def j2me_enabled_build_versions(cls):
-        return map(lambda x: x.version, cls.j2me_enabled_builds())
+        return [x.version for x in cls.j2me_enabled_builds()]
 
 
 class BuildSpec(DocumentSchema):
@@ -273,7 +274,7 @@ class CommCareBuildConfig(Document):
 
     @classmethod
     def j2me_enabled_config_labels(cls):
-        return map(lambda x: x.label, cls.j2me_enabled_configs())
+        return [x.label for x in cls.j2me_enabled_configs()]
 
     @classmethod
     def latest_j2me_enabled_config(cls):

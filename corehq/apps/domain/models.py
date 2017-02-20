@@ -180,6 +180,15 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     )
     business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
     data_access_threshold = IntegerProperty()
+    partner_technical_competency = IntegerProperty()
+    support_prioritization = IntegerProperty()
+    gs_continued_involvement = StringProperty()
+    technical_complexity = StringProperty()
+    app_design_comments = StringProperty()
+    training_materials = StringProperty()
+    partner_comments = StringProperty()
+    partner_contact = StringProperty()
+    dimagi_contact = StringProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):

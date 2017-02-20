@@ -10,6 +10,7 @@
         "airstanzania",
         "airsghana",
         "airsbenin",
+        "airskenya",
         "airs-testing"
     ],
     "data_source_table":"static-sms-indicators-001",

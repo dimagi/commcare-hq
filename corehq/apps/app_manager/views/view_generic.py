@@ -282,20 +282,17 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             },
         })
 
-    live_preview_ab = ab_tests.ABTest(ab_tests.LIVE_PREVIEW, request)
     domain_obj = Domain.get_by_name(domain)
     context.update({
-        'live_preview_ab': live_preview_ab.context,
-        'is_onboarding_domain': domain_obj.is_onboarding_domain,
         'show_live_preview': should_show_preview_app(
             request,
             domain_obj,
-            request.couch_user.username,
-        )
+            request.couch_user.username
+        ),
+        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     })
 
     response = render(request, template, context)
 
-    live_preview_ab.update_response(response)
     response.set_cookie('lang', encode_if_unicode(lang))
     return response

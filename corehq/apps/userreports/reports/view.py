@@ -21,7 +21,7 @@ from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
 from corehq.apps.locations.permissions import conditionally_location_safe
@@ -51,6 +51,7 @@ from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.userreports.util import (
     default_language,
     has_report_builder_trial,
+    has_report_builder_access,
     can_edit_report,
     get_ucr_class_name)
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
@@ -124,8 +125,15 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @use_nvd3
     @conditionally_location_safe(has_location_filter)
     def dispatch(self, request, *args, **kwargs):
-        original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
-        return original
+        if self.should_redirect_to_paywall(request):
+            from corehq.apps.userreports.views import paywall_home
+            return HttpResponseRedirect(paywall_home(self.domain))
+        else:
+            original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
+            return original
+
+    def should_redirect_to_paywall(self, request):
+        return self.spec.report_meta.created_by_builder and not has_report_builder_access(request)
 
     @property
     def section_url(self):

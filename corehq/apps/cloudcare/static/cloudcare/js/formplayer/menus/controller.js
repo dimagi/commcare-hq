@@ -177,7 +177,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 title: menuResponse.title,
                 headers: menuResponse.headers,
                 widthHints: menuResponse.widthHints,
-                action: menuResponse.action,
+                actions: menuResponse.actions,
                 pageCount: menuResponse.pageCount,
                 currentPage: menuResponse.currentPage,
                 styles: menuResponse.styles,

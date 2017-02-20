@@ -6,6 +6,7 @@ DOC_TYPE_MAPPING = {
     'xformduplicate': 'XFormDuplicate',
     'xformerror': 'XFormError',
     'xformarchived': 'XFormArchived',
+    'xformdeprecated': 'XFormDeprecated',
 }
 
 

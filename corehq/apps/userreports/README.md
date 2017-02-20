@@ -316,6 +316,23 @@ This expression returns the value of the expression for the case that matches th
 }
 ```
 
+##### Coalesce Expression
+
+This expression returns the value of the expression provided, or the value of the default_expression if the expression provided evalutes to a null or blank string.
+```json
+{
+    "type": "coalesce",
+    "expression": {
+        "type": "property_name",
+        "property_name": "district"
+    },
+    "default_expression": {
+    	"type": "constant",
+        "constant": "default_district"
+    }
+}
+```
+
 ##### Array Index Expression
 
 This expression returns `doc["siblings"][0]`:
@@ -962,7 +979,7 @@ Property            | Description
 --------------------|------------
 ledger_section      | The ledger section to use for this indicator, for example, "stock"
 product_codes       | A list of the products to include in the indicator.  This will be used in conjunction with the `column_id` to produce each column name.
-case_id_expression  | (optional) An expression used to get the case where each ledger is found.  If not specified, it will use the row's doc id.
+case_id_expression  | An expression used to get the case where each ledger is found.  If not specified, it will use the row's doc id.
 
 ```
 {

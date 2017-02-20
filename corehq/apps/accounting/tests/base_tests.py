@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from django_prbac.models import Role
 
@@ -13,7 +14,8 @@ class BaseAccountingTest(TestCase):
         Role.get_cache().clear()
         generator.instantiate_accounting()
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         for domain in Domain.get_all():
             domain.delete()
-        super(BaseAccountingTest, self).tearDown()
+        super(BaseAccountingTest, cls).tearDownClass()

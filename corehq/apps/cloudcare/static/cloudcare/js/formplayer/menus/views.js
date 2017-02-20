@@ -252,8 +252,9 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             'keypress': 'keyAction',
         },
 
-        caseListAction: function () {
-            FormplayerFrontend.trigger("menu:select", "action 0");
+        caseListAction: function (e) {
+            var index = $(e.currentTarget).data().index;
+            FormplayerFrontend.trigger("menu:select", "action " + index);
         },
 
         caseListSearch: function (e) {
@@ -278,7 +279,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 title: this.options.title,
                 headers: this.options.headers,
                 widthHints: this.options.widthHints,
-                action: this.options.action,
+                actions: this.options.actions,
                 currentPage: this.options.currentPage,
                 pageCount: this.options.pageCount,
                 styles: this.options.styles,
