@@ -31,9 +31,9 @@ class IndicatorTestForm(forms.Form):
     indicator = forms.ChoiceField(
         label=ugettext_lazy("Indicator"),
         choices=(
-            ('aww_sub_perf', 'AWW Submission Performance'),
-            ('ls_sub_perf', 'LS SubmissionPerformance'),
-            ('ls_vhnd_survey', 'LS VHND Survey'),
+            ('aww_sub_perf', 'AWW #1 (Submission Performance)'),
+            ('ls_vhnd_survey', 'LS #2 (VHND Survey)'),
+            ('ls_sub_perf', 'LS #6 (Submission Performance)'),
         ),
         required=True
     )
