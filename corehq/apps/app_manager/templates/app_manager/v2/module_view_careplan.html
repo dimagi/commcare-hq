@@ -4,6 +4,7 @@
 {% load i18n %}
 
 {% block settings_fields %}
+    {% initial_page_data 'parent_modules' parent_modules %}
     <div id="detail-screen-parent" class="form-group">
         <label class="control-label col-sm-2">{% trans "Attached to" %}</label>
         <div class="col-sm-4">
