@@ -34,7 +34,8 @@
         "choice_provider": {
           "include_descendants": true,
           "type": "location",
-          "order_by_hierarchy": true
+          "order_by_hierarchy": true,
+          "show_full_path": true
         },
         "display": "Filter by Area"
       },
