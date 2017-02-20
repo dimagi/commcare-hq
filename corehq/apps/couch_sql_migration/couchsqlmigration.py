@@ -184,7 +184,13 @@ class CouchSqlDomainMigrator(object):
             try:
                 CaseAccessorSQL.save_case(sql_case)
             except IntegrityError as e:
-                self.log_error("Unable to migrate case:\n{}\n{}".format(couch_case.case_id, e))
+                # case re-created by form processing so just mark the case as deleted
+                CaseAccessorSQL.soft_delete_cases(
+                    self.domain,
+                    [sql_case.case_id],
+                    sql_case.deleted_on,
+                    sql_case.deletion_id
+                )
 
     def _calculate_case_diffs(self):
         cases = {}
