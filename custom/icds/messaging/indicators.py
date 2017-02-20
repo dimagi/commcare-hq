@@ -275,7 +275,7 @@ class LSAggregatePerformanceIndicator(LSIndicator):
         }
 
     def get_report_fixture(self, report_id):
-        return ReportFixturesProvider._report_config_to_fixture(
+        return ReportFixturesProvider.report_config_to_fixture(
             self.report_configs[report_id], self.restore_user
         )
 
