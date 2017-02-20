@@ -22,6 +22,7 @@ from couchdbkit.ext.django import loading
 from django.core.management import call_command
 from mock import patch, Mock
 from nose.plugins import Plugin
+from nose.tools import nottest
 from django.conf import settings
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.db.utils import OperationalError
@@ -276,6 +277,7 @@ def print_imports_until_thread_change():
     sys.meta_path.append(InfoImporter())
 
 
+@nottest
 @unit_testing_only
 def get_all_test_dbs():
     all_dbs = couch_config.all_dbs_by_db_name.values()
