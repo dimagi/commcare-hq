@@ -161,8 +161,7 @@ def _get_advanced_module_view_context(app, module, lang=None):
                                                case_property_builder,
                                                case_type),
         'case_list_form_options': form_options,
-        'case_list_form_not_allowed_reason': _case_list_form_not_allowed_reason(
-            module),
+        'case_list_form_not_allowed_reason': _case_list_form_not_allowed_reason(module),
         'valid_parent_modules': [
             parent_module for parent_module in app.modules
             if not getattr(parent_module, 'root_module_id', None)
@@ -325,7 +324,10 @@ def _case_list_form_options(app, module, case_type_, lang=None):
     langs = None if lang is None else [lang]
     options.update({f.unique_id: trans(f.name, langs) for f in forms})
 
-    return options
+    return {
+        'options': options,
+        'form': module.case_list_form,
+    }
 
 
 def _get_module_details_context(app, module, case_property_builder, case_type_):
@@ -369,14 +371,21 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
 
 
 def _case_list_form_not_allowed_reason(module, allow=None):
+    reason = None
     if allow and not allow.allow:
-        return allow
+        reason = allow
     elif not module.all_forms_require_a_case():
-        return AllowWithReason(False, AllowWithReason.ALL_FORMS_REQUIRE_CASE)
+        reason = AllowWithReason(False, AllowWithReason.ALL_FORMS_REQUIRE_CASE)
     elif module.put_in_root:
-        return AllowWithReason(False, AllowWithReason.MODULE_IN_ROOT)
+        reason = AllowWithReason(False, AllowWithReason.MODULE_IN_ROOT)
     else:
-        return AllowWithReason(True, '')
+        reason = AllowWithReason(True, '')
+    if reason:
+        return {
+            'allow': reason.allow,
+            'message': reason.message,
+        }
+    return None
 
 
 class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
