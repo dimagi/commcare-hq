@@ -97,6 +97,12 @@ def get_module_template(domain, module):
 def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
+        'module_brief': {
+            'id': module.id,
+            'case_type': module.case_type,
+            'module_type': module.module_type,
+            'requires_case_details': bool(module.requires_case_details),
+        },
         'edit_name_url': reverse(
             'edit_module_attr',
             args=[app.domain, app.id, module.id, 'name']
