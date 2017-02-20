@@ -1,5 +1,8 @@
+import httplib
 import json
 import logging
+from collections import namedtuple
+
 import requests
 
 from dimagi.ext.couchdbkit import Document, StringProperty
@@ -42,10 +45,12 @@ class Dhis2IntegrationError(Exception):
 
 def json_serializer(obj):
     """
-    A JSON serializer that serializes dates and times
+    A JSON serializer that serializes dates, times, and namedtuples
     """
     if hasattr(obj, 'isoformat'):
         return obj.isoformat()
+    if hasattr(obj, '_asdict'):
+        return obj._asdict()
 
 
 class JsonApiRequest(object):
@@ -66,7 +71,15 @@ class JsonApiRequest(object):
         :raises JsonApiError: if HTTP status is not in the 200 (OK) range
         """
         if 200 <= response.status_code < 300:
-            return response.json()
+            if response.content:
+                return response.json()
+            else:
+                # Response has no body. Return a status in a way that is consistent with other requests
+                return {
+                    'status': 'SUCCESS',
+                    'httpStatusCode': response.status_code,
+                    'httpStatus': httplib.responses[response.status_code],
+                }
         else:
             raise JsonApiError('API request to {} failed with HTTP status {}: {}'.format(
                 response.url, response.status_code, response.text))
@@ -86,6 +99,25 @@ class JsonApiRequest(object):
                 'Request details: %s\n'
                 'Error: %s',
                 {'method': 'get', 'url': self.server_url + path, 'headers': self.headers},
+                err)
+            raise JsonApiError(str(err))
+        return JsonApiRequest.json_or_error(response)
+
+    def delete(self, path, **kwargs):
+        logging.debug(
+            'DHIS2: DELETE %s: \n'
+            '    Headers: %s\n'
+            '    kwargs: %s',
+            self.server_url + path, self.headers, kwargs
+        )
+        try:
+            response = requests.delete(self.server_url + path, headers=self.headers, auth=self.auth, **kwargs)
+        except requests.RequestException as err:
+            logging.exception(
+                'JSON API raised HTTP or socket error.\n'
+                'Request details: %s\n'
+                'Error: %s',
+                {'method': 'delete', 'url': self.server_url + path, 'headers': self.headers},
                 err)
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
@@ -138,3 +170,7 @@ class JsonApiRequest(object):
             )
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
+
+
+# Just for now. Use Documents when we need to persist
+DataValue = namedtuple('DataValue', ('dataElement', 'period', 'orgUnit', 'value'))
