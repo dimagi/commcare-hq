@@ -5,7 +5,8 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.performance_sms import parser
 from corehq.apps.performance_sms.exceptions import InvalidParameterException
-from corehq.apps.performance_sms.models import TemplateVariable, ScheduleConfiguration, SCHEDULE_CHOICES
+from corehq.apps.performance_sms.models import TemplateVariable, ScheduleConfiguration, SCHEDULE_CHOICES, \
+    PerformanceConfiguration
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.ui.fields import JsonField
 from crispy_forms.bootstrap import StrictButton
@@ -14,7 +15,29 @@ from crispy_forms.layout import Layout
 import corehq.apps.style.crispy as hqcrispy
 
 
-class PerformanceMessageEditForm(forms.Form):
+class PerformanceFormMixin(object):
+
+    def clean_template(self):
+        return _clean_template(self.cleaned_data['template'])
+
+    def clean_schedule(self):
+        # todo: support other scheduling options
+        return ScheduleConfiguration(interval=self.cleaned_data['schedule'])
+
+    def clean(self):
+        cleaned_data = super(PerformanceFormMixin, self).clean()
+        print 'calling clean()'
+        config = PerformanceConfiguration.wrap(self.config.to_json())
+        self._apply_updates_to_config(config, cleaned_data)
+        try:
+            config.validate()
+        except InvalidParameterException as e:
+            raise forms.ValidationError(unicode(e))
+
+        return cleaned_data
+
+
+class PerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
     recipient_id = forms.CharField()
     schedule = forms.ChoiceField(choices=[(choice, ugettext_lazy(choice)) for choice in SCHEDULE_CHOICES])
     template = forms.CharField(widget=forms.Textarea)
@@ -58,13 +81,6 @@ class PerformanceMessageEditForm(forms.Form):
         self.helper.layout = Layout(
             *form_layout
         )
-
-    def clean_template(self):
-        return _clean_template(self.cleaned_data['template'])
-
-    def clean_schedule(self):
-        # todo: support other scheduling options
-        return ScheduleConfiguration(interval=self.cleaned_data['schedule'])
 
     def _apply_updates_to_config(self, config, cleaned_data):
         config.recipient_id = cleaned_data['recipient_id']
@@ -116,7 +132,7 @@ def _clean_template(template):
     return template
 
 
-class AdvancedPerformanceMessageEditForm(forms.Form):
+class AdvancedPerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
     recipient_id = forms.CharField()
     schedule = forms.ChoiceField(choices=[(choice, ugettext_lazy(choice)) for choice in SCHEDULE_CHOICES])
     template = forms.CharField(widget=forms.Textarea)
@@ -143,13 +159,6 @@ class AdvancedPerformanceMessageEditForm(forms.Form):
         self.helper.layout = Layout(
             *form_layout
         )
-
-    def clean_template(self):
-        return _clean_template(self.cleaned_data['template'])
-
-    def clean_schedule(self):
-        # todo: support other scheduling options
-        return ScheduleConfiguration(interval=self.cleaned_data['schedule'])
 
     def save(self, commit=True):
         self.config.recipient_id = self.cleaned_data['recipient_id']
