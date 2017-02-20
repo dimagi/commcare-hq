@@ -11,7 +11,7 @@ reset: Drop existing test dbs, then create and migrate new ones, but do not
 flush: Flush all objects from the old test databases before running tests.
     Much faster than `reset`.
 migrate: Migrate the test databases before running tests.
-    teardown: Skip database setup; do normal teardown after running tests.
+teardown: Skip database setup; do normal teardown after running tests.
 """
 
 
@@ -24,7 +24,7 @@ class CmdLineParametersPlugin(Plugin):
 
     def options(self, parser, env):
         parser.add_option(
-            '--reuse_db',
+            '--reusedb',
             default=None,
             choices=['reset', 'flush', 'migrate', 'teardown'],
             help=REUSE_DB_HELP,
@@ -36,7 +36,7 @@ class CmdLineParametersPlugin(Plugin):
         )
 
     def configure(self, options, conf):
-        for option in ['reuse_db', 'collect_only']:
+        for option in ['reusedb', 'collect_only']:
             type(self).parameters[option] = getattr(options, option)
 
     @classmethod

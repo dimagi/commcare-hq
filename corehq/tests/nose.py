@@ -177,7 +177,8 @@ class HqdbContext(DatabaseContext):
     """
 
     def __init__(self, tests, runner):
-        reuse_db = CmdLineParametersPlugin.get('reuse_db') or string_to_boolean(os.environ.get("REUSE_DB"))
+        reuse_db = (CmdLineParametersPlugin.get('reusedb')
+                    or string_to_boolean(os.environ.get("REUSE_DB") or "0"))
         self.reuse_db = reuse_db
         self.skip_setup_for_reuse_db = reuse_db and reuse_db != "reset"
         self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown"
