@@ -154,7 +154,7 @@
                             return {value: value, label: label};
                         });
                         if (extra) {
-                            self.caseListFormOptstr.push({value: extra, label: '{% trans "Unknown Form (missing)" %}'});
+                            self.caseListFormOptstr.push({value: extra, label: gettext("Unknown Form (missing)")});
                         }
                     };
 
