@@ -58,12 +58,10 @@ branches:
   - revert-14997-revert-14712-br/anonymous-formplayer  # BR 2/16
 
   # django 1.10 mgmt cmd updates - NP 2/10
-  - np/110/make_supervisor_conf
   - np/110/preindex_everything
   - np/110/ptop_es_manage
   - np/110/ptop_reset_checkpoint
   - np/110/run_ptop
-  - np/update_manifest-2
 
   - np/django1.10 # NP 2/12
   - sk/sentry  # SK 2/13
