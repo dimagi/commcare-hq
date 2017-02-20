@@ -3,8 +3,9 @@ $(function () {
         v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
         moduleBrief = initial_page_data('module_brief'),
         moduleType = moduleBrief.module_type,
-        options = initial_page_data('js_options');
+        options = initial_page_data('js_options') || {};
 
+    // Set up details
     if (!v2 || moduleBrief.case_type) {
         var state = hqImport('app_manager/js/detail-screen-config.js').state;
         var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
@@ -26,16 +27,16 @@ $(function () {
                 lang: moduleBrief.lang,
                 langs: moduleBrief.langs,
                 saveUrl: hqImport('hqwebapp/js/urllib.js').reverse('edit_module_detail_screens'),
-                parentModules: options.parent_modules,
+                parentModules: options.parent_modules || [],
                 childCaseTypes: detail.subcase_types,
-                fixture_columns_by_type: options.fixture_columns_by_type,
+                fixture_columns_by_type: options.fixture_columns_by_type || {},
                 parentSelect: detail.parent_select,
                 fixtureSelect: detail.fixture_select,
                 contextVariables: state,
                 multimedia: initial_page_data('multimedia_object_map'),
-                searchProperties: options.search_properties,
+                searchProperties: options.search_properties || [],
                 includeClosed: options.include_closed,
-                defaultProperties: options.default_properties,
+                defaultProperties: options.default_properties || [],
                 searchButtonDisplayCondition: options.search_button_display_condition,
                 contextVariables: state,
             });
@@ -50,6 +51,7 @@ $(function () {
         }
     }
 
+    // Validation for case type
     var showCaseTypeError = function(message) {
         var $caseTypeError = $('#case_type_error');
         $caseTypeError.css('display', 'block');
@@ -88,6 +90,7 @@ $(function () {
         }
     });
 
+    // Registration in case list
     if ($('#case-list-form').length) {
         var CaseListForm = function (data, formOptions, allowed, now_allowed_reason) {
             var self = this,
@@ -142,12 +145,14 @@ $(function () {
             self.toggleState(formSet && !formMissing);
             self.buildOptstr(formMissing ? data.form_id : false);
         };
-        var caseListForm = new CaseListForm(
-            initial_page_data('case_list_form_options').form,
-            initial_page_data('case_list_form_options').options,
-            initial_page_data('case_list_form_not_allowed_reason').allow,
-            initial_page_data('case_list_form_not_allowed_reason').message
-        );
+        var case_list_form_options = initial_page_data('case_list_form_options'),
+            case_list_form_not_allowed_reason = initial_page_data('case_list_form_not_allowed_reason'),
+            caseListForm = new CaseListForm(
+                case_list_form_options ? case_list_form_options.form : {},
+                case_list_form_options ? case_list_form_options.options : [],
+                case_list_form_not_allowed_reason ? case_list_form_not_allowed_reason.allow : "",
+                case_list_form_not_allowed_reason ? case_list_form_not_allowed_reason.message : ""
+            );
         $('#case-list-form').koApplyBindings(caseListForm);
         // Reset save button after bindings
         // see http://manage.dimagi.com/default.asp?145851
@@ -157,6 +162,7 @@ $(function () {
     }
 
     if (moduleType == 'shadow') {
+        // Shadow module checkboxes for including/excluding forms
         var ShadowModule = hqImport('app_manager/js/shadow-module-settings.js').ShadowModule,
             options = initial_page_data('shadow_module_options');
         $('#sourceModuleForms').koApplyBindings(new ShadowModule(
@@ -164,6 +170,10 @@ $(function () {
             options.source_module_id,
             options.excluded_form_ids
         ));
+    } else if (moduleType == 'advanced') {
+        // TODO
+    } else if (moduleType == 'careplan') {
+        // TODO
     }
 
     $(function () {
