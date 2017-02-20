@@ -73,8 +73,8 @@ class EpisodeUpdate(object):
         self.episode = episode_case
         self.case_updater = case_updater
 
-    def get_adherence_schedule_date_start(self):
-        return parse_datetime(self.episode.dynamic_case_properties().get('adherence_schedule_date_start'))
+    def get_property(self, property):
+        return self.episode.dynamic_case_properties().get(property)
 
     def get_latest_adherence_case_for_episode(self):
         """
@@ -86,16 +86,16 @@ class EpisodeUpdate(object):
         latest_date = 0
         latest_case = None
         for case in indexed_cases:
-            adherence_date = parse_datetime(self.episode.dynamic_case_properties().get('adherence_date'))
-            if (not self.episode.closed and
-               self.episode.type == CASE_TYPE_ADHERENCE and
+            adherence_date = parse_datetime(case.dynamic_case_properties().get('adherence_date'))
+            if (not case.closed and
+               case.episode.type == CASE_TYPE_ADHERENCE and
                adherence_date > latest_date):
                 latest_date = adherence_date
                 latest_case = case
         return latest_case
 
     def update_json():
-        adherence_schedule_date_start = self.get_adherence_schedule_date_start()
+        adherence_schedule_date_start = parse_datetime(self.get_property('adherence_schedule_date_start'))
         if not adherence_schedule_date_start:
             # adherence schedule hasn't been selected, so no update necessary
             return {}
@@ -103,7 +103,7 @@ class EpisodeUpdate(object):
         if adherence_schedule_date_start > self.case_updater.purge_date:
             return {
                 'aggregated_score_date_calculated': adherence_schedule_date_start - 1
-                'expected': 0
+                'expected_doses_taken': 0
                 'aggregated_score_count_taken': 0
             }
         else:
@@ -130,7 +130,7 @@ class EpisodeUpdate(object):
                 is_dose_taken_by_date = {}
                 for date, cases in adherence_cases_by_date.iteritems():
                     is_dose_taken_by_date[date] = any([
-                        case.adherence_value in DOSE_TAKEN_INDICATORS
+                        case.dynamic_case_properties().get('adherence_value') in DOSE_TAKEN_INDICATORS
                         for case in cases
                     ])
                 total_taken_count = is_dose_taken_by_date.values().count(True)
@@ -138,7 +138,7 @@ class EpisodeUpdate(object):
 
             # calculate 'expected_doses_taken' score
             dose_data = self.case_updater.get_doses_data()
-            adherence_schedule_id = episode.adherence_schedule_id or DAILY_SCHEDULE_ID
+            adherence_schedule_id = self.get_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
             doses_per_week = dose_data.get(adherence_schedule_id)
             if doses_per_week:
                 update['expected_doses_taken'] = ((
