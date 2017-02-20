@@ -393,7 +393,8 @@ class MessageLogReport(BaseCommConnectLogReport):
             return table_cell['html']
 
         def get_contact_link(couch_recipient, couch_recipient_doc_type, raw=False):
-            doc_info = self.get_recipient_info(self.domain, couch_recipient_doc_type, couch_recipient, contact_cache)
+            doc_info = self.get_recipient_info(self.domain, couch_recipient_doc_type, couch_recipient,
+                contact_cache)
             table_cell = self._fmt_contact_link(couch_recipient, doc_info)
             return table_cell['raw'] if raw else table_cell['html']
 
