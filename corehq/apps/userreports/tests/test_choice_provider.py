@@ -121,8 +121,6 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
 
     @classmethod
     def setUpClass(cls):
-        delete_all_locations()
-        delete_all_users()
         super(LocationChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
         choice_tuples = [
@@ -148,6 +146,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
     def tearDownClass(cls):
         cls.domain_obj.delete()
         delete_all_locations()
+        delete_all_users()
 
     def test_query_search(self):
         # Searching for something common to all locations gets you all locations
