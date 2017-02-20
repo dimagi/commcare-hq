@@ -47,7 +47,9 @@ class PerformanceFormMixin(object):
 
 class PerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
     recipient_id = forms.CharField()
-    schedule = forms.ChoiceField(choices=[(choice, ugettext_lazy(choice)) for choice in SCHEDULE_CHOICES])
+    schedule_interval = forms.ChoiceField(
+        choices=[(choice, ugettext_lazy(choice)) for choice in SCHEDULE_CHOICES]
+    )
     template = forms.CharField(widget=forms.Textarea)
     time_range = forms.ChoiceField(
         choices=[(choice.slug, choice.description) for choice in get_simple_dateranges()]
@@ -59,7 +61,7 @@ class PerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
 
         def _to_initial(config):
             initial = copy.copy(config._doc)
-            initial['schedule'] = config.schedule.interval
+            initial['schedule_interval'] = config.schedule.interval
             if config.template_variables:
                 initial['application'] = config.template_variables[0].app_id
                 initial['source'] = config.template_variables[0].source_id
@@ -90,13 +92,9 @@ class PerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
             *form_layout
         )
 
-    def clean_schedule(self):
-        # todo: support other scheduling options
-        return ScheduleConfiguration(interval=self.cleaned_data['schedule'])
-
     def _apply_updates_to_config(self, config, cleaned_data):
         config.recipient_id = cleaned_data['recipient_id']
-        config.schedule = cleaned_data['schedule']
+        config.schedule = ScheduleConfiguration(interval=cleaned_data['schedule_interval'])
         config.template = cleaned_data['template']
         template_variable = TemplateVariable(
             type=cleaned_data['source_type'],
