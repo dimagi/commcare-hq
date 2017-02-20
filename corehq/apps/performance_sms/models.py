@@ -1,4 +1,5 @@
 from corehq.apps.groups.models import Group
+from corehq.apps.performance_sms import parser
 from corehq.apps.reports.daterange import get_simple_dateranges
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
@@ -51,3 +52,6 @@ class PerformanceConfiguration(Document):
     @property
     def is_advanced(self):
         return len(self.template_variables) > 1
+
+    def validate(self):
+        parser.validate(self.template)
