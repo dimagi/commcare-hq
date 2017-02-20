@@ -759,8 +759,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     def save_case(case):
         transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
 
-        indices_to_save_or_update = case.get_tracked_models_to_create(CommCareCaseIndexSQL)
-        indices_to_save_or_update.extend(case.get_tracked_models_to_update(CommCareCaseIndexSQL))
+        indices_to_save_or_update = case.get_live_tracked_models(CommCareCaseIndexSQL)
         index_ids_to_delete = [index.id for index in case.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
 
         attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
