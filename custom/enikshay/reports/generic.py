@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from sqlagg.filters import IN, AND, GTE, LT, RawFilter, EQ
+from sqlagg.filters import IN, AND, GTE, LT, EQ
 
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericReportView
@@ -9,7 +9,7 @@ from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import UCR_ENGINE_ID
-from custom.enikshay.reports.filters import EnikshayLocationFilter, QuarterFilter, EnikshayMigrationFilter
+from custom.enikshay.reports.filters import EnikshayLocationFilter, EnikshayMigrationFilter
 from custom.utils.utils import clean_IN_filter_value
 
 TABLE_ID = 'episode'
