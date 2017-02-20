@@ -100,6 +100,8 @@ def get_module_view_context(app, module, lang=None):
         'module_brief': {
             'id': module.id,
             'case_type': module.case_type,
+            'lang': lang,
+            'langs': app.langs,
             'module_type': module.module_type,
             'requires_case_details': bool(module.requires_case_details),
         },
@@ -130,16 +132,18 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
     '''
     case_type = module.case_type
     return {
-        'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
         'details': _get_module_details_context(app, module, case_property_builder, case_type),
-        'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
-        'valid_parent_modules': _get_valid_parent_modules(app, module),
-        'is_search_enabled': case_search_enabled_for_domain(app.domain),
-        'search_properties': module.search_config.properties if module_offers_search(module) else [],
-        'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
-        'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
-        'search_button_display_condition':
-            module.search_config.search_button_display_condition if module_offers_search(module) else "",
+        'js_options': {
+            'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
+            'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
+            'valid_parent_modules': _get_valid_parent_modules(app, module),
+            'is_search_enabled': case_search_enabled_for_domain(app.domain),
+            'search_properties': module.search_config.properties if module_offers_search(module) else [],
+            'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+            'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
+            'search_button_display_condition':
+                module.search_config.search_button_display_condition if module_offers_search(module) else "",
+        }
     }
 
 
