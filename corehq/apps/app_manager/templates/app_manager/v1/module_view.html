@@ -43,7 +43,7 @@
             var details = {{ details|JSON }};
             var lang = {{ lang|JSON }};
             var langs = {{ app.langs|JSON }};
-            var saveUrl = "{% url "edit_module_detail_screens" domain app.id module.id %}";
+            var saveUrl = hqImport('hqwebapp/js/urllib.js').reverse('edit_module_detail_screens');
             var parentModules = {{ parent_modules|JSON }};
             var fixture_columns_by_type = {{ fixture_columns_by_type|JSON }};
             var searchProperties = {{ search_properties|JSON }};
@@ -202,7 +202,7 @@
         });
         $(function () {
             var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
-            setupValidation('{% url "validate_module_for_build" domain app.id module.id %}');
+            setupValidation(hqImport('hqwebapp/js/urllib.js').reverse('validate_module_for_build'));
         });
         $(function() {
             // show display style options only when module configured to show module and then forms
@@ -233,6 +233,8 @@
 {% endblock %}
 
 {% block form-view %}
+    {% registerurl "edit_module_detail_screens" domain app.id module.id %}
+    {% registerurl "validate_module_for_build" domain app.id module.id %}
     {% include 'app_manager/v1/partials/module_view_heading.html' %}
 <div class="tabbable">
 <ul class="nav nav-tabs" id="module-view-tabs">
