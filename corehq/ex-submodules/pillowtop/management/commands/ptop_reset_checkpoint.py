@@ -10,7 +10,8 @@ class Command(BaseCommand):
         parser.add_argument(
             'pillow_class',
         )
-        parser.add_argument('--noinput',
+        parser.add_argument(
+            '--noinput',
             action='store_true',
             dest='interactive',
             default=False,
