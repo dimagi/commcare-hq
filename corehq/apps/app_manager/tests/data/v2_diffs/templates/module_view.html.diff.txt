@@ -98,9 +98,9 @@
 +                </li>
 +              {% endif %}
 +            {% endfor %}
-+            {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
++            {% if details %}
 +                <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-+            {% endif %}{% endif %}
++            {% endif %}
 +          {% endif %}
 +        {% endblock %}{# endblock tab-headers #}
 +      </ul>
@@ -120,9 +120,9 @@
 -    </li>
 -    {% endif %}
 -    {% endfor %}
--    {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
+-    {% if details %}
 -        <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
--    {% endif %}{% endif %}
+-    {% endif %}
 -    {% endblock %}{# endblock tab-headers #}
 -</ul>
 -<div class="spacer"></div>
@@ -148,11 +148,11 @@
 +              </div>
 +            {% endif %}
 +          {% endfor %}
-+          {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
++          {% if details %}
 +            <div class="tab-pane" id="module-actions">
 +                {% include 'app_manager/v2/partials/module_actions.html' %}
 +            </div>
-+          {% endif %}{% endif %}
++          {% endif %}
 +        {% endif %}
 +      {% endblock %}
      </div>
@@ -173,11 +173,11 @@
 -    </div>
 -    {% endif %}
 -    {% endfor %}
--    {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
+-    {% if details %}
 -        <div class="tab-pane" id="module-actions">
 -            {% include 'app_manager/v1/partials/module_actions.html' %}
 -        </div>
--    {% endif %}{% endif %}
+-    {% endif %}
 -    {% endblock %}{# endblock tab-content #}
 -</div>
 -</div>
