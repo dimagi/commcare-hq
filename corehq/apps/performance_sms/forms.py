@@ -66,17 +66,21 @@ class PerformanceMessageEditForm(forms.Form):
         # todo: support other scheduling options
         return ScheduleConfiguration(interval=self.cleaned_data['schedule'])
 
-    def save(self, commit=True):
-        self.config.recipient_id = self.cleaned_data['recipient_id']
-        self.config.schedule = self.cleaned_data['schedule']
-        self.config.template = self.cleaned_data['template']
+    def _apply_updates_to_config(self, config, cleaned_data):
+        config.recipient_id = cleaned_data['recipient_id']
+        config.schedule = cleaned_data['schedule']
+        config.template = cleaned_data['template']
         template_variable = TemplateVariable(
-            type=self.cleaned_data['source_type'],
-            time_range=self.cleaned_data['time_range'],
-            source_id=self.cleaned_data['source'],
-            app_id=self.cleaned_data['application'],
+            type=cleaned_data['source_type'],
+            time_range=cleaned_data['time_range'],
+            source_id=cleaned_data['source'],
+            app_id=cleaned_data['application'],
         )
-        self.config.template_variables = [template_variable]
+        config.template_variables = [template_variable]
+        return config
+
+    def save(self, commit=True):
+        self._apply_updates_to_config(self.config, self.cleaned_data)
         if commit:
             self.config.save()
         return self.config
