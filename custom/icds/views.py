@@ -1,13 +1,18 @@
 from django import forms
 from django.core.urlresolvers import reverse
+from django.http import JsonResponse
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
+from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.es.filters import term
+from corehq.apps.es.users import UserES
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.decorators import use_select2
 
@@ -70,6 +75,7 @@ class IndicatorTestPage(BaseDomainView):
         })
         return page_context
 
+    @method_decorator(require_superuser_or_developer)
     @use_select2
     def dispatch(self, *args, **kwargs):
         return super(IndicatorTestPage, self).dispatch(*args, **kwargs)
@@ -91,3 +97,16 @@ def get_indicator_class(slug):
         'ls_sub_perf': LSSubmissionPerformanceIndicator,
         'ls_vhnd_survey': LSVHNDSurveyIndicator,
     }[slug]
+
+
+@require_superuser_or_developer
+def user_lookup(request, domain):
+    return JsonResponse({
+        'results': (
+            UserES()
+            .domain(domain)
+            .fields(['_id', 'base_username'])
+            .search_string_query(request.GET['term'])
+            .size(10)
+            .run().hits)
+    })
