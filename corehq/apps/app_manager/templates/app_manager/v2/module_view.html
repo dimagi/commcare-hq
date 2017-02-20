@@ -75,7 +75,7 @@
                 </li>
               {% endif %}
             {% endfor %}
-            {% if details and app|get_available_modules_for_case_list_configuration:module %}
+            {% if details and app.advanced_app_builder and app|get_available_modules_for_case_list_configuration:module %}
                 <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
             {% endif %}
           {% endif %}
@@ -101,7 +101,7 @@
               </div>
             {% endif %}
           {% endfor %}
-          {% if details %}
+          {% if details and app.advanced_app_builder%}
             {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
             {% if available_modules %}
             <div class="tab-pane" id="module-actions">
