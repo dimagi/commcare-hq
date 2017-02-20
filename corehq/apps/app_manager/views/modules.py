@@ -97,25 +97,25 @@ def get_module_template(domain, module):
 def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
-        'module_brief': {
-            'id': module.id,
-            'auto_select_case': module.auto_select_case,
-            'case_type': module.case_type,
-            'lang': lang,
-            'langs': app.langs,
-            'module_type': module.module_type,
-            'parent_select': module.parent_select,
-            'requires_case_details': bool(module.requires_case_details),
-        },
         'edit_name_url': reverse(
             'edit_module_attr',
             args=[app.domain, app.id, module.id, 'name']
         )
     }
+    module_brief = {
+        'id': module.id,
+        'case_type': module.case_type,
+        'lang': lang,
+        'langs': app.langs,
+        'module_type': module.module_type,
+        'requires_case_details': bool(module.requires_case_details),
+    }
     case_property_builder = _setup_case_property_builder(app)
     if isinstance(module, CareplanModule):
+        module_brief.update({'parent_select': module.parent_select})
         context.update(_get_careplan_module_view_context(app, module, case_property_builder))
     elif isinstance(module, AdvancedModule):
+        module_brief.update({'auto_select_case': module.auto_select_case})
         context.update(_get_shared_module_view_context(app, module, case_property_builder, lang))
         context.update(_get_advanced_module_view_context(app, module))
     elif isinstance(module, ReportModule):
@@ -125,6 +125,7 @@ def get_module_view_context(app, module, lang=None):
         context.update(_get_basic_module_view_context(app, module, case_property_builder))
     if isinstance(module, ShadowModule):
         context.update(_get_shadow_module_view_context(app, module, lang))
+    context.update({'module_brief': module_brief})
     return context
 
 
