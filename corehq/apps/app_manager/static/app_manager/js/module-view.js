@@ -171,6 +171,18 @@ $(function () {
             options.excluded_form_ids
         ));
     } else if (moduleType == 'advanced') {
+        if (moduleBrief.has_schedule || COMMCAREHQ.toggleEnabled('VISIT_SCHEDULER')) {
+            var VisitScheduler = hqImport('app_manager/js/visit-scheduler.js');
+            var visitScheduler = new VisitScheduler.ModuleScheduler({
+                home: $('#module-scheduler'),
+                saveUrl: hqImport('hqwebapp/js/urllib.js').reverse('edit_schedule_phases'),
+                hasSchedule: moduleBrief.has_schedule,
+                schedulePhases: initial_page_data('schedule_phases'),
+                caseProperties: initial_page_data('details')[0].properties,
+            });
+            visitScheduler.init();
+        }
+
         $('#auto-select-case').koApplyBindings({
             auto_select_case: ko.observable(moduleBrief.auto_select_case),
         });

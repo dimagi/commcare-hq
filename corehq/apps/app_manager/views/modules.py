@@ -115,7 +115,10 @@ def get_module_view_context(app, module, lang=None):
         module_brief.update({'parent_select': module.parent_select})
         context.update(_get_careplan_module_view_context(app, module, case_property_builder))
     elif isinstance(module, AdvancedModule):
-        module_brief.update({'auto_select_case': module.auto_select_case})
+        module_brief.update({
+            'auto_select_case': module.auto_select_case,
+            'has_schedule': module.has_schedule,
+        })
         context.update(_get_shared_module_view_context(app, module, case_property_builder, lang))
         context.update(_get_advanced_module_view_context(app, module))
     elif isinstance(module, ReportModule):
