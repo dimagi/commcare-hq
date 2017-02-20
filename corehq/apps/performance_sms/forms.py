@@ -36,6 +36,16 @@ class PerformanceFormMixin(object):
 
         return cleaned_data
 
+    def save(self, commit=True):
+        self._apply_updates_to_config(self.config, self.cleaned_data)
+        if commit:
+            self.config.save()
+        return self.config
+
+    def _apply_updates_to_config(self, config, cleaned_data):
+        # overridden by subclasses
+        raise NotImplementedError()
+
 
 class PerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
     recipient_id = forms.CharField()
@@ -94,12 +104,6 @@ class PerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
         )
         config.template_variables = [template_variable]
         return config
-
-    def save(self, commit=True):
-        self._apply_updates_to_config(self.config, self.cleaned_data)
-        if commit:
-            self.config.save()
-        return self.config
 
     @property
     def app_id(self):
@@ -160,14 +164,12 @@ class AdvancedPerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
             *form_layout
         )
 
-    def save(self, commit=True):
-        self.config.recipient_id = self.cleaned_data['recipient_id']
-        self.config.schedule = self.cleaned_data['schedule']
-        self.config.template = self.cleaned_data['template']
-        self.config.template_variables = self.cleaned_data['template_variables']
-        if commit:
-            self.config.save()
-        return self.config
+    def _apply_updates_to_config(self, config, cleaned_data):
+        config.recipient_id = cleaned_data['recipient_id']
+        config.schedule = cleaned_data['schedule']
+        config.template = cleaned_data['template']
+        config.template_variables = cleaned_data['template_variables']
+        return config
 
     def clean_template_variables(self):
         template_vars = self.cleaned_data['template_variables']
