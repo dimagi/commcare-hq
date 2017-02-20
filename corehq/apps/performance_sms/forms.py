@@ -26,7 +26,9 @@ class PerformanceFormMixin(object):
 
     def clean(self):
         cleaned_data = super(PerformanceFormMixin, self).clean()
-        print 'calling clean()'
+        if self.errors:
+            # don't bother processing if there are already errors
+            return cleaned_data
         config = PerformanceConfiguration.wrap(self.config.to_json())
         self._apply_updates_to_config(config, cleaned_data)
         try:
