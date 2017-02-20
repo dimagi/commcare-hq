@@ -35,7 +35,7 @@ CASE_TYPE_EPISODE = 'episode'
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def enikshay_adherence_task():
-    # get toggle enabled domains
+    # Todo: get toggle enabled domains
     domains = []
     for domain in domains:
         updater = PeriodicCaseUpdater(domain)
