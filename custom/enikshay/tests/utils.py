@@ -119,7 +119,7 @@ def get_adherence_case_structure(indexed_episode_id, adherence_date, extra_updat
     }
     update.update(extra_update)
     return CaseStructure(
-        case_id=adherence_date.strftime('%Y-%m-%d'),
+        case_id=adherence_date.strftime('%Y-%m-%d-%H-%M'),
         attrs={
             "case_type": "adherence",
             "create": True,
