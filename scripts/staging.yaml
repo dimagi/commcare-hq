@@ -58,25 +58,17 @@ branches:
   - revert-14997-revert-14712-br/anonymous-formplayer  # BR 2/16
 
   # django 1.10 mgmt cmd updates - NP 2/10
-  - np/110/clean_supervisor_confs
-  - np/110/fix_checkpoints_from_file
-  - np/110/list_deploys
-  - np/110/mail_admins
   - np/110/make_supervisor_conf
   - np/110/preindex_everything
   - np/110/ptop_es_manage
   - np/110/ptop_reset_checkpoint
-  - np/110/record_deploy_success
-  - np/110/reset_pillow_seq_store
-  - np/110/run_form_websocket_feed.py
   - np/110/run_ptop
-  - np/110/shutdown_celery_worker_by_hostname
-  - np/110/update_manifest-same
-  - np/110/validate_kafka_pillow_checkpoints
+  - np/update_manifest-2
 
   - np/django1.10 # NP 2/12
   - sk/sentry  # SK 2/13
-  - clmi-reg-from-case-list # Jenny 2/15
+  - xmlns-overflow  # Jenny 2/16
+  - np/tb/migration-filter  # NP 2/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

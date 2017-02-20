@@ -1,8 +1,17 @@
 --- 
 +++ 
-@@ -5,12 +5,12 @@
+@@ -5,7 +5,7 @@
      <div class="row top-spacer">
-         {% if not request|toggle_enabled:'USER_PROPERTY_EASY_REFS' %}
+         {% if request|toggle_enabled:'USER_PROPERTY_EASY_REFS' %}
+         <div class="col-sm-6">
+-            <div class="panel panel-default">
++            <div class="panel panel-appmanager">
+                 <div class="panel-heading panel-title">{% trans "Load the following case properties into the form" %}</div>
+                 <div class="panel-body">
+                     <p>{% trans "User properties can now be loaded in the form builer with easy references" %}</p>
+@@ -15,12 +15,12 @@
+         </div>
+         {% else %}
          <div class="col-sm-6">
 -            <div class="panel panel-default"
 +            <div class="panel panel-appmanager"
