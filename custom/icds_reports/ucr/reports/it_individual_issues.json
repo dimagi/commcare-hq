@@ -28,7 +28,8 @@
         "required": false,
         "datatype": "string",
         "choice_provider": {
-          "type": "location"
+          "type": "location",
+          "order_by_hierarchy": true
         },
         "show_all": true,
         "display": "Filter by State",
@@ -41,7 +42,8 @@
         "required": false,
         "datatype": "string",
         "choice_provider": {
-          "type": "location"
+          "type": "location",
+          "order_by_hierarchy": true
         },
         "show_all": true,
         "display": "Filter by District",
@@ -54,7 +56,8 @@
         "required": false,
         "datatype": "string",
         "choice_provider": {
-          "type": "location"
+          "type": "location",
+          "order_by_hierarchy": true
         },
         "show_all": true,
         "display": "Filter by Block",
