@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -10,99 +10,106 @@
+@@ -11,103 +11,110 @@
      <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
      <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
      <script src="{% static 'app_manager/js/module-view.js' %}"></script>
@@ -98,7 +98,7 @@
 +                </li>
 +              {% endif %}
 +            {% endfor %}
-+            {% if details %}
++            {% if details and app.advanced_app_builder and app|get_available_modules_for_case_list_configuration:module %}
 +                <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
 +            {% endif %}
 +          {% endif %}
@@ -120,7 +120,7 @@
 -    </li>
 -    {% endif %}
 -    {% endfor %}
--    {% if details %}
+-    {% if details and app|get_available_modules_for_case_list_configuration:module %}
 -        <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
 -    {% endif %}
 -    {% endblock %}{# endblock tab-headers #}
@@ -148,10 +148,14 @@
 +              </div>
 +            {% endif %}
 +          {% endfor %}
-+          {% if details %}
++          {% if details and app.advanced_app_builder%}
++            {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
++            {% if available_modules %}
 +            <div class="tab-pane" id="module-actions">
 +                {% include 'app_manager/v2/partials/module_actions.html' %}
 +            </div>
++            {% endif %}
++            {% endwith %}
 +          {% endif %}
 +        {% endif %}
 +      {% endblock %}
@@ -174,9 +178,13 @@
 -    {% endif %}
 -    {% endfor %}
 -    {% if details %}
--        <div class="tab-pane" id="module-actions">
--            {% include 'app_manager/v1/partials/module_actions.html' %}
--        </div>
+-        {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
+-        {% if available_modules %}
+-            <div class="tab-pane" id="module-actions">
+-                {% include 'app_manager/v1/partials/module_actions.html' %}
+-            </div>
+-        {% endif %}
+-        {% endwith %}
 -    {% endif %}
 -    {% endblock %}{# endblock tab-content #}
 -</div>
@@ -184,7 +192,7 @@
  <script type="text/html" id="module-forms-template">
      <div class="checkbox">
          <label>
-@@ -116,10 +123,10 @@
+@@ -121,10 +128,10 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
