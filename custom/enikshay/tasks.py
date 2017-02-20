@@ -6,8 +6,7 @@ from xml.etree import ElementTree
 from celery.task import periodic_task
 from celery.schedules import crontab
 from django.conf import settings
-from django.utils.dateparse import parse_datetime, parse_date
-
+from django.utils.dateparse import parse_datetime
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -16,7 +15,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 
-from .case_utils import get_adherence_cases_between_dates_from_episode, CASE_TYPE_ADHERENCE
+from .case_utils import get_adherence_cases_between_dates_from_episode, CASE_TYPE_ADHERENCE, CASE_TYPE_EPISODE
 
 
 DOSE_TAKEN_INDICATORS = [
@@ -27,11 +26,10 @@ DOSE_TAKEN_INDICATORS = [
 DAILY_SCHEDULE_FIXTURE_NAME = 'adherence_schedules'
 DAILY_SCHEDULE_ID = 'schedule_daily'
 SCHEDULE_ID_FIXTURE = 'id'
-CASE_TYPE_EPISODE = 'episode'
 
 
 @periodic_task(
-    run_every=crontab(minute=1, hour="*/6"),
+    run_every=crontab(day_of_week=[1], hour=0, minute=0),  # every Monday
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def enikshay_adherence_task():
@@ -71,7 +69,7 @@ class PeriodicCaseUpdater(object):
 
 def index_by_adherence_date(adherence_cases):
     """
-    inde
+    index by day of adherence_date datetime
     """
     by_date = defaultdict(list)
     for case in adherence_cases:
