@@ -1,10 +1,13 @@
 import functools
 import logging
+import sys
 from datetime import datetime
+from django.test.utils import override_settings
 from uuid import uuid4
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from nose.plugins.attrib import attr
 from nose.tools import nottest
 
 from casexml.apps.case.models import CommCareCase
@@ -146,6 +149,27 @@ class FormProcessorTestUtils(object):
                     deleted.add(doc_id)
                 except ResourceNotFound:
                     pass
+
+
+def generate_sql_backend_test_case(test_cls):
+    '''
+    Dynamically generates a new TestCase that is the same as
+    the one passed in except with the sql backend enabled.
+    '''
+    sql_test_class_name = '{}_SQL'.format(test_cls.__name__)
+
+    # Dynamically create new sql TestCase from other class
+    sql_test_class = type(sql_test_class_name, (test_cls,), {})
+
+    # Add the test case to the module
+    test_module = sys.modules[test_cls.__module__]
+    setattr(
+        test_module,
+        sql_test_class_name,
+        # Ensure that we override the settings and tag the class as sql_backend
+        attr(sql_backend=True)(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(sql_test_class))
+    )
+    return test_cls
 
 
 run_with_all_backends = functools.partial(
