@@ -20,10 +20,6 @@ class PerformanceFormMixin(object):
     def clean_template(self):
         return _clean_template(self.cleaned_data['template'])
 
-    def clean_schedule(self):
-        # todo: support other scheduling options
-        return ScheduleConfiguration(interval=self.cleaned_data['schedule'])
-
     def clean(self):
         cleaned_data = super(PerformanceFormMixin, self).clean()
         if self.errors:
@@ -94,6 +90,10 @@ class PerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
             *form_layout
         )
 
+    def clean_schedule(self):
+        # todo: support other scheduling options
+        return ScheduleConfiguration(interval=self.cleaned_data['schedule'])
+
     def _apply_updates_to_config(self, config, cleaned_data):
         config.recipient_id = cleaned_data['recipient_id']
         config.schedule = cleaned_data['schedule']
@@ -140,7 +140,7 @@ def _clean_template(template):
 
 class AdvancedPerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
     recipient_id = forms.CharField()
-    schedule = forms.ChoiceField(choices=[(choice, ugettext_lazy(choice)) for choice in SCHEDULE_CHOICES])
+    schedule = JsonField()
     template = forms.CharField(widget=forms.Textarea)
     template_variables = JsonField(expected_type=list)
 
@@ -165,6 +165,9 @@ class AdvancedPerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
         self.helper.layout = Layout(
             *form_layout
         )
+
+    def clean_schedule(self):
+        return ScheduleConfiguration.wrap(self.cleaned_data['schedule'])
 
     def _apply_updates_to_config(self, config, cleaned_data):
         config.recipient_id = cleaned_data['recipient_id']
