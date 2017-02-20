@@ -19,10 +19,20 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 
 class RetireUserTestCase(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super(RetireUserTestCase, cls).setUpClass()
+        cls.domain = 'test'
+        cls.domain_object = create_domain(cls.domain)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_object.delete()
+        super(RetireUserTestCase, cls).tearDownClass()
+
     def setUp(self):
         super(RetireUserTestCase, self).setUp()
         delete_all_users()
-        self.domain = 'test'
         self.username = "fake-person@test.commcarehq.org"
         self.other_username = 'other-user@test.commcarehq.org'
         self.password = "s3cr3t"
@@ -202,9 +212,6 @@ class RetireUserTestCase(TestCase):
 
     @run_with_all_backends
     def test_all_case_forms_deleted(self):
-        domain = create_domain(self.domain)
-        self.addCleanup(domain.delete)
-
         from corehq.apps.callcenter.utils import sync_user_case
         sync_user_case(self.commcare_user, USERCASE_TYPE, self.commcare_user.get_id)
 
