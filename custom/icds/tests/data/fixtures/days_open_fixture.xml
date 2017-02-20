@@ -4,47 +4,7 @@
 		<row index="0" is_total_row="False">
 			<column id="awc_opened_count">3</column>
 			<column id="count">3</column>
-			<column id="owner_id">AWW 8's Center</column>
-		</row>
-		<row index="1" is_total_row="False">
-			<column id="awc_opened_count">9</column>
-			<column id="count">10</column>
-			<column id="owner_id">AWW 7's Center</column>
-		</row>
-		<row index="2" is_total_row="False">
-			<column id="awc_opened_count">8</column>
-			<column id="count">9</column>
-			<column id="owner_id">AWW 6's Center</column>
-		</row>
-		<row index="3" is_total_row="False">
-			<column id="awc_opened_count">40</column>
-			<column id="count">44</column>
-			<column id="owner_id">AWW 3's Center</column>
-		</row>
-		<row index="4" is_total_row="False">
-			<column id="awc_opened_count">4</column>
-			<column id="count">7</column>
-			<column id="owner_id">AWW 2's Center</column>
-		</row>
-		<row index="5" is_total_row="False">
-			<column id="awc_opened_count">12</column>
-			<column id="count">12</column>
-			<column id="owner_id">AWW 5's Center</column>
-		</row>
-		<row index="6" is_total_row="False">
-			<column id="awc_opened_count">4</column>
-			<column id="count">4</column>
-			<column id="owner_id">AWW 9's Center</column>
-		</row>
-		<row index="7" is_total_row="False">
-			<column id="awc_opened_count">12</column>
-			<column id="count">15</column>
-			<column id="owner_id">AWW 4's Center</column>
-		</row>
-		<row index="8" is_total_row="False">
-			<column id="awc_opened_count">25</column>
-			<column id="count">25</column>
-			<column id="owner_id">AWW 1's Center</column>
+			<column id="owner_id">AWC1</column>
 		</row>
 		<row index="9" is_total_row="True">
 			<column id="awc_opened_count">117</column>

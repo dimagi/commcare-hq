@@ -4,47 +4,7 @@
 		<row index="0" is_total_row="False">
 			<column id="open_ccs_thr_gte_21">1</column>
 			<column id="open_count">1</column>
-			<column id="owner_id">AWW 8's Center</column>
-		</row>
-		<row index="1" is_total_row="False">
-			<column id="open_ccs_thr_gte_21">9</column>
-			<column id="open_count">11</column>
-			<column id="owner_id">AWW 7's Center</column>
-		</row>
-		<row index="2" is_total_row="False">
-			<column id="open_ccs_thr_gte_21">0</column>
-			<column id="open_count">1</column>
-			<column id="owner_id">AWW 6's Center</column>
-		</row>
-		<row index="3" is_total_row="False">
-			<column id="open_ccs_thr_gte_21">3</column>
-			<column id="open_count">4</column>
-			<column id="owner_id">AWW 3's Center</column>
-		</row>
-		<row index="4" is_total_row="False">
-			<column id="open_ccs_thr_gte_21">3</column>
-			<column id="open_count">3</column>
-			<column id="owner_id">AWW 2's Center</column>
-		</row>
-		<row index="5" is_total_row="False">
-			<column id="open_ccs_thr_gte_21">0</column>
-			<column id="open_count">3</column>
-			<column id="owner_id">AWW 5's Center</column>
-		</row>
-		<row index="6" is_total_row="False">
-			<column id="open_ccs_thr_gte_21">0</column>
-			<column id="open_count">5</column>
-			<column id="owner_id">AWW 9's Center</column>
-		</row>
-		<row index="7" is_total_row="False">
-			<column id="open_ccs_thr_gte_21">0</column>
-			<column id="open_count">2</column>
-			<column id="owner_id">AWW 4's Center</column>
-		</row>
-		<row index="8" is_total_row="False">
-			<column id="open_ccs_thr_gte_21">3</column>
-			<column id="open_count">4</column>
-			<column id="owner_id">AWW 1's Center</column>
+			<column id="owner_id">AWC1</column>
 		</row>
 		<row index="9" is_total_row="True">
 			<column id="open_ccs_thr_gte_21">19</column>

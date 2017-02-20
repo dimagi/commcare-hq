@@ -127,8 +127,34 @@ class LSIndicator(SMSIndicator):
 
 
 class AWWAggregatePerformanceIndicator(AWWIndicator):
+    template = 'ls_aggregate_performance.txt'
+
+    def get_value_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="False"]'
+        rows = fixture.findall(xpath)
+        for row in rows:
+            owner_id = row.find('./column[@id="owner_id"]')
+            if owner_id.text == self.user.sql_location.name:
+                return row.find('./column[@id="{}"]'.format(attribute)).text
+
     def get_messages(self, language_code=None):
-        return LSAggregatePerformanceIndicator(self.domain, self.supervisor).get_messages(language_code)
+        agg_perf = LSAggregatePerformanceIndicator(self.domain, self.supervisor)
+
+        visits = self.get_value_from_fixture(agg_perf.visits_fixture, 'count')
+        thr_gte_21 = self.get_value_from_fixture(agg_perf.thr_fixture, 'open_ccs_thr_gte_21')
+        thr_count = self.get_value_from_fixture(agg_perf.thr_fixture, 'open_count')
+        num_weigh = self.get_value_from_fixture(agg_perf.weighed_fixture, 'open_weighed')
+        num_weigh_avail = self.get_value_from_fixture(agg_perf.weighed_fixture, 'open_count')
+        num_days_open = self.get_value_from_fixture(agg_perf.days_open_fixture, 'awc_opened_count')
+
+        context = {
+            "visits": "{}/65".format(visits),
+            "thr_distribution": "{} / {}".format(thr_gte_21, thr_count),
+            "children_weighed": "{} / {}".format(num_weigh, num_weigh_avail),
+            "days_open": "{}/25".format(num_days_open),
+        }
+
+        return [self.render_template(context, language_code=language_code)]
 
 
 class AWWSubmissionPerformanceIndicator(AWWIndicator):

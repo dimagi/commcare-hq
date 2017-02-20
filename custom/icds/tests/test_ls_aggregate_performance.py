@@ -102,6 +102,9 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         weighed.return_value = ET.fromstring(self.get_xml('weighed_fixture'))
         thr.return_value = ET.fromstring(self.get_xml('thr_fixture'))
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
-        aww_indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
-        ls_indicator = LSAggregatePerformanceIndicator(self.domain, self.ls)
-        self.assertEqual(aww_indicator.get_messages(), ls_indicator.get_messages())
+        indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
+        message = indicator.get_messages()[0]
+        self.assertTrue('Home Visits - 6/65' in message)
+        self.assertTrue('THR Distribution - 1 / 1' in message)
+        self.assertTrue('Number of children weighed - 2 / 2' in message)
+        self.assertTrue('Days AWC open -  3/25' in message)
