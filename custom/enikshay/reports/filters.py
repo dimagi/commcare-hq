@@ -69,8 +69,8 @@ class EnikshayMigrationFilter(BaseSingleOptionFilter):
     label = _('Filter migrated data')
     default_text = _('Show All')
     options = (
-        ('1', 'From migration'),
-        ('0', 'Not from migration'),
+        ('1', 'Show only migrated from Nikshay'),
+        ('0', 'Show only eNikshay'),
     )
 
 

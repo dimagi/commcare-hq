@@ -48,11 +48,11 @@
                 "show_all": true,
                 "choices": [
                     {
-                        "display": "From migration",
+                        "display": "Show only migrated from Nikshay",
                         "value": 1
                     },
                     {
-                        "display": "Not from migration",
+                        "display": "Show only eNikshay",
                         "value": 0
                     }
                 ],
