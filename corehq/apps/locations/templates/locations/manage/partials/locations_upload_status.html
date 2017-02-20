@@ -1,5 +1,11 @@
-{% extends "style/partials/download_status.html" %}
 {% load i18n %}
+{% load i18n %}
+{% if is_ready %}
+    <div id="ready_{{ download_id }}">
+        <legend>{{ on_complete_short }}</legend>
+        <script>
+            $("#export-download-status .loading-indicator").addClass('hide');
+        </script>
 {% block results %}
 {% if result.success %}
     {% if result.errors %}
@@ -27,3 +33,9 @@
         </div>
 {% endif %}
 {% endblock results %}
+        </div>
+{% else %}
+    <legend>
+        {% trans "Importing your data. This may take some time..." %}
+    </legend>
+{% endif %}
