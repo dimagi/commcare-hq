@@ -22,13 +22,24 @@ class Command(BaseCommand):
     Example: ./manage.py run_blob_migration [options] saved_exports
     """
     help = USAGE
-    option_list = (
-        make_option('--log-dir', help="Migration log directory."),
-        make_option('--reset', action="store_true", default=False,
-            help="Discard any existing migration state."),
-        make_option('--chunk-size', type="int", default=100,
-            help="Maximum number of records to read from couch at once."),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--log-dir',
+            help="Migration log directory.",
+        )
+        parser.add_argument(
+            '--reset',
+            action="store_true",
+            default=False,
+            help="Discard any existing migration state.",
+        )
+        parser.add_argument(
+            '--chunk-size',
+            type=int,
+            default=100,
+            help="Maximum number of records to read from couch at once.",
+        )
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
