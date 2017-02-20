@@ -1,3 +1,4 @@
+/*globals $, COMMCAREHQ, _, ko */
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
         v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
@@ -19,7 +20,7 @@ $(function () {
                 state: {
                     type: detail.type,
                     short: detail.short,
-                    long: detail.long
+                    long: detail.long,
                 },
                 sortRows: detail.sort_elements,
                 model: detail.model,
@@ -38,7 +39,6 @@ $(function () {
                 includeClosed: options.include_closed,
                 defaultProperties: options.default_properties || [],
                 searchButtonDisplayCondition: options.search_button_display_condition,
-                contextVariables: state,
             });
 
             var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
@@ -78,7 +78,7 @@ $(function () {
             showCaseTypeError(
                 gettext("Case types can only include the characters a-z, 0-9, '-' and '_'")
             );
-        } else if (valueNoSpaces === 'commcare-user' && moduleType != 'advanced') {
+        } else if (valueNoSpaces === 'commcare-user' && moduleType !== 'advanced') {
             $(this).closest('.form-group').addClass('has-error');
             showCaseTypeError(
                 gettext("'commcare-user' is a reserved case type. Please change the case type")
@@ -161,16 +161,16 @@ $(function () {
         $button.setStateWhenReady('saved');
     }
 
-    if (moduleType == 'shadow') {
+    if (moduleType === 'shadow') {
         // Shadow module checkboxes for including/excluding forms
         var ShadowModule = hqImport('app_manager/js/shadow-module-settings.js').ShadowModule,
-            options = initial_page_data('shadow_module_options');
+            shadowOptions = initial_page_data('shadow_module_options');
         $('#sourceModuleForms').koApplyBindings(new ShadowModule(
-            options.modules,
-            options.source_module_id,
-            options.excluded_form_ids
+            shadowOptions.modules,
+            shadowOptions.source_module_id,
+            shadowOptions.excluded_form_ids
         ));
-    } else if (moduleType == 'advanced') {
+    } else if (moduleType === 'advanced') {
         if (moduleBrief.has_schedule || COMMCAREHQ.toggleEnabled('VISIT_SCHEDULER')) {
             var VisitScheduler = hqImport('app_manager/js/visit-scheduler.js');
             var visitScheduler = new VisitScheduler.ModuleScheduler({
@@ -186,11 +186,9 @@ $(function () {
         $('#auto-select-case').koApplyBindings({
             auto_select_case: ko.observable(moduleBrief.auto_select_case),
         });
-    } else if (moduleType == 'careplan') {
+    } else if (moduleType === 'careplan') {
         var $container = $('#detail-screen-parent');
         if ($container.length) {
-            var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
-                moduleBrief = initial_page_data('module_brief');
             var ParentSelect = hqImport('app_manager/js/detail-screen-config.js').ParentSelect;
             var parent_select_model = moduleBrief.parent_select;
             var parentSelect = new ParentSelect({
@@ -213,13 +211,13 @@ $(function () {
         var $menu_mode = $('#put_in_root');
         var $display_style_container = $('#display_style_container');
         var update_display_view = function() {
-            if($menu_mode.val() == 'false') {
+            if ($menu_mode.val() === 'false') {
                 $display_style_container.show();
             } else {
                 $display_style_container.hide();
             }
-        }
-        update_display_view()
-        $menu_mode.on('change', update_display_view)
+        };
+        update_display_view();
+        $menu_mode.on('change', update_display_view);
     });
 });
