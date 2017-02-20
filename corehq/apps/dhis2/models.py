@@ -5,7 +5,10 @@ from collections import namedtuple
 
 import requests
 
-from dimagi.ext.couchdbkit import Document, StringProperty
+from dimagi.ext.couchdbkit import Document, DocumentSchema, StringProperty
+
+
+COUCH_KEYS = ('_id', 'doc_type', '_rev', '#export_tag')
 
 
 class Dhis2Connection(Document):
@@ -13,6 +16,28 @@ class Dhis2Connection(Document):
     server_url = StringProperty()
     username = StringProperty()
     password = StringProperty()
+
+
+class DataValueMap(Document):
+    domain = StringProperty()
+    report = StringProperty()  # a UCR
+    # UCR columns to be mapped to DHIS2 DataValue properties:
+    data_element_column = StringProperty(required=True)
+    # period_column = StringProperty(required=True)  # MVP: report (month) period as YYYYMM
+    org_unit_column = StringProperty(required=True)
+    category_option_combo_column = StringProperty(required=True)
+    value_column = StringProperty(required=True)
+    complete_date_column = StringProperty()
+    attribute_option_combo_column = StringProperty()  # (DHIS2 defaults this to categoryOptionCombo)
+    comment_column = StringProperty()
+
+
+# MVP: "monthly"
+# class ReportPeriod(Document):
+#     domain = StringProperty()
+#     report = StringProperty()  # a UCR
+#     period = StringProperty()
+#     #  DHIS2 offers weekly, monthly, two-monthly, quarterly, six-monthly, financial-yearly & annually
 
 
 class JsonApiError(Exception):
@@ -172,5 +197,19 @@ class JsonApiRequest(object):
         return JsonApiRequest.json_or_error(response)
 
 
-# Just for now. Use Documents when we need to persist
-DataValue = namedtuple('DataValue', ('dataElement', 'period', 'orgUnit', 'value'))
+class AsDictMixin(dict):
+    def _asdict(self):
+        # Used by json_serializer for sending to the API. Don't return CouchDB's properties
+        return {k: v for k, v in dict(self).items() if k not in COUCH_KEYS}
+
+
+class DataValue(DocumentSchema, AsDictMixin):
+    # Use DocumentSchema because it conveniently handles optional properties
+    dataElement = StringProperty()
+    period = StringProperty()
+    orgUnit = StringProperty()
+    categoryOptionCombo = StringProperty()
+    value = StringProperty()
+    completeDate = StringProperty()
+    attributeOptionCombo = StringProperty()
+    comment = StringProperty()
