@@ -55,7 +55,7 @@ from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
-from casexml.apps.case.xform import extract_case_blocks
+from casexml.apps.case.xform import extract_case_blocks, get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
@@ -1839,16 +1839,42 @@ def download_attachment(request, domain, instance_id):
 def archive_form(request, domain, instance_id):
     instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
+    case_id_from_request, redirect = _get_case_id_and_redirect_url(domain, request)
+
+    notify_level = messages.SUCCESS
     if instance.is_normal:
-        instance.archive(user_id=request.couch_user._id)
-        notif_msg = _("Form was successfully archived.")
+        cases_created = {u.id for u in get_case_updates(instance) if u.creates_case()}
+        cases_still_active = {}
+        for case in CaseAccessors(domain).iter_cases(list(cases_created)):
+            if case.xform_ids != [instance.form_id]:
+                # case has other forms that need to be archived before this one
+                cases_still_active[case.case_id] = case.name
+
+        if cases_still_active:
+            def _get_case_link(case_id, name):
+                if case_id == case_id_from_request:
+                    return _(u"%(case_name)s (this case)") % {'case_name': name}
+                else:
+                    return u'<a href="{}">{}</a>'.format(reverse('case_details', args=[domain, case_id]), name)
+            case_links = ', '.join([
+                _get_case_link(case_id, name)
+                for case_id, name in cases_still_active.items()
+            ])
+            msg = _("""Form can not be archived as it creates a case that is still active.
+            All other forms for these cases must be archived first:""")
+            notify_msg = u"""{} {}""".format(msg, case_links)
+            notify_level = messages.ERROR
+        else:
+            instance.archive(user_id=request.couch_user._id)
+            notify_msg = _("Form was successfully archived.")
     elif instance.is_archived:
-        notif_msg = _("Form was already archived.")
+        notify_msg = _("Form was already archived.")
     else:
-        notif_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
+        notify_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
+        notify_level = messages.ERROR
 
     params = {
-        "notif": notif_msg,
+        "notif": notify_msg,
         "undo": _("Undo"),
         "url": reverse('unarchive_form', args=[domain, instance_id]),
         "id": "restore-%s" % instance_id,
@@ -1859,26 +1885,31 @@ def archive_form(request, domain, instance_id):
         <form id="{id}" action="{url}" method="POST">{csrf_inline}</form>""" \
         if instance.is_archived else u'{notif}'
     msg = msg_template.format(**params)
-    messages.success(request, mark_safe(msg), extra_tags='html')
+    messages.add_message(request, notify_level, mark_safe(msg), extra_tags='html')
 
+    return HttpResponseRedirect(redirect)
+
+
+def _get_case_id_and_redirect_url(domain, request):
+    case_id = None
     redirect = request.META.get('HTTP_REFERER')
     if not redirect:
         redirect = inspect.SubmitHistory.get_url(domain)
-
-    # check if referring URL was a case detail view, then make sure
-    # the case still exists before redirecting.
-    template = reverse('case_details', args=[domain, 'fake_case_id'])
-    template = template.replace('fake_case_id', '([^/]*)')
-    case_id = re.findall(template, redirect)
-    if case_id:
-        try:
-            case = CaseAccessors(domain).get_case(case_id[0])
-            if case.is_deleted:
-                raise CaseNotFound
-        except CaseNotFound:
-            redirect = reverse('project_report_dispatcher', args=[domain, 'case_list'])
-
-    return HttpResponseRedirect(redirect)
+    else:
+        # check if referring URL was a case detail view, then make sure
+        # the case still exists before redirecting.
+        template = reverse('case_details', args=[domain, 'fake_case_id'])
+        template = template.replace('fake_case_id', '([^/]*)')
+        case_id = re.findall(template, redirect)
+        if case_id:
+            case_id = case_id[0]
+            try:
+                case = CaseAccessors(domain).get_case(case_id)
+                if case.is_deleted:
+                    raise CaseNotFound
+            except CaseNotFound:
+                redirect = reverse('project_report_dispatcher', args=[domain, 'case_list'])
+    return case_id, redirect
 
 
 @require_form_view_permission
