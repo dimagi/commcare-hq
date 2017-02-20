@@ -1,4 +1,5 @@
-import logging
+from __future__ import absolute_import
+from . import logging
 
 # this is utility code for retrying an unreliable operation
 # (network access, db access, etc.) several times before giving
@@ -138,7 +139,7 @@ class WebServiceTask:
 
             self.value = val
             return True
-        except Exception, e:
+        except Exception as e:
             self.errors.append(e)
             return False
 

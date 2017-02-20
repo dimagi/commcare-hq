@@ -1,4 +1,5 @@
-from system import shell_exec
+from __future__ import absolute_import
+from .system import shell_exec
 
 def get_revision(vcs, reporoot, dirtyfunc=lambda rev, **kw: rev + '*'):
     """return a revision string for the current state of the repository.

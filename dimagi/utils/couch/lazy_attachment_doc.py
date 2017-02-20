@@ -139,7 +139,7 @@ class LazyAttachmentDoc(Document):
             self.__remove_cached_attachment(name)
             data = info['content']
             content_type = (info['content_type']
-                            or ';'.join(filter(None, guess_type(name))))
+                            or ';'.join([_f for _f in guess_type(name) if _f]))
             if isinstance(data, unicode):
                 data = data.encode('utf8')
             _attachments[name] = {

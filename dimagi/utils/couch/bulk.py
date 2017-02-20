@@ -57,9 +57,9 @@ class CouchTransaction(object):
 
     def preview_save(self, cls=None):
         if cls:
-            return self.docs_to_save[cls].values()
+            return list(self.docs_to_save[cls].values())
         else:
-            return [doc for _cls in self.docs_to_save.keys()
+            return [doc for _cls in self.docs_to_save
                             for doc in self.preview_save(cls=_cls)]
 
     def commit(self):
@@ -67,7 +67,7 @@ class CouchTransaction(object):
             cls.bulk_delete(docs)
 
         for cls, doc_map in self.docs_to_save.items():
-            docs = doc_map.values()
+            docs = list(doc_map.values())
             cls.bulk_save(docs)
 
     def __enter__(self):
@@ -81,7 +81,7 @@ class CouchTransaction(object):
 
 
 def get_docs(db, keys, **query_params):
-    payload = json.dumps({'keys': filter(None, keys)})
+    payload = json.dumps({'keys': [_f for _f in keys if _f]})
     url = db.uri + '/_all_docs'
     query_params['include_docs'] = True
 

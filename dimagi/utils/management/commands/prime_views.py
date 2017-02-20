@@ -76,7 +76,7 @@ class Command(BaseCommand):
                     else:
                         views = design_doc.get('views', {})
                         # get the first view
-                        for view_name in views.keys():
+                        for view_name in views:
                             pool.spawn(do_prime, app, design_doc_name, view_name, verbose=verbose)
                             break
             except Exception:

@@ -3,6 +3,7 @@ Generate apache conf for static content
 NOTE that this should go before the conf for dynamic content
 
 """
+from __future__ import print_function
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -46,6 +47,6 @@ class Command(BaseCommand):
         arg_dict['static_path'] = settings.STATIC_URL
         arg_dict['media_path'] = settings.MEDIA_URL
 
-        print outstring % arg_dict
+        print(outstring % arg_dict)
 
 

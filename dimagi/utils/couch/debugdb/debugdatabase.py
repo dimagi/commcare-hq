@@ -43,7 +43,7 @@ class DebugDatabase(Database):
         error = None
         try:
             doc = self.res.get(docid, **params).json_body
-        except ResourceNotFound, ex:
+        except ResourceNotFound as ex:
             error = ex
             doc = {}
         #############################
@@ -55,7 +55,7 @@ class DebugDatabase(Database):
         stacktrace = tidy_stacktrace(traceback.extract_stack())
 
         if wrapper is not None:
-            view_path_display = "GET %s" % wrapper.im_self._doc_type
+            view_path_display = "GET %s" % wrapper.__self__._doc_type
         else:
             view_path_display = "Raw GET"
 
@@ -115,7 +115,7 @@ class DebugViewResults64(ViewResults):
 
         # add key in view results that could be added by an external
         # like couchdb-lucene
-        for key in self._result_cache.keys():
+        for key in self._result_cache:
             if key not in ["total_rows", "offset", "rows"]:
                 self._dynamic_keys.append(key)
                 setattr(self, key, self._result_cache[key])
@@ -181,7 +181,7 @@ class DebugViewResults57(ViewResults):
 
         # add key in view results that could be added by an external
         # like couchdb-lucene
-        for key in self._result_cache.keys():
+        for key in self._result_cache:
             if key not in ["total_rows", "offset", "rows"]:
                 self._dynamic_keys.append(key)
                 setattr(self, key, self._result_cache[key])

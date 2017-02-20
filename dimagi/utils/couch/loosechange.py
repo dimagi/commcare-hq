@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import tempfile
 import time
@@ -59,7 +60,7 @@ def load(path=None, convert=True, convert_args={'dates': True}):
 
     end = time.time()
 
-    print 'data loaded: %d docs, %.2fs' % (len(db), end - start)
+    print('data loaded: %d docs, %.2fs' % (len(db), end - start))
 
 def map_reduce(emitfunc=lambda rec: [(None,)], reducefunc=lambda v: v, data=None, include_docs=False):
     """perform a "map-reduce" on the data
@@ -88,12 +89,12 @@ def map_reduce(emitfunc=lambda rec: [(None,)], reducefunc=lambda v: v, data=None
             if k not in mapped:
                 mapped[k] = []
             mapped[k].append(v)
-    return dict((k, reducefunc(v)) for k, v in mapped.iteritems())
+    return dict((k, reducefunc(v)) for k, v in mapped.items())
 
 def convert_data(e, **kw):
     """recursively convert parsed json into easy wrappers"""
     if isinstance(e, type({})):
-        for k in e.keys():
+        for k in e:
             e[k] = convert_data(e[k], **kw)
         return AssocArray(e)
     elif hasattr(e, '__iter__'):

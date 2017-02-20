@@ -12,7 +12,7 @@ class log_exception(object):
         def decorated(*args, **kwargs):
             try:
                 return fn(*args, **kwargs)
-            except Exception, e:
+            except Exception as e:
                 logging.exception('something went wrong calling {fn}: {msg}'.format(
                     fn=fn.__name__,
                     msg=str(e),

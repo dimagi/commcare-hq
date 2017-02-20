@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management import call_command
 from django.core.management.base import CommandError, BaseCommand
 from optparse import make_option
@@ -34,7 +35,7 @@ class Command(BaseCommand):
             call_command('test')
         else:
             args = ['test'] + settings.DEV_APPS
-            print args
+            print(args)
 
             call_command(*args)
 

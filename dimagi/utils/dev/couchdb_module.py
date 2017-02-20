@@ -31,7 +31,7 @@ class CouchDBDevModule(DevServerModule):
 
         def output_stacktrace(row, count=1):
             if SHOW_STACKTRACE:
-                filtered_stacktrace = filter(lambda x: 'site-packages' not in x[0], row['stacktrace'])
+                filtered_stacktrace = [x for x in row['stacktrace'] if 'site-packages' not in x[0]]
                 self.logger.debug('\n\t'.join(["%s:%s" % (x[0],x[1]) for x in filtered_stacktrace[-count-STACKTRACE_SIZE:]]))
 
         if SHOW_VERBOSE:

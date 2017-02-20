@@ -12,7 +12,7 @@ def delete(server, dbname):
         try:                 
             server.delete_db(dbname)
             return
-        except Exception, e: 
+        except Exception as e: 
             # logging.error("Can't delete database %s.  %s" % (dbname, e))
             tries += 1
     if tries == MAX_TRIES:

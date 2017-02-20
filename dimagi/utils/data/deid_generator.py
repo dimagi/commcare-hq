@@ -1,5 +1,6 @@
 import hashlib
 from datetime import datetime
+from functools import reduce
 
 def to_number(bytes):
     return reduce(lambda a, b: a*256 + b, bytes)
@@ -31,7 +32,7 @@ class DeidGenerator(object):
 
     def digest(self, alphabet="0123456789"):
         b = len(alphabet)
-        answer = map(lambda i: alphabet[i], to_base(self.number, b))
+        answer = [alphabet[i] for i in to_base(self.number, b)]
         if isinstance(alphabet, basestring):
             answer = ''.join(answer)
         return answer

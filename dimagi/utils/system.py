@@ -16,7 +16,7 @@ def shell_exec(cmd, cwd=None):
     note: common directories will be automatically added to the syspath"""
     try:
         return shell_exec_checked(cmd, cwd)
-    except ShellCommandError, e:
+    except ShellCommandError as e:
         logging.exception('error executing command [%s]' % cmd)
         return None
 
@@ -25,7 +25,7 @@ def shell_exec_checked(cmd, cwd=None):
     return stdout otherwise. stderr is logged if no error occurs."""
     try:
         retcode, out, err = shell_exec_raw(cmd, cwd)
-    except Exception, e:
+    except Exception as e:
         #not terribly sure what exceptions can occur when executing via shell.
         #maybe if the shell itself is missing. playing it safe anyway...
         raise ShellCommandError(ex=e)

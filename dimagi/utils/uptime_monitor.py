@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import urllib2
-import logging
+from . import logging
 import json
-from gmailloghandler import TLSSMTPHandler
+from .gmailloghandler import TLSSMTPHandler
 
 # this is a simple uptime monitoring script to send alert emails
 # when something goes wrong with a server. it monitors both:
@@ -59,7 +60,7 @@ try:
 
     if errors:
         logging.error('errors on server:\n\n' + '\n'.join(errors))
-except Exception, e:
+except Exception as e:
     logging.error('could not contact rapidsms server: %s %s' % (type(e), str(e)))
 
 
