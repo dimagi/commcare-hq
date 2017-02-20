@@ -37,6 +37,7 @@
 
     <script>
         $(function () {
+            var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
             var state = hqImport('app_manager/js/detail-screen-config.js').state;
             var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
             state.requires_case_details({{ module.requires_case_details|BOOL }});
@@ -88,8 +89,7 @@
                     $detail_home.koApplyBindings(detailScreenConfig);
                 }
             }
-        });
-        $(function () {
+
             var moduleType = {{ module.module_type|JSON }};
             var showCaseTypeError = function(message) {
                 var $caseTypeError = $('#case_type_error');
@@ -191,20 +191,20 @@
             }
 
             if (moduleType == 'shadow') {
-                var ShadowModule = hqImport('app_manager/js/shadow-module-settings.js').ShadowModule;
-                var shadowModule = new ShadowModule(
-                    {{ modules|JSON }},
-                    {{ module.source_module_id|JSON }},
-                    {{ excluded_form_ids|JSON }}
-                );
-                $('#sourceModuleForms').koApplyBindings(shadowModule);
+                var ShadowModule = hqImport('app_manager/js/shadow-module-settings.js').ShadowModule,
+                    options = initial_page_data('shadow_module_options');
+                $('#sourceModuleForms').koApplyBindings(new ShadowModule(
+                    options.modules,
+                    options.source_module_id,
+                    options.excluded_form_ids
+                ));
             }
-
         });
     </script>
 {% endblock %}
 
 {% block form-view %}
+    {% initial_page_data 'shadow_module_options' shadow_module_options %}
     {% registerurl "edit_module_detail_screens" domain app.id module.id %}
     {% registerurl "validate_module_for_build" domain app.id module.id %}
     {% include 'app_manager/v1/partials/module_view_heading.html' %}
