@@ -74,7 +74,6 @@ def index_by_adherence_date(adherence_cases):
     by_date = defaultdict(list)
     for case in adherence_cases:
         adherence_date = parse_datetime(case.dynamic_case_properties().get('adherence_date')).date()
-        print adherence_date, case
         by_date[adherence_date].append(case)
     return by_date
 
@@ -142,16 +141,13 @@ class EpisodeUpdate(object):
                     adherence_schedule_date_start,
                     update["aggregated_score_date_calculated"]
                 )
-                print adherence_cases, "gr0"
                 adherence_cases_by_date = index_by_adherence_date(adherence_cases)
-                print adherence_cases_by_date, 'sdass'
                 is_dose_taken_by_date = {}
                 for date, cases in adherence_cases_by_date.iteritems():
                     is_dose_taken_by_date[date] = any([
                         case.dynamic_case_properties().get('adherence_value') in DOSE_TAKEN_INDICATORS
                         for case in cases
                     ])
-                print is_dose_taken_by_date, 'asdaer'
                 total_taken_count = is_dose_taken_by_date.values().count(True)
                 update["aggregated_score_count_taken"] = total_taken_count
 
@@ -160,9 +156,6 @@ class EpisodeUpdate(object):
             adherence_schedule_id = self.get_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
             doses_per_week = dose_data.get(adherence_schedule_id)
             if doses_per_week:
-                print update['aggregated_score_date_calculated']
-                print (update['aggregated_score_date_calculated'] - adherence_schedule_date_start).days / 7.0
-                print doses_per_week, "er3"
                 update['expected_doses_taken'] = ((
                     (update['aggregated_score_date_calculated'] - adherence_schedule_date_start)).days / 7.0
                 ) * doses_per_week
