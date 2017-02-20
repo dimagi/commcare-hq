@@ -171,7 +171,9 @@ $(function () {
             options.excluded_form_ids
         ));
     } else if (moduleType == 'advanced') {
-        // TODO
+        $('#auto-select-case').koApplyBindings({
+            auto_select_case: ko.observable(moduleBrief.auto_select_case),
+        });
     } else if (moduleType == 'careplan') {
         var $container = $('#detail-screen-parent');
         if ($container.length) {
