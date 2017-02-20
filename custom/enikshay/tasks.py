@@ -9,6 +9,7 @@ from django.conf import settings
 from django.utils.dateparse import parse_datetime
 
 from casexml.apps.case.mock import CaseBlock
+from corehq import toggles
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -33,8 +34,7 @@ SCHEDULE_ID_FIXTURE = 'id'
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def enikshay_adherence_task():
-    # Todo: get toggle enabled domains
-    domains = []
+    domains = toggles.UATBC_ADHERENCE_TASK.get_enabled_domains()
     for domain in domains:
         updater = PeriodicCaseUpdater(domain)
         updater.run()

@@ -1055,3 +1055,10 @@ INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+UATBC_ADHERENCE_TASK = StaticToggle(
+    'uatbc_adherence_calculations',
+    'This runs backend adherence calculations for enikshay domains',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
