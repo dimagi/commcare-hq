@@ -211,35 +211,6 @@
             }
 
         });
-        $(function () {
-            var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
-            setupValidation(hqImport('hqwebapp/js/urllib.js').reverse('validate_module_for_build'));
-        });
-        $(function() {
-            // show display style options only when module configured to show module and then forms
-            var $menu_mode = $('#put_in_root');
-            var $display_style_container = $('#display_style_container');
-            var update_display_view = function() {
-                if($menu_mode.val() == 'false') {
-                    $display_style_container.show();
-                } else {
-                    $display_style_container.hide();
-                }
-            }
-            update_display_view()
-            $menu_mode.on('change', update_display_view)
-        });
-    </script>
-
-    <script type="text/html" id="module-forms-template">
-        <div class="checkbox">
-            <label>
-                <input name="incl_form_ids"
-                       type="checkbox"
-                       data-bind="value: uniqueId, checked: $parent.includedFormIds"/>
-                <span data-bind="text: name"></span>
-            </label>
-        </div>
     </script>
 {% endblock %}
 
@@ -313,6 +284,17 @@
       {% endblock %}
     </div>
 </div>
+
+<script type="text/html" id="module-forms-template">
+    <div class="checkbox">
+        <label>
+            <input name="incl_form_ids"
+                   type="checkbox"
+                   data-bind="value: uniqueId, checked: $parent.includedFormIds"/>
+            <span data-bind="text: name"></span>
+        </label>
+    </div>
+</script>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
