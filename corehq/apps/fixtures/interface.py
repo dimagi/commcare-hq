@@ -67,6 +67,41 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
             context = super(FixtureViewInterface, self).report_context
         except ResourceNotFound:
             return {"table_not_selected": True}
+
+        # Build javascript options for DataTables
+        report_table = context['report_table']
+        headers = report_table.get('headers')
+        data_tables_options = {
+            'slug': self.context['report']['slug'],
+            'defaultRows': report_table.get('default_rows', 10),
+            'startAtRowNum': report_table.get('start_at_row', 0),
+            'showAllRowsOption': report_table.get('show_all_rows'),
+            'autoWidth': headers.auto_width,
+        }
+        if headers.render_aoColumns:
+            data_tables_options.update({
+                'aoColumns': headers.render_aoColumns,
+            })
+        if headers.custom_sort:
+            data_tables_options.update({
+                'customSort': headers.custom_sort,
+            })
+
+        pagination = context['report_table'].get('pagination', {})
+        if pagination.get('is_on'):
+            data_tables_options.update({
+                'ajaxSource': pagination.get('source'),
+                'ajaxParams': pagination.get('params'),
+            })
+
+        left_col = context['report_table'].get('left_col', {})
+        if left_col.get('is_fixed'):
+            data_tables_options.update({
+                'fixColumns': True,
+                'fixColsNumLeft': left_col['fixed'].get('num'),
+                'fixColsWidth': left_col['fixed'].get('width'),
+            })
+
         context.update({
             "selected_table": self.table.get("table_id", ""),
             'active_tab': ProjectDataTab(
@@ -74,7 +109,8 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
                 domain=self.domain,
                 couch_user=self.request.couch_user,
                 project=self.request.project
-            )
+            ),
+            'data_tables_options': data_tables_options,
         })
         return context
 

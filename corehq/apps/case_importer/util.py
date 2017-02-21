@@ -16,7 +16,7 @@ from corehq.apps.case_importer.exceptions import (
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
-from corehq.apps.locations.models import SQLLocation, Location
+from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -341,8 +341,8 @@ def get_spreadsheet(filename):
 
 
 def is_valid_location_owner(owner, domain):
-    if isinstance(owner, Location):
-        return owner.sql_location.domain == domain and owner.sql_location.location_type.shares_cases
+    if isinstance(owner, SQLLocation):
+        return owner.domain == domain and owner.location_type.shares_cases
     else:
         return False
 

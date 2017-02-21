@@ -99,6 +99,22 @@
             </div>
             <div class="panel-body">
                 <div class="form-group">
+                    <label for="search-display-condition" class="control-label">
+                        {% trans "Display condition" %}
+                    </label>
+                    <input type="text"
+                           class="form-control"
+                           id="search-display-condition"
+                           spellcheck="false"
+                           data-bind="value: searchButtonDisplayCondition"
+                    >
+                    <p class="help-block">
+                        {% blocktrans %}
+                        If this xpath expression evaluates to false, the case search button will not be
+                        displayed. If no expression is given, the button will always be displayed.
+                        {% endblocktrans %}
+                    </p>
+
                     <label for="claim-relevant-condition" >
                         {% trans "Only claim cases that fulfill the following condition" %}
                     </label>

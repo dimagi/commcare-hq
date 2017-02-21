@@ -7,6 +7,7 @@ hqDefine('userreports/js/expression_evaluator.js', function () {
         self.submitUrl = submitUrl;
         self.documentType = ko.observable(initialData.documentType);
         self.documentId = ko.observable(initialData.documentId);
+        self.dataSourceId = ko.observable(initialData.dataSourceId);
         self.expressionText = ko.observable(editor.getValue());
         self.uiFeedback = ko.observable();
 
@@ -27,10 +28,14 @@ hqDefine('userreports/js/expression_evaluator.js', function () {
 
         self.updateUrl = function () {
             var currentParams = document.location.search.substring(1);
-            var newParams = $.param({
+            var newParams = {
                 'id': self.documentId(),
                 'type': self.documentType(),
-            });
+            }
+            if (self.dataSourceId()) {
+                newParams['data_source'] = self.dataSourceId();
+            }
+            newParams = $.param(newParams);
             if (currentParams !== newParams) {
                 var newUrl = document.location.pathname + "?" + newParams;
                 if (history.pushState) {
@@ -52,6 +57,7 @@ hqDefine('userreports/js/expression_evaluator.js', function () {
                     data: {
                         doc_type: self.documentType(),
                         doc_id: self.documentId(),
+                        data_source: self.dataSourceId(),
                         expression: self.expressionText(),
                     },
                     success: function (data) {

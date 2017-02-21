@@ -65,7 +65,8 @@
     "markdown-it": "7.0.1",
     "At.js": "~1.5.2",
     "clipboard": "1.5.15",
-    "fast-levenshtein": "^2.0.5"
+    "fast-levenshtein": "^2.0.5",
+    "intl-tel-input": "9.0.7"
   },
   "devDependencies": {
     "chai": "3.3.0",

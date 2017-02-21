@@ -1,5 +1,6 @@
 from corehq.apps.export.views import ExportsPermissionsMixin
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, resolve, Resolver404
+from corehq.tabs.uitab import url_is_location_safe
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.reports.models import ReportConfig, FormExportSchema, CaseExportSchema
 from dimagi.utils.decorators.memoized import memoized
@@ -35,6 +36,15 @@ class Tile(object):
         """Whether or not the tile is visible on the dashboard (permissions).
         :return: Boolean
         """
+        if not self.request.can_access_all_locations:
+            url = self.tile_config.get_url(self.request)
+            try:
+                match = resolve(url)
+            except Resolver404:
+                pass
+            else:
+                if 'domain' in match.kwargs and not url_is_location_safe(url):
+                    return False
         return bool(self.tile_config.visibility_check(self.request))
 
     @property

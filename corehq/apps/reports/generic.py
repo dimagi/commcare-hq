@@ -124,6 +124,12 @@ class GenericReportView(object):
     report_title = None
     report_subtitles = []
 
+    # For drilldown reports, we hide the child reports from navigation.
+    # For those child reports, set the parent's report class here so that we
+    # still include these reports in the list of reports we do access control
+    # against.
+    parent_report_class = None
+
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
             raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"

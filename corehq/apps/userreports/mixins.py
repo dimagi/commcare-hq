@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 from collections import OrderedDict
 
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.reports.specs import ReportColumn, ExpressionColumn
 from corehq.apps.userreports.util import get_table_name
+import six
 
 
 class ConfigurableReportDataSourceMixin(object):
@@ -13,7 +15,7 @@ class ConfigurableReportDataSourceMixin(object):
             self._config = config_or_config_id
             self._config_id = self._config._id
         else:
-            assert isinstance(config_or_config_id, basestring)
+            assert isinstance(config_or_config_id, six.string_types)
             self._config = None
             self._config_id = config_or_config_id
 
@@ -50,7 +52,7 @@ class ConfigurableReportDataSourceMixin(object):
         in the report. These top-level columns may resolve to more than one column in the
         underlying query or report (e.g. percentage columns or expanded columns)
         """
-        return self._column_configs.values()
+        return list(self._column_configs.values())
 
     @property
     def inner_columns(self):
@@ -97,3 +99,20 @@ class ConfigurableReportDataSourceMixin(object):
     @property
     def has_total_row(self):
         return any(column_config.calculate_total for column_config in self.top_level_db_columns)
+
+    @property
+    def group_by(self):
+        # ask each column for its group_by contribution and combine to a single list
+        return [
+            group_by for col_id in self.aggregation_columns
+            for group_by in self.get_db_column_ids(col_id)
+        ]
+
+    def get_db_column_ids(self, column_id):
+        # for columns that end up being complex queries (e.g. aggregate dates)
+        # there could be more than one column ID and they may specify aliases
+        if column_id in self._column_configs:
+            return self._column_configs[column_id].get_query_column_ids()
+        else:
+            # if the column isn't found just treat it as a normal field
+            return [column_id]

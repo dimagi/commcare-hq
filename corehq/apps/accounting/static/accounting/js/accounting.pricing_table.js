@@ -32,7 +32,6 @@ hqDefine('accounting/js/accounting.pricing_table.js', function () {
         };
 
         self.init = function () {
-            $('.edition-heading').tooltip();
             $('.col-edition').click(function () {
                 self.selected_edition($(this).data('edition'));
             });
@@ -111,5 +110,14 @@ hqDefine('accounting/js/accounting.pricing_table.js', function () {
 
     };
 
-    return {PricingTable: PricingTable};
+    $(function () {
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+            pricingTable = new PricingTable(
+                initial_page_data('pricing_table'),
+                initial_page_data('current_edition'),
+                initial_page_data('is_renewal')
+            );
+        $('#pricing-table').koApplyBindings(pricingTable);
+        pricingTable.init();
+    }());
 });

@@ -46,15 +46,14 @@ from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe, user_can_access_location_id, is_location_safe
 from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
@@ -79,13 +78,12 @@ from corehq.apps.users.forms import (
     MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
     SelfRegistrationForm, SetUserPasswordForm,
 )
-from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.toggles import SUPPORT
-from corehq.util.couch import get_document_or_404
 from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
     InvalidExcelFileException
@@ -214,6 +212,7 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     def page_context(self):
+        from corehq.apps.users.views.mobile import GroupsListView
         context = {
             'are_groups': bool(len(self.all_groups)),
             'groups_url': reverse('all_groups', args=[self.domain]),
@@ -222,6 +221,10 @@ class EditCommCareUserView(BaseEditUserView):
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
             'data_fields_form': self.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
+            'can_create_groups': (
+                self.request.couch_user.has_permission(self.domain, 'edit_commcare_users') and
+                self.request.couch_user.has_permission(self.domain, 'access_all_locations')
+            ),
             'needs_to_downgrade_locations': (
                 users_have_locations(self.domain) and
                 not has_privilege(self.request, privileges.LOCATIONS)
@@ -245,12 +248,7 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return UserRole.commcareuser_role_choices(self.domain)
-
-    @property
-    def can_change_user_roles(self):
-        return ((self.request.user.is_superuser or self.request.couch_user.can_edit_web_users(domain=self.domain))
-                and self.request.couch_user.user_id != self.editable_user_id)
+        return [('none', _('(none)'))] + self.editable_role_choices
 
     @property
     def existing_role(self):
@@ -266,10 +264,6 @@ class EditCommCareUserView(BaseEditUserView):
     def form_user_update(self):
         form = super(EditCommCareUserView, self).form_user_update
         form.load_language(language_choices=get_domain_languages(self.domain))
-        if self.can_change_user_roles:
-            form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
-        else:
-            del form.fields['role']
         return form
 
     @property
@@ -614,7 +608,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
-            'location_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
+            'location_url': reverse('child_locations_for_select2', args=[self.domain]),
         }
 
     @property
@@ -671,6 +665,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         # backend pages start at 0
         users_query = self._user_query(query, page - 1, limit)
+
+        # run with a blank query to fetch total records with same scope as in search
+        total_records = self._user_query('', 0, 0).count()
         if in_data.get('showDeactivatedUsers', False):
             users_query = users_query.show_only_inactive()
         users_data = users_query.run()
@@ -680,6 +677,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'total': users_data.total,
                 'page': page,
                 'query': query,
+                'total_records': total_records
             },
             'success': True,
         }
@@ -1174,7 +1172,10 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
             )
             # Since the user is being created by following the link and token
             # we sent to their phone by SMS, we can verify their phone number
-            user.save_verified_number(self.domain, self.invitation.phone_number, True)
+            entry = user.get_or_create_phone_entry(self.invitation.phone_number)
+            entry.set_two_way()
+            entry.set_verified()
+            entry.save()
 
             self.invitation.registered_date = datetime.utcnow()
             self.invitation.save()

@@ -50,7 +50,10 @@
                 var data = {
                     url: $('#id_url').val(),
                     format: $('#id_format').val(),
-                    repeater_type: {{ repeater_type|JSON }}
+                    repeater_type: {{ repeater_type|JSON }},
+                    use_basic_auth: $('#id_use_basic_auth').prop("checked"),
+                    username: $('#id_username').val(),
+                     password: $('#id_password').val()
                 };
                 $testLinkButton.disableButton();
 

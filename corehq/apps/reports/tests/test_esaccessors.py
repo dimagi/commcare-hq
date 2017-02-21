@@ -899,6 +899,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
 class TestUserESAccessors(SimpleTestCase):
 
     def setUp(self):
+        super(TestUserESAccessors, self).setUp()
         self.username = 'superman'
         self.first_name = 'clark'
         self.last_name = 'kent'
@@ -911,6 +912,7 @@ class TestUserESAccessors(SimpleTestCase):
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(USER_INDEX)
+        super(TestUserESAccessors, cls).tearDownClass()
 
     def _send_user_to_es(self, _id=None, is_active=True):
         user = CommCareUser(

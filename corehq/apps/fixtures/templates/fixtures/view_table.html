@@ -16,7 +16,15 @@
     {% endif%}
 {% endblock %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+    <script src="{% static 'fixtures/js/view-table.js' %}"></script>
+{% endblock %}
+
 {% block page_content %}
+    {% initial_page_data 'renderReportTables' 1 %}
+    {% initial_page_data 'dataTablesOptions' data_tables_options %}
+
 {% block reportcontent %}
 {% block reporttable %}
 
@@ -100,44 +108,4 @@
 {% endblock %}
 {% block posttable %}{% endblock %}
 {% endblock %}
-{% endblock %}
-
-{% block js-inline %} {{ block.super }}
-    <script>
-
-        {% if report_table and report_table.datatables %}
-            var reportTables = new HQReportDataTables({
-                dataTableElem: '#report_table_{{ report.slug }}',
-                defaultRows: {{ report_table.default_rows|default:10 }},
-                startAtRowNum: {{ report_table.start_at_row|default:0 }},
-                showAllRowsOption: {{ report_table.show_all_rows|JSON }},
-
-                {% if report_table.headers.render_aoColumns %}aoColumns: {{ report_table.headers.render_aoColumns|JSON }},{% endif %}
-                autoWidth: {{ report_table.headers.auto_width|JSON }},
-                {% if report_table.headers.custom_sort %}customSort: {{ report_table.headers.custom_sort|JSON }},{% endif %}
-
-                {% if report_table.pagination.is_on %}
-                    ajaxSource: '{{ report_table.pagination.source }}',
-                    ajaxParams: {{ report_table.pagination.params|JSON }},
-                {% endif %}
-
-                {% if report_table.left_col.is_fixed %}
-                    fixColumns: true,
-                    fixColsNumLeft: {{ report_table.left_col.fixed.num }},
-                    fixColsWidth: {{ report_table.left_col.fixed.width }},
-                {% endif %}
-            });
-            if (typeof standardHQReport !== 'undefined') {
-                standardHQReport.handleTabularReportCookies(reportTables);
-            }
-            reportTables.render();
-        {% endif %}
-
-        $(function() {
-            $('.header-popover').popover({
-                trigger: 'hover',
-                placement: 'bottom'
-            });
-        });
-    </script>
 {% endblock %}

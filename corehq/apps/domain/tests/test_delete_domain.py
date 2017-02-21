@@ -46,7 +46,7 @@ class TestDeleteDomain(TestCase):
         Call.objects.create(domain=domain_name)
         SQLLastReadMessage.objects.create(domain=domain_name)
         ExpectedCallback.objects.create(domain=domain_name)
-        PhoneNumber.objects.create(domain=domain_name)
+        PhoneNumber.objects.create(domain=domain_name, is_two_way=False, pending_verification=False)
         event = MessagingEvent.objects.create(
             domain=domain_name,
             date=datetime.utcnow(),

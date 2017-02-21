@@ -208,6 +208,10 @@ def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
             tracking_dict.update({
                 'phone': webuser.phone_numbers[0],
             })
+        if webuser.atypical_user:
+            tracking_dict.update({
+                'atypical_user': True
+            })
         tracking_dict.update(get_ab_test_properties(webuser))
         _track_on_hubspot(webuser, tracking_dict)
         _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)

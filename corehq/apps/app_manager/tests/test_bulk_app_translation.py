@@ -126,12 +126,12 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_headers_bad_column = (  # bad column is default-fra
         ("Modules_and_forms", (
-            "Type", "sheet_name", "default_en", "default_fra",
+            "Type", "sheet_name", "default_en", "default-fra",
             "label_for_cases_en", "label_for_cases_fra", "icon_filepath_en", "icon_filepath_fra",
-            "audio_filepath_en", "audio_filepath_fra" , "unique_id"
+            "audio_filepath_en", "audio_filepath_fra", "unique_id"
         )),
         ("module1", (
-            "case_property", "list_or_detail", "default_en", "default_fra"
+            "case_property", "list_or_detail", "default_en", "default-fra"
         )),
         ("module1_form1", (
             "label", "default_en", "default-fra", "audio_en", "audio_fra",
@@ -255,14 +255,32 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             self.fail(e)
 
     def test_bad_column_name(self):
-        self.upload_raw_excel_translations(self.upload_headers_bad_column,
+        self.upload_raw_excel_translations(
+            self.upload_headers_bad_column,
             self.upload_data,
             expected_messages=[
+                u'Sheet "Modules_and_forms" has less columns than expected. Sheet '
+                u'will be processed but the following translations will be '
+                u'unchanged: default_fra',
+
+                u'Sheet "Modules_and_forms" has unrecognized columns. Sheet will '
+                u'be processed but ignoring the following columns: default-fra',
+
+                u'Sheet "module1" has less columns than expected. Sheet '
+                u'will be processed but the following translations will be '
+                u'unchanged: default_fra',
+
+                u'Sheet "module1" has unrecognized columns. Sheet will '
+                u'be processed but ignoring the following columns: default-fra',
+                u"You must provide at least one translation of the case property 'name'",
+
                 u'Sheet "module1_form1" has less columns than expected. Sheet '
-                'will be processed but the following translations will be '
-                'unchanged: default_fra',
+                u'will be processed but the following translations will be '
+                u'unchanged: default_fra',
+
                 u'Sheet "module1_form1" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                u'be processed but ignoring the following columns: default-fra',
+
                 u'App Translations Updated!'
             ]
         )

@@ -50,11 +50,15 @@ class Command(BaseCommand):
         ),
     )
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('prev_log_path')
+        parser.add_argument('log_path')
+
+    def handle(self, prev_log_path, log_path, **options):
 
         dry_run = options.get("dry_run", True)
-        prev_log_path = args[0].strip()
-        log_path = args[1].strip()
+        prev_log_path = prev_log_path.strip()
+        log_path = log_path.strip()
 
         unique_id_to_xmlns_map = {}
         app_to_unique_ids_map = defaultdict(set)

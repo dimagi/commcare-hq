@@ -205,7 +205,7 @@ def plan_rebuild_stock_state(case_id, section_id, product_id):
         .get_ordered_transactions_for_stock(
             case_id=case_id, section_id=section_id, product_id=product_id)
         .reverse()  # we want earliest transactions first
-        .select_related('report__type')
+        .select_related('report')
     )
     balance = None
     for stock_transaction in stock_transactions:

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from decimal import Decimal
 import functools
@@ -28,6 +29,14 @@ def get_sample_report_config():
 def get_sample_data_source():
     folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
     sample_file = os.path.join(folder, 'sample_data_source.json')
+    with open(sample_file) as f:
+        structure = json.loads(f.read())
+        return DataSourceConfiguration.wrap(structure)
+
+
+def get_data_source_with_related_doc_type():
+    folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
+    sample_file = os.path.join(folder, 'parent_child_data_source.json')
     with open(sample_file) as f:
         structure = json.loads(f.read())
         return DataSourceConfiguration.wrap(structure)

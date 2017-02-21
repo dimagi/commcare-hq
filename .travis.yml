@@ -5,12 +5,11 @@ branches:
     - master
 env:
   matrix:
-    - TEST=javascript
     # need node installs for app_manager.XpathValidatorTest
     - TEST=python NOSE_DIVIDED_WE_RUN=04 JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=59 JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=af JS_SETUP=yes
-    - TEST=python-sharded
+    - TEST=python-sharded-and-javascript JS_SETUP=yes
   global:
     # TRAVIS_HQ_USERNAME
     - secure: "LuT0vvsY6RjlEX8Gje74Xl0jcuEfaiN/fOOXpfZd1tf8zC3Xd9E8mNn5vlup/3PBBBv1yIAUmw9LTc03ifWBGzaazqIVAgTfgBoW7XAd8G/lx0/eeZFqheSdpP8wSZwn72Z/XrIhQczFCreZRJHlZA9GopRv7Lfs1SfNEbnMoac="
@@ -23,7 +22,6 @@ before_install:
   - sudo mv -v docker-compose /usr/local/bin/
 install:
   - mkdir -p $TRAVIS_BUILD_DIR/docker-volumes
-  - pip install coverage coveralls
 before_script:
   - docker version
   - docker-compose version
@@ -31,11 +29,9 @@ script:
   # workaround for env vars
   - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
   - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
-  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1"
+  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
 after_success:
-  # create symlink so coverage report can find source files
+  # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro
-  - coverage report
-  - coveralls
 services:
   - docker

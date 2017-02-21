@@ -260,6 +260,12 @@ def get_apps_base_context(request, domain, app):
         'langs': langs,
         'domain': domain,
         'app': app,
+        'app_subset': {
+            'commcare_minor_release': app.commcare_minor_release,
+            'doc_type': app.get_doc_type(),
+            'form_counts_by_module': [len(m.forms) for m in app.modules],
+            'version': app.version,
+        } if app else {},
         'timezone': timezone,
     }
 
@@ -835,6 +841,8 @@ def drop_user_case(request, domain, app_id):
     app.save()
     messages.success(
         request,
+        _('You have successfully removed User Properties from this application.')
+        if toggles.APP_MANAGER_V2.enabled(domain) else
         _('You have successfully removed User Case properties from this application.')
     )
     return back_to_main(request, domain, app_id=app_id)

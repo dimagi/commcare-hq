@@ -228,7 +228,7 @@ class BaseUserInfoForm(forms.Form):
         help_text=mark_safe_lazy(
             ugettext_lazy(
                 "<i class=\"fa fa-info-circle\"></i> "
-                "Becomes default language seen in CloudCare and reports (if applicable), "
+                "Becomes default language seen in Web Apps and reports (if applicable), "
                 "but does not affect mobile applications. "
                 "Supported languages for reports are en, fr (partial), and hin (partial)."
             )
@@ -345,10 +345,10 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
         self.fields['role'].help_text = _(mark_safe(
-            "<i class=\"fa fa-info-circle\"></i> "
-            "Only applies to mobile workers that will be entering data using "
-            "<a href='https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry'>"
-            "CloudCare</a>"
+            '<i class="fa fa-info-circle"></i> '
+            'Only applies to mobile workers who will be entering data using '
+            '<a href="https://wiki.commcarehq.org/display/commcarepublic/Web+Apps">'
+            'Web Apps</a>'
         ))
 
     @property
@@ -746,7 +746,7 @@ class SupplyPointSelectWidget(forms.Widget):
         if query_url:
             self.query_url = query_url
         else:
-            self.query_url = reverse('corehq.apps.locations.views.child_locations_for_select2', args=[domain])
+            self.query_url = reverse('child_locations_for_select2', args=[self.domain])
 
     def render(self, name, value, attrs=None):
         location_ids = value.split(',') if value else []
@@ -970,7 +970,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -980,7 +980,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large",
+                crispy.Field('country', css_class="input-large ko-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.B3MultiField(

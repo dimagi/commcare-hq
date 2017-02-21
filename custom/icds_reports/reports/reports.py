@@ -1,5 +1,6 @@
 from django.core.urlresolvers import reverse
 
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.standard import CustomProjectReport
@@ -14,6 +15,7 @@ from custom.icds_reports.reports import IcdsBaseReport
 from dimagi.utils.decorators.memoized import memoized
 
 
+@location_safe
 class MPRReport(IcdsBaseReport):
 
     title = '1. Identification and Basic Information'
@@ -45,6 +47,7 @@ class MPRReport(IcdsBaseReport):
         ]
 
 
+@location_safe
 class ASRReport(IcdsBaseReport):
 
     title = '1. Identification and Basic Information'
@@ -68,6 +71,7 @@ class ASRReport(IcdsBaseReport):
         ]
 
 
+@location_safe
 class TableauReport(CustomProjectReport):
 
     slug = 'tableau_dashboard'

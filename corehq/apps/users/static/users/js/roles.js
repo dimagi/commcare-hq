@@ -52,6 +52,7 @@ hqDefine('users/js/roles.js', function () {
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
+        self.landingPageChoices = o.landingPageChoices;
         self.getReportObject = function (path) {
             var i;
             for (i = 0; i < self.reportOptions.length; i++) {

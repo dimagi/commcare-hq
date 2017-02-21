@@ -19,8 +19,8 @@ class NotificationsTests(SimpleTestCase):
             message = u'Émilie, vous avez de nouveaux messages.'
             notify_event('domain', couch_user, 'app_id', 'unique_form_id', message)
 
-            notification = ('Émilie, vous avez de nouveaux messages. (<a href="https://confluence.dimagi.com/'
-                            'display/internal/App+Builder+Notifications" target="_blank">what is this?</a>)')
+            notification = (u'Émilie, vous avez de nouveaux messages. (<a href="https://confluence.dimagi.com/'
+                            u'display/internal/App+Builder+Notifications" target="_blank">what is this?</a>)')
             json_patch.dumps.assert_called_with({
                 'domain': 'domain',
                 'user_id': '123',

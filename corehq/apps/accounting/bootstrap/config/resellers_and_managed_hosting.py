@@ -6,7 +6,7 @@ from corehq.apps.accounting.models import (
 )
 
 BOOTSTRAP_CONFIG = {
-    (SoftwarePlanEdition.MANAGED_HOSTING, False): {
+    (SoftwarePlanEdition.MANAGED_HOSTING, False, False): {
         'role': 'advanced_plan_v0',
         'product_rate': dict(monthly_fee=Decimal('1000.00')),
         'feature_rates': {
@@ -14,7 +14,7 @@ BOOTSTRAP_CONFIG = {
             FeatureType.SMS: dict(monthly_limit=0),
         }
     },
-    (SoftwarePlanEdition.RESELLER, False): {
+    (SoftwarePlanEdition.RESELLER, False, False): {
         'role': 'advanced_plan_v0',
         'product_rate': dict(monthly_fee=Decimal('1000.00')),
         'feature_rates': {

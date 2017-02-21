@@ -9,9 +9,8 @@ from django.core.urlresolvers import reverse
 
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import WebUser, CommCareUser, UserRole, Permissions
+from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.toggles import (RESTRICT_FORM_EDIT_BY_LOCATION, NAMESPACE_DOMAIN)
-from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.views.mobile import users as user_views
 from corehq.form_processor.utils.xform import (
     TestFormMetadata,
@@ -66,18 +65,6 @@ class FormEditRestrictionsMixin(object):
     def test_unassigned_web_user_cant_edit_anything(self):
         self.assertCannotEdit(self.locationless_web_user, self.cambridge_form)
         self.assertCannotEdit(self.locationless_web_user, self.boston_form)
-
-    @flag_enabled('MULTIPLE_LOCATIONS_PER_USER')
-    @run_with_all_backends
-    def test_multiple_locations_per_user(self):
-        # Note also that location types must not be administrative for multiple
-        # locations per domain to work.  This was a pain to figure out...
-        multi_loc_user = self.make_mobile_user('Cambridge')
-        multi_loc_user.set_location(self.locations['Boston'].couch_location)
-        multi_loc_form = self.make_form(multi_loc_user)
-
-        self.assertCanEdit(self.middlesex_web_user, multi_loc_form)
-        self.assertCanEdit(self.massachusetts_web_user, multi_loc_form)
 
     #### The rest of this class is helper methods and setup ####
 

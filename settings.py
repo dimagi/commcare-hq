@@ -1,9 +1,10 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
 import importlib
 from collections import defaultdict
 
 import os
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 from django.contrib import messages
 import settingshelper as helper
 
@@ -145,6 +146,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'corehq.middleware.SentryContextMiddleware',
     'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
@@ -201,6 +203,7 @@ DEFAULT_APPS = (
     'two_factor',
     'ws4redis',
     'statici18n',
+    'raven.contrib.django.raven_compat',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -225,6 +228,7 @@ HQ_APPS = (
     'corehq.apps.accounting',
     'corehq.apps.appstore',
     'corehq.apps.data_analytics',
+    'corehq.apps.data_pipeline_audit',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
     'corehq.apps.domain_migration_flags',
@@ -368,6 +372,7 @@ ENIKSHAY_APPS = (
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
     'custom.enikshay.nikshay_datamigration',
+    'custom.enikshay.integrations.nikshay'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -475,7 +480,7 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = []
 # the physical server emailing - differentiate if needed
 SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
-SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+SUPPORT_EMAIL = "support@dimagi.com"
 PROBONO_SUPPORT_EMAIL = 'pro-bono@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
@@ -874,6 +879,11 @@ ONBOARDING_DOMAIN_TEST_DATE = ()
 
 HQ_INSTANCE = 'development'
 
+SENTRY_PUBLIC_KEY = None
+SENTRY_PRIVATE_KEY = None
+SENTRY_PROJECT_ID = None
+SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -908,10 +918,10 @@ TEMPLATES = [
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.core.context_processors.request',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
                 'django.template.context_processors.media',
+                'django.template.context_processors.request',
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
 
@@ -1061,6 +1071,10 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
+        'sentry': {
+            'level': 'ERROR',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
     },
     'loggers': {
         '': {
@@ -1073,8 +1087,8 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        'django.request': {
-            'handlers': ['mail_admins'],
+        'django': {
+            'handlers': ['mail_admins', 'sentry'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1083,7 +1097,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            'handlers': ['notify_exception'],
+            'handlers': ['notify_exception', 'sentry'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1152,6 +1166,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'sentry.errors.uncaught': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        }
     }
 }
 
@@ -1446,6 +1465,7 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "FRI_SMS_CATCHUP_CONTENT": "custom.fri.api.catchup_custom_content_handler",
     "FRI_SMS_SHIFT": "custom.fri.api.shift_custom_content_handler",
     "FRI_SMS_OFF_DAY": "custom.fri.api.off_day_custom_content_handler",
+    "UCLA_MESSAGE_BANK": "custom.ucla.api.ucla_message_bank_content",
 }
 
 # These are custom templates which can wrap default the sms/chat.html template
@@ -1631,6 +1651,9 @@ BASE_REPEATERS = (
 CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsRegisterPatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
+    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
+    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsTreatmentOutcomeRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater'
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
@@ -1705,7 +1728,8 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_hiv.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_monthly_summary.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary_dmc.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary_phi.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'mdr_suspects.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patient_overview_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patients_due_to_follow_up.json'),
@@ -1929,3 +1953,13 @@ else:
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
 }
+
+_raven_config = helper.configure_sentry(
+    BASE_DIR,
+    SERVER_ENVIRONMENT,
+    SENTRY_PUBLIC_KEY,
+    SENTRY_PRIVATE_KEY,
+    SENTRY_PROJECT_ID
+)
+if _raven_config:
+    RAVEN_CONFIG = _raven_config

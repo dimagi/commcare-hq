@@ -30,7 +30,7 @@ def handle(verified_contact, text, msg):
 
     user = verified_contact.owner
 
-    if not verified_contact.verified:
+    if verified_contact.pending_verification:
         if not process_verification(verified_contact, msg, VERIFICATION_KEYWORDS):
             logged_event = MessagingEvent.get_current_verification_event(
                 domain, verified_contact.owner_id, verified_contact.phone_number)

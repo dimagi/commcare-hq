@@ -6,68 +6,26 @@
 
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
 
-{% block js-inline  %}{{ block.super }}
-  <script>
-    $(function () {
-      $(window).on('resize load', function () {
-        var newHeight = $(window).height() - $('#hq-navigation').outerHeight() - $('#hq-footer').outerHeight() - 1;  // -1 for rounding errors
-        $('.reg-form-column').css('min-height', Math.max(newHeight, 450) + 'px');
-      });
-    });
-  </script>
-  {% url "eula_basic" as eula_url %}
-  {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
-  <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
-  <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
-  <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-  <script src="{% static 'style/js/password_validators.ko.js' %}"></script>
-  <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
-  <script>
-    $(function () {
-      var reg = hqImport('registration/js/new_user.ko.js');
-      reg.onModuleLoad = function () {
-        $('.loading-form-step').fadeOut(500, function () {
-          $('.step-1').fadeIn(500);
-        });
-      };
-      reg.initRMI('{% url 'process_registration' %}');
-      {% if not hide_password_feedback %}
-        reg.showPasswordFeedback();
-      {% endif %}
-      var regForm = new reg.FormViewModel({{ reg_form_defaults|JSON }}, '#registration-form-container', ['step-1', 'step-2', 'final-step']);
-      $('#registration-form-container').koApplyBindings(regForm);
-
-      reg.setResetEmailFeedbackFn(function (isValidating) {
-        // separating form and function
-        if (isValidating) {
-          $('#div_id_email')
-            .removeClass('has-error has-success')
-            .addClass('has-warning')
-            .find('.form-control-feedback')
-              .removeClass('fa-check fa-remove')
-              .addClass('fa-spinner fa-spin');
-        } else {
-          $('#div_id_email')
-            .removeClass('has-warning')
-            .addClass((regForm.emailDelayed.isValid() && regForm.email.isValid()) ? 'has-success' : 'has-error')
-            .find('.form-control-feedback')
-              .removeClass('fa-spinner fa-spin')
-              .addClass((regForm.emailDelayed.isValid() && regForm.email.isValid()) ? 'fa-check' : 'fa-remove');
-        }
-      });
-
-      reg.setSubmitAttemptFn(function () {
-        _kmq.push(["trackClick", "create_account_clicked", "Clicked Create Account"]);
-      });
-
-      reg.setSubmitSuccessFn(function () {
-        _kmq.push(["trackClick", "create_account_success", "Account Creation was Successful"]);
-      });
-    });
-  </script>
+{% block js %}{{ block.super }}
+    {% compress js %}
+        <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
+        <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+        <script src="{% static 'style/js/password_validators.ko.js' %}"></script>
+        <script src="{% static 'intl-tel-input/build/js/intlTelInput.min.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+        <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
+        <script src="{% static 'registration/js/register_new_user.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block stylesheets %}
+<link type="text/css"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
+
 {% if less_debug %}
 <link type="text/less"
       rel="stylesheet"
@@ -91,10 +49,16 @@
 {% endblock %}
 
 {% block content %}
+{% initial_page_data 'hide_password_feedback' hide_password_feedback %}
+{% initial_page_data 'show_number' show_number %}
+{% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
+{% initial_page_data 'reg_form_defaults' reg_form_defaults %}
+{% initial_page_data 'ab_test' ab_test %}
+{% registerurl 'process_registration' %}
 <div class="container">
   <div class="row">
     <div class="col-xs-8 col-xs-offset-4 col-md-7 col-md-offset-5 reg-form-column animate-height" style="min-height: 450px">
-      <div id="registration-form-container">
+      <div id="registration-form-container" {% if show_number %}class="has-phonenumber"{% endif %}>
         <ul class="form-step-progress">
           <li class="active">{% trans "Create Account" %}</li>
           <li data-bind="css: { active: currentStep() > 0 }">{% trans "Name Project" %}</li>
@@ -126,5 +90,5 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% include 'registration/partials/eula_modal.html' %}
+    {% include 'style/includes/modal_eula.html' %}
 {% endblock %}

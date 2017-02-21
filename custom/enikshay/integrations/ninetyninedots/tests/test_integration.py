@@ -1,9 +1,9 @@
 from datetime import datetime
 import pytz
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 
-from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.integrations.ninetyninedots.views import (
@@ -31,6 +31,7 @@ class Receiver99DotsTests(SimpleTestCase):
             self.assertEqual(e.message, "Adherences invalid")
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
     @classmethod
     def setUpClass(cls):
@@ -40,7 +41,6 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
 
-    @run_with_all_backends
     def test_create_adherence_cases(self):
         self.create_case_structure()
         case_accessor = CaseAccessors(self.domain)
@@ -82,7 +82,6 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
                 'high'
             )
 
-    @run_with_all_backends
     def test_update_adherence_confidence(self):
         self.create_case_structure()
         case_accessor = CaseAccessors(self.domain)
@@ -116,7 +115,6 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
             'new_confidence_level',
         )
 
-    @run_with_all_backends
     def test_update_default_confidence_level(self):
         self.create_case_structure()
         confidence_level = "new_confidence_level"

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, time
 from corehq.apps.reports_core.exceptions import FilterValueException
@@ -10,6 +11,8 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.conf import settings
+import six
+from six.moves import range
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
 
@@ -80,10 +83,10 @@ class DatespanFilter(BaseFilter):
     template = 'reports_core/filters/datespan_filter/datespan_filter.html'
     javascript_template = 'reports_core/filters/datespan_filter/datespan_filter.js'
 
-    def __init__(self, name, label='Datespan Filter',
-                 css_id=None):
+    def __init__(self, name, label='Datespan Filter', css_id=None, compare_as_string=False):
         self.label = label
         self.css_id = css_id or name
+        self.compare_as_string = compare_as_string
         params = [
             FilterParam(self.startdate_param_name, True),
             FilterParam(self.enddate_param_name, True),
@@ -107,7 +110,10 @@ class DatespanFilter(BaseFilter):
 
         def date_or_nothing(param):
             if param:
-                return iso_string_to_date(param)
+                if self.compare_as_string:
+                    return iso_string_to_date(param)
+                else:
+                    return datetime.combine(iso_string_to_date(param), time())
             else:
                 return None
         try:
@@ -294,7 +300,7 @@ class ChoiceListFilter(BaseFilter):
     def value(self, **kwargs):
         raw_value = kwargs[self.name]
         choice = transform_from_datatype(self.datatype)(raw_value) if raw_value != SHOW_ALL_CHOICE else raw_value
-        choice_values = map(lambda c: c.value, self.choices)
+        choice_values = [c.value for c in self.choices]
         if choice not in choice_values:
             raise FilterValueException(_(u'Choice "{choice}" not found in choices: {choices}')
                                        .format(choice=choice,
@@ -347,12 +353,13 @@ class DynamicChoiceListFilter(BaseFilter):
             ]
 
     def value(self, **kwargs):
-        selection = unicode(kwargs.get(self.name, ""))
+        selection = six.text_type(kwargs.get(self.name, ""))
+        user = kwargs.get("request_user", None)
         if selection:
             choices = selection.split(CHOICE_DELIMITER)
             typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
-            return self.choice_provider.get_sorted_choices_for_values(typed_choices)
-        return self.default_value(kwargs.get("request_user", None))
+            return self.choice_provider.get_sorted_choices_for_values(typed_choices, user)
+        return self.default_value(user)
 
     def default_value(self, request_user=None):
         if hasattr(self.choice_provider, 'default_value'):

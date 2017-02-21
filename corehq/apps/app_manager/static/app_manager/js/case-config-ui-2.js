@@ -4,7 +4,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
     "use strict";
     var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
     var action_names = ["open_case", "update_case", "close_case", "case_preload",
-        // Usercase actions are managed in the User Case Management tab.
+        // Usercase actions are managed in the User Properties tab.
         "usercase_update", "usercase_preload"];
 
     var CaseConfig = function (params) {
@@ -73,7 +73,9 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         });
 
         self.saveUsercaseButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: gettext("You have unchanged user case settings"),
+            unsavedMessage: COMMCAREHQ.toggleEnabled('USER_PROPERTY_EASY_REFS') ?
+                gettext("You have unchanged user properties settings") :
+                gettext("You have unchanged user case settings"),
             save: function () {
                 var actions = JSON.stringify(_(self.actions).extend(
                     HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction)
@@ -163,13 +165,15 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
             var $home = $('#case-config-ko');
             var $usercaseMgmt = $('#usercase-config-ko');
             _.delay(function () {
-                $home.koApplyBindings(self);
-                $home.on('textchange', 'input', self.change)
-                     // all select2's are represented by an input[type="hidden"]
-                     .on('change', 'select, input[type="hidden"]', self.change)
-                     .on('click', 'a', self.change);
-                self.ensureBlankProperties();
-                self.forceRefreshTextchangeBinding($home);
+                if ($home.length) {
+                    $home.koApplyBindings(self);
+                    $home.on('textchange', 'input', self.change)
+                         // all select2's are represented by an input[type="hidden"]
+                         .on('change', 'select, input[type="hidden"]', self.change)
+                         .on('click', 'a', self.change);
+                    self.ensureBlankProperties();
+                    self.forceRefreshTextchangeBinding($home);
+                }
 
                 if ($usercaseMgmt.length) {
                     $usercaseMgmt.koApplyBindings(self);

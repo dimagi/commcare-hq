@@ -183,10 +183,9 @@ class HqdbContext(DatabaseContext):
     """
 
     def __init__(self, tests, runner):
-        reuse_db = os.environ.get("REUSE_DB")
+        self.reuse_db = reuse_db = os.environ.get("REUSE_DB")
         self.skip_setup_for_reuse_db = reuse_db and reuse_db != "reset"
         self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown"
-        self.run_migrations_for_reuse_db = reuse_db and reuse_db == "migrate"
         super(HqdbContext, self).__init__(tests, runner)
 
     @classmethod
@@ -214,9 +213,12 @@ class HqdbContext(DatabaseContext):
         self.apps = [self.verify_test_db(*item) for item in databases.items()]
 
         if self.skip_setup_for_reuse_db and self._databases_ok():
-            if self.run_migrations_for_reuse_db:
+            if self.reuse_db == "migrate":
                 call_command('migrate_multi', interactive=False)
             return  # skip remaining setup
+
+        if self.reuse_db == "reset":
+            self.delete_couch_databases()
 
         sys.__stdout__.write("\n")  # newline for creating database message
         if "REUSE_DB" in os.environ:
@@ -238,16 +240,7 @@ class HqdbContext(DatabaseContext):
         self.old_names = old_names, []
         return True
 
-    def teardown(self):
-        if self.should_skip_test_setup():
-            return
-
-        self.blob_db.close()
-
-        if self.skip_teardown_for_reuse_db:
-            return
-
-        # delete couch databases
+    def delete_couch_databases(self):
         deleted_databases = []
         for app, uri in self.apps:
             if uri in deleted_databases:
@@ -261,6 +254,17 @@ class HqdbContext(DatabaseContext):
             except ResourceNotFound:
                 log.info("database %s not found for %s! it was probably already deleted.",
                          db.dbname, app_label)
+
+    def teardown(self):
+        if self.should_skip_test_setup():
+            return
+
+        self.blob_db.close()
+
+        if self.skip_teardown_for_reuse_db:
+            return
+
+        self.delete_couch_databases()
 
         # HACK clean up leaked database connections
         from corehq.sql_db.connections import connection_manager

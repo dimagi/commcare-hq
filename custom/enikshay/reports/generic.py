@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from sqlagg.filters import IN, AND, GTE, LT
+from sqlagg.filters import IN, AND, GTE, LT, RawFilter
 
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericReportView
@@ -45,6 +45,31 @@ class MultiReport(CustomProjectReport, GenericReportView):
 class EnikshayMultiReport(MultiReport):
     fields = (DatespanFilter, EnikshayLocationFilter)
 
+    @property
+    def export_table(self):
+        export_table = []
+
+        for report in self.reports:
+            report_instance = report(self.request, domain=self.domain)
+            rows = [
+                [header.html for header in report_instance.headers.header]
+            ]
+            report_table = [
+                unicode(report.name[:28] + '...'),
+                rows
+            ]
+            export_table.append(report_table)
+
+            for row in report_instance.rows:
+                row_formatted = []
+                for element in row:
+                    if isinstance(element, dict):
+                        row_formatted.append(element['sort_key'])
+                    else:
+                        row_formatted.append(unicode(element))
+                rows.append(row_formatted)
+        return export_table
+
 
 class EnikshayReport(DatespanMixin, CustomProjectReport, SqlTabularReport):
     use_datatables = False
@@ -55,7 +80,7 @@ class EnikshayReport(DatespanMixin, CustomProjectReport, SqlTabularReport):
             domain=self.domain,
             locations_id=EnikshayLocationFilter.get_value(self.request, self.domain),
             start_date=self.datespan.startdate,
-            end_date=self.datespan.enddate
+            end_date=self.datespan.end_of_end_day
         )
 
 
@@ -86,7 +111,7 @@ class EnikshaySqlData(SqlData):
     @property
     def filters(self):
         filters = [
-            AND([GTE('opened_on', 'start_date'), LT('opened_on', 'end_date')]),
+            AND([GTE('opened_on', 'start_date'), LT('opened_on', 'end_date')])
         ]
 
         locations_id = filter(lambda x: bool(x), self.config.locations_id)

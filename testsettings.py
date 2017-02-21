@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from settings import *
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
@@ -22,6 +23,7 @@ NOSE_PLUGINS = [
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
 
     # The following are not enabled by default
+    'corehq.tests.noseplugins.logfile.LogFilePlugin',
     'corehq.tests.noseplugins.timing.TimingPlugin',
     'corehq.tests.noseplugins.uniformresult.UniformTestResultPlugin',
 
@@ -70,6 +72,7 @@ ENABLE_PRELOGIN_SITE = True
 
 # override dev_settings
 CACHE_REPORTS = True
+
 
 def _set_logging_levels(levels):
     import logging

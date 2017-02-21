@@ -234,7 +234,9 @@ class DetailContributor(SectionContributor):
         frame.add_command(XPath.string(id_strings.form_command(form)))
 
         target_form_dm = self.entries_helper.get_datums_meta_for_form_generic(form)
-        source_form_dm = self.entries_helper.get_datums_meta_for_form_generic(module.get_form(0))
+        source_form_dm = []
+        if len(module.forms):
+            source_form_dm = self.entries_helper.get_datums_meta_for_form_generic(module.get_form(0))
         for target_meta in target_form_dm:
             if target_meta.requires_selection:
                 # This is true for registration forms where the case being created is a subcase
@@ -260,11 +262,17 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def _get_case_search_action(module):
+        relevant_kwarg = {}
+        if module.search_config.search_button_display_condition:
+            relevant_kwarg = dict(
+                relevant=XPath(module.search_config.search_button_display_condition),
+            )
         action = Action(
             display=Display(
                 text=Text(locale_id=id_strings.case_search_locale(module))
             ),
-            stack=Stack()
+            stack=Stack(),
+            **relevant_kwarg
         )
         frame = PushFrame()
         frame.add_mark()

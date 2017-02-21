@@ -54,7 +54,7 @@ class ReminderRecipientTest(TestCase):
             parent=parent_location
         )
 
-        self.user.set_location(child_location.couch_location)
+        self.user.set_location(child_location)
 
         with create_test_case(self.domain, 'test-case', 'test-name', owner_id=self.user.get_id) as case:
             self.assertEqual(case.owner_id, self.user.get_id)

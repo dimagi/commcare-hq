@@ -8,6 +8,7 @@ from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, 
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import SUBMITTED_NOTIFICATION_MSD, SUBMITTED_CONFIRM, \
     SUBMITTED_REMINDER_DISTRICT, SUBMITTED_INVALID_QUANTITY
+from custom.ilsgateway.utils import send_translated_message
 
 
 class RandrHandler(KeywordHandler):
@@ -21,10 +22,7 @@ class RandrHandler(KeywordHandler):
     def _send_submission_alert_to_msd(self, params):
         users = filter(lambda u: u.user_data.get('role', None) == 'MSD', CommCareUser.by_domain(self.domain))
         for user in users:
-            if not user.get_verified_number():
-                continue
-            with localize(user.get_language_code()):
-                send_sms_to_verified_number(user.get_verified_number(), SUBMITTED_NOTIFICATION_MSD % params)
+            send_translated_message(user, SUBMITTED_NOTIFICATION_MSD, **params)
 
     def _handle(self, help=False):
         location = self.user.location

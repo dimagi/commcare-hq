@@ -37,6 +37,10 @@ class RegisterWebUserForm(forms.Form):
         label=_("Create Password"),
         widget=forms.PasswordInput(),
     )
+    phone_number = forms.CharField(
+        label=_("Phone Number (Optional)"),
+        required=False,
+    )
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
         required=False,
@@ -47,9 +51,24 @@ class RegisterWebUserForm(forms.Form):
                href='#eulaModal'>
                CommCare HQ End User License Agreement</a>.""")))
     xform = forms.CharField(required=False, widget=forms.HiddenInput())
+    atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
+        self.show_phone_number = kwargs.pop('show_number', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
+
+        if not self.show_phone_number:
+            del self.fields['phone_number']
+            phone_number_fields = []
+        else:
+            phone_number_fields = [
+                hqcrispy.InlineField(
+                    'phone_number',
+                    css_class="input-lg",
+                    data_bind="value: phoneNumber, "
+                              "valueUpdate: 'keyup'"
+                ),
+            ]
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -94,7 +113,9 @@ class RegisterWebUserForm(forms.Form):
                                   "}",
                     ),
                     hqcrispy.ValidationMessage('passwordDelayed'),
+                    crispy.Div(*phone_number_fields),
                     hqcrispy.InlineField('xform'),
+                    hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
                         ugettext("Next"),
                         css_class="btn btn-success btn-lg",

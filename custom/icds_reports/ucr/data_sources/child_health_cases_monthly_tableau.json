@@ -2356,7 +2356,7 @@
               ]
             },
             "items_expression": {
-              "type": "icds_get_child_cases",
+              "type": "get_subcases",
               "case_id_expression": {
                 "type": "root_doc",
                 "expression": {
@@ -2776,6 +2776,14 @@
             "property_value": 24,
             "expression": {
               "type": "icds_child_age_in_months_month_start"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "icds_child_valid_in_month"
             }
           }
         ]

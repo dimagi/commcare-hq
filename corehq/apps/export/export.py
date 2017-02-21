@@ -15,10 +15,12 @@ from corehq.util.files import safe_filename
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
+    get_sms_export_base_query,
 )
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
+    SMSExportInstance,
 )
 
 
@@ -75,7 +77,10 @@ class _Writer(object):
                     (t, (t.get_headers(split_columns=instance.split_multiselects),))
                     for t in instance.selected_tables
                 ]
-                table_titles.update({t: t.label for t in instance.selected_tables})
+                table_titles.update({
+                    t: t.label or "Sheet{}".format(i+1)
+                    for i, t in enumerate(instance.selected_tables)
+                })
             self.writer.open(headers, file, table_titles=table_titles, archive_basepath=name)
             yield
             self.writer.close()
@@ -200,6 +205,8 @@ def _get_base_query(export_instance):
         return get_case_export_base_query(
             export_instance.domain, export_instance.case_type
         )
+    if isinstance(export_instance, SMSExportInstance):
+        return get_sms_export_base_query(export_instance.domain)
     else:
         raise Exception(
             "Unknown base query for export instance type {}".format(type(export_instance))
@@ -212,7 +219,7 @@ def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
     """
     if _should_not_rebuild_export(export_instance, last_access_cutoff):
         return
-
+    filters = filters or export_instance.get_filters()
     file = get_export_file([export_instance], filters or [])
     with file as payload:
         _save_export_payload(export_instance, payload)

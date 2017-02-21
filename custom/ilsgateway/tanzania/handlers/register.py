@@ -133,7 +133,10 @@ class RegisterHandler(KeywordHandler):
                     password,
                     phone_number=strip_plus(self.msg.phone_number)
                 )
-            self.verified_contact = self.user.save_verified_number(self.domain, self.msg.phone_number, True)
+            self.verified_contact = self.user.get_or_create_phone_entry(self.msg.phone_number)
+            self.verified_contact.set_two_way()
+            self.verified_contact.set_verified()
+            self.verified_contact.save()
             # As per earlier ILSGateway system, set language by default to Swahili
             self.user.language = 'sw'
 

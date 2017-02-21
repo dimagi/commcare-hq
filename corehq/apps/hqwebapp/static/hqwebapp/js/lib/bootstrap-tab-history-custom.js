@@ -54,7 +54,12 @@ $(function () {
         link.parent().removeClass('active');    // force tab to load
         link.tab('show');
     };
-    $(window).on('load', statechange);
+    $(window).on('load', function() {
+        statechange();
+    });
+    if (document.readyState === "complete") {
+        statechange();
+    }
     History.Adapter.bind(window, 'statechange', statechange);
     History.Adapter.bind(window, 'statechange', function () {
         var State = History.getState();

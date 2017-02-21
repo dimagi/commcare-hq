@@ -1,6 +1,6 @@
 from custom.ilsgateway.slab.views import SLABConfigurationReport
 from custom.ilsgateway.tanzania.reports.alerts import AlertReport
-from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport, NewDashboardReport
+from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport
 from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
 from custom.ilsgateway.tanzania.reports.randr import RRreport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
@@ -14,7 +14,6 @@ from custom.ilsgateway.zipline.reports.zipline_warehouse_package_report import Z
 CUSTOM_REPORTS = (
     ('Custom reports', (
         DashboardReport,
-        NewDashboardReport,
         AlertReport,
         StockOnHandReport,
         RRreport,

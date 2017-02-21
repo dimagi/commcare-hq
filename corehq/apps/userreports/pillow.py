@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 from alembic.autogenerate.api import compare_metadata
 from datetime import datetime, timedelta
@@ -16,6 +17,7 @@ from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
+import six
 
 
 REBUILD_CHECK_INTERVAL = 10 * 60  # in seconds
@@ -59,9 +61,9 @@ class ConfigurableReportTableManagerMixin(object):
         sql_supported_backends = [UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND]
         es_supported_backends = [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND]
         self._rebuild_sql_tables(
-            filter(lambda a: get_backend_id(a.config) in sql_supported_backends, self.table_adapters))
+            [a for a in self.table_adapters if get_backend_id(a.config) in sql_supported_backends])
         self._rebuild_es_tables(
-            filter(lambda a: get_backend_id(a.config) in es_supported_backends, self.table_adapters))
+            [a for a in self.table_adapters if get_backend_id(a.config) in es_supported_backends])
 
     def _rebuild_sql_tables(self, adapters):
         # todo move this code to sql adapter rebuild_if_necessary
@@ -76,19 +78,19 @@ class ConfigurableReportTableManagerMixin(object):
         for engine_id, table_map in tables_by_engine.items():
             engine = connection_manager.get_engine(engine_id)
             with engine.begin() as connection:
-                migration_context = get_migration_context(connection, table_map.keys())
+                migration_context = get_migration_context(connection, list(table_map))
                 raw_diffs = compare_metadata(migration_context, metadata)
                 diffs = reformat_alembic_diffs(raw_diffs)
 
-            tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
+            tables_to_rebuild = get_tables_to_rebuild(diffs, list(table_map))
             for table_name in tables_to_rebuild:
                 sql_adapter = table_map[table_name]
                 if not sql_adapter.config.is_static:
                     try:
                         rev_before_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
                         self.rebuild_table(sql_adapter)
-                    except TableRebuildError, e:
-                        _notify_cory(unicode(e), sql_adapter.config.to_json())
+                    except TableRebuildError as e:
+                        _notify_cory(six.text_type(e), sql_adapter.config.to_json())
                 else:
                     self.rebuild_table(sql_adapter)
 

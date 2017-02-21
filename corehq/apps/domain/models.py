@@ -180,6 +180,15 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     )
     business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
     data_access_threshold = IntegerProperty()
+    partner_technical_competency = IntegerProperty()
+    support_prioritization = IntegerProperty()
+    gs_continued_involvement = StringProperty()
+    technical_complexity = StringProperty()
+    app_design_comments = StringProperty()
+    training_materials = StringProperty()
+    partner_comments = StringProperty()
+    partner_contact = StringProperty()
+    dimagi_contact = StringProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
@@ -1049,17 +1058,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return (self.has_privilege(privileges.LOCATIONS)
                 and (self.commtrack_enabled
                      or LocationType.objects.filter(domain=self.name).exists()))
-
-    @property
-    def supports_multiple_locations_per_user(self):
-        """
-        This method is a wrapper around the toggle that
-        enables multiple location functionality. Callers of this
-        method should know that this is special functionality
-        left around for special applications, and not a feature
-        flag that should be set normally.
-        """
-        return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self.name)
 
     @property
     def is_onboarding_domain(self):

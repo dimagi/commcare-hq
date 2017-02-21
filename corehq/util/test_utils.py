@@ -120,9 +120,9 @@ def flag_enabled(toggle_class_string):
     """
     Decorate test methods with this to mock the lookup
 
-        @flag_enabled('MULTIPLE_LOCATIONS_PER_USER')
+        @flag_enabled('SELF_DESTRUCT_ON_SUBMIT')
         def test_something_fancy(self):
-            something.which_depends(on.MULTIPLE_LOCATIONS_PER_USER)
+            something.which_depends(on.SELF_DESTRUCT_ON_SUBMIT)
     """
     return mock.patch(
         '.'.join(['corehq.toggles', toggle_class_string, 'enabled']),
@@ -256,10 +256,12 @@ def call_with_settings(fn, settings_dict, args, kwargs):
             setattr(settings, key, value)
 
 
-def run_with_multiple_configs(fn, run_configs):
+def run_with_multiple_configs(fn, run_configs, nose_tags=None):
+    from nose.plugins.attrib import attr
     helper = RunWithMultipleConfigs(fn, run_configs)
 
     @functools.wraps(fn)
+    @attr(**(nose_tags or {}))
     def inner(*args, **kwargs):
         return helper(*args, **kwargs)
 

@@ -14,6 +14,7 @@ $(function () {
     $('.showReadable').click(showReadable);
     $('.showRaw').click(showRaw);
     $('.formDisplayToggle a').click(function () {
+        // activate the correct 'tab' header
         $(this).tab('show');
         return false;
     });
@@ -67,8 +68,9 @@ $(function () {
 </div>
 {% else %}
 <ul class="nav nav-pills formDisplayToggle" style="margin: 10px 0;">
-    <li class="active"><a href="#" class="showReadable">{% trans "Labels" %}</a></li>
-    <li><a href="#" class="showRaw">{% trans "Question IDs" %}</a></li>
+    <!-- hrefs here aren't real but can't be '#' since JQuery crashes-->
+    <li class="active"><a href="#readable-pill" class="showReadable">{% trans "Labels" %}</a></li>
+    <li><a href="#raw-pill" class="showRaw">{% trans "Question IDs" %}</a></li>
 </ul>
 <div class="checkbox">
     <label>

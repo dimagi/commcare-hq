@@ -24,8 +24,9 @@
     <script src="{% static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
-    {% endcompress %}
     <script src="{% static 'style/js/knockout_subscribables.ko.js' %}"></script>
+    <script src="{% static 'app_manager/js/value-or-none-ui.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -46,7 +47,7 @@
         }
     </style>
 
-    {% if request|toggle_enabled:"USE_FORMPLAYER_FRONTEND"%}
+    {% if not request|toggle_enabled:"USE_OLD_CLOUDCARE"%}
         <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
     {% endif %}
 
@@ -211,7 +212,7 @@
 
         gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
 
-        {% if allow_cloudcare %}
+        {% if can_preview_form and allow_cloudcare %}
             // tag the 'preview in cloudcare' button with the right url
             // unfortunately, has to be done in javascript
             var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
@@ -239,7 +240,7 @@
                 return urlRoot + '#' + Util.objectToEncodedUrl(urlObject.toJson());
             };
 
-            {% if request|toggle_enabled:"USE_FORMPLAYER_FRONTEND"%}
+            {% if not request|toggle_enabled:"USE_OLD_CLOUDCARE"%}
             var cloudCareUrl = getFormplayerUrl("{% url "formplayer_single_app" domain app.id %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}");
             {% else %}
                 var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
@@ -272,38 +273,40 @@
     </script>
 {% endblock %}
 
-{% block pre_page_content %}
-  <div class="appmanager-page-actions">
-      <a class="btn btn-purple js-preview-toggle" style="display: none;" href="#">
-        <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
-        <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
-      </a>
-  </div>
-
-  <div class="appmanager-edit-title">
-    {% if form.get_action_type == 'open' %}
-      {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
-    {% elif form.requires_case %}
-      {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
-    {% else %}
-      {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+{% block pre_form_content %}
+    {% if can_preview_form %}
+    <div class="appmanager-page-actions">
+        <button type="button" class="btn btn-info js-preview-toggle" style="display: none;">
+          <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
+          <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
+        </button>
+    </div>
     {% endif %}
-  </div>
 
-  <div class="appmanager-edit-description">
-    <inline-edit-v2 params="
-        name: 'comment',
-        id:'comment-id',
-        containerClass: 'app-comment',
-        value: '{{ form.comment|escapejs }}',
-        placeholder: '{% trans "Enter form description here"|escapejs %}',
-        url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
-        saveValueName: 'comment',
-        cols: 50,
-    "></inline-edit-v2>
-  </div>
+    <div class="appmanager-edit-title">
+      {% if form.get_action_type == 'open' %}
+        {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+      {% elif form.requires_case %}
+        {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+      {% else %}
+        {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+      {% endif %}
+    </div>
 
-  <div id="build_errors"></div>
+    <div class="appmanager-edit-description">
+      <inline-edit-v2 params="
+          name: 'comment',
+          id:'comment-id',
+          containerClass: 'app-comment',
+          value: '{{ form.comment|escapejs }}',
+          placeholder: '{% trans "Enter form description here"|escapejs %}',
+          url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
+          saveValueName: 'comment',
+          cols: 50,
+      "></inline-edit-v2>
+    </div>
+
+    <div id="build_errors"></div>
 {% endblock %}
 
 {% block form-view %}
@@ -325,7 +328,11 @@
             {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
             <li>
                 <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
+                  {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+                    {% trans "User Properties" %}
+                  {% else %}
                     {% trans "User Case Management" %}
+                  {% endif %}
                 </a>
             </li>
             {% endif %}{% endif %}
@@ -384,16 +391,39 @@
                     </p>
                 {% elif form.source %}
                     <header class="clearfix">
+                      {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+                        <h4 class="pull-left">{% trans "User Properties" %}</h4>
+                        <span class="hq-help-template"
+                            data-title="{% trans "User Properties" %}"
+                            data-content="{% trans "User properties allow you to store data about the user and use that data in forms." %}"
+                        ></span>
+                      {% else %}
                         <h4 class="pull-left">{% trans "User Case Management" %}</h4>
                         <span class="hq-help-template"
                             data-title="{% trans "User Case Management" %}"
                             data-content="{% trans "The user case allows you to store data about the user in a case and use that data in forms." %}"
                         ></span>
+                      {% endif %}
                     </header>
                     <div class="casexml" id="usercasexml_home">
                         {% block usercase_management_content %}
                             {%  if form.uses_usercase and not allow_usercase %}
                                 <div class="container-fluid col-sm-6">
+                              {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+                                <p>{% blocktrans %}
+                                    The User Properties feature is no longer available because of the change in your
+                                    CommCare subscription. Although currently-deployed applications will still
+                                    function properly, it will not be possible to update or redeploy them unless
+                                    the User Properties functionality is removed, or you upgrade your CommCare
+                                    subscription.
+                                {% endblocktrans %}</p>
+
+                                <p class="alert alert-danger">{% blocktrans %}
+                                    WARNING: By clicking "Remove User Properties" you will lose User Properties
+                                    functionality if you redeploy your application. However, you will still be
+                                    able to see all previously collected data.
+                                {% endblocktrans %}</p>
+                              {% else %}
                                 <p>{% blocktrans %}
                                     The User Case feature is no longer available because of the change in your
                                     CommCare subscription. Although currently-deployed applications will still
@@ -407,13 +437,18 @@
                                     functionality if you redeploy your application. However, you will still be
                                     able to see all previously collected data.
                                 {% endblocktrans %}</p>
+                              {% endif %}
 
                                 <p>
                                     <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary">
                                         {% trans "Change your subscription" %}
                                     </a>
                                     <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger">
+                                      {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+                                        {% trans "Remove User Properties" %}
+                                      {% else %}
                                         {% trans "Remove User Case Properties" %}
+                                      {% endif %}
                                     </a>
                                 </p>
                                 </div>
@@ -423,7 +458,11 @@
                     </div>
                 {% else %}
                     <p class="alert alert-warning">
+                      {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+                        {% trans "You have not created a form yet. Create a form in order to view and edit User Properties." %}
+                      {% else %}
                         {% trans "You have not created a form yet. Create a form in order to view and edit User Case Management." %}
+                      {% endif %}
                     </p>
                 {% endif %}
             </div>

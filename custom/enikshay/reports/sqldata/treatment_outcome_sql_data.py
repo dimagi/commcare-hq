@@ -90,6 +90,14 @@ def generate_for_all_outcomes(slug, filters):
 class TreatmentOutcomeSqlData(EnikshaySqlData):
 
     @property
+    def filters(self):
+        filters = super(TreatmentOutcomeSqlData, self).filters
+        filters.append(
+            RawFilter('episode_type_patient = 1')
+        )
+        return filters
+
+    @property
     def columns(self):
         return (
             generate_for_all_outcomes('new_patients', self.filters + [RawFilter("patient_type = 'new'")]) +

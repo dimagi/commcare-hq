@@ -172,7 +172,6 @@ FormplayerFrontend.on("start", function (options) {
         savedDisplayOptions,
         appId;
     user.username = options.username;
-    user.language = options.language;
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
@@ -188,6 +187,7 @@ FormplayerFrontend.on("start", function (options) {
         singleAppMode: options.singleAppMode,
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
+        language: options.language,
     });
 
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
@@ -301,11 +301,18 @@ FormplayerFrontend.on("sync", function () {
         domain = user.domain,
         formplayer_url = user.formplayer_url,
         complete,
+        data = {
+            "username": username,
+            "domain": domain,
+            "restoreAs": user.restoreAs,
+        },
         options;
 
     complete = function(response) {
         if (response.responseJSON.status === 'retry') {
             FormplayerFrontend.trigger('retry', response.responseJSON, function() {
+                // Ensure that when we hit the sync db route we don't use the overwrite_cache param
+                options.data = JSON.stringify($.extend(true, { preserveCache: true }, data));
                 $.ajax(options);
             }, gettext('Waiting for server progress'));
         } else {
@@ -315,11 +322,7 @@ FormplayerFrontend.on("sync", function () {
     };
     options = {
         url: formplayer_url + "/sync-db",
-        data: JSON.stringify({
-            "username": username,
-            "domain": domain,
-            "restoreAs": user.restoreAs,
-        }),
+        data: JSON.stringify(data),
         complete: complete,
     };
     Util.setCrossDomainAjaxOptions(options);

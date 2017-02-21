@@ -14,7 +14,9 @@
             <th>
                 <div class="form-group">
                     <select class="form-control" data-bind="
-                        options: report.filterConfig.filterDocTypes,
+                        options: $root.staticFilterData.filterChoices,
+                        optionsText: 'description',
+                        optionsValue: 'slug',
                         value: selectedValue.doc_type
                     ">
                     </select>
@@ -22,13 +24,17 @@
                 <div class="form-group">
                     <div data-bind="visible: filter.selectedValue.doc_type() === 'AutoFilter'">
                         <select class="form-control" data-bind="
-                            options: report.filterConfig.autoFilterTypes,
+                            options: $root.staticFilterData.autoFilterChoices,
+                            optionsText: 'description',
+                            optionsValue: 'slug',
                             value: filter.selectedValue.filter_type
                         "></select>
                     </div>
                     <div data-bind="visible: filter.selectedValue.doc_type() === 'StaticDatespanFilter'">
                         <select class="form-control" data-bind="
-                            options: report.filterConfig.date_range_options,
+                            options: $root.staticFilterData.dateRangeOptions,
+                            optionsText: 'description',
+                            optionsValue: 'slug',
                             value: filter.selectedValue.date_range
                         "></select>
                     </div>
@@ -38,7 +44,7 @@
                                 <label><span>today() - </span><span data-bind="text: filter.display"></span></label>
                                 <select class="form-control"
                                         data-bind="
-                                            options: report.filterConfig.date_operators,
+                                            options: $root.staticFilterData.dateOperators,
                                             value: filter.selectedValue.operator
                                 "></select>
                             </div>
@@ -97,7 +103,7 @@
                                 <select
                                     class="form-control"
                                     data-bind="
-                                        options: report.filterConfig.numeric_operators,
+                                        options: $root.staticFilterData.numericOperators,
                                         value: filter.selectedValue.operator
                                     "
                                 ></select>

@@ -233,8 +233,8 @@ class SiteCodeToLocationCache(BulkCacheBase):
         """
         return SQLLocation.objects.get(
             domain=self.domain,
-            site_code=site_code
-        ).couch_location
+            site_code__iexact=site_code
+        )
 
 
 class LocationIdToSiteCodeCache(BulkCacheBase):

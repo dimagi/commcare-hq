@@ -9,6 +9,7 @@
     "airsmozambique",
     "airsrwanda",
     "airsethiopia",
+    "airskenya",
     "airszambia"
   ],
   "config": {
@@ -357,7 +358,32 @@
             "Tanzania": {
               "default": 0,
               "cases": {
-                "Geita": 20000
+                "Geita": 117617,
+                "Kagera": 163299,
+                "Mara": 89430,
+                "Mwanza": 184559
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_1_name"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
+            "kenya": {
+              "default": 0,
+              "cases": {
+                "migori": 226827
               },
               "type": "switch",
               "switch_on": {
@@ -705,7 +731,44 @@
             "Tanzania": {
               "default": 0,
               "cases": {
-                "Geita TC": 20000
+                "Bukoba rural": 63744,
+                "Butiama": 52748,
+                "Chato": 76482,
+                "Kwimba": 79430,
+                "Missenyi": 45344,
+                "Musoma rural": 36682,
+                "Ngara": 54211,
+                "Nyang'hwale": 41135,
+                "Pemba": 13714,
+                "Sengerema": 105129,
+                "Unguja": 26774
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_2_name"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
+            "kenya": {
+              "default": 0,
+              "cases": {
+                "awendo": 34320,
+                "nyatike": 49571,
+                "rongo": 26969,
+                "suna_east": 32161,
+                "suna_west": 41020,
+                "uriri": 42786
               },
               "type": "switch",
               "switch_on": {
@@ -1097,13 +1160,197 @@
             "Tanzania": {
               "default": 0,
               "cases": {
-                "Mtakuja": 3018,
-                "Nyankumbu": 2624,
-                "Bunegezi": 2914,
-                "Kalangalala": 2993,
-                "Bulela": 2887,
-                "Bung'wangoko": 2819,
-                "Kasamwa": 2745
+                "Bambi": 3904,
+                "Bugoji": 6557,
+                "Buhemba": 6830,
+                "Bujugo": 6199,
+                "Bukiriro": 7295,
+                "Bukome": 2293,
+                "Bukwimba": 6856,
+                "Bungulwa": 7500,
+                "Bupandwa": 7800,
+                "Busaka": 1818,
+                "Busegwe": 5711,
+                "Buseresere": 2109,
+                "Busisi": 4200,
+                "Butiama": 6296,
+                "Buturage": 6906,
+                "Buyagu": 4500,
+                "Buyango": 6505,
+                "Buziku": 1723,
+                "Buzirayombo": 1359,
+                "Bwanga": 1998,
+                "Bwina": 1937,
+                "Center": 2234,
+                "Chake Chake": 2925,
+                "Chato Mlimani": 2291,
+                "Donge Vijibweni": 3660,
+                "Gera": 7007,
+                "Ibwera": 5995,
+                "Ichwankima": 2357,
+                "Igayaza": 6739,
+                "Ihanga": 1723,
+                "Ilemela": 2599,
+                "Ilula": 7000,
+                "Ilyamchele": 1663,
+                "Imwelu": 2109,
+                "Inala ": 7200,
+                "Iparamasa": 2267,
+                "Itanga": 1998,
+                "Kabale": 7039,
+                "Kachwamba": 2357,
+                "Kagunga": 6800,
+                "Kahumo": 2291,
+                "Kakeneno": 1523,
+                "KAKINDO": 8880,
+                "Kakobe": 7500,
+                "Kakunyu": 4476,
+                "Kalebezo": 7800,
+                "Kamugegi": 6071,
+                "Kasala": 2879,
+                "Kasenga": 2357,
+                "Kashenye": 3371,
+                "Kashozi": 6596,
+                "Katende": 1498,
+                "Katete": 2081,
+                "Katoro": 7031,
+                "Katunguru": 8129,
+                "Kharumwa": 6855,
+                "Kiagata": 6451,
+                "Kibehe": 2320,
+                "Kibumba": 2879,
+                "Kibuteni": 2483,
+                "Kigongo": 2435,
+                "Kikubiji": 7100,
+                "Kinsabe": 2267,
+                "Kishanje": 5934,
+                "Kishogo": 6263,
+                "Kmt": 2280,
+                "Kome": 8800,
+                "Konde": 4152,
+                "Kyaka": 8366,
+                "Kyawazarwe": 7402,
+                "Luchili": 7300,
+                "Lukole": 6650,
+                "Mabawe": 7031,
+                "Mahonda": 3840,
+                "Maisome": 3000,
+                "Malya": 7500,
+                "Minkoto": 2304,
+                "Mirwa": 6868,
+                "Mnekezi": 2267,
+                "Mombasa": 4457,
+                "Mtundu": 1862,
+                "Mugango ": 6707,
+                "Muganza": 2321,
+                "Murangi": 5446,
+                "Murusagamba": 6121,
+                "Mwabagalu": 2109,
+                "Mwamala (New)": 5800,
+                "Mwamashimba": 6300,
+                "Mwangika": 4600,
+                "Mwingiro": 6856,
+                "Ndijani": 4501,
+                "Ngara Mjini": 8869,
+                "Ngumo": 7600,
+                "Nkalalo (New)": 5830,
+                "Nyakaliro": 7500,
+                "Nyakanga": 7119,
+                "Nyakisasa": 5641,
+                "Nyamatongo": 8100,
+                "Nyambiti": {
+                  "type": "switch",
+                  "cases": {
+                    "Kwimba": 4300,
+                    "Chato": 2040
+                  },
+                  "switch_on": {
+                    "value_expression": {
+                      "type": "property_path",
+                      "property_path": [
+                        "user_data",
+                        "level_2_name"
+                      ]
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                      "type": "property_name",
+                      "property_name": "owner_id"
+                    }
+                  },
+                  "default": 0
+                },
+                "Nyamikoma": 5900,
+                "Nyamilama": 7400,
+                "Nyampande": 6400,
+                "Nyang'hwale": 6856,
+                "Nyang'Wale": 6856,
+                "Nyantimba": 2072,
+                "Nyegina": 6559,
+                "Nyijundu": 6856,
+                "Rubale": 6220,
+                "Ruhunga": 5561,
+                "Rulenge": 4343,
+                "Rumasa": 1862,
+                "Rusori": 6788,
+                "Sengerema": 6200,
+                "Shabaka": 6856,
+                "Shakani": 3929,
+                "Shanga": 8261,
+                "Sima": 6500,
+                "Suguti": 4625,
+                "Wete": 3600,
+                "Wingwi": 3037
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_3_name"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
+            "kenya": {
+              "default": 0,
+              "cases": {
+                "agenga_dispensary": 7810,
+                "alendo_chief's_camp": 5471,
+                "anjego_dispensary": 12045,
+                "arombe_dispensary": 8102,
+                "awendo_sub_county_hospital": 7899,
+                "bande_dispensary": 6838,
+                "bondo_dispensary": 7430,
+                "bware_dispensary": 9761,
+                "dede_dispensary": 6387,
+                "karungu_sub_county_hospital": 6921,
+                "kochola_dispensary": 6009,
+                "lela_dispensary": 9353,
+                "macalder_sub_county_hospital": 7682,
+                "mariwa_health_centre": 12816,
+                "migori_county_referral_hospital": 9435,
+                "minyenya_dispensary": 6233,
+                "muhuru_health_centre": 8220,
+                "nyamaranga_health_centre": 8492,
+                "ongo_health_centre": 9008,
+                "osingo_dispensary": 4945,
+                "othoro_sub_county_hospital": 12901,
+                "oyani_health_centre": 4691,
+                "rabondo_dispensary": 9409,
+                "rongo_sub_county_hospital": 12877,
+                "suna_rabuor_health_centre": 5596,
+                "suna_ragana_dispensary": 6640,
+                "uriri_health_centre": 5734,
+                "wath_onger_dispensary": 8122
               },
               "type": "switch",
               "switch_on": {
@@ -1391,6 +1638,55 @@
                   "property_name": "owner_id"
                 }
               }
+            },
+            "kenya": {
+              "default": 0,
+              "cases": {
+                "agenga_dispensary": 7810,
+                "alendo_chief's_camp": 5471,
+                "anjego_dispensary": 12045,
+                "arombe_dispensary": 8102,
+                "awendo_sub_county_hospital": 7899,
+                "bande_dispensary": 6838,
+                "bondo_dispensary": 7430,
+                "bware_dispensary": 9761,
+                "dede_dispensary": 6387,
+                "karungu_sub_county_hospital": 6921,
+                "kochola_dispensary": 6009,
+                "lela_dispensary": 9353,
+                "macalder_sub_county_hospital": 7682,
+                "mariwa_health_centre": 12816,
+                "migori_county_referral_hospital": 9435,
+                "minyenya_dispensary": 6233,
+                "muhuru_health_centre": 8220,
+                "nyamaranga_health_centre": 8492,
+                "ongo_health_centre": 9008,
+                "osingo_dispensary": 4945,
+                "othoro_sub_county_hospital": 12901,
+                "oyani_health_centre": 4691,
+                "rabondo_dispensary": 9409,
+                "rongo_sub_county_hospital": 12877,
+                "suna_rabuor_health_centre": 5596,
+                "suna_ragana_dispensary": 6640,
+                "uriri_health_centre": 5734,
+                "wath_onger_dispensary": 8122
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "ward_code"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
             }
           },
           "type": "switch",
@@ -1424,12 +1720,13 @@
           "cases": {
             "mozambique": 481296,
             "Senegal": 220551,
+            "Tanzania": 595393,
             "Rwanda": 188189,
             "zambia": 542184,
             "Ethiopia": 708258,
             "Mali": 242684,
             "Madagascar": 311916,
-            "Tanzania": 502934,
+            "kenya": 226827,
             "benin": 270141
           },
           "type": "switch",

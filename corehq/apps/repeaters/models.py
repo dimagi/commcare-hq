@@ -1,4 +1,3 @@
-import base64
 from collections import namedtuple
 from datetime import datetime, timedelta
 import logging
@@ -12,6 +11,7 @@ from corehq.form_processor.exceptions import XFormNotFound
 from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
 from corehq.util.datadog.utils import log_counter
 from corehq.util.quickcache import quickcache
+from utils import get_repeater_auth_header
 
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
@@ -32,6 +32,7 @@ from .dbaccessors import (
     get_pending_repeat_record_count,
     get_failure_repeat_record_count,
     get_success_repeat_record_count,
+    get_cancelled_repeat_record_count
 )
 from .const import (
     MAX_RETRY_WAIT,
@@ -39,6 +40,7 @@ from .const import (
     RECORD_FAILURE_STATE,
     RECORD_SUCCESS_STATE,
     RECORD_PENDING_STATE,
+    RECORD_CANCELLED_STATE,
     POST_TIMEOUT,
 )
 from .exceptions import RequestConnectionError
@@ -63,9 +65,9 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False,
         raise RequestConnectionError(e.message)
 
     if not 200 <= resp.status_code < 300:
-        message = u'Status Code {}: {}'.format(resp.status_code, resp.reason)
+        message = u'Status Code {}: {}. {}'.format(resp.status_code, resp.reason, getattr(resp, 'content', None))
         cache.set(key, message, expiry)
-        raise RequestConnectionError(message)
+
     return resp
 
 
@@ -169,6 +171,9 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def get_success_record_count(self):
         return get_success_repeat_record_count(self.domain, self._id)
 
+    def get_cancelled_record_count(self):
+        return get_cancelled_repeat_record_count(self.domain, self._id)
+
     def format_or_default_format(self):
         from corehq.apps.repeaters.repeater_generators import RegisterGenerator
         return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
@@ -269,7 +274,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self['base_doc'] += DELETED
         self.save()
 
-    def get_url(self, repeate_record):
+    def get_url(self, repeat_record):
         # to be overridden
         return self.url
 
@@ -288,8 +293,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         generator = self.get_payload_generator(self.format_or_default_format())
         headers = generator.get_headers()
         if self.use_basic_auth:
-            user_pass = base64.encodestring(':'.join((self.username, self.password))).replace('\n', '')
-            headers.update({'Authorization': 'Basic ' + user_pass})
+            headers.update(get_repeater_auth_header(headers, self.username, self.password))
 
         return headers
 
@@ -297,13 +301,19 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         """handle a successful post
         """
         generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_success(response, self.payload_doc(repeat_record))
+        return generator.handle_success(response, self.payload_doc(repeat_record), repeat_record)
 
     def handle_failure(self, response, repeat_record):
         """handle a failed post
         """
         generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_failure(response, self.payload_doc(repeat_record))
+        return generator.handle_failure(response, self.payload_doc(repeat_record), repeat_record)
+
+    def handle_exception(self, exception, repeat_record):
+        """handle an exception during a post
+        """
+        generator = self.get_payload_generator(self.format_or_default_format())
+        return generator.handle_exception(exception, repeat_record)
 
 
 class FormRepeater(Repeater):
@@ -427,6 +437,8 @@ class RepeatRecord(Document):
     An record of a particular instance of something that needs to be forwarded
     with a link to the proper repeater object
     """
+    overall_tries = IntegerProperty(default=0)
+    max_possible_tries = IntegerProperty(default=3)
 
     repeater_id = StringProperty()
     repeater_type = StringProperty()
@@ -436,6 +448,7 @@ class RepeatRecord(Document):
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
     failure_reason = StringProperty()
+    cancelled = BooleanProperty(default=False)
 
     payload_id = StringProperty()
 
@@ -456,6 +469,8 @@ class RepeatRecord(Document):
         state = RECORD_PENDING_STATE
         if self.succeeded:
             state = RECORD_SUCCESS_STATE
+        elif self.cancelled:
+            state = RECORD_CANCELLED_STATE
         elif self.failure_reason:
             state = RECORD_FAILURE_STATE
         return state
@@ -481,23 +496,26 @@ class RepeatRecord(Document):
         ).one()
         return results['value'] if results else 0
 
-    def set_next_try(self, reason=None):
+    def set_next_try(self, reason=None, requeue=False):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
         assert self.succeeded is False
         assert self.next_check is not None
         now = datetime.utcnow()
-        window = timedelta(minutes=0)
-        if self.last_checked:
-            window = self.next_check - self.last_checked
-            window += (window // 2)  # window *= 1.5
-        if window < MIN_RETRY_WAIT:
-            window = MIN_RETRY_WAIT
-        elif window > MAX_RETRY_WAIT:
-            window = MAX_RETRY_WAIT
+        if requeue:
+            self.next_check = now
+        else:
+            window = timedelta(minutes=0)
+            if self.last_checked:
+                window = self.next_check - self.last_checked
+                window += (window // 2)  # window *= 1.5
+            if window < MIN_RETRY_WAIT:
+                window = MIN_RETRY_WAIT
+            elif window > MAX_RETRY_WAIT:
+                window = MAX_RETRY_WAIT
 
-        self.last_checked = now
-        self.next_check = self.last_checked + window
+            self.last_checked = now
+            self.next_check = self.last_checked + window
 
     def try_now(self):
         # try when we haven't succeeded and either we've
@@ -536,6 +554,7 @@ class RepeatRecord(Document):
     def fire(self, max_tries=3, force_send=False):
         headers = self.repeater.get_headers(self)
         if self.try_now() or force_send:
+            self.overall_tries += 1
             tries = 0
             post_info = PostInfo(self.get_payload(), headers, force_send, max_tries)
             self.post(post_info, tries=tries)
@@ -582,16 +601,32 @@ class RepeatRecord(Document):
         """handle internal exceptions
         """
         self._fail(unicode(exception), None)
+        self.repeater.handle_exception(exception, self)
 
     def _fail(self, reason, response):
-        if self.repeater.allow_retries(response):
+        if self.repeater.allow_retries(response) and self.overall_tries < self.max_possible_tries:
             self.set_next_try()
+        else:
+            self.cancel()
         self.failure_reason = reason
         log_counter(REPEATER_ERROR_COUNT, {
             '_id': self._id,
             'reason': reason,
             'target_url': self.url,
         })
+
+    def cancel(self):
+        self.next_check = None
+        self.cancelled = True
+
+    def requeue(self):
+        self.cancelled = False
+        self.succeeded = False
+        self.failure_reason = ''
+        self.overall_tries = 0
+        self.next_check = datetime.utcnow()
+        self.set_next_try(requeue=True)
+
 
 # import signals
 # Do not remove this import, its required for the signals code to run even though not explicitly used in this file

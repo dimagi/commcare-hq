@@ -15,7 +15,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
-from corehq.apps.reminders.util import enqueue_reminder_directly, get_verified_number_for_recipient
+from corehq.apps.reminders.util import enqueue_reminder_directly, get_two_way_number_for_recipient
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.smsforms.app import submit_unfinished_form
@@ -1169,7 +1169,7 @@ class CaseReminderHandler(Document):
         # Retrieve the corresponding verified number entries for all individual recipients
         verified_numbers = {}
         for r in recipients:
-            verified_numbers[r.get_id] = get_verified_number_for_recipient(r)
+            verified_numbers[r.get_id] = get_two_way_number_for_recipient(r)
         
         # Set the event initiation timestamp if we're not on any timeouts
         if reminder.callback_try_count == 0:

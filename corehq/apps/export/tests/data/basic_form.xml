@@ -4,7 +4,7 @@
 		<h:title>Buy Candy Corn</h:title>
 		<model>
 			<instance>
-				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="undefined" uiVersion="1" version="1" name="Buy Candy Corn">
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="xmlns" uiVersion="1" version="1" name="Buy Candy Corn">
 					<question1 />
 					<question2 />
 				</data>

@@ -312,6 +312,15 @@
                         </div>
                     </div>
                 {% endif %}
+                {% if request.user.is_superuser %}
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <a data-bind="attr: {href: $root.url('source', id)}">
+                                {% trans 'View Source Files' %}
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         {% endif %}
         </div>

@@ -41,12 +41,12 @@ class ABTest(object):
         }
 
 
-LIVE_PREVIEW_ENABLED = 'live_preview_enabled'
-LIVE_PREVIEW_DISABLED = 'live_preview_disabled'
+NEW_USER_NUMBER_OPTION_SHOW_NUM = 'show_number'
+NEW_USER_NUMBER_OPTION_HIDE_NUM = 'hide_number'
 
 
-LIVE_PREVIEW = ABTestConfig(
-    'Live Preview',
-    'live_preview_dec2016',
-    (LIVE_PREVIEW_ENABLED, LIVE_PREVIEW_DISABLED)
+NEW_USER_NUMBER = ABTestConfig(
+    'New User Phone Number',
+    'new_phone_jan2016',
+    (NEW_USER_NUMBER_OPTION_SHOW_NUM, NEW_USER_NUMBER_OPTION_HIDE_NUM)
 )

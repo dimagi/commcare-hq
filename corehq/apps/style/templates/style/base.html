@@ -358,6 +358,12 @@
         {# modals #}
         {% block modals %}{% endblock modals %}
 
+        <div id="initial-page-data" class="hide">
+        {% block initial_page_data %}
+            {# do not override this block, use initial_page_data template tag to populate #}
+        {% endblock %}
+        </div>
+
         {# javascript below this line #}
 
         {# HQ Specific Libraries #}
@@ -596,8 +602,15 @@
         {# Report Issue #}
         {% include 'style/includes/modal_report_issue.html' %}
 
+        {# Remote modals (EULA and CDA) #}
+        {% compress js %}
+            <script src="{% static 'style/js/remote-modals.js' %}"></script>
+        {% endcompress %}
+
         {# EULA #}
-        {% include 'style/includes/modal_eula.html' %}
+        {% if request.couch_user and not request.couch_user.is_eula_signed %}
+            {% include 'style/includes/modal_eula.html' with needs_agreement=True %}
+        {% endif %}
 
         {# 30 Day Trial #}
         {% include 'style/includes/modal_30_day_trial.html' %}

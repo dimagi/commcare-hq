@@ -1,3 +1,4 @@
+/* globals hqDefine _ */
 hqDefine('app_manager/js/report-module.js', function () {
     // TODO: Ideally the separator would be defined in one place. Right now it is
     //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
@@ -229,33 +230,6 @@ hqDefine('app_manager/js/report-module.js', function () {
                 }
             });
         };
-
-        // TODO - add user-friendly text
-        this.filterDocTypes = [
-            null,
-            'AutoFilter',
-            'StaticDatespanFilter',
-            'CustomDatespanFilter',
-            'CustomMonthFilter',
-            'CustomDataAutoFilter',
-            'StaticChoiceListFilter',
-            'StaticChoiceFilter',
-            'MobileSelectFilter',
-            'AncestorLocationTypeFilter',
-            'NumericFilter',
-        ];
-        this.autoFilterTypes = [
-            'case_sharing_group',
-            'location_id',
-            'parent_location_id',
-            'username',
-            'user_id'
-        ];
-        this.date_range_options = [
-            'last7', 'last30', 'thismonth', 'lastmonth', 'thisyear', 'lastyear', 'thisquarter', 'lastquarter',
-        ];
-        this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
-        this.numeric_operators = ['=', '!=', '<', '<=', '>', '>='];
     }
 
     function ReportConfig(report_id, display,
@@ -302,11 +276,22 @@ hqDefine('app_manager/js/report-module.js', function () {
         };
     }
 
+    function StaticFilterData(options) {
+        this.filterChoices = options.filterChoices;
+        // support "unselected"
+        this.filterChoices.unshift({slug: null, description: 'No filter'});
+        this.autoFilterChoices = options.autoFilterChoices;
+        this.dateRangeOptions = options.dateRangeOptions;
+        this.dateOperators = ['=', '<', '<=', '>', '>=', 'between'];
+        this.numericOperators = ['=', '!=', '<', '<=', '>', '>='];
+    }
+
     function ReportModule(options) {
         var self = this;
         var currentReports = options.currentReports || [];
         var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
+        self.staticFilterData = options.staticFilterData;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
         self.moduleFilter = options.moduleFilter === "None" ? "" : options.moduleFilter;
@@ -426,6 +411,7 @@ hqDefine('app_manager/js/report-module.js', function () {
     }
     return {
         ReportModule: ReportModule,
+        StaticFilterData: StaticFilterData,
         select2Separator: select2Separator
     };
 });

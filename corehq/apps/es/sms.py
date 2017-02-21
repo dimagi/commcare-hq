@@ -21,6 +21,8 @@ class SMSES(HQESQuery):
             to_commcare_user_or_case,
             received,
             direction,
+            processed,
+            processed_or_incoming_messages,
         ] + super(SMSES, self).builtin_filters
 
     def user_aggregation(self):
@@ -37,6 +39,14 @@ def outgoing_messages():
 
 def direction(direction_):
     return filters.term("direction", direction_)
+
+
+def processed_or_incoming_messages():
+    return filters.NOT(filters.AND(outgoing_messages(), processed(False)))
+
+
+def processed(processed=True):
+    return filters.term('processed', processed)
 
 
 def to_commcare_user():

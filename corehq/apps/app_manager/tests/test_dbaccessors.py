@@ -9,6 +9,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_build_doc_by_version,
     get_built_app_ids_for_app_id,
     get_built_app_ids_with_submissions_for_app_id,
+    get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_current_app,
     get_latest_build_doc,
     get_latest_app_ids_and_versions,
@@ -126,6 +127,18 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         )
         self.assertEqual(len(app_ids), 0)  # Should skip the one that has_submissions
 
+    def test_get_built_app_ids_with_submissions_for_app_ids_and_versions(self):
+        app_ids = get_built_app_ids_with_submissions_for_app_ids_and_versions(
+            self.domain,
+            {self.apps[0]._id: self.first_saved_version},
+        )
+        self.assertEqual(len(app_ids), 0)  # Should skip the one that has_submissions
+
+        app_ids = get_built_app_ids_with_submissions_for_app_ids_and_versions(
+            self.domain,
+        )
+        self.assertEqual(len(app_ids), 1)  # Should get the one that has_submissions
+
     def test_get_all_app_ids_for_domain(self):
         app_ids = get_all_app_ids(self.domain)
         self.assertEqual(len(app_ids), 3)
@@ -144,11 +157,18 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         })
 
     def test_get_all_built_app_ids_and_versions(self):
-        app_build_verions = get_all_built_app_ids_and_versions(self.domain)
+        app_build_versions = get_all_built_app_ids_and_versions(self.domain)
 
-        self.assertEqual(len(app_build_verions), 3)
-        self.assertEqual(len(filter(lambda abv: abv.app_id == '1234', app_build_verions)), 1)
-        self.assertEqual(len(filter(lambda abv: abv.app_id == self.apps[0]._id, app_build_verions)), 2)
+        self.assertEqual(len(app_build_versions), 3)
+        self.assertEqual(len(filter(lambda abv: abv.app_id == '1234', app_build_versions)), 1)
+        self.assertEqual(len(filter(lambda abv: abv.app_id == self.apps[0]._id, app_build_versions)), 2)
+
+    def test_get_all_built_app_ids_and_versions_by_app(self):
+        app_build_versions = get_all_built_app_ids_and_versions(self.domain, app_id='1234')
+
+        self.assertEqual(len(app_build_versions), 1)
+        self.assertEqual(len(filter(lambda abv: abv.app_id == '1234', app_build_versions)), 1)
+        self.assertEqual(len(filter(lambda abv: abv.app_id != '1234', app_build_versions)), 0)
 
 
 class TestAppGetters(TestCase):

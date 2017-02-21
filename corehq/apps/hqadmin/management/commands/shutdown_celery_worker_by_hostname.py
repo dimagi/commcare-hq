@@ -7,9 +7,11 @@ from corehq.apps.hqadmin.utils import parse_celery_pings
 
 class Command(BaseCommand):
     help = "Gracefully shutsdown a celery worker"
-    args = 'hostname'
 
-    def handle(self, hostname, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('hostname')
+
+    def handle(self, hostname, **options):
         celery = Celery()
         celery.config_from_object(settings)
         celery.control.broadcast('shutdown', destination=[hostname])

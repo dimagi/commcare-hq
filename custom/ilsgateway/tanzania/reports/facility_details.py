@@ -7,6 +7,7 @@ from corehq.util.timezones.conversions import ServerTime
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway.models import SupplyPointStatusTypes, ILSNotes
 from custom.ilsgateway.tanzania import ILSData, MultiReport
+from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.utils import decimal_format, float_format, latest_status
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
@@ -199,6 +200,7 @@ class FacilityDetailsReport(MultiReport):
     name = "Facility Details"
     slug = 'facility_details'
     use_datatables = True
+    parent_report_class = StockOnHandReport
 
     @property
     def title(self):

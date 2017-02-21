@@ -33,6 +33,12 @@
       {% trans 'Resume Build (Advanced)' %}
     </button>
   </form>
+  <form method='post' action="{% url 'build_in_place' domain data_source.get_id %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-default disable-on-submit">
+      {% trans 'Rebuild Tables In Place (Advanced)' %}
+    </button>
+  </form>
   {% endif %}
 {% endif %}
 {% endblock %}

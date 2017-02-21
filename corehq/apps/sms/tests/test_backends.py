@@ -671,7 +671,7 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
         # Test sending to verified number with backend map
         SQLMobileBackendMapping.unset_default_domain_backend(self.domain)
 
-        verified_number = contact.get_verified_number()
+        verified_number = contact.get_phone_number()
         self.assertTrue(verified_number is not None)
         self.assertTrue(verified_number.backend_id is None)
         self.assertEqual(verified_number.phone_number, '15551234567')
@@ -699,7 +699,7 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
         # Test sending to verified number with a contact-level backend owned by the domain
         update_case(self.domain, contact.case_id, case_properties={'contact_backend_id': 'BACKEND'})
         contact = CaseAccessors(self.domain).get_case(contact.case_id)
-        verified_number = contact.get_verified_number()
+        verified_number = contact.get_phone_number()
         self.assertTrue(verified_number is not None)
         self.assertEqual(verified_number.backend_id, 'BACKEND')
         self.assertEqual(verified_number.phone_number, '15551234567')

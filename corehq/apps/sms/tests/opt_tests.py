@@ -30,7 +30,7 @@ class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
         self.assertEqual(PhoneBlacklist.objects.count(), 0)
 
         incoming('99912345678', 'join opt-test', 'GVI')
-        v = PhoneNumber.by_phone('99912345678')
+        v = PhoneNumber.get_two_way_number('99912345678')
         self.assertIsNotNone(v)
 
         incoming('99912345678', 'stop', 'GVI')
@@ -62,7 +62,7 @@ class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
         self.assertEqual(PhoneBlacklist.objects.count(), 0)
 
         incoming('99912345678', 'join opt-test', 'GVI')
-        v = PhoneNumber.by_phone('99912345678')
+        v = PhoneNumber.get_two_way_number('99912345678')
         self.assertIsNotNone(v)
 
         send_sms_to_verified_number(v, 'hello')

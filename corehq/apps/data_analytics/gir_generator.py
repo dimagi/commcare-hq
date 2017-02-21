@@ -54,7 +54,7 @@ class GIRTableGenerator(object):
             if user_forms.get(user, 0) >= \
                     (domain.internal.performance_threshold or DEFAULT_PERFORMANCE_THRESHOLD):
                 performing_users.add(user)
-            if user_months.get(user, 0) >= \
+            if user_months.get(user, 0) > \
                     (domain.internal.experienced_threshold or DEFAULT_EXPERIENCED_THRESHOLD):
                 experienced_users.add(user)
         for user in performing_users & experienced_users:

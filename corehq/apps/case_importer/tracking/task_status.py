@@ -29,7 +29,10 @@ class TaskStatusResultError(jsonobject.StrictJsonObject):
     title = jsonobject.StringProperty()
     description = jsonobject.StringProperty()
     column = jsonobject.StringProperty()
-    rows = jsonobject.ListProperty(int)
+    # usually an int, but field has been hijacked to include other debug info
+    # search 'row_number=' in tasks.py
+    # longer-term solution would be to have another field for debug info
+    rows = jsonobject.ListProperty()
 
 
 def normalize_task_status_result(result):

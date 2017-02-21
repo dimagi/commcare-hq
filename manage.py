@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import
 import sys
 import os
 import mimetypes
@@ -80,6 +81,7 @@ def patch_jsonfield():
                 return json.loads(value, **self.load_kwargs)
             except ValueError:
                 raise ValidationError(_("Enter valid JSON"))
+        return value
 
     JSONField.to_python = to_python
 
