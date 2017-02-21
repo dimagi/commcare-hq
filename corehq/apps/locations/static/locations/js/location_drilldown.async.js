@@ -89,7 +89,7 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
         if (!initialData) {
             initialData = {
                 locs: locs,
-                selected: selected
+                selected: selected,
             };
         }
 

@@ -42,7 +42,9 @@ class TableauView(TemplateView):
         return self.request.couch_user
 
     def get_context_data(self, **kwargs):
-        location_type_code, user_location_id, state_id, district_id, block_id = _get_user_location(self.couch_user, self.domain)
+        location_type_code, user_location_id, state_id, district_id, block_id = _get_user_location(
+            self.couch_user, self.domain
+        )
         client_ip = self.request.META.get('X-Forwarded-For', '')
         tableau_access_url = get_tableau_trusted_url(client_ip)
 
