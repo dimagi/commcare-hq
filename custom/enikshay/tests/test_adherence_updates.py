@@ -148,7 +148,6 @@ class TestAdherenceUpdater(TestCase):
         return EpisodeUpdate(episode, self.case_updater)
 
     def test_adherence_schedule_date_start_late(self):
-        self.assertEqual(1, 1)
         #   Sample test case
         #   [
         #       (
