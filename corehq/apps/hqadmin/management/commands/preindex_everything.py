@@ -74,7 +74,7 @@ class Command(BaseCommand):
             )
 
         def couch_preindex():
-            call_command('sync_prepare_couchdb_multi', num_pool, username,
+            call_command('sync_prepare_couchdb_multi', str(num_pool), username,
                          **{'no_mail': True})
             print "Couch preindex done"
 
