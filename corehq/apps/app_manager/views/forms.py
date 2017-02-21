@@ -550,8 +550,8 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
     allow_usercase = (domain_has_privilege(request.domain, privileges.USER_CASE)
                       and not toggles.USER_TESTING_SIMPLIFY.enabled(request.domain))
     valid_index_names = DEFAULT_CASE_INDEX_IDENTIFIERS.values()
-    if allow_usercase and USERCASE_PREFIX[-1] == "/":
-        valid_index_names.append(USERCASE_PREFIX[0:-1])
+    if allow_usercase:
+        valid_index_names.append(USERCASE_PREFIX[0:-1]) # strip trailing slash
 
     form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
     context = {
