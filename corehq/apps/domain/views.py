@@ -61,6 +61,7 @@ from corehq.apps.style.decorators import (
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
+    SubscriptionAdjustmentError,
 )
 from corehq.apps.accounting.payment_handlers import (
     BulkStripePaymentHandler,
@@ -1294,8 +1295,15 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             try:
                 form.process_subscription_management()
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-            except NewSubscriptionError as e:
-                messages.error(self.request, e.message)
+            except (NewSubscriptionError, SubscriptionAdjustmentError) as e:
+                messages.error(self.request, mark_safe(
+                    'This request will require Ops assistance. '
+                    'Please explain to <a href="mailto:%(ops_email)s">%(ops_email)s</a>'
+                    ' what you\'re trying to do and report the following error: <strong>"%(error)s"</strong>' % {
+                        'error': e.message,
+                        'ops_email': settings.ACCOUNTS_EMAIL,
+                    }
+                ))
         return self.get(request, *args, **kwargs)
 
     @property
