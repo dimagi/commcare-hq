@@ -62,6 +62,7 @@ hqDefine('accounting/js/accounting.credits.js', function () {
         self.recurringInterval = ko.observable(data.recurring_interval);
         self.creditType = ko.observable(data.type);
         self.usage = ko.observable(data.usage);
+        self.limit = ko.observable(data.limit);
         self.remaining = ko.observable(data.remaining);
         self.monthlyFee = ko.observable(data.monthly_fee);
         self.amount = ko.observable((data.subscription_credit) ? data.subscription_credit.amount : 0);
