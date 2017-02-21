@@ -333,7 +333,8 @@ DropdownEntry.prototype.onPreProcess = function(newValue) {
  * Docs: https://confluence.dimagi.com/display/commcarepublic/Advanced+CommCare+Android+Formatting#AdvancedCommCareAndroidFormatting-SingleSelect"ComboBox"
  */
 function ComboboxEntry(question, options) {
-    var self = this;
+    var self = this,
+        initialOption;
     EntrySingleAnswer.call(this, question, options);
 
     // Specifies the type of matching we will do when a user types a query
@@ -354,6 +355,14 @@ function ComboboxEntry(question, options) {
     });
     self.helpText = function() { return 'Combobox'; };
 
+    // If there is a prexisting answer, set the rawAnswer to the corresponding text.
+    if (question.answer()) {
+        initialOption = self.options()[self.answer() - 1];
+        self.rawAnswer(
+             initialOption ? initialOption.name : Formplayer.Const.NO_ANSWER
+        );
+    }
+
     self.renderAtwho = function() {
         var $input = $('#' + self.entryId);
         $input.atwho('destroy');
@@ -363,6 +372,7 @@ function ComboboxEntry(question, options) {
             data: self.options(),
             maxLen: Infinity,
             tabSelectsMatch: false,
+            limit: 10,
             suffix: '',
             callbacks: {
                 filter: function(query, data) {

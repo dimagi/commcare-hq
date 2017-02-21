@@ -1,7 +1,10 @@
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from elasticsearch import TransportError
 
-from corehq.apps.es.users import user_ids_at_locations, user_ids_at_locations_and_descendants
+from corehq.apps.locations.dbaccessors import (
+    user_ids_at_locations, user_ids_at_locations_and_descendants
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -99,8 +102,12 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         try:
             return self._build_query().run().raw
         except ESError as e:
-            if e.args[0].info.get('status') == 400:
-                raise BadRequestError()
+            original_exception = e.args[0]
+            if isinstance(original_exception, TransportError):
+                if hasattr(original_exception.info, "get"):
+                    if original_exception.info.get('status') == 400:
+                        raise BadRequestError()
+            raise e
 
     def get_special_owner_ids(self, admin, unknown, demo, commtrack):
         if not any([admin, unknown, demo]):

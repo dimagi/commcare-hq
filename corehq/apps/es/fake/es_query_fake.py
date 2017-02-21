@@ -58,6 +58,10 @@ class ESQueryFake(object):
         del cls._get_all_docs()[:]
 
     @classmethod
+    def remove_doc(cls, doc_id):
+        cls._all_docs = [doc for doc in cls._all_docs if doc['_id'] != doc_id]
+
+    @classmethod
     def _get_all_docs(cls):
         cls_name = cls.__name__
         try:
@@ -94,6 +98,9 @@ class ESQueryFake(object):
         clone._sort_desc = desc
         return clone
 
+    def get_ids(self):
+        return [h['_id'] for h in self.run().hits]
+
     def run(self):
         result_docs = list(self._result_docs)
         total = len(result_docs)
@@ -114,10 +121,16 @@ class ESQueryFake(object):
 
     def term(self, field, value):
         if isinstance(value, (list, tuple, set)):
-            valid_terms = list(value)
+            valid_terms = set(value)
         else:
-            valid_terms = [value]
-        return self._filtered(lambda doc: doc[field] in valid_terms)
+            valid_terms = set([value])
+
+        def _term_query(doc):
+            if isinstance(doc[field], list):
+                return set(doc[field]).intersection(valid_terms)
+            return doc[field] in valid_terms
+
+        return self._filtered(_term_query)
 
     def __getattr__(self, item):
         """

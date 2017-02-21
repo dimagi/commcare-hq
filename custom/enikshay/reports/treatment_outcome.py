@@ -155,6 +155,8 @@ class TreatmentOutcomeReport(EnikshayMultiReport):
     slug = 'treatment_outcome'
     report_template_path = 'enikshay/treatment_outcome.html'
 
+    exportable = True
+
     @property
     def reports(self):
         return [

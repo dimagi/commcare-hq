@@ -13,7 +13,6 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
         $('a.breadcrumb-2').click(function (e) {
             e.preventDefault();
             var url = $(this).attr('href');

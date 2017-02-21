@@ -8,8 +8,11 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_CASE,
     PROPERTY_TAG_STOCK,
     CASE_NAME_TRANSFORM,
-    USERNAME_TRANSFORM,
+    CASE_OR_USER_ID_TRANSFORM,
+    DOC_TYPE_TRANSFORM,
     OWNER_ID_TRANSFORM,
+    USERNAME_TRANSFORM,
+    WORKFLOW_TRANSFORM,
     PROPERTY_TAG_NONE
 )
 from corehq.apps.export.models import (
@@ -465,4 +468,34 @@ PARENT_CASE_TABLE_PROPERTIES = [
         item=ExportItem(path=[PathNode(name='indices', is_repeat=True), PathNode(name='doc_type')]),
         is_advanced=False
     ),
+]
+
+_SMS_COLUMNS = [
+    ("Contact Type", "couch_recipient_doc_type", DOC_TYPE_TRANSFORM),
+    ("Contact ID", "couch_recipient", None),
+    ("Timestamp", "date", None),
+    ("User Name", "couch_recipient", CASE_OR_USER_ID_TRANSFORM),
+    ("Phone Number", "phone_number", None),
+    ("Direction", "direction", None),
+    ("Message", "text", None),
+    ("Type", "workflow", WORKFLOW_TRANSFORM),
+]
+
+SMS_TABLE_PROPERTIES = [
+    RowNumberColumn(
+        tags=[PROPERTY_TAG_ROW],
+        label='number',
+        item=ExportItem(path=[PathNode(name='number')]),
+        is_advanced=False
+    )
+] + [
+    ExportColumn(
+        label=col[0],
+        item=ExportItem(
+            path=[PathNode(name=col[1])],
+            transform=col[2]
+        ),
+        selected=True
+    )
+    for col in _SMS_COLUMNS
 ]
