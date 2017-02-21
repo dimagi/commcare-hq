@@ -429,14 +429,12 @@ class FormAccessorSQL(AbstractFormAccessor):
         logging.debug('Saving new form: %s', form)
         unsaved_attachments = getattr(form, 'unsaved_attachments', [])
         if unsaved_attachments:
-            del form.unsaved_attachments
             for unsaved_attachment in unsaved_attachments:
                 unsaved_attachment.form = form
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
         for operation in operations:
             operation.form = form
-        form.clear_tracked_models()
 
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
@@ -445,6 +443,13 @@ class FormAccessorSQL(AbstractFormAccessor):
             )
             result = fetchone_as_namedtuple(cursor)
             form.id = result.form_pk
+
+        try:
+            del form.unsaved_attachments
+        except AttributeError:
+            pass
+
+        form.clear_tracked_models()
 
     @staticmethod
     @transaction.atomic
@@ -787,7 +792,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 ])
                 result = fetchone_as_namedtuple(cursor)
                 case.id = result.case_pk
-                case.clear_tracked_models()
             except InternalError as e:
                 if logging.root.isEnabledFor(logging.DEBUG):
                     msg = 'save_case_and_related_models called with args: \n{}, {}, {}, {} ,{} ,{}'.format(
@@ -801,6 +805,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     logging.debug(msg)
                 raise CaseSaveError(e)
             else:
+                case.clear_tracked_models()
                 for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
                     attachment.delete_content()
 

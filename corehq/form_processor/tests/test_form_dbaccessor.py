@@ -265,6 +265,22 @@ class FormAccessorTestsSQL(TestCase):
         attachments = FormAccessorSQL.get_attachments(unsaved_form.form_id)
         self.assertEqual(1, len(attachments))
 
+    def test_save_form_db_error(self):
+        form = create_form_for_test(DOMAIN)
+        dup_form = create_form_for_test(DOMAIN, save=False)
+        dup_form.form_id = form.form_id
+
+        try:
+            FormAccessorSQL.save_new_form(dup_form)
+        except Exception:
+            dup_form.form_id = uuid.uuid4().hex
+            FormAccessorSQL.save_new_form(dup_form)
+        else:
+            self.fail("saving dup form didn't raise an exception")
+
+        attachments = FormAccessorSQL.get_attachments(dup_form.form_id)
+        self.assertEqual(1, len(attachments))
+
     def test_save_form_deprecated(self):
         existing_form, new_form = _simulate_form_edit()
 
