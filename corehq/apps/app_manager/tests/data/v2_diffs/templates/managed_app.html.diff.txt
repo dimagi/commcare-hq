@@ -6,60 +6,7 @@
  {% load xforms_extras %}
  {% load url_extras %}
  {% load hq_shared_tags %}
-@@ -46,13 +46,10 @@
-     <script>
-         $(function () {
-             $('[data-toggle="tooltip"]').tooltip()
--            $('.edit-form-pencil').tooltip({
--                title: "{% trans "Edit in form builder" %}",
--                placement: 'auto'
--            });
-+
-             $('.edit-form-li').each(function () {
-                 var $this = $(this);
--                if (!{{ formdesigner|JSON }} || !$this.hasClass("active")) {
-+                if ({{ formdesigner|JSON }} || !$this.hasClass("active")) {
-                     var $pencil = $this.find('.edit-form-pencil');
-                     $pencil.addClass('no-data');
-                     $this.hover(function() {
-@@ -62,6 +59,7 @@
-                     });
-                 }
-             });
-+
-         });
-     </script>
-     {% endif %}
-@@ -104,6 +102,28 @@
-             {% endfor %}
-         });
-     </script>
-+
-+    <script type="text/html" id="js-popover-template-add-item">
-+      <div class="popover popover-additem" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>
-+    </script>
-+
-+    <script type="text/html" id="js-popover-template-add-item-content">
-+      <div class="row">
-+        <div class="col-xs-6">
-+          <button type="button" class="popover-additem-option new-module" data-type="survey">
-+            <i class="fa fa-file-o"></i>
-+            {% trans "Surveys" %}
-+          </button>
-+        </div>
-+        <div class="col-xs-6">
-+          <button type="button" class="popover-additem-option new-module" data-type="case">
-+            <i class="fa fa-bars"></i>
-+            {% trans "Case List" %}
-+          </button>
-+        </div>
-+      </div>
-+    </script>
-+
- {% endblock %}
- 
- {% block breadcrumbs %}
-@@ -117,238 +137,54 @@
+@@ -25,251 +25,77 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -182,15 +129,25 @@
 -                    <li class="edit-module-li {% ifequal module.id selected_module.id %}{% if not form %}
 -                        active{% endif %}{% endifequal %}"
 -                        data-index="{{ module.id }}">
--                        <a href="{% url "view_module" domain app.id module.id %}">
+-                        <a href="{% url "view_module" domain app.id module.id %}"
+-                            >
 -                            <i class="drag_handle"></i>
--                            {% if module.module_type == 'advanced' %}<i class="fa fa-flask appmanager-icon-type"></i>
--                            {% elif module.module_type == 'report' %}<i class="fa fa-bar-chart appmanager-icon-type"></i>
--                            {% elif module.module_type == 'shadow' %}<i class="fa fa-folder-open-o appmanager-icon-type"></i>
--                            {% else %}<i class="fa fa-folder-open"></i>{% endif %}
+-                            <i
+-                            {% if module.module_type == 'advanced' %}class="fa fa-flask appmanager-icon-type"
+-                            {% elif module.module_type == 'report' %}class="fa fa-bar-chart appmanager-icon-type"
+-                            {% elif module.module_type == 'shadow' %}class="fa fa-folder-open-o appmanager-icon-type"
+-                            {% else %}class="fa fa-folder-open"{% endif %}
+ 
+-                            {% if module.case_type and app.get_case_types|length > 1 %}
+-                            title="Case Type: {{ module.case_type }}"
+-                            data-toggle="tooltip"
+-                            data-placement="top"
+-                            {% endif %}
+-                            ></i>
+-
 -                            <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
 -                                {{ module.name|html_trans:langs }}
- 
+-
 -                            </span>
 -                        </a>
 -                        <ul class="nav nav-hq-sidebar {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable-forms sortable">
@@ -334,6 +291,29 @@
  {% endblock %}
  
  {% block app-content %}
+     {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
+     {% initial_page_data 'app_subset' app_subset %}
+     {% initial_page_data 'formdesigner' formdesigner %}
 +    {% block pre_form_content %}{% endblock %}
      {% block form-view %}{% endblock %}
++    <script type="text/html" id="js-popover-template-add-item">
++      <div class="popover popover-additem" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>
++    </script>
++
++    <script type="text/html" id="js-popover-template-add-item-content">
++      <div class="row">
++        <div class="col-xs-6">
++          <button type="button" class="popover-additem-option new-module" data-type="survey">
++            <i class="fa fa-file-o"></i>
++            {% trans "Surveys" %}
++          </button>
++        </div>
++        <div class="col-xs-6">
++          <button type="button" class="popover-additem-option new-module" data-type="case">
++            <i class="fa fa-bars"></i>
++            {% trans "Case List" %}
++          </button>
++        </div>
++      </div>
++    </script>
  {% endblock %}

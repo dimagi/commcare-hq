@@ -1,7 +1,8 @@
 # see https://pyup.io/docs/configuration/ for all available options
 
-update: insecure
 search: False
 requirements:
-  - requirements/requirements.txt
-  - requirements/prod-requirements.txt
+  - requirements/requirements.txt:
+      updates: security
+  - requirements/prod-requirements.txt:
+      updates: security

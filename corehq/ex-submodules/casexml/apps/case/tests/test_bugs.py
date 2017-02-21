@@ -12,7 +12,7 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
@@ -32,10 +32,15 @@ class CaseBugTest(TestCase, TestFileMixin):
     file_path = ('data', 'bugs')
     root = os.path.dirname(__file__)
 
-    def setUp(self):
-        super(CaseBugTest, self).setUp()
-        delete_all_cases()
-        delete_all_xforms()
+    @classmethod
+    def setUpClass(cls):
+        super(CaseBugTest, cls).setUpClass()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        super(CaseBugTest, cls).tearDownClass()
 
     def test_conflicting_ids(self):
         """
@@ -156,24 +161,47 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual('not_bar', case.dynamic_case_properties()['foo'])
         self.assertTrue(case.is_deleted)
 
+    @run_with_all_backends
+    def test_case_block_ordering(self):
+        case_id1 = uuid.uuid4().hex
+        case_id2 = uuid.uuid4().hex
+        # updates before create and case blocks for different cases interleaved
+        blocks = [
+            CaseBlock(create=False, case_id=case_id1, update={'p': '2'}).as_xml(),
+            CaseBlock(create=False, case_id=case_id2, update={'p': '2'}).as_xml(),
+            CaseBlock(create=True, case_id=case_id1, update={'p': '1'}).as_xml(),
+            CaseBlock(create=True, case_id=case_id2, update={'p': '1'}).as_xml()
+        ]
+
+        xform, cases = post_case_blocks(blocks)
+        self.assertEqual(cases[0].get_case_property('p'), '2')
+        self.assertEqual(cases[1].get_case_property('p'), '2')
+
 
 class TestCaseHierarchy(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(TestCaseHierarchy, cls).setUpClass()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
 
-    def setUp(self):
-        super(TestCaseHierarchy, self).setUp()
-        delete_all_cases()
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        super(TestCaseHierarchy, cls).tearDownClass()
 
     @run_with_all_backends
     def test_normal_index(self):
         factory = CaseFactory()
+        parent_id = uuid.uuid4().hex
         [cp] = factory.create_or_update_case(
-            CaseStructure(case_id='parent', attrs={'case_type': 'parent', 'create': True})
+            CaseStructure(case_id=parent_id, attrs={'case_type': 'parent', 'create': True})
         )
 
+        child_id = uuid.uuid4().hex
         factory.create_or_update_case(CaseStructure(
-            case_id='child',
+            case_id=child_id,
             attrs={'case_type': 'child', 'create': True},
-            indices=[CaseIndex(CaseStructure(case_id='parent'), related_type='parent')],
+            indices=[CaseIndex(CaseStructure(case_id=parent_id), related_type='parent')],
             walk_related=False
         ))
 
@@ -184,17 +212,19 @@ class TestCaseHierarchy(TestCase):
     @run_with_all_backends
     def test_extension_index(self):
         factory = CaseFactory()
+        standard_case_id = uuid.uuid4().hex
         [case] = factory.create_or_update_case(
-            CaseStructure(case_id="standard_case", attrs={'case_type': "standard_type", 'create': True})
+            CaseStructure(case_id=standard_case_id, attrs={'case_type': "standard_type", 'create': True})
         )
 
+        extension_case_id = uuid.uuid4().hex
         factory.create_or_update_case(
             CaseStructure(
-                case_id="extension_case",
+                case_id=extension_case_id,
                 attrs={'case_type': "extension_type", 'create': True},
                 indices=[
                     CaseIndex(
-                        CaseStructure(case_id="standard_case"),
+                        CaseStructure(case_id=standard_case_id),
                         related_type='standard_type',
                         relationship=CASE_INDEX_EXTENSION
                     )
@@ -224,25 +254,28 @@ class TestCaseHierarchy(TestCase):
     @run_with_all_backends
     def test_complex_index(self):
         factory = CaseFactory()
-        cp = factory.create_or_update_case(CaseStructure(case_id='parent', attrs={
+        parent_id = uuid.uuid4().hex
+        cp = factory.create_or_update_case(CaseStructure(case_id=parent_id, attrs={
             'case_type': 'parent', 'create': True
         }))[0]
 
         # cases processed according to ID order so ensure that this case is
         # processed after the task case by making its ID sort after task ID
+        goal_id = uuid.uuid4().hex
         factory.create_or_update_case(CaseStructure(
-            case_id='z_goal',
+            case_id=goal_id,
             attrs={'case_type': 'goal', 'create': True},
-            indices=[CaseIndex(CaseStructure(case_id='parent'), related_type='parent')],
+            indices=[CaseIndex(CaseStructure(case_id=parent_id), related_type='parent')],
             walk_related=False
         ))
 
+        task_id = uuid.uuid4().hex
         factory.create_or_update_case(CaseStructure(
-            case_id='task1',
+            case_id=task_id,
             attrs={'case_type': 'task', 'create': True},
             indices=[
-                CaseIndex(CaseStructure(case_id='z_goal'), related_type='goal', identifier='goal'),
-                CaseIndex(CaseStructure(case_id='parent'), related_type='parent')
+                CaseIndex(CaseStructure(case_id=goal_id), related_type='goal', identifier='goal'),
+                CaseIndex(CaseStructure(case_id=parent_id), related_type='parent')
             ],
             walk_related=False,
         ))

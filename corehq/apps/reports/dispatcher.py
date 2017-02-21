@@ -232,6 +232,7 @@ class ReportDispatcher(View):
                         'subpages': report.get_subpages(),
                         'show_in_navigation': show_in_navigation,
                         'show_in_dropdown': show_in_dropdown,
+                        'class_name': report.__name__,
                     })
             if report_contexts:
                 if hasattr(section_name, '__call__'):
