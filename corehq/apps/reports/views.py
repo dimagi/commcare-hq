@@ -1881,8 +1881,8 @@ def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_r
             return u'<a href="{}#!history">{}</a>'.format(reverse('case_details', args=[domain, case_id]), name)
 
     case_links = ', '.join([
-       _get_case_link(case_id, name)
-       for case_id, name in cases_with_other_forms.items()
+        _get_case_link(case_id, name)
+        for case_id, name in cases_with_other_forms.items()
     ])
     msg = _("""Form can not be archived as it creates cases that are updated by other forms.
         All other forms for these cases must be archived first:""")
