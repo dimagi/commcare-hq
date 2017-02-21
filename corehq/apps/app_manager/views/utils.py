@@ -114,9 +114,8 @@ def validate_langs(request, existing_langs):
     return (langs, rename)
 
 
-def get_blank_form_xml(form_name, lang):
+def get_blank_form_xml(form_name):
     return render_to_string("app_manager/blank_form.xml", context={
         'xmlns': str(uuid.uuid4()).upper(),
         'name': form_name,
-        'lang': lang,
     })

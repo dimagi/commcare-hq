@@ -2539,7 +2539,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
         self.forms.append(form)
         form = self.get_form(-1)
         if attachment == Ellipsis:
-            attachment = get_blank_form_xml(name, lang)
+            attachment = get_blank_form_xml(name)
         form.source = attachment
         return form
 
@@ -3090,7 +3090,7 @@ class AdvancedModule(ModuleBase):
         self.forms.append(form)
         form = self.get_form(-1)
         if attachment == Ellipsis:
-            attachment = get_blank_form_xml(name, lang)
+            attachment = get_blank_form_xml(name)
         form.source = attachment
         return form
 
