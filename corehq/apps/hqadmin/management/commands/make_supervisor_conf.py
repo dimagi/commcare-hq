@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import os
 import sys
@@ -58,7 +59,7 @@ class SupervisorConfCommand(BaseCommand):
     def write_configuration_file(self, destination_fullpath, rendered_configuration):
         with open(destination_fullpath, 'w') as fout:
             fout.write(rendered_configuration)
-            print "\t[make_supervisor_conf] Wrote supervisor configuration: %s" % destination_fullpath
+            print("\t[make_supervisor_conf] Wrote supervisor configuration: %s" % destination_fullpath)
 
 
 class Command(SupervisorConfCommand):

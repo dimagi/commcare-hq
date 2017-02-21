@@ -1,3 +1,4 @@
+from __future__ import print_function
 import datetime
 import warnings
 
@@ -92,10 +93,10 @@ class Command(BaseCommand):
         failed = []
         error_messages = defaultdict(lambda: 0)
         for form in iter_problem_forms(domain, since):
-            print "%s\t%s\t%s\t%s\t%s" % (form._id, form.received_on,
+            print("%s\t%s\t%s\t%s\t%s" % (form._id, form.received_on,
                               form.xmlns,
                               form.get_data('form/meta/username'),
-                              form.problem.strip())
+                              form.problem.strip()))
             if not options["dryrun"]:
                 try:
                     reprocess_form_cases(form)
@@ -105,8 +106,8 @@ class Command(BaseCommand):
                 else:
                     succeeded.append(form._id)
 
-        print "%s / %s forms successfully processed, %s failures" % \
-              (len(succeeded), len(succeeded) + len(failed), len(failed))
+        print("%s / %s forms successfully processed, %s failures" % \
+              (len(succeeded), len(succeeded) + len(failed), len(failed)))
         if error_messages:
-            print "The following errors were seen: \n%s" % \
-                  ("\n".join("%s: %s" % (v, k) for k, v in error_messages.items()))
+            print("The following errors were seen: \n%s" % \
+                  ("\n".join("%s: %s" % (v, k) for k, v in error_messages.items())))

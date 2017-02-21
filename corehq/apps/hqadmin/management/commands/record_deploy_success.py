@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 from datadog import api as datadog_api
 import requests
@@ -64,8 +65,8 @@ class Command(BaseCommand):
         #  reset PillowTop errors in the hope that a fix has been deployed
         rows_updated = PillowError.bulk_reset_attempts(datetime.utcnow())
         if rows_updated:
-            print "\n---------------- Pillow Errors Reset ----------------\n" \
-                  "{} pillow errors queued for retry\n".format(rows_updated)
+            print("\n---------------- Pillow Errors Reset ----------------\n" \
+                  "{} pillow errors queued for retry\n".format(rows_updated))
 
         deploy_notification_text = (
             "CommCareHQ has been successfully deployed to *{}* by *{}* in *{}* minutes. ".format(
@@ -117,12 +118,12 @@ class Command(BaseCommand):
                 alert_type="success"
             )
 
-            print "\n=============================================================\n" \
+            print("\n=============================================================\n" \
                   "Congratulations! Deploy Complete.\n\n" \
                   "Don't forget to keep an eye on the deploy dashboard to " \
                   "make sure everything is running smoothly.\n\n" \
                   "https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef" \
-                  "\n=============================================================\n"
+                  "\n=============================================================\n")
 
         if options['mail_admins']:
             message_body = get_deploy_email_message_body(

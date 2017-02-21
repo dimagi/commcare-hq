@@ -1,3 +1,4 @@
+from __future__ import print_function
 from multiprocessing import Process, Queue
 import sys
 import os
@@ -92,7 +93,7 @@ class Command(BaseCommand):
     def iter_source_dbs(self):
         for sourcedb_name, sourcedb in self.source_couch.all_dbs_by_slug.items():
             if sourcedb_name not in self.exclude_dbs:
-                print "In {} db".format(sourcedb_name or "the main")
+                print("In {} db".format(sourcedb_name or "the main"))
                 yield sourcedb_name, sourcedb
 
     def handle(self, *args, **options):
@@ -119,7 +120,7 @@ class Command(BaseCommand):
             sys.exit(0)
 
         if simulate:
-            print "\nSimulated run, no data will be copied.\n"
+            print("\nSimulated run, no data will be copied.\n")
 
         if options['postgres_db'] and options['postgres_password']:
             settings.DATABASES[options['postgres_db']]['PASSWORD'] = options['postgres_password']
@@ -145,14 +146,14 @@ class Command(BaseCommand):
         elif options['id_file']:
             path = options['id_file']
             if not os.path.isfile(path):
-                print "Path '%s' does not exist or is not a file" % path
+                print("Path '%s' does not exist or is not a file" % path)
                 sys.exit(1)
 
             with open(path) as input:
                 doc_ids = [line.rstrip('\n') for line in input]
 
             if not doc_ids:
-                print "Path '%s' does not contain any document ID's" % path
+                print("Path '%s' does not contain any document ID's" % path)
                 sys.exit(1)
 
             for sourcedb_name, sourcedb in self.iter_source_dbs():
@@ -176,10 +177,10 @@ class Command(BaseCommand):
                 num_since = sourcedb.view("by_domain_doc_type_date/view", startkey=[domain, doc_type, since],
                                           endkey=[domain, doc_type, {}], reduce=True).all()
                 num = num_since[0]['value'] if num_since else 0
-                print "{0:<30}- {1:<6} total {2}".format(doc_type, num, doc_count[doc_type])
+                print("{0:<30}- {1:<6} total {2}".format(doc_type, num, doc_count[doc_type]))
         else:
             for doc_type in sorted(doc_count.iterkeys()):
-                print "{0:<30}- {1}".format(doc_type, doc_count[doc_type])
+                print("{0:<30}- {1}".format(doc_type, doc_count[doc_type]))
 
     def copy_docs(self, sourcedb, domain, simulate, startkey=None, endkey=None, doc_ids=None,
                   doc_type=None, since=None, exclude_types=None, postgres_db=None, exclude_attachments=False):
@@ -192,7 +193,7 @@ class Command(BaseCommand):
         msg = "Found %s matching documents in domain: %s" % (total, domain)
         msg += " of type: %s" % (doc_type) if doc_type else ""
         msg += " since: %s" % (since) if since else ""
-        print msg
+        print(msg)
 
         err_log = self._get_err_log()
 
@@ -218,13 +219,13 @@ class Command(BaseCommand):
         if os.stat(err_log.name)[6] == 0:
             os.remove(err_log.name)
         else:
-            print 'Failed document IDs written to %s' % err_log.name
+            print('Failed document IDs written to %s' % err_log.name)
 
         if postgres_db:
             copy_postgres_data_for_docs(postgres_db, doc_ids=doc_ids, simulate=simulate)
 
     def copy_domain(self, source_couch, domain):
-        print "Copying domain doc"
+        print("Copying domain doc")
         sourcedb = source_couch.get_db_for_class(Domain)
         result = sourcedb.view(
             "domain/domains",
@@ -238,7 +239,7 @@ class Command(BaseCommand):
             dt = DocumentTransform(domain_doc._obj, sourcedb)
             save(dt, self.targetdb.get_db_for_doc_type(domain_doc['doc_type']))
         else:
-            print "Domain doc not found for domain %s." % domain
+            print("Domain doc not found for domain %s." % domain)
 
     def _get_err_log(self):
         name = 'copy_domain.err.%s'
@@ -269,13 +270,13 @@ class Worker(Process):
                          self.exclude_attachments)
             except Exception, e:
                 self.err_log.write('%s\n' % doc["_id"])
-                print "     Document %s failed! Error is: %s %s" % (doc["_id"], e.__class__.__name__, e)
+                print("     Document %s failed! Error is: %s %s" % (doc["_id"], e.__class__.__name__, e))
 
 
 def copy_doc(doc, count, sourcedb, targetdb, exclude_types, total, simulate, exclude_attachments):
     if exclude_types and doc["doc_type"] in exclude_types:
-        print "     SKIPPED (excluded type: %s). Synced %s/%s docs (%s: %s)" % \
-              (doc["doc_type"], count, total, doc["doc_type"], doc["_id"])
+        print("     SKIPPED (excluded type: %s). Synced %s/%s docs (%s: %s)" % \
+              (doc["doc_type"], count, total, doc["doc_type"], doc["_id"]))
     else:
         if not simulate:
             for i in reversed(range(5)):
@@ -292,4 +293,4 @@ def copy_doc(doc, count, sourcedb, targetdb, exclude_types, total, simulate, exc
                 except (ResourceConflict, ParserError, TypeError):
                     if i == 0:
                         raise
-    print "     Synced %s/%s docs (%s: %s)" % (count, total, doc["doc_type"], doc["_id"])
+    print("     Synced %s/%s docs (%s: %s)" % (count, total, doc["doc_type"], doc["_id"]))

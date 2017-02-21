@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 
 import math
@@ -42,17 +43,17 @@ class Command(BaseCommand):
         domain_stats = get_call_center_data_source_stats(domains)
         for domain in domains:
             stats = domain_stats[domain]
-            print 'Checking domain:', domain
+            print('Checking domain:', domain)
             if stats.error:
-                print 'Error getting stats:\n', stats.error
+                print('Error getting stats:\n', stats.error)
                 continue
 
             for stat in stats.iter_data_source_stats():
                 diff = math.fabs(stat.ucr_percent - stat.es_percent)
                 if diff > threshold:
-                    print "rebuilding data source '{}' in domain '{}': diff = {}".format(
+                    print("rebuilding data source '{}' in domain '{}': diff = {}".format(
                         stat.name, domain, diff
-                    )
+                    ))
                     try:
                         rebuild_indicators(
                             StaticDataSourceConfiguration.get_doc_id(domain, TABLE_IDS[stat.name])

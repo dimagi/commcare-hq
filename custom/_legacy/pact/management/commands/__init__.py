@@ -1,3 +1,4 @@
+from __future__ import print_function
 import getpass
 import urllib2
 from django.core.management.base import NoArgsCommand
@@ -34,8 +35,8 @@ class PactMigrateCommand(NoArgsCommand):
             payload = res.read()
             return payload
         except urllib2.HTTPError, e:
-            print "\t\t\tError: %s: %s" % (url, e)
+            print("\t\t\tError: %s: %s" % (url, e))
             if retry < RETRY_LIMIT:
-                print "Retry %d/%d" % (retry,RETRY_LIMIT)
+                print("Retry %d/%d" % (retry,RETRY_LIMIT))
                 return self.get_url(url, retry=retry+1)
             return None

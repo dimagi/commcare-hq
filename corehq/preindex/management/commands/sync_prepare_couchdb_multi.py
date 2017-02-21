@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 from traceback import print_stack
 from django.core.management.base import BaseCommand
@@ -48,7 +49,7 @@ class Command(BaseCommand):
         message += "Total time: %d seconds" % delta.seconds
 
         if not no_email:
-            print message
+            print(message)
             send_mail(
                 '%s CouchDB Preindex Complete' % settings.EMAIL_SUBJECT_PREFIX,
                 message,
@@ -64,13 +65,13 @@ class Command(BaseCommand):
         for design in get_preindex_designs():
             pool.spawn(sync_design_doc, design, temp='tmp')
 
-        print "All apps loaded into jobs, waiting..."
+        print("All apps loaded into jobs, waiting...")
         pool.join()
         # reraise any error
         for greenlet in pool.greenlets:
             try:
                 greenlet.get()
             except Exception:
-                print "Error in greenlet", greenlet
+                print("Error in greenlet", greenlet)
                 print_stack()
-        print "All apps reported complete."
+        print("All apps reported complete.")

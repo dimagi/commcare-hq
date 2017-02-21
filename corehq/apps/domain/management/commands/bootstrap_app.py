@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
@@ -45,8 +46,8 @@ class Command(BaseCommand):
 
         app.save()
 
-        print "Application {app_name}: {app_url} created in domain {domain_name}".format(
+        print("Application {app_name}: {app_url} created in domain {domain_name}".format(
             app_name=app_name,
             app_url=reverse('view_app', args=[domain_name, app._id], absolute=True),
             domain_name=domain_name
-        )
+        ))

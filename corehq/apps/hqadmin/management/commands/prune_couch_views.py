@@ -1,3 +1,4 @@
+from __future__ import print_function
 from collections import defaultdict
 from optparse import make_option
 from couchdbkit import Database
@@ -35,8 +36,8 @@ class Command(BaseCommand):
             to_delete = found_designs - expected_designs
             if to_delete:
                 designs_to_delete[db] = [ddoc._doc for ddoc in design_docs if ddoc.name in to_delete]
-                print '\ndeleting from {}:\n---------------------'.format(db.dbname)
-                print '\n'.join(sorted(to_delete))
+                print('\ndeleting from {}:\n---------------------'.format(db.dbname))
+                print('\n'.join(sorted(to_delete)))
 
         if designs_to_delete:
             if options['noinput'] or raw_input('\n'.join([
@@ -54,9 +55,9 @@ class Command(BaseCommand):
                         delete_conflicts(db, design_doc['_id'])
                     db.delete_docs(design_docs)
             else:
-                print 'aborted!'
+                print('aborted!')
         else:
-            print 'database already completely pruned!'
+            print('database already completely pruned!')
 
 
 class MyConflictsDontDie(Exception):

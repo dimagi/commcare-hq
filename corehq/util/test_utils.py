@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import uuid
 import functools
 import json
@@ -236,9 +237,9 @@ class RunWithMultipleConfigs(object):
             try:
                 call_with_settings(fn_with_pre_and_post, run_config.settings, args, kwargs)
             except Exception:
-                print self.fn, 'failed with the following settings:'
+                print(self.fn, 'failed with the following settings:')
                 for key, value in run_config.settings.items():
-                    print 'settings.{} = {!r}'.format(key, value)
+                    print('settings.{} = {!r}'.format(key, value))
                 raise
 
 

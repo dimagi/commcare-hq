@@ -1,3 +1,4 @@
+from __future__ import print_function
 import logging
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.cleanup import rebuild_case_from_forms
@@ -25,6 +26,6 @@ class Command(BaseCommand):
             try:
                 rebuild_case_from_forms(domain, case_id, RebuildWithReason(reason=reason))
                 if count % 100 == 0:
-                    print 'rebuilt %s/%s cases' % (count, len(ids))
+                    print('rebuilt %s/%s cases' % (count, len(ids)))
             except Exception, e:
                 logging.exception("couldn't rebuild case {id}. {msg}".format(id=case_id, msg=str(e)))
