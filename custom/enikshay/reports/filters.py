@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.core.urlresolvers import reverse
 
-from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseReportFilter
+from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseReportFilter, BaseSingleOptionFilter
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import QuarterFilter as UCRQuarterFilter
 from corehq.apps.userreports.reports.filters.choice_providers import LocationChoiceProvider
@@ -62,6 +62,16 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         context = super(EnikshayLocationFilter, self).filter_context
         context['endpoint'] = self.pagination_source
         return context
+
+
+class EnikshayMigrationFilter(BaseSingleOptionFilter):
+    slug = 'is_migrated'
+    label = _('Filter migrated data')
+    default_text = _('Show All')
+    options = (
+        ('1', 'Show only migrated from Nikshay'),
+        ('0', 'Show only eNikshay'),
+    )
 
 
 class QuarterFilter(BaseReportFilter):
