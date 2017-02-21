@@ -59,9 +59,6 @@ branches:
 
   # django 1.10 mgmt cmd updates - NP 2/10
   - np/110/preindex_everything
-  - np/110/ptop_es_manage
-  - np/110/ptop_reset_checkpoint
-  - np/110/run_ptop
 
   - np/django1.10 # NP 2/12
   - sk/sentry  # SK 2/13
