@@ -1,3 +1,5 @@
+/*global _ tableau */
+
 var viz = {},
     workbook = {},
     LOCATIONS_MAP = {
@@ -11,11 +13,95 @@ var viz = {},
 
 var tableauOptions = {};
 
-var initialLocationParams = [];
+function findLocationTypeCode(level) {
+    for (var key in LOCATIONS_MAP) {
+        if (LOCATIONS_MAP.hasOwnProperty(key)) {
+            var value = LOCATIONS_MAP[key];
+            if (value === level) {
+                return key;
+            }
+        }
+    }
+}
+
+function resetFilters() {
+    var today = new Date();
+    var twoDigitMonth = ("0" + (today.getMonth() + 1)).slice(-2);
+
+    $('#report_filter_month').select2('val', twoDigitMonth);
+    $('#report_filter_year').select2('val', today.getFullYear());
+    $("#report_filter_caste").select2('val', 'All');
+    $("#report_filter_child_age_tranche").select2('val', 'All');
+    $("#report_filter_minority").select2('val', 'All');
+    $("#report_filter_disabled").select2('val', 'All');
+    $("#report_filter_resident").select2('val', 'All');
+    $("#report_filter_ccs_status").select2('val', 'All');
+    $("#report_filter_thr_beneficiary_type").select2('val', 'All');
+
+    var locationKOContext = ko.dataFor($('#group_location_async')[0]);
+    locationKOContext.reset();
+}
+
+function getFiltersValues() {
+    var month = $('#report_filter_month').val();
+    var year = $('#report_filter_year').val();
+    var dateStr = year + '-' + month + '-01';
+
+    var caste = $('#report_filter_caste').val();
+
+    var childAge = $('#report_filter_child_age_tranche').val();
+
+    var minority = $('#report_filter_minority').val();
+
+    var disabled = $('#report_filter_disabled').val();
+
+    var resident = $('#report_filter_resident').val();
+
+    var maternalStatus = $('#report_filter_ccs_status').val();
+
+    var beneficiaryType = $('#report_filter_thr_beneficiary_type').val();
+
+    var locationKOContext = ko.dataFor($('#group_location_async')[0]);
+
+    var selectedUUIDs = [];
+
+    var locationLevel = 1;
+
+    locationKOContext.selected_path().forEach(function(loc) {
+        var uuid = loc.uuid();
+        if (uuid) {
+            selectedUUIDs.push(uuid);
+            locationLevel++;
+        }
+    });
+
+    var locationTypeCode = findLocationTypeCode(locationLevel);
+
+    var filters = {
+        Month: dateStr,
+        Caste: caste,
+        child_age_tranche: childAge,
+        Minority: minority,
+        Disabled: disabled,
+        Resident: resident,
+        ccs_status: maternalStatus,
+        thr_beneficiary_type: beneficiaryType,
+        state: selectedUUIDs[0] || 'All',
+        district: selectedUUIDs[1] || 'All',
+        block: selectedUUIDs[2] || 'All',
+        view_by: locationLevel,
+        user_state: '',
+        user_district: '',
+        user_block: '',
+        user_national: '',
+    };
+
+    filters['user_' + locationTypeCode] = selectedUUIDs[0] || selectedUUIDs[1] || selectedUUIDs[2] || 'All';
+    return filters;
+}
 
 function initializeViz(o) {
     tableauOptions = o;
-
     var placeholderDiv = document.getElementById("tableauPlaceholder");
     var url = tableauOptions.tableauUrl;
     var options = {
@@ -33,7 +119,13 @@ function initializeViz(o) {
 
     $("#resetFilters").click(function () {
         var currentSheet = history.state.sheetName;
-        switchVisualization(currentSheet, workbook, initialLocationParams);
+        resetFilters();
+        switchVisualization(currentSheet, workbook, getFiltersValues());
+    });
+
+    $("#applyFilters").click(function() {
+        var currentSheet = history.state.sheetName;
+        switchVisualization(currentSheet, workbook, getFiltersValues());
     });
 }
 
@@ -50,7 +142,6 @@ function setUpInitialTableauParams() {
         'block': tableauOptions.blockCode,
     };
     params[locationKey] = tableauOptions.userLocation;
-    initialLocationParams = _.clone(params);
     var today = new Date();
     var lastMonth = new Date(today.getFullYear(), today.getMonth() - 1 , 1);
     params['Month'] = lastMonth.getFullYear() + "-" + (lastMonth.getMonth() + 1) + "-01";
@@ -111,7 +202,7 @@ function updateViz(marks) {
         // default the sheet to navigate to to the current one
         currentSheet = history.state.sheetName,
         newSheet = currentSheet;
-        newParams = {};
+        var newParams = {};
 
     function buildParams(currentParams) {
 
@@ -238,7 +329,7 @@ window.onpopstate = function (event) {
             alert(err);
         });
     }
-}
+};
 
 /*
 Given an attribute pair and existingParams, extracts and returns new paramter specified by
@@ -287,7 +378,6 @@ function extractHardcodedSheetParams(params, sheetName){
             return JSON.parse(sheetParam.formattedValue);
         }
         catch(e) {
-            console.log(e);
             return {};
         }
     }
