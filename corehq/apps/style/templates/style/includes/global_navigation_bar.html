@@ -51,7 +51,7 @@
                     <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "Project Settings" %}
                 </a>
             </li>
-            {% if not django_settings.enterprise_mode %}
+            {% if not enterprise_mode %}
             <li>
                 <a href="{% url "domain_subscription_view" domain %}" id="menuitem-currentsubscription">
                     <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
