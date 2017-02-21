@@ -1884,7 +1884,7 @@ def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_r
         _get_case_link(case_id, name)
         for case_id, name in cases_with_other_forms.items()
     ])
-    msg = _("""Form can not be archived as it creates cases that are updated by other forms.
+    msg = _("""Form cannot be archived as it creates cases that are updated by other forms.
         All other forms for these cases must be archived first:""")
     notify_msg = u"""{} {}""".format(msg, case_links)
     return notify_msg
