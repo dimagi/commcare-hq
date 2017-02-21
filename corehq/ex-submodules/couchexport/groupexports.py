@@ -22,7 +22,7 @@ def export_for_group(export_id_or_group, last_access_cutoff=None):
             rebuild_export(subconfig, schema, last_access_cutoff=last_access_cutoff)
         except ExportRebuildError:
             continue
-        except Exception, e:
+        except Exception as e:
             notify_exception(None, 'Problem building export {} in domain {}: {}'.format(
                 subconfig.index, getattr(config, 'domain', 'unknown'), e
             ))

@@ -76,7 +76,7 @@ def report_run(domain, strict=True):
     try:
         populate_report_data(run.start, run.end, domain, run, strict=strict)
         has_error = False
-    except Exception, e:
+    except Exception as e:
         # just in case something funky happened in the DB
         if isinstance(e, DatabaseError):
             try:

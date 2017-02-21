@@ -260,7 +260,7 @@ class BaseExportView(BaseProjectDataView):
     def post(self, request, *args, **kwargs):
         try:
             export_id = self.commit(request)
-        except Exception, e:
+        except Exception as e:
             if self.is_async:
                 # todo: this can probably be removed as soon as
                 # http://manage.dimagi.com/default.asp?157713 is resolved
@@ -2033,7 +2033,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
 
             except ResourceNotFound:
                 raise Http404()
-            except Exception, e:
+            except Exception as e:
                 _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
                 _soft_assert(False, 'Failed to convert export {}. {}'.format(self.export_id, e))
                 messages.error(

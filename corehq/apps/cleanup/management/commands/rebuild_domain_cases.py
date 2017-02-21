@@ -27,5 +27,5 @@ class Command(BaseCommand):
                 rebuild_case_from_forms(domain, case_id, RebuildWithReason(reason=reason))
                 if count % 100 == 0:
                     print('rebuilt %s/%s cases' % (count, len(ids)))
-            except Exception, e:
+            except Exception as e:
                 logging.exception("couldn't rebuild case {id}. {msg}".format(id=case_id, msg=str(e)))

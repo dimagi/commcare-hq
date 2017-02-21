@@ -168,7 +168,7 @@ class ReportDispatcher(View):
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
                 )
                 return getattr(report, '%s_response' % render_as)
-            except BadRequestError, e:
+            except BadRequestError as e:
                 return HttpResponseBadRequest(e)
         else:
             raise Http404()

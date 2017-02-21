@@ -268,7 +268,7 @@ class Worker(Process):
                 target = self.targetdb.get_db_for_doc_type(doc['doc_type'])
                 copy_doc(doc, count, self.sourcedb, target, self.exclude_types, self.total, self.simulate,
                          self.exclude_attachments)
-            except Exception, e:
+            except Exception as e:
                 self.err_log.write('%s\n' % doc["_id"])
                 print("     Document %s failed! Error is: %s %s" % (doc["_id"], e.__class__.__name__, e))
 

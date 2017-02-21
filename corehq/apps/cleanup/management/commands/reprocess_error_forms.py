@@ -100,7 +100,7 @@ class Command(BaseCommand):
             if not options["dryrun"]:
                 try:
                     reprocess_form_cases(form)
-                except Exception, e:
+                except Exception as e:
                     failed.append(form._id)
                     error_messages[str(e)] += 1
                 else:

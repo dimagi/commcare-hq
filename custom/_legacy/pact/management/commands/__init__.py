@@ -34,7 +34,7 @@ class PactMigrateCommand(NoArgsCommand):
             res = urllib2.urlopen(req)
             payload = res.read()
             return payload
-        except urllib2.HTTPError, e:
+        except urllib2.HTTPError as e:
             print("\t\t\tError: %s: %s" % (url, e))
             if retry < RETRY_LIMIT:
                 print("Retry %d/%d" % (retry,RETRY_LIMIT))

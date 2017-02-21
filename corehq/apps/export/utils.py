@@ -230,7 +230,7 @@ def convert_saved_export_to_export_instance(
                     new_column.deid_transform = transform
                     info.append('Column has deid_transform: {}'.format(transform))
                 ordering.append(new_column)
-            except SkipConversion, e:
+            except SkipConversion as e:
                 if is_remote_app_migration or force_convert_columns or column.index in SKIPPABLE_PROPERTIES:
                     # In the event that we skip a column and it's a remote application,
                     # add it to the inferred schema
@@ -606,7 +606,7 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
                     dryrun=dryrun,
                     force_convert_columns=force_convert_columns,
                 )
-            except Exception, e:
+            except Exception as e:
                 print('Failed parsing {}: {}'.format(old_export['_id'], e))
                 raise e
             else:
