@@ -1843,26 +1843,9 @@ def archive_form(request, domain, instance_id):
 
     notify_level = messages.SUCCESS
     if instance.is_normal:
-        cases_created = {u.id for u in get_case_updates(instance) if u.creates_case()}
-        cases_still_active = {}
-        for case in CaseAccessors(domain).iter_cases(list(cases_created)):
-            if case.xform_ids != [instance.form_id]:
-                # case has other forms that need to be archived before this one
-                cases_still_active[case.case_id] = case.name
-
-        if cases_still_active:
-            def _get_case_link(case_id, name):
-                if case_id == case_id_from_request:
-                    return _(u"%(case_name)s (this case)") % {'case_name': name}
-                else:
-                    return u'<a href="{}">{}</a>'.format(reverse('case_details', args=[domain, case_id]), name)
-            case_links = ', '.join([
-                _get_case_link(case_id, name)
-                for case_id, name in cases_still_active.items()
-            ])
-            msg = _("""Form can not be archived as it creates a case that is still active.
-            All other forms for these cases must be archived first:""")
-            notify_msg = u"""{} {}""".format(msg, case_links)
+        cases_with_other_forms = _get_cases_with_other_forms(domain, instance)
+        if cases_with_other_forms:
+            notify_msg = _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_request)
             notify_level = messages.ERROR
         else:
             instance.archive(user_id=request.couch_user._id)
@@ -1888,6 +1871,35 @@ def archive_form(request, domain, instance_id):
     messages.add_message(request, notify_level, mark_safe(msg), extra_tags='html')
 
     return HttpResponseRedirect(redirect)
+
+
+def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_request):
+    def _get_case_link(case_id, name):
+        if case_id == case_id_from_request:
+            return _(u"%(case_name)s (this case)") % {'case_name': name}
+        else:
+            return u'<a href="{}">{}</a>'.format(reverse('case_details', args=[domain, case_id]), name)
+
+    case_links = ', '.join([
+       _get_case_link(case_id, name)
+       for case_id, name in cases_with_other_forms.items()
+    ])
+    msg = _("""Form can not be archived as it creates cases that are updated by other forms.
+        All other forms for these cases must be archived first:""")
+    notify_msg = u"""{} {}""".format(msg, case_links)
+    return notify_msg
+
+
+def _get_cases_with_other_forms(domain, xform):
+    """Get all cases touched by this form which also have other forms associated with them.
+    :returns: Dict of Case ID -> Case"""
+    cases_created = {u.id for u in get_case_updates(xform) if u.creates_case()}
+    cases = {}
+    for case in CaseAccessors(domain).iter_cases(list(cases_created)):
+        if case.xform_ids != [xform.form_id]:
+            # case has other forms that need to be archived before this one
+            cases[case.case_id] = case.name
+    return cases
 
 
 def _get_case_id_and_redirect_url(domain, request):
