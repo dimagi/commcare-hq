@@ -167,7 +167,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
             DetailColumn(
                 header={'en': 'a'},
                 model='case',
-                field='house/case_name',  # Include a parent case property in the case list
+                field='parent/case_name',  # Include a parent case property in the case list
                 format='plain',
             )
         )
