@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
@@ -76,22 +77,22 @@ class Command(BaseCommand):
         form_ids_in_couch = set(get_form_ids_by_type(domain, 'XFormInstance'))
         form_ids_in_sqlite = set(self.planning_db.get_all_form_ids())
 
-        print 'Forms in Couch: {}'.format(len(form_ids_in_couch))
-        print 'Forms in Sqlite: {}'.format(len(form_ids_in_sqlite))
+        print('Forms in Couch: {}'.format(len(form_ids_in_couch)))
+        print('Forms in Sqlite: {}'.format(len(form_ids_in_sqlite)))
         if form_ids_in_couch ^ form_ids_in_sqlite:
-            print 'In Couch only: {}'.format(
-                list(form_ids_in_couch - form_ids_in_sqlite))
+            print('In Couch only: {}'.format(
+                list(form_ids_in_couch - form_ids_in_sqlite)))
 
         case_ids_in_couch = set(get_case_ids_in_domain(domain))
         case_ids_in_sqlite = set(self.planning_db.get_all_case_ids())
 
-        print 'Cases in Couch: {}'.format(len(case_ids_in_couch))
-        print 'Cases in Sqlite: {}'.format(len(case_ids_in_sqlite))
+        print('Cases in Couch: {}'.format(len(case_ids_in_couch)))
+        print('Cases in Sqlite: {}'.format(len(case_ids_in_sqlite)))
         if case_ids_in_couch ^ case_ids_in_sqlite:
-            print 'In Couch only: {}'.format(
-                list(case_ids_in_couch - case_ids_in_sqlite))
-            print 'In Sqlite only: {}'.format(
-                list(case_ids_in_sqlite - case_ids_in_couch))
+            print('In Couch only: {}'.format(
+                list(case_ids_in_couch - case_ids_in_sqlite)))
+            print('In Sqlite only: {}'.format(
+                list(case_ids_in_sqlite - case_ids_in_couch)))
 
     def show_diffs(self):
         for diff in self.planning_db.get_diffs():
@@ -103,4 +104,4 @@ class Command(BaseCommand):
                     FormJsonDiff(diff_type=u'type', path=[u'external_id'], old_value=u'', new_value=None),
                     FormJsonDiff(diff_type=u'type', path=[u'closed_by'], old_value=u'', new_value=None)):
                 continue
-            print '[{}] {}'.format(diff.doc_id, json_diff)
+            print('[{}] {}'.format(diff.doc_id, json_diff))

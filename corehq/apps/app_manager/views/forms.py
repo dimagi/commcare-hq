@@ -294,7 +294,7 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
                 save_xform(app, form, xform)
             else:
                 raise Exception("You didn't select a form to upload")
-        except Exception, e:
+        except Exception as e:
             if ajax:
                 return HttpResponseBadRequest(unicode(e))
             else:

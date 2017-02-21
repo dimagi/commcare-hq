@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 import traceback
 from cStringIO import StringIO
@@ -76,11 +77,11 @@ class Command(BaseCommand):
         def couch_preindex():
             call_command('sync_prepare_couchdb_multi', str(num_pool), username,
                          **{'no_mail': True})
-            print "Couch preindex done"
+            print("Couch preindex done")
 
         def pillow_preindex():
             call_command('ptop_preindex')
-            print "ptop_preindex_done"
+            print("ptop_preindex_done")
 
         jobs = [gevent.spawn(couch_preindex), gevent.spawn(pillow_preindex)]
 
@@ -105,7 +106,7 @@ class Command(BaseCommand):
         if email:
             mail_admins(subject, message)
         else:
-            print '{}\n\n{}'.format(subject, message)
+            print('{}\n\n{}'.format(subject, message))
 
 rcache = cache.caches['redis']
 PREINDEX_COMPLETE_COMMIT = '#preindex_complete_commit'

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from datetime import datetime
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -229,7 +230,7 @@ def convert_saved_export_to_export_instance(
                     new_column.deid_transform = transform
                     info.append('Column has deid_transform: {}'.format(transform))
                 ordering.append(new_column)
-            except SkipConversion, e:
+            except SkipConversion as e:
                 if is_remote_app_migration or force_convert_columns or column.index in SKIPPABLE_PROPERTIES:
                     # In the event that we skip a column and it's a remote application,
                     # add it to the inferred schema
@@ -586,7 +587,7 @@ def revert_migrate_domain(domain, dryrun=False):
         toggle_js_domain_cachebuster.clear(domain)
 
     for reverted_export in reverted_exports:
-        print 'Reverted export: {}'.format(reverted_export._id)
+        print('Reverted export: {}'.format(reverted_export._id))
 
 
 def migrate_domain(domain, dryrun=False, force_convert_columns=False):
@@ -605,8 +606,8 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
                     dryrun=dryrun,
                     force_convert_columns=force_convert_columns,
                 )
-            except Exception, e:
-                print 'Failed parsing {}: {}'.format(old_export['_id'], e)
+            except Exception as e:
+                print('Failed parsing {}: {}'.format(old_export['_id'], e))
                 raise e
             else:
                 metas.append(migration_meta)
@@ -631,20 +632,20 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
 
         output = '* Export information for export: {} *'.format(meta.old_export_url)
         schema_id_output = 'Generated schema: {}'.format(meta.generated_schema_id)
-        print ''
-        print '*' * len(output)
-        print output
-        print '* {}{} *'.format(schema_id_output, ' ' * (len(output) - len(schema_id_output) - 4))
-        print '*' * len(output)
-        print ''
+        print('')
+        print('*' * len(output))
+        print(output)
+        print('* {}{} *'.format(schema_id_output, ' ' * (len(output) - len(schema_id_output) - 4)))
+        print('*' * len(output))
+        print('')
 
         if meta.skipped_tables:
-            print '# Skipped tables #'
+            print('# Skipped tables #')
             for table_meta in meta.skipped_tables:
                 table_meta.pretty_print()
 
         if meta.skipped_columns:
-            print '# Skipped columns #'
+            print('# Skipped columns #')
             for column_meta in meta.skipped_columns:
                 column_meta.pretty_print()
     return metas

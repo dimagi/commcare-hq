@@ -60,7 +60,7 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False,
 
     try:
         resp = simple_post(data, url, *args, **kwargs)
-    except (Timeout, ConnectionError), e:
+    except (Timeout, ConnectionError) as e:
         cache.set(key, e.message, expiry)
         raise RequestConnectionError(e.message)
 
@@ -569,7 +569,7 @@ class RepeatRecord(Document):
                 force_send=post_info.force_send,
                 timeout=POST_TIMEOUT,
             )
-        except Exception, e:
+        except Exception as e:
             self.handle_exception(e)
         else:
             return self.handle_response(response, post_info, tries)

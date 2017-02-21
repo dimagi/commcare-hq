@@ -30,7 +30,7 @@ def recalculate_dots_data(case_id, cc_user, sync_token=None):
         try:
             casedoc = PactPatientCase.get(case_id)
             recompute_dots_casedata(casedoc, cc_user, sync_token=sync_token)
-        except Exception, ex:
+        except Exception as ex:
             tb = traceback.format_exc()
             notify_exception(None, message="PACT error recomputing DOTS case block: %s\n%s" % (ex, tb))
 
@@ -67,7 +67,7 @@ def eval_dots_block(xform_json, callback=None):
         xform_json[PACT_DOTS_DATA_PROPERTY]['processed']=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         XFormInstance.get_db().save_doc(xform_json)
 
-    except Exception, ex:
+    except Exception as ex:
         #if this gets triggered, that's ok because web entry don't got them
         tb = traceback.format_exc()
         notify_exception(None, message="PACT error evaluating DOTS block docid %s, %s\n\tTraceback: %s" % (xform_json['_id'], ex, tb))

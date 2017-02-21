@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 from django.core.management.base import BaseCommand
 
@@ -20,5 +21,5 @@ class Command(BaseCommand):
     def handle(self, domain, *args, **options):
         dryrun = options.pop('dryrun')
         if dryrun:
-            print '*** Running in dryrun mode. Will not save any reversions ***'
+            print('*** Running in dryrun mode. Will not save any reversions ***')
         revert_migrate_domain(domain, dryrun)

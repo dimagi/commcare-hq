@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import requests
 from optparse import make_option
@@ -90,8 +91,8 @@ def integrity_check(config, wiggle=0):
                 try:
                     total_rows = content['total_rows']
                 except KeyError:
-                    print "Problem getting `total_rows`. Is this a valid couch database?  {}"\
-                        .format(suite.database)
+                    print("Problem getting `total_rows`. Is this a valid couch database?  {}"\
+                        .format(suite.database))
                 else:
                     matched = False
                     for wiggle_range, couches in matches.items():
@@ -111,18 +112,18 @@ def print_result(matches, view, database):
         return
 
     if len(matches) == 1:
-        print u"{}All is consistent in {} for view {}{}".format(Colors.OKGREEN, database, view, Colors.ENDC)
+        print(u"{}All is consistent in {} for view {}{}".format(Colors.OKGREEN, database, view, Colors.ENDC))
         return
 
-    print "{}{} - {}{}".format(Colors.WARNING, database, view, Colors.ENDC)
+    print("{}{} - {}{}".format(Colors.WARNING, database, view, Colors.ENDC))
     for wiggle_range, match_tuples in matches.items():
-        print u"Couches for wiggle range {}: ".format(wiggle_range)
+        print(u"Couches for wiggle range {}: ".format(wiggle_range))
         for couch_uri, rows in match_tuples:
-            print u"\t{}".format(couch_uri)
-            print u"\tHad this many {}{}{} rows for this view".format(
+            print(u"\t{}".format(couch_uri))
+            print(u"\tHad this many {}{}{} rows for this view".format(
                 Colors.BOLD,
                 rows,
-                Colors.ENDC)
+                Colors.ENDC))
 
 
 class CouchConfig(JsonObject):

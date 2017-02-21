@@ -1,3 +1,4 @@
+from __future__ import print_function
 from copy import copy
 from datetime import datetime
 from itertools import groupby
@@ -2295,12 +2296,12 @@ class ConversionMeta(DocumentSchema):
     info = ListProperty()
 
     def pretty_print(self):
-        print '---' * 15
-        print '{:<20}| {}'.format('Original Path', self.path)
-        print '{:<20}| {}'.format('Failure Reason', self.failure_reason)
+        print('---' * 15)
+        print('{:<20}| {}'.format('Original Path', self.path))
+        print('{:<20}| {}'.format('Failure Reason', self.failure_reason))
         for idx, line in enumerate(self.info):
             prefix = 'Info' if idx == 0 else ''
-            print '{:<20}| {}'.format(prefix, line)
+            print('{:<20}| {}'.format(prefix, line))
 
 
 class ExportMigrationMeta(Document):

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 from optparse import make_option
 from django.core.management import BaseCommand, CommandError
@@ -33,6 +34,6 @@ class Command(BaseCommand):
             )
             if not options['noinput'] and \
                     raw_input("{} Type ['y', 'yes'] to continue.\n".format(msg)) not in ['y', 'yes']:
-                print 'skipped'
+                print('skipped')
                 continue
             pillow.checkpoint.update_to(checkpoint_to_set)

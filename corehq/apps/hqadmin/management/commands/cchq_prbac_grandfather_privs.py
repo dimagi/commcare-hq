@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 
 from django.core.management.base import BaseCommand
@@ -24,11 +25,11 @@ class Command(BaseCommand):
                 ', '.join(privs),
                 ', '.join(all_plan_slugs),
         )):
-            print 'Aborting'
+            print('Aborting')
             return
 
         if not all(priv in MAX_PRIVILEGES for priv in privs):
-            print 'Not all specified privileges are valid: {}'.format(', '.join(privs))
+            print('Not all specified privileges are valid: {}'.format(', '.join(privs)))
             return
 
         grants_to_privs = ((role_slug, privs) for role_slug in all_plan_slugs)

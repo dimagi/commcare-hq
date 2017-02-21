@@ -2278,7 +2278,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                               'see: https://confluence.dimagi.com/pages/viewpage.action?pageId=38276915'))
                     hierarchy = hierarchy or parent_child(domain)
                     LocationXpath('').validate(column.field_property, hierarchy)
-                except LocationXpathValidationError, e:
+                except LocationXpathValidationError as e:
                     yield {
                         'type': 'invalid location xpath',
                         'details': unicode(e),

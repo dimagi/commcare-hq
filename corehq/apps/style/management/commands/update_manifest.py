@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import os
 from django.core.management.base import BaseCommand
@@ -34,32 +35,32 @@ class Command(BaseCommand):
         return os.path.join(self.root_dir, MANIFEST_FILE)
 
     def output_manifest(self, manifest_str, is_soft_update=False):
-        print "saving manifest.json to disk"
+        print("saving manifest.json to disk")
         if not os.path.exists(CACHE_DIR):
             os.makedirs(CACHE_DIR)
         if is_soft_update and os.path.exists(self.manifest_file):
             with open(self.manifest_file, 'r') as fin:
-                print "soft update of manifest.json"
+                print("soft update of manifest.json")
                 existing_manifest = fin.read()
                 new_manifest_dict = json.loads(manifest_str)
                 existing_manifest_dict = json.loads(existing_manifest)
                 existing_manifest_dict.update(new_manifest_dict)
                 manifest_str = json.dumps(existing_manifest_dict)
         with open(self.manifest_file, 'w') as fout:
-            print manifest_str
+            print(manifest_str)
             fout.write(manifest_str)
 
     def save_manifest(self):
-        print "saving manifest.json to redis"
+        print("saving manifest.json to redis")
         with open(self.manifest_file, 'r') as fin:
             manifest_data = fin.read()
-            print manifest_data
+            print(manifest_data)
             rcache.set(COMPRESS_PREFIX % self.current_sha, manifest_data, 86400)
 
     def handle(self, params, **options):
         current_snapshot = gitinfo.get_project_snapshot(self.root_dir, submodules=False)
         self.current_sha = current_snapshot['commits'][0]['sha']
-        print "Current commit SHA: %s" % self.current_sha
+        print("Current commit SHA: %s" % self.current_sha)
 
         if 'save' in params:
             self.save_manifest()

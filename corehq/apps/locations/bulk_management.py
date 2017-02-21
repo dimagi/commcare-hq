@@ -746,7 +746,7 @@ class LocationTreeValidator(object):
 def new_locations_import(domain, excel_importer):
     try:
         importer = NewLocationImporter.from_excel_importer(domain, excel_importer)
-    except LocationExcelSheetError, e:
+    except LocationExcelSheetError as e:
         result = LocationUploadResult()
         result.errors = [str(e)]
         return result
