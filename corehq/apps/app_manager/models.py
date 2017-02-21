@@ -1035,6 +1035,9 @@ class FormBase(DocumentSchema):
                     self.get_app().get_form(form_link.form_id)
                 except FormNotFoundException:
                     errors.append(dict(type='bad form link', **meta))
+        elif self.post_form_workflow == WORKFLOW_PARENT_MODULE:
+            if not module.root_module:
+                errors.append(dict(type='form link to missing root', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self, 'form_filter') and self.form_filter:

@@ -33,6 +33,7 @@ describe('FormplayerFrontend Integration', function() {
                 user;
             newOptions.phoneMode = true;
             newOptions.oneQuestionPerScreen = true;
+            newOptions.language = 'sindarin';
 
             FormplayerFrontend.start(newOptions);
 
@@ -48,6 +49,7 @@ describe('FormplayerFrontend Integration', function() {
                 singleAppMode: undefined,
                 landingPageAppMode: undefined,
                 oneQuestionPerScreen: true,
+                language: 'sindarin',
             });
         });
     });

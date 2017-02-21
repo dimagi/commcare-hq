@@ -37,15 +37,15 @@
               afterRender: afterRender
           }">
       </section>
-      {% if request.couch_user.can_edit_data %}
-      <section id="cloudcare-debugger" data-bind="
-          template: {
-              name: 'instance-viewer-ko-template',
-              afterRender: adjustWidth
-          }
-      "></section>
-      {% endif %}
     </div>
+    {% if request.couch_user.can_edit_data %}
+    <section id="cloudcare-debugger" data-bind="
+        template: {
+            name: 'instance-viewer-ko-template',
+            afterRender: adjustWidth
+        }
+    "></section>
+    {% endif %}
 </div>
 {% endblock %}
 

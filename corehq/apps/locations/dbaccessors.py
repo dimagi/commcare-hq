@@ -92,3 +92,45 @@ def user_ids_at_accessible_locations(domain_name, user):
     from corehq.apps.locations.models import SQLLocation
     accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(domain_name, user)
     return user_ids_at_locations(accessible_location_ids)
+
+
+def get_user_ids_from_assigned_location_ids(domain, location_ids):
+    """
+    Returns {user_id: [location_id, location_id, ...], ...}
+    """
+    result = (
+        UserES()
+        .domain(domain)
+        .location(location_ids)
+        .non_null('assigned_location_ids')
+        .fields(['assigned_location_ids', '_id'])
+        .run().hits
+    )
+    ret = {}
+    for r in result:
+        if 'assigned_location_ids' in r:
+            locs = r['assigned_location_ids']
+            if not isinstance(locs, list):
+                locs = [r['assigned_location_ids']]
+            ret[r['_id']] = locs
+    return ret
+
+
+def get_user_ids_from_primary_location_ids(domain, location_ids):
+    """
+    Returns {user_id: primary_location_id, ...}
+    """
+    result = (
+        UserES()
+        .domain(domain)
+        .primary_location(location_ids)
+        .non_null('location_id')
+        .fields(['location_id', '_id'])
+        .run().hits
+    )
+    ret = {}
+    for r in result:
+        if 'location_id' in r:
+            loc = r['location_id']
+            ret[r['_id']] = loc
+    return ret
