@@ -24,6 +24,7 @@ class TestReminders(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestReminders, cls).setUpClass()
         cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         domain = prepare_domain(TEST_DOMAIN)
         mohsw = make_loc(code="moh1", name="Test MOHSW 1", type="MOHSW", domain=domain.name)
@@ -65,6 +66,7 @@ class TestReminders(TestCase):
     def tearDown(self):
         SMS.objects.all().delete()
         SupplyPointStatus.objects.all().delete()
+        super(TestReminders, self).tearDown()
 
     def test_randr_reminder_facility(self):
         date = datetime(2015, 5, 1)
