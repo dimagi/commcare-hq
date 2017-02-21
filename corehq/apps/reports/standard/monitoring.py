@@ -1134,7 +1134,10 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 td = submission_time - completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
                 rows.append([
-                    self.get_user_link(row['form']['meta']['username'], user_map.get(row['form']['meta']['userID'])),
+                    self.get_user_link(
+                        row['form']['meta']['username'],
+                        user_map.get(row['form']['meta']['userID'])
+                    ),
                     self._format_date(completion_time),
                     self._format_date(submission_time),
                     form_map[row['xmlns']],
