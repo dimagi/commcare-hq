@@ -62,7 +62,11 @@ def do_reindex(alias_name, reset):
             kwargs = {"reset": True} if reset else {}
             reindex_command, command_kwargs = reindex_command
             kwargs.update(command_kwargs)
-            call_command(reindex_command, **kwargs)
+            if reindex_command == 'ptop_reindexer_v2':
+                index = kwargs.pop('index')
+                call_command(reindex_command, index, **kwargs)
+            else:
+                call_command(reindex_command, **kwargs)
         else:
             reindex_command()
     print "Pillow preindex finished %s" % alias_name
@@ -72,15 +76,16 @@ class Command(BaseCommand):
     help = ("Preindex ES pillows. "
             "Only run reindexer if the index doesn't exist.")
 
-    option_list = (
-        make_option('--reset',
-                    action='store_true',
-                    dest='reset',
-                    default=False,
-                    help='Reset resumable indices.'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--reset',
+            action='store_true',
+            dest='reset',
+            default=False,
+            help='Reset resumable indices.',
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         runs = []
         all_es_indices = get_all_expected_es_indices()
         es = get_es_new()

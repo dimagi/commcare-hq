@@ -1223,7 +1223,8 @@ owner                | Select a possible case owner owner (user, group, or locat
 Location choice providers also support two additional configuration options:
 
 * "include_descendants" - Include descendant locations in the results. Defaults to `false`.
-* "show_full_path" - display the full path to the location in the filter.  Defaults to `false`.
+* "show_full_path" - Display the full path to the location in the filter.  Defaults to `false`.
+* "order_by_hierarchy" - By default, locations show up in alphabetical order.  Set this to `true` to instead order by their position in the organization hierarchy.
 
 Example assuming "village" is a location ID, which is converted to names using the location `choice_provider`:
 ```json

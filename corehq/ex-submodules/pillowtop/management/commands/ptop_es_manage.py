@@ -10,29 +10,31 @@ from pillowtop.es_utils import assume_alias
 
 class Command(BaseCommand):
     help = "."
-    args = ""
-    label = ""
 
-    option_list = (
-        make_option('--flip_all_aliases',
-                    action='store_true',
-                    dest='flip_all',
-                    default=False,
-                    help="Flip all aliases"),
-        make_option('--list',
-                    action='store_true',
-                    dest='list_pillows',
-                    default=False,
-                    help="Print AliasedElasticPillows that can be operated on"),
-        make_option('--code_red',
-                    action='store_true',
-                    dest='code_red',
-                    default=False,
-                    help="Code red! Delete all indices and pillow checkpoints and start afresh."),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--flip_all_aliases',
+            action='store_true',
+            dest='flip_all',
+            default=False,
+            help="Flip all aliases",
+        )
+        parser.add_argument(
+            '--list',
+            action='store_true',
+            dest='list_pillows',
+            default=False,
+            help="Print AliasedElasticPillows that can be operated on",
+        )
+        parser.add_argument(
+            '--code_red',
+            action='store_true',
+            dest='code_red',
+            default=False,
+            help="Code red! Delete all indices and pillow checkpoints and start afresh.",
+        )
 
-    def handle(self, *args, **options):
-        if len(args) != 0: raise CommandError("This command doesn't expect arguments!")
+    def handle(self, **options):
         flip_all = options['flip_all']
         code_red = options['code_red']
 

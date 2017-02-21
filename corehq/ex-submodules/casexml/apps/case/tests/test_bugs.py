@@ -12,7 +12,10 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    use_sql_backend,
+)
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
@@ -24,18 +27,20 @@ class SimpleCaseBugTests(SimpleTestCase):
             CommCareCase(_id='test').to_xml(version)
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-class CaseBugTest(TestCase, TestFileMixin):
-    """
-    Tests bugs that come up in case processing
-    """
+class CaseBugTestCouchOnly(TestCase, TestFileMixin):
+
     file_path = ('data', 'bugs')
     root = os.path.dirname(__file__)
 
-    def setUp(self):
-        super(CaseBugTest, self).setUp()
-        delete_all_cases()
-        delete_all_xforms()
+    @classmethod
+    def setUpClass(cls):
+        super(CaseBugTestCouchOnly, cls).setUpClass()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        super(CaseBugTestCouchOnly, cls).tearDownClass()
 
     def test_conflicting_ids(self):
         """
@@ -45,7 +50,25 @@ class CaseBugTest(TestCase, TestFileMixin):
         with self.assertRaises(BulkSaveError):
             submit_form_locally(xml_data, 'test-domain')
 
-    @run_with_all_backends
+
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
+class CaseBugTest(TestCase, TestFileMixin):
+    """
+    Tests bugs that come up in case processing
+    """
+    file_path = ('data', 'bugs')
+    root = os.path.dirname(__file__)
+
+    @classmethod
+    def setUpClass(cls):
+        super(CaseBugTest, cls).setUpClass()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        super(CaseBugTest, cls).tearDownClass()
+
     def test_empty_case_id(self):
         """
         Ensure that form processor fails on empty id
@@ -77,26 +100,22 @@ class CaseBugTest(TestCase, TestFileMixin):
         _test({'case_type': value})
         _test({'user_id': value})
 
-    @run_with_all_backends
     def testDateInCasePropertyBug(self):
         """
         Submits a case name/case type/user_id that looks like a date
         """
         self._testCornerCaseDatatypeBugs('2011-11-16')
 
-    @run_with_all_backends
     def testIntegerInCasePropertyBug(self):
         """
         Submits a case name/case type/user_id that looks like a number
         """
         self._testCornerCaseDatatypeBugs('42')
 
-    @run_with_all_backends
     def testDecimalInCasePropertyBug(self):
         # Submits a case name/case type/user_id that looks like a decimal
         self._testCornerCaseDatatypeBugs('4.06')
 
-    @run_with_all_backends
     def testDuplicateCasePropertiesBug(self):
         # Submit multiple values for the same property in an update block
         case_id = '061ecbae-d9be-4bb5-bdd4-e62abd5eaf7b'
@@ -111,7 +130,6 @@ class CaseBugTest(TestCase, TestFileMixin):
         response, form, [case] = submit_form_locally(xml_data, 'test-domain')
         self.assertEqual("2", case.dynamic_case_properties()['bar'])
 
-    @run_with_all_backends
     def testMultipleCaseBlocks(self):
         # How do we do when submitting a form with multiple blocks for the same case?
         case_id = 'MCLPZ69ON942EKNIBR5WF1G2L'
@@ -129,14 +147,12 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual(2, len(ids))
         self.assertEqual([create_form.form_id, form.form_id], ids)
 
-    @run_with_all_backends
     def testLotsOfSubcases(self):
         # How do we do when submitting a form with multiple blocks for the same case?
         xml_data = self.get_xml('lots_of_subcases')
         response, form, cases = submit_form_locally(xml_data, 'test-domain')
         self.assertEqual(11, len(cases))
 
-    @run_with_all_backends
     def testSubmitToDeletedCase(self):
         # submitting to a deleted case should succeed and affect the case
         case_id = uuid.uuid4().hex
@@ -156,24 +172,50 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual('not_bar', case.dynamic_case_properties()['foo'])
         self.assertTrue(case.is_deleted)
 
+    def test_case_block_ordering(self):
+        case_id1 = uuid.uuid4().hex
+        case_id2 = uuid.uuid4().hex
+        # updates before create and case blocks for different cases interleaved
+        blocks = [
+            CaseBlock(create=False, case_id=case_id1, update={'p': '2'}).as_xml(),
+            CaseBlock(create=False, case_id=case_id2, update={'p': '2'}).as_xml(),
+            CaseBlock(create=True, case_id=case_id1, update={'p': '1'}).as_xml(),
+            CaseBlock(create=True, case_id=case_id2, update={'p': '1'}).as_xml()
+        ]
+
+        xform, cases = post_case_blocks(blocks)
+        self.assertEqual(cases[0].get_case_property('p'), '2')
+        self.assertEqual(cases[1].get_case_property('p'), '2')
+
+
+@use_sql_backend
+class CaseBugTestSQL(CaseBugTest):
+    pass
+
 
 class TestCaseHierarchy(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(TestCaseHierarchy, cls).setUpClass()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
 
-    def setUp(self):
-        super(TestCaseHierarchy, self).setUp()
-        delete_all_cases()
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        super(TestCaseHierarchy, cls).tearDownClass()
 
-    @run_with_all_backends
     def test_normal_index(self):
         factory = CaseFactory()
+        parent_id = uuid.uuid4().hex
         [cp] = factory.create_or_update_case(
-            CaseStructure(case_id='parent', attrs={'case_type': 'parent', 'create': True})
+            CaseStructure(case_id=parent_id, attrs={'case_type': 'parent', 'create': True})
         )
 
+        child_id = uuid.uuid4().hex
         factory.create_or_update_case(CaseStructure(
-            case_id='child',
+            case_id=child_id,
             attrs={'case_type': 'child', 'create': True},
-            indices=[CaseIndex(CaseStructure(case_id='parent'), related_type='parent')],
+            indices=[CaseIndex(CaseStructure(case_id=parent_id), related_type='parent')],
             walk_related=False
         ))
 
@@ -181,20 +223,21 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(2, len(hierarchy['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases']))
 
-    @run_with_all_backends
     def test_extension_index(self):
         factory = CaseFactory()
+        standard_case_id = uuid.uuid4().hex
         [case] = factory.create_or_update_case(
-            CaseStructure(case_id="standard_case", attrs={'case_type': "standard_type", 'create': True})
+            CaseStructure(case_id=standard_case_id, attrs={'case_type': "standard_type", 'create': True})
         )
 
+        extension_case_id = uuid.uuid4().hex
         factory.create_or_update_case(
             CaseStructure(
-                case_id="extension_case",
+                case_id=extension_case_id,
                 attrs={'case_type': "extension_type", 'create': True},
                 indices=[
                     CaseIndex(
-                        CaseStructure(case_id="standard_case"),
+                        CaseStructure(case_id=standard_case_id),
                         related_type='standard_type',
                         relationship=CASE_INDEX_EXTENSION
                     )
@@ -207,7 +250,6 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(2, len(hierarchy['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases']))
 
-    @run_with_all_backends
     def test_recursive_indexes(self):
         factory = CaseFactory()
         [case] = factory.create_or_update_case(CaseStructure(
@@ -221,28 +263,30 @@ class TestCaseHierarchy(TestCase):
         hierarchy = get_case_hierarchy(case, {})
         self.assertEqual(1, len(hierarchy['case_list']))
 
-    @run_with_all_backends
     def test_complex_index(self):
         factory = CaseFactory()
-        cp = factory.create_or_update_case(CaseStructure(case_id='parent', attrs={
+        parent_id = uuid.uuid4().hex
+        cp = factory.create_or_update_case(CaseStructure(case_id=parent_id, attrs={
             'case_type': 'parent', 'create': True
         }))[0]
 
         # cases processed according to ID order so ensure that this case is
         # processed after the task case by making its ID sort after task ID
+        goal_id = uuid.uuid4().hex
         factory.create_or_update_case(CaseStructure(
-            case_id='z_goal',
+            case_id=goal_id,
             attrs={'case_type': 'goal', 'create': True},
-            indices=[CaseIndex(CaseStructure(case_id='parent'), related_type='parent')],
+            indices=[CaseIndex(CaseStructure(case_id=parent_id), related_type='parent')],
             walk_related=False
         ))
 
+        task_id = uuid.uuid4().hex
         factory.create_or_update_case(CaseStructure(
-            case_id='task1',
+            case_id=task_id,
             attrs={'case_type': 'task', 'create': True},
             indices=[
-                CaseIndex(CaseStructure(case_id='z_goal'), related_type='goal', identifier='goal'),
-                CaseIndex(CaseStructure(case_id='parent'), related_type='parent')
+                CaseIndex(CaseStructure(case_id=goal_id), related_type='goal', identifier='goal'),
+                CaseIndex(CaseStructure(case_id=parent_id), related_type='parent')
             ],
             walk_related=False,
         ))
@@ -260,3 +304,8 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(1, len(hierarchy['child_cases']))
         self.assertEqual(2, len(hierarchy['child_cases'][0]['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases'][0]['child_cases']))
+
+
+@use_sql_backend
+class TestCaseHierarchySQL(TestCaseHierarchy):
+    pass

@@ -295,6 +295,13 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
 )
 
+DHIS2_INTEGRATION = StaticToggle(
+    'dhis2_integration',
+    'DHIS2 Integration',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
@@ -446,14 +453,6 @@ MOBILE_PRIVILEGES_FLAG = StaticToggle(
     'Offer "Enable Privileges on Mobile" flag.',
     TAG_EXPERIMENTAL,
     [NAMESPACE_USER]
-)
-
-MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
-    'multiple_locations',
-    "(Deprecated) Enable multiple locations per user on domain.",
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    description="Don't enable this flag."
 )
 
 PRODUCTS_PER_LOCATION = StaticToggle(
@@ -1037,5 +1036,12 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
+    'include_metadata_in_ucr_excel_exports',
+    'Include metadata in UCR excel exports',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

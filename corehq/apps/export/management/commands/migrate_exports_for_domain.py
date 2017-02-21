@@ -15,10 +15,18 @@ class Command(BaseCommand):
             default=False,
             help='Runs a dry run on the export conversations'
         ),
+        make_option(
+            '--force-convert-columns',
+            action='store_true',
+            dest='force_convert_columns',
+            default=False,
+            help='Force convert columns that were not found in the new schema'
+        ),
     )
 
     def handle(self, domain, *args, **options):
         dryrun = options.pop('dryrun')
+        force_convert_columns = options.pop('force_convert_columns')
         if dryrun:
             print '*** Running in dryrun mode. Will not save any conversion ***'
-        migrate_domain(domain, dryrun)
+        migrate_domain(domain, dryrun, force_convert_columns=force_convert_columns)

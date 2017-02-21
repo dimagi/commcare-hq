@@ -1,13 +1,12 @@
 from collections import namedtuple
 import uuid
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import (
     FixtureDataType, FixtureTypeField, FixtureDataItem, FieldList, FixtureItemField
 )
 from corehq.apps.users.models import WebUser
-from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import create_test_case
 from custom.ucla.api import ucla_message_bank_content
 
@@ -15,6 +14,7 @@ Reminder = namedtuple('Reminder', ['domain', 'schedule_iteration_num', 'current_
 Handler = namedtuple('Handler', ['events'])
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestUCLACustomHandler(TestCase):
     domain_name = uuid.uuid4().hex
     case_type = 'ucla-reminder'
@@ -103,12 +103,10 @@ class TestUCLACustomHandler(TestCase):
         data_item.save()
         self.addCleanup(data_item.delete)
 
-    @run_with_all_backends
     def test_message_bank_doesnt_exist(self):
         with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
             self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
 
-    @run_with_all_backends
     def test_message_bank_doesnt_have_correct_properties(self):
         data_type = FixtureDataType(
             domain=self.domain_name,
@@ -125,32 +123,27 @@ class TestUCLACustomHandler(TestCase):
         self._setup_fixture_type()
         self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), None)
 
-    @run_with_all_backends
     def test_passing_case_without_risk_profile(self):
         self._setup_fixture_type()
         with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
             self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
 
-    @run_with_all_backends
     def test_no_relevant_message_invalid_risk(self):
         self._setup_fixture_type()
         with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk2'}) as case:
             self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
 
-    @run_with_all_backends
     def test_no_relevant_message_invalid_seq_num(self):
         self._setup_fixture_type()
         with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
             self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(iteration_num=2), self._handler(), case)
 
-    @run_with_all_backends
     def test_multiple_relevant_messages(self):
         self._setup_fixture_type()
         self._setup_data_item('risk1', '1', 'message2')
         with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
             self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
 
-    @run_with_all_backends
     def test_correct_message(self):
         self._setup_fixture_type()
         with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:

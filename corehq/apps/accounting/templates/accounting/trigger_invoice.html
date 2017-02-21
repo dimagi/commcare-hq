@@ -6,16 +6,6 @@
     <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        (function () {
-            var AsyncSelect2Handler = hqImport('accounting/js/accounting.billing_info_handler.js').AsyncSelect2Handler;
-            var domain_handler = new AsyncSelect2Handler('domain');
-            domain_handler.init();
-        }());
-    </script>
-{% endblock %}
-
 {% block page_content %}
     {% crispy trigger_form %}
 {% endblock %}
