@@ -2431,7 +2431,8 @@ class ModuleDetailsMixin():
                 })
         if self.case_list_filter:
             try:
-                case_list_filter = interpolate_xpath(self.case_list_filter)
+                # test filter is valid, while allowing for advanced user hacks like "foo = 1][bar = 2"
+                case_list_filter = interpolate_xpath('dummy[' + self.case_list_filter + ']')
                 etree.XPath(case_list_filter)
             except (etree.XPathSyntaxError, CaseXPathValidationError):
                 errors.append({
