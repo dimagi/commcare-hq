@@ -25,6 +25,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            'slug',
+            choices=sorted(MIGRATIONS),
+            help="Migration slug: {}".format(', '.join(sorted(MIGRATIONS))),
+        )
+        parser.add_argument(
             '--log-dir',
             help="Migration log directory.",
         )
