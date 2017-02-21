@@ -1878,7 +1878,7 @@ def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_r
         if case_id == case_id_from_request:
             return _(u"%(case_name)s (this case)") % {'case_name': name}
         else:
-            return u'<a href="{}">{}</a>'.format(reverse('case_details', args=[domain, case_id]), name)
+            return u'<a href="{}#!history">{}</a>'.format(reverse('case_details', args=[domain, case_id]), name)
 
     case_links = ', '.join([
        _get_case_link(case_id, name)
