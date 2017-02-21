@@ -119,7 +119,7 @@ $(function () {
                         {% endblocktrans %}
                     </p>
                     <p>
-                        {% blocktrans with hq_name=django_settings.COMMCARE_HQ_NAME %}
+                        {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
                             Their activity and form submissions can be
                             monitored in the Reports section of this {{ hq_name }} project space.
                             <br />

@@ -931,7 +931,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.websockets_override',
-                'corehq.util.context_processors.django_settings',
+                'corehq.util.context_processors.commcare_hq_names',
             ],
             'debug': DEBUG,
             'loaders': [

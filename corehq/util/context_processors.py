@@ -93,7 +93,10 @@ def enterprise_mode(request):
     }
 
 
-def django_settings(request):
+def commcare_hq_names(request):
     return {
-        'django_settings': settings
+        'commcare_hq_names': {
+            'COMMCARE_NAME': settings.COMMCARE_NAME,
+            'COMMCARE_HQ_NAME': settings.COMMCARE_HQ_NAME
+        }
     }

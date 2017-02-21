@@ -142,7 +142,7 @@
 
 {% block page_content %}
     <p class="lead">
-        {% blocktrans with hq_name=django_settings.COMMCARE_HQ_NAME cc_name=django_settings.COMMCARE_NAME %}
+        {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME cc_name=commcare_hq_names.COMMCARE_NAME %}
             Web Users can manage and view data on {{ hq_name }}.
             However, these users cannot submit forms from phones
             using the {{ cc_name }} Application.
