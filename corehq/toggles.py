@@ -850,14 +850,6 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 )
 
 
-PROJECT_HEALTH_DASHBOARD = StaticToggle(
-    'project_health_dashboard',
-    'Shows the project performance dashboard in the reports navigation',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-
 PHONE_NUMBERS_REPORT = StaticToggle(
     'phone_numbers_report',
     "Shows information related to the phone numbers owned by a project's contacts",
