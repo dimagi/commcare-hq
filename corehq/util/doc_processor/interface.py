@@ -223,11 +223,14 @@ class DocumentProcessorController(object):
         if self.visited % self.chunk_size == 0:
             self.document_iterator.set_iterator_detail('progress', {"visited": self.visited, "total": self.total})
 
-        if self.attempted % self.chunk_size == 0:
+        attempted = self.attempted
+        last_attempted = getattr(self, "_last_attempted", None)
+        if attempted % self.chunk_size == 0 and attempted != last_attempted:
             elapsed, remaining = self.timing
             self.progress_logger.progress(
                 self.processed, self.visited, self.total, elapsed, remaining
             )
+            self._last_attempted = attempted
 
     def _processing_complete(self):
         if self.session_visited:
