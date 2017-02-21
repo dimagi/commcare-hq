@@ -568,11 +568,11 @@ class PropertyXpathGenerator(BaseXpathGenerator):
         property = parts.pop()
         indexes = parts
 
-        use_relative = not indexes and property != '#owner_name'
-        if use_relative:
-            case = CaseXPath('')
-        else:
+        use_absolute = indexes or property == '#owner_name'
+        if use_absolute:
             case = CaseXPath(u'current()')
+        else:
+            case = CaseXPath('')
 
         if indexes and indexes[0] == 'user':
             case = CaseXPath(UserCaseXPath().case())
