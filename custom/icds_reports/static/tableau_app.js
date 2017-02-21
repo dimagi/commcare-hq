@@ -201,8 +201,8 @@ function updateViz(marks) {
     var debugHtml = ["<ul>"],
         // default the sheet to navigate to to the current one
         currentSheet = history.state.sheetName,
-        newSheet = currentSheet;
-        var newParams = {};
+        newSheet = currentSheet,
+        newParams = {};
 
     function buildParams(currentParams) {
 
