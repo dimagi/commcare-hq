@@ -57,8 +57,6 @@ branches:
 
   - revert-14997-revert-14712-br/anonymous-formplayer  # BR 2/16
   - np/django1.10 # NP 2/12
-  - sk/sentry  # SK 2/13
-  - xmlns-overflow  # Jenny 2/16
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
