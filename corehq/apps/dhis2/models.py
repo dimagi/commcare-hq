@@ -1,14 +1,11 @@
 import httplib
 import json
 import logging
-from collections import namedtuple
 
 import requests
 
-from dimagi.ext.couchdbkit import Document, DocumentSchema, StringProperty
-
-
-COUCH_KEYS = ('_id', 'doc_type', '_rev', '#export_tag')
+from dimagi.ext.couchdbkit import Document, StringProperty
+from dimagi.ext.jsonobject import JsonObject
 
 
 class Dhis2Connection(Document):
@@ -70,12 +67,10 @@ class Dhis2IntegrationError(Exception):
 
 def json_serializer(obj):
     """
-    A JSON serializer that serializes dates, times, and namedtuples
+    A JSON serializer that serializes dates and times
     """
     if hasattr(obj, 'isoformat'):
         return obj.isoformat()
-    if hasattr(obj, '_asdict'):
-        return obj._asdict()
 
 
 class JsonApiRequest(object):
@@ -197,14 +192,7 @@ class JsonApiRequest(object):
         return JsonApiRequest.json_or_error(response)
 
 
-class AsDictMixin(dict):
-    def _asdict(self):
-        # Used by json_serializer for sending to the API. Don't return CouchDB's properties
-        return {k: v for k, v in dict(self).items() if k not in COUCH_KEYS}
-
-
-class DataValue(DocumentSchema, AsDictMixin):
-    # Use DocumentSchema because it conveniently handles optional properties
+class DataValue(JsonObject):
     dataElement = StringProperty()
     period = StringProperty()
     orgUnit = StringProperty()
