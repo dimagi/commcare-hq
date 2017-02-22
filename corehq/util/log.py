@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 from collections import defaultdict
 from itertools import islice
@@ -268,22 +269,22 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
         remaining = (display_seconds((elapsed / percent) * (1 - percent))
                      if position > 0 else "-:--:--")
 
-        print prefix,
-        print "[{}{}]".format("." * dots, " " * spaces),
-        print "{}/{}".format(position, length),
-        print "{:.0%}".format(percent),
-        print "{} remaining".format(remaining),
-        print ("\r" if oneline else "\n"),
+        print(prefix, end=' ')
+        print("[{}{}]".format("." * dots, " " * spaces), end=' ')
+        print("{}/{}".format(position, length), end=' ')
+        print("{:.0%}".format(percent), end=' ')
+        print("{} remaining".format(remaining), end=' ')
+        print(("\r" if oneline else "\n"), end=' ')
         sys.stdout.flush()
 
-    print "Started at {:%Y-%m-%d %H:%M:%S}".format(start)
+    print("Started at {:%Y-%m-%d %H:%M:%S}".format(start))
     checkpoints = {length*i/granularity for i in range(length)}
     for i, x in enumerate(iterable):
         yield x
         if i in checkpoints:
             draw(i)
     draw(length)
-    print ""
+    print("")
     end = datetime.now()
-    print "Finished at {:%Y-%m-%d %H:%M:%S}".format(end)
-    print "Elapsed time: {}".format(display_seconds((end - start).total_seconds()))
+    print("Finished at {:%Y-%m-%d %H:%M:%S}".format(end))
+    print("Elapsed time: {}".format(display_seconds((end - start).total_seconds())))

@@ -15,7 +15,7 @@
      var CaseConfig = hqImport('app_manager/js/case-config-ui-2.js').CaseConfig;
      var caseConfig = new CaseConfig({
          home: $('#casexml_home'),
-@@ -24,5 +24,73 @@
+@@ -25,5 +25,73 @@
          usercasePropertiesMap: {{ usercase_properties|JSON }},
      });
      caseConfig.init();

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from django_countries.data import COUNTRIES
 from corehq.apps.domain.models import Domain
@@ -9,7 +10,7 @@ class Command(BaseCommand):
     label = ""
 
     def handle(self, *args, **options):
-        print "Migrating Domain countries"
+        print("Migrating Domain countries")
 
         country_lookup = {v.lower(): k for k, v in COUNTRIES.iteritems()}
         #Special cases
@@ -44,5 +45,5 @@ class Command(BaseCommand):
                     domain.deployment.countries = abbr
                     domain.save()
             except Exception as e:
-                print "There was an error migrating the domain named %s." % domain.name
-                print "Error: %s" % e
+                print("There was an error migrating the domain named %s." % domain.name)
+                print("Error: %s" % e)

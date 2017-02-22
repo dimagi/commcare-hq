@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 from optparse import make_option
 import os
@@ -87,22 +88,22 @@ class Command(BaseCommand):
                         log_names.append('migrated_from-{}'.format(log_name))
                         logs.append(properly_wrap_sync_log(wrapped_log.to_json()['migrated_from']))
 
-        print 'state hashes'
+        print('state hashes')
         for i in range(len(log_names)):
-            print '{} ({}): {}'.format(log_names[i], logs[i]._id, logs[i].get_state_hash())
+            print('{} ({}): {}'.format(log_names[i], logs[i]._id, logs[i].get_state_hash()))
 
-        print '\ncase diffs'
+        print('\ncase diffs')
         for i in range(len(log_names)):
             for j in range(len(log_names)):
                 if i != j:
                     case_diff = set(logs[i].get_footprint_of_cases_on_phone()) - \
                         set(logs[j].get_footprint_of_cases_on_phone())
                     if case_diff:
-                        print 'cases on {} and not {}: {}'.format(
+                        print('cases on {} and not {}: {}'.format(
                             log_names[i],
                             log_names[j],
                             ', '.join(sorted(case_diff))
-                        )
+                        ))
 
         if options['debugger']:
             union_of_ids = set().union(*[set(log.get_footprint_of_cases_on_phone()) for log in logs])
@@ -116,9 +117,9 @@ class Command(BaseCommand):
                 log_to_check.case_ids_on_phone, options['check_hash'], depth=int(options['depth'])
             )
             if result:
-                print 'check successful - missing ids {}'.format(result)
+                print('check successful - missing ids {}'.format(result))
             else:
-                print 'no match found'
+                print('no match found')
 
 
 def _brute_force_search(case_id_set, expected_hash, diff=None, depth=1):

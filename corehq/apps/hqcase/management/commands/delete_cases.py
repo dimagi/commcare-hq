@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 from django.core.management.base import NoArgsCommand, BaseCommand, CommandError
 from couchdbkit import ResourceNotFound
@@ -32,14 +33,14 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if not len(args):
-            print "Usage: ./manage.py delete_cases <user>"
+            print("Usage: ./manage.py delete_cases <user>")
             return
         try:
             self.user = CouchUser.get_by_username(args[0])
             if not self.user:
                 self.user = CouchUser.get(args[0])
         except ResourceNotFound:
-            print "Could not find user {}".format(args[0])
+            print("Could not find user {}".format(args[0]))
             return
 
         if not isinstance(self.user, CommCareUser):
@@ -61,8 +62,8 @@ class Command(BaseCommand):
                 self.user.username,
             )
             if not raw_input(msg) == 'y':
-                print "cancelling"
+                print("cancelling")
                 return
 
         self.delete_all()
-        print "Cases successfully deleted, you monster!"
+        print("Cases successfully deleted, you monster!")

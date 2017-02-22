@@ -1,3 +1,4 @@
+from __future__ import print_function
 from corehq.apps.sms.models import PhoneNumber
 from django.core.management.base import BaseCommand
 from optparse import make_option
@@ -19,10 +20,10 @@ class Command(BaseCommand):
 
     def show_missing_count(self):
         count = self.get_queryset().count()
-        print "There are %s PhoneNumbers missing couch_id" % count
+        print("There are %s PhoneNumbers missing couch_id" % count)
 
     def apply_fix(self):
-        print "Applying fix..."
+        print("Applying fix...")
         for phone_number in self.get_queryset():
             phone_number.save()
 

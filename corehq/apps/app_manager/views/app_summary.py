@@ -163,7 +163,7 @@ def _get_translated_form_name(app, form_id, language):
 
 
 def _get_translated_module_name(app, module_id, language):
-    return _translate_name(_get_name_map(app)[module_id], language)
+    return _translate_name(_get_name_map(app)[module_id]['module_name'], language)
 
 
 APP_SUMMARY_EXPORT_HEADER_NAMES = [

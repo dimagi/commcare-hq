@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 
 import re
@@ -43,7 +44,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if not settings.USE_PARTITIONED_DATABASE:
-            print "System not configured to use a partitioned database"
+            print("System not configured to use a partitioned database")
 
         verbose = options['verbose']
         existing_config = _get_existing_cluster_config(settings.PL_PROXY_CLUSTER_NAME)
@@ -71,31 +72,31 @@ def _update_pl_proxy_cluster(existing_config, verbose):
     new_shard_configs = partition_config.get_shards()
 
     if verbose:
-        print '{0} Existing config {0}'.format('-' * 42)
-        print existing_config
-        print '-' * 100
+        print('{0} Existing config {0}'.format('-' * 42))
+        print(existing_config)
+        print('-' * 100)
 
     shards_to_update = get_shards_to_update(existing_shards, new_shard_configs)
 
     if not shards_to_update:
-        print 'No changes. Exiting.'
+        print('No changes. Exiting.')
     else:
-        print "Shards to update:"
+        print("Shards to update:")
         existing_shards_by_id = {shard.id: shard for shard in existing_shards}
         for new in shards_to_update:
-            print "    {}  ->   {}".format(
+            print("    {}  ->   {}".format(
                 existing_shards_by_id[new.id].get_server_option_string(),
                 new.get_server_option_string()
-            )
+            ))
         if _confirm("Update these shards?"):
             alter_sql = _get_alter_server_sql(shards_to_update)
             if verbose:
-                print alter_sql
+                print(alter_sql)
 
             with connections[partition_config.get_proxy_db()].cursor() as cursor:
                 cursor.execute(alter_sql)
         else:
-            print 'Abort'
+            print('Abort')
 
 
 def _get_alter_server_sql(shards_to_update):
@@ -121,9 +122,9 @@ def create_pl_proxy_cluster(verbose=False, drop_existing=False):
     user_mapping_sql = get_user_mapping_sql()
 
     if verbose:
-        print 'Running SQL'
-        print config_sql
-        print user_mapping_sql
+        print('Running SQL')
+        print(config_sql)
+        print(user_mapping_sql)
 
     with connections[proxy_db].cursor() as cursor:
         cursor.execute(config_sql)

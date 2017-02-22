@@ -79,7 +79,7 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
             else:
                 es_getter().create(index, doc_type, body=data, id=doc_id)
             break
-        except ConnectionError, ex:
+        except ConnectionError as ex:
             current_tries += 1
             pillow_logging.error("[%s] put_robust error %s attempt %d/%d" % (
                 name, ex, current_tries, retries))

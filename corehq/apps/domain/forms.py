@@ -706,7 +706,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
                 domain.cloudcare_releases = cloudcare_releases
             domain.save()
             return True
-        except Exception, e:
+        except Exception as e:
             logging.exception("couldn't save project settings - error is %s" % e)
             return False
 

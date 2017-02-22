@@ -614,7 +614,7 @@ def test_repeater(request, domain):
                                                 "response": resp.content,
                                                 "status": resp.status_code}))
 
-        except Exception, e:
+        except Exception as e:
             errors = str(e)
         return HttpResponse(json.dumps({"success": False, "response": errors}))
     else:
@@ -1236,7 +1236,7 @@ class WireInvoiceView(View):
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
             wire_invoice_factory.create_wire_invoice(balance)
-        except Exception, e:
+        except Exception as e:
             return json_response({'error': {'message', e}})
 
         return json_response({'success': True})

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, \
@@ -52,10 +53,10 @@ class AppFormSubmissionReindexDocProcessor(BaseDocProcessor):
             return True
 
     def handle_skip(self, doc):
-        print 'Unable to process form {} with build {}'.format(
+        print('Unable to process form {} with build {}'.format(
             doc['_id'],
             doc.get('build_id')
-        )
+        ))
         return True
 
     @staticmethod
