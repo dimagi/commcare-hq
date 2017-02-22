@@ -67,7 +67,7 @@ def csrf_inline(request):
     """
     from django.template import Template, RequestContext
     node = "{% csrf_token %}"
-    return Template(node).render(RequestContext(request))
+    return Template(node).render(RequestContext(request).dicts[0])
 
 
 def aliased_language_name(lang_code):
