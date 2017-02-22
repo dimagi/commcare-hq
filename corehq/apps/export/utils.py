@@ -604,7 +604,7 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
                 try:
                     _, migration_meta = convert_saved_export_to_export_instance(
                         domain,
-                        SavedExportSchema.wrap(old_export),
+                        SavedExportSchema.get(old_export._id),
                         dryrun=dryrun,
                         force_convert_columns=force_convert_columns,
                     )
