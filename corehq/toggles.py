@@ -636,13 +636,6 @@ CUSTOM_INSTANCES = StaticToggle(
     namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
-LOCATIONS_IN_REPORTS = StaticToggle(
-    'LOCATIONS_IN_REPORTS',
-    "Include locations in report filters",
-    TAG_PRODUCT_PATH,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 CLOUDCARE_CACHE = StaticToggle(
     'cloudcare_cache',
     'Aggresively cache case list, can result in stale data',
