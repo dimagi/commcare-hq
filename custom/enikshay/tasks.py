@@ -172,9 +172,9 @@ class EpisodeUpdate(object):
         update = self.update_json()
         if update:
             return CaseBlock(**{
-                'case_id': self.episode.case_id
+                'case_id': self.episode.case_id,
                 'create': False,
-                'update': self.update_json()
+                'update': update
             })
         else:
             return None
