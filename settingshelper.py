@@ -9,6 +9,8 @@ import uuid
 import re
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 import six
+from raven import breadcrumbs
+from raven import fetch_git_sha
 
 
 def is_testing():
@@ -206,16 +208,7 @@ def configure_sentry(base_dir, server_env, pub_key, priv_key, project_id):
     if not (pub_key and priv_key and project_id):
         return
 
-    try:
-        from raven import breadcrumbs, fetch_git_sha
-    except ImportError:
-        return
-
-    release_dir = base_dir.split('/')[-1]
-    if re.match('\d{4}-\d{2}-\d{2}_\d{2}.\d{2}', release_dir):
-        release = "{}-{}-deploy".format(release_dir, server_env)
-    else:
-        release = fetch_git_sha(base_dir)
+    release = get_release_name(base_dir, server_env)
 
     breadcrumbs.ignore_logger('quickcache')
 
@@ -234,3 +227,12 @@ def configure_sentry(base_dir, server_env, pub_key, priv_key, project_id):
             'raven.processors.RemovePostDataProcessor',
         )
     }
+
+
+def get_release_name(base_dir, server_env):
+    release_dir = base_dir.split('/')[-1]
+    if re.match('\d{4}-\d{2}-\d{2}_\d{2}.\d{2}', release_dir):
+        release = "{}-{}-deploy".format(release_dir, server_env)
+    else:
+        release = fetch_git_sha(base_dir)
+    return release

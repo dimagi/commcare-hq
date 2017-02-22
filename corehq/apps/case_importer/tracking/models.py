@@ -20,7 +20,7 @@ class CaseUploadRecord(models.Model):
     case_type = models.CharField(max_length=256)
     comment = models.TextField(null=True)
 
-    upload_file_meta = models.ForeignKey('CaseUploadFileMeta', null=True)
+    upload_file_meta = models.ForeignKey('CaseUploadFileMeta', null=True, on_delete=models.CASCADE)
 
     class Meta(object):
         index_together = ('domain', 'created')
@@ -65,5 +65,5 @@ class CaseUploadFileMeta(models.Model):
 
 
 class CaseUploadFormRecord(models.Model):
-    case_upload_record = models.ForeignKey(CaseUploadRecord, related_name='form_records')
+    case_upload_record = models.ForeignKey(CaseUploadRecord, related_name='form_records', on_delete=models.CASCADE)
     form_id = models.CharField(max_length=256, unique=True)

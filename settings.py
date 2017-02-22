@@ -883,6 +883,7 @@ SENTRY_PUBLIC_KEY = None
 SENTRY_PRIVATE_KEY = None
 SENTRY_PROJECT_ID = None
 SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
+SENTRY_API_KEY = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -931,6 +932,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.websockets_override',
+                'corehq.util.context_processors.commcare_hq_names',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1409,6 +1411,10 @@ MESSAGE_TAGS = {
 
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
+# CommCare HQ - To indicate server
+COMMCARE_HQ_NAME = "CommCare HQ"
+# CommCare - To Indicate mobile
+COMMCARE_NAME = "CommCare"
 
 DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
@@ -1954,6 +1960,7 @@ REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
 }
 
+SENTRY_CONFIGURED = False
 _raven_config = helper.configure_sentry(
     BASE_DIR,
     SERVER_ENVIRONMENT,
@@ -1963,3 +1970,4 @@ _raven_config = helper.configure_sentry(
 )
 if _raven_config:
     RAVEN_CONFIG = _raven_config
+    SENTRY_CONFIGURED = True

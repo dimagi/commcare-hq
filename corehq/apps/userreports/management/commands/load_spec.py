@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 from optparse import make_option
 from couchdbkit import ResourceNotFound
@@ -44,8 +45,8 @@ class Command(BaseCommand):
             to_save.validate()
             to_save.save()
 
-            print 'updated {}: "{}"'.format(to_save.doc_type, to_save)
+            print('updated {}: "{}"'.format(to_save.doc_type, to_save))
             if options['rebuild'] and isinstance(to_save, DataSourceConfiguration):
-                print 'rebuilding table...'
+                print('rebuilding table...')
                 rebuild_indicators(to_save._id)
-                print '...done!'
+                print('...done!')

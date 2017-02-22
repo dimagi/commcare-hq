@@ -202,7 +202,7 @@ class SOHHandler(KeywordHandler):
         except ProductCodeException as e:
             self.respond(e.message)
             return True
-        except Exception, e:  # todo: should we only trap SMSErrors?
+        except Exception as e:  # todo: should we only trap SMSErrors?
             if settings.UNIT_TESTING or settings.DEBUG:
                 raise
             self.respond('problem with stock report: %s' % str(e))

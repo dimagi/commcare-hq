@@ -32,7 +32,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
-        except ProgrammingError, e:
+        except ProgrammingError as e:
             raise TableRebuildError('problem rebuilding UCR table {}: {}'.format(self.config, e))
         finally:
             self.session_helper.Session.commit()
@@ -41,7 +41,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.session_helper.Session.remove()
         try:
             build_table(self.engine, self.get_table())
-        except ProgrammingError, e:
+        except ProgrammingError as e:
             raise TableRebuildError('problem building UCR table {}: {}'.format(self.config, e))
         finally:
             self.session_helper.Session.commit()

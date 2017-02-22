@@ -1,3 +1,4 @@
+from __future__ import print_function
 import hashlib
 import json
 import os
@@ -25,15 +26,15 @@ class Command(BaseCommand):
         prefix = os.getcwd()
         current_snapshot = gitinfo.get_project_snapshot(self.root_dir, submodules=False)
         current_sha = current_snapshot['commits'][0]['sha']
-        print "Current commit SHA: %s" % current_sha
+        print("Current commit SHA: %s" % current_sha)
 
         if 'clear' in args:
-            print "clearing resource cache"
+            print("clearing resource cache")
             rcache.delete_pattern(RESOURCE_PREFIX % '*')
 
         existing_resource_str = rcache.get(RESOURCE_PREFIX % current_sha, None)
         if existing_resource_str:
-            print "getting resource dict from cache"
+            print("getting resource dict from cache")
             self.output_resources(existing_resource_str)
             return
 

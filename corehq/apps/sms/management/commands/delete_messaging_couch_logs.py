@@ -1,3 +1,4 @@
+from __future__ import print_function
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (SMSLog, SMS, CallLog, LastReadMessage,
     ExpectedCallbackEventLog, ExpectedCallback)
@@ -187,7 +188,7 @@ class Command(BaseCommand):
 
             count += 1
             if (count % 10000) == 0:
-                print 'Processed %s / %s %s documents' % (count, total_count, couch_model.__name__)
+                print('Processed %s / %s %s documents' % (count, total_count, couch_model.__name__))
 
     def verify(self):
         with open('messaging_logs.txt', 'w') as f:
@@ -197,27 +198,27 @@ class Command(BaseCommand):
                 self.get_expected_callback_compare_fields(), f)
 
     def delete_models(self, delete_interval):
-        print 'Deleting SMSLogs...'
+        print('Deleting SMSLogs...')
         count = iter_bulk_delete_with_doc_type_verification(SMSLog.get_db(), self.get_sms_couch_ids(), 'SMSLog',
             wait_time=delete_interval, max_fetch_attempts=5)
-        print 'Deleted %s documents' % count
+        print('Deleted %s documents' % count)
 
-        print 'Deleting CallLogs...'
+        print('Deleting CallLogs...')
         count = iter_bulk_delete_with_doc_type_verification(CallLog.get_db(), self.get_call_couch_ids(), 'CallLog',
             wait_time=delete_interval, max_fetch_attempts=5)
-        print 'Deleted %s documents' % count
+        print('Deleted %s documents' % count)
 
-        print 'Deleting ExpectedCallbackEventLogs...'
+        print('Deleting ExpectedCallbackEventLogs...')
         count = iter_bulk_delete_with_doc_type_verification(ExpectedCallbackEventLog.get_db(),
             self.get_callback_couch_ids(), 'ExpectedCallbackEventLog', wait_time=delete_interval,
             max_fetch_attempts=5)
-        print 'Deleted %s documents' % count
+        print('Deleted %s documents' % count)
 
-        print 'Deleting LastReadMessages...'
+        print('Deleting LastReadMessages...')
         count = iter_bulk_delete_with_doc_type_verification(LastReadMessage.get_db(),
             self.get_lastreadmessage_couch_ids(), 'LastReadMessage', wait_time=delete_interval,
             max_fetch_attempts=5)
-        print 'Deleted %s documents' % count
+        print('Deleted %s documents' % count)
 
     def handle(self, *args, **options):
         if options['verify']:

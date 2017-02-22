@@ -6,7 +6,7 @@ from corehq.apps.reports_core.filters import Choice
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
-from custom.enikshay.reports.filters import EnikshayLocationFilter
+from custom.enikshay.reports.filters import EnikshayLocationFilter, EnikshayMigrationFilter
 from custom.enikshay.reports.generic import EnikshayReport
 from custom.enikshay.reports.sqldata.case_finding_sql_data import CaseFindingSqlData
 from custom.enikshay.reports.sqldata.charts_sql_data import ChartsSqlData
@@ -24,7 +24,7 @@ class WebDashboardReport(EnikshayReport):
     slug = 'web_dashboard'
     use_datatables = False
     report_template_path = 'enikshay/web_dashboard.html'
-    fields = (DatespanFilter, EnikshayLocationFilter)
+    fields = (DatespanFilter, EnikshayLocationFilter, EnikshayMigrationFilter)
 
     emailable = False
 
@@ -77,6 +77,9 @@ class WebDashboardReport(EnikshayReport):
 
         if locations_id:
             filter_values['village'] = locations_id
+
+        if self.report_config.is_migrated is not None:
+            filter_values['is_migrated'] = Choice(value=self.report_config.is_migrated, display='')
 
         sputum_conversion_report.set_filter_values(filter_values)
         sputum_conversion_data = sputum_conversion_report.get_data()[0]

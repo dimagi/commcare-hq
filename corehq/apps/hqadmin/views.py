@@ -311,7 +311,7 @@ def system_ajax(request):
             try:
                 t = cresource.get("api/tasks", params_dict={'limit': task_limit}).body_string()
                 all_tasks = json.loads(t)
-            except Exception, ex:
+            except Exception as ex:
                 return json_response({'error': "Error with getting from celery_flower: %s" % ex}, status_code=500)
 
             for task_id, traw in all_tasks.items():

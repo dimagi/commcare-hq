@@ -1,3 +1,4 @@
+from __future__ import print_function
 import uuid
 import re
 from collections import defaultdict
@@ -105,7 +106,7 @@ class Command(BaseCommand):
                     unique_id = get_form_unique_id(xform_instance)
                 except (MultipleFormsMissingXmlns, FormNameMismatch) as e:
                     log_file.write(e.message)
-                    print e.message
+                    print(e.message)
                     continue
 
                 if unique_id:
@@ -147,14 +148,14 @@ class Command(BaseCommand):
                             dry_run
                         )
                     else:
-                        print 'Could not find unique_id {} in build {}'.format(form_unique_id, build._id)
+                        print('Could not find unique_id {} in build {}'.format(form_unique_id, build._id))
 
     @staticmethod
     def _print_progress(i, total_submissions):
         if i % 200 == 0 and i != 0:
-            print "Progress: {} of {} ({})  {}".format(
+            print("Progress: {} of {} ({})  {}".format(
                 i, total_submissions, round(i / float(total_submissions), 2), datetime.now()
-            )
+            ))
 
 
 def get_submissions_without_xmlns():

@@ -110,7 +110,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
         try:
             config = self.populate_instance(self.instance, cleaned_data)
             config.validate()
-        except Exception, e:
+        except Exception as e:
             raise ValidationError(_(u'Problem with report spec: {}').format(e))
         return cleaned_data
 
@@ -228,7 +228,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         try:
             config = self.populate_instance(self.instance, cleaned_data)
             config.validate()
-        except Exception, e:
+        except Exception as e:
             if settings.DEBUG:
                 raise
             raise ValidationError(_(u'Problem with data source spec: {}').format(e))
