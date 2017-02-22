@@ -1,6 +1,5 @@
 from __future__ import print_function
 from datetime import datetime
-import sys
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
@@ -609,8 +608,7 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
                 )
             except Exception as e:
                 print('Failed parsing {}: {}'.format(old_export['_id'], e))
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                raise exc_type, exc_value, exc_traceback
+                raise
             else:
                 metas.append(migration_meta)
 
