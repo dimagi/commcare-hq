@@ -927,7 +927,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         for result in results:
             response = result[1]
             if isinstance(response, Exception):
-                raise DomainDeleteException(u"Error occurred during domain pre_delete {}: {}".format(self.name, str(response)))
+                raise DomainDeleteException(u"Error occurred during domain pre_delete {}".format(self.name), response)
             elif response:
                 assert isinstance(response, list)
                 dynamic_deletion_operations.extend(response)
