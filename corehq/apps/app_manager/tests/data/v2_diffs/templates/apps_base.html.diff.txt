@@ -129,3 +129,9 @@
          </div>
      {% endif %}
  </div>
+@@ -155,3 +158,5 @@
+     </div>
+     {% endif %}
+ {% endblock modals %}
++
++{% block page_row_classes %}appmanager-content-row{% endblock %}
