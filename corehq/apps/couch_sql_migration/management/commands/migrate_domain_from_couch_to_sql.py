@@ -108,7 +108,8 @@ class Command(BaseCommand):
         form_ids_in_sql = set(FormAccessorSQL.get_deleted_form_ids_in_domain(domain))
         diff_count, num_docs_with_diffs = diff_stats.pop("XFormInstance-Deleted", (0, 0))
         has_diffs |= self._print_status(
-            "XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only
+            "XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql,
+            diff_count, num_docs_with_diffs, short, diffs_only
         )
 
         case_ids_in_couch = set(get_case_ids_in_domain(domain))
@@ -124,7 +125,8 @@ class Command(BaseCommand):
         case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain))
         diff_count, num_docs_with_diffs = diff_stats.pop("CommCareCase-Deleted", (0, 0))
         has_diffs |= self._print_status(
-            'CommCareCase-Deleted', case_ids_in_couch, case_ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only
+            'CommCareCase-Deleted', case_ids_in_couch, case_ids_in_sql,
+            diff_count, num_docs_with_diffs, short, diffs_only
         )
 
         if diff_stats:

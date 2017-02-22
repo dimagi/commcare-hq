@@ -213,7 +213,9 @@ class CouchSqlDomainMigrator(object):
             couch_case = couch_cases[sql_case.case_id]
             sql_case_json = sql_case.to_json()
             diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
-            diffs = filter_case_diffs(couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions)
+            diffs = filter_case_diffs(
+                couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
+            )
             if diffs and not sql_case.is_deleted:
                 couch_case, diffs = self._rebuild_couch_case_and_re_diff(couch_case, sql_case_json)
 
@@ -234,7 +236,9 @@ class CouchSqlDomainMigrator(object):
         )
         rebuilt_case_json = rebuilt_case.to_json()
         diffs = json_diff(rebuilt_case_json, sql_case_json, track_list_indices=False)
-        diffs = filter_case_diffs(rebuilt_case_json, sql_case_json, diffs, self.forms_that_touch_cases_without_actions)
+        diffs = filter_case_diffs(
+            rebuilt_case_json, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
+        )
         return rebuilt_case_json, diffs
 
     def _diff_ledgers(self, case_ids):
