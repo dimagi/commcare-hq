@@ -1,7 +1,7 @@
 from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
 
-from corehq.form_processor.exceptions import AccessRestricted
+from corehq.util.exceptions import AccessRestricted
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, CommCareCaseSQL, \
     CaseTransaction, XFormAttachmentSQL, CommCareCaseIndexSQL, CaseAttachmentSQL
 from corehq.util.test_utils import generate_cases

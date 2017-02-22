@@ -16,13 +16,14 @@ from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (XFormInstanceSQL, XFormOperationSQL,
-    XFormAttachmentSQL, DisabledDbMixin)
+    XFormAttachmentSQL)
 from corehq.form_processor.parsers.form import apply_deprecation
 from corehq.form_processor.tests.utils import (create_form_for_test,
     FormProcessorTestUtils, run_with_all_backends)
 from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
 from corehq.form_processor.utils.xform import TestFormMetadata
 from corehq.sql_db.routers import db_for_read_write
+from corehq.util.mixin import DisabledDbMixin
 from corehq.util.test_utils import trap_extra_setup
 
 DOMAIN = 'test-form-accessor'

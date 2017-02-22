@@ -1,4 +1,5 @@
 import uuid
+from corehq.util.exceptions import AccessRestricted
 
 
 class UUIDGeneratorException(Exception):
@@ -40,3 +41,15 @@ class ValidateModelMixin(object):
     def save(self, *args, **kwargs):
         self.full_clean()
         super(ValidateModelMixin, self).save(*args, **kwargs)
+
+
+class DisabledDbMixin(object):
+
+    def save(self, *args, **kwargs):
+        raise AccessRestricted('Direct object save disabled.')
+
+    def save_base(self, *args, **kwargs):
+        raise AccessRestricted('Direct object save disabled.')
+
+    def delete(self, *args, **kwargs):
+        raise AccessRestricted('Direct object deletion disabled.')
