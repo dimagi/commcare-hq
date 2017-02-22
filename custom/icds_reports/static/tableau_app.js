@@ -135,13 +135,14 @@ function setUpWorkbook(viz) {
 
 function setUpInitialTableauParams() {
     var locationKey = 'user_' + tableauOptions.userLocationLevel;
-    var params = {
-        'view_by': LOCATIONS_MAP[tableauOptions.userLocationLevel],
-        'state': tableauOptions.stateCode,
-        'district': tableauOptions.districtCode,
-        'block': tableauOptions.blockCode,
-    };
+
+    var params = getFiltersValues();
+    params.view_by = LOCATIONS_MAP[tableauOptions.userLocationLevel];
+    params.state = tableauOptions.stateCode;
+    params.district = tableauOptions.districtCode;
+    params.block = tableauOptions.blockCode;
     params[locationKey] = tableauOptions.userLocation;
+
     var today = new Date();
     var lastMonth = new Date(today.getFullYear(), today.getMonth() - 1 , 1);
     params['Month'] = lastMonth.getFullYear() + "-" + (lastMonth.getMonth() + 1) + "-01";
