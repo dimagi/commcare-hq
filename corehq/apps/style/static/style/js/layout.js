@@ -70,7 +70,6 @@ hqLayout.actions = {
 
 
         if ($appmanager.length) {
-            console.log('APP MANAGER');
             var availableHeight = hqLayout.utils.getAvailableContentHeight(),
                 contentHeight = $appmanager.outerHeight();
 
