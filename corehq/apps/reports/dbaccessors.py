@@ -1,10 +1,8 @@
-from itertools import imap
 import json
 
 from django.conf import settings
 
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
-from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types
 
 
 def _get_exports(domain, include_docs=True, reduce=False, **kwargs):
@@ -47,14 +45,3 @@ def touch_exports(domain):
 def hq_group_export_configs_by_domain(domain):
     from corehq.apps.reports.models import HQGroupExportConfiguration
     return get_docs_in_domain_by_class(domain, HQGroupExportConfiguration)
-
-
-def get_all_hq_group_export_configs():
-    from corehq.apps.reports.models import HQGroupExportConfiguration
-    return imap(
-        HQGroupExportConfiguration.wrap,
-        get_all_docs_with_doc_types(
-            HQGroupExportConfiguration.get_db(),
-            ('HQGroupExportConfiguration',)
-        )
-    )
