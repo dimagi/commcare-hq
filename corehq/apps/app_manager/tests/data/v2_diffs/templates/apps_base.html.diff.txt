@@ -74,10 +74,10 @@
    {% endif %}
  
  {% endblock %}
-@@ -66,37 +83,23 @@
+@@ -64,37 +81,23 @@
+     <script src="{% static 'style/js/ui-element.js' %}"></script>
+     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-     <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
-     <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
 -    {% if show_live_preview %}
 +
 +
@@ -120,7 +120,7 @@
       id="js-appmanager-body">
      {% if app %}
          {% if error %}
-@@ -121,7 +124,7 @@
+@@ -119,7 +122,7 @@
                  {% endblocktrans %}
              </p>
              <br>
