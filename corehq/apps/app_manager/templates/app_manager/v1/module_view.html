@@ -2,6 +2,7 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load app_manager_extras %}
 {% block head %}{{ block.super }}
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
@@ -68,9 +69,9 @@
     </li>
     {% endif %}
     {% endfor %}
-    {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
+    {% if details and app|get_available_modules_for_case_list_configuration:module %}
         <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-    {% endif %}{% endif %}
+    {% endif %}
     {% endblock %}{# endblock tab-headers #}
 </ul>
 <div class="spacer"></div>
@@ -95,11 +96,15 @@
     </div>
     {% endif %}
     {% endfor %}
-    {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
-        <div class="tab-pane" id="module-actions">
-            {% include 'app_manager/v1/partials/module_actions.html' %}
-        </div>
-    {% endif %}{% endif %}
+    {% if details %}
+        {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
+        {% if available_modules %}
+            <div class="tab-pane" id="module-actions">
+                {% include 'app_manager/v1/partials/module_actions.html' %}
+            </div>
+        {% endif %}
+        {% endwith %}
+    {% endif %}
     {% endblock %}{# endblock tab-content #}
 </div>
 </div>

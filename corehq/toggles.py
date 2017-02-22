@@ -1017,13 +1017,6 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-COPY_CASE_CONFIGS = StaticToggle(
-    'copy_case_configs',
-    'Allow copying case list / details screens in basic modules.',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN]
-)
-
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
