@@ -4,6 +4,11 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
+{% block js %}{{ block.super }}
+    <script src='{% static 'hqwebapp/js/initial_page_data.js' %}'></script>
+    <script src='{% static 'hqwebapp/js/urllib.js' %}'></script>
+{% endblock %}
+
 {% block js-inline %} {{ block.super }}
     <script>
         $(function() {
@@ -28,10 +33,10 @@
 
                 if (jsonResp.success) {
                     $testResult.addClass("text-success");
-                    $testResult.text("{% trans 'Success! Response is' %}: " + message);
+                    $testResult.text(gettext('Success! Response is: ') + message);
                 } else {
                     $testResult.addClass("text-danger");
-                    $testResult.text("{% trans 'Failed! Response is' %}: " + message);
+                    $testResult.text(gettext('Failed! Response is: ') + message);
                 }
             };
 
@@ -43,14 +48,14 @@
                 $testResult
                     .removeClass("hide text-success")
                     .addClass("text-danger");
-                $testResult.text("{% trans 'HQ was unable to make the request' %}: " + resp.statusText);
+                $testResult.text(gettext('HQ was unable to make the request: ') + resp.statusText);
             };
 
             $testLinkButton.click(function () {
                 var data = {
                     url: $('#id_url').val(),
                     format: $('#id_format').val(),
-                    repeater_type: {{ repeater_type|JSON }},
+                    repeater_type: hqImport("hqwebapp/js/initial_page_data.js").get("repeater_type"),
                     use_basic_auth: $('#id_use_basic_auth').prop("checked"),
                     username: $('#id_username').val(),
                      password: $('#id_password').val()
@@ -58,7 +63,7 @@
                 $testLinkButton.disableButton();
 
                 $.post({
-                    url: "{% url "test_repeater" domain %}",
+                    url: hqImport("hqwebapp/js/urllib.js").reverse("test_repeater"),
                     data: data,
                     success: handleSuccess,
                     error: handleFailure,
@@ -71,10 +76,13 @@
                     $testLinkButton.addClass('disabled');
                 }
             });
+            debugger;
         });
     </script>
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl "test_repeater" domain %}
+    {% initial_page_data "repeater_type" repeater_type %}
     {% crispy form %}
 {% endblock %}
