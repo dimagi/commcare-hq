@@ -600,11 +600,11 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
                 get_exports_json(domain),
                 length=export_count,
                 prefix=domain):
-            with CriticalSection(['saved-export-{}'.format(old_export._id)], timeout=120):
+            with CriticalSection(['saved-export-{}'.format(old_export['_id'])], timeout=120):
                 try:
                     _, migration_meta = convert_saved_export_to_export_instance(
                         domain,
-                        SavedExportSchema.get(old_export._id),
+                        SavedExportSchema.get(old_export['_id']),
                         dryrun=dryrun,
                         force_convert_columns=force_convert_columns,
                     )
