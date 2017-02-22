@@ -148,10 +148,10 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
         num_days_open = self.get_value_from_fixture(agg_perf.days_open_fixture, 'awc_opened_count')
 
         context = {
-            "visits": "{}/65".format(visits),
+            "visits": "{} / 65".format(visits),
             "thr_distribution": "{} / {}".format(thr_gte_21, thr_count),
             "children_weighed": "{} / {}".format(num_weigh, num_weigh_avail),
-            "days_open": "{}/25".format(num_days_open),
+            "days_open": "{}".format(num_days_open),
         }
 
         return [self.render_template(context, language_code=language_code)]
@@ -326,6 +326,7 @@ class LSAggregatePerformanceIndicator(LSIndicator):
         return fixture.findall(xpath)[0].text
 
     def get_messages(self, language_code=None):
+        visit_on_time = self.get_value_from_fixture(self.visits_fixture, 'visit_on_time')
         visits = self.get_value_from_fixture(self.visits_fixture, 'count')
         thr_gte_21 = self.get_value_from_fixture(self.thr_fixture, 'open_ccs_thr_gte_21')
         thr_count = self.get_value_from_fixture(self.thr_fixture, 'open_count')
@@ -334,10 +335,10 @@ class LSAggregatePerformanceIndicator(LSIndicator):
         num_days_open = self.get_value_from_fixture(self.days_open_fixture, 'awc_opened_count')
 
         context = {
-            "visits": "{}/65".format(visits),
+            "visits": "{} / {}".format(visit_on_time, visits),
             "thr_distribution": "{} / {}".format(thr_gte_21, thr_count),
             "children_weighed": "{} / {}".format(num_weigh, num_weigh_avail),
-            "days_open": "{}/25".format(num_days_open),
+            "days_open": "{}".format(int(num_days_open) // len(self.awc_locations)),
         }
 
         return [self.render_template(context, language_code=language_code)]

@@ -3,7 +3,7 @@
 	<rows>
 		<row index="0" is_total_row="False">
 			<column id="open_ccs_thr_gte_21">1</column>
-			<column id="open_count">1</column>
+			<column id="open_count">2</column>
 			<column id="owner_id">AWC1</column>
 		</row>
 		<row index="9" is_total_row="True">
