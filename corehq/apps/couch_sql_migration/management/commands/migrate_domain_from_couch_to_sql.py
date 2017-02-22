@@ -1,3 +1,4 @@
+from __future__ import print_function
 from itertools import izip_longest, groupby
 
 from django.conf import settings
@@ -53,7 +54,7 @@ class Command(BaseCommand):
             do_couch_to_sql_migration(domain, with_progress=not self.no_input, debug=self.debug)
             has_diffs = self.print_stats(domain, short=True, diffs_only=True)
             if has_diffs:
-                print "\nUse '--stats-short', '--stats-long', '--show-diffs' to see more info.\n"
+                print("\nUse '--stats-short', '--stats-long', '--show-diffs' to see more info.\n")
         if options['blow_away']:
             self.require_only_option('blow_away', options)
             if not self.no_input:
@@ -82,9 +83,9 @@ class Command(BaseCommand):
         db = get_diff_db(domain)
         diffs = sorted(db.get_diffs(), key=lambda d: d.kind)
         for doc_type, diffs in groupby(diffs, key=lambda d: d.kind):
-            print '-' * 50, "Diffs for {}".format(doc_type), '-' * 50
+            print('-' * 50, "Diffs for {}".format(doc_type), '-' * 50)
             for diff in diffs:
-                print '[{}({})] {}'.format(doc_type, diff.doc_id, diff.json_diff)
+                print('[{}({})] {}'.format(doc_type, diff.doc_id, diff.json_diff))
 
     def print_stats(self, domain, short=True, diffs_only=False):
         db = get_diff_db(domain)
@@ -137,7 +138,7 @@ class Command(BaseCommand):
                 )
 
         if diffs_only and not has_diffs:
-            print shell_green("No differences found between old and new docs!")
+            print(shell_green("No differences found between old and new docs!"))
         return has_diffs
 
     def _print_status(self, name, ids_in_couch, ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only):
@@ -155,18 +156,18 @@ class Command(BaseCommand):
         doc_count_row = row.format(n_couch, n_sql)
         header = ((82 - len(name)) / 2) * '_'
 
-        print '\n{} {} {}'.format(header, name, header)
-        print row.format('Couch', 'SQL')
-        print _highlight(doc_count_row)
+        print('\n{} {} {}'.format(header, name, header))
+        print(row.format('Couch', 'SQL'))
+        print(_highlight(doc_count_row))
         if diff_count:
-            print _highlight("{:^83}".format('{} diffs ({} docs)'.format(diff_count, num_docs_with_diffs)))
+            print(_highlight("{:^83}".format('{} diffs ({} docs)'.format(diff_count, num_docs_with_diffs))))
 
         if not short:
             if ids_in_couch ^ ids_in_sql:
                 couch_only = list(ids_in_couch - ids_in_sql)
                 sql_only = list(ids_in_sql - ids_in_couch)
                 for couch, sql in izip_longest(couch_only, sql_only):
-                    print row.format(couch or '', sql or '')
+                    print(row.format(couch or '', sql or ''))
 
         return True
 

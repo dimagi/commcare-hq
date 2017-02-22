@@ -54,7 +54,7 @@ class AppMigrationCommandBase(BaseCommand):
                 migrated_app = self.migrate_app(app_doc)
                 if migrated_app:
                     return DocUpdate(migrated_app)
-        except Exception, e:
+        except Exception as e:
             logger.exception("App {id} not properly migrated".format(id=app_doc['_id']))
             if self.options['failfast']:
                 raise e

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import re
 from datetime import datetime
 from itertools import chain
@@ -68,7 +69,7 @@ class Command(BaseCommand):
                 """
             )
             if confirm != "y":
-                print "\n\t\tSwap duplicates cancelled."
+                print("\n\t\tSwap duplicates cancelled.")
                 return
 
         with open(log_path, "w") as log_file:
@@ -87,7 +88,7 @@ class Command(BaseCommand):
                 except MultiplePreviouslyFixedForms as e:
                     if xform_instance.build_id not in unfixable_builds:
                         unfixable_builds.add(xform_instance.build_id)
-                        print e.message
+                        print(e.message)
                     _log(log_file, WARNING, MULTI_MATCH, xform_instance)
                     continue
                 except CantMatchAForm as e:
@@ -112,9 +113,9 @@ class Command(BaseCommand):
     @staticmethod
     def _print_progress(i, total_submissions):
         if i % 200 == 0 and i != 0:
-            print "Progress: {} of {} ({})  {}".format(
+            print("Progress: {} of {} ({})  {}".format(
                 i, total_submissions, round(i / float(total_submissions), 2), datetime.now()
-            )
+            ))
 
 
 def _log(stream, level, event, xform=None, xform_id=None):

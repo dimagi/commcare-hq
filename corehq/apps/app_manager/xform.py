@@ -35,7 +35,7 @@ def parse_xml(string):
         string = string.encode("utf-8")
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
-    except ET.ParseError, e:
+    except ET.ParseError as e:
         raise XFormException(_(u"Error parsing XML: {}").format(e))
 
 
@@ -997,6 +997,7 @@ class XForm(WrappedNode):
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
+                    "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
                 }
 
                 # Include meta information about the stock entry

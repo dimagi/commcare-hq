@@ -50,15 +50,14 @@ branches:
   - bmb/currentind-string # Biyeun 11/12
   - nh/new_rb  # Norman 11/22
   - refresh-to-same-tab # Jenny 2/9
-  - je/sms-export-final # emord 2/9
+  - je/device-log-details # 2/21
 
   # django 1.10 dependencies - NP 2/10
   - np/110/two-factor
 
   - revert-14997-revert-14712-br/anonymous-formplayer  # BR 2/16
-  - np/django1.10 # NP 2/12
-  - sk/sentry  # SK 2/13
-  - xmlns-overflow  # Jenny 2/16
+#  - np/django1.10 # NP 2/12
+  - np/110/requestcontext # NP 2/22
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

@@ -87,7 +87,7 @@ def get_filter_values(filters, request_dict, user=None):
             filter.css_id: filter.get_value(request_dict, user)
             for filter in filters
         }
-    except FilterException, e:
+    except FilterException as e:
         raise UserReportsFilterError(unicode(e))
 
 

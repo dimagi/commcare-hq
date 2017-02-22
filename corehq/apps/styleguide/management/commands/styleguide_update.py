@@ -1,3 +1,4 @@
+from __future__ import print_function
 from pycco.main import template, parse, highlight, re, destination
 import os
 from django.core.management.base import BaseCommand
@@ -48,7 +49,7 @@ class Command(BaseCommand):
                 })
                 result = re.sub(r"__DOUBLE_OPEN_STACHE__", "{{",
                                 rendered).encode("utf-8")
-            print destination(source, outdir=outdir)
+            print(destination(source, outdir=outdir))
             with open(destination(source, outdir=outdir), "w") as fout:
                 fout.write(result)
 
