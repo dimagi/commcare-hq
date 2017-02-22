@@ -33,7 +33,7 @@ from dimagi.utils.couch.database import (
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.html import format_html
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, log_signal_errors
 from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
@@ -651,18 +651,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
-        for result in results:
-            # Second argument is None if there was no error
-            return_val = result[1]
-            if return_val:
-                notify_exception(
-                    None,
-                    message="Error occurred during domain post_save (%s)" % return_val.__class__.__name__,
-                    details={
-                        'domain': self.name
-                    },
-                    exec_info=(type(return_val), return_val, return_val.__traceback__)
-                )
+        log_signal_errors(results, "Error occurred during domain post_save (%s)", {'domain': self.name})
 
     def save_copy(self, new_domain_name=None, new_hr_name=None, user=None,
                   copy_by_id=None, share_reminders=True,
