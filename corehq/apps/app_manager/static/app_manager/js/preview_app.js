@@ -123,9 +123,9 @@ hqDefine('app_manager/js/preview_app.js', function() {
         }
     };
 
-    module.makePreviewHidden = function () {
-        _private.hideAppPreview(true);
-        localStorage.removeItem(module.DATA.OPEN);
+    module.forceShowPreview = function () {
+        _private.showAppPreview(false);
+        localStorage.setItem(module.DATA.OPEN, module.DATA.OPEN);
     };
 
     module.initPreviewWindow = function (layoutController) {
