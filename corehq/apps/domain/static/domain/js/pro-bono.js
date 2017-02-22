@@ -20,7 +20,7 @@ $(function () {
         multiple: true,
         data: [],
         formatNoMatches: function () {
-            return django.gettext("Please enter a valid email.");
-        }
+            return gettext("Please enter a valid email.");
+        },
     });
 });
