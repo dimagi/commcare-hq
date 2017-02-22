@@ -94,47 +94,48 @@ class Command(BaseCommand):
         for doc_type in doc_types():
             form_ids_in_couch = set(get_form_ids_by_type(domain, doc_type))
             form_ids_in_sql = set(FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type))
-            diff_count = diff_stats.pop(doc_type, 0)
+            diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
             has_diffs |= self._print_status(
-                doc_type, form_ids_in_couch, form_ids_in_sql, diff_count, short, diffs_only
+                doc_type, form_ids_in_couch, form_ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only
             )
 
         form_ids_in_couch = set(get_doc_ids_in_domain_by_type(
             domain, "XFormInstance-Deleted", XFormInstance.get_db())
         )
         form_ids_in_sql = set(FormAccessorSQL.get_deleted_form_ids_in_domain(domain))
-        diff_count = diff_stats.pop("XFormInstance-Deleted", 0)
+        diff_count, num_docs_with_diffs = diff_stats.pop("XFormInstance-Deleted", (0, 0))
         has_diffs |= self._print_status(
-            "XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql, diff_count, short, diffs_only
+            "XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only
         )
 
         case_ids_in_couch = set(get_case_ids_in_domain(domain))
         case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(domain))
-        diff_count = diff_stats.pop("CommCareCase", 0)
+        diff_count, num_docs_with_diffs = diff_stats.pop("CommCareCase", (0, 0))
         has_diffs |= self._print_status(
-            'CommCareCase', case_ids_in_couch, case_ids_in_sql, diff_count, short, diffs_only
+            'CommCareCase', case_ids_in_couch, case_ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only
         )
 
         case_ids_in_couch = set(get_doc_ids_in_domain_by_type(
             domain, "CommCareCase-Deleted", XFormInstance.get_db())
         )
         case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain))
-        diff_count = diff_stats.pop("CommCareCase-Deleted", 0)
+        diff_count, num_docs_with_diffs = diff_stats.pop("CommCareCase-Deleted", (0, 0))
         has_diffs |= self._print_status(
-            'CommCareCase-Deleted', case_ids_in_couch, case_ids_in_sql, diff_count, short, diffs_only
+            'CommCareCase-Deleted', case_ids_in_couch, case_ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only
         )
 
         if diff_stats:
-            for key, count in diff_stats.items():
+            for key, counts in diff_stats.items():
+                diff_count, num_docs_with_diffs = counts
                 has_diffs |= self._print_status(
-                    key, set(), set(), count, short, diffs_only
+                    key, set(), set(), diff_count, num_docs_with_diffs, short, diffs_only
                 )
 
         if diffs_only and not has_diffs:
             print shell_green("No differences found between old and new docs!")
         return has_diffs
 
-    def _print_status(self, name, ids_in_couch, ids_in_sql, diff_count, short, diffs_only):
+    def _print_status(self, name, ids_in_couch, ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only):
         n_couch = len(ids_in_couch)
         n_sql = len(ids_in_sql)
         has_diff = n_couch != n_sql or diff_count
@@ -153,7 +154,7 @@ class Command(BaseCommand):
         print row.format('Couch', 'SQL')
         print _highlight(doc_count_row)
         if diff_count:
-            print _highlight("{:^83}".format('{} diffs'.format(diff_count)))
+            print _highlight("{:^83}".format('{} diffs ({} docs)'.format(diff_count, num_docs_with_diffs)))
 
         if not short:
             if ids_in_couch ^ ids_in_sql:

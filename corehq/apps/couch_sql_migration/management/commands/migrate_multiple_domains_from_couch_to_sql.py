@@ -58,7 +58,7 @@ class Command(BaseCommand):
             self.stderr.write("Migration has diffs, aborting for domain {}".format(domain))
             self.abort(domain)
             writer = SimpleTableWriter(self.stdout, TableRowFormatter([50, 10, 10, 10]))
-            writer.write_table(['Doc Type', '# Couch', '# SQL', '# Diffs'], [
+            writer.write_table(['Doc Type', '# Couch', '# SQL', '# Diffs', '# Docs with Diffs'], [
                 (doc_type,) + stat for doc_type, stat in stats.items()
             ])
         else:
@@ -73,9 +73,9 @@ class Command(BaseCommand):
         stats = {}
 
         def _update_stats(doc_type, couch_count, sql_count):
-            diff_count = diff_stats.pop(doc_type, 0)
+            diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
             if diff_count or couch_count != sql_count:
-                stats[doc_type] = (couch_count, sql_count, diff_count)
+                stats[doc_type] = (couch_count, sql_count, diff_count, num_docs_with_diffs)
 
         for doc_type in doc_types():
             form_ids_in_couch = len(set(get_form_ids_by_type(domain, doc_type)))
