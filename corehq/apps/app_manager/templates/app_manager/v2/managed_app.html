@@ -89,12 +89,19 @@
           <button type="button" class="popover-additem-option new-module" data-type="survey">
             <i class="fa fa-file-o"></i>
             {% trans "Surveys" %}
+            <p>{% blocktrans %}
+              <i class="fa fa-info-circle"></i> Collect data<br/>once.
+            {% endblocktrans %}</p>
+          </button>
           </button>
         </div>
         <div class="col-xs-6">
           <button type="button" class="popover-additem-option new-module" data-type="case">
             <i class="fa fa-bars"></i>
             {% trans "Case List" %}
+            <p>{% blocktrans %}
+              <i class="fa fa-info-circle"></i> Track items<br/>over time.
+            {% endblocktrans %}</p>
           </button>
         </div>
       </div>
