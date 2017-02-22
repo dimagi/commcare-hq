@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 
 from django.test import SimpleTestCase, TestCase
@@ -14,12 +13,6 @@ from corehq.apps.locations.tests.util import (
 )
 from corehq.apps.users.models import CommCareUser
 
-from custom.icds.const import (
-    CHILDREN_WEIGHED_REPORT_ID,
-    DAYS_AWC_OPEN_REPORT_ID,
-    HOME_VISIT_REPORT_ID,
-    THR_REPORT_ID,
-)
 from custom.icds.messaging.indicators import (
     LSAggregatePerformanceIndicator,
     AWWAggregatePerformanceIndicator,
