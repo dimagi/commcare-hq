@@ -130,3 +130,26 @@ var Select2SmsRateHandler = function (options) {
 
 Select2SmsRateHandler.prototype = Object.create( BaseSelect2Handler.prototype );
 Select2SmsRateHandler.prototype.constructor = Select2SmsRateHandler;
+
+$(function() {
+    _.each($(".ko-sms-rate-calculator"), function(element) {
+        var smsRateCalculator = new SMSRateCalculator({
+            country_code: {
+                fieldName: 'country_code',
+                currentValue: ''
+            }
+        });
+        $(element).koApplyBindings(smsRateCalculator);
+        smsRateCalculator.init();
+    });
+
+    _.each($(".ko-public-sms-rate-calculator"), function(element) {
+        var smsRateCalculator = new PublicSMSRateCalculator({
+            country_code: {
+                fieldName: 'country_code',
+                currentValue: ''
+            }
+        });
+        $(element).koApplyBindings(smsRateCalculator);
+    });
+});
