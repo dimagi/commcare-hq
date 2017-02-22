@@ -49,9 +49,10 @@ class PeriodicCaseUpdater(object):
     def run(self):
         for episode in self._get_open_episode_cases():
             update = EpisodeUpdate(episode, self)
-            if update.update_kwargs():
+            case_block = update.case_block()
+            if case_block:
                 submit_case_blocks(
-                    [ElementTree.tostring(CaseBlock(**update.update_kwargs()).as_xml())],
+                    [ElementTree.tostring(case_block.as_xml())],
                     self.domain
                 )
 
@@ -166,3 +167,14 @@ class EpisodeUpdate(object):
                     "No fixture item found with schedule_id {}".format(adherence_schedule_id)
                 )
             return update
+
+    def case_block(self):
+        update = self.update_json()
+        if update:
+            return CaseBlock(**{
+                'case_id': self.episode.case_id
+                'create': False,
+                'update': self.update_json()
+            })
+        else:
+            return None
