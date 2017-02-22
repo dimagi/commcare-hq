@@ -24,8 +24,14 @@ from couchforms.models import doc_types, XFormInstance
 class Command(BaseCommand):
     args = "<path to domain list>"
 
+    def add_arguments(self, parser):
+        parser.add_argument('--strict', action='store_true', default=False,
+                            help="Abort domain migration even for diffs in deleted doc types")
+
     def handle(self, *args, **options):
         with_traceback = options['traceback']
+        self.strict = options['strict']
+
         path = args[0]
         if not os.path.isfile(path):
             raise CommandError("Couldn't locate domain list: {}".format(path))
@@ -92,11 +98,13 @@ class Command(BaseCommand):
         case_ids_in_sql = len(set(CaseAccessorSQL.get_case_ids_in_domain(domain)))
         _update_stats("CommCareCase", case_ids_in_couch, case_ids_in_sql)
 
-        case_ids_in_couch = len(set(get_doc_ids_in_domain_by_type(
-            domain, "CommCareCase-Deleted", XFormInstance.get_db())
-        ))
-        case_ids_in_sql = len(set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)))
-        _update_stats("CommCareCase-Deleted", case_ids_in_couch, case_ids_in_sql)
+        if self.strict:
+            # only care about these in strict mode
+            case_ids_in_couch = len(set(get_doc_ids_in_domain_by_type(
+                domain, "CommCareCase-Deleted", XFormInstance.get_db())
+            ))
+            case_ids_in_sql = len(set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)))
+            _update_stats("CommCareCase-Deleted", case_ids_in_couch, case_ids_in_sql)
 
         if diff_stats:
             for key in diff_stats.keys():
