@@ -19,7 +19,6 @@ class Command(BaseCommand):
 
         query = SoftwarePlanVersion.objects
 
-        filters = {}
         if skip_edition:
             query = query.exclude(plan__edition__in=skip_edition.split(','))
 
