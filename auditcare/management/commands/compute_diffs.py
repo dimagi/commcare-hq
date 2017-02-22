@@ -1,7 +1,8 @@
-from django.core.management.base import  NoArgsCommand
+from django.core.management.base import BaseCommand
 from auditcare.models import AccessAudit, ModelActionAudit
 
-class Command(NoArgsCommand):
+
+class Command(BaseCommand):
     help = "Recompute diff properties on all model changes, and set next/prev pointers"
 
     def add_arguments(self, parser):
