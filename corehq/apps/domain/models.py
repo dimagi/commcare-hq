@@ -653,11 +653,15 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
         for result in results:
             # Second argument is None if there was no error
-            if result[1]:
+            return_val = result[1]
+            if return_val:
                 notify_exception(
                     None,
-                    message="Error occured during domain post_save %s: %s" %
-                            (self.name, str(result[1]))
+                    message="Error occurred during domain post_save (%s)" % return_val.__class__.__name__,
+                    details={
+                        'domain': self.name
+                    },
+                    exec_info=(type(return_val), return_val, return_val.__traceback__)
                 )
 
     def save_copy(self, new_domain_name=None, new_hr_name=None, user=None,
