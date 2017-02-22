@@ -31,7 +31,7 @@
                     $testResult.text("{% trans 'Success! Response is' %}: " + message);
                 } else {
                     $testResult.addClass("text-danger");
-                    $testResult.text(gettext('Failed! Response is: ') + message);
+                    $testResult.text("{% trans 'Failed! Response is' %}: " + message);
                 }
             };
 
