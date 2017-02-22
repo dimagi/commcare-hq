@@ -377,13 +377,6 @@ def new_form(request, domain, app_id, module_id):
     name = request.POST.get('name')
     form = app.new_form(module_id, name, lang)
 
-    blank_form = render_to_string("app_manager/blank_form.xml", context={
-        'xmlns': str(uuid.uuid4()).upper(),
-        'name': form.name[lang],
-        'lang': lang,
-    })
-    form.source = blank_form
-
     if toggles.APP_MANAGER_V2.enabled(domain):
         case_action = request.POST.get('case_action', 'none')
         if case_action == 'update':

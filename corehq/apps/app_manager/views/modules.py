@@ -975,7 +975,7 @@ def new_module(request, domain, app_id):
                     suffix = suffix + 1
                     module.case_type = 'case-{}'.format(suffix)
             else:
-                form = app.new_form(module_id, "Survey", lang)
+                app.new_form(module_id, "Survey", lang)
             form_id = 0
         else:
             app.new_form(module_id, "Untitled Form", lang)
