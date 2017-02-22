@@ -1,4 +1,4 @@
-from itertools import izip_longest
+from itertools import izip_longest, groupby
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -80,8 +80,11 @@ class Command(BaseCommand):
 
     def show_diffs(self, domain):
         db = get_diff_db(domain)
-        for diff in db.get_diffs():
-            print '[{}({})] {}'.format(diff.kind, diff.doc_id, diff.json_diff)
+        diffs = sorted(db.get_diffs(), key=lambda d: d.kind)
+        for doc_type, diffs in groupby(diffs, key=lambda d: d.kind):
+            print '-' * 50, "Diffs for {}".format(doc_type), '-' * 50
+            for diff in diffs:
+                print '[{}({})] {}'.format(doc_type, diff.doc_id, diff.json_diff)
 
     def print_stats(self, domain, short=True, diffs_only=False):
         db = get_diff_db(domain)
