@@ -293,9 +293,6 @@ class TestCreditTransfers(BaseAccountingTest):
 
     @classmethod
     def tearDownClass(cls):
-        CreditAdjustment.objects.all().delete()
-        CreditLine.objects.all().delete()
-        generator.delete_all_subscriptions()
         cls.web_user.delete()
         super(TestCreditTransfers, cls).tearDownClass()
 

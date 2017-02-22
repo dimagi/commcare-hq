@@ -56,8 +56,6 @@ class TestSubscriptionProperties(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        generator.delete_all_subscriptions()
-        generator.delete_all_accounts()
         cls.base_domain.delete()
         cls.user.delete()
         super(TestSubscriptionProperties, cls).tearDownClass()
