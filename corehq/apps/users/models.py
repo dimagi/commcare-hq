@@ -1421,11 +1421,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self)
         for result in results:
             # Second argument is None if there was no error
-            if result[1]:
+            return_val = result[1]
+            if return_val:
                 notify_exception(
                     None,
-                    message="Error occured while syncing user %s: %s" %
-                            (self.username, repr(result[1]))
+                    message="Error occurred while syncing user (%s)" % return_val.__class__.__name__,
+                    details={
+                        'username': self.username
+                    },
+                    exec_info=(type(return_val), return_val, return_val.__traceback__)
                 )
 
     def delete(self):
