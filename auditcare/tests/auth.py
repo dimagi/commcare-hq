@@ -61,7 +61,7 @@ class AuthenticationTestCase(TestCase):
 
         #login
         start_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
-        response = self.client.post(reverse('auditcare.views.audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'mockmock'})
+        response = self.client.post(reverse('audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'mockmock'})
         login_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         self.assertEqual(start_count+1, login_count)
 
@@ -79,7 +79,7 @@ class AuthenticationTestCase(TestCase):
         
     def testSingleFailedLogin(self):
         start_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
-        response = self.client.post(reverse('auditcare.views.audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
+        response = self.client.post(reverse('audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
 
         login_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         self.assertEquals(start_count+1, login_count)
@@ -97,7 +97,7 @@ class AuthenticationTestCase(TestCase):
         login.COOLOFF_TIME = timedelta(seconds=4)
 
         start_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
-        response = self.client.post(reverse('auditcare.views.audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
+        response = self.client.post(reverse('audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
 
         firstlogin_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         self.assertEquals(start_count+1, firstlogin_count)
@@ -110,7 +110,7 @@ class AuthenticationTestCase(TestCase):
 
         for n in range(1,3):
             #we are logging in within the cooloff period, so let's check to see if it doesn't increment.
-            response = self.client.post(reverse('auditcare.views.audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
+            response = self.client.post(reverse('audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
             next_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
             self.assertEquals(firstlogin_count, next_count)
 
@@ -119,7 +119,7 @@ class AuthenticationTestCase(TestCase):
             self.assertEquals(next_audit.failures_since_start, n+start_failures)
             time.sleep(1)
         time.sleep(3)
-        response = self.client.post(reverse('auditcare.views.audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrong'})
+        response = self.client.post(reverse('audited_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrong'})
         cooled_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
         self.assertEquals(cooled_audit.failures_since_start,1)
 
