@@ -8,17 +8,9 @@ from auditcare.utils import show_urls
 
 
 class Command(BaseCommand):
-    args = ''
     help = """Output ALL views in your project in a format helpful for auditcare"""
 
-    option_list = (
-        make_option('--show-path', action='store_true', dest='show_path', default=False,
-                    help='Show the URL paths, this is for informational purposes only'),
-    )
-
-
-    def handle(self, *args, **options):
-        show_path = options["show_path"]
+    def handle(self, **options):
         consolidated = set(show_urls.show_urls(urls.urlpatterns))
         for raw_path, view_name in consolidated:
             path = raw_path.replace('^', '/').replace('$','')

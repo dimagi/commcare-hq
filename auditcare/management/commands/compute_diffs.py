@@ -1,15 +1,21 @@
-from optparse import make_option
-from django.core.management.base import  NoArgsCommand
+from django.core.management.base import BaseCommand
 from auditcare.models import AccessAudit, ModelActionAudit
 
-class Command(NoArgsCommand):
+
+class Command(BaseCommand):
     help = "Recompute diff properties on all model changes, and set next/prev pointers"
-    option_list = NoArgsCommand.option_list + (
-        make_option('--recompute', action='store_true', dest='recompute',
-            help='Recompute values.'),
-    )
-    def handle_noargs(self, **options):
-        recompute = options.get('recompute', False)
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--recompute',
+            action='store_true',
+            default=False,
+            dest='recompute',
+            help='Recompute values.',
+        )
+
+    def handle(self, **options):
+        recompute = options['recompute']
         print recompute
         db = AccessAudit.get_db()
         vals = db.view('auditcare/model_actions_by_id', group=True, group_level=1).all()
