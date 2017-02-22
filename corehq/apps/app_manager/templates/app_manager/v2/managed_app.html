@@ -41,8 +41,9 @@
           </div>
           <h2 class="appnav-name">
             <a href="{% url "view_app" domain app.id %}"
-               class="variable-app_name appnav-responsive">
-                {{ app.name }}
+               class="appnav-responsive">
+                <i class="fa fa-mobile appnav-name-icon"></i>
+                <span class="variable-app_name">{{ app.name }}</span>
             </a>
           </h2>
       </div>
