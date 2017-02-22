@@ -28,7 +28,7 @@
 
                 if (jsonResp.success) {
                     $testResult.addClass("text-success");
-                    $testResult.text(gettext('Success! Response is: ' + message);
+                    $testResult.text("{% trans 'Success! Response is' %}: " + message);
                 } else {
                     $testResult.addClass("text-danger");
                     $testResult.text(gettext('Failed! Response is: ') + message);
@@ -43,7 +43,7 @@
                 $testResult
                     .removeClass("hide text-success")
                     .addClass("text-danger");
-                $testResult.text(gettext('HQ was unable to make the request: ' + resp.statusText);
+                $testResult.text("{% trans 'HQ was unable to make the request' %}: " + resp.statusText);
             };
 
             $testLinkButton.click(function () {
