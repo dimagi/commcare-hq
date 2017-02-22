@@ -2,6 +2,9 @@
 /*global _ LocationSelectViewModel */
 
 
+/*eslint no-unused-vars:0*/
+var LOAD_LOCS_URL = '/locations/api/';
+
 describe('Location Drilldown', function() {
     var hierarchy = [["state", [null]], ["district", ["state"]], ["block", ["district"]]];
 
