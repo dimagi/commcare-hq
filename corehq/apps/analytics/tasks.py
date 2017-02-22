@@ -447,9 +447,9 @@ def submit_data_to_hub_and_kiss(submit_json):
     for (dispatcher, error_message) in [hubspot_dispatch, kissmetrics_dispatch]:
         try:
             dispatcher(submit_json)
-        except requests.exceptions.HTTPError, e:
+        except requests.exceptions.HTTPError as e:
             _hubspot_failure_soft_assert(False, e.response.content)
-        except Exception, e:
+        except Exception as e:
             notify_exception(None, u"{msg}: {exc}".format(msg=error_message, exc=e))
 
 

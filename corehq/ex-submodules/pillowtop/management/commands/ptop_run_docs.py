@@ -1,3 +1,4 @@
+from __future__ import print_function
 import datetime
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import CommandError, BaseCommand
@@ -63,7 +64,7 @@ class Command(BaseCommand):
 
     def log(self, string):
         timestamp = datetime.datetime.utcnow().replace(microsecond=0)
-        print "[{}] {}".format(timestamp, string)
+        print("[{}] {}".format(timestamp, string))
 
     def check_file(self, docs_filename):
         ok = True

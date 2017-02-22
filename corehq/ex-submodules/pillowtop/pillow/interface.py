@@ -107,7 +107,7 @@ class PillowBase(object):
     def process_with_error_handling(self, change):
         try:
             self.process_change(change)
-        except Exception, ex:
+        except Exception as ex:
             handle_pillow_error(self, change, ex)
 
     @abstractmethod

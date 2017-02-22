@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import uuid
 from datetime import datetime
@@ -57,10 +58,10 @@ class CouchSqlDomainMigrator(object):
 
     def log_debug(self, message):
         if self.debug:
-            print '[DEBUG] {}'.format(message)
+            print('[DEBUG] {}'.format(message))
 
     def log_error(self, message):
-        print '[ERROR] {}'.format(message)
+        print('[ERROR] {}'.format(message))
 
     def migrate(self):
         self._process_main_forms()

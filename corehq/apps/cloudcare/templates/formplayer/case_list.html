@@ -47,11 +47,13 @@
       <% } %>
 
       <% if (actions) { %>
+        <div class="caselist-actions">
         <% _.each(actions, function(action, index) { %>
-            <div class="caselist-action-button">
+            <div class="caselist-action-button btn-group">
               <button type="button" class="btn btn-success btn-lg" id="double-management" data-index="<%= index %>"><%= action.text %></button>
             </div>
         <% }) %>
+        </div>
       <% } %>
 
       <% if (pageCount) { %>

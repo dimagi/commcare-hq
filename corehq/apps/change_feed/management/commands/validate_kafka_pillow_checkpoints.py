@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 from django.core.management import BaseCommand
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
@@ -36,7 +37,7 @@ def validate_checkpoints(print_only):
                     pillow.pillow_id, e
                 )
                 if print_only:
-                    print message
+                    print(message)
                 else:
                     raise Exception(message)
 

@@ -17,6 +17,7 @@
         save_url: "{% url "edit_form_actions" app.domain app.id module.id nav_form.id %}",
         requires: form_requires,
         reserved_words: {{ case_reserved_words_json|JSON }},
+        valid_index_names: {{ valid_index_names|JSON }},
         moduleCaseTypes: {{ module_case_types|JSON }},
         caseType: {{ form.get_case_type|JSON }},
         allowUsercase: {{ allow_usercase|JSON }},

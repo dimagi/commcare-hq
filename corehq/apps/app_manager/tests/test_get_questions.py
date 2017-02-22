@@ -136,6 +136,7 @@ QUESTIONS = [
         'label': '#form/datanode',
         'translations': {},
         'type': 'DataBindOnly',
+        'relevant': None,
         'calculate': None
     },
 ]

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import re
 from collections import defaultdict
 from optparse import make_option
@@ -56,7 +57,7 @@ class Command(BaseCommand):
                 """
             )
             if confirm != "y":
-                print "\n\t\tSwap duplicates cancelled."
+                print("\n\t\tSwap duplicates cancelled.")
                 return
 
         ids_file_path = ids_file_path.strip()
@@ -89,17 +90,17 @@ class Command(BaseCommand):
                         self.log_no_dups(log_file, bad_xform_id, domain)
                         no_dups_counts[domain] += 1
 
-        print "Found {} forms with no duplicates".format(sum(no_dups_counts.values()))
-        print "Found {} forms with one duplicate".format(sum(one_dup_counts.values()))
-        print "Found {} forms with multiple duplicates".format(sum(multi_dups_counts.values()))
-        print ""
+        print("Found {} forms with no duplicates".format(sum(no_dups_counts.values())))
+        print("Found {} forms with one duplicate".format(sum(one_dup_counts.values())))
+        print("Found {} forms with multiple duplicates".format(sum(multi_dups_counts.values())))
+        print("")
         domains = set(no_dups_counts.keys()) | set(one_dup_counts.keys()) | set(multi_dups_counts.keys())
         domains = sorted(list(domains))
         for domain in domains:
-            print domain
-            print "\t{} forms with no duplicates".format(no_dups_counts[domain])
-            print "\t{} forms with one duplicate". format(one_dup_counts[domain])
-            print "\t{} forms with multiple duplicates".format(multi_dups_counts[domain])
+            print(domain)
+            print("\t{} forms with no duplicates".format(no_dups_counts[domain]))
+            print("\t{} forms with one duplicate". format(one_dup_counts[domain]))
+            print("\t{} forms with multiple duplicates".format(multi_dups_counts[domain]))
 
     def get_duplicates(self, domain, xform_id):
 
@@ -194,6 +195,6 @@ class Command(BaseCommand):
     @staticmethod
     def _print_progress(i, total_submissions):
         if i % 20 == 0 and i != 0:
-            print "Progress: {} of {} ({})  {}".format(
+            print("Progress: {} of {} ({})  {}".format(
                 i, total_submissions, round(i / float(total_submissions), 2), datetime.now()
-            )
+            ))

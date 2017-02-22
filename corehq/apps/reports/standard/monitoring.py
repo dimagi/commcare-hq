@@ -44,6 +44,7 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
+from django.conf import settings
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
@@ -1068,7 +1069,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
     is_cacheable = True
 
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
-                                "sent to CommCare HQ.")
+                                "sent to {}.".format(settings.COMMCARE_HQ_NAME))
 
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',

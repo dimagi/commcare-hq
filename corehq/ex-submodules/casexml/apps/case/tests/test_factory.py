@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 
 
@@ -103,41 +103,35 @@ class CaseStructureTest(SimpleTestCase):
 
 class CaseFactoryTest(TestCase):
 
-    @run_with_all_backends
     def test_simple_create(self):
         factory = CaseFactory()
         case = factory.create_case()
         self.assertIsNotNone(CaseAccessors().get_case(case.case_id))
 
-    @run_with_all_backends
     def test_create_overrides(self):
         factory = CaseFactory()
         case = factory.create_case(owner_id='somebody', update={'custom_prop': 'custom_value'})
         self.assertEqual('somebody', case.owner_id)
         self.assertEqual('custom_value', case.dynamic_case_properties()['custom_prop'])
 
-    @run_with_all_backends
     def test_domain(self):
         domain = uuid.uuid4().hex
         factory = CaseFactory(domain=domain)
         case = factory.create_case()
         self.assertEqual(domain, case.domain)
 
-    @run_with_all_backends
     def test_factory_defaults(self):
         owner_id = uuid.uuid4().hex
         factory = CaseFactory(case_defaults={'owner_id': owner_id})
         case = factory.create_case()
         self.assertEqual(owner_id, case.owner_id)
 
-    @run_with_all_backends
     def test_override_defaults(self):
         owner_id = uuid.uuid4().hex
         factory = CaseFactory(case_defaults={'owner_id': owner_id})
         case = factory.create_case(owner_id='notthedefault')
         self.assertEqual('notthedefault', case.owner_id)
 
-    @run_with_all_backends
     def test_create_from_structure(self):
         owner_id = uuid.uuid4().hex
         factory = CaseFactory(case_defaults={
@@ -165,12 +159,11 @@ class CaseFactoryTest(TestCase):
         [regular, child, parent] = cases
         self.assertEqual(1, len(child.indices))
         self.assertEqual(parent_case_id, child.indices[0].referenced_id)
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(2, len(regular.actions))  # create + update
             self.assertEqual(2, len(parent.actions))  # create + update
             self.assertEqual(3, len(child.actions))  # create + update + index
 
-    @run_with_all_backends
     def test_no_walk_related(self):
         factory = CaseFactory()
         parent = factory.create_case()
@@ -182,7 +175,6 @@ class CaseFactoryTest(TestCase):
         self.assertEqual(1, len(child_updates))
         self.assertEqual(parent.case_id, child_updates[0].indices[0].referenced_id)
 
-    @run_with_all_backends
     def test_form_extras(self):
         domain = uuid.uuid4().hex
         LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
@@ -192,7 +184,6 @@ class CaseFactoryTest(TestCase):
         form = FormAccessors(domain).get_form(case.xform_ids[0])
         self.assertEqual(token_id, form.last_sync_token)
 
-    @run_with_all_backends
     def test_form_extras_default(self):
         domain = uuid.uuid4().hex
         # have to enable loose sync token validation for the domain or create actual SyncLog documents.
@@ -204,7 +195,6 @@ class CaseFactoryTest(TestCase):
         form = FormAccessors(domain).get_form(case.xform_ids[0])
         self.assertEqual(token_id, form.last_sync_token)
 
-    @run_with_all_backends
     def test_form_extras_override_defaults(self):
         domain = uuid.uuid4().hex
         LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
@@ -213,3 +203,8 @@ class CaseFactoryTest(TestCase):
         [case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}), form_extras={'last_sync_token': 'differenttoken'})
         form = FormAccessors(domain).get_form(case.xform_ids[0])
         self.assertEqual('differenttoken', form.last_sync_token)
+
+
+@use_sql_backend
+class CaseFactoryTestSQL(CaseFactoryTest):
+    pass

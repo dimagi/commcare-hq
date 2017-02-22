@@ -1,3 +1,4 @@
+from __future__ import print_function
 import logging
 from collections import namedtuple
 from functools import partial
@@ -65,7 +66,7 @@ def catch_signal(sender, **kwargs):
                 'pillow': pillow
             }
 
-    print '\tchecking fluff SQL tables for schema changes'
+    print('\tchecking fluff SQL tables for schema changes')
     engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
 
     with engine.begin() as connection:

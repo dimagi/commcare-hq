@@ -26,6 +26,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         self.requires = params.requires;
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
+        self.valid_index_names = params.valid_index_names;
         self.moduleCaseTypes = params.moduleCaseTypes;
         self.allowUsercase = params.allowUsercase;
 
@@ -661,6 +662,12 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
                         return '<strong>' + self.key() + '</strong> is a reserved word';
                     } else if (self.repeat_context() && self.repeat_context() !== case_transaction.repeat_context()) {
                         return gettext('Inside the wrong repeat!');
+                    } else if (_.difference(
+                                    _.initial(self.key().split(/\//)),
+                                    case_transaction.caseConfig.valid_index_names
+                                ).length) {
+                        return gettext('Property uses unrecognized prefix <strong>' +
+                                        self.key().replace(/\/[^\/]*$/, '') + '</strong>');
                     }
                 }
                 return null;

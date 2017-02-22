@@ -853,7 +853,7 @@ class DomainForms(Resource):
         for form_object in forms_objects:
             form = form_object['form']
             module = form_object['module']
-            form_name = '{} > {} > {}'.format(application.name, module.name['en'], form.name['en'])
+            form_name = u'{} > {} > {}'.format(application.name, module.name['en'], form.name['en'])
             results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
         return results
 

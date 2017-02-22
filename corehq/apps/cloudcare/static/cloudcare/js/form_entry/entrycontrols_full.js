@@ -372,6 +372,7 @@ function ComboboxEntry(question, options) {
             data: self.options(),
             maxLen: Infinity,
             tabSelectsMatch: false,
+            limit: 10,
             suffix: '',
             callbacks: {
                 filter: function(query, data) {

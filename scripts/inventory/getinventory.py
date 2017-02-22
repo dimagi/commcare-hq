@@ -5,6 +5,7 @@ Get server hostname or IP address for the given inventory file and group.
 The server name or IP is printed on stdout on success.
 Errors and help output are printed on stderr.
 """
+from __future__ import print_function
 import os
 import sys
 import argparse

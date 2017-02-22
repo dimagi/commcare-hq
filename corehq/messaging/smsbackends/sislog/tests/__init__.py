@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.test.testcases import TestCase
 from corehq.messaging.smsbackends.sislog.util import convert_raw_string
 
@@ -18,5 +19,5 @@ class GSM0338Portuguese(TestCase):
         for raw, expected in raw_to_clean.items():
             cleaned = convert_raw_string(raw)
             self.assertEqual(cleaned, expected)
-            print "Cleaned text: %s" % cleaned
+            print("Cleaned text: %s" % cleaned)
 

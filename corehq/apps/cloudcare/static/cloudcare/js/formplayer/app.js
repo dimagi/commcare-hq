@@ -172,7 +172,6 @@ FormplayerFrontend.on("start", function (options) {
         savedDisplayOptions,
         appId;
     user.username = options.username;
-    user.language = options.language;
     user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
@@ -188,6 +187,7 @@ FormplayerFrontend.on("start", function (options) {
         singleAppMode: options.singleAppMode,
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
+        language: options.language,
     });
 
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);

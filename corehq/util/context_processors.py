@@ -91,3 +91,12 @@ def enterprise_mode(request):
     return {
         'enterprise_mode': settings.ENTERPRISE_MODE
     }
+
+
+def commcare_hq_names(request):
+    return {
+        'commcare_hq_names': {
+            'COMMCARE_NAME': settings.COMMCARE_NAME,
+            'COMMCARE_HQ_NAME': settings.COMMCARE_HQ_NAME
+        }
+    }

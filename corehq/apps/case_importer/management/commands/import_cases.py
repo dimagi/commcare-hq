@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 from datetime import datetime
 from django.core.management import BaseCommand, CommandError
@@ -30,6 +31,6 @@ class Command(BaseCommand):
 
         config.couch_user_id = user._id
         with get_spreadsheet(export_file) as spreadsheet:
-            print json.dumps(do_import(spreadsheet, config, domain),
-                             default=json_handler)
-            print 'finished in %s seconds' % (datetime.utcnow() - start).seconds
+            print(json.dumps(do_import(spreadsheet, config, domain),
+                             default=json_handler))
+            print('finished in %s seconds' % (datetime.utcnow() - start).seconds)
