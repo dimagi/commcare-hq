@@ -18,6 +18,8 @@ from corehq.apps.reports.filters.users import EmwfUtils
 from corehq.apps.es import UserES, GroupES, groups
 from corehq.apps.locations.models import SQLLocation
 
+from phonelog.models import DeviceReportEntry
+
 logger = logging.getLogger(__name__)
 
 
@@ -239,3 +241,29 @@ def paginate_options(data_sources, query, start, size):
         size -= len(objects)  # how many more do we need for this page?
         options.extend(objects)
     return total, options
+
+
+class DeviceLogFilter(LoginAndDomainMixin, JSONResponseMixin, View):
+    field = None
+
+    def get(self, request, domain):
+        q = self.request.GET.get('q', None)
+        field_filter = {self.field + "__startswith": q}
+        values = (
+            DeviceReportEntry.objects
+            .filter(domain=domain)
+            .filter(**field_filter)
+            .distinct(self.field)
+            .values_list(self.field, flat=True)
+        )[:10]
+        return self.render_json_response({
+            'results': [{'id': v, 'text': v} for v in values],
+        })
+
+
+class DeviceLogUsers(DeviceLogFilter):
+    field = 'username'
+
+
+class DeviceLogIds(DeviceLogFilter):
+    field = 'device_id'
