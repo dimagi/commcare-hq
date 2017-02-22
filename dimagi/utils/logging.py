@@ -27,7 +27,7 @@ def notify_error(message):
     notify_logger.error(message)
 
 
-def notify_exception(request, message=None, details=None):
+def notify_exception(request, message=None, details=None, exec_info=None):
     """
     :param request: a Django request object
     :param message: message string
@@ -38,7 +38,7 @@ def notify_exception(request, message=None, details=None):
     notify_logger.error(
         'Notify Exception: %s' % (message
                                   or "No message provided, fix error handler"),
-        exc_info=sys.exc_info(),
+        exc_info=exec_info or sys.exc_info(),
         extra={
             'status_code': 500,
             'request': request,
