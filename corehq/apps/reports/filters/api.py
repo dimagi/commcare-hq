@@ -266,7 +266,6 @@ class DeviceLogFilter(LoginAndDomainMixin, JSONResponseMixin, View):
         )[:10]
         return self.render_json_response({
             'results': [{'id': v, 'text': v} for v in values],
-            'total': len(values)
         })
 
 
