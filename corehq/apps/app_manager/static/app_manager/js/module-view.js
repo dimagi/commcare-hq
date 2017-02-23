@@ -2,53 +2,7 @@ $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
         v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
         moduleBrief = initial_page_data('module_brief'),
-        moduleType = moduleBrief.module_type,
-        options = initial_page_data('js_options');
-
-    if (!v2 || moduleBrief.case_type) {
-        var state = hqImport('app_manager/js/detail-screen-config.js').state;
-        var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
-        state.requires_case_details(moduleBrief.requires_case_details);
-
-        var details = initial_page_data('details');
-        for (var i = 0; i < details.length; i++) {
-            var detail = details[i];
-            var detailScreenConfig = DetailScreenConfig.init({
-                module_id: moduleBrief.id,
-                state: {
-                    type: detail.type,
-                    short: detail.short,
-                    long: detail.long
-                },
-                sortRows: detail.sort_elements,
-                model: detail.model,
-                properties: detail.properties,
-                lang: moduleBrief.lang,
-                langs: moduleBrief.langs,
-                saveUrl: hqImport('hqwebapp/js/urllib.js').reverse('edit_module_detail_screens'),
-                parentModules: options.parent_modules,
-                childCaseTypes: detail.subcase_types,
-                fixture_columns_by_type: options.fixture_columns_by_type,
-                parentSelect: detail.parent_select,
-                fixtureSelect: detail.fixture_select,
-                contextVariables: state,
-                multimedia: initial_page_data('multimedia_object_map'),
-                searchProperties: options.search_properties,
-                includeClosed: options.include_closed,
-                defaultProperties: options.default_properties,
-                searchButtonDisplayCondition: options.search_button_display_condition,
-                contextVariables: state,
-            });
-
-            var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
-            $list_home.koApplyBindings(detailScreenConfig);
-
-            if (detail.long !== undefined) {
-                var $detail_home = $("#" + detail.type + "-detail-screen-detail-config-tab");
-                $detail_home.koApplyBindings(detailScreenConfig);
-            }
-        }
-    }
+        moduleType = moduleBrief.module_type;
 
     var showCaseTypeError = function(message) {
         var $caseTypeError = $('#case_type_error');
