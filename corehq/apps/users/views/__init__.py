@@ -658,7 +658,7 @@ class UserInvitationView(object):
             context['current_page'] = {'page_name': _('Project Invitation')}
         else:
             context['current_page'] = {'page_name': _('Project Invitation, Account Required')}
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
                 if is_invited_user:
@@ -907,7 +907,7 @@ class DomainRequestView(BasePageView):
         domain = Domain.get_by_name(self.request.domain)
         if self.request_form is None:
             initial = {'domain': domain.name}
-            if self.request.user.is_authenticated():
+            if self.request.user.is_authenticated:
                 initial.update({
                     'email': self.request.user.get_username(),
                     'full_name': self.request.user.get_full_name(),
