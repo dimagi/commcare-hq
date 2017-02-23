@@ -21,7 +21,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 
 
-def get_es_new(**kwargs):
+def get_es_new():
     """
     Get a handle to the configured elastic search DB.
     Returns an elasticsearch.Elasticsearch instance.
