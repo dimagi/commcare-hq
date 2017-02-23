@@ -47,11 +47,14 @@ class ConstantGetterSpec(JsonObject):
 
 class PropertyNameGetterSpec(JsonObject):
     type = TypeProperty('property_name')
-    property_name = StringProperty(required=True)
+    property_name = DefaultProperty(required=True)
     datatype = DataTypeProperty(required=False)
 
+    def configure(self, property_name_expression):
+        self._property_name_expression = property_name_expression
+
     def __call__(self, item, context=None):
-        raw_value = item.get(self.property_name, None) if isinstance(item, dict) else None
+        raw_value = item.get(self._property_name_expression(item, context)) if isinstance(item, dict) else None
         return transform_from_datatype(self.datatype)(raw_value)
 
 
