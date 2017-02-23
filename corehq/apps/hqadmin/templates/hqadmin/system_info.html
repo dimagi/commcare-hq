@@ -221,7 +221,7 @@
             });
 
             self.start_stop_text = ko.computed(function () {
-                return self.process_running() ? '{% trans "Stop" %}' : '{% trans "Start" %}';
+                return self.process_running() ? gettext("Stop") : gettext("Start");
             });
 
             self.disabled = ko.computed(function() {
@@ -293,7 +293,7 @@
 
             self.perform_operation = function(operation) {
                 self.operation_in_progress(true);
-                $.post('{% url "pillow_operation_api" %}', {
+                $.post(hqImport("hqwebapp/js/urllib.js").reverse("pillow_operation_api"), {
                     'pillow_name': self.name,
                     'operation': operation
                 }, function( data ) {
@@ -328,13 +328,18 @@
             self.sql_rows = data.sql_rows;
         }
 
-        var celeryViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=flower_poll", CeleryTaskModel, {{ celery_update }});
-        {% if is_bigcouch %}
-        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", DesignDocModel, {{ couch_update }}, 'design_document');
-        {% else %}
-        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", ActiveTaskModel, {{ couch_update }});
-        {% endif %}
-        var pillowtopViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=pillowtop", PillowModel, {{ couch_update }}, 'name');
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
+            celery_update = initial_page_data("celery_update"),
+            couch_update = initial_page_data("couch_update"),
+            system_ajax_url = hqImport("hqwebapp/js/urllib.js").reverse("system_ajax");
+        var celeryViewModel = new RefreshableViewModel(system_ajax_url + "?api=flower_poll", CeleryTaskModel, celery_update);
+        var couchViewModel;
+        if (initial_page_data("is_bigcouch")) {
+            var couchViewModel = new RefreshableViewModel(system_ajax_url + "?api=_active_tasks", DesignDocModel, couch_update, 'design_document');
+        } else {
+            var couchViewModel = new RefreshableViewModel(system_ajax_url + "?api=_active_tasks", ActiveTaskModel, couch_update);
+        }
+        var pillowtopViewModel = new RefreshableViewModel(system_ajax_url + "?api=pillowtop", PillowModel, couch_update, 'name');
 
         var AutoRefreshModel = function () {
             var self = this;
@@ -379,6 +384,11 @@
 
 {% endblock js-inline %}
 {% block reportcontent %}
+    {% initial_page_data "celery_update" celery_update %}
+    {% initial_page_data "couch_update" couch_update %}
+    {% initial_page_data "is_bigcouch" is_bigcouch %}
+    {% registerurl "pillow_operation_api" %}
+    {% registerurl "system_ajax" %}
     <div class="row" style="margin-top: 15px;">
         <div class="col-sm-12">
             {% with deploy_history|first as last_deploy %}
