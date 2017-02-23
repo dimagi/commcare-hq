@@ -36,6 +36,10 @@ from custom.icds.const import (
 DEFAULT_LANGUAGE = 'hin'
 
 
+class IndicatorError(Exception):
+    pass
+
+
 class SMSIndicator(object):
     # The name of the template to be used when rendering the message(s) to be sent
     # This should not be the full path, just the name of the file, since the path
@@ -133,10 +137,18 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
     def get_value_from_fixture(self, fixture, attribute):
         xpath = './rows/row[@is_total_row="False"]'
         rows = fixture.findall(xpath)
+        location_name = self.user.sql_location.name
         for row in rows:
             owner_id = row.find('./column[@id="owner_id"]')
-            if owner_id.text == self.user.sql_location.name:
-                return row.find('./column[@id="{}"]'.format(attribute)).text
+            if owner_id.text == location_name:
+                try:
+                    return row.find('./column[@id="{}"]'.format(attribute)).text
+                except:
+                    raise IndicatorError(
+                        "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
+                    )
+
+        raise IndicatorError("AWC {} not found in the restore".format(location_name))
 
     def get_messages(self, language_code=None):
         agg_perf = LSAggregatePerformanceIndicator(self.domain, self.supervisor)

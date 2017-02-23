@@ -62,6 +62,7 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
             LocationStructure('LSL', 'supervisor', [
                 LocationStructure('AWC1', 'awc', []),
                 LocationStructure('AWC2', 'awc', []),
+                LocationStructure('AWC3', 'awc', []),
             ])
         ]
         cls.loc_types = setup_location_types_with_structure(cls.domain, location_type_structure)
@@ -101,3 +102,33 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         self.assertTrue('Received adequate THR / Due for THR - 1 / 2' in message)
         self.assertTrue('Number of children weighed - 1 / 2' in message)
         self.assertTrue('Days AWC open - 3' in message)
+
+    @patch.object(LSAggregatePerformanceIndicator, 'visits_fixture', new_callable=PropertyMock)
+    @patch.object(LSAggregatePerformanceIndicator, 'thr_fixture', new_callable=PropertyMock)
+    @patch.object(LSAggregatePerformanceIndicator, 'weighed_fixture', new_callable=PropertyMock)
+    @patch.object(LSAggregatePerformanceIndicator, 'days_open_fixture', new_callable=PropertyMock)
+    def test_user_not_in_fixtures(self, days_open, weighed, thr, visits):
+        aww3 = self._make_user('aww3', self.locs['AWC3'])
+        self.addCleanup(aww3.delete)
+        days_open.return_value = ET.fromstring(self.get_xml('days_open_fixture'))
+        weighed.return_value = ET.fromstring(self.get_xml('weighed_fixture'))
+        thr.return_value = ET.fromstring(self.get_xml('thr_fixture'))
+        visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
+        indicator = AWWAggregatePerformanceIndicator(self.domain, aww3)
+        with self.assertRaises(Exception) as e:
+            indicator.get_messages()
+        self.assertIn('AWC AWC3 not found in the restore', e.exception.message)
+
+    @patch.object(LSAggregatePerformanceIndicator, 'visits_fixture', new_callable=PropertyMock)
+    @patch.object(LSAggregatePerformanceIndicator, 'thr_fixture', new_callable=PropertyMock)
+    @patch.object(LSAggregatePerformanceIndicator, 'weighed_fixture', new_callable=PropertyMock)
+    @patch.object(LSAggregatePerformanceIndicator, 'days_open_fixture', new_callable=PropertyMock)
+    def test_attribute_not_in_fixtures(self, days_open, weighed, thr, visits):
+        days_open.return_value = ET.fromstring(self.get_xml('bad_days_open_fixture'))
+        weighed.return_value = ET.fromstring(self.get_xml('weighed_fixture'))
+        thr.return_value = ET.fromstring(self.get_xml('thr_fixture'))
+        visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
+        indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
+        with self.assertRaises(Exception) as e:
+            indicator.get_messages()
+        self.assertIn('Attribute awc_opened_count not found in restore for AWC AWC1', e.exception.message)
