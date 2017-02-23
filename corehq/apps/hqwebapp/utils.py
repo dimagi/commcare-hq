@@ -65,9 +65,9 @@ def csrf_inline(request):
 
     Useful for adding inline forms in messages for e.g. while showing an "'undo' Archive Form" message
     """
-    from django.template import Template, RequestContext
+    from django.template import Template
     node = "{% csrf_token %}"
-    return Template(node).render(RequestContext(request))
+    return Template(node).render(request=request)
 
 
 def aliased_language_name(lang_code):
