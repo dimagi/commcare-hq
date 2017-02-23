@@ -69,12 +69,12 @@ class GetCaseHistorySpec(JsonObject):
         if not case_id:
             return []
 
-        forms = self._case_forms_expression(item, context)
-
         cache_key = (self.__class__.__name__, case_id)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
+        forms = self._case_forms_expression(item, context)
+        
         case_history = []
         for f in forms:
             case_blocks = extract_case_blocks(f)
