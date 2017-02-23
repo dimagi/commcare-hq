@@ -74,7 +74,7 @@ class GetCaseHistorySpec(JsonObject):
             return context.get_cache_value(cache_key)
 
         forms = self._case_forms_expression(item, context)
-        
+
         case_history = []
         for f in forms:
             case_blocks = extract_case_blocks(f)
