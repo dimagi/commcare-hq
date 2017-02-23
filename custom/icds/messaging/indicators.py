@@ -336,7 +336,12 @@ class LSAggregatePerformanceIndicator(LSIndicator):
 
     def get_value_from_fixture(self, fixture, attribute):
         xpath = './rows/row[@is_total_row="True"]/column[@id="{}"]'.format(attribute)
-        return fixture.findall(xpath)[0].text
+        try:
+            return fixture.findall(xpath)[0].text
+        except:
+            raise IndicatorError("{} not found in fixture {} for user {}".format(
+                attribute, fixture, self.user.get_id
+            ))
 
     def get_messages(self, language_code=None):
         visit_on_time = self.get_value_from_fixture(self.visits_fixture, 'visit_on_time')
@@ -347,12 +352,17 @@ class LSAggregatePerformanceIndicator(LSIndicator):
         num_weigh_avail = self.get_value_from_fixture(self.weighed_fixture, 'open_count')
         num_days_open = int(self.get_value_from_fixture(self.days_open_fixture, 'awc_opened_count'))
         num_awc_locations = len(self.days_open_fixture.findall('./rows/row[@is_total_row="False"]'))
+        if num_awc_locations:
+            avg_days_open = int(round(1.0 * num_days_open / num_awc_locations))
+        else:
+            # catch div by 0
+            avg_days_open = 0
 
         context = {
             "visits": "{} / {}".format(visit_on_time, visits),
             "thr_distribution": "{} / {}".format(thr_gte_21, thr_count),
             "children_weighed": "{} / {}".format(num_weigh, num_weigh_avail),
-            "days_open": "{}".format(int(round(1.0 * num_days_open / num_awc_locations))),
+            "days_open": "{}".format(avg_days_open),
         }
 
         return [self.render_template(context, language_code=language_code)]
