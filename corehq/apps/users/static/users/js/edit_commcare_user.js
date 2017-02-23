@@ -3,6 +3,21 @@ $(function () {
         couch_user_id = initial_page_data('couch_user_id'),
         activeTabCookie = 'active_tab',
         last_active_tab = $.cookie(activeTabCookie);
+
+    $('.verify-button').tooltip();
+    $('#id_language').select2({
+        placeholder: gettext('Select a language...'),
+    });
+
+    $('#add_phone_number').submit(function() {
+        ga_track_event('Edit Mobile Worker', 'Update phone number', initial_page_data('couch_user_id'), {
+            'hitCallback': function () {
+                document.getElementById('add_phone_number').submit();
+            }
+        });
+        return false;
+    });
+
     if (last_active_tab) {
         $(last_active_tab).addClass('active');
         $('#user-settings-tabs a[href="'+last_active_tab+'"]').parent().addClass('active');

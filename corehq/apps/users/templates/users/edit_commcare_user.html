@@ -16,10 +16,6 @@
     <script src="{% static 'users/js/edit_commcare_user.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %} {{ block.super }}
-{% include 'users/partial/basic_info_js_inline.html' %}
-{% endblock %}
-
 {% block page_content %}
     {% initial_page_data "couch_user_id" couch_user.user_id %}
     {% initial_page_data "couch_user_username" couch_user.username %}
