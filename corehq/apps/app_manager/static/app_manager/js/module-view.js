@@ -173,21 +173,7 @@ $(function () {
     } else if (moduleType == 'advanced') {
         // TODO
     } else if (moduleType == 'careplan') {
-        var $container = $('#detail-screen-parent');
-        if ($container.length) {
-            var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
-                moduleBrief = initial_page_data('module_brief');
-            var ParentSelect = hqImport('app_manager/js/detail-screen-config.js').ParentSelect;
-            var parent_select_model = moduleBrief.parent_select;
-            var parentSelect = new ParentSelect({
-                active: parent_select_model.active,
-                moduleId: parent_select_model.module_id,
-                parentModules: initial_page_data('parent_modules'),
-                lang: moduleBrief.lang,
-                langs: moduleBrief.langs,
-            });
-            $container.koApplyBindings(parentSelect);
-        }
+        // TODO
     }
 
     $(function () {

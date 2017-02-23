@@ -103,7 +103,6 @@ def get_module_view_context(app, module, lang=None):
             'lang': lang,
             'langs': app.langs,
             'module_type': module.module_type,
-            'parent_select': module.parent_select,
             'requires_case_details': bool(module.requires_case_details),
         },
         'edit_name_url': reverse(
