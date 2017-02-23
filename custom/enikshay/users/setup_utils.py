@@ -86,6 +86,13 @@ def get_site_code(domain, location):
 def validate_nikshay_code(domain, location):
     """When locations are created, enforce that a custom location data field
     (Nikshay code) is unique amongst sibling locations"""
+    if 'nikshay_code' not in location.metadata:
+        return False
+    sibling_codes = [
+        loc.metadata.get('nikshay_code', None)
+        for loc in location.get_siblings(include_self=False)
+    ]
+    return location.metadata['nikshay_code'] not in sibling_codes
 
 
 def validate_nikshay_code_unchanged(domain, location):
