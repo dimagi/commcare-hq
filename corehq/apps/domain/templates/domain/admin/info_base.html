@@ -2,21 +2,31 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js-inline %} {{ block.super }}
+
+
+{% block js-inline %}{{ block.super }}
 <script>
     $(function() {
-        {% for field in autocomplete_fields %}
-            $("#id_{{ field }}").focus(function() {
-                if (!$("#id_{{ field }}").data('loaded')) {
-                    $("#id_{{ field }}").data('loaded', 'true');
-                    $.getJSON('{% url "domain_autocomplete_fields" field %}', function(results) {
-                        $("#id_{{ field }}").typeahead({ source: results,
-                            items: 8
+        var fields = hqImport('hqwebapp/js/initial_page_data.js').get('autocomplete_fields');
+        _.each(hqImport('hqwebapp/js/initial_page_data.js').get('autocomplete_fields'), function(field) {
+            $("#id_" + field).focus(function() {
+                if (!$("#id_" + field).data('loaded')) {
+                    $("#id_" + field).data('loaded', 'true');
+                    $.getJSON(hqImport("hqwebapp/js/urllib.js").reverse("domain_autocomplete_fields", field), function(results) {
+                        $("#id_" + field).typeahead({
+                            source: results,
+                            items: 8,
                         }).attr("autocomplete", "off");
                     });
                 }
             });
-        {% endfor %}
+        });
     });
 </script>
+{% endblock %}
+
+{% block content %}
+    {% initial_page_data "autocomplete_fields" autocomplete_fields %}
+    {% registerurl 'domain_autocomplete_fields' '---' %}
+    {{ block.super }}
 {% endblock %}
