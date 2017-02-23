@@ -26,6 +26,10 @@ class ScheduleInstance(ScheduleForeignKeyMixin):
     next_event_due = models.DateTimeField()
     active = models.BooleanField()
 
+    class Meta:
+        app_label = 'scheduling_partitioned'
+        db_table = 'scheduling_scheduleinstance'
+
     class UnknownRecipient(Exception):
         pass
 
