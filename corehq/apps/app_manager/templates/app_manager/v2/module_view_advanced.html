@@ -19,6 +19,13 @@
         visitScheduler.init();
         </script>
     {% endif %}
+    <script>
+        $(function(){
+            $('#auto-select-case').koApplyBindings({
+                auto_select_case: ko.observable({{ module.auto_select_case|JSON }}),
+            });
+        });
+    </script>
 {% endblock js-inline %}
 
 {% block tab-headers %}{{ block.super }}

@@ -99,7 +99,6 @@ def get_module_view_context(app, module, lang=None):
     context = {
         'module_brief': {
             'id': module.id,
-            'auto_select_case': module.auto_select_case,
             'case_type': module.case_type,
             'lang': lang,
             'langs': app.langs,
