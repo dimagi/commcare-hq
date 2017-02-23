@@ -506,6 +506,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     show_date_range = False
     check_for_multimedia = False
     filter_form_class = None
+    sms_export = False
 
     @use_daterangepicker
     @use_select2
