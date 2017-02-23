@@ -38,10 +38,10 @@ class TestLSAggregatePerformanceIndicator(SimpleTestCase, TestXmlMixin):
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
         indicator = LSAggregatePerformanceIndicator('domain', 'user')
         message = indicator.get_messages()[0]
-        self.assertTrue('Timely Home Visits - 22 / 269' in message)
-        self.assertTrue('Received adequate THR / Due for THR - 19 / 34' in message)
-        self.assertTrue('Number of children weighed - 30 / 33' in message)
-        self.assertTrue('Days AWC open - 59' in message)
+        self.assertIn('Timely Home Visits - 22 / 269', message)
+        self.assertIn('Received adequate THR / Due for THR - 19 / 34', message)
+        self.assertIn('Number of children weighed - 30 / 33', message)
+        self.assertIn('Days AWC open - 59', message)
 
 
 class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
@@ -98,10 +98,10 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
         indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
         message = indicator.get_messages()[0]
-        self.assertTrue('Home Visits - 6 / 65' in message)
-        self.assertTrue('Received adequate THR / Due for THR - 1 / 2' in message)
-        self.assertTrue('Number of children weighed - 1 / 2' in message)
-        self.assertTrue('Days AWC open - 3' in message)
+        self.assertIn('Home Visits - 6 / 65', message)
+        self.assertIn('Received adequate THR / Due for THR - 1 / 2', message)
+        self.assertIn('Number of children weighed - 1 / 2', message)
+        self.assertIn('Days AWC open - 3', message)
 
     @patch.object(LSAggregatePerformanceIndicator, 'visits_fixture', new_callable=PropertyMock)
     @patch.object(LSAggregatePerformanceIndicator, 'thr_fixture', new_callable=PropertyMock)
