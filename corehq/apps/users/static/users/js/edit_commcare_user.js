@@ -13,7 +13,7 @@ $(function () {
         ga_track_event('Edit Mobile Worker', 'Update phone number', initial_page_data('couch_user_id'), {
             'hitCallback': function () {
                 document.getElementById('add_phone_number').submit();
-            }
+            },
         });
         return false;
     });
@@ -26,7 +26,7 @@ $(function () {
         first_tab.parent().addClass('active');
         $(first_tab.attr('href')).addClass('active');
     }
-    $('#user-settings-tabs a[data-toggle="tab"]').on('shown', function (e) {
+    $('#user-settings-tabs a[data-toggle="tab"]').on('shown.bs.tab', function () {
         $.cookie(activeTabCookie, $(this).attr('href'),
                 {path: initial_page_data('path'),
                 expires: 1});
@@ -39,55 +39,48 @@ $(function () {
             dataType: 'json',
             success: function (response, status, xhr, form) {
                 form.find('#user-password').html(response.formHTML);
-                if (response.status == "OK") {
-
+                if (response.status === "OK") {
                     alert_user(gettext("Password changed successfully"), 'success');
                     ga_track_event("Edit Mobile Worker", "Reset password", couch_user_id);
                 } else {
-                    message = gettext('Password was not changed ');
-
+                    var message = gettext('Password was not changed ');
                     if (initial_page_data('hide_password_feedback')) {
                         message += gettext("Password Requirements: 1 special character, " +
                                           "1 number, 1 capital letter, minimum length of 8 characters.");
                     }
-                
                     alert_user(message, 'danger');
-
                 }
             },
-            error: function (response) {
-                console.log('error');
-            }
         });
         return false;
     });
     if (!initial_page_data('is_currently_logged_in_user')) {
         function DeleteUserButtonModel() {
-             var self = this;
-             self.signOff = ko.observable('');
-             self.formDeleteUserSent = ko.observable(false);
-             self.disabled = function () {
-                 var understand = self.signOff().toLowerCase() === initial_page_data('couch_user_username');
-                 return self.formDeleteUserSent() || !understand;
-             };
-             self.submit = function () {
-                 if (!self.disabled()) {
-                     self.formDeleteUserSent(true);
-                     return true;
-                 }
-             }
-         }
-         if ($('#delete_user_' + couch_user_id).get(0)) {
-             $('#delete_user_' + couch_user_id).koApplyBindings(new DeleteUserButtonModel());
-         }
+            var self = this;
+            self.signOff = ko.observable('');
+            self.formDeleteUserSent = ko.observable(false);
+            self.disabled = function () {
+                var understand = self.signOff().toLowerCase() === initial_page_data('couch_user_username');
+                return self.formDeleteUserSent() || !understand;
+            };
+            self.submit = function () {
+                if (!self.disabled()) {
+                    self.formDeleteUserSent(true);
+                    return true;
+                }
+            }
+        }
+        if ($('#delete_user_' + couch_user_id).get(0)) {
+           $('#delete_user_' + couch_user_id).koApplyBindings(new DeleteUserButtonModel());
+        }
 
         // Event tracking
         var $deleteModalForm = $("#delete_user_" + couch_user_id + " form");
-        $("button:submit", $deleteModalForm).on("click", function(){
+        $("button:submit", $deleteModalForm).on("click", function() {
             ga_track_event("Edit Mobile Worker", "Deleted User", couch_user_id, {
                 'hitCallback': function() {
                     $deleteModalForm.submit();
-                }
+                },
             });
             return false;
         });
@@ -98,9 +91,9 @@ $(function () {
     var multiselect_utils = hqImport('style/js/multiselect_utils');
         multiselect_utils.createFullMultiselectWidget(
             'id_selected_ids',
-            django.gettext("Available Groups"),
-            django.gettext("Groups with this User"),
-            django.gettext("Search Group...")
+            gettext("Available Groups"),
+            gettext("Groups with this User"),
+            gettext("Search Group...")
         );
 
     // "are you sure?" stuff
