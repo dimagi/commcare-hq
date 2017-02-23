@@ -68,10 +68,10 @@ $(function () {
                     self.formDeleteUserSent(true);
                     return true;
                 }
-            }
+            };
         }
         if ($('#delete_user_' + couch_user_id).get(0)) {
-           $('#delete_user_' + couch_user_id).koApplyBindings(new DeleteUserButtonModel());
+            $('#delete_user_' + couch_user_id).koApplyBindings(new DeleteUserButtonModel());
         }
 
         // Event tracking
