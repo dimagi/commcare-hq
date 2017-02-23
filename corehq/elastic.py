@@ -26,7 +26,7 @@ def get_es_new():
     Get a handle to the configured elastic search DB.
     Returns an elasticsearch.Elasticsearch instance.
     """
-    if not get_es_new._es_client:
+    if not getattr(get_es_new, '_es_client', None):
         es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
         if not es_hosts:
             es_hosts = [settings.ELASTICSEARCH_HOST]
