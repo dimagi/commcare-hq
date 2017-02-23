@@ -93,7 +93,7 @@
   <!-- Main Page Content -->
   <div class="main-content">
     <div class="map-wrapper wrapper">
-      <div id="map"></div>
+      <div id="map" data-token="{{ MAPBOX_ACCESS_TOKEN }}"></div>
     </div>
     <div class="filter-wrapper wrapper">
       {% if request.user.is_superuser and is_internal_view %}
@@ -110,10 +110,5 @@
       {% include 'appstore/partials/sidebar.html' with not_searchable="true" search_name="es_search" search_for=facet_report.search_for %}
     </div>
   </div>
-  <script type="application/javascript">
-      $(function () {
-          projectMapInit('{{ MAPBOX_ACCESS_TOKEN }}');
-      });
-  </script>
 </body>
 </html>
