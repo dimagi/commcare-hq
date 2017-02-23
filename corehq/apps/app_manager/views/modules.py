@@ -100,8 +100,6 @@ def get_module_view_context(app, module, lang=None):
         'module_brief': {
             'id': module.id,
             'case_type': module.case_type,
-            'lang': lang,
-            'langs': app.langs,
             'module_type': module.module_type,
             'requires_case_details': bool(module.requires_case_details),
         },
@@ -132,6 +130,7 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
     '''
     case_type = module.case_type
     return {
+        'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
         'details': _get_module_details_context(app, module, case_property_builder, case_type),
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
         'valid_parent_modules': _get_valid_parent_modules(app, module),
