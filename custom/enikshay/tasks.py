@@ -34,19 +34,26 @@ SCHEDULE_ID_FIXTURE = 'id'
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def enikshay_adherence_task():
+    # runs adherence calculations for all domains that `toggles.UATBC_ADHERENCE_TASK` enabled
     domains = toggles.UATBC_ADHERENCE_TASK.get_enabled_domains()
     for domain in domains:
-        updater = PeriodicCaseUpdater(domain)
+        updater = EpisodeAdherenceUpdater(domain)
         updater.run()
 
 
-class PeriodicCaseUpdater(object):
+class EpisodeAdherenceUpdater(object):
+    """This iterates over all open 'episode' cases and sets 'adherence' related properties
+    according to this spec https://docs.google.com/document/d/1FjSdLYOYUCRBuW3aSxvu3Z5kvcN6JKbpDFDToCgead8/edit
+
+    This is applicable to various enikshay domains. The domain can be specified in the initalization
+    """
 
     def __init__(self, domain):
         self.domain = domain
         self.purge_date = pytz.UTC.localize(datetime.datetime.today() - datetime.timedelta(days=60))
 
     def run(self):
+        # iterate over all open 'episode' cases and set 'adherence' properties
         for episode in self._get_open_episode_cases():
             update = EpisodeUpdate(episode, self)
             case_block = update.case_block()
@@ -57,6 +64,7 @@ class PeriodicCaseUpdater(object):
                 )
 
     def _get_open_episode_cases(self):
+        # return all open 'episode' cases
         case_accessor = CaseAccessors(self.domain)
         case_ids = case_accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_EPISODE)
         return case_accessor.iter_cases(case_ids)
@@ -69,8 +77,14 @@ class PeriodicCaseUpdater(object):
 
 
 def index_by_adherence_date(adherence_cases):
-    """
-    index by day of adherence_date datetime
+    """index by day of `adherence_date` to list of adherence cases that fall on that day.
+
+    Args:
+        adherence_cases: list of 'adherence' cases
+
+    Returns:
+        A dict with key as the day of `adherence_date` and value as the list of adherence
+        cases that fall on that day.
     """
     by_date = defaultdict(list)
     for case in adherence_cases:
@@ -80,18 +94,32 @@ def index_by_adherence_date(adherence_cases):
 
 
 class EpisodeUpdate(object):
-
+    """
+    Class to capture are adherence related calculations specific to an 'episode' case
+    """
     def __init__(self, episode_case, case_updater):
+        """
+        Args:
+            episode_case: An 'episode' case object
+            case_repeater: EpisodeAdherenceUpdater object
+        """
         self.episode = episode_case
         self.case_updater = case_updater
 
     def get_property(self, property):
+        """
+        Args:
+            name of the case-property
+
+        Returns:
+            value of the episode case-property named 'property'
+        """
         return self.episode.dynamic_case_properties().get(property)
 
     def get_latest_adherence_case_for_episode(self):
         """
-        return open case of type 'adherence' reversed-indexed to episode and
-            with latest 'adherence_date' property
+        return open case of type 'adherence' reverse-indexed to episode that
+            has the latest 'adherence_date' property of all
         """
         case_accessor = CaseAccessors(self.case_updater.domain)
         indexed_cases = case_accessor.get_reverse_indexed_cases([self.episode.case_id])
@@ -108,6 +136,19 @@ class EpisodeUpdate(object):
         return latest_case
 
     def update_json(self):
+        """
+        Evaluates adherence calculations on the 'episode' case and returns dict of values
+
+        Returns:
+            If no update is necessary, empty dict is returned, if not, dict with following
+            keys is returned
+
+            {
+                'aggregated_score_date_calculated': value,
+                'expected_doses_taken': value,
+                'aggregated_score_count_taken': value
+            }
+        """
         adherence_schedule_date_start = parse_datetime(self.get_property('adherence_schedule_date_start'))
         if not adherence_schedule_date_start:
             # adherence schedule hasn't been selected, so no update necessary
@@ -169,6 +210,10 @@ class EpisodeUpdate(object):
             return update
 
     def case_block(self):
+        """
+        Returns:
+            CaseBlock object with adherence updates. If no update is necessary, None is returned
+        """
         update = self.update_json()
         if update:
             return CaseBlock(**{

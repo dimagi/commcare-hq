@@ -30,7 +30,7 @@ class TestAdherenceUpdater(TestCase):
         self.occurrence_id = u"occurrence"
         self.episode_id = u"episode"
         FormProcessorTestUtils.delete_all_cases()
-        self.case_updater = PeriodicCaseUpdater(self.domain)
+        self.case_updater = EpisodeAdherenceUpdater(self.domain)
 
     @classmethod
     def setupFixtureData(cls):
