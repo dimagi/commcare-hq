@@ -1,6 +1,6 @@
 Aggregrate Performance Report:
 
-Timely Home Visits - {{ visits }}
+Home Visits - {{ visits }}
 
 Received adequate THR / Due for THR - {{ thr_distribution }}
 

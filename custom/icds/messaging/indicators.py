@@ -128,7 +128,7 @@ class LSIndicator(SMSIndicator):
 
 
 class AWWAggregatePerformanceIndicator(AWWIndicator):
-    template = 'ls_aggregate_performance.txt'
+    template = 'aww_aggregate_performance.txt'
 
     def get_value_from_fixture(self, fixture, attribute):
         xpath = './rows/row[@is_total_row="False"]'
@@ -333,13 +333,14 @@ class LSAggregatePerformanceIndicator(LSIndicator):
         thr_count = self.get_value_from_fixture(self.thr_fixture, 'open_count')
         num_weigh = self.get_value_from_fixture(self.weighed_fixture, 'open_weighed')
         num_weigh_avail = self.get_value_from_fixture(self.weighed_fixture, 'open_count')
-        num_days_open = self.get_value_from_fixture(self.days_open_fixture, 'awc_opened_count')
+        num_days_open = int(self.get_value_from_fixture(self.days_open_fixture, 'awc_opened_count'))
+        num_awc_locations = len(self.days_open_fixture.findall('./rows/row[@is_total_row="False"]'))
 
         context = {
             "visits": "{} / {}".format(visit_on_time, visits),
             "thr_distribution": "{} / {}".format(thr_gte_21, thr_count),
             "children_weighed": "{} / {}".format(num_weigh, num_weigh_avail),
-            "days_open": "{}".format(int(num_days_open) // len(self.awc_locations)),
+            "days_open": "{}".format(int(round(1.0 * num_days_open / num_awc_locations))),
         }
 
         return [self.render_template(context, language_code=language_code)]

@@ -27,23 +27,21 @@ class PropertyMock(Mock):
 class TestLSAggregatePerformanceIndicator(SimpleTestCase, TestXmlMixin):
     file_path = ('../../../..', 'custom/icds/tests/data/fixtures')
 
-    @patch.object(LSAggregatePerformanceIndicator, 'awc_locations', new_callable=PropertyMock)
     @patch.object(LSAggregatePerformanceIndicator, 'visits_fixture', new_callable=PropertyMock)
     @patch.object(LSAggregatePerformanceIndicator, 'thr_fixture', new_callable=PropertyMock)
     @patch.object(LSAggregatePerformanceIndicator, 'weighed_fixture', new_callable=PropertyMock)
     @patch.object(LSAggregatePerformanceIndicator, 'days_open_fixture', new_callable=PropertyMock)
-    def test_report_parsing(self, days_open, weighed, thr, visits, awc_locations):
+    def test_report_parsing(self, days_open, weighed, thr, visits):
         days_open.return_value = ET.fromstring(self.get_xml('days_open_fixture'))
         weighed.return_value = ET.fromstring(self.get_xml('weighed_fixture'))
         thr.return_value = ET.fromstring(self.get_xml('thr_fixture'))
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
-        awc_locations.return_value = {1: 'loc1', 2: 'loc2'}
         indicator = LSAggregatePerformanceIndicator('domain', 'user')
         message = indicator.get_messages()[0]
-        self.assertTrue('Home Visits - 22 / 269' in message)
-        self.assertTrue('THR Distribution - 19 / 34' in message)
+        self.assertTrue('Timely Home Visits - 22 / 269' in message)
+        self.assertTrue('Received adequate THR / Due for THR - 19 / 34' in message)
         self.assertTrue('Number of children weighed - 30 / 33' in message)
-        self.assertTrue('Days AWC open -  58' in message)
+        self.assertTrue('Days AWC open - 59' in message)
 
 
 class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
@@ -100,6 +98,6 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
         message = indicator.get_messages()[0]
         self.assertTrue('Home Visits - 6 / 65' in message)
-        self.assertTrue('THR Distribution - 1 / 2' in message)
+        self.assertTrue('Received adequate THR / Due for THR - 1 / 2' in message)
         self.assertTrue('Number of children weighed - 1 / 2' in message)
-        self.assertTrue('Days AWC open -  3' in message)
+        self.assertTrue('Days AWC open - 3' in message)
