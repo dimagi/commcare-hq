@@ -4,7 +4,7 @@ var HQTimezoneHandler = function (o) {
     self.override_tz = ko.observable(o.override);
     self.form_is_ready = ko.observable(false);
 
-    self.updateForm = function(data) {
+    self.updateForm = function() {
         self.form_is_ready(true);
     };
 };
