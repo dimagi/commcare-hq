@@ -13,7 +13,7 @@ Using SimpleTestCase
 ====================
 
 The SimpleTestCase runs tests without a database. Many times this can be achieved through the use of the `mock
-library <http://www.voidspace.org.uk/python/mock/>`. A good rule of thumb is to have 80% of your tests be unit
+library <http://www.voidspace.org.uk/python/mock/>`_. A good rule of thumb is to have 80% of your tests be unit
 tests that utilize ``SimpleTestCase``, and then 20% of your tests be integration tests that utilize the
 database and ``TestCase``.
 
