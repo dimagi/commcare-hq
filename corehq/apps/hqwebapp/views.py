@@ -22,7 +22,6 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.template import loader
-from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
@@ -94,12 +93,13 @@ def server_error(request, template_name='500.html'):
     cache.cache.set(traceback_key, traceback_text, 60*60)
 
     return HttpResponseServerError(t.render(
-        RequestContext(request, {
+        context={
             'MEDIA_URL': settings.MEDIA_URL,
             'STATIC_URL': settings.STATIC_URL,
             'domain': domain,
             '500traceback': traceback_key,
-        }).dicts[0]
+        },
+        request=request,
     ))
 
 
@@ -109,10 +109,11 @@ def not_found(request, template_name='404.html'):
     """
     t = loader.get_template(template_name)
     return HttpResponseNotFound(t.render(
-        RequestContext(request, {
+        context={
             'MEDIA_URL': settings.MEDIA_URL,
             'STATIC_URL': settings.STATIC_URL,
-        }).dicts[0]
+        },
+        request=request,
     ))
 
 
@@ -273,21 +274,23 @@ def no_permissions(request, redirect_to=None, template_name="403.html", message=
     """
     t = loader.get_template(template_name)
     return HttpResponseForbidden(t.render(
-        RequestContext(request, {
+        context={
             'MEDIA_URL': settings.MEDIA_URL,
             'STATIC_URL': settings.STATIC_URL,
             'message': message,
-        }).dicts[0]
+        },
+        request=request,
     ))
 
 
 def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
     t = loader.get_template(template_name)
     return HttpResponseForbidden(t.render(
-        RequestContext(request, {
+        context={
             'MEDIA_URL': settings.MEDIA_URL,
             'STATIC_URL': settings.STATIC_URL,
-        }).dicts[0]
+        },
+        request=request,
     ))
 
 
