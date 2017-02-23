@@ -64,7 +64,12 @@
         }
     </style>
 </head>
-<body>
+<body
+    data-uri="{{ WEBSOCKET_URI }}"
+    data-heartbeat-message="{{ WS4REDIS_HEARTBEAT }}"
+    data-tvmode="{{ tvmode|JSON }}"
+    data-token="{{ MAPBOX_ACCESS_TOKEN }}"
+>
 	<div class="container-fluid">
 		{% block main_content %}
             <h1>Incoming Forms <small>This should update in real time.</small></h1>
@@ -100,19 +105,20 @@
 	{% block script_panel %}
         <script>
 $(function() {
-    var filter = {};
+    var filter = {},
+        initial_page_data = $("body").data();
 
     // courtesy of http://colorbrewer2.org/
     var COUNTRY_COLORS = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'];
     var COUNTRY_ACTIVE_COLORS = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
     var ws4redis = WS4Redis({
-        uri: '{{ WEBSOCKET_URI }}form-feed?subscribe-broadcast',
+        uri: initial_page_data.uri + 'form-feed?subscribe-broadcast',
         receive_message: receiveMessage,
-        heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
+        heartbeat_msg: initial_page_data.heartbeatMessage,
     });
 
     // in tv mode we don't show domains in the graph but just countries
-    var tvmode = {{ tvmode|JSON }};
+    var tvmode = initial_page_data.tvmode;
     var chartSourceData = tvmode ? dimagisphere.formData.totalFormsByCountry : dimagisphere.formData.totalFormsByDomain;
 
     function addDataToMap(msgObj) {
@@ -195,7 +201,7 @@ $(function() {
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         maxZoom: 10,
         id: mapId,
-        accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
+        accessToken: initial_page_data.token,
     }).addTo(map);
 
     function getColor(featureId) {
