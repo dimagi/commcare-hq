@@ -1,3 +1,4 @@
+from __future__ import print_function
 import csv
 from django.core.management import BaseCommand
 import sys
@@ -40,7 +41,7 @@ class Command(BaseCommand):
                     'app version',
                 ]
                 writer.writerow(headers)
-                print headers
+                print(headers)
 
                 for case in cases_to_delete:
                     form = FormAccessors(domain=domain).get_form(case.xform_ids[0])
@@ -58,18 +59,18 @@ class Command(BaseCommand):
                         app_version_info.build_version,
                     ]
                     writer.writerow(row)
-                    print row
+                    print(row)
 
         if cases_to_delete and raw_input('\n'.join([
             'Delete these {} cases? (y/N)'.format(len(cases_to_delete)),
         ])).lower() == 'y':
             case_accessor.soft_delete_cases([c.case_id for c in cases_to_delete])
-            print 'deleted {} cases'.format(len(cases_to_delete))
+            print('deleted {} cases'.format(len(cases_to_delete)))
 
         if cases_to_delete:
-            print 'details here: {}'.format(options['filename'])
+            print('details here: {}'.format(options['filename']))
         else:
-            print "didn't find any cases to delete"
+            print("didn't find any cases to delete")
 
 
 def get_entire_case_network(domain, case_ids):

@@ -23,7 +23,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, log_signal_errors
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
@@ -43,7 +43,7 @@ from corehq.apps.users.util import (
     user_location_data,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
-    tag_cases_as_deleted_and_remove_indices
+    tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -1283,14 +1283,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         from .signals import couch_user_post_save
         results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
-        for result in results:
-            # Second argument is None if there was no error
-            if result[1]:
-                notify_exception(
-                    None,
-                    message="Error occured while syncing user %s: %s" %
-                            (self.username, repr(result[1]))
-                )
+        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
@@ -1415,14 +1408,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         from .signals import commcare_user_post_save
         results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self)
-        for result in results:
-            # Second argument is None if there was no error
-            if result[1]:
-                notify_exception(
-                    None,
-                    message="Error occured while syncing user %s: %s" %
-                            (self.username, repr(result[1]))
-                )
+        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     def delete(self):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -1531,21 +1517,25 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
         deletion_date = datetime.utcnow()
-        deleted_cases = set()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
             self['-deletion_date'] = deletion_date
 
+        deleted_cases = set()
         for case_id_list in chunked(self._get_case_ids(), 50):
             tag_cases_as_deleted_and_remove_indices.delay(self.domain, case_id_list, deletion_id, deletion_date)
             deleted_cases.update(case_id_list)
 
+        deleted_forms = set()
         for form_id_list in chunked(self._get_form_ids(), 50):
             tag_forms_as_deleted_rebuild_associated_cases.delay(
                 self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
+            deleted_forms.update(form_id_list)
+
+        tag_system_forms_as_deleted(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
 
         try:
             django_user = self.get_django_user()

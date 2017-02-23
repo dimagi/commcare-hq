@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import NoArgsCommand
 
 from corehq.apps.api.es import ReportXFormES
@@ -25,8 +26,8 @@ class Command(NoArgsCommand):
         while True:
 #            q['from'] = offset
             res = xform_es.run_query(q)
-            print "####### Query block total: %s" % res['hits']['total']
-            print res['hits']['hits']
+            print("####### Query block total: %s" % res['hits']['total'])
+            print(res['hits']['hits'])
             if len(res['hits'].get('hits', [])) == 0:
                 break
             else:

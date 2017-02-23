@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 from django.core.management import BaseCommand
 from corehq.apps.users.models import CommCareUser
@@ -21,8 +22,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         username = options['username']
         if not username:
-            print "You need a username!"
-            print "Usage: ./manage.py mem_profile_restore --username large_caseload@domain.commcarehq.org"
+            print("You need a username!")
+            print("Usage: ./manage.py mem_profile_restore --username large_caseload@domain.commcarehq.org")
             return
 
         couch_user = CommCareUser.get_by_username(username)

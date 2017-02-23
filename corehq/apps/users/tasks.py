@@ -73,6 +73,33 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
+def tag_system_forms_as_deleted(domain, deleted_forms, deleted_cases, deletion_id, deletion_date):
+    form_ids_to_delete = set()
+    for case_id in deleted_cases:
+        xform_ids = CaseAccessors(domain).get_case_xform_ids(case_id)
+        form_ids_to_delete |= set(xform_ids) - deleted_forms
+
+    def _is_safe_to_delete(form):
+        if form.domain != domain:
+            return False
+
+        case_ids = get_case_ids_from_form(form)
+        cases_touched_by_form_not_deleted = case_ids - deleted_cases
+        for case in CaseAccessors(domain).iter_cases(cases_touched_by_form_not_deleted):
+            if not case.is_deleted:
+                return False
+
+        # all cases touched by this form are deleted
+        return True
+
+    for form in FormAccessors(domain).iter_forms(form_ids_to_delete):
+        if not _is_safe_to_delete(form):
+            form_ids_to_delete.remove(form.form_id)
+
+    FormAccessors(domain).soft_delete_forms(list(form_ids_to_delete), deletion_date, deletion_id)
+
+
+@task(queue='background_queue', ignore_result=True, acks_late=True)
 def _remove_indices_from_deleted_cases_task(domain, case_ids):
     # todo: we may need to add retry logic here but will wait to see
     # what errors we should be catching

@@ -49,7 +49,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
         try:
             patient_doc = self.get_case()
             has_error = False
-        except Exception, ex:
+        except Exception as ex:
             logging.exception(u'problem getting pact patient data for patient {}. {}'.format(
                 self.patient_id, ex
             ))

@@ -15,7 +15,7 @@ from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdate
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import RebuildWithReason
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
 from couchforms.models import XFormInstance
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
@@ -45,12 +45,7 @@ def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
     return case_id
 
 
-class CaseRebuildTest(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(CaseRebuildTest, cls).setUpClass()
-        delete_all_cases()
+class CaseRebuildTestMixin(object):
 
     def _assertListEqual(self, l1, l2, include_ordering=True):
         if include_ordering:
@@ -68,6 +63,14 @@ class CaseRebuildTest(TestCase):
             pass # this is what we want
         else:
             self.fail(msg)
+
+
+class CouchCaseRebuildTest(TestCase, CaseRebuildTestMixin):
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_cases()
+        super(CouchCaseRebuildTest, cls).tearDownClass()
 
     def test_couch_action_equality(self):
         case_id = _post_util(create=True)
@@ -178,10 +181,6 @@ class CaseRebuildTest(TestCase):
         CouchCaseUpdateStrategy(case).soft_rebuild_case()
         _confirm_action_order(case, [a1, a2, a3])
 
-    @run_with_all_backends
-    def test_rebuild_empty(self):
-        self.assertEqual(None, rebuild_case_from_forms('anydomain', 'notarealid', RebuildWithReason(reason='test')))
-
     def test_couch_rebuild_deleted_case(self):
         # Note: Can't run this on SQL because if a case gets hard deleted then
         # there is no way to find out which forms created / updated it without
@@ -251,7 +250,20 @@ class CaseRebuildTest(TestCase):
         self._assertListEqual(original_actions, primary_actions(case))
         self._assertListEqual(original_form_ids, case.xform_ids)
 
-    @run_with_all_backends
+
+class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
+
+    @classmethod
+    def setUpClass(cls):
+        super(CaseRebuildTest, cls).setUpClass()
+        delete_all_cases()
+
+    def test_rebuild_empty(self):
+        self.assertEqual(
+            None,
+            rebuild_case_from_forms('anydomain', 'notarealid', RebuildWithReason(reason='test'))
+        )
+
     def test_archiving_only_form(self):
         """
         Checks that archiving the only form associated with the case archives
@@ -283,7 +295,6 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(3, len(case.actions))
         self.assertTrue(case.actions[-1].is_case_rebuild)
 
-    @run_with_all_backends
     def test_form_archiving(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
@@ -412,7 +423,6 @@ class CaseRebuildTest(TestCase):
         self.assertFalse('p5' in case.dynamic_case_properties())  # should disappear entirely
         _reset(f3)
 
-    @run_with_all_backends
     def test_archie_modified_on(self):
         case_id = uuid.uuid4().hex
         now = datetime.utcnow().replace(microsecond=0)
@@ -437,7 +447,6 @@ class CaseRebuildTest(TestCase):
         case = case_accessors.get_case(case_id)
         self.assertEqual(way_earlier, case.modified_on)
 
-    @run_with_all_backends
     def test_archive_against_deleted_case(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
@@ -456,6 +465,33 @@ class CaseRebuildTest(TestCase):
         f2_doc.archive()
         case = case_accessors.get_case(case_id)
         self.assertTrue(case.is_deleted)
+
+    def test_archive_removes_index(self):
+        parent_case_id = uuid.uuid4().hex
+        post_case_blocks([
+            CaseBlock(parent_case_id, create=True).as_xml()
+        ])
+        child_case_id = uuid.uuid4().hex
+        post_case_blocks([
+            CaseBlock(child_case_id, create=True).as_xml()
+        ])
+        xform, _ = post_case_blocks([
+            CaseBlock(child_case_id, index={'mom': ('mother', parent_case_id)}).as_xml()
+        ])
+
+        case_accessors = CaseAccessors(REBUILD_TEST_DOMAIN)
+        case = case_accessors.get_case(child_case_id)
+        self.assertEqual(1, len(case.indices))
+
+        xform.archive()
+
+        case = case_accessors.get_case(child_case_id)
+        self.assertEqual(0, len(case.indices))
+
+
+@use_sql_backend
+class CaseRebuildTestSQL(CaseRebuildTest):
+    pass
 
 
 class TestCheckActionOrder(SimpleTestCase):

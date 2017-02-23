@@ -1,6 +1,8 @@
 from django.conf.urls import url
 
-from .api import EmwfOptionsView, LocationRestrictedEmwfOptions, CaseListFilterOptions
+from .api import (
+    EmwfOptionsView, LocationRestrictedEmwfOptions, CaseListFilterOptions, DeviceLogUsers, DeviceLogIds
+)
 from .location import LocationGroupFilterOptions
 
 urlpatterns = [
@@ -12,4 +14,6 @@ urlpatterns = [
    url(r'^grouplocationfilter_options/$', LocationGroupFilterOptions.as_view(),
        name='grouplocationfilter_options'
        ),
+   url(r'^device_log_users/$', DeviceLogUsers.as_view(), name='device_log_users'),
+   url(r'^device_log_ids/$', DeviceLogIds.as_view(), name='device_log_ids'),
 ]

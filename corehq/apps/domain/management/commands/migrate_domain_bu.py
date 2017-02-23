@@ -1,3 +1,4 @@
+from __future__ import print_function
 import csv
 
 from django.core.management.base import BaseCommand, CommandError
@@ -32,7 +33,7 @@ class Command(BaseCommand):
             domain = Domain.wrap(doc)
             new_bu = name_by_map[domain.name]
             if new_bu not in BUSINESS_UNITS:
-                print 'Unknown BU: domain={}, BU={}'.format(domain.name, new_bu)
+                print('Unknown BU: domain={}, BU={}'.format(domain.name, new_bu))
                 return
             domain.internal.business_unit = new_bu
             return DocUpdate(doc)

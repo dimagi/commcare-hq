@@ -239,7 +239,7 @@ class PatientDetail(models.Model):
 
 
 class Outcome(models.Model):
-    PatientId = models.OneToOneField(PatientDetail, primary_key=True)
+    PatientId = models.OneToOneField(PatientDetail, primary_key=True, on_delete=models.CASCADE)
     Outcome = models.CharField(
         max_length=255,
         choices=(

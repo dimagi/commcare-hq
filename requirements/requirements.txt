@@ -16,7 +16,7 @@ dropbox==7.1.1
 defusedxml==0.4.1
 diff-match-patch==20120106
 django-tastypie==0.13.3
-djangorestframework==3.5.3
+djangorestframework==3.5.4
 djtables==0.1.1
 elasticsearch==1.9.0
 #egenix-mx-base==3.2.8
@@ -96,4 +96,4 @@ csiphash==0.0.4
 json-delta==2.0
 email_validator==1.0.1
 dnspython==1.13.0
-raven==5.32.0
+raven==6.0.0

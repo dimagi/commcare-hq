@@ -1,3 +1,4 @@
+from __future__ import print_function
 import csv
 from django.core.management.base import BaseCommand
 import sys
@@ -8,7 +9,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if len(args) != 1:
-            print 'usage is ./manage.py list_dynamic_reports filename'
+            print('usage is ./manage.py list_dynamic_reports filename')
             sys.exit(1)
         filename = args[0]
         with open(filename, 'wb') as f:

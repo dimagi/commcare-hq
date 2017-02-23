@@ -1,3 +1,4 @@
+from __future__ import print_function
 from datetime import datetime
 from optparse import make_option
 from dateutil import parser
@@ -49,4 +50,4 @@ class Command(BaseCommand):
 def print_row(*args):
     tp = ["{{{}!s:<30}}".format(i) for i, _ in enumerate(args)]
     template = ' | '.join(tp)
-    print template.format(*args)
+    print(template.format(*args))

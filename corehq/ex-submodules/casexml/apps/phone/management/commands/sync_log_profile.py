@@ -1,3 +1,4 @@
+from __future__ import print_function
 import csv
 from django.core.management import BaseCommand
 from casexml.apps.phone.models import SyncLog
@@ -46,4 +47,4 @@ class Command(BaseCommand):
 
                     ])
                 if i % 500 == 0:
-                    print 'processed {}/{} logs'.format(i, total_count)
+                    print('processed {}/{} logs'.format(i, total_count))

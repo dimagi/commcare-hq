@@ -58,8 +58,6 @@ class BaseInvoiceTestCase(BaseAccountingTest):
             date_end=subscription_end_date,
         )
 
-        cls.community_plan = DefaultProductPlan.get_default_plan_version()
-
     def tearDown(self):
         for user in self.domain.all_users():
             user.delete()
@@ -67,16 +65,6 @@ class BaseInvoiceTestCase(BaseAccountingTest):
 
     @classmethod
     def tearDownClass(cls):
-        CreditAdjustment.objects.all().delete()
-        CreditLine.objects.all().delete()
-
-        BillingRecord.objects.all().delete()
-        LineItem.objects.all().delete()
-        SubscriptionAdjustment.objects.all().delete()
-        Invoice.objects.all().delete()
-        generator.delete_all_subscriptions()
-        generator.delete_all_accounts()
-
         cls.billing_contact.delete()
         cls.dimagi_user.delete()
         cls.domain.delete()
@@ -465,7 +453,8 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertIsNone(user_line_item.base_description)
         self.assertEqual(user_line_item.base_cost, Decimal('0.0000'))
 
-        num_to_charge = num_active - self.community_plan.user_limit
+        community_plan = DefaultProductPlan.get_default_plan_version()
+        num_to_charge = num_active - community_plan.user_limit
         self.assertIsNotNone(user_line_item.unit_description)
         self.assertEqual(user_line_item.quantity, num_to_charge)
         self.assertEqual(user_line_item.unit_cost, self.user_rate.per_excess_fee)
