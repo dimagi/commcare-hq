@@ -29,6 +29,11 @@ class ScheduleInstance(ScheduleForeignKeyMixin):
     class Meta:
         app_label = 'scheduling_partitioned'
         db_table = 'scheduling_scheduleinstance'
+        index_together = (
+            # index for equality comparisons on the leading columns
+            ('active', 'next_event_due'),
+            ('domain', 'active', 'next_event_due'),
+        )
 
     class UnknownRecipient(Exception):
         pass

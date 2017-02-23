@@ -4,8 +4,10 @@ from django.db import models
 
 
 class ScheduleForeignKeyMixin(models.Model):
-    timed_schedule_id = models.IntegerField(null=True)
-    alert_schedule_id = models.IntegerField(null=True)
+    # These are ids rather than ForeignKeys because some subclasses of
+    # ScheduleForeignKeyMixin are partitioned models.
+    timed_schedule_id = models.IntegerField(null=True, db_index=True)
+    alert_schedule_id = models.IntegerField(null=True, db_index=True)
 
     class Meta:
         abstract = True
@@ -52,7 +54,7 @@ class ScheduleForeignKeyMixin(models.Model):
 
 
 class Schedule(models.Model):
-    domain = models.CharField(max_length=126)
+    domain = models.CharField(max_length=126, db_index=True)
 
     # Only matters when the recipient of a ScheduleInstance is a Location
     # If False, only include users at that location as recipients
