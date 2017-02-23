@@ -22,18 +22,6 @@
 </div>
 {% endblock %}
 
-{% block js-inline %} {{ block.super }}
-    <script>
-        $('#id_username, #id_domain').change(function() {
-            var username = $('#id_username').val(),
-                domain = $('#id_domain').val();
-
-            var action = hqImport('hqwebapp/js/initial_page_data.js').get('url') + username + '/';
-            if (domain) {
-                action += domain + '/'
-            }
-
-            $('#auth-as-form').attr('action', action);
-        });
-    </script>
+{% block js %} {{ block.super }}
+    <script src="{% static 'hqadmin/js/authenticate_as.js' %}"></script>
 {% endblock %}
