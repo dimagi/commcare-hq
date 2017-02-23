@@ -26,18 +26,20 @@ def get_es_new(**kwargs):
     Get a handle to the configured elastic search DB.
     Returns an elasticsearch.Elasticsearch instance.
     """
-    es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
-    if not es_hosts:
-        es_hosts = [settings.ELASTICSEARCH_HOST]
+    if not get_es_new._es_client:
+        es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
+        if not es_hosts:
+            es_hosts = [settings.ELASTICSEARCH_HOST]
 
-    hosts = [
-        {
-            'host': host,
-            'port': settings.ELASTICSEARCH_PORT,
-        }
-        for host in es_hosts
-    ]
-    return Elasticsearch(hosts, **kwargs)
+        hosts = [
+            {
+                'host': host,
+                'port': settings.ELASTICSEARCH_PORT,
+            }
+            for host in es_hosts
+        ]
+        get_es_new._es_client = Elasticsearch(hosts, **kwargs)
+    return get_es_new._es_client
 
 
 def doc_exists_in_es(index_info, doc_id_or_dict):
