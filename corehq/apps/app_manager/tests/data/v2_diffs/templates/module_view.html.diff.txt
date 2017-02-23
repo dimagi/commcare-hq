@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -9,32 +9,33 @@
+@@ -10,32 +10,33 @@
      <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
      <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
      <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
@@ -48,7 +48,7 @@
          $(function () {
              var state = hqImport('app_manager/js/detail-screen-config.js').state;
              var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
-@@ -88,6 +89,7 @@
+@@ -89,6 +90,7 @@
                  }
              }
          });
@@ -56,7 +56,7 @@
          $(function () {
              var moduleType = {{ module.module_type|JSON }};
              var showCaseTypeError = function(message) {
-@@ -104,6 +106,15 @@
+@@ -105,6 +107,15 @@
                  if (value !== valueNoSpaces) {
                      $(this).val(valueNoSpaces);
                  }
@@ -72,7 +72,7 @@
                  if (!valueNoSpaces.match(/^[\w-]*$/g)) {
                      $(this).closest('.form-group').addClass('has-error');
                      showCaseTypeError(
-@@ -114,7 +125,6 @@
+@@ -115,7 +126,6 @@
                      showCaseTypeError(
                          gettext("'commcare-user' is a reserved case type. Please change the case type")
                      );
@@ -80,7 +80,7 @@
                  } else {
                      $(this).closest('.form-group').removeClass('has-error');
                      hideCaseTypeError();
-@@ -232,71 +242,77 @@
+@@ -233,75 +243,81 @@
      </script>
  {% endblock %}
  
