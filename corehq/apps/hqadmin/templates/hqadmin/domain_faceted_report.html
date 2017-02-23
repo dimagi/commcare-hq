@@ -64,9 +64,9 @@
                     chart_name: key,
                     histogram_type: key,
                     xaxis_label: visualizations[key].xaxis_label,
-                    ajax_url: "{% url "admin_stats_data" %}",
+                    ajax_url: hqImport("hqwebapp/js/urllib.js").reverse("admin_stats_data"),
                     data: url_params,
-                    interval: "{{ interval }}"
+                    interval: hqImport("hqwebapp/js/initial_page_data.js").get("interval"),
                 });
                 visualizations[key].viz.init();
             }
@@ -94,6 +94,8 @@
 
 {% block page_content %}
 {{ block.super }}
+    {% registerurl "admin_stats_data" %}
+    {% initial_page_data "interval" interval %}
     <div class="well">
         <form id="all-charts-filter" style="margin: 0;" class="form-inline">
             <h3>{% trans "Filters for All Charts Below" %}</h3>
