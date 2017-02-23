@@ -102,58 +102,21 @@ def get_module_view_context(app, module, lang=None):
             args=[app.domain, app.id, module.id, 'name']
         )
     }
-    module_brief = {
-        'id': module.id,
-        'case_type': module.case_type,
-        'lang': lang,
-        'langs': app.langs,
-        'module_type': module.module_type,
-        'requires_case_details': bool(module.requires_case_details),
-    }
-    case_property_builder = _setup_case_property_builder(app)
     if isinstance(module, CareplanModule):
-        module_brief.update({'parent_select': module.parent_select})
-        context.update(_get_careplan_module_view_context(app, module, case_property_builder))
+        context.update(_get_careplan_module_view_context(app, module))
     elif isinstance(module, AdvancedModule):
-        module_brief.update({
-            'auto_select_case': module.auto_select_case,
-            'has_schedule': module.has_schedule,
-        })
-        context.update(_get_shared_module_view_context(app, module, case_property_builder, lang))
-        context.update(_get_advanced_module_view_context(app, module))
+        context.update(_get_advanced_module_view_context(app, module, lang))
     elif isinstance(module, ReportModule):
         context.update(_get_report_module_context(app, module))
     else:
-        context.update(_get_shared_module_view_context(app, module, case_property_builder, lang))
-        context.update(_get_basic_module_view_context(app, module, case_property_builder))
+        context.update(_get_basic_module_view_context(app, module, lang))
     if isinstance(module, ShadowModule):
         context.update(_get_shadow_module_view_context(app, module, lang))
-    context.update({'module_brief': module_brief})
     return context
 
 
-def _get_shared_module_view_context(app, module, case_property_builder, lang=None):
-    '''
-    Get context items that are used by both basic and advanced modules.
-    '''
-    case_type = module.case_type
-    return {
-        'details': _get_module_details_context(app, module, case_property_builder, case_type),
-        'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
-        'valid_parent_modules': _get_valid_parent_modules(app, module),
-        'js_options': {
-            'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
-            'is_search_enabled': case_search_enabled_for_domain(app.domain),
-            'search_properties': module.search_config.properties if module_offers_search(module) else [],
-            'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
-            'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
-            'search_button_display_condition':
-                module.search_config.search_button_display_condition if module_offers_search(module) else "",
-        }
-    }
-
-
-def _get_careplan_module_view_context(app, module, case_property_builder):
+def _get_careplan_module_view_context(app, module):
+    case_property_builder = _setup_case_property_builder(app)
     subcase_types = list(app.get_subcase_types(module.case_type))
     return {
         'parent_modules': _get_parent_modules(app, module,
@@ -188,11 +151,29 @@ def _get_careplan_module_view_context(app, module, case_property_builder):
     }
 
 
-def _get_advanced_module_view_context(app, module):
+def _get_advanced_module_view_context(app, module, lang=None):
+    case_property_builder = _setup_case_property_builder(app)
     case_type = module.case_type
+    form_options = _case_list_form_options(app, module, case_type, lang)
     return {
-        'case_list_form_not_allowed_reason': _case_list_form_not_allowed_reason(module),
+        'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
+        'details': _get_module_details_context(app, module,
+                                               case_property_builder,
+                                               case_type),
+        'case_list_form_options': form_options,
+        'case_list_form_not_allowed_reason': _case_list_form_not_allowed_reason(
+            module),
+        'valid_parent_modules': [
+            parent_module for parent_module in app.modules
+            if not getattr(parent_module, 'root_module_id', None)
+        ],
         'child_module_enabled': True,
+        'is_search_enabled': case_search_enabled_for_domain(app.domain),
+        'search_properties': module.search_config.properties if module_offers_search(module) else [],
+        'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'search_button_display_condition':
+            module.search_config.search_button_display_condition if module_offers_search(module) else "",
+        'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
         'schedule_phases': [
             {
                 'id': schedule.id,
@@ -205,8 +186,10 @@ def _get_advanced_module_view_context(app, module):
     }
 
 
-def _get_basic_module_view_context(app, module, case_property_builder):
+def _get_basic_module_view_context(app, module, lang=None):
+    case_property_builder = _setup_case_property_builder(app)
     case_type = module.case_type
+    form_options = _case_list_form_options(app, module, case_type, lang)
     # http://manage.dimagi.com/default.asp?178635
     allow_with_parent_select = app.build_version >= '2.23' or not module.parent_select.active
     allow_case_list_form = _case_list_form_not_allowed_reason(
@@ -215,10 +198,20 @@ def _get_basic_module_view_context(app, module, case_property_builder):
     )
     return {
         'parent_modules': _get_parent_modules(app, module, case_property_builder, case_type),
+        'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
+        'details': _get_module_details_context(app, module, case_property_builder, case_type),
+        'case_list_form_options': form_options,
         'case_list_form_not_allowed_reason': allow_case_list_form,
+        'valid_parent_modules': _get_valid_parent_modules(app, module),
         'child_module_enabled': (
-            toggles.BASIC_CHILD_MODULE.enabled(app.domain)
+            toggles.BASIC_CHILD_MODULE.enabled(app.domain) and module.doc_type != "ShadowModule"
         ),
+        'is_search_enabled': case_search_enabled_for_domain(app.domain),
+        'search_properties': module.search_config.properties if module_offers_search(module) else [],
+        'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'search_button_display_condition':
+            module.search_config.search_button_display_condition if module_offers_search(module) else "",
+        'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
     }
 
 
@@ -234,11 +227,8 @@ def _get_shadow_module_view_context(app, module, lang=None):
         }
 
     return {
-        'shadow_module_options': {
-            'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
-            'source_module_id': module.source_module_id,
-            'excluded_form_ids': module.excluded_form_ids,
-        },
+        'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
+        'excluded_form_ids': module.excluded_form_ids,
     }
 
 
@@ -332,10 +322,7 @@ def _case_list_form_options(app, module, case_type_, lang=None):
     langs = None if lang is None else [lang]
     options.update({f.unique_id: trans(f.name, langs) for f in forms})
 
-    return {
-        'options': options,
-        'form': module.case_list_form,
-    }
+    return options
 
 
 def _get_module_details_context(app, module, case_property_builder, case_type_):
@@ -379,21 +366,14 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
 
 
 def _case_list_form_not_allowed_reason(module, allow=None):
-    reason = None
     if allow and not allow.allow:
-        reason = allow
+        return allow
     elif not module.all_forms_require_a_case():
-        reason = AllowWithReason(False, AllowWithReason.ALL_FORMS_REQUIRE_CASE)
+        return AllowWithReason(False, AllowWithReason.ALL_FORMS_REQUIRE_CASE)
     elif module.put_in_root:
-        reason = AllowWithReason(False, AllowWithReason.MODULE_IN_ROOT)
+        return AllowWithReason(False, AllowWithReason.MODULE_IN_ROOT)
     else:
-        reason = AllowWithReason(True, '')
-    if reason:
-        return {
-            'allow': reason.allow,
-            'message': reason.message,
-        }
-    return None
+        return AllowWithReason(True, '')
 
 
 class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
