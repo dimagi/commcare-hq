@@ -15,14 +15,16 @@
 
 {% block js-inline %} {{ block.super }}
     <script>
-        {% if aoColumns %}
         $(function() {
+            var aoColumns = hqImport('hqwebapp/js/initial_page_data.js').get('aoColumns');
+            if (aoColumns) {
                 var reportTables = new HQReportDataTables({
-                    {% if aoColumns %}aoColumns: {{ aoColumns|JSON }}{% endif %},
+                    aoColumns: aoColumns,
                 });
                 reportTables.render();
+            }
+            console.log(aoColumns);
         });
-        {% endif %}
     </script>
 {% endblock %}
 
@@ -60,6 +62,7 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'aoColumns' aoColumns %}
     {% if not hide_filters %}
         {% include "hqadmin/hqadmin_base_filters.html" %}
     {% endif %}
