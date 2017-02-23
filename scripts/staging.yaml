@@ -53,7 +53,7 @@ branches:
   - je/device-log-details # 2/21
   - np/110/two-factor
   - revert-14997-revert-14712-br/anonymous-formplayer  # BR 2/16
-#  - np/django1.10 # NP 2/12
+  - np/django1.10 # NP 2/12
   - np/110/requestcontext # NP 2/22
 submodules:
   submodules/touchforms-src:
