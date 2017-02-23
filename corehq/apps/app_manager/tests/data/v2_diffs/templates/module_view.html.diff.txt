@@ -6,8 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -10,32 +10,33 @@
-     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
+@@ -11,103 +11,110 @@
      <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
      <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
      <script src="{% static 'app_manager/js/module-view.js' %}"></script>
@@ -193,7 +192,7 @@
  <script type="text/html" id="module-forms-template">
      <div class="checkbox">
          <label>
-@@ -116,10 +123,10 @@
+@@ -121,10 +128,10 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
