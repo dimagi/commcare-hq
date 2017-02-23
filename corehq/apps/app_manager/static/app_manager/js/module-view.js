@@ -1,46 +1,5 @@
 $(function () {
-    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
-        v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
-        moduleBrief = initial_page_data('module_brief'),
-        moduleType = moduleBrief.module_type;
-
-    var showCaseTypeError = function(message) {
-        var $caseTypeError = $('#case_type_error');
-        $caseTypeError.css('display', 'block');
-        $caseTypeError.text(message);
-    };
-    var hideCaseTypeError = function() {
-        $('#case_type_error').css('display', 'none');
-    };
-    $('#case_type').on('textchange', function () {
-        var value = $(this).val();
-        var valueNoSpaces = value.replace(/ /g, '_');
-        if (value !== valueNoSpaces) {
-            $(this).val(valueNoSpaces);
-        }
-        if (v2 && !valueNoSpaces) {
-            $(this).closest('.form-group').addClass('has-error');
-            showCaseTypeError(
-                gettext("Case type is required.")
-            );
-            return;
-        }
-        if (!valueNoSpaces.match(/^[\w-]*$/g)) {
-            $(this).closest('.form-group').addClass('has-error');
-            showCaseTypeError(
-                gettext("Case types can only include the characters a-z, 0-9, '-' and '_'")
-            );
-        } else if (valueNoSpaces === 'commcare-user' && moduleType != 'advanced') {
-            $(this).closest('.form-group').addClass('has-error');
-            showCaseTypeError(
-                gettext("'commcare-user' is a reserved case type. Please change the case type")
-            );
-
-        } else {
-            $(this).closest('.form-group').removeClass('has-error');
-            hideCaseTypeError();
-        }
-    });
+    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
 
     if ($('#case-list-form').length) {
         var CaseListForm = function (data, formOptions, allowed, now_allowed_reason) {
