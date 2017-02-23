@@ -1,5 +1,4 @@
 $(function() {
-    var fields = hqImport('hqwebapp/js/initial_page_data.js').get('autocomplete_fields');
     _.each(hqImport('hqwebapp/js/initial_page_data.js').get('autocomplete_fields'), function(field) {
         $("#id_" + field).focus(function() {
             if (!$("#id_" + field).data('loaded')) {

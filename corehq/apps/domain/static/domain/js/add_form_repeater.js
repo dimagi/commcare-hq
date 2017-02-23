@@ -45,7 +45,7 @@ $(function() {
             repeater_type: hqImport("hqwebapp/js/initial_page_data.js").get("repeater_type"),
             use_basic_auth: $('#id_use_basic_auth').prop("checked"),
             username: $('#id_username').val(),
-             password: $('#id_password').val()
+            password: $('#id_password').val(),
         };
         $testLinkButton.disableButton();
 

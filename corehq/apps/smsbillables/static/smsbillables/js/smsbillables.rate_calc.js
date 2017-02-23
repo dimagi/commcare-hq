@@ -136,8 +136,8 @@ $(function() {
         var smsRateCalculator = new SMSRateCalculator({
             country_code: {
                 fieldName: 'country_code',
-                currentValue: ''
-            }
+                currentValue: '',
+            },
         });
         $(element).koApplyBindings(smsRateCalculator);
         smsRateCalculator.init();
@@ -147,8 +147,8 @@ $(function() {
         var smsRateCalculator = new PublicSMSRateCalculator({
             country_code: {
                 fieldName: 'country_code',
-                currentValue: ''
-            }
+                currentValue: '',
+            },
         });
         $(element).koApplyBindings(smsRateCalculator);
     });

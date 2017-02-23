@@ -4,7 +4,7 @@ var HQTimezoneHandler = function (o) {
     self.override_tz = ko.observable(o.override);
     self.form_is_ready = ko.observable(false);
 
-    self.updateForm = function(data, event) {
+    self.updateForm = function(data) {
         self.form_is_ready(true);
     };
 };
@@ -16,8 +16,8 @@ $(function() {
     }));
 
     var $globalTimezone = $('#id_global_timezone'),
-            $userTimezone = $('#id_user_timezone'),
-            $overrideGlobalTimezone = $('#id_override_global_tz');
+        $userTimezone = $('#id_user_timezone'),
+        $overrideGlobalTimezone = $('#id_override_global_tz');
 
     var $matchMessage = $('<span class="help-block" />');
     $userTimezone.parent().append($matchMessage);
@@ -39,7 +39,7 @@ $(function() {
     });
 
     function compare_global_user_timezones() {
-        if($globalTimezone.val() == $userTimezone.val()) {
+        if($globalTimezone.val() === $userTimezone.val()) {
             $userTimezone.parent().parent().addClass('has-success').removeClass('has-warning');
             $matchMessage.html(gettext('This matches the global setting: ') + '<strong>' + $globalTimezone.val() + '</strong>');
         } else {
@@ -51,6 +51,6 @@ $(function() {
     if (initial_page_data('no_domain_membership')) {
         var err_txt = "You may not override this project space's timezone because you only have access to this project space through an Organization. " +
                 "You must be added to the project space as a member in order to override your timezone.";
-        $overrideGlobalTimezone.parent().html(err_txt)
+        $overrideGlobalTimezone.parent().html(err_txt);
     }
 });
