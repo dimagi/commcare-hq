@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import json
 from simpleeval import InvalidExpression
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.document_stores import get_document_store
@@ -15,7 +14,6 @@ from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from .utils import eval_statements
-from corehq.util.quickcache import quickcache
 import six
 
 
