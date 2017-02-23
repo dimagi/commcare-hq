@@ -1,7 +1,6 @@
 import pytz
 from django.test import TestCase
 
-from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -14,18 +13,16 @@ class TestAdherenceUpdater(TestCase):
     def setUpClass(cls):
         super(TestAdherenceUpdater, cls).setUpClass()
         cls.domain = 'adherence-enikshay-test'
-        cls.setupFixtureData()
-        FormProcessorTestUtils.delete_all_cases()
-
-    def setUp(self):
-        super(TestAdherenceUpdater, self).setUp()
-        delete_all_users()
-        self.factory = CaseFactory(domain=self.domain)
-        self.user = CommCareUser.create(
-            self.domain,
+        cls.user = CommCareUser.create(
+            cls.domain,
             "jon-snow@user",
             "123",
         )
+        cls.setupFixtureData()
+
+    def setUp(self):
+        super(TestAdherenceUpdater, self).setUp()
+        self.factory = CaseFactory(domain=self.domain)
         self.person_id = u"person"
         self.occurrence_id = u"occurrence"
         self.episode_id = u"episode"
@@ -82,14 +79,9 @@ class TestAdherenceUpdater(TestCase):
             data_item.save()
             cls.data_items.append(data_item)
 
-    def tearDown(self):
-        delete_all_users()
-        super(TestAdherenceUpdater, self).tearDown()
-
     @classmethod
     def tearDownClass(cls):
-        for domain in Domain.get_all():
-            domain.delete()
+        cls.user.delete()
         cls.data_type.delete()
         for data_item in cls.data_items:
             data_item.delete()

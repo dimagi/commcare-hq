@@ -34,7 +34,7 @@ SCHEDULE_ID_FIXTURE = 'id'
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def enikshay_adherence_task():
-    # runs adherence calculations for all domains that `toggles.UATBC_ADHERENCE_TASK` enabled
+    # runs adherence calculations for all domains that have `toggles.UATBC_ADHERENCE_TASK` enabled
     domains = toggles.UATBC_ADHERENCE_TASK.get_enabled_domains()
     for domain in domains:
         updater = EpisodeAdherenceUpdater(domain)
