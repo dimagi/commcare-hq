@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, date
 import itertools
 import json
 from wsgiref.util import FileWrapper
+from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.utils import get_domain_module_map
@@ -523,8 +524,9 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
-    saved_export = SavedBasicExport.get(export_id)
-    return _download_saved_export(req, domain, saved_export)
+    with CriticalSection(['saved-export-{}'.format(export_id)]):
+        saved_export = SavedBasicExport.get(export_id)
+        return _download_saved_export(req, domain, saved_export)
 
 
 @csrf_exempt
@@ -532,10 +534,11 @@ def hq_download_saved_export(req, domain, export_id):
 @require_form_deid_export_permission
 @require_GET
 def hq_deid_download_saved_export(req, domain, export_id):
-    saved_export = SavedBasicExport.get(export_id)
-    if not saved_export.is_safe:
-        raise Http404()
-    return _download_saved_export(req, domain, saved_export)
+    with CriticalSection(['saved-export-{}'.format(export_id)]):
+        saved_export = SavedBasicExport.get(export_id)
+        if not saved_export.is_safe:
+            raise Http404()
+        return _download_saved_export(req, domain, saved_export)
 
 
 def _download_saved_export(req, domain, saved_export):

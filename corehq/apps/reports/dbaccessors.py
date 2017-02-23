@@ -21,6 +21,13 @@ def _get_exports(domain, include_docs=True, reduce=False, **kwargs):
     )
 
 
+def get_exports_json(domain):
+    for res in _get_exports(domain):
+        # workaround for http://manage.dimagi.com/default.asp?223471
+        if res['doc'] is not None:
+            yield res['doc']
+
+
 def stale_get_exports_json(domain):
     for res in _get_exports(domain, stale=settings.COUCH_STALE_QUERY):
         # workaround for http://manage.dimagi.com/default.asp?223471
