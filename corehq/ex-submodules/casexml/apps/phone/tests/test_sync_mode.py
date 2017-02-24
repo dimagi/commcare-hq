@@ -24,7 +24,8 @@ from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from corehq.util.test_utils import flag_enabled
 from casexml.apps.case.tests.util import (
     check_user_has_case, assert_user_doesnt_have_case,
-    assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases)
+    assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases, check_payload_has_cases,
+    check_payload_has_case_ids)
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
     AbstractSyncLog
@@ -1661,9 +1662,13 @@ class MultiUserSyncTest(SyncBaseTest):
         # so that they can be purged.
 
         payload = generate_restore_payload(self.project, self.user, latest_sync_log.get_id, version=V2)
-        assert_user_has_cases(self, self.user, [case_id, parent_id], restore_id=latest_sync_log.get_id)
-
-        # Ghetto
+        check_payload_has_case_ids(
+            self,
+            username=self.user.username,
+            payload_string=payload,
+            case_ids=[case_id, parent_id],
+        )
+        # hacky
         self.assertTrue("something new" in payload)
         self.assertTrue("hi!" in payload)
         # also check that the latest sync log knows those cases are no longer relevant to the phone
