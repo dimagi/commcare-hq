@@ -27,20 +27,7 @@ class SimpleCaseBugTests(SimpleTestCase):
             CommCareCase(_id='test').to_xml(version)
 
 
-class CaseBugTestCouchOnly(TestCase, TestFileMixin):
-
-    file_path = ('data', 'bugs')
-    root = os.path.dirname(__file__)
-
-    @classmethod
-    def setUpClass(cls):
-        super(CaseBugTestCouchOnly, cls).setUpClass()
-        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
-
-    @classmethod
-    def tearDownClass(cls):
-        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
-        super(CaseBugTestCouchOnly, cls).tearDownClass()
+class CaseBugTestCouchOnly(TestCase):
 
     def test_conflicting_ids(self):
         """
