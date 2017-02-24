@@ -1126,7 +1126,11 @@ class Subscription(models.Model):
         assert date_start is not None
         for sub in Subscription.objects.filter(
             subscriber=self.subscriber
-        ).exclude(id=self.id).all():
+        ).exclude(
+            id=self.id,
+        ).exclude(
+            CONSISTENT_DATES_CHECK,
+        ).all():
             related_has_no_end = sub.date_end is None
             current_has_no_end = date_end is None
             start_before_related_end = sub.date_end is not None and date_start < sub.date_end
