@@ -52,7 +52,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
     get_aggregated_ledger_values,
-)
+    get_case_types_for_domain_es)
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -1157,6 +1157,17 @@ class TestCaseESAccessors(BaseESAccessorsTest):
 
         results = get_case_counts_opened_by_user(self.domain, datespan, case_types=['not-here'])
         self.assertEqual(results, {})
+
+    def test_get_case_types(self):
+        self._send_case_to_es(case_type='t1')
+        self._send_case_to_es(case_type='t2')
+        self._send_case_to_es(case_type='t3', closed_on=datetime.utcnow())
+        self._send_case_to_es(domain='other', case_type='t4')
+
+        case_types = get_case_types_for_domain_es(self.domain)
+        self.assertEqual(case_types, {'t1', 't2', 't3'})
+        self.assertEqual({'t4'}, get_case_types_for_domain_es('other'))
+        self.assertEqual(set(), get_case_types_for_domain_es('none'))
 
 
 class TestLedgerESAccessors(BaseESAccessorsTest):
