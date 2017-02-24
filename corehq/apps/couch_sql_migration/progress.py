@@ -19,6 +19,20 @@ def couch_sql_migration_in_progress(domain):
     return get_migration_status(domain, COUCH_TO_SQL_SLUG, strict=True) == MigrationStatus.IN_PROGRESS
 
 
+def _notify_dimagi_users_on_domain(domain):
+    from corehq.apps.notifications.models import Notification
+    from corehq.apps.users.models import WebUser
+
+    users = [user for user in WebUser.by_domain(domain) if '@dimagi.com' in user.username]
+    django_users = [user.get_django_user() for user in users]
+    if django_users:
+        notification = Notification(
+            domain_specific=True, domains=[domain], type='alert',
+            content="This project has been migrated to the scale backend.", users_read=django_users
+        )
+        notification.activate()
+
+
 def set_couch_sql_migration_complete(domain):
     from corehq.apps.couch_sql_migration.couchsqlmigration import commit_migration
     commit_migration(domain)
@@ -26,3 +40,4 @@ def set_couch_sql_migration_complete(domain):
     DomainMigrationProgress.objects.filter(domain=domain, migration_slug=COUCH_TO_SQL_SLUG).delete()
     # we get this for free
     set_tz_migration_complete(domain)
+    _notify_dimagi_users_on_domain(domain)
