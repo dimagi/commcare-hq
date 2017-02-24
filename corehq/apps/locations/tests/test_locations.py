@@ -1,13 +1,13 @@
-from corehq.apps.groups.tests.test_groups import WrapGroupTestMixin
-from corehq.apps.locations.models import Location, LocationType, SQLLocation
-from corehq.apps.locations.tests.util import make_loc
+from django.test import TestCase, SimpleTestCase
+
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
-from corehq.apps.users.models import CommCareUser
-from django.test import TestCase, SimpleTestCase
-from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.shortcuts import create_domain
-from .util import LocationHierarchyPerTest
+from corehq.apps.groups.tests.test_groups import WrapGroupTestMixin
+from corehq.apps.products.models import SQLProduct
+
+from ..models import Location, LocationType, SQLLocation
+from .util import LocationHierarchyPerTest, make_loc
 
 
 class LocationProducts(TestCase):
@@ -70,31 +70,6 @@ class LocationProducts(TestCase):
             set(SQLProduct.objects.filter(domain=self.domain.name)),
             set(self.loc.products),
         )
-
-
-class LocationTestBase(TestCase):
-
-    def setUp(self):
-        self.domain = create_domain('locations-test')
-        self.domain.convert_to_commtrack()
-        bootstrap_location_types(self.domain.name)
-
-        self.loc = make_loc('loc', type='outlet', domain=self.domain.name)
-        self.sp = self.loc.linked_supply_point()
-
-        self.user = CommCareUser.create(
-            self.domain.name,
-            'username',
-            'password',
-            first_name='Bob',
-            last_name='Builder',
-        )
-        self.user.set_location(self.loc)
-
-    def tearDown(self):
-        self.user.delete()
-        # domain delete cascades to everything else
-        self.domain.delete()
 
 
 class LocationsTest(TestCase):
