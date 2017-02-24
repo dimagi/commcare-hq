@@ -97,7 +97,18 @@ class LocationTestBase(TestCase):
         self.domain.delete()
 
 
-class LocationsTest(LocationTestBase):
+class LocationsTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(LocationsTest, cls).setUpClass()
+        cls.domain = create_domain('locations-test')
+        bootstrap_location_types(cls.domain.name)
+        cls.loc = make_loc('loc', type='outlet', domain=cls.domain.name)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        super(LocationsTest, cls).tearDownClass()
 
     def test_storage_types(self):
         # make sure we can go between sql/couch locs
@@ -116,13 +127,13 @@ class LocationsTest(LocationTestBase):
         test_state1 = make_loc(
             'teststate1',
             type='state',
-            parent=self.user.location,
+            parent=self.loc,
             domain=self.domain.name
         )
         test_state2 = make_loc(
             'teststate2',
             type='state',
-            parent=self.user.location,
+            parent=self.loc,
             domain=self.domain.name
         )
         test_village1 = make_loc(
@@ -149,28 +160,28 @@ class LocationsTest(LocationTestBase):
         # descendants
         compare(
             [test_state1, test_state2, test_village1, test_village2],
-            self.user.location.descendants
+            self.loc.descendants
         )
 
         # children
         compare(
             [test_state1, test_state2],
-            self.user.location.get_children()
+            self.loc.get_children()
         )
 
         # parent and parent_location_id
         self.assertEqual(
-            self.user.location.location_id,
+            self.loc.location_id,
             test_state1.parent_location_id
         )
         self.assertEqual(
-            self.user.location.location_id,
+            self.loc.location_id,
             test_state1.parent._id
         )
 
         # Location.root_locations
         compare(
-            [self.user.location],
+            [self.loc],
             Location.root_locations(self.domain.name)
         )
 
@@ -189,8 +200,7 @@ class LocationsTest(LocationTestBase):
         test_village2.domain = 'rejected'
         test_village2.save()
         self.assertEqual(
-            {loc.location_id for loc in [self.user.location, test_state1, test_state2,
-                                 test_village1]},
+            {loc.location_id for loc in [self.loc, test_state1, test_state2, test_village1]},
             set(SQLLocation.objects.filter(domain=self.domain.name).location_ids()),
         )
 
@@ -206,7 +216,7 @@ class LocationsTest(LocationTestBase):
 
         # Location.by_domain
         compare(
-            [self.user.location, test_state1, test_state2, test_village1],
+            [self.loc, test_state1, test_state2, test_village1],
             Location.by_domain(self.domain.name)
         )
 
