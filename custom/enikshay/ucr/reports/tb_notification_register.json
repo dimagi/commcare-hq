@@ -380,7 +380,7 @@
             {
                 "display": "Health Facility for Treatment",
                 "type": "field",
-                "field": "phi_assigned_to",
+                "field": "phi",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
