@@ -78,10 +78,10 @@ class _Writer(object):
                     for t in instance.selected_tables
                 ]
                 for table_index, table in enumerate(instance.selected_tables):
-                    sheet_name = table.label or "Sheet{}".format(table_index+1)
+                    sheet_name = table.label or "Sheet{}".format(table_index + 1)
                     if len(export_instances) > 1:
                         sheet_name = "{}-{}".format(
-                            instance.name or "Export{}".format(instance_index+1),
+                            instance.name or "Export{}".format(instance_index + 1),
                             sheet_name
                         )
                     table_titles[table] = sheet_name
