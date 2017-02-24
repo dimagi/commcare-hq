@@ -127,8 +127,8 @@ class CaseBugTest(TestCase, TestFileMixin):
         response, form, [case] = submit_form_locally(xml_data, 'test-domain')
         self.assertEqual("2", case.dynamic_case_properties()['bar'])
 
-    def testMultipleCaseBlocks(self):
-        # How do we do when submitting a form with multiple blocks for the same case?
+    def test_multiple_case_blocks(self):
+        """Ensure we can submit a form with multiple blocks for the same case"""
         case_id = uuid.uuid4().hex
         case_blocks = [
             CaseBlock(create=True, case_id=case_id, update={
@@ -149,14 +149,15 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual(1, len(ids))
         self.assertEqual(form.form_id, ids[0])
 
-    def testLotsOfSubcases(self):
-        # How do we do when submitting a form with multiple blocks for the same case?
+    def test_lots_of_subcases(self):
+        """Creates a bunch of subcases"""
+        # cz 2/24/2017: unclear why this test is here
         xml_data = self.get_xml('lots_of_subcases')
         response, form, cases = submit_form_locally(xml_data, 'test-domain')
         self.assertEqual(11, len(cases))
 
-    def testSubmitToDeletedCase(self):
-        # submitting to a deleted case should succeed and affect the case
+    def test_submit_to_deleted_case(self):
+        """submitting to a deleted case should succeed and affect the case"""
         case_id = uuid.uuid4().hex
         xform, [case] = post_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',
