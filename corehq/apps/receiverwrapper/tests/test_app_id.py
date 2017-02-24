@@ -70,4 +70,3 @@ class TestAppId(TestCase):
 @use_sql_backend
 class TestAppIdSQL(TestAppId):
     pass
-
