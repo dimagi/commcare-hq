@@ -111,8 +111,10 @@ class CaseBugTest(TestCase, TestFileMixin):
         # Submits a case name/case type/user_id that looks like a decimal
         self._test_datatypes_in_various_properties('4.06')
 
-    def testDuplicateCasePropertiesBug(self):
-        # Submit multiple values for the same property in an update block
+    def test_duplicate_case_properties(self):
+        """
+        Submit multiple values for the same property in an update block
+        """
         case_id = '061ecbae-d9be-4bb5-bdd4-e62abd5eaf7b'
         post_case_blocks([
             CaseBlock(create=True, case_id=case_id).as_xml()
