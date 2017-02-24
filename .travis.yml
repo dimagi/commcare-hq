@@ -15,6 +15,8 @@ env:
     - secure: "LuT0vvsY6RjlEX8Gje74Xl0jcuEfaiN/fOOXpfZd1tf8zC3Xd9E8mNn5vlup/3PBBBv1yIAUmw9LTc03ifWBGzaazqIVAgTfgBoW7XAd8G/lx0/eeZFqheSdpP8wSZwn72Z/XrIhQczFCreZRJHlZA9GopRv7Lfs1SfNEbnMoac="
     # TRAVIS_HQ_PASSWORD
     - secure: "GmJzDwP60bUWKzIWnhg4j8TkA/IQsM5Ulx+frkPkrZmLnmLZN5K6cWqruZLl/mB6VFvnuGNBwaYq5ADMD8LpIt8LYlmHZ/zOaE04ti3rOvaOHxG+ncMkloeeke+82ismFZsI/X15F4yawUKR74lnAS5u8BfY2P+Jqko1D+15WKg="
+    # DATADOG_API_KEY
+    - secure: "R2Kq6NZuc0gSqZ3PQX2VXwBsaQo2Z+3m5opheEs57PZNyK8zRrBH67pyHpOLx0ppoKuwWQA9yoiZjz/DgW3zs0TgCxvOMl/oRu93eiG/FE5Rons8E3Iu1LtcM4ew1UR70/6HimRJWja9bGJLq0Iyx0VEUH1T2t7okVOd4TOg5S8="
 before_install:
   # get newer version of docker-compose for variable substitution in compose files
   - curl -L https://github.com/docker/compose/releases/download/1.5.2/docker-compose-`uname -s`-`uname -m` > docker-compose

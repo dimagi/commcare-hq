@@ -1,6 +1,7 @@
 #! /bin/bash
 # This script runs inside the web container
 set -e
+declare -A metrics
 
 if [ -z "$1" ]; then
     # the main container need not stay running for services
@@ -47,8 +48,35 @@ function run_tests() {
         exit 1
     fi
     shift
+
+    metrics[setup_start]=`date +%s`
     setup $TEST
+    metrics[setup_delta]=$((`date +%s` - metrics[setup_start]))
+    send_metrics_to_datadog "setup" $metrics[setup_delta]
+
+
+    metrics[tests_start]=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
+    metrics[tests_delta]=$((`date +%s` - metrics[setup_start]))
+
+    send_metrics_to_datadog "tests" $metrics[tests_delta]
+}
+
+function send_metrics_to_datadog() {
+
+    currenttime=$(date +%s)
+
+    curl  -X POST -H "Content-type: application/json" \
+    -d "{ \"series\" :
+             [{\"metric\":\"travis.timings.$1\",
+              \"points\":[[$currenttime, $2]],
+              \"type\":\"gauge\",
+              \"host\":\"travis-ci.org\",
+              \"tags\":[\"environment:travis\", \"test_type:$TEST\", \"partition:$NOSE_DIVIDED_WE_RUN\"]}
+            ]
+        }" \
+    "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}"
+
 }
 
 function _run_tests() {
