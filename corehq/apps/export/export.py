@@ -72,15 +72,19 @@ class _Writer(object):
             # open the ExportWriter
             headers = []
             table_titles = {}
-            for instance in export_instances:
+            for instance_index, instance in enumerate(export_instances):
                 headers += [
                     (t, (t.get_headers(split_columns=instance.split_multiselects),))
                     for t in instance.selected_tables
                 ]
-                table_titles.update({
-                    t: t.label or "Sheet{}".format(i+1)
-                    for i, t in enumerate(instance.selected_tables)
-                })
+                for table_index, table in enumerate(instance.selected_tables):
+                    sheet_name = table.label or "Sheet{}".format(table_index+1)
+                    if len(export_instances) > 1:
+                        sheet_name = "{}-{}".format(
+                            instance.name or "Export{}".format(instance_index+1),
+                            sheet_name
+                        )
+                    table_titles[table] = sheet_name
             self.writer.open(headers, file, table_titles=table_titles, archive_basepath=name)
             yield
             self.writer.close()
