@@ -127,20 +127,25 @@ class CaseBugTest(TestCase, TestFileMixin):
 
     def testMultipleCaseBlocks(self):
         # How do we do when submitting a form with multiple blocks for the same case?
-        case_id = 'MCLPZ69ON942EKNIBR5WF1G2L'
-        create_form, _ = post_case_blocks([
-            CaseBlock(create=True, case_id=case_id).as_xml()
-        ])
-        xml_data = self.get_xml('multiple_case_blocks')
-        response, form, [case] = submit_form_locally(xml_data, 'test-domain')
-
-        self.assertEqual('1630005', case.dynamic_case_properties()['community_code'])
-        self.assertEqual('SantaMariaCahabon', case.dynamic_case_properties()['district_name'])
-        self.assertEqual('TAMERLO', case.dynamic_case_properties()['community_name'])
+        case_id = uuid.uuid4().hex
+        case_blocks = [
+            CaseBlock(create=True, case_id=case_id, update={
+                'p1': 'v1',
+                'p2': 'v2',
+            }).as_string(),
+            CaseBlock(case_id=case_id, update={
+                'p2': 'v4',
+                'p3': 'v3',
+            }).as_string(),
+        ]
+        form, [case] = submit_case_blocks(case_blocks, 'test-domain')
+        self.assertEqual('v1', case.dynamic_case_properties()['p1'])
+        self.assertEqual('v4', case.dynamic_case_properties()['p2'])
+        self.assertEqual('v3', case.dynamic_case_properties()['p3'])
 
         ids = case.xform_ids
-        self.assertEqual(2, len(ids))
-        self.assertEqual([create_form.form_id, form.form_id], ids)
+        self.assertEqual(1, len(ids))
+        self.assertEqual(form.form_id, ids[0])
 
     def testLotsOfSubcases(self):
         # How do we do when submitting a form with multiple blocks for the same case?
