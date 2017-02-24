@@ -64,9 +64,13 @@ class CaseBugTest(TestCase, TestFileMixin):
         """
         Ensure that form processor fails on empty id
         """
-        xml_data = self.get_xml('empty_id')
-        response, form, cases = submit_form_locally(xml_data, 'test-domain')
-        self.assertIn('IllegalCaseId', response.content)
+        case_block = CaseBlock(
+            case_id='',
+            create=True,
+        ).as_string()
+        form, cases = submit_case_blocks(case_block, 'test-domain')
+        self.assertIn('IllegalCaseId', form.problem)
+        self.assertEqual([], cases)  # should make no cases
 
     def _testCornerCaseDatatypeBugs(self, value):
 
