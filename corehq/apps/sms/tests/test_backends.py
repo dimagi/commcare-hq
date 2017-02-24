@@ -1,4 +1,6 @@
 import json
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.api.models import ApiUser, PERMISSION_POST_SMS
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
@@ -37,127 +39,145 @@ from mock import patch
 from urllib import urlencode
 
 
-class AllBackendTest(BaseSMSTest):
+class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
-    def setUp(self):
-        super(AllBackendTest, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        cls.domain_obj = Domain(name='all-backend-test')
+        cls.domain_obj.save()
+        cls.setup_subscription(cls.domain_obj.name, SoftwarePlanEdition.ADVANCED)
+        cls.domain_obj = Domain.get(cls.domain_obj.get_id)
 
-        self.domain_obj = Domain(name='all-backend-test')
-        self.domain_obj.save()
-        self.create_account_and_subscription(self.domain_obj.name)
-        self.domain_obj = Domain.get(self.domain_obj.get_id)
+        cls.test_phone_number = '99912345'
 
-        self.test_phone_number = '99912345'
-
-        self.unicel_backend = SQLUnicelBackend(
+        cls.unicel_backend = SQLUnicelBackend(
             name='UNICEL',
             is_global=True,
             hq_api_id=SQLUnicelBackend.get_api_id()
         )
-        self.unicel_backend.save()
+        cls.unicel_backend.save()
 
-        self.mach_backend = SQLMachBackend(
+        cls.mach_backend = SQLMachBackend(
             name='MACH',
             is_global=True,
             hq_api_id=SQLMachBackend.get_api_id()
         )
-        self.mach_backend.save()
+        cls.mach_backend.save()
 
-        self.tropo_backend = SQLTropoBackend(
+        cls.tropo_backend = SQLTropoBackend(
             name='TROPO',
             is_global=True,
             hq_api_id=SQLTropoBackend.get_api_id()
         )
-        self.tropo_backend.save()
+        cls.tropo_backend.save()
 
-        self.http_backend = SQLHttpBackend(
+        cls.http_backend = SQLHttpBackend(
             name='HTTP',
             is_global=True,
             hq_api_id=SQLHttpBackend.get_api_id()
         )
-        self.http_backend.save()
+        cls.http_backend.save()
 
-        self.telerivet_backend = SQLTelerivetBackend(
+        cls.telerivet_backend = SQLTelerivetBackend(
             name='TELERIVET',
             is_global=True,
             hq_api_id=SQLTelerivetBackend.get_api_id()
         )
-        self.telerivet_backend.set_extra_fields(
-            **dict(
-                webhook_secret='telerivet-webhook-secret'
-            )
-        )
-        self.telerivet_backend.save()
+        cls.telerivet_backend.set_extra_fields(webhook_secret='telerivet-webhook-secret')
+        cls.telerivet_backend.save()
 
-        self.test_backend = SQLTestSMSBackend(
+        cls.test_backend = SQLTestSMSBackend(
             name='TEST',
             is_global=True,
             hq_api_id=SQLTestSMSBackend.get_api_id()
         )
-        self.test_backend.save()
+        cls.test_backend.save()
 
-        self.grapevine_backend = SQLGrapevineBackend(
+        cls.grapevine_backend = SQLGrapevineBackend(
             name='GRAPEVINE',
             is_global=True,
             hq_api_id=SQLGrapevineBackend.get_api_id()
         )
-        self.grapevine_backend.save()
+        cls.grapevine_backend.save()
 
-        self.twilio_backend = SQLTwilioBackend(
+        cls.twilio_backend = SQLTwilioBackend(
             name='TWILIO',
             is_global=True,
             hq_api_id=SQLTwilioBackend.get_api_id()
         )
-        self.twilio_backend.save()
+        cls.twilio_backend.save()
 
-        self.megamobile_backend = SQLMegamobileBackend(
+        cls.megamobile_backend = SQLMegamobileBackend(
             name='MEGAMOBILE',
             is_global=True,
             hq_api_id=SQLMegamobileBackend.get_api_id()
         )
-        self.megamobile_backend.save()
+        cls.megamobile_backend.save()
 
-        self.smsgh_backend = SQLSMSGHBackend(
+        cls.smsgh_backend = SQLSMSGHBackend(
             name='SMSGH',
             is_global=True,
             hq_api_id=SQLSMSGHBackend.get_api_id()
         )
-        self.smsgh_backend.save()
+        cls.smsgh_backend.save()
 
-        self.apposit_backend = SQLAppositBackend(
+        cls.apposit_backend = SQLAppositBackend(
             name='APPOSIT',
             is_global=True,
             hq_api_id=SQLAppositBackend.get_api_id()
         )
-        self.apposit_backend.save()
+        cls.apposit_backend.save()
 
-        self.sislog_backend = SQLSislogBackend(
+        cls.sislog_backend = SQLSislogBackend(
             name='SISLOG',
             is_global=True,
             hq_api_id=SQLSislogBackend.get_api_id()
         )
-        self.sislog_backend.save()
+        cls.sislog_backend.save()
 
-        self.yo_backend = SQLYoBackend(
+        cls.yo_backend = SQLYoBackend(
             name='YO',
             is_global=True,
             hq_api_id=SQLYoBackend.get_api_id()
         )
-        self.yo_backend.save()
+        cls.yo_backend.save()
 
-        self.push_backend = PushBackend(
+        cls.push_backend = PushBackend(
             name='PUSH',
             is_global=True,
             hq_api_id=PushBackend.get_api_id()
         )
-        self.push_backend.save()
+        cls.push_backend.save()
 
-        self.icds_backend = SQLICDSBackend(
+        cls.icds_backend = SQLICDSBackend(
             name="ICDS",
             is_global=True,
             hq_api_id=SQLICDSBackend.get_api_id()
         )
-        self.icds_backend.save()
+        cls.icds_backend.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.teardown_subscription()
+        cls.domain_obj.delete()
+        cls.unicel_backend.delete()
+        cls.mach_backend.delete()
+        cls.tropo_backend.delete()
+        cls.http_backend.delete()
+        cls.telerivet_backend.delete()
+        cls.test_backend.delete()
+        cls.grapevine_backend.delete()
+        cls.twilio_backend.delete()
+        cls.megamobile_backend.delete()
+        cls.smsgh_backend.delete()
+        cls.apposit_backend.delete()
+        cls.sislog_backend.delete()
+        cls.yo_backend.delete()
+        cls.push_backend.delete()
+        cls.icds_backend.delete()
+
+    def tearDown(self):
+        SMS.objects.filter(domain=self.domain_obj.name).delete()
 
     def _test_outbound_backend(self, backend, msg_text, mock_send):
         SQLMobileBackendMapping.set_default_domain_backend(self.domain_obj.name, backend)
@@ -400,26 +420,6 @@ class AllBackendTest(BaseSMSTest):
 
         self._verify_inbound_request(self.push_backend.get_api_id(), 'push test',
             backend_couch_id=self.push_backend.couch_id)
-
-    def tearDown(self):
-        delete_domain_phone_numbers(self.domain_obj.name)
-        self.domain_obj.delete()
-        self.unicel_backend.delete()
-        self.mach_backend.delete()
-        self.tropo_backend.delete()
-        self.http_backend.delete()
-        self.telerivet_backend.delete()
-        self.test_backend.delete()
-        self.grapevine_backend.delete()
-        self.twilio_backend.delete()
-        self.megamobile_backend.delete()
-        self.smsgh_backend.delete()
-        self.apposit_backend.delete()
-        self.sislog_backend.delete()
-        self.yo_backend.delete()
-        self.push_backend.delete()
-        self.icds_backend.delete()
-        super(AllBackendTest, self).tearDown()
 
 
 class OutgoingFrameworkTestCase(BaseSMSTest):
