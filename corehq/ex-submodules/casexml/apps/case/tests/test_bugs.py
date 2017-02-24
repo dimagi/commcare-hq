@@ -73,27 +73,27 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual([], cases)  # should make no cases
 
     def _testCornerCaseDatatypeBugs(self, value):
-
-        def _test(custom_format_args):
-            case_id = uuid.uuid4().hex
-            format_args = {
-                'case_id': case_id,
-                'user_id': uuid.uuid4().hex,
-                'case_name': 'data corner cases',
-                'case_type': 'datatype-check',
+        case_id = uuid.uuid4().hex
+        create_caseblock = CaseBlock(
+            case_id=case_id,
+            user_id=value,
+            case_name=value,
+            case_type=value,
+            create=True,
+        ).as_string()
+        update_caseblock = CaseBlock(
+            case_id=case_id,
+            user_id=value,
+            update={
+                'case_name': value,
+                'case_type': value,
             }
-            format_args.update(custom_format_args)
-            for filename in ['bugs_in_case_create_datatypes', 'bugs_in_case_update_datatypes']:
-                format_args['form_id'] = uuid.uuid4().hex
-                xml_data = self.get_xml(filename).format(**format_args)
-                response, form, [case] = submit_form_locally(xml_data, 'test-domain')
-                self.assertEqual(format_args['user_id'], case.user_id)
-                self.assertEqual(format_args['case_name'], case.name)
-                self.assertEqual(format_args['case_type'], case.type)
-
-        _test({'case_name': value})
-        _test({'case_type': value})
-        _test({'user_id': value})
+        ).as_string()
+        for caseblock in create_caseblock, update_caseblock:
+            form, [case] = submit_case_blocks(caseblock, 'test-domain')
+            self.assertEqual(value, case.user_id)
+            self.assertEqual(value, case.name)
+            self.assertEqual(value, case.type)
 
     def testDateInCasePropertyBug(self):
         """
