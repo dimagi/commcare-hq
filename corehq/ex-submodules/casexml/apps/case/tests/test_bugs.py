@@ -72,7 +72,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertIn('IllegalCaseId', form.problem)
         self.assertEqual([], cases)  # should make no cases
 
-    def _testCornerCaseDatatypeBugs(self, value):
+    def _test_datatypes_in_various_properties(self, value):
         case_id = uuid.uuid4().hex
         create_caseblock = CaseBlock(
             case_id=case_id,
@@ -95,21 +95,21 @@ class CaseBugTest(TestCase, TestFileMixin):
             self.assertEqual(value, case.name)
             self.assertEqual(value, case.type)
 
-    def testDateInCasePropertyBug(self):
+    def test_date_in_various_properties(self):
         """
         Submits a case name/case type/user_id that looks like a date
         """
-        self._testCornerCaseDatatypeBugs('2011-11-16')
+        self._test_datatypes_in_various_properties('2011-11-16')
 
-    def testIntegerInCasePropertyBug(self):
+    def test_integer_in_various_properties(self):
         """
         Submits a case name/case type/user_id that looks like a number
         """
-        self._testCornerCaseDatatypeBugs('42')
+        self._test_datatypes_in_various_properties('42')
 
-    def testDecimalInCasePropertyBug(self):
+    def test_decimal_in_various_properties(self):
         # Submits a case name/case type/user_id that looks like a decimal
-        self._testCornerCaseDatatypeBugs('4.06')
+        self._test_datatypes_in_various_properties('4.06')
 
     def testDuplicateCasePropertiesBug(self):
         # Submit multiple values for the same property in an update block
