@@ -14,6 +14,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 
@@ -130,10 +131,10 @@ class BaseCCTests(TestCase):
     def setUp(self):
         super(BaseCCTests, self).setUp()
         locmem_cache.clear()
-        CaseAccessors.get_case_types.clear(CaseAccessors(self.domain_name))
+        get_case_types_for_domain_es.clear(self.domain_name)
 
     def tearDown(self):
-        CaseAccessors.get_case_types.clear(CaseAccessors(self.domain_name))
+        get_case_types_for_domain_es.clear(self.domain_name)
         super(BaseCCTests, self).tearDown()
 
     def _test_indicators(self, user, data_set, expected):

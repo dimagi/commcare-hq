@@ -603,15 +603,6 @@ class CaseAccessorTestsSQL(TestCase):
 
         self.assertEqual([], CaseAccessorSQL.get_cases_by_external_id('d2', '123', case_type='t2'))
 
-    def test_get_case_types_for_domain(self):
-        case_types = {'c1', 'c2', 'c3'}
-        for type_ in case_types:
-            for i in range(3):
-                _create_case(case_type=type_)
-
-        types = CaseAccessorSQL.get_case_types_for_domain(DOMAIN)
-        self.assertEqual(case_types, types)
-
     def test_closed_transactions(self):
         case = _create_case()
         _create_case_transactions(case)
