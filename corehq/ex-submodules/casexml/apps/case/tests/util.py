@@ -146,7 +146,7 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
     )
     payload_string = restore_config.get_payload().as_string()
 
-    return check_payload_has_case(
+    return check_payload_has_cases(
         testcase=testcase,
         payload_string=payload_string,
         username=user.username,
@@ -159,16 +159,19 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
     )
 
 
-def check_payload_has_case(testcase, payload_string, username, case_blocks, should_have=True,
-                           line_by_line=True, version=V2, return_single=False, restore_config=None):
+def check_payload_has_case_ids(testcase, payload_string, username, case_ids):
+    case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
+    return check_payload_has_cases(testcase, payload_string, username, case_blocks, line_by_line=False)
+
+
+def check_payload_has_cases(testcase, payload_string, username, case_blocks, should_have=True,
+                            line_by_line=True, version=V2, return_single=False, restore_config=None):
 
     if not isinstance(case_blocks, list):
         case_blocks = [case_blocks]
         return_single = True
 
-
     XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
-
     blocks_from_restore = extract_caseblocks_from_xml(payload_string, version)
 
     def check_block(case_block):
