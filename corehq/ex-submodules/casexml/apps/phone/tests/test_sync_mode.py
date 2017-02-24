@@ -1612,6 +1612,7 @@ class MultiUserSyncTest(SyncBaseTest):
 
     def testOtherUserReassignsIndexed(self):
         # create a parent and child case (with index) from one user
+        # assign the parent case away from the same user
         parent_id = "other_reassigns_index_parent"
         case_id = "other_reassigns_index_child"
         self.factory.create_or_update_cases([
@@ -1619,21 +1620,16 @@ class MultiUserSyncTest(SyncBaseTest):
                 case_id=case_id,
                 attrs={'create': True},
                 indices=[CaseIndex(
-                    CaseStructure(case_id=parent_id, attrs={'create': True}),
+                    CaseStructure(case_id=parent_id, attrs={
+                        'create': True,
+                        'owner_id': self.other_user_id,
+                        'update': {"greeting": "hello"},
+                    }),
                     relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
                 )],
             )
         ])
-
-        # assign the parent case away from the same user
-        parent_update = CaseBlock(
-            create=False,
-            case_id=parent_id,
-            user_id=self.user_id,
-            owner_id=self.other_user_id,
-            update={"greeting": "hello"}).as_xml()
-        self._postFakeWithSyncToken(parent_update, self.sync_log.get_id)
 
         # sync cases to second user
         other_sync_log = synclog_from_restore_payload(
@@ -1641,6 +1637,7 @@ class MultiUserSyncTest(SyncBaseTest):
         )
 
         # change the child's owner from another user
+        # also change the parent from the second user
         child_reassignment = CaseBlock(
             create=False,
             case_id=case_id,
@@ -1648,16 +1645,13 @@ class MultiUserSyncTest(SyncBaseTest):
             owner_id=self.other_user_id,
             update={"childgreeting": "hi!"},
         ).as_xml()
-        self._postFakeWithSyncToken(child_reassignment, other_sync_log.get_id)
-
-        # also change the parent from the second user
         other_parent_update = CaseBlock(
             create=False,
             case_id=parent_id,
             user_id=self.other_user_id,
             owner_id=self.other_user_id,
             update={"other_greeting": "something new"}).as_xml()
-        self._postFakeWithSyncToken(other_parent_update, other_sync_log.get_id)
+        self._postFakeWithSyncToken([child_reassignment, other_parent_update], other_sync_log.get_id)
 
         # original user syncs again
         latest_sync_log = SyncLog.last_for_user(self.user.user_id)
@@ -1665,11 +1659,11 @@ class MultiUserSyncTest(SyncBaseTest):
         # at this point both cases are assigned to the other user so the original user
         # should not have them. however, the first sync should send them down (with new ownership)
         # so that they can be purged.
-        assert_user_has_case(self, self.user, case_id, restore_id=latest_sync_log.get_id)
-        assert_user_has_case(self, self.user, parent_id, restore_id=latest_sync_log.get_id)
+
+        payload = generate_restore_payload(self.project, self.user, latest_sync_log.get_id, version=V2)
+        assert_user_has_cases(self, self.user, [case_id, parent_id], restore_id=latest_sync_log.get_id)
 
         # Ghetto
-        payload = generate_restore_payload(self.project, self.user, latest_sync_log.get_id, version=V2)
         self.assertTrue("something new" in payload)
         self.assertTrue("hi!" in payload)
         # also check that the latest sync log knows those cases are no longer relevant to the phone
