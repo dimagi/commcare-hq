@@ -10,6 +10,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -45,9 +46,13 @@ class CaseBugTestCouchOnly(TestCase, TestFileMixin):
         """
         If a form and a case share an ID it's a conflict
         """
-        xml_data = self.get_xml('id_conflicts')
+        conflict_id = uuid.uuid4().hex
+        case_block = CaseBlock(
+            case_id=conflict_id,
+            create=True,
+        ).as_string()
         with self.assertRaises(BulkSaveError):
-            submit_form_locally(xml_data, 'test-domain')
+            submit_case_blocks(case_block, 'test-conflicts', form_id=conflict_id)
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
