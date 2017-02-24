@@ -84,7 +84,6 @@ class KafkaPublishingSQLTest(TestCase):
                 dupe_form = submit_form_locally(form.get_xml(), domain=self.domain)[1]
                 self.assertTrue(dupe_form.is_duplicate)
 
-
         # confirm republished
         ledger_meta_a = self.processor.changes_seen[0].metadata
         ledger_meta_b = self.processor.changes_seen[1].metadata

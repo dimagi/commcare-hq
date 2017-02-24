@@ -127,5 +127,3 @@ class TestFormArchivingSQL(TestFormArchiving):
                 xform.unarchive()
         self.assertEqual(1, len(change_context.changes))
         self.assertEqual(change_context.changes[0].id, xform.form_id)
-
-
