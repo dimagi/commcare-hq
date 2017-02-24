@@ -422,160 +422,150 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             backend_couch_id=self.push_backend.couch_id)
 
 
-class OutgoingFrameworkTestCase(BaseSMSTest):
+class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
 
-    def setUp(self):
-        super(OutgoingFrameworkTestCase, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = "test-domain"
+        cls.domain2 = "test-domain2"
 
-        self.domain = "test-domain"
-        self.domain2 = "test-domain2"
+        cls.domain_obj = Domain(name=cls.domain)
+        cls.domain_obj.save()
 
-        self.domain_obj = Domain(name=self.domain)
-        self.domain_obj.save()
+        cls.setup_subscription(cls.domain, SoftwarePlanEdition.ADVANCED)
+        cls.domain_obj = Domain.get(cls.domain_obj._id)
 
-        self.create_account_and_subscription(self.domain_obj.name)
-        self.domain_obj = Domain.get(self.domain_obj._id)
-
-        self.backend1 = SQLTestSMSBackend.objects.create(
+        cls.backend1 = SQLTestSMSBackend.objects.create(
             name='BACKEND1',
             is_global=True,
             hq_api_id=SQLTestSMSBackend.get_api_id()
         )
 
-        self.backend2 = SQLTestSMSBackend.objects.create(
+        cls.backend2 = SQLTestSMSBackend.objects.create(
             name='BACKEND2',
             is_global=True,
             hq_api_id=SQLTestSMSBackend.get_api_id()
         )
 
-        self.backend3 = SQLTestSMSBackend.objects.create(
+        cls.backend3 = SQLTestSMSBackend.objects.create(
             name='BACKEND3',
             is_global=True,
             hq_api_id=SQLTestSMSBackend.get_api_id()
         )
 
-        self.backend4 = SQLTestSMSBackend.objects.create(
+        cls.backend4 = SQLTestSMSBackend.objects.create(
             name='BACKEND4',
             is_global=True,
             hq_api_id=SQLTestSMSBackend.get_api_id()
         )
 
-        self.backend5 = SQLTestSMSBackend.objects.create(
+        cls.backend5 = SQLTestSMSBackend.objects.create(
             name='BACKEND5',
-            domain=self.domain,
+            domain=cls.domain,
             is_global=False,
             hq_api_id=SQLTestSMSBackend.get_api_id()
         )
 
-        self.backend6 = SQLTestSMSBackend.objects.create(
+        cls.backend6 = SQLTestSMSBackend.objects.create(
             name='BACKEND6',
-            domain=self.domain2,
+            domain=cls.domain2,
             is_global=False,
             hq_api_id=SQLTestSMSBackend.get_api_id()
         )
-        self.backend6.set_shared_domains([self.domain])
+        cls.backend6.set_shared_domains([cls.domain])
 
-        self.backend7 = SQLTestSMSBackend.objects.create(
+        cls.backend7 = SQLTestSMSBackend.objects.create(
             name='BACKEND7',
-            domain=self.domain2,
+            domain=cls.domain2,
             is_global=False,
             hq_api_id=SQLTestSMSBackend.get_api_id()
         )
 
-        self.backend8 = SQLTestSMSBackend.objects.create(
+        cls.backend8 = SQLTestSMSBackend.objects.create(
             name='BACKEND',
-            domain=self.domain,
+            domain=cls.domain,
             is_global=False,
             hq_api_id=SQLTestSMSBackend.get_api_id()
         )
 
-        self.backend9 = SQLTestSMSBackend.objects.create(
+        cls.backend9 = SQLTestSMSBackend.objects.create(
             name='BACKEND',
-            domain=self.domain2,
+            domain=cls.domain2,
             is_global=False,
             hq_api_id=SQLTestSMSBackend.get_api_id()
         )
-        self.backend9.set_shared_domains([self.domain])
+        cls.backend9.set_shared_domains([cls.domain])
 
-        self.backend10 = SQLTestSMSBackend.objects.create(
+        cls.backend10 = SQLTestSMSBackend.objects.create(
             name='BACKEND',
             is_global=True,
             hq_api_id=SQLTestSMSBackend.get_api_id()
         )
 
-        self.backend_mapping1 = SQLMobileBackendMapping.objects.create(
+        cls.backend_mapping1 = SQLMobileBackendMapping.objects.create(
             is_global=True,
             backend_type=SQLMobileBackend.SMS,
             prefix='*',
-            backend=self.backend1
+            backend=cls.backend1
         )
 
-        self.backend_mapping2 = SQLMobileBackendMapping.objects.create(
+        cls.backend_mapping2 = SQLMobileBackendMapping.objects.create(
             is_global=True,
             backend_type=SQLMobileBackend.SMS,
             prefix='1',
-            backend=self.backend2
+            backend=cls.backend2
         )
 
-        self.backend_mapping3 = SQLMobileBackendMapping.objects.create(
+        cls.backend_mapping3 = SQLMobileBackendMapping.objects.create(
             is_global=True,
             backend_type=SQLMobileBackend.SMS,
             prefix='91',
-            backend=self.backend3
+            backend=cls.backend3
         )
 
-        self.backend_mapping4 = SQLMobileBackendMapping.objects.create(
+        cls.backend_mapping4 = SQLMobileBackendMapping.objects.create(
             is_global=True,
             backend_type=SQLMobileBackend.SMS,
             prefix='265',
-            backend=self.backend4
+            backend=cls.backend4
         )
 
-        self.backend_mapping5 = SQLMobileBackendMapping.objects.create(
+        cls.backend_mapping5 = SQLMobileBackendMapping.objects.create(
             is_global=True,
             backend_type=SQLMobileBackend.SMS,
             prefix='256',
-            backend=self.backend5
+            backend=cls.backend5
         )
 
-        self.backend_mapping6 = SQLMobileBackendMapping.objects.create(
+        cls.backend_mapping6 = SQLMobileBackendMapping.objects.create(
             is_global=True,
             backend_type=SQLMobileBackend.SMS,
             prefix='25670',
-            backend=self.backend6
+            backend=cls.backend6
         )
 
-        self.backend_mapping7 = SQLMobileBackendMapping.objects.create(
+        cls.backend_mapping7 = SQLMobileBackendMapping.objects.create(
             is_global=True,
             backend_type=SQLMobileBackend.SMS,
             prefix='25675',
-            backend=self.backend7
+            backend=cls.backend7
         )
 
-    def tearDown(self):
-        delete_domain_phone_numbers(self.domain)
-        delete_domain_phone_numbers(self.domain2)
-        for obj in (
-            list(MobileBackendInvitation.objects.all()) +
-            list(SQLMobileBackendMapping.objects.all())
-        ):
-            # For now we can't do bulk delete because we need to have the
-            # delete sync with couch
-            obj.delete()
-
-        self.backend1.delete()
-        self.backend2.delete()
-        self.backend3.delete()
-        self.backend4.delete()
-        self.backend5.delete()
-        self.backend6.delete()
-        self.backend7.delete()
-        self.backend8.delete()
-        self.backend9.delete()
-        self.backend10.delete()
-        self.domain_obj.delete()
-
-        super(OutgoingFrameworkTestCase, self).tearDown()
+    @classmethod
+    def tearDownClass(cls):
+        delete_domain_phone_numbers(cls.domain)
+        delete_domain_phone_numbers(cls.domain2)
+        cls.backend1.delete()
+        cls.backend2.delete()
+        cls.backend3.delete()
+        cls.backend4.delete()
+        cls.backend5.delete()
+        cls.backend6.delete()
+        cls.backend7.delete()
+        cls.backend8.delete()
+        cls.backend9.delete()
+        cls.backend10.delete()
+        cls.domain_obj.delete()
 
     def test_multiple_country_prefixes(self):
         self.assertEqual(
