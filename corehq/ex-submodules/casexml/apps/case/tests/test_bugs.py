@@ -8,7 +8,6 @@ from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -16,7 +15,7 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
 )
-from corehq.util.test_utils import TestFileMixin, softer_assert
+from corehq.util.test_utils import TestFileMixin
 
 
 class SimpleCaseBugTests(SimpleTestCase):
