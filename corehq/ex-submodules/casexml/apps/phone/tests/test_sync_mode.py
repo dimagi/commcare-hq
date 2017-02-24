@@ -25,7 +25,7 @@ from corehq.util.test_utils import flag_enabled
 from casexml.apps.case.tests.util import (
     check_user_has_case, assert_user_doesnt_have_case,
     assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases, check_payload_has_cases,
-    check_payload_has_case_ids)
+    check_payload_has_case_ids, assert_user_doesnt_have_cases)
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
     AbstractSyncLog
@@ -1688,8 +1688,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # original user syncs again
         latest_sync_log = SyncLog.last_for_user(self.user.user_id)
         # should be no changes
-        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=latest_sync_log.get_id)
-        assert_user_doesnt_have_case(self, self.user, parent_id, restore_id=latest_sync_log.get_id)
+        assert_user_doesnt_have_cases(self, self.user, [case_id, parent_id], restore_id=latest_sync_log.get_id)
 
         # change the child again from the second user
         other_child_update = CaseBlock(
