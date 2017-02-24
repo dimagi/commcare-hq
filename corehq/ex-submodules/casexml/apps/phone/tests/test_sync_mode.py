@@ -1542,8 +1542,9 @@ class MultiUserSyncTest(SyncBaseTest):
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
 
         # make sure the second user doesn't get either
-        assert_user_doesnt_have_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id)
-        assert_user_doesnt_have_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
+        assert_user_doesnt_have_cases(
+            self, self.other_user, [case_id, parent_id], restore_id=self.other_sync_log.get_id
+        )
 
         # assign just the child case to a second user
         child_update = CaseBlock(
@@ -1556,9 +1557,10 @@ class MultiUserSyncTest(SyncBaseTest):
         self._postFakeWithSyncToken(child_update, self.sync_log.get_id)
         # second user syncs
         # make sure both cases restore
-        assert_user_has_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id,
-                             purge_restore_cache=True)
-        assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
+        assert_user_has_cases(
+            self, self.other_user, [case_id, parent_id], restore_id=self.other_sync_log.get_id,
+            purge_restore_cache=True
+        )
 
     def testOtherUserUpdatesIndex(self):
         # create a parent and child case (with index) from one user
@@ -1575,8 +1577,7 @@ class MultiUserSyncTest(SyncBaseTest):
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
 
-        assert_user_doesnt_have_case(self, self.user, parent_id, restore_id=self.sync_log.get_id)
-        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+        assert_user_doesnt_have_cases(self, self.user, [case_id, parent_id], restore_id=self.sync_log.get_id)
 
         # assign the parent case away from same user
         parent_update = CaseBlock(
@@ -1921,9 +1922,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
 
         # syncing again by original user should not pull anything
         sync_again_id = SyncLog.last_for_user(self.user_id)._id
-        assert_user_doesnt_have_case(self, self.user, extension.case_id,
-                                     restore_id=sync_again_id)
-        assert_user_doesnt_have_case(self, self.user, host.case_id,
+        assert_user_doesnt_have_cases(self, self.user, [extension.case_id, host.case_id],
                                      restore_id=sync_again_id)
 
         # reassign the extension case
@@ -1953,8 +1952,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
     def test_multiple_syncs(self):
         host, extension = self._create_extension()
-        assert_user_has_case(self, self.user, host.case_id)
-        assert_user_has_case(self, self.user, extension.case_id)
+        assert_user_has_cases(self, self.user, [host.case_id, extension.case_id])
 
         sync_log = SyncLog.last_for_user(self.user_id)
         self.assertItemsEqual(sync_log.case_ids_on_phone, ['host', 'extension'])
