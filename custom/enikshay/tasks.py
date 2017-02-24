@@ -5,6 +5,7 @@ from xml.etree import ElementTree
 
 from celery.task import periodic_task
 from celery.schedules import crontab
+from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.utils.dateparse import parse_datetime
 
@@ -27,6 +28,7 @@ DOSE_TAKEN_INDICATORS = [
 DAILY_SCHEDULE_FIXTURE_NAME = 'adherence_schedules'
 DAILY_SCHEDULE_ID = 'schedule_daily'
 SCHEDULE_ID_FIXTURE = 'id'
+logger = get_task_logger(__name__)
 
 
 @periodic_task(
@@ -56,12 +58,18 @@ class EpisodeAdherenceUpdater(object):
         # iterate over all open 'episode' cases and set 'adherence' properties
         for episode in self._get_open_episode_cases():
             update = EpisodeUpdate(episode, self)
-            case_block = update.case_block()
-            if case_block:
-                submit_case_blocks(
-                    [ElementTree.tostring(case_block.as_xml())],
-                    self.domain
-                )
+            try:
+                case_block = update.case_block()
+                if case_block:
+                    submit_case_blocks(
+                        [ElementTree.tostring(case_block.as_xml())],
+                        self.domain
+                    )
+            except Exception, e:
+                logger.error("Error calculating adherence values for episode case_id({}): {}".format(
+                    episode.case_id,
+                    e
+                ))
 
     def _get_open_episode_cases(self):
         # return all open 'episode' cases
@@ -95,7 +103,7 @@ def index_by_adherence_date(adherence_cases):
 
 class EpisodeUpdate(object):
     """
-    Class to capture are adherence related calculations specific to an 'episode' case
+    Class to capture adherence related calculations specific to an 'episode' case
     """
     def __init__(self, episode_case, case_updater):
         """
