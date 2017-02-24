@@ -1128,7 +1128,7 @@ class Subscription(models.Model):
             subscriber=self.subscriber
         ).exclude(
             id=self.id,
-        ).exclude(
+        ).filter(
             CONSISTENT_DATES_CHECK,
         ).all():
             related_has_no_end = sub.date_end is None
