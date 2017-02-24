@@ -137,12 +137,6 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
                         line_by_line=True, restore_id="", version=V2,
                         purge_restore_cache=False, return_single=False):
 
-    if not isinstance(case_blocks, list):
-        case_blocks = [case_blocks]
-        return_single = True
-
-    XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
-
     if restore_id and purge_restore_cache:
         SyncLog.get(restore_id).invalidate_cached_payloads()
 
@@ -151,6 +145,30 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
         restore_user=user, params=RestoreParams(restore_id, version=version)
     )
     payload_string = restore_config.get_payload().as_string()
+
+    return check_payload_has_case(
+        testcase=testcase,
+        payload_string=payload_string,
+        username=user.username,
+        case_blocks=case_blocks,
+        should_have=should_have,
+        line_by_line=line_by_line,
+        version=version,
+        return_single=return_single,
+        restore_config=restore_config,
+    )
+
+
+def check_payload_has_case(testcase, payload_string, username, case_blocks, should_have=True,
+                           line_by_line=True, version=V2, return_single=False, restore_config=None):
+
+    if not isinstance(case_blocks, list):
+        case_blocks = [case_blocks]
+        return_single = True
+
+
+    XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
+
     blocks_from_restore = extract_caseblocks_from_xml(payload_string, version)
 
     def check_block(case_block):
@@ -177,16 +195,16 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
                     if n == 2:
                         testcase.fail(
                             "Block for case_id '%s' appears twice"
-                            " in ota restore for user '%s':%s" % (case_id, user.username, extra_info())
+                            " in ota restore for user '%s':%s" % (case_id, username, extra_info())
                         )
                 else:
                     testcase.fail(
                         "User '%s' gets case '%s' "
-                        "but shouldn't:%s" % (user.username, case_id, extra_info())
+                        "but shouldn't:%s" % (username, case_id, extra_info())
                     )
         if not n and should_have:
             testcase.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s':%s"
-                          % (case_id, user.username, extra_info()))
+                          % (case_id, username, extra_info()))
 
         return match
 
