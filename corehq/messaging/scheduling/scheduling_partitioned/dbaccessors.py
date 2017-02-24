@@ -1,9 +1,9 @@
 from corehq.sql_db.util import (
     get_object_from_partitioned_database,
     save_object_to_partitioned_database,
+    delete_object_from_partitioned_database,
     run_query_across_partitioned_databases,
 )
-from datetime import datetime
 from django.db.models import Q
 
 
