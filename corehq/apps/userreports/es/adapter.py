@@ -164,6 +164,9 @@ class IndicatorESAdapter(IndicatorAdapter):
     def refresh_table(self):
         self.es.indices.refresh(index=self.table_name)
 
+    def clear_table(self):
+        self.rebuild_table()
+
     def get_query_object(self):
         return ESAlchemy(self.table_name, self.config)
 

@@ -59,6 +59,12 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         # SQL is always fresh
         pass
 
+    def clear_table(self):
+        table = self.get_table()
+        with self.engine.begin() as connection:
+            delete = table.delete()
+            connection.execute(delete)
+
     def get_query_object(self):
         """
         Get a sqlalchemy query object ready to query this table
