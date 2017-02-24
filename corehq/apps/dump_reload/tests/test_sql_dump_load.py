@@ -5,6 +5,7 @@ from StringIO import StringIO
 from collections import Counter
 from datetime import datetime
 
+from nose.plugins.attrib import attr
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
 from django.db.models.signals import post_save
@@ -109,6 +110,7 @@ class BaseDumpLoadTest(TestCase):
                 self.assertIn('raw', args, message)
 
 
+@attr(sql_backend=True)
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     maxDiff = None
