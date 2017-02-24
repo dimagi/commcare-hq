@@ -1771,6 +1771,14 @@ class EditFormInstance(View):
             non_parents = filter(lambda cb: cb.path == [], case_blocks)
             if len(non_parents) == 1:
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
+                case = CaseAccessors(domain).get_case(edit_session_data['case_id'])
+                if case.closed:
+                    return _error(_(
+                        u'Case {} is closed. Please reopen the '
+                        u'case before editing the form'
+                    ).format(case.case_id))
+                elif case.deleted:
+                    return _error(_(u'Case {} is deleted. Cannot edit this form.').format(case.case_id))
 
         edit_session_data['is_editing'] = True
         edit_session_data['function_context'] = {
