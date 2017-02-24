@@ -9,7 +9,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from corehq.util.context_managers import drop_connected_signals
 from couchforms.signals import xform_archived, xform_unarchived
 
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import TestFileMixin
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
@@ -28,7 +28,6 @@ class TestFormArchiving(TestCase, TestFileMixin):
         FormProcessorTestUtils.delete_all_cases()
         super(TestFormArchiving, self).tearDown()
 
-    @run_with_all_backends
     def testArchive(self):
         case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
         xml_data = self.get_xml('basic')
@@ -70,7 +69,6 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual('unarchive', restoration.operation)
         self.assertEqual('mr. researcher', restoration.user)
 
-    @run_with_all_backends
     def testSignal(self):
         global archive_counter, restore_counter
         archive_counter = 0
@@ -105,6 +103,10 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(1, archive_counter)
         self.assertEqual(1, restore_counter)
 
+
+@use_sql_backend
+class TestFormArchivingSQL(TestFormArchiving):
+
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def testPublishChanges(self):
         xml_data = self.get_xml('basic')
@@ -125,3 +127,5 @@ class TestFormArchiving(TestCase, TestFileMixin):
                 xform.unarchive()
         self.assertEqual(1, len(change_context.changes))
         self.assertEqual(change_context.changes[0].id, xform.form_id)
+
+
