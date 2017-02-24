@@ -43,6 +43,9 @@ preview_app/less */
 
 #js-appmanager-body.offset-for-preview {
   margin-right: @preview-phone-wrapper-width;
+  width: -webkit-calc(~"100% - " @preview-phone-wrapper-width);
+  width: -moz-calc(~"100% - " @preview-phone-wrapper-width);
+  width: calc(~"100% - " @preview-phone-wrapper-width);
 }
 
 #hq-messages-container > div > div > .alert {
@@ -60,7 +63,7 @@ preview_app/less */
   position: fixed;
   z-index: @zindex-app-preview;
   width: 0;
-  background-color: rgba(50, 50, 50, .3);
+  background-color: lighten(@cc-neutral-low, 5);
   .transition(width 1s);
   overflow: hidden;
 
@@ -93,6 +96,9 @@ preview_app/less */
 .preview-tablet-mode {
   #js-appmanager-body.offset-for-preview {
     margin-right: @preview-tablet-wrapper-width;
+    width: -webkit-calc(~"100% - " @preview-tablet-wrapper-width);
+    width: -moz-calc(~"100% - " @preview-tablet-wrapper-width);
+    width: calc(~"100% - " @preview-tablet-wrapper-width);
   }
   #hq-messages-container.offset-for-preview > div > div > .alert {
     margin-right: @preview-tablet-wrapper-width + 10;
