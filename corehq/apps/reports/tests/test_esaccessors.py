@@ -66,7 +66,7 @@ class BaseESAccessorsTest(SimpleTestCase):
         with trap_extra_setup(ConnectionError):
             self.es = get_es_new()
             self._delete_es_index()
-            self.domain = 'esdomain'
+            self.domain = uuid.uuid4().hex
             if isinstance(self.es_index_info, (list, tuple)):
                 for index_info in self.es_index_info:
                     initialize_index_and_mapping(self.es, index_info)
@@ -1168,6 +1168,21 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         self.assertEqual(case_types, {'t1', 't2', 't3'})
         self.assertEqual({'t4'}, get_case_types_for_domain_es('other'))
         self.assertEqual(set(), get_case_types_for_domain_es('none'))
+
+    def test_get_case_types_caching(self):
+        self._send_case_to_es(case_type='t1')
+
+        self.assertEqual({'t1'}, get_case_types_for_domain_es(self.domain))
+
+        self._send_case_to_es(case_type='t2')
+        # cached response
+        self.assertEqual({'t1'}, get_case_types_for_domain_es(self.domain))
+
+        # simulate a save
+        from casexml.apps.case.signals import case_post_save
+        case_post_save.send(self, case=CommCareCase(domain=self.domain, type='t2'))
+
+        self.assertEqual({'t1', 't2'}, get_case_types_for_domain_es(self.domain))
 
 
 class TestLedgerESAccessors(BaseESAccessorsTest):
