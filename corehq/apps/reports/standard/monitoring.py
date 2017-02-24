@@ -29,7 +29,9 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_duration_stats_by_user,
     get_form_duration_stats_for_users)
 from corehq.apps.reports.exceptions import TooMuchDataError
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.filters.users import (
+    ExpandedMobileWorkerFilter as EMWF, LocationRestrictedMobileWorkerFilter
+)
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter
@@ -110,7 +112,7 @@ class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
             "enddate": self.request.GET.get("enddate", '')
         }
 
-        params.update(EMWF.for_user(user.user_id))
+        params.update(LocationRestrictedMobileWorkerFilter.for_user(user.user_id))
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 
