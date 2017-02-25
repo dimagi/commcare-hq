@@ -1481,9 +1481,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         """
         base_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
         if self.view_by_groups:
-            params = EMWF.for_reporting_group(owner_id)
+            params = LocationRestrictedMobileWorkerFilter.for_reporting_group(owner_id)
         else:
-            params = EMWF.for_user(owner_id)
+            params = LocationRestrictedMobileWorkerFilter.for_user(owner_id)
 
         start_date, end_date = self._dates_for_linked_reports(self.datespan)
         params.update({
@@ -1516,7 +1516,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     @staticmethod
     def _case_list_url_params(query, owner_id):
         params = {}
-        params.update(EMWF.for_user(owner_id))  # Get user slug for Users or Groups Filter
+        params.update(CaseListFilter.for_user(owner_id))
         params.update({'search_query': query})
         return params
 
