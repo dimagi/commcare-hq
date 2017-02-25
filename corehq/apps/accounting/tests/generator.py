@@ -101,7 +101,7 @@ def arbitrary_contact_info(account, web_user_creator):
 
 
 @unit_testing_only
-def subscribable_plan(edition=SoftwarePlanEdition.STANDARD):
+def subscribable_plan_version(edition=SoftwarePlanEdition.STANDARD):
     return DefaultProductPlan.get_default_plan_version(edition)
 
 
@@ -111,7 +111,7 @@ def generate_domain_subscription(account, domain, date_start, date_end,
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
     subscription = Subscription(
         account=account,
-        plan_version=plan_version or subscribable_plan(),
+        plan_version=plan_version or subscribable_plan_version(),
         subscriber=subscriber,
         date_start=date_start,
         date_end=date_end,
