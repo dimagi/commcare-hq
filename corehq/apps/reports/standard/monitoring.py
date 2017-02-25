@@ -81,7 +81,6 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
 
 
 class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
-    exportable = True
 
     def get_raw_user_link(self, user):
         return _get_raw_user_link(user, self.raw_user_link_url)
