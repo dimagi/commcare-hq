@@ -53,11 +53,11 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
             web_user_creator=generator.create_arbitrary_web_user_name(is_dimagi=True),
             web_user_contact=cls.autopay_user_email
         )
-        cls.non_autopay_domain = generator.arbitrary_domain()
+        cls.non_autopay_domain_name = generator.get_arbitrary_domain_name()
         # Non-autopay subscription has same parameters as the autopayable subscription
         cls.non_autopay_subscription = generator.generate_domain_subscription(
             cls.non_autopay_account,
-            cls.non_autopay_domain,
+            cls.non_autopay_domain_name,
             date_start=cls.subscription.date_start,
             date_end=add_months_to_date(cls.subscription.date_start, cls.subscription_length),
         )

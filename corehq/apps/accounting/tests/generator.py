@@ -122,13 +122,8 @@ def get_start_date():
 
 
 @unit_testing_only
-def arbitrary_domain():
-    domain = Domain(
-        name=data_gen.arbitrary_unique_name()[:20],
-        is_active=True,
-    )
-    domain.save()
-    return domain
+def get_arbitrary_domain_name():
+    return data_gen.arbitrary_unique_name()[:20]
 
 
 @unit_testing_only

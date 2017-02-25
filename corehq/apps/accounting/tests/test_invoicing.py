@@ -40,7 +40,7 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFeeCriteria,
 )
 from corehq.apps.smsbillables.tests.generator import arbitrary_sms_billables_for_domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import CouchUser, WebUser
 
 
 class BaseInvoiceTestCase(BaseAccountingTest):
@@ -58,7 +58,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         cls.currency = generator.init_default_currency()
         cls.account = generator.billing_account(
             cls.dimagi_user, cls.billing_contact)
-        cls.domain = generator.arbitrary_domain()
+        cls.domain = generator.get_arbitrary_domain_name()
 
         cls.subscription_length = 15  # months
         subscription_start_date = datetime.date(2016, 2, 23)
@@ -71,15 +71,9 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         )
 
     def tearDown(self):
-        for user in self.domain.all_users():
+        for user in CouchUser.by_domain(self.domain):
             user.delete()
         super(BaseAccountingTest, self).tearDown()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.domain.delete()
-
-        super(BaseInvoiceTestCase, cls).tearDownClass()
 
 
 class TestInvoice(BaseInvoiceTestCase):
@@ -99,7 +93,7 @@ class TestInvoice(BaseInvoiceTestCase):
         invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
         tasks.generate_invoices(invoice_date)
         self.assertEqual(self.subscription.invoice_set.count(), 1)
-        self.assertEqual(self.subscription.subscriber.domain, self.domain.name)
+        self.assertEqual(self.subscription.subscriber.domain, self.domain)
 
         invoice = self.subscription.invoice_set.latest('date_created')
 
@@ -124,11 +118,10 @@ class TestInvoice(BaseInvoiceTestCase):
         No invoices should be generated for domains that are not on a subscription and do not
         have any per_excess charges on users or SMS messages
         """
-        domain = generator.arbitrary_domain()
+        domain = generator.get_arbitrary_domain_name()
         tasks.generate_invoices()
         self.assertRaises(Invoice.DoesNotExist,
-                          lambda: Invoice.objects.get(subscription__subscriber__domain=domain.name))
-        domain.delete()
+                          lambda: Invoice.objects.get(subscription__subscriber__domain=domain))
 
     def test_community_invoice(self):
         """
@@ -136,25 +129,24 @@ class TestInvoice(BaseInvoiceTestCase):
         make sure that an invoice is generated in addition to a subscription for that month to
         the community plan.
         """
-        domain = generator.arbitrary_domain()
+        domain = generator.get_arbitrary_domain_name()
         generator.create_excess_community_users(domain)
         account = BillingAccount.get_or_create_account_by_domain(
             domain, created_by=self.dimagi_user)[0]
-        billing_contact = generator.arbitrary_contact_info(account, self.dimagi_user)
+        generator.arbitrary_contact_info(account, self.dimagi_user)
         account.date_confirmed_extra_charges = datetime.date.today()
         account.save()
         tasks.generate_invoices()
-        subscriber = Subscriber.objects.get(domain=domain.name)
+        subscriber = Subscriber.objects.get(domain=domain)
         invoices = Invoice.objects.filter(subscription__subscriber=subscriber)
         self.assertEqual(invoices.count(), 1)
         invoice = invoices.get()
-        self.assertEqual(invoice.subscription.subscriber.domain, domain.name)
+        self.assertEqual(invoice.subscription.subscriber.domain, domain)
         self.assertEqual(invoice.subscription.date_start, invoice.date_start)
         self.assertEqual(
             invoice.subscription.date_end - datetime.timedelta(days=1),
             invoice.date_end
         )
-        domain.delete()
 
     def test_date_due_not_set_small_invoice(self):
         """Date Due doesn't get set if the invoice is small"""
@@ -334,10 +326,10 @@ class TestUserLineItem(BaseInvoiceTestCase):
 
         num_users = lambda: random.randint(0, self.user_rate.monthly_limit)
         num_active = num_users()
-        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
+        generator.arbitrary_commcare_users_for_domain(self.domain, num_active)
 
         num_inactive = num_users()
-        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_inactive, is_active=False)
+        generator.arbitrary_commcare_users_for_domain(self.domain, num_inactive, is_active=False)
 
         tasks.generate_invoices(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
@@ -365,10 +357,10 @@ class TestUserLineItem(BaseInvoiceTestCase):
 
         num_users = lambda: random.randint(self.user_rate.monthly_limit + 1, self.user_rate.monthly_limit + 2)
         num_active = num_users()
-        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
+        generator.arbitrary_commcare_users_for_domain(self.domain, num_active)
 
         num_inactive = num_users()
-        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_inactive, is_active=False)
+        generator.arbitrary_commcare_users_for_domain(self.domain, num_inactive, is_active=False)
 
         tasks.generate_invoices(invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
@@ -395,7 +387,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         - quantity is equal to number of commcare users in that domain minus the monthly_limit on the user rate
         - total and subtotals are equal to number of extra users * per_excess_fee
         """
-        domain = generator.arbitrary_domain()
+        domain = generator.get_arbitrary_domain_name()
         num_active = generator.create_excess_community_users(domain)
 
         account = BillingAccount.get_or_create_account_by_domain(
@@ -405,7 +397,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         account.save()
 
         tasks.generate_invoices()
-        subscriber = Subscriber.objects.get(domain=domain.name)
+        subscriber = Subscriber.objects.get(domain=domain)
         invoice = Invoice.objects.filter(subscription__subscriber=subscriber).get()
         user_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.USER).get()
 
@@ -419,7 +411,6 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertEqual(user_line_item.unit_cost, self.user_rate.per_excess_fee)
         self.assertEqual(user_line_item.subtotal, num_to_charge * self.user_rate.per_excess_fee)
         self.assertEqual(user_line_item.total, num_to_charge * self.user_rate.per_excess_fee)
-        domain.delete()
 
 
 class TestSmsLineItem(BaseInvoiceTestCase):
