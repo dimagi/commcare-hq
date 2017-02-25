@@ -50,14 +50,13 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.custom_role.save()
         self.read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
 
-        self.admin_user = generator.arbitrary_web_user()
-        self.admin_user.add_domain_membership(self.domain.name, is_admin=True)
-        self.admin_user.save()
+        self.admin_username = generator.create_arbitrary_web_user_name()
 
         self.web_users = []
         self.commcare_users = []
         for role in [self.custom_role] + self.user_roles:
-            web_user = generator.arbitrary_web_user()
+            web_user = WebUser.create(self.domain, generator.create_arbitrary_web_user_name(), 'test123')
+            web_user.is_active = True
             web_user.add_domain_membership(self.domain.name, role_id=role.get_id)
             web_user.save()
             self.web_users.append(web_user)
@@ -69,13 +68,13 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             self.commcare_users.append(commcare_user)
 
         self.account = BillingAccount.get_or_create_account_by_domain(
-            self.domain.name,created_by=self.admin_user.username)[0]
+            self.domain.name,created_by=self.admin_username)[0]
         self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
 
     def test_cancellation(self):
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.advanced_plan,
-            web_user=self.admin_user.username
+            web_user=self.admin_username
         )
         self._change_std_roles()
         subscription.change_plan(DefaultProductPlan.get_default_plan_version())
@@ -101,13 +100,13 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
     def test_resubscription(self):
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.advanced_plan,
-            web_user=self.admin_user.username
+            web_user=self.admin_username
         )
         self._change_std_roles()
         new_subscription = subscription.change_plan(DefaultProductPlan.get_default_plan_version())
         custom_role = UserRole.get(self.custom_role.get_id)
         self.assertTrue(custom_role.is_archived)
-        new_subscription.change_plan(self.advanced_plan, web_user=self.admin_user.username)
+        new_subscription.change_plan(self.advanced_plan, web_user=self.admin_username)
         custom_role = UserRole.get(self.custom_role.get_id)
         self.assertFalse(custom_role.is_archived)
 
@@ -160,7 +159,6 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
     def tearDown(self):
         self.domain.delete()
-        self.admin_user.delete()
         super(TestUserRoleSubscriptionChanges, self).tearDown()
 
 
