@@ -29,6 +29,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_duration_stats_by_user,
     get_form_duration_stats_for_users)
 from corehq.apps.reports.exceptions import TooMuchDataError
+from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import (
     ExpandedMobileWorkerFilter as EMWF, LocationRestrictedMobileWorkerFilter
 )
@@ -83,7 +84,7 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
 class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
 
     def get_raw_user_link(self, user):
-        return _get_raw_user_link(user, self.raw_user_link_url, filter_class=EMWF)
+        return _get_raw_user_link(user, self.raw_user_link_url, filter_class=CaseListFilter)
 
     @property
     def raw_user_link_url(self):
@@ -1780,8 +1781,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
 def _get_raw_user_link(user, url, filter_class):
     """
-    filter_class is expected to be one of either
-    - ExpandedMobileWorkerFilter
+    filter_class is expected to be either ExpandedMobileWorkerFilter or a subclass of it, including
+    - CaseListFilter
     - LocationRestrictedMobileWorkerFilter
     """
     user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
