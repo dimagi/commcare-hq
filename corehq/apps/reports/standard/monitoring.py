@@ -732,7 +732,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         )
 
 
-class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
+class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
     name = ugettext_noop("Daily Form Activity")
     bad_request_error_text = ugettext_noop("Your search query was invalid. If you're using a large date range, try using a smaller one.")
@@ -928,6 +928,9 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         styled_date_cols = ['<span class="muted">0</span>' if c == 0 else c for c in date_cols]
         first_col = self.get_raw_user_link(user) if user else _("Total")
         return [first_col] + styled_date_cols + [sum(date_cols)]
+
+    def get_raw_user_link(self, user):
+        return _get_raw_user_link(user, self.raw_user_link_url)
 
     @property
     def raw_user_link_url(self):
