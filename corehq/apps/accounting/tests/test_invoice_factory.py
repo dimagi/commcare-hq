@@ -19,7 +19,7 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         super(TestDomainInvoiceFactory, self).setUp()
         self.invoice_start, self.invoice_end = get_previous_month_date_range()
 
-        self.domain = generator.arbitrary_domain()
+        self.domain = generator.get_arbitrary_domain_name()
         self.account = BillingAccount.get_or_create_account_by_domain(
             domain=self.domain.name, created_by="TEST"
         )[0]
@@ -37,7 +37,7 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         Subscription.objects.all().delete()
 
     def test_feature_charges(self):
-        domain_under_limits = generator.arbitrary_domain()
+        domain_under_limits = generator.get_arbitrary_domain_name()
         self.assertTrue(self.community.feature_charges_exist_for_domain(self.domain))
         self.assertFalse(self.community.feature_charges_exist_for_domain(domain_under_limits))
 
