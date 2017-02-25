@@ -72,24 +72,21 @@ def create_arbitrary_web_user_name(is_dimagi=False):
 
 
 @unit_testing_only
-def billing_account(web_user_creator, web_user_contact, currency=None, save=True):
+def billing_account(web_user_creator, web_user_contact):
     account_name = data_gen.arbitrary_unique_name(prefix="BA")[:40]
-    currency = currency or Currency.objects.get(code=settings.DEFAULT_CURRENCY)
-    billing_account = BillingAccount(
+    currency = Currency.objects.get(code=settings.DEFAULT_CURRENCY)
+    billing_account = BillingAccount.create(
         name=account_name,
         created_by=web_user_creator,
         currency=currency,
     )
-    if save:
-        billing_account.save()
-        billing_contact = arbitrary_contact_info(billing_account, web_user_contact)
-        billing_contact.save()
+    arbitrary_contact_info(billing_account, web_user_contact)
     return billing_account
 
 
 @unit_testing_only
 def arbitrary_contact_info(account, web_user_creator):
-    return BillingContactInfo(
+    return BillingContactInfo.create(
         account=account,
         first_name=data_gen.arbitrary_firstname(),
         last_name=data_gen.arbitrary_lastname(),
