@@ -84,13 +84,7 @@ class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
     exportable = True
 
     def get_raw_user_link(self, user):
-        user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
-        user_link = user_link_template % {
-            'link': self.raw_user_link_url,
-            'params': urlencode(EMWF.for_user(user.user_id)),
-            'username': user.username_in_report,
-        }
-        return user_link
+        return _get_raw_user_link(user, self.raw_user_link_url)
 
     @property
     def raw_user_link_url(self):
@@ -1783,3 +1777,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         self.total_row = self._total_row(rows, report_data)
         return rows
+
+
+def _get_raw_user_link(user, url):
+    user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
+    user_link = user_link_template % {
+        'link': url,
+        'params': urlencode(EMWF.for_user(user.user_id)),
+        'username': user.username_in_report,
+    }
+    return user_link
