@@ -929,12 +929,8 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         return [first_col] + styled_date_cols + [sum(date_cols)]
 
     def get_raw_user_link(self, user):
-        return _get_raw_user_link(user, self.raw_user_link_url)
-
-    @property
-    def raw_user_link_url(self):
         from corehq.apps.reports.standard.inspect import SubmitHistory
-        return SubmitHistory.get_url(domain=self.domain)
+        return _get_raw_user_link(user, SubmitHistory.get_url(domain=self.domain))
 
     @property
     def template_context(self):
