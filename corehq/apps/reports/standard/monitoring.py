@@ -83,7 +83,7 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
 class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
 
     def get_raw_user_link(self, user):
-        return _get_raw_user_link(user, self.raw_user_link_url)
+        return _get_raw_user_link(user, self.raw_user_link_url, filter_class=EMWF)
 
     @property
     def raw_user_link_url(self):
@@ -930,7 +930,8 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
     def get_raw_user_link(self, user):
         from corehq.apps.reports.standard.inspect import SubmitHistory
-        return _get_raw_user_link(user, SubmitHistory.get_url(domain=self.domain))
+        return _get_raw_user_link(user, SubmitHistory.get_url(domain=self.domain),
+                                  filter_class=LocationRestrictedMobileWorkerFilter)
 
     @property
     def template_context(self):
@@ -1777,11 +1778,16 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return rows
 
 
-def _get_raw_user_link(user, url):
+def _get_raw_user_link(user, url, filter_class):
+    """
+    filter_class is expected to be one of either
+    - ExpandedMobileWorkerFilter
+    - LocationRestrictedMobileWorkerFilter
+    """
     user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
     user_link = user_link_template % {
         'link': url,
-        'params': urlencode(EMWF.for_user(user.user_id)),
+        'params': urlencode(filter_class.for_user(user.user_id)),
         'username': user.username_in_report,
     }
     return user_link
