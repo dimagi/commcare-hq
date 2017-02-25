@@ -33,7 +33,7 @@ class TestCreditLines(BaseInvoiceTestCase):
     def setUp(self):
         super(TestCreditLines, self).setUp()
         num_active = random.randint(self.user_rate.monthly_limit + 1, self.user_rate.monthly_limit + 2)
-        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
+        generator.arbitrary_commcare_users_for_domain(self.domain, num_active)
         num_excess = num_active - self.user_rate.monthly_limit
         self.monthly_user_fee = num_excess * self.user_rate.per_excess_fee
 
@@ -117,7 +117,7 @@ class TestCreditLines(BaseInvoiceTestCase):
     def _generate_users_fee_to_credit_against(self):
         user_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
         num_active = random.randint(user_rate.monthly_limit + 1, user_rate.monthly_limit + 2)
-        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
+        generator.arbitrary_commcare_users_for_domain(self.domain, num_active)
         num_excess = num_active - user_rate.monthly_limit
         per_month_fee = num_excess * user_rate.per_excess_fee
         return user_rate, per_month_fee
@@ -326,7 +326,7 @@ class TestCreditTransfers(BaseAccountingTest):
             edition=SoftwarePlanEdition.STANDARD
         )
         first_sub = Subscription.new_domain_subscription(
-            self.account, self.domain.name, advanced_plan,
+            self.account, self.domain, advanced_plan,
             date_start=datetime.date.today() - relativedelta(days=1),
         )
 

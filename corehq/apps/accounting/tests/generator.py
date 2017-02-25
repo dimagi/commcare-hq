@@ -100,7 +100,7 @@ def subscribable_plan_version(edition=SoftwarePlanEdition.STANDARD):
 @unit_testing_only
 def generate_domain_subscription(account, domain, date_start, date_end,
                                  plan_version=None, service_type=SubscriptionType.NOT_SET):
-    subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
+    subscriber, _ = Subscriber.objects.get_or_create(domain=domain)
     subscription = Subscription(
         account=account,
         plan_version=plan_version or subscribable_plan_version(),
@@ -151,7 +151,7 @@ def create_excess_community_users(domain):
     community_plan_version = DefaultProductPlan.get_default_plan_version()
     num_active_users = random.randint(community_plan_version.user_limit + 1,
                                       community_plan_version.user_limit + 4)
-    arbitrary_commcare_users_for_domain(domain.name, num_active_users)
+    arbitrary_commcare_users_for_domain(domain, num_active_users)
     return num_active_users
 
 
