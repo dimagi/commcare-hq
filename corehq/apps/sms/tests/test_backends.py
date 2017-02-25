@@ -565,6 +565,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.backend8.delete()
         cls.backend9.delete()
         cls.backend10.delete()
+        cls.teardown_subscription()
         cls.domain_obj.delete()
 
     def test_multiple_country_prefixes(self):
@@ -772,6 +773,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
             self.__test_contact_level_backend(contact)
             self.__test_send_sms_with_backend()
             self.__test_send_sms_with_backend_name()
+            SQLMobileBackendMapping.unset_default_domain_backend(self.domain)
 
 
 class SQLMobileBackendTestCase(TestCase):
