@@ -122,13 +122,6 @@ def generate_domain_subscription(account, domain, date_start, date_end,
 
 
 @unit_testing_only
-def delete_all_subscriptions():
-    SubscriptionAdjustment.objects.all().delete()
-    Subscription.objects.all().delete()
-    Subscriber.objects.all().delete()
-
-
-@unit_testing_only
 def get_start_date():
     start_date = datetime.date.today()
     (_, last_day) = calendar.monthrange(start_date.year, start_date.month)

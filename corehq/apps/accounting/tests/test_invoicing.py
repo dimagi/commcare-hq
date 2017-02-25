@@ -219,18 +219,8 @@ class TestContractedInvoices(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestContractedInvoices, self).setUp()
-        generator.delete_all_subscriptions()
-
-        self.subscription_length = self.min_subscription_length
-        subscription_start_date = datetime.date(2016, 2, 23)
-        subscription_end_date = add_months_to_date(subscription_start_date, self.subscription_length)
-        self.subscription = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
-            date_start=subscription_start_date,
-            date_end=subscription_end_date,
-            service_type=SubscriptionType.IMPLEMENTATION,
-        )
+        self.subscription.service_type = SubscriptionType.IMPLEMENTATION
+        self.subscription.save()
 
         self.invoice_date = utils.months_from_date(
             self.subscription.date_start,
