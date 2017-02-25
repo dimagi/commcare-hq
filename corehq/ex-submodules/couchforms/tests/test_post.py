@@ -70,6 +70,10 @@ class PostCouchOnlyTest(TestCase, PostTestMixin):
 
 class PostTest(TestCase, PostTestMixin):
 
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_xforms()
+        super(PostTest, self).tearDown()
+
     def test_decimalmeta(self):
         self._test('decimalmeta', any_id_ok=True)
 
