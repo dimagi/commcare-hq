@@ -43,6 +43,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AllBackendTest, cls).setUpClass()
         cls.domain_obj = Domain(name='all-backend-test')
         cls.domain_obj.save()
         cls.setup_subscription(cls.domain_obj.name, SoftwarePlanEdition.ADVANCED)
@@ -175,6 +176,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.yo_backend.delete()
         cls.push_backend.delete()
         cls.icds_backend.delete()
+        super(AllBackendTest, cls).tearDownClass()
 
     def tearDown(self):
         SMS.objects.filter(domain=self.domain_obj.name).delete()
@@ -426,6 +428,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(OutgoingFrameworkTestCase, cls).setUpClass()
         cls.domain = "test-domain"
         cls.domain2 = "test-domain2"
 
@@ -567,6 +570,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.backend10.delete()
         cls.teardown_subscription()
         cls.domain_obj.delete()
+        super(OutgoingFrameworkTestCase, cls).tearDownClass()
 
     def test_multiple_country_prefixes(self):
         self.assertEqual(

@@ -14,6 +14,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(OptTestCase, cls).setUpClass()
         cls.domain = 'opt-test'
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.sms_case_registration_enabled = True
@@ -29,6 +30,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         FormProcessorTestUtils.delete_all_cases(cls.domain)
         cls.teardown_subscription()
         cls.domain_obj.delete()
+        super(OptTestCase, cls).tearDownClass()
 
     def tearDown(self):
         PhoneBlacklist.objects.all().delete()
