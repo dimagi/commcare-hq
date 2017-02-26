@@ -21,23 +21,30 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 
 
-def get_es_new(**kwargs):
+def get_es_new():
     """
     Get a handle to the configured elastic search DB.
     Returns an elasticsearch.Elasticsearch instance.
     """
-    es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
-    if not es_hosts:
-        es_hosts = [settings.ELASTICSEARCH_HOST]
+    if not getattr(get_es_new, '_es_client', None):
+        es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
+        if not es_hosts:
+            es_hosts = [settings.ELASTICSEARCH_HOST]
 
-    hosts = [
-        {
-            'host': host,
-            'port': settings.ELASTICSEARCH_PORT,
-        }
-        for host in es_hosts
-    ]
-    return Elasticsearch(hosts, **kwargs)
+        hosts = [
+            {
+                'host': host,
+                'port': settings.ELASTICSEARCH_PORT,
+            }
+            for host in es_hosts
+        ]
+        get_es_new._es_client = Elasticsearch(
+            hosts,
+            sniff_on_start=True,
+            sniff_on_connection_fail=True,
+            sniffer_timeout=60
+        )
+    return get_es_new._es_client
 
 
 def doc_exists_in_es(index_info, doc_id_or_dict):

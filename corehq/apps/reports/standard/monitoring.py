@@ -44,6 +44,7 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
+from django.conf import settings
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
@@ -1068,7 +1069,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
     is_cacheable = True
 
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
-                                "sent to CommCare HQ.")
+                                "sent to {}.".format(settings.COMMCARE_HQ_NAME))
 
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
@@ -1133,7 +1134,10 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 td = submission_time - completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
                 rows.append([
-                    self.get_user_link(user_map.get(row['form']['meta']['userID'])),
+                    self.get_user_link(
+                        row['form']['meta']['username'],
+                        user_map.get(row['form']['meta']['userID'])
+                    ),
                     self._format_date(completion_time),
                     self._format_date(submission_time),
                     form_map[row['xmlns']],
@@ -1149,6 +1153,11 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
         self.total_row = [_("Average"), "-", "-", "-", "-", self._format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
         return rows
+
+    def get_user_link(self, username, user):
+        if not user:
+            return username
+        return super(FormCompletionVsSubmissionTrendsReport, self).get_user_link(user)
 
     def _format_date(self, date):
         """

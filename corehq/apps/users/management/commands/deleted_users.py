@@ -1,6 +1,7 @@
 """
 List the IDs of deleted users for a given domain
 """
+from __future__ import print_function
 from optparse import make_option
 from django.core.management import BaseCommand
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
@@ -34,8 +35,8 @@ class Command(BaseCommand):
         for id_ in deleted:
             if options['with_usernames']:
                 doc_info = get_doc_info_by_id(domain, id_)
-                print id_, doc_info.display
+                print(id_, doc_info.display)
             else:
-                print id_
+                print(id_)
         if id_ is None:
-            print 'Domain "{}" has no deleted users'.format(domain)
+            print('Domain "{}" has no deleted users'.format(domain))

@@ -1,4 +1,5 @@
 from urllib import urlencode
+
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.http import Http404
@@ -21,14 +22,14 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
-from corehq.apps.reports.models import ReportConfig
+from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
-from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
+from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports, can_view_sms_exports
 from corehq.form_processor.utils import use_new_exports
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
-from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
+from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
@@ -59,8 +60,15 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = tools + report_builder_nav + custom_reports + project_reports
+        sidebar_items = tools + report_builder_nav + self._regroup_sidebar_items(custom_reports + project_reports)
         return self._filter_sidebar_items(sidebar_items)
+
+    def _regroup_sidebar_items(self, sidebar_items):
+        try:
+            ordering = ReportsSidebarOrdering.objects.get(domain=self.domain)
+        except ReportsSidebarOrdering.DoesNotExist:
+            return sidebar_items
+        return regroup_sidebar_items(ordering.config, sidebar_items)
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
@@ -426,6 +434,11 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_view_sms_exports(self):
+        return can_view_sms_exports(self.couch_user, self.domain)
+
+    @property
+    @memoized
     def use_new_daily_saved_exports_ui(self):
         from corehq.apps.export.views import use_new_daily_saved_exports_ui
         return use_new_daily_saved_exports_ui(self.domain)
@@ -528,6 +541,7 @@ class ProjectDataTab(UITab):
                 DownloadNewFormExportView,
                 DownloadCaseExportView,
                 DownloadNewCaseExportView,
+                DownloadNewSmsExportView,
                 BulkDownloadFormExportView,
                 BulkDownloadNewFormExportView,
                 EditCustomFormExportView,
@@ -620,6 +634,16 @@ class ProjectDataTab(UITab):
                                 'urlname': edit_case_cls.urlname,
                             } if self.can_edit_commcare_data else None,
                         ])
+                    })
+
+            if self.can_view_sms_exports:
+                export_data_views.append(
+                    {
+                        'title': DownloadNewSmsExportView.page_title,
+                        'url': reverse(DownloadNewSmsExportView.urlname, args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-share fa fa-commenting-o',
+                        'subpages': []
                     })
 
             if self.should_see_daily_saved_export_list_view:
@@ -729,8 +753,7 @@ class ProjectDataTab(UITab):
         if self.can_only_see_deid_exports or not self.can_export_data:
             return []
         from corehq.apps.export.views import (
-            FormExportListView,
-            CaseExportListView,
+            FormExportListView, CaseExportListView, DownloadNewSmsExportView,
         )
         items = []
         if self.can_view_form_exports:
@@ -743,6 +766,12 @@ class ProjectDataTab(UITab):
                 CaseExportListView.page_title,
                 url=reverse(CaseExportListView.urlname, args=(self.domain,))
             ))
+        if self.can_view_sms_exports:
+            items.append(dropdown_dict(
+                DownloadNewSmsExportView.page_title,
+                url=reverse(DownloadNewSmsExportView.urlname, args=(self.domain,))
+            ))
+
         items += [
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("View All"), url=self.url),

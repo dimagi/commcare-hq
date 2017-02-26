@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
 from dimagi.utils.post import post_file
 
@@ -13,4 +14,4 @@ class Command(BaseCommand):
         file = args[0]
         url = args[1]
         resp, errors = post_file(file, url)
-        print "Got response:\n%s" % resp
+        print("Got response:\n%s" % resp)

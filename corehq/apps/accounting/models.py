@@ -1121,21 +1121,15 @@ class Subscription(models.Model):
         """Raises a subscription Adjustment error if the specified date range
         conflicts with other subscriptions related to this subscriber.
         """
+        assert date_start is not None
         for sub in Subscription.objects.filter(
             subscriber=self.subscriber
         ).exclude(id=self.id).all():
             related_has_no_end = sub.date_end is None
             current_has_no_end = date_end is None
-            start_before_related_end = (
-                date_start is not None and sub.date_end is not None
-                and date_start < sub.date_end
-            )
-            start_before_related_start = (
-                date_start is not None and date_start < sub.date_start
-            )
-            start_after_related_start = (
-                date_start is not None and date_start > sub.date_start
-            )
+            start_before_related_end = sub.date_end is not None and date_start < sub.date_end
+            start_before_related_start = date_start < sub.date_start
+            start_after_related_start = date_start > sub.date_start
             end_before_related_end = (
                 date_end is not None and sub.date_end is not None
                 and date_end < sub.date_end
@@ -1144,9 +1138,7 @@ class Subscription(models.Model):
                 date_end is not None and sub.date_end is not None
                 and date_end > sub.date_end
             )
-            end_after_related_start = (
-                date_end is not None and date_end > sub.date_start
-            )
+            end_after_related_start = date_end is not None and date_end > sub.date_start
 
             if (
                 (start_before_related_end and start_after_related_start)
@@ -1155,6 +1147,7 @@ class Subscription(models.Model):
                 or (end_after_related_start and related_has_no_end)
                 or (start_before_related_start and end_after_related_end)
                 or (start_before_related_end and current_has_no_end)
+                or (current_has_no_end and related_has_no_end)
             ):
                 raise SubscriptionAdjustmentError(
                     "The start date of %(start_date)s conflicts with the "
@@ -2706,6 +2699,13 @@ class CreditLine(ValidateModelMixin, models.Model):
             subscription=subscription,
             feature_type__exact=feature_type,
             product_type__exact=product_type,
+        ).all()
+
+    @classmethod
+    def get_non_general_credits_by_subscription(cls, subscription):
+        return cls.objects.filter(subscription=subscription).filter(
+            Q(product_type__in=[c[0] for c in SoftwareProductType.CHOICES] + [SoftwareProductType.ANY]) |
+            Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
 
     @classmethod

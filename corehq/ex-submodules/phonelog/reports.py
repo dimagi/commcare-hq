@@ -94,17 +94,17 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
     @property
     @memoized
     def device_log_users(self):
-        return DeviceLogUsersFilter.get_selected(self.request)
+        return DeviceLogUsersFilter.get_value(self.request, self.domain)
 
     @property
     @memoized
     def selected_tags(self):
-        return self.request.GET.getlist(DeviceLogTagFilter.slug)
+        return filter(None, self.request.GET.getlist(DeviceLogTagFilter.slug))
 
     @property
     @memoized
     def selected_devices(self):
-        return set(self.request.GET.getlist(DeviceLogDevicesFilter.slug))
+        return set(filter(None, self.request.GET.getlist(DeviceLogDevicesFilter.slug)))
 
     @property
     @memoized

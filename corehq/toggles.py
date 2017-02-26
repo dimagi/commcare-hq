@@ -295,6 +295,13 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
 )
 
+DHIS2_INTEGRATION = StaticToggle(
+    'dhis2_integration',
+    'DHIS2 Integration',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
@@ -629,13 +636,6 @@ CUSTOM_INSTANCES = StaticToggle(
     namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
-LOCATIONS_IN_REPORTS = StaticToggle(
-    'LOCATIONS_IN_REPORTS',
-    "Include locations in report filters",
-    TAG_PRODUCT_PATH,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 CLOUDCARE_CACHE = StaticToggle(
     'cloudcare_cache',
     'Aggresively cache case list, can result in stale data',
@@ -843,14 +843,6 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 )
 
 
-PROJECT_HEALTH_DASHBOARD = StaticToggle(
-    'project_health_dashboard',
-    'Shows the project performance dashboard in the reports navigation',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-
 PHONE_NUMBERS_REPORT = StaticToggle(
     'phone_numbers_report',
     "Shows information related to the phone numbers owned by a project's contacts",
@@ -925,7 +917,7 @@ EDIT_FORMPLAYER = PredictablyRandomToggle(
     'Edit forms on Formplayer',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.1,
+    randomness=0.0,
 )
 
 PREVIEW_APP = PredictablyRandomToggle(
@@ -1015,13 +1007,6 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     'user_property_easy_refs',
     'Easy-reference user properties in the form builder.',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-COPY_CASE_CONFIGS = StaticToggle(
-    'copy_case_configs',
-    'Allow copying case list / details screens in basic modules.',
-    TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )
 

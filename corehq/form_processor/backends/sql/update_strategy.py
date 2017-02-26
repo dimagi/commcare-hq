@@ -184,9 +184,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def _reset_case_state(self):
         """
         Clear known case properties, and all dynamic properties
-        Note: does not alter case indices or attachments. For indices this isn't an issue
-        since we only allow creating indices at case creation (via the app builder) and also
-        don't support optionally creating indices.
         """
         self.case.case_json = {}
         self.case.deleted = False
@@ -225,6 +222,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
         self._reset_case_state()
 
+        original_indices = {index.identifier: index for index in self.case.indices}
+        original_attachments = {attach.identifier: attach for attach in self.case.get_attachments()}
+
         real_transactions = []
         for transaction in transactions:
             if not transaction.is_relevant:
@@ -233,11 +233,21 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)
 
+        self._delete_old_related_models(original_indices, self.case.get_live_tracked_models(CommCareCaseIndexSQL))
+        self._delete_old_related_models(original_attachments, self.case.get_live_tracked_models(CaseAttachmentSQL))
+
         self.case.deleted = already_deleted or not bool(real_transactions)
 
         self.case.track_create(rebuild_transaction)
         if not self.case.modified_on:
             self.case.modified_on = rebuild_transaction.server_date
+
+    def _delete_old_related_models(self, original_models_by_id, models_to_keep):
+        for model in models_to_keep:
+            original_models_by_id.pop(model.identifier, None)
+
+        for model in original_models_by_id.values():
+            self.case.track_delete(model)
 
     def _apply_form_transaction(self, transaction):
         form = transaction.form

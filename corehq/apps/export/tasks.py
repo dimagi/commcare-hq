@@ -3,7 +3,7 @@ from celery.task import task
 
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.export import get_export_file, rebuild_export
-from corehq.apps.export.dbaccessors import get_case_inferred_schema
+from corehq.apps.export.dbaccessors import get_case_inferred_schema, get_properly_wrapped_export_instance
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
 from corehq.util.decorators import serial_task
 from corehq.util.files import safe_filename_header
@@ -39,7 +39,8 @@ def populate_export_download_task(export_instances, filters, download_id, filena
 
 
 @task(queue='background_queue', ignore_result=True)
-def rebuild_export_task(export_instance, last_access_cutoff=None, filter=None):
+def rebuild_export_task(export_instance_id, last_access_cutoff=None, filter=None):
+    export_instance = get_properly_wrapped_export_instance(export_instance_id)
     rebuild_export(export_instance, last_access_cutoff, filter)
 
 

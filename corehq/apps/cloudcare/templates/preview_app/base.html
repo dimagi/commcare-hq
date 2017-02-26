@@ -168,15 +168,15 @@
                       afterRender: afterRender
                   }">
               </section>
-              {% if request.couch_user.can_edit_data %}
-              <section id="cloudcare-debugger" data-bind="
-                  template: {
-                      name: 'instance-viewer-ko-template',
-                      afterRender: adjustWidth
-                  }
-              "></section>
-              {% endif %}
             </div>
+            {% if request.couch_user.can_edit_data %}
+            <section id="cloudcare-debugger" data-bind="
+                template: {
+                    name: 'instance-viewer-ko-template',
+                    afterRender: adjustWidth
+                }
+            "></section>
+            {% endif %}
         </div>
 
         {% include 'form_entry/templates.html' %}
@@ -190,6 +190,7 @@
         {% include 'formplayer/users.html' %}
         {% include 'formplayer/progress.html' %}
         {% include 'formplayer/dependencies.html' %}
+        {% include 'formplayer/query_view.html' %}
         {% include "style/includes/ko.html" %}
         {% include 'style/includes/analytics_all.html' %}
         <script src="{% static 'cloudcare/js/preview_app/preview_app.js' %}"></script>

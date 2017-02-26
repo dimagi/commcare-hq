@@ -3,7 +3,6 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 # Standard library imports
 import logging
-from optparse import make_option
 
 # Django imports
 from django.core.management import call_command
@@ -32,18 +31,33 @@ def cchq_prbac_bootstrap(apps, schema_editor):
 class Command(BaseCommand):
     help = 'Populate a fresh database with some sample roles and grants'
 
-    option_list = (
-        make_option('--dry-run', action='store_true',  default=False,
-                    help='Do not actually modify the database, just verbosely log what happen'),
-        make_option('--verbose', action='store_true',  default=False,
-                    help='Enable debug output'),
-        make_option('--fresh-start', action='store_true',  default=False,
-                    help='We changed the core v0 plans, wipe all existing plans and start over. USE CAUTION.'),
-        make_option('--testing', action='store_true',  default=False,
-                    help='Run this command for tests.'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            default=False,
+            help='Do not actually modify the database, just verbosely log what happen',
+        )
+        parser.add_argument(
+            '--verbose',
+            action='store_true',
+            default=False,
+            help='Enable debug output',
+        )
+        parser.add_argument(
+            '--fresh-start',
+            action='store_true',
+            default=False,
+            help='We changed the core v0 plans, wipe all existing plans and start over. USE CAUTION.',
+        )
+        parser.add_argument(
+            '--testing',
+            action='store_true',
+            default=False,
+            help='Run this command for tests.',
+        )
 
-    def handle(self, dry_run=False, verbose=False, fresh_start=False, testing=False, *args, **options):
+    def handle(self, dry_run=False, verbose=False, fresh_start=False, testing=False, **options):
 
         self.verbose = verbose
 
