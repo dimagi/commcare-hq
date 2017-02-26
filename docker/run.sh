@@ -1,7 +1,6 @@
 #! /bin/bash
 # This script runs inside the web container
 set -e
-declare -A metrics
 
 if [ -z "$1" ]; then
     # the main container need not stay running for services
@@ -49,17 +48,17 @@ function run_tests() {
     fi
     shift
 
-    metrics[setup_start]=`date +%s`
+    now=`date +%s`
     setup $TEST
-    metrics[setup_delta]=$((`date +%s` - metrics[setup_start]))
-    send_metrics_to_datadog "setup" $metrics[setup_delta]
+    delta=$((`date +%s` - $now))
 
+    send_metrics_to_datadog "setup" 20
 
-    metrics[tests_start]=`date +%s`
+    now=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
-    metrics[tests_delta]=$((`date +%s` - metrics[setup_start]))
+    delta=$((`date +%s` - $now))
 
-    send_metrics_to_datadog "tests" $metrics[tests_delta]
+    send_metrics_to_datadog "tests" $delta
 }
 
 function send_metrics_to_datadog() {
