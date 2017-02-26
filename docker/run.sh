@@ -47,6 +47,8 @@ function run_tests() {
         exit 1
     fi
     shift
+    echo "Datadog Testing"
+    echo ${DATADOG_API_KEY:0:2}
 
     now=`date +%s`
     setup $TEST
