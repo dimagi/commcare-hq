@@ -80,7 +80,7 @@ class _Writer(object):
                 for table_index, table in enumerate(instance.selected_tables):
                     sheet_name = table.label or "Sheet{}".format(table_index + 1)
                     if len(export_instances) > 1:
-                        sheet_name = "{}-{}".format(
+                        sheet_name = u"{}-{}".format(
                             instance.name or "Export{}".format(instance_index + 1),
                             sheet_name
                         )
