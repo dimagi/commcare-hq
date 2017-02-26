@@ -20,15 +20,13 @@ class Command(BaseCommand):
     help = 'Populate a fresh db with standard set of Software Plans.'
 
     option_list = (
-        make_option('--dry-run', action='store_true', default=False,
-                    help='Do not actually modify the database, just verbosely log what happen'),
         make_option('--verbose', action='store_true', default=False,
                     help='Enable debug output'),
         make_option('--testing', action='store_true', default=False,
                     help='Run this command for testing purposes.'),
     )
 
-    def handle(self, dry_run=False, verbose=False, testing=False, *args, **options):
+    def handle(self, verbose=False, testing=False, *args, **options):
         log_accounting_info(
             'Bootstrapping standard plans. Custom plans will have to be created via the admin UIs.'
         )
@@ -39,4 +37,4 @@ class Command(BaseCommand):
         else:
             config = BOOTSTRAP_CONFIG
 
-        ensure_plans(config, dry_run=dry_run, verbose=verbose, apps=default_apps)
+        ensure_plans(config, verbose=verbose, apps=default_apps)

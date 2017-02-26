@@ -61,7 +61,7 @@
     {% if intro_only %}
     $(function () {
         var previewApp = hqImport('app_manager/js/preview_app.js');
-        previewApp.makePreviewHidden();
+        previewApp.forceShowPreview();
     });
     {% endif %}
 

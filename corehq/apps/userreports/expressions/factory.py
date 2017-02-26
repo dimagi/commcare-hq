@@ -38,6 +38,14 @@ _property_path_expression = functools.partial(_simple_expression_generator, Prop
 _iteration_number_expression = functools.partial(_simple_expression_generator, IterationNumberExpressionSpec)
 
 
+def _property_name_expression(spec, context):
+    expression = PropertyNameGetterSpec.wrap(spec)
+    expression.configure(
+        ExpressionFactory.from_spec(expression.property_name, context=context)
+    )
+    return expression
+
+
 def _named_expression(spec, context):
     expression = NamedExpressionSpec.wrap(spec)
     expression.configure(context=context)

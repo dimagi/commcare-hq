@@ -24,7 +24,8 @@ from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from corehq.util.test_utils import flag_enabled
 from casexml.apps.case.tests.util import (
     check_user_has_case, assert_user_doesnt_have_case,
-    assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases)
+    assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases, check_payload_has_cases,
+    check_payload_has_case_ids, assert_user_doesnt_have_cases)
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
     AbstractSyncLog
@@ -1541,8 +1542,9 @@ class MultiUserSyncTest(SyncBaseTest):
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
 
         # make sure the second user doesn't get either
-        assert_user_doesnt_have_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id)
-        assert_user_doesnt_have_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
+        assert_user_doesnt_have_cases(
+            self, self.other_user, [case_id, parent_id], restore_id=self.other_sync_log.get_id
+        )
 
         # assign just the child case to a second user
         child_update = CaseBlock(
@@ -1555,9 +1557,10 @@ class MultiUserSyncTest(SyncBaseTest):
         self._postFakeWithSyncToken(child_update, self.sync_log.get_id)
         # second user syncs
         # make sure both cases restore
-        assert_user_has_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id,
-                             purge_restore_cache=True)
-        assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
+        assert_user_has_cases(
+            self, self.other_user, [case_id, parent_id], restore_id=self.other_sync_log.get_id,
+            purge_restore_cache=True
+        )
 
     def testOtherUserUpdatesIndex(self):
         # create a parent and child case (with index) from one user
@@ -1574,8 +1577,7 @@ class MultiUserSyncTest(SyncBaseTest):
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
 
-        assert_user_doesnt_have_case(self, self.user, parent_id, restore_id=self.sync_log.get_id)
-        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+        assert_user_doesnt_have_cases(self, self.user, [case_id, parent_id], restore_id=self.sync_log.get_id)
 
         # assign the parent case away from same user
         parent_update = CaseBlock(
@@ -1612,6 +1614,7 @@ class MultiUserSyncTest(SyncBaseTest):
 
     def testOtherUserReassignsIndexed(self):
         # create a parent and child case (with index) from one user
+        # assign the parent case away from the same user
         parent_id = "other_reassigns_index_parent"
         case_id = "other_reassigns_index_child"
         self.factory.create_or_update_cases([
@@ -1619,21 +1622,16 @@ class MultiUserSyncTest(SyncBaseTest):
                 case_id=case_id,
                 attrs={'create': True},
                 indices=[CaseIndex(
-                    CaseStructure(case_id=parent_id, attrs={'create': True}),
+                    CaseStructure(case_id=parent_id, attrs={
+                        'create': True,
+                        'owner_id': self.other_user_id,
+                        'update': {"greeting": "hello"},
+                    }),
                     relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
                 )],
             )
         ])
-
-        # assign the parent case away from the same user
-        parent_update = CaseBlock(
-            create=False,
-            case_id=parent_id,
-            user_id=self.user_id,
-            owner_id=self.other_user_id,
-            update={"greeting": "hello"}).as_xml()
-        self._postFakeWithSyncToken(parent_update, self.sync_log.get_id)
 
         # sync cases to second user
         other_sync_log = synclog_from_restore_payload(
@@ -1641,6 +1639,7 @@ class MultiUserSyncTest(SyncBaseTest):
         )
 
         # change the child's owner from another user
+        # also change the parent from the second user
         child_reassignment = CaseBlock(
             create=False,
             case_id=case_id,
@@ -1648,16 +1647,13 @@ class MultiUserSyncTest(SyncBaseTest):
             owner_id=self.other_user_id,
             update={"childgreeting": "hi!"},
         ).as_xml()
-        self._postFakeWithSyncToken(child_reassignment, other_sync_log.get_id)
-
-        # also change the parent from the second user
         other_parent_update = CaseBlock(
             create=False,
             case_id=parent_id,
             user_id=self.other_user_id,
             owner_id=self.other_user_id,
             update={"other_greeting": "something new"}).as_xml()
-        self._postFakeWithSyncToken(other_parent_update, other_sync_log.get_id)
+        self._postFakeWithSyncToken([child_reassignment, other_parent_update], other_sync_log.get_id)
 
         # original user syncs again
         latest_sync_log = SyncLog.last_for_user(self.user.user_id)
@@ -1665,11 +1661,15 @@ class MultiUserSyncTest(SyncBaseTest):
         # at this point both cases are assigned to the other user so the original user
         # should not have them. however, the first sync should send them down (with new ownership)
         # so that they can be purged.
-        assert_user_has_case(self, self.user, case_id, restore_id=latest_sync_log.get_id)
-        assert_user_has_case(self, self.user, parent_id, restore_id=latest_sync_log.get_id)
 
-        # Ghetto
         payload = generate_restore_payload(self.project, self.user, latest_sync_log.get_id, version=V2)
+        check_payload_has_case_ids(
+            self,
+            username=self.user.username,
+            payload_string=payload,
+            case_ids=[case_id, parent_id],
+        )
+        # hacky
         self.assertTrue("something new" in payload)
         self.assertTrue("hi!" in payload)
         # also check that the latest sync log knows those cases are no longer relevant to the phone
@@ -1689,8 +1689,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # original user syncs again
         latest_sync_log = SyncLog.last_for_user(self.user.user_id)
         # should be no changes
-        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=latest_sync_log.get_id)
-        assert_user_doesnt_have_case(self, self.user, parent_id, restore_id=latest_sync_log.get_id)
+        assert_user_doesnt_have_cases(self, self.user, [case_id, parent_id], restore_id=latest_sync_log.get_id)
 
         # change the child again from the second user
         other_child_update = CaseBlock(
@@ -1705,8 +1704,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # original user syncs again
         latest_sync_log = SyncLog.last_for_user(self.user.user_id)
         # should be no changes
-        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=latest_sync_log.get_id)
-        assert_user_doesnt_have_case(self, self.user, parent_id, restore_id=latest_sync_log.get_id)
+        assert_user_doesnt_have_cases(self, self.user, [case_id, parent_id], restore_id=latest_sync_log.get_id)
 
         # change owner of child back to orginal user from second user
         child_reassignment = CaseBlock(
@@ -1719,14 +1717,17 @@ class MultiUserSyncTest(SyncBaseTest):
 
         # original user syncs again
         latest_sync_log = SyncLog.last_for_user(self.user.user_id)
-        # both cases should now sync
-        assert_user_has_case(self, self.user, case_id, restore_id=latest_sync_log.get_id)
-        assert_user_has_case(self, self.user, parent_id, restore_id=latest_sync_log.get_id)
-
-        # ghetto
         payload = generate_restore_payload(
             self.project, self.user, latest_sync_log.get_id, version=V2
         )
+        # both cases should now sync
+        check_payload_has_case_ids(
+            self,
+            payload_string=payload,
+            username=self.user.username,
+            case_ids=[case_id, parent_id]
+        )
+        # hacky
         self.assertTrue("something different" in payload)
         self.assertTrue("hi changed!" in payload)
 
@@ -1921,9 +1922,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
 
         # syncing again by original user should not pull anything
         sync_again_id = SyncLog.last_for_user(self.user_id)._id
-        assert_user_doesnt_have_case(self, self.user, extension.case_id,
-                                     restore_id=sync_again_id)
-        assert_user_doesnt_have_case(self, self.user, host.case_id,
+        assert_user_doesnt_have_cases(self, self.user, [extension.case_id, host.case_id],
                                      restore_id=sync_again_id)
 
         # reassign the extension case
@@ -1953,8 +1952,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
     def test_multiple_syncs(self):
         host, extension = self._create_extension()
-        assert_user_has_case(self, self.user, host.case_id)
-        assert_user_has_case(self, self.user, extension.case_id)
+        assert_user_has_cases(self, self.user, [host.case_id, extension.case_id])
 
         sync_log = SyncLog.last_for_user(self.user_id)
         self.assertItemsEqual(sync_log.case_ids_on_phone, ['host', 'extension'])
