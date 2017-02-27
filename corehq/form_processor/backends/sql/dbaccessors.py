@@ -54,6 +54,8 @@ from corehq.sql_db.config import partition_config
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.chunked import chunked
+from uuid import UUID
+
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -93,6 +95,24 @@ class ShardAccessor(object):
             return {row.doc_id: row.hash for row in rows}
 
     @staticmethod
+    def hash_doc_uuid_sql(doc_uuid):
+        """Get the hash for a UUID from PostgreSQL
+
+        This is used to ensure the python version is consistent with what's
+        being used by PL/Proxy
+        """
+        assert settings.USE_PARTITIONED_DATABASE
+
+        if not isinstance(doc_uuid, UUID):
+            raise ValueError("Expected an instance of UUID")
+
+        query = "SELECT hash_string(CAST(%s AS bytea), 'siphash24') AS hash"
+        with get_cursor(XFormInstanceSQL) as cursor:
+            doc_uuid_before_cast = '\\x%s' % doc_uuid.hex
+            cursor.execute(query, [doc_uuid_before_cast])
+            return fetchone_as_namedtuple(cursor).hash
+
+    @staticmethod
     def hash_doc_ids_python(doc_ids):
         return {
             doc_id: ShardAccessor.hash_doc_id_python(doc_id)
@@ -103,6 +123,10 @@ class ShardAccessor(object):
     def hash_doc_id_python(doc_id):
         if isinstance(doc_id, unicode):
             doc_id = doc_id.encode('utf-8')
+        elif isinstance(doc_id, UUID):
+            # Hash the 16-byte string
+            doc_id = doc_id.bytes
+
         digest = csiphash.siphash24(ShardAccessor.hash_key, doc_id)
         hash_long = struct.unpack("<Q", digest)[0]  # convert byte string to long
         # convert 64 bit hash to 32 bit to match Postgres
