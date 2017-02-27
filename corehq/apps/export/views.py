@@ -40,6 +40,8 @@ from corehq.apps.domain.decorators import login_and_domain_required, \
 from corehq.apps.export.utils import (
     convert_saved_export_to_export_instance,
     revert_new_exports,
+    domain_has_daily_saved_export_access,
+    domain_has_excel_dashboard_access,
 )
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.tasks import generate_schema_for_all_builds
@@ -973,7 +975,20 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         if not (self.has_edit_permissions or self.has_view_permissions
                 or (self.is_deid and self.has_deid_view_permissions)):
             raise Http404()
-        return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
+
+        self.request = request
+
+        if domain_has_daily_saved_export_access(self.domain) or domain_has_excel_dashboard_access(self.domain):
+            self.set_notify_new_daily_saved_export()
+
+        return super(BaseExportListView, self).dispatch(self.request, *args, **kwargs)
+
+    def set_notify_new_daily_saved_export(self):
+        self.request.notify_new_daily_saved_export = False
+
+        if self.request.session.get('notify_new_daily_saved_export', True):
+            self.request.notify_new_daily_saved_export = True
+            self.request.session['notify_new_daily_saved_export'] = False
 
     @property
     def page_context(self):
