@@ -1729,7 +1729,7 @@ class EditFormInstance(View):
         instance_id = self.kwargs.get('instance_id', None)
 
         def _error(msg):
-            messages.error(request, msg)
+            messages.error(request, mark_safe(msg))
             url = reverse('render_form_data', args=[domain, instance_id])
             return HttpResponseRedirect(url)
 
@@ -1774,11 +1774,14 @@ class EditFormInstance(View):
                 case = CaseAccessors(domain).get_case(edit_session_data['case_id'])
                 if case.closed:
                     return _error(_(
-                        u'Case {} is closed. Please reopen the '
+                        u'Case <a href="{case_url}">{case_name}</a> is closed. Please reopen the '
                         u'case before editing the form'
-                    ).format(case.case_id))
+                    ).format(
+                        case_url=reverse('case_details', args=[domain, case.case_id]),
+                        case_name=case.name,
+                    ))
                 elif case.deleted:
-                    return _error(_(u'Case {} is deleted. Cannot edit this form.').format(case.case_id))
+                    return _error(_(u'Case <a href="{}" is deleted. Cannot edit this form.').format(case.case_id))
 
         edit_session_data['is_editing'] = True
         edit_session_data['function_context'] = {
