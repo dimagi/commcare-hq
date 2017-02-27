@@ -1,5 +1,5 @@
-/* globals django, COMMCAREHQ */
-(function ($, _) {
+/* globals django, COMMCAREHQ, hqDefine */
+hqDefine('data_dictionary/js/data_dictionary.js', function () {
 
     var CaseType = function (name) {
         var self = this;
@@ -171,4 +171,4 @@
             window.analytics.usage('Data Dictionary', 'downloaded data dictionary');
         });
     });
-})($, _);
+});
