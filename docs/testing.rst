@@ -9,37 +9,38 @@ Doing a lot of work in the ``setUp`` call of a test class means that it will be 
 quickly adds a lot of run time to the tests. Some things that can be easily moved to ``setUpClass`` are domain
 creation, user creation, or any other static models needed for the test.
 
-Furthermore, nose provides the ability to write setup for the entire package and/or module. More information
-on that can be found `here <http://pythontesting.net/framework/nose/nose-fixture-reference/#package>`_.
-
-Using SimpleTestCase
-====================
-
-The SimpleTestCase runs tests without a database. Many times this can be achieved through the use of the `mock
-library <http://www.voidspace.org.uk/python/mock/>`_. A good rule of thumb is to have 80% of your tests be unit
-tests that utilize ``SimpleTestCase``, and then 20% of your tests be integration tests that utilize the
-database and ``TestCase``.
-
-CommCareHQ also has some custom in mocking tools.
-
-    - `Fake Couch <https://github.com/dimagi/fakecouch>`_ - Fake implementation of CouchDBKit api for testing purposes.
-    - `ESQueryFake <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/es/fake/es_query_fake.py>`_ - For faking ES queries.
-
-
-Tearing down tests
-==================
-
-It is important to ensure that all objects you have created in the test database are deleted when the test
-class finishes running. This often happens in the ``tearDown`` method or the ``tearDownClass`` method.
-However, unneccessary cleanup "just to be safe" can add a large amount of time onto your tests.
-
-Combining test classes
-======================
-
 Sometimes classes share the same base class and inherit the ``setUpClass`` function. Below is an example:
 
 .. code:: python
-    # BETTER EXAMPLE
+
+    # BAD EXAMPLE
+
+    class MyBaseTestClass(TestCase):
+
+        @classmethod
+        def setUpClass(cls):
+            ...
+
+        def _my_helper_function(self):
+            ...
+
+
+    class MyTestClass(MyBaseTestClass):
+
+        def test(self):
+            ...
+
+    class MyTestClassTwo(MyBaseTestClass):
+
+        def test(self):
+            ...
+
+
+In the above example the ``setUpClass`` is run twice, once for ``MyTestClass`` and once for ``MyTestClassTwo``. If ``setUpClass`` has expensive operations, then it's best for all the tests to be combined under one test class.
+
+.. code:: python
+
+    # GOOD EXAMPLE
 
     class MyTextMixin(object)
 
@@ -64,32 +65,30 @@ Sometimes classes share the same base class and inherit the ``setUpClass`` funct
         def test(self):
             ...
 
-.. code:: python
-    # BAD EXAMPLE
+However this can lead to giant Test classes. If you find that all the tests in a package or module are sharing
+the same set up, you can write a setup method for the entire package or module. More information on that can be found `here <http://pythontesting.net/framework/nose/nose-fixture-reference/#package>`_.
 
-    class MyBaseTestClass(TestCase):
+Tearing down tests
+==================
 
-        @classmethod
-        def setUpClass(cls):
-            ...
-
-        def _my_helper_function(self):
-            ...
+It is important to ensure that all objects you have created in the test database are deleted when the test
+class finishes running. This often happens in the ``tearDown`` method or the ``tearDownClass`` method.
+However, unneccessary cleanup "just to be safe" can add a large amount of time onto your tests.
 
 
-    class MyTestClass(MyBaseTestClass):
+Using SimpleTestCase
+====================
 
-        def test(self):
-            ...
+The SimpleTestCase runs tests without a database. Many times this can be achieved through the use of the `mock
+library <http://www.voidspace.org.uk/python/mock/>`_. A good rule of thumb is to have 80% of your tests be unit
+tests that utilize ``SimpleTestCase``, and then 20% of your tests be integration tests that utilize the
+database and ``TestCase``.
 
-    class MyTestClassTwo(MyBaseTestClass):
+CommCareHQ also has some custom in mocking tools.
 
-        def test(self):
-            ...
+    - `Fake Couch <https://github.com/dimagi/fakecouch>`_ - Fake implementation of CouchDBKit api for testing purposes.
+    - `ESQueryFake <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/es/fake/es_query_fake.py>`_ - For faking ES queries.
 
-
-In the above example the ``setUpClass`` is run three times, once for ``MyBaseTestClass``, ``MyTestClass`` and ``MyTestClassTwo``. If
-``setUpClass`` has expensive operations, then it's best for all the tests to be combined under one test class.
 
 Squashing Migrations
 ====================
