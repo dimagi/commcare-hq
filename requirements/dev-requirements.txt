@@ -1,4 +1,4 @@
-django-debug-toolbar
+django-debug-toolbar==1.6
 django-devserver>=0.7.0
 guppy
 werkzeug
@@ -14,7 +14,7 @@ jenkinsapi==0.2.28
 fixture
 sniffer
 psutil  # for memory profiling
-django-extensions
+django-extensions==1.7.7
 ipython==5.2.2
 ipdb==0.9.4
 wheel==0.29.0
