@@ -8,14 +8,14 @@ from django.db.models import Q
 from uuid import UUID
 
 
-def _validate_schedule_instance(obj)
+def _validate_schedule_instance(obj):
     from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
 
     if not isinstance(obj, ScheduleInstance):
         raise ValueError("Expected an instance of ScheduleInstance")
 
 
-def _validate_uuid(value)
+def _validate_uuid(value):
     if not isinstance(value, UUID):
         raise ValueError("Expected an instance of UUID")
 
