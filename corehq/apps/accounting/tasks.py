@@ -7,7 +7,7 @@ from urllib import urlencode
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import F, Q, Sum
+from django.db.models import Q, Sum
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
@@ -28,9 +28,11 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
+    CONSISTENT_DATES_CHECK,
     Currency,
     DefaultProductPlan,
     EntryPoint,
+    Invoice,
     SoftwarePlanEdition,
     StripePaymentMethod,
     Subscription,
@@ -40,7 +42,7 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
-    Invoice)
+)
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
@@ -62,8 +64,6 @@ _invoicing_complete_soft_assert = soft_assert(
     to='{}@{}'.format('npellegrino', 'dimagi.com'),
     exponential_backoff=False,
 )
-
-CONSISTENT_DATES_CHECK = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
 
 
 @transaction.atomic
