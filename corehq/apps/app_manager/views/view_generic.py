@@ -95,6 +95,16 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             # Soft assert but then continue rendering; template will contain a user-facing warning
             _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
             _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
+        if (form is not None and toggles.USER_PROPERTY_EASY_REFS.enabled(domain)
+                and "usercase_preload" in form.actions
+                and form.actions.usercase_preload.preload):
+            _assert = soft_assert(['dmiller' + '@' + 'dimagi.com'])
+            _assert(False, 'User property easy refs + old-style config = bad', {
+                'domain': domain,
+                'app_id': app_id,
+                'module_id': module_id,
+                'form_id': form_id,
+            })
 
     context = get_apps_base_context(request, domain, app)
     if app and app.copy_of:

@@ -23,7 +23,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, log_signal_errors
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
@@ -43,8 +43,7 @@ from corehq.apps.users.util import (
     user_location_data,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
-    tag_cases_as_deleted_and_remove_indices
-from corehq.apps.users.exceptions import InvalidLocationConfig
+    tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -1284,14 +1283,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         from .signals import couch_user_post_save
         results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
-        for result in results:
-            # Second argument is None if there was no error
-            if result[1]:
-                notify_exception(
-                    None,
-                    message="Error occured while syncing user %s: %s" %
-                            (self.username, repr(result[1]))
-                )
+        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
@@ -1416,14 +1408,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         from .signals import commcare_user_post_save
         results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self)
-        for result in results:
-            # Second argument is None if there was no error
-            if result[1]:
-                notify_exception(
-                    None,
-                    message="Error occured while syncing user %s: %s" %
-                            (self.username, repr(result[1]))
-                )
+        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     def delete(self):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -1532,21 +1517,25 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
         deletion_date = datetime.utcnow()
-        deleted_cases = set()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
             self['-deletion_date'] = deletion_date
 
+        deleted_cases = set()
         for case_id_list in chunked(self._get_case_ids(), 50):
             tag_cases_as_deleted_and_remove_indices.delay(self.domain, case_id_list, deletion_id, deletion_date)
             deleted_cases.update(case_id_list)
 
+        deleted_forms = set()
         for form_id_list in chunked(self._get_form_ids(), 50):
             tag_forms_as_deleted_rebuild_associated_cases.delay(
                 self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
+            deleted_forms.update(form_id_list)
+
+        tag_system_forms_as_deleted(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
 
         try:
             django_user = self.get_django_user()
@@ -1688,16 +1677,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 'commtrack-supply-point': sp.case_id
             })
 
-        if self.project.supports_multiple_locations_per_user:
-            # TODO is it possible to only remove this
-            # access if it was not previously granted by
-            # the bulk upload?
-
-            # we only add the new one because we don't know
-            # if we can actually remove the old..
-            self.add_location_delegate(location)
-        else:
-            self.create_location_delegates([location])
+        self.create_location_delegates([location])
 
         self.user_data.update({
             'commcare_primary_case_sharing_id':
@@ -1805,34 +1785,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             self.save()
 
-    @property
-    def locations(self):
-        """
-        This method is only used for domains with the multiple
-        locations per user flag set. It will error if you try
-        to call it on a normal domain.
-        """
-        from corehq.apps.locations.models import SQLLocation
-        if not self.project.supports_multiple_locations_per_user:
-            raise InvalidLocationConfig(
-                "Attempting to access multiple locations for a user in a domain that does not support this."
-            )
-
-        def _get_linked_supply_point_ids():
-            mapping = self.get_location_map_case()
-            if mapping:
-                return [index.referenced_id for index in mapping.indices]
-            return []
-
-        def _get_linked_supply_points():
-            return SupplyInterface(self.domain).get_supply_points(_get_linked_supply_point_ids())
-
-        location_ids = [sp.location_id for sp in _get_linked_supply_points()]
-        return list(SQLLocation.objects
-                    .filter(domain=self.domain,
-                            location_id__in=location_ids)
-                    .couch_locations())
-
     def supply_point_index_mapping(self, supply_point, clear=False):
         from corehq.apps.commtrack.exceptions import (
             LinkedSupplyPointNotFoundError
@@ -1907,16 +1859,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         Submit the case blocks creating the delgate case access
         for the location(s).
         """
-        if self.project.supports_multiple_locations_per_user:
-            new_locs_set = set([loc.location_id for loc in locations])
-            old_locs_set = set([loc.location_id for loc in self.locations])
-
-            if new_locs_set == old_locs_set:
-                # don't do anything if the list passed is the same
-                # as the users current locations. the check is a little messy
-                # as we can't compare the location objects themself
-                return
-
         self.clear_location_delegates()
 
         if not locations:
@@ -1992,9 +1934,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self=self
         ))
 
+    def get_usercase(self):
+        return CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
+
     @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self):
-        case = CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
+        case = self.get_usercase()
         return case.case_id if case else None
 
     def update_device_id_last_used(self, device_id, when=None):

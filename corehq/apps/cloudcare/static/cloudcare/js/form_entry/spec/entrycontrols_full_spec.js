@@ -104,9 +104,11 @@ describe('Entries', function() {
         questionJSON.datatype = Formplayer.Const.SELECT;
         questionJSON.style = { raw: Formplayer.Const.COMBOBOX };
         questionJSON.choices = ['a', 'b'];
+        questionJSON.answer = 2;
 
         entry = (new Question(questionJSON)).entry;
         assert.isTrue(entry instanceof ComboboxEntry);
+        assert.equal(entry.rawAnswer(), 'b');
 
         entry.rawAnswer('a');
         assert.equal(entry.answer(), 1);

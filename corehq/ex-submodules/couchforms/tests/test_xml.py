@@ -2,7 +2,7 @@
 import uuid
 import os
 from django.test import TestCase
-from corehq.form_processor.tests.utils import run_with_all_backends, post_xform
+from corehq.form_processor.tests.utils import use_sql_backend, post_xform
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -10,7 +10,6 @@ class XMLElementTest(TestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
 
-    @run_with_all_backends
     def test_various_encodings(self):
         tests = (
             ('utf-8', u'हिन्दी चट्टानों'),
@@ -29,3 +28,8 @@ class XMLElementTest(TestCase, TestFileMixin):
             self.assertEqual(value, xform.form_data['test'])
             elem = xform.get_xml_element()
             self.assertEqual(value, elem.find('{http://commcarehq.org/couchforms-tests}test').text)
+
+
+@use_sql_backend
+class XMLElementTestSQL(XMLElementTest):
+    pass

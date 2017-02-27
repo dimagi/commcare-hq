@@ -3,7 +3,6 @@ from collections import namedtuple
 from datetime import datetime
 
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
@@ -12,7 +11,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo, CaseAcce
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.tests.test_basic_cases import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
 
@@ -20,7 +19,7 @@ DOMAIN = 'test-case-accessor'
 CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@use_sql_backend
 class CaseAccessorTestsSQL(TestCase):
 
     def tearDown(self):
@@ -669,7 +668,6 @@ class CaseAccessorsTests(TestCase):
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
 
-    @run_with_all_backends
     def test_soft_delete(self):
         _submit_case_block(True, 'c1', domain=DOMAIN)
         _submit_case_block(True, 'c2', domain=DOMAIN)
@@ -688,6 +686,12 @@ class CaseAccessorsTests(TestCase):
 
         case = accessors.get_case('c3')
         self.assertFalse(case.is_deleted)
+
+
+@use_sql_backend
+class CaseAccessorsTestsSQL(CaseAccessorsTests):
+    pass
+
 
 
 def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed=False):

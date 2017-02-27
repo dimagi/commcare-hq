@@ -141,7 +141,7 @@ class IndicatorFactory(object):
         cls.validate_spec(spec)
         try:
             return cls.constructor_map[spec['type']](spec, context)
-        except BadValueError, e:
+        except BadValueError as e:
             # for now reraise jsonobject exceptions as BadSpecErrors
             raise BadSpecError(str(e))
 

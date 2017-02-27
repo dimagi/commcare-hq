@@ -9,9 +9,10 @@ from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
-    DetailColumn
+    DetailColumn,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin, SuiteMixin, parse_normalize
+from corehq.apps.builds.models import BuildSpec
 
 DOMAIN = 'test_domain'
 
@@ -21,6 +22,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def setUp(self):
         self.app = Application.new_app(DOMAIN, "Untitled Application")
+        self.app.build_spec = BuildSpec(version='tests', build_number=1)
         self.module = self.app.add_module(Module.new_module("Untitled Module", None))
         self.app.new_form(0, "Untitled Form", None)
         self.module.case_type = 'case'
@@ -62,6 +64,18 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()
+        self.assertXmlPartialEqual(self.get_xml('remote_request'), suite, "./remote-request[1]")
+
+    def test_duplicate_remote_request(self):
+        """
+        Adding a second search config should not affect the initial one.
+        """
+        # this tests a bug encountered by enishay
+        copy_app = Application.wrap(self.app.to_json())
+        copy_app.modules.append(Module.wrap(copy_app.modules[0].to_json()))
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = copy_app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('remote_request'), suite, "./remote-request[1]")
 
     def test_case_search_action(self):

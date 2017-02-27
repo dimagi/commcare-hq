@@ -158,6 +158,7 @@ class CaseFindingReport(EnikshayMultiReport):
 
     name = ugettext_lazy('Case Finding')
     slug = 'case_finding'
+    exportable = True
 
     @property
     def reports(self):

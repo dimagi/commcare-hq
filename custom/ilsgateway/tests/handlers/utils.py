@@ -135,7 +135,6 @@ class ILSTestScript(TestScript):
             if location:
                 location.delete()
         SQLLocation.objects.all().delete()
-        generator.delete_all_subscriptions()
         test_domain = Domain.get_by_name(TEST_DOMAIN)
         if test_domain:
             test_domain.delete()

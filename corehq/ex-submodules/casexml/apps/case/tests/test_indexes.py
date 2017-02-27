@@ -12,7 +12,7 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 
 
 class IndexSimpleTest(SimpleTestCase):
@@ -61,16 +61,23 @@ class IndexTest(TestCase):
     MOTHER_CASE_ID = 'text-index-mother-case'
     FATHER_CASE_ID = 'text-index-father-case'
 
-    def setUp(self):
-        super(IndexTest, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        super(IndexTest, cls).setUpClass()
         delete_all_users()
-        self.project = Domain(name='index-test')
-        self.project.save()
-        self.user = create_restore_user(domain=self.project.name)
+        cls.project = Domain(name='index-test')
+        cls.project.save()
+        cls.user = create_restore_user(domain=cls.project.name)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
         super(IndexTest, self).tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_users()
+        cls.project.delete()
+        super(IndexTest, cls).tearDownClass()
 
     def testIndexes(self):
         # Step 0. Create mother and father cases
@@ -143,7 +150,6 @@ class IndexTest(TestCase):
 
         check_user_has_case(self, self.user, update_index_expected)
 
-    @run_with_all_backends
     def testRelationshipGetsSet(self):
         parent_case_id = uuid.uuid4().hex
         post_case_blocks(
@@ -159,6 +165,11 @@ class IndexTest(TestCase):
         ).as_xml()
         post_case_blocks([create_index], domain=self.project.name)
         check_user_has_case(self, self.user, create_index)
+
+
+@use_sql_backend
+class IndexTestSQL(IndexTest):
+    pass
 
 
 class CaseBlockIndexRelationshipTests(SimpleTestCase):

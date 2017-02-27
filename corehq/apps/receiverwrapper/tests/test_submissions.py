@@ -12,7 +12,7 @@ from django.core.urlresolvers import reverse
 import os
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
 
 
 class SubmissionTest(TestCase):
@@ -76,40 +76,40 @@ class SubmissionTest(TestCase):
         expected = self._get_expected_json(xform_id, xmlns)
         self.assertEqual(foo, expected)
 
-    @run_with_all_backends
     def test_submit_simple_form(self):
         self._test(
             form='simple_form.xml',
             xmlns='http://commcarehq.org/test/submit',
         )
 
-    @run_with_all_backends
     def test_submit_bare_form(self):
         self._test(
             form='bare_form.xml',
             xmlns='http://commcarehq.org/test/submit',
         )
 
-    @run_with_all_backends
     def test_submit_user_registration(self):
         self._test(
             form='user_registration.xml',
             xmlns='http://openrosa.org/user/registration',
         )
 
-    @run_with_all_backends
     def test_submit_with_case(self):
         self._test(
             form='form_with_case.xml',
             xmlns='http://commcarehq.org/test/submit',
         )
 
-    @run_with_all_backends
     def test_submit_with_namespaced_meta(self):
         self._test(
             form='namespace_in_meta.xml',
             xmlns='http://bihar.commcarehq.org/pregnancy/new',
         )
+
+
+@use_sql_backend
+class SubmissionTestSQL(SubmissionTest):
+    pass
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

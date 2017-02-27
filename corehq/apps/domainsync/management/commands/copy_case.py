@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.dbaccessors import get_reverse_indices
@@ -34,7 +35,7 @@ class Command(BaseCommand):
             raise CommandError('This command only works for couch-based domains.')
 
         def _migrate_case(case_id):
-            print 'getting case %s' % case_id
+            print('getting case %s' % case_id)
             case = CommCareCase.wrap(source_couch.get_db_for_class(CommCareCase).get(case_id))
             original_domain = case.domain
             if domain is not None:
@@ -43,7 +44,7 @@ class Command(BaseCommand):
             return case, original_domain
 
         case, orig_domain = _migrate_case(case_id)
-        print 'copying %s parent cases' % len(case.indices)
+        print('copying %s parent cases' % len(case.indices))
         for index in case.indices:
             _migrate_case(index.referenced_id)
             doc_ids.append(index.referenced_id)
@@ -52,12 +53,12 @@ class Command(BaseCommand):
         case.domain = orig_domain
         with OverrideDB(CommCareCase, source_couch.get_db_for_class(CommCareCase)):
             child_indices = get_reverse_indices(case)
-        print 'copying %s child cases' % len(child_indices)
+        print('copying %s child cases' % len(child_indices))
         for index in child_indices:
             _migrate_case(index.referenced_id)
             doc_ids.append(index.referenced_id)
 
-        print 'copying %s xforms' % len(case.xform_ids)
+        print('copying %s xforms' % len(case.xform_ids))
 
         def form_wrapper(row):
             doc = row['doc']
@@ -74,7 +75,7 @@ class Command(BaseCommand):
             if domain is not None:
                 form.domain = domain
             form.save(force_update=True)
-            print 'saved %s' % form._id
+            print('saved %s' % form._id)
             doc_ids.append(form._id)
 
         if options['postgres_db']:

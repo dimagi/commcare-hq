@@ -1,3 +1,4 @@
+from __future__ import print_function
 from dimagi.utils.chunked import chunked
 from django.core.management import BaseCommand
 
@@ -11,7 +12,7 @@ def reindex_sql_forms_in_domain(domain):
     for state, _ in XFormInstanceSQL.STATES:
         all_doc_ids = FormAccessorSQL.get_form_ids_in_domain_by_state(domain, state)
         for doc_ids in chunked(all_doc_ids, 100):
-            print 'Reindexing doc_ids: {}'.format(','.join(doc_ids))
+            print('Reindexing doc_ids: {}'.format(','.join(doc_ids)))
             reindexer.doc_processor.process_bulk_docs([
                 reindexer.reindex_accessor.doc_to_json(form)
                 for form in FormAccessorSQL.get_forms(list(doc_ids))

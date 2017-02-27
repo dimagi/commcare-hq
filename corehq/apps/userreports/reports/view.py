@@ -2,9 +2,13 @@ import json
 import os
 import tempfile
 from StringIO import StringIO
+
+from datetime import datetime
+
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
+from corehq.apps.reports_core.filters import Choice, PreFilter
 from corehq.apps.style.decorators import (
     use_select2,
     use_daterangepicker,
@@ -16,7 +20,8 @@ from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE, UCR_LABORATORY_BACKEND
 from couchexport.shortcuts import export_response
 
-from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
+from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR, INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
@@ -82,7 +87,7 @@ def get_filter_values(filters, request_dict, user=None):
             filter.css_id: filter.get_value(request_dict, user)
             for filter in filters
         }
-    except FilterException, e:
+    except FilterException as e:
         raise UserReportsFilterError(unicode(e))
 
 
@@ -455,6 +460,39 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def url(self):
         return reverse(self.slug, args=[self.domain, self.report_config_id])
 
+    def _get_filter_export_format(self, filter_value):
+        if isinstance(filter_value, list):
+            values = []
+            for value in filter_value:
+                if isinstance(value, Choice):
+                    values.append(value.display)
+                else:
+                    values.append(unicode(value))
+            return ', '.join(values)
+        elif isinstance(filter_value, DateSpan):
+            return filter_value.default_serialization()
+        else:
+            if isinstance(filter_value, Choice):
+                return filter_value.display
+            else:
+                return unicode(filter_value)
+
+    def _get_filter_values(self):
+        slug_to_filter = {
+            ui_filter.name: ui_filter
+            for ui_filter in self.filters
+        }
+
+        filters_without_prefilters = {
+            filter_slug: filter_value
+            for filter_slug, filter_value in self.filter_values.iteritems()
+            if not isinstance(slug_to_filter[filter_slug], PreFilter)
+        }
+
+        for filter_slug, filter_value in filters_without_prefilters.iteritems():
+            label = slug_to_filter[filter_slug].label
+            yield label, self._get_filter_export_format(filter_value)
+
     @property
     @memoized
     def export_table(self):
@@ -477,12 +515,23 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
         rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
         total_rows = [data.get_total_row()] if data.has_total_row else []
-        return [
+
+        export_table = [
             [
                 self.title,
                 [headers] + rows + total_rows
             ]
         ]
+
+        if INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS.enabled(self.domain):
+            export_table.append([
+                'metadata',
+                [
+                    [_('Report Name'), self.title],
+                    [_('Generated On'), datetime.utcnow().strftime('%Y-%m-%d %H:%M')],
+                ] + list(self._get_filter_values())
+            ])
+        return export_table
 
     @property
     @memoized

@@ -23,6 +23,7 @@ Where staging.yaml looks as follows:
 
 When not specified, a submodule's trunk and name inherit from the parent
 """
+from __future__ import print_function
 
 from gevent import monkey
 monkey.patch_all(time=False, select=False)
@@ -72,7 +73,7 @@ def fetch_remote(base_config, name="origin"):
             continue
         seen.add(path)
         git = get_git(path)
-        print "  [{cwd}] fetching {name}".format(cwd=path, name=name)
+        print("  [{cwd}] fetching {name}".format(cwd=path, name=name))
         jobs.append(gevent.spawn(git.fetch, name))
         for branch in (b for b in config.branches if ":" in b):
             remote, branch = branch.split(":", 1)
@@ -81,11 +82,11 @@ def fetch_remote(base_config, name="origin"):
                 print("  [{path}] adding remote: {remote} -> {url}"
                       .format(**locals()))
                 git.remote("add", remote, url)
-            print "  [{path}] fetching {remote} {branch}".format(**locals())
+            print("  [{path}] fetching {remote} {branch}".format(**locals()))
             jobs.append(gevent.spawn(git.fetch, remote, branch))
             fetched.add(remote)
     gevent.joinall(jobs)
-    print "fetched {}".format(", ".join(['origin'] + sorted(fetched)))
+    print("fetched {}".format(", ".join(['origin'] + sorted(fetched))))
 
 
 def remote_url(git, remote, original="origin"):
@@ -137,30 +138,30 @@ def sync_local_copies(config, push=True):
                 unpushed = _count_commits('origin/{0}..{0}'.format(branch))
                 unpulled = _count_commits('{0}..origin/{0}'.format(branch))
                 if unpulled or unpushed:
-                    print ("  [{cwd}] {branch}: {unpushed} ahead "
+                    print(("  [{cwd}] {branch}: {unpushed} ahead "
                            "and {unpulled} behind origin").format(
                         cwd=path,
                         branch=branch,
                         unpushed=unpushed,
                         unpulled=unpulled,
-                    )
+                    ))
                 else:
-                    print "  [{cwd}] {branch}: Everything up-to-date.".format(
+                    print("  [{cwd}] {branch}: Everything up-to-date.".format(
                         cwd=path,
                         branch=branch,
-                    )
+                    ))
                 if unpushed:
                     unpushed_branches.append((path, branch))
                 elif unpulled:
-                    print "  Fastforwarding your branch to origin"
+                    print("  Fastforwarding your branch to origin")
                     git.merge('--ff-only', origin(branch))
     if unpushed_branches and push:
-        print "The following branches have commits that need to be pushed:"
+        print("The following branches have commits that need to be pushed:")
         for path, branch in unpushed_branches:
-            print "  [{cwd}] {branch}".format(cwd=path, branch=branch)
+            print("  [{cwd}] {branch}".format(cwd=path, branch=branch))
         exit(1)
     else:
-        print "All branches up-to-date."
+        print("All branches up-to-date.")
 
 
 def rebuild_staging(config, print_details=True, push=True):
@@ -182,17 +183,17 @@ def rebuild_staging(config, print_details=True, push=True):
                         remote_branch = origin(branch)
                     if not has_remote(git, remote_branch):
                         not_found.append((path, branch))
-                        print "  [{cwd}] {branch} NOT FOUND".format(
+                        print("  [{cwd}] {branch} NOT FOUND".format(
                             cwd=format_cwd(path),
                             branch=branch,
-                        )
+                        ))
                         continue
                     branch = remote_branch
-                print "  [{cwd}] Merging {branch} into {name}".format(
+                print("  [{cwd}] Merging {branch} into {name}".format(
                     cwd=path,
                     branch=branch,
                     name=config.name
-                ),
+                ), end=' ')
                 try:
                     git.merge(branch, '--no-edit')
                 except sh.ErrorReturnCode_1:
@@ -201,9 +202,9 @@ def rebuild_staging(config, print_details=True, push=True):
                         git.merge("--abort")
                     except sh.ErrorReturnCode_128:
                         pass
-                    print "FAIL"
+                    print("FAIL")
                 else:
-                    print "ok"
+                    print("ok")
             if config.submodules:
                 for submodule in config.submodules:
                     git.add(submodule)
@@ -213,27 +214,27 @@ def rebuild_staging(config, print_details=True, push=True):
             for path, config in all_configs:
                 # stupid safety check
                 assert config.name != 'master', path
-                print "  [{cwd}] Force pushing to origin {name}".format(
+                print("  [{cwd}] Force pushing to origin {name}".format(
                     cwd=path,
                     name=config.name,
-                )
+                ))
                 force_push(get_git(path), config.name)
 
     if not_found:
-        print "You must remove the following branches before rebuilding:"
+        print("You must remove the following branches before rebuilding:")
         for cwd, branch in not_found:
-            print "  [{cwd}] {branch}".format(
+            print("  [{cwd}] {branch}".format(
                 cwd=format_cwd(cwd),
                 branch=branch,
-            )
+            ))
     if merge_conflicts:
-        print "You must fix the following merge conflicts before rebuilding:"
+        print("You must fix the following merge conflicts before rebuilding:")
         for cwd, branch, config in merge_conflicts:
-            print "\n[{cwd}] {branch} => {name}".format(
+            print("\n[{cwd}] {branch} => {name}".format(
                 cwd=format_cwd(cwd),
                 branch=branch,
                 name=config.name,
-            )
+            ))
             git = get_git(cwd)
             if print_details:
                 print_conflicts(branch, config, git)
@@ -244,13 +245,13 @@ def rebuild_staging(config, print_details=True, push=True):
 
 def print_conflicts(branch, config, git):
     if has_merge_conflict(branch, config.trunk, git):
-        print red("{} conflicts with {}".format(branch, config.trunk))
+        print(red("{} conflicts with {}".format(branch, config.trunk)))
         return
 
     conflict_found = False
     for other_branch in config.branches:
         if has_merge_conflict(branch, other_branch, git):
-            print red("{} conflicts with {}".format(branch, other_branch))
+            print(red("{} conflicts with {}".format(branch, other_branch)))
             conflict_found = True
 
     if not conflict_found:

@@ -70,7 +70,7 @@ class AppFactory(object):
     def new_form(self, module):
         slug = self.slugs[module.unique_id]
         index = len(module.forms)
-        form = module.new_form('{} form {}'.format(slug, index), None)
+        form = module.new_form('{} form {}'.format(slug, index), None, '')
         form.unique_id = '{}_form_{}'.format(slug, index)
         form.source = ''  # set form source since we changed the unique_id
         if self.include_xmlns:

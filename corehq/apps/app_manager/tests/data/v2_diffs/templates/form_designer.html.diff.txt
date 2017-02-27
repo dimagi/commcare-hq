@@ -30,31 +30,7 @@
                      {% if request.couch_user.days_since_created == 0 %}
                          analytics.workflow('Saved the Form Builder within first 24 hours');
                      {% endif %}
-@@ -72,6 +82,11 @@
-                     {% if request.guided_tour %}
-                     form_tour_start();
-                     {% endif %}
-+                    if ($('.fd-question-tree li').length > 0) {
-+                      setTimeout(function () {
-+                        $('.js-preview-toggle').removeAttr('disabled');
-+                      }, 1500);
-+                    }
-                     {% if request.couch_user.days_since_created == 0 %}
-                         $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
-                             analytics.workflow('Added question in Form Builder within first 24 hours');
-@@ -83,6 +98,11 @@
-                     {% if request.guided_tour %}
-                     form_tour_start();
-                     {% endif %}
-+                    if ($('.fd-question-tree li').length > 0) {
-+                      setTimeout(function () {
-+                        $('.js-preview-toggle').removeAttr('disabled');
-+                      }, 1500);
-+                    }
-                 },
-                 {% endif %}
-                 sessionid: {{ sessionid|JSON }},
-@@ -126,12 +146,11 @@
+@@ -126,12 +136,11 @@
              csrftoken: $.cookie('csrftoken')
          };
  
@@ -68,7 +44,7 @@
  
                  $('#formdesigner').vellum(VELLUM_OPTIONS);
  
-@@ -148,14 +167,67 @@
+@@ -148,14 +157,67 @@
              });
          });
          analytics.workflow('Entered the Form Builder');
@@ -109,9 +85,9 @@
 +    {% if can_preview_form %}
 +    <script type="text/html" id="js-fd-app-preview-btn-template">
 +      <div class="btn-group js-preview-toggle-container">
-+        <button class="btn btn-info js-preview-toggle" type="button" disabled="disabled">
-+          <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
-+          <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
++        <button class="btn btn-info js-preview-toggle" type="button">
++          <span class="js-preview-action-show hide">{% trans "Show App Preview" %}</span>
++          <span class="js-preview-action-hide hide">{% trans "Hide App Preview" %}</span>
 +        </button>
 +      </div>
 +    </script>

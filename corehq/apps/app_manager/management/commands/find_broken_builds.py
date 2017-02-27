@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand
@@ -109,13 +110,13 @@ class Command(BaseCommand):
         end = options['enddate']
         ids = options['build_ids']
 
-        print 'Starting...\n'
+        print('Starting...\n')
         if not ids:
             ids = get_build_ids(start, end)
         else:
             ids = ids.split(',')
 
-        print 'Checking {} builds\n'.format(len(ids))
+        print('Checking {} builds\n'.format(len(ids)))
         for message in find_broken_builds(check_fn, ids):
             self.stderr.write(message)
 

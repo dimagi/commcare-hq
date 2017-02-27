@@ -1,17 +1,44 @@
 from decimal import Decimal
+from django.test import TestCase
+from casexml.apps.case.tests.util import delete_all_xforms
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.commtrack.tests.util import CommTrackTest, FIXED_USER, ROAMING_USER
 from corehq.apps.commtrack.sms import handle
+from corehq.apps.commtrack.tests import util
+from corehq.apps.products.models import Product
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER, NAMESPACE_DOMAIN
 from couchforms.dbaccessors import get_commtrack_forms
 
 
-class SMSTests(CommTrackTest):
+class SMSTests(TestCase):
+    user_definitions = []
 
-    def setUp(self):
-        super(SMSTests, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        super(SMSTests, cls).setUpClass()
+        cls.backend, cls.backend_mapping = setup_default_sms_test_backend()
+        cls.domain = util.bootstrap_domain(util.TEST_DOMAIN)
+        util.bootstrap_location_types(cls.domain.name)
+        util.bootstrap_products(cls.domain.name)
+        cls.products = sorted(Product.by_domain(cls.domain.name), key=lambda p: p._id)
+        cls.loc = util.make_loc('loc1')
+        cls.sp = cls.loc.linked_supply_point()
+        cls.users = [util.bootstrap_user(cls, **user_def) for user_def in cls.user_definitions]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()  # domain delete cascades to everything else
+        cls.backend_mapping.delete()
+        cls.backend.delete()
+        delete_all_users()
+        super(SMSTests, cls).tearDownClass()
+
+    def tearDown(self):
+        delete_all_xforms()
+        super(SMSTests, self).tearDown()
 
     def check_stock(self, code, amount, case_id=None, section_id='stock'):
         if not case_id:
@@ -35,7 +62,7 @@ class SMSTests(CommTrackTest):
 
 
 class StockReportTest(SMSTests):
-    user_definitions = [ROAMING_USER, FIXED_USER]
+    user_definitions = [util.ROAMING_USER, util.FIXED_USER]
 
     def testStockReportRoaming(self):
         self.assertEqual(0, len(get_commtrack_forms(self.domain.name)))
@@ -204,7 +231,7 @@ class StockReportTest(SMSTests):
 
 
 class StockAndReceiptTest(SMSTests):
-    user_definitions = [FIXED_USER]
+    user_definitions = [util.FIXED_USER]
 
     def setUp(self):
         super(StockAndReceiptTest, self).setUp()

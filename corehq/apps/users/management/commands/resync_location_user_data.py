@@ -1,3 +1,4 @@
+from __future__ import print_function
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.database import iter_docs
@@ -28,4 +29,4 @@ class Command(BaseCommand):
             try:
                 self.process_user(user)
             except Exception as e:
-                print "Error processing user %s: %s" % (user._id, e)
+                print("Error processing user %s: %s" % (user._id, e))

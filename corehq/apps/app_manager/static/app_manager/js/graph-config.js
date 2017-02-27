@@ -583,7 +583,7 @@ hqDefine('app_manager/js/graph-config.js', function () {
 
     // private
     var BubbleGraphSeries = function(original, childCaseTypes, fixtures, lang, langs){
-        GraphSeries.apply(this, [original, childCaseTypes, fixtures, lang, langs]);
+        XYGraphSeries.apply(this, [original, childCaseTypes, fixtures, lang, langs]);
         var self = this;
 
         self.radiusFunction = ko.observable(original.radiusFunction === undefined ? "" : original.radiusFunction);

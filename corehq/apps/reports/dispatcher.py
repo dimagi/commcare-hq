@@ -168,7 +168,7 @@ class ReportDispatcher(View):
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
                 )
                 return getattr(report, '%s_response' % render_as)
-            except BadRequestError, e:
+            except BadRequestError as e:
                 return HttpResponseBadRequest(e)
         else:
             raise Http404()
@@ -232,6 +232,7 @@ class ReportDispatcher(View):
                         'subpages': report.get_subpages(),
                         'show_in_navigation': show_in_navigation,
                         'show_in_dropdown': show_in_dropdown,
+                        'class_name': report.__name__,
                     })
             if report_contexts:
                 if hasattr(section_name, '__call__'):

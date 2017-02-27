@@ -4,6 +4,12 @@
 
 {% block js %}
     {{ block.super }}
+    {% compress js %}
+        <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+        <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+        <script src="{% static 'style/js/hq.helpers.js' %}"></script>
+    {% endcompress %}
+
     <style>
         @page {
             size: A4 landscape;
@@ -12,8 +18,13 @@
                 page-break-inside: avoid;
             }
         @media print {
+            .table {
+                border-collapse: collapse !important;
+            }
+
             .table th, .table td {
-                border-right: 1px solid #dddddd;
+                border: 1px solid #dddddd;
+                padding: 2px;
             }
         }
         .hideImportant {

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 from optparse import make_option
 
@@ -39,7 +40,7 @@ class Command(BaseCommand):
         domain = doc.get('domain', None)
         if self.full:
             doc_type = doc.get('doc_type', None)
-            print "{0},{1},{2}".format(id, domain, doc_type)
+            print("{0},{1},{2}".format(id, domain, doc_type))
         elif domain and domain not in self.domains:
             self.domains.add(domain)
-            print domain
+            print(domain)

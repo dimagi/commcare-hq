@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
             name='Followup',
             fields=[
                 ('id', models.AutoField(serialize=False, primary_key=True)),
-                ('PatientID', models.ForeignKey(to='nikshay_datamigration.PatientDetail')),
+                ('PatientID', models.ForeignKey(to='nikshay_datamigration.PatientDetail', on_delete=models.CASCADE)),
                 ('IntervalId', models.CharField(max_length=255)),
                 ('TestDate', models.CharField(max_length=255, null=True)),
                 ('DMC', models.CharField(max_length=255)),
@@ -81,7 +81,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Outcome',
             fields=[
-                ('PatientId', models.OneToOneField(primary_key=True, serialize=False, to='nikshay_datamigration.PatientDetail')),
+                ('PatientId', models.OneToOneField(primary_key=True, serialize=False, to='nikshay_datamigration.PatientDetail', on_delete=models.CASCADE)),
                 ('Outcome', models.CharField(max_length=255)),
                 ('OutcomeDate', models.CharField(max_length=255, null=True)),
                 ('MO', models.CharField(max_length=255, null=True)),

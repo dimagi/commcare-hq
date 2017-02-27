@@ -4,7 +4,7 @@ import importlib
 from collections import defaultdict
 
 import os
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 from django.contrib import messages
 import settingshelper as helper
 
@@ -146,6 +146,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'corehq.middleware.SentryContextMiddleware',
     'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
@@ -202,6 +203,7 @@ DEFAULT_APPS = (
     'two_factor',
     'ws4redis',
     'statici18n',
+    'raven.contrib.django.raven_compat',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -877,6 +879,12 @@ ONBOARDING_DOMAIN_TEST_DATE = ()
 
 HQ_INSTANCE = 'development'
 
+SENTRY_PUBLIC_KEY = None
+SENTRY_PRIVATE_KEY = None
+SENTRY_PROJECT_ID = None
+SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
+SENTRY_API_KEY = None
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -911,10 +919,10 @@ TEMPLATES = [
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.core.context_processors.request',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
                 'django.template.context_processors.media',
+                'django.template.context_processors.request',
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
 
@@ -924,6 +932,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.websockets_override',
+                'corehq.util.context_processors.commcare_hq_names',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1064,6 +1073,10 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
+        'sentry': {
+            'level': 'ERROR',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
     },
     'loggers': {
         '': {
@@ -1077,7 +1090,7 @@ LOGGING = {
             'propagate': False,
         },
         'django': {
-            'handlers': ['mail_admins'],
+            'handlers': ['mail_admins', 'sentry'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1086,7 +1099,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            'handlers': ['notify_exception'],
+            'handlers': ['notify_exception', 'sentry'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1155,6 +1168,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'sentry.errors.uncaught': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        }
     }
 }
 
@@ -1393,6 +1411,10 @@ MESSAGE_TAGS = {
 
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
+# CommCare HQ - To indicate server
+COMMCARE_HQ_NAME = "CommCare HQ"
+# CommCare - To Indicate mobile
+COMMCARE_NAME = "CommCare"
 
 DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
@@ -1937,3 +1959,15 @@ else:
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
 }
+
+SENTRY_CONFIGURED = False
+_raven_config = helper.configure_sentry(
+    BASE_DIR,
+    SERVER_ENVIRONMENT,
+    SENTRY_PUBLIC_KEY,
+    SENTRY_PRIVATE_KEY,
+    SENTRY_PROJECT_ID
+)
+if _raven_config:
+    RAVEN_CONFIG = _raven_config
+    SENTRY_CONFIGURED = True

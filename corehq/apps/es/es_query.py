@@ -97,6 +97,7 @@ Language
     sorting
     Add esquery.iter() method
 """
+from __future__ import print_function
 from collections import namedtuple
 from copy import deepcopy
 import json
@@ -372,7 +373,7 @@ class ESQuery(object):
 
     def pprint(self):
         """pretty prints the JSON query that will be sent to elasticsearch."""
-        print self.dumps(pretty=True)
+        print(self.dumps(pretty=True))
 
     def sort(self, field, desc=False, reset_sort=True):
         """Order the results by field."""
