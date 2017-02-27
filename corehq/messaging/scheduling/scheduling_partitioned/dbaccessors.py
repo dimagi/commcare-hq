@@ -24,7 +24,7 @@ def get_schedule_instance(schedule_instance_id):
     from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
 
     _validate_uuid(schedule_instance_id)
-    return get_object_from_partitioned_database(ScheduleInstance, schedule_instance_id)
+    return get_object_from_partitioned_database(ScheduleInstance, schedule_instance_id, 'schedule_instance_id')
 
 
 def save_schedule_instance(instance):
