@@ -22,7 +22,6 @@ from casexml.apps.case.xml import V2
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from .util import (
-    LocationHierarchyPerTest,
     setup_location_types_with_structure,
     setup_locations_with_structure,
     LocationStructure,
@@ -370,7 +369,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
-class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+class WebUserLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     location_type_names = ['state', 'county', 'city']
     location_structure = [
@@ -427,7 +426,7 @@ class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsM
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
-class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+class ForkedHierarchyLocationFixturesTest(TestCase, FixtureHasLocationsMixin):
     """
     - State
         - County
@@ -435,6 +434,7 @@ class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLo
         - Region
             - Town
     """
+    domain = 'forked-hierarchy-domain'
     location_type_structure = [
         LocationTypeStructure('state', [
             LocationTypeStructure('county', [
@@ -470,6 +470,9 @@ class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLo
         self.user = create_restore_user(self.domain, 'user', '123')
         self.location_types = setup_location_types_with_structure(self.domain, self.location_type_structure)
         self.locations = setup_locations_with_structure(self.domain, self.location_structure)
+
+    def tearDown(self):
+        self.domain_obj.delete()
 
     def test_forked_locations(self, *args):
         self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
