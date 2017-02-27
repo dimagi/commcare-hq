@@ -3,13 +3,14 @@ from datetime import datetime
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
+from dimagi.utils.couch import CriticalSection
 from toggle.shortcuts import set_toggle
 
 from corehq.toggles import OLD_EXPORTS, NAMESPACE_DOMAIN, ALLOW_USER_DEFINED_EXPORT_COLUMNS
 from corehq.util.log import with_progress_bar
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.reports.dbaccessors import (
-    stale_get_exports_json,
+    get_exports_json,
     stale_get_export_count,
 )
 from corehq.apps.reports.models import (
@@ -596,21 +597,22 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
     metas = []
     if export_count:
         for old_export in with_progress_bar(
-                stale_get_exports_json(domain),
+                get_exports_json(domain),
                 length=export_count,
                 prefix=domain):
-            try:
-                _, migration_meta = convert_saved_export_to_export_instance(
-                    domain,
-                    SavedExportSchema.wrap(old_export),
-                    dryrun=dryrun,
-                    force_convert_columns=force_convert_columns,
-                )
-            except Exception as e:
-                print('Failed parsing {}: {}'.format(old_export['_id'], e))
-                raise e
-            else:
-                metas.append(migration_meta)
+            with CriticalSection(['saved-export-{}'.format(old_export['_id'])], timeout=120):
+                try:
+                    _, migration_meta = convert_saved_export_to_export_instance(
+                        domain,
+                        SavedExportSchema.get(old_export['_id']),
+                        dryrun=dryrun,
+                        force_convert_columns=force_convert_columns,
+                    )
+                except Exception as e:
+                    print('Failed parsing {}: {}'.format(old_export['_id'], e))
+                    raise
+                else:
+                    metas.append(migration_meta)
 
     if not dryrun:
         set_toggle(OLD_EXPORTS.slug, domain, False, namespace=NAMESPACE_DOMAIN)

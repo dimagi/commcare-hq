@@ -492,6 +492,36 @@
         "type": "boolean"
       },
       {
+        "column_id": "weight_recorded_in_month",
+        "type": "expression",
+        "datatype": "decimal",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "wer_eligible"
+          },
+          "expression_if_true": {
+            "type": "icds_get_last_case_property_update",
+            "case_property": "weight_child",
+            "start_date": {
+              "type": "icds_month_start"
+            },
+            "end_date": {
+              "type": "icds_month_end"
+            }
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
         "column_id": "nutrition_status_last_recorded",
         "type": "expression",
         "datatype": "string",

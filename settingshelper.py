@@ -211,6 +211,7 @@ def configure_sentry(base_dir, server_env, pub_key, priv_key, project_id):
     release = get_release_name(base_dir, server_env)
 
     breadcrumbs.ignore_logger('quickcache')
+    breadcrumbs.ignore_logger('django.template')
 
     return {
         'dsn': 'https://{pub_key}:{priv_key}@sentry.io/{project_id}'.format(

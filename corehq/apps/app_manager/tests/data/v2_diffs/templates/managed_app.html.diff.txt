@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load url_extras %}
  {% load hq_shared_tags %}
-@@ -25,251 +25,77 @@
+@@ -25,251 +25,85 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -38,8 +38,9 @@
 +          </div>
 +          <h2 class="appnav-name">
 +            <a href="{% url "view_app" domain app.id %}"
-+               class="variable-app_name appnav-responsive">
-+                {{ app.name }}
++               class="appnav-responsive">
++                <i class="fa fa-mobile appnav-name-icon"></i>
++                <span class="variable-app_name">{{ app.name }}</span>
              </a>
 -        </li>
 +          </h2>
@@ -306,12 +307,19 @@
 +          <button type="button" class="popover-additem-option new-module" data-type="survey">
 +            <i class="fa fa-file-o"></i>
 +            {% trans "Surveys" %}
++            <p>{% blocktrans %}
++              <i class="fa fa-info-circle"></i> Collect data<br/>once.
++            {% endblocktrans %}</p>
++          </button>
 +          </button>
 +        </div>
 +        <div class="col-xs-6">
 +          <button type="button" class="popover-additem-option new-module" data-type="case">
 +            <i class="fa fa-bars"></i>
 +            {% trans "Case List" %}
++            <p>{% blocktrans %}
++              <i class="fa fa-info-circle"></i> Track items<br/>over time.
++            {% endblocktrans %}</p>
 +          </button>
 +        </div>
 +      </div>

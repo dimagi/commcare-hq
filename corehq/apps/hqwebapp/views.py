@@ -22,7 +22,6 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.template import loader
-from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
@@ -93,12 +92,15 @@ def server_error(request, template_name='500.html'):
     traceback_key = uuid.uuid4().hex
     cache.cache.set(traceback_key, traceback_text, 60*60)
 
-    return HttpResponseServerError(t.render(RequestContext(request,
-        {'MEDIA_URL': settings.MEDIA_URL,
-         'STATIC_URL': settings.STATIC_URL,
-         'domain': domain,
-         '500traceback': traceback_key,
-        })))
+    return HttpResponseServerError(t.render(
+        context={
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_URL': settings.STATIC_URL,
+            'domain': domain,
+            '500traceback': traceback_key,
+        },
+        request=request,
+    ))
 
 
 def not_found(request, template_name='404.html'):
@@ -106,10 +108,13 @@ def not_found(request, template_name='404.html'):
     404 error handler.
     """
     t = loader.get_template(template_name)
-    return HttpResponseNotFound(t.render(RequestContext(request,
-        {'MEDIA_URL': settings.MEDIA_URL,
-         'STATIC_URL': settings.STATIC_URL
-        })))
+    return HttpResponseNotFound(t.render(
+        context={
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_URL': settings.STATIC_URL,
+        },
+        request=request,
+    ))
 
 
 @require_GET
@@ -268,21 +273,25 @@ def no_permissions(request, redirect_to=None, template_name="403.html", message=
     403 error handler.
     """
     t = loader.get_template(template_name)
-    return HttpResponseForbidden(t.render(RequestContext(request, {
-        'MEDIA_URL': settings.MEDIA_URL,
-        'STATIC_URL': settings.STATIC_URL,
-        'message': message,
-    })))
+    return HttpResponseForbidden(t.render(
+        context={
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_URL': settings.STATIC_URL,
+            'message': message,
+        },
+        request=request,
+    ))
 
 
 def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
     t = loader.get_template(template_name)
-    return HttpResponseForbidden(
-        t.render(RequestContext(
-            request,
-            {'MEDIA_URL': settings.MEDIA_URL,
-             'STATIC_URL': settings.STATIC_URL
-             })))
+    return HttpResponseForbidden(t.render(
+        context={
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_URL': settings.STATIC_URL,
+        },
+        request=request,
+    ))
 
 
 @sensitive_post_parameters('auth-password')
