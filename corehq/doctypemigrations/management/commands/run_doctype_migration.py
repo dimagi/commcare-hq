@@ -50,39 +50,39 @@ class Command(BaseCommand):
 
     """
     help = USAGE
-    option_list = (
-        make_option(
+
+    def add_arguments(self, parser):
+        parser.add_argument(
             '--initial',
             action='store_true',
             default=False,
             help="Do a full, initial bulk migration.",
-        ),
-        make_option(
+        )
+        parser.add_argument(
             '--continuous',
             action='store_true',
             default=False,
             help=("Start a continuous migration to keep things topped off "
                   "based on the changes feed.  This should be run in a screen "
                   "session and cancelled with ^C once it's no longer needed."),
-        ),
-        make_option(
+        )
+        parser.add_argument(
             '--cleanup',
             action='store_true',
             default=False,
             help="Delete the old documents still in the source db.",
-        ),
-        make_option(
+        )
+        parser.add_argument(
             '--stats',
             action='store_true',
             default=False,
             help="Output misc info about the status of the migration.",
-        ),
-        make_option(
+        )
+        parser.add_argument(
             '--erase-continuous-progress',
             action='store_true',
-            default=False
+            default=False,
         )
-    )
 
     def handle(self, migrator_slug=None, initial=None, continuous=None, cleanup=None,
                stats=None, erase_continuous_progress=None, **options):

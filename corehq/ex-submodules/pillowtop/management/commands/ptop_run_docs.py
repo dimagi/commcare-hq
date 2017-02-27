@@ -11,31 +11,29 @@ from corehq.util.doc_processor.couch import CouchDocumentProvider
 
 class Command(BaseCommand):
     help = "Run a pillow on a set list of doc ids"
-    args = "--pillow=<Pillow> --docs=<doc"
 
-    option_list = (
-        make_option(
+    def add_arguments(self, parser):
+        parser.add_argument(
             '--pillow',
             action='store',
             dest='pillow',
             help="Pillow to run over doc ids",
-        ),
-        make_option(
+        )
+        parser.add_argument(
             '--docs',
             action='store',
             dest='docs_filename',
             help="A file containing doc ids, one per line",
-        ),
-        make_option(
+        )
+        parser.add_argument(
             '--skip-check',
             action='store_true',
             dest='skip_check',
             help="Skip syntax check of docs file",
             default=False,
         )
-    )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         pillow = options.get('pillow', 'MISSING')
         if pillow not in REINDEX_FNS:
             raise CommandError('--pillow must be specified and must be one of:\n{}'

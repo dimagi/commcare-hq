@@ -10,16 +10,27 @@ from corehq.apps.userreports.util import get_ucr_es_indices
 class Command(BaseCommand):
     help = 'Close all unreferenced elasticsearch indices.'
 
-    option_list = (
-        make_option('--verbose', help='Additional logging.', action='store_true',
-                    default=False),
-        make_option('--noinput', help='Do not prompt user for input', action='store_true',
-                    default=False),
-        make_option('--delete', help='Delete the indices', action='store_true',
-                    default=False),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--verbose',
+            action='store_true',
+            default=False,
+            help='Additional logging.',
+        )
+        parser.add_argument(
+            '--noinput',
+            action='store_true',
+            default=False,
+            help='Do not prompt user for input',
+        )
+        parser.add_argument(
+            '--delete',
+            action='store_true',
+            default=False,
+            help='Delete the indices',
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         es = get_es_new()
         # call this before getting existing indices because apparently getting the pillow will create the index
         # if it doesn't exist

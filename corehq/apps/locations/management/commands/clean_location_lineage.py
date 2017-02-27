@@ -11,16 +11,20 @@ class Command(BaseCommand):
     help = "Cleans the location lineage properties for a domain. See http://manage.dimagi.com/default.asp?245138"
     args = '<domain>'
 
-    option_list = (
-        make_option('--noinput',
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'domain',
+            dest='domain_name',
+        )
+        parser.add_argument(
+            '--noinput',
             action='store_true',
             dest='noinput',
             default=False,
-            help='Skip important confirmation warnings.'),
-    )
+            help='Skip important confirmation warnings.',
+        )
 
-    def handle(self, *args, **options):
-        domain_name = args[0].strip()
+    def handle(self, domain_name, **options):
         domain = Domain.get_by_name(domain_name)
         if not domain:
             print(u'domain with name "{}" not found'.format(domain_name))

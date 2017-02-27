@@ -13,22 +13,25 @@ BULK_DELETE_INTERVAL = 5
 
 
 class Command(BaseCommand):
-    args = ""
     help = ("Deletes all messaging logs stored in couch")
-    option_list = (
-        make_option("--verify",
-                    action="store_true",
-                    dest="verify",
-                    default=False,
-                    help="Include this option to double-check that all data "
-                         "stored in couch is in postgres without deleting anything."),
-        make_option("--delete-interval",
-                    action="store",
-                    dest="delete_interval",
-                    type="int",
-                    default=BULK_DELETE_INTERVAL,
-                    help="The number of seconds to wait between each bulk delete."),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--verify",
+            action="store_true",
+            dest="verify",
+            default=False,
+            help="Include this option to double-check that all data "
+                 "stored in couch is in postgres without deleting anything.",
+        )
+        parser.add_argument(
+            "--delete-interval",
+            action="store",
+            dest="delete_interval",
+            type=int,
+            default=BULK_DELETE_INTERVAL,
+            help="The number of seconds to wait between each bulk delete.",
+        )
 
     def get_sms_couch_ids(self):
         result = SMSLog.view(
@@ -220,7 +223,7 @@ class Command(BaseCommand):
             max_fetch_attempts=5)
         print('Deleted %s documents' % count)
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         if options['verify']:
             self.verify()
             return

@@ -10,13 +10,16 @@ class Command(AppMigrationCommandBase):
     # Caution: backwards is not reversible, as some of multi-lang media references will be lost
 
     include_builds = True
-    option_list = AppMigrationCommandBase.option_list + (
-        make_option('--backwards',
-                    action='store_true',
-                    dest='backwards',
-                    default=False,
-                    help='Reverse this migration'),
-    )
+
+    def add_arguments(self, parser):
+        super(Command, self).add_arguments(parser)
+        parser.add_argument(
+            '--backwards',
+            action='store_true',
+            dest='backwards',
+            default=False,
+            help='Reverse this migration',
+        )
 
     def migrate_app(self, app_doc):
         new_modules = []

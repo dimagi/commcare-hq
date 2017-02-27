@@ -12,25 +12,32 @@ from couchforms.models import XFormInstance
 
 class Command(BaseCommand):
     help = "Copy a case and all related forms"
-    args = '<sourcedb> <case_id> <domain>'
-    option_list = (
-        make_option('--postgres-db',
-                    action='store',
-                    dest='postgres_db',
-                    default='',
-                    help="Name of postgres database to pull additional data from. This should map to a "
-                         "key in settings.DATABASES. If not specified no additional postgres data will be "
-                         "copied. This is currently used to pull CommCare Supply models."),
-    )
 
-    def handle(self, *args, **options):
-        if len(args) < 2:
-            raise CommandError('Usage is copy_case, %s' % self.args)
-        source_couch = CouchConfig(args[0])
-        case_id = args[1]
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'sourcedb',
+        )
+        parser.add_argument(
+            'case_id',
+        )
+        parser.add_argument(
+            'domain',
+            nargs='?',
+        )
+        parser.add_argument(
+            '--postgres-db',
+            action='store',
+            dest='postgres_db',
+            default='',
+            help="Name of postgres database to pull additional data from. This should map to a "
+                 "key in settings.DATABASES. If not specified no additional postgres data will be "
+                 "copied. This is currently used to pull CommCare Supply models.",
+        )
+
+    def handle(self, sourcedb, case_id, domain, **options):
+        source_couch = CouchConfig(sourcedb)
         doc_ids = [case_id]
 
-        domain = args[2] if len(args) > 2 else None
         if should_use_sql_backend(domain):
             raise CommandError('This command only works for couch-based domains.')
 

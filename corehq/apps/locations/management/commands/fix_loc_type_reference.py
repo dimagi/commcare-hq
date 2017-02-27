@@ -9,20 +9,23 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 class Command(BaseCommand):
     help = "Make "
 
-    option_list = (
-        make_option('--dry_run',
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--dry_run',
             action='store_true',
             dest='dry_run',
             default=False,
-            help='Just check what domains have problems'),
-        make_option('--noinput',
+            help='Just check what domains have problems',
+        )
+        parser.add_argument(
+            '--noinput',
             action='store_true',
             dest='noinput',
             default=False,
-            help='Skip important confirmation warnings.'),
-    )
+            help='Skip important confirmation warnings.',
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         domains = (SQLLocation.objects
                    .order_by('domain')
                    .distinct('domain')

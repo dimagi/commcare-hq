@@ -10,22 +10,19 @@ from dimagi.utils.decorators.log_exception import log_exception
 
 class Command(BaseCommand):
     help = "Load a user configurable report data source or report spec from a json file"
-    args = '<filename>'
-    label = ""
-    option_list = (
-        make_option('--rebuild',
-                    action='store_true',
-                    dest='rebuild',
-                    default=False,
-                    help='Also rebuild indicator tables (has no affect for reports).'),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument('filename')
+        parser.add_argument(
+            '--rebuild',
+            action='store_true',
+            dest='rebuild',
+            default=False,
+            help='Also rebuild indicator tables (has no affect for reports).',
+        )
 
     @log_exception()
-    def handle(self, *args, **options):
-        if len(args) < 1:
-            raise CommandError('Usage is load_data_source %s' % self.args)
-
-        filename = args[0]
+    def handle(self, filename, **options):
         with open(filename) as f:
             body = json.loads(f.read())
 

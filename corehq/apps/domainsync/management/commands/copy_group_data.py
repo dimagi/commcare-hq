@@ -20,16 +20,29 @@ CHUNK_SIZE = 100
 
 class Command(BaseCommand):
     help = "Copy all data (users, forms, cases) associated with a single group"
-    args = '<sourcedb> <group_id>'
-    label = ""
-    option_list = (
-        make_option('--exclude-user-owned',
-            action='store_true', dest='exclude_user_owned', default=False,
-            help="In addition to getting cases owned by the group itself, also get those owned by all users in the group"),
-        make_option('--include-sync-logs',
-            action='store_true', dest='include_sync_logs', default=False,
-            help="Get sync logs for all users in the group"),
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'sourcedb',
         )
+        parser.add_argument(
+            'group_id',
+        )
+        parser.add_argument(
+            '--exclude-user-owned',
+            action='store_true',
+            dest='exclude_user_owned',
+            default=False,
+            help="In addition to getting cases owned by the group itself, also get those owned by all users in the group",
+        )
+        parser.add_argument(
+            '--include-sync-logs',
+            action='store_true',
+            dest='include_sync_logs',
+            default=False,
+            help="Get sync logs for all users in the group",
+        )
+
 
     def lenient_bulk_save(self, cls, docs):
         try:
@@ -40,18 +53,14 @@ class Command(BaseCommand):
                 logging.exception(other)
                 raise
 
-    def handle(self, *args, **options):
+    def handle(self, sourcedb, group_id, **options):
         raise CommandError(
             'copy_group_data is currently broken. '
             'Ask Danny or Ethan to fix it along the lines of '
             'https://github.com/dimagi/commcare-hq/pull/9180/files#diff-9d976dc051a36a028c6604581dfbce5dR95'
         )
 
-        if len(args) != 2:
-            raise CommandError('Usage is copy_group_data %s' % self.args)
-
-        sourcedb = Database(args[0])
-        group_id = args[1]
+        sourcedb = Database(sourcedb)
         exclude_user_owned = options["exclude_user_owned"]
 
         print('getting group')

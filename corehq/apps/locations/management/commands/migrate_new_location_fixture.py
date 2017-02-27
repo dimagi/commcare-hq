@@ -15,16 +15,18 @@ class Command(BaseCommand):
     fixture format.
     The Feature Flag FLAT_LOCATION_FIXTURE should be removed after this
     """
-    option_list = BaseCommand.option_list + (
-        make_option("--check",
-                    action="store_true",
-                    dest="check",
-                    default=False,
-                    help="Include this option to check what changes would occur and highlight domains that need "
-                         "attention"),
-    )
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--check",
+            action="store_true",
+            dest="check",
+            default=False,
+            help="Include this option to check what changes would occur and highlight domains that need "
+                 "attention",
+        )
+
+    def handle(self, **options):
         dry_run = options['check']
 
         # 1. Find domains with locations

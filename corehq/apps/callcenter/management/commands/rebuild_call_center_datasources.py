@@ -17,18 +17,25 @@ class Command(BaseCommand):
     args = '<domain domain ...>'
     help = "Rebuild call center data sources which are out of sync"
 
-    option_list = (
-        make_option(
-            '--all', action='store_true', default=False,
-            help='Check ALL domains'
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'domains',
+            nargs='*',
+        )
+        parser.add_argument(
+            '--all',
+            action='store_true',
+            default=False,
+            help='Check ALL domains',
         ),
-        make_option(
-            '--threshold', type='int', default=20,
-            help='Threshold above which data source will be rebuilt (percentage difference between ES and UCR)'
+        parser.add_argument(
+            '--threshold',
+            type=int,
+            default=20,
+            help='Threshold above which data source will be rebuilt (percentage difference between ES and UCR)',
         ),
-    )
 
-    def handle(self, *domains, **options):
+    def handle(self, domains, **options):
         if not domains and not options['all']:
             raise CommandError('Specify specific domains or --all')
 

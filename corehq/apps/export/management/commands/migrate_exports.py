@@ -12,31 +12,30 @@ from dimagi.utils.django.email import send_HTML_email
 class Command(BaseCommand):
     help = "Migrates old exports to new ones"
 
-    option_list = (
-        make_option(
+    def add_arguments(self, parser):
+        parser.add_argument(
             '--dry-run',
             action='store_true',
             dest='dryrun',
             default=False,
-            help='Runs a dry run on the export conversations'
-        ),
-        make_option(
+            help='Runs a dry run on the export conversations',
+        )
+        parser.add_argument(
             '--limit',
             dest='limit',
             default=None,
             type='int',
-            help='Limits the number of domains migrated'
-        ),
-        make_option(
+            help='Limits the number of domains migrated',
+        )
+        parser.add_argument(
             '--force-convert-columns',
             action='store_true',
             dest='force_convert_columns',
             default=False,
-            help='Force convert columns that were not found in the new schema'
-        ),
-    )
+            help='Force convert columns that were not found in the new schema',
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         dryrun = options.pop('dryrun')
         limit = options.pop('limit')
         force_convert_columns = options.pop('force_convert_columns')

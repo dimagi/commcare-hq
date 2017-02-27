@@ -32,17 +32,17 @@ ALTER_SERVER_TEMPLATE = """
 
 
 class Command(BaseCommand):
-    args = ''
     help = 'Creates or updates the pl_proxy cluster configuration'
 
-    option_list = (
-        make_option('--verbose',
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--verbose',
             action='store_true',
             dest='verbose',
-            default=False),
+            default=False,
         )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         if not settings.USE_PARTITIONED_DATABASE:
             print("System not configured to use a partitioned database")
 

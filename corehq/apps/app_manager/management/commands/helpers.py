@@ -30,17 +30,21 @@ class AppMigrationCommandBase(BaseCommand):
     Base class for commands that want to migrate apps.
     """
     include_builds = False
-    option_list = (
-        make_option('--failfast',
-                    action='store_true',
-                    dest='failfast',
-                    default=False,
-                    help='Stop processing if there is an error'),
-        make_option('--domain',
-                    help='Migrate only this domain'),
-    )
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--failfast',
+            action='store_true',
+            dest='failfast',
+            default=False,
+            help='Stop processing if there is an error',
+        )
+        parser.add_argument(
+            '--domain',
+            help='Migrate only this domain',
+        )
+
+    def handle(self, **options):
         self.options = options
         app_ids = self.get_app_ids()
         logger.info('migrating {} apps'.format(len(app_ids)))

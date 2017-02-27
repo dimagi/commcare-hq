@@ -11,12 +11,15 @@ from dimagi.utils.couch.database import get_design_docs
 class Command(BaseCommand):
     help = 'Delete all unreferenced couch design docs.'
 
-    option_list = (
-        make_option('--noinput', help='Do not prompt user for input', action='store_true',
-                    default=False),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--noinput',
+            action='store_true',
+            default=False,
+            help='Do not prompt user for input',
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         # build a data structure indexing databases to relevant design docs
         db_label_map = defaultdict(lambda: set())
 
