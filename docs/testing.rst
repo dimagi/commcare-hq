@@ -68,7 +68,7 @@ In the above example the ``setUpClass`` is run twice, once for ``MyTestClass`` a
 However this can lead to giant Test classes. If you find that all the tests in a package or module are sharing
 the same set up, you can write a setup method for the entire package or module. More information on that can be found `here <http://pythontesting.net/framework/nose/nose-fixture-reference/#package>`_.
 
-Tearing down tests
+Test tear down
 ==================
 
 It is important to ensure that all objects you have created in the test database are deleted when the test
