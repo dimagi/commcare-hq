@@ -139,12 +139,20 @@ def get_user_ids_from_primary_location_ids(domain, location_ids):
 
 
 def generate_user_ids_from_primary_location_ids(domain, location_ids):
+    """
+    Creates a generator for iterating through the user ids of the all the users in the
+    given domain whose primary location is given in the list of location_ids.
+    """
     for location_ids_chunk in chunked(location_ids, 50):
         for user_id in get_user_ids_from_primary_location_ids(domain, location_ids_chunk).keys():
             yield user_id
 
 
 def get_location_ids_with_location_type(domain, location_type_code):
+    """
+    Returns a QuerySet with the location_ids of all the unarchived SQLLocations in the
+    given domain whose LocationType's code matches the given location_type_code.
+    """
     return SQLLocation.objects.filter(
         domain=domain,
         is_archived=False,
