@@ -5,30 +5,38 @@ from corehq.sql_db.util import (
     run_query_across_partitioned_databases,
 )
 from django.db.models import Q
+from uuid import UUID
+
+
+def _validate_schedule_instance(obj)
+    from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
+
+    if not isinstance(obj, ScheduleInstance):
+        raise ValueError("Expected an instance of ScheduleInstance")
+
+
+def _validate_uuid(value)
+    if not isinstance(value, UUID):
+        raise ValueError("Expected an instance of UUID")
 
 
 def get_schedule_instance(schedule_instance_id):
     from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
 
-    return get_object_from_partitioned_database(ScheduleInstance, str(schedule_instance_id))
+    _validate_uuid(schedule_instance_id)
+    return get_object_from_partitioned_database(ScheduleInstance, schedule_instance_id)
 
 
 def save_schedule_instance(instance):
-    from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
-
-    if not isinstance(instance, ScheduleInstance):
-        raise ValueError("Expected an instance of ScheduleInstance")
-
-    save_object_to_partitioned_database(instance, str(instance.pk))
+    _validate_schedule_instance(instance)
+    _validate_uuid(instance.schedule_instance_id)
+    save_object_to_partitioned_database(instance, instance.schedule_instance_id)
 
 
 def delete_schedule_instance(instance):
-    from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
-
-    if not isinstance(instance, ScheduleInstance):
-        raise ValueError("Expected an instance of ScheduleInstance")
-
-    delete_object_from_partitioned_database(instance, str(instance.pk))
+    _validate_schedule_instance(instance)
+    _validate_uuid(instance.schedule_instance_id)
+    delete_object_from_partitioned_database(instance, instance.schedule_instance_id)
 
 
 def get_active_schedule_instance_ids(start_timestamp, end_timestamp):
