@@ -41,6 +41,7 @@ DATATYPE_MAP = {
     'integer': 'long',
     'decimal': 'double',
     'array': 'string',
+    'boolean': 'long',
 }
 
 
@@ -207,7 +208,9 @@ class IndicatorESAdapter(IndicatorAdapter):
 def build_es_mapping(data_source_config):
     properties = {}
     for indicator in data_source_config.configured_indicators:
-        datatype = indicator.get('datatype', 'string')
+        datatype = indicator.get('type')
+        if datatype not in DATATYPE_MAP:
+            datatype = indicator.get('datatype', 'string')
         properties[indicator['column_id']] = {
             "type": DATATYPE_MAP[datatype],
         }
