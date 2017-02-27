@@ -57,14 +57,7 @@ function _run_tests() {
     if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript" ]; then
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
-        TESTS=" \
-            corehq.form_processor \
-            corehq.sql_db \
-            couchforms \
-            casexml.apps.case \
-            casexml.apps.phone \
-            corehq.apps.receiverwrapper \
-            corehq.apps.dump_reload.tests.test_sql_dump_load:TestSQLDumpLoadShardedModels"
+        TESTS="--attr=sql_backend"
     else
         TESTS=""
     fi

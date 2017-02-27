@@ -1,3 +1,4 @@
+from __future__ import print_function
 import kombu.five
 from celery import Celery
 from django.conf import settings
@@ -104,7 +105,7 @@ def revoke_tasks(task_names, interval=5):
             if task.name in task_names and task.id not in task_ids:
                 app.control.revoke(task.id, terminate=True)
                 task_ids.add(task.id)
-                print datetime.utcnow(), 'Revoked', task.id, task.name
+                print(datetime.utcnow(), 'Revoked', task.id, task.name)
 
         sleep(interval)
 
@@ -126,24 +127,24 @@ def print_tasks(worker, task_state):
     fcn = getattr(inspect, task_state)
     result = fcn()
     if not result:
-        print "Worker does not appear to be online. Check worker name, and that it is running."
+        print("Worker does not appear to be online. Check worker name, and that it is running.")
         return
 
     tasks = result[worker]
 
     if not tasks:
-        print '(none)'
+        print('(none)')
         return
 
     if task_state == 'revoked':
         for task_id in tasks:
-            print task_id
+            print(task_id)
         return
 
     tasks = _get_task_info_fcn(task_state)(tasks)
 
     for task_info in tasks:
         if task_info.time_start:
-            print task_info.id, task_info.time_start, task_info.name
+            print(task_info.id, task_info.time_start, task_info.name)
         else:
-            print task_info.id, task_info.name
+            print(task_info.id, task_info.name)

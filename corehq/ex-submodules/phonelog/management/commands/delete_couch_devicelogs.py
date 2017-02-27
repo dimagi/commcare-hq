@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 from optparse import make_option
 from corehq.util.couch import IterDB
@@ -56,4 +57,4 @@ class Command(BaseCommand):
                     assert doc['doc_type'] == 'XFormInstance'
                     iter_db.delete(doc)
         if iter_db.errors_by_type:
-            print 'There were some errors', iter_db.errors_by_type
+            print('There were some errors', iter_db.errors_by_type)

@@ -726,7 +726,7 @@ def sync_db_api(request, domain):
     username = request.GET.get('username')
     try:
         response = sync_db(username, domain, DjangoAuth(auth_cookie))
-    except Exception, e:
+    except Exception as e:
         return json_response(
             {'status': 'error', 'message': unicode(e)},
             status_code=500
@@ -774,7 +774,7 @@ def render_form(request, domain):
 
     try:
         raw_instance = get_raw_instance(session_id, domain)
-    except Exception, e:
+    except Exception as e:
         return HttpResponse(e, status=500, content_type="text/plain")
 
     xmlns = raw_instance["xmlns"]

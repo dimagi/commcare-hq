@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 import sys
 from pillowtop import get_pillow_by_name, get_all_pillow_configs
@@ -25,8 +26,8 @@ class Command(BaseCommand):
 
         pillow_to_use = get_pillow_by_name(pillow_class)
         if not pillow_to_use:
-            print ""
-            print "\n\tPillow class [%s] not in configuration, what are you trying to do?\n" % pillow_class
+            print("")
+            print("\n\tPillow class [%s] not in configuration, what are you trying to do?\n" % pillow_class)
             sys.exit()
 
         if not options.get('interactive'):
@@ -40,10 +41,10 @@ Type 'yes' to continue, or 'no' to cancel: """ % pillow_class)
             confirm = 'yes'
 
         if confirm != 'yes':
-            print "Reset cancelled."
+            print("Reset cancelled.")
             return
 
-        print "Resetting checkpoint for %s" % pillow_to_use.checkpoint.checkpoint_id
-        print "\tOld checkpoint: %s" % pillow_to_use.get_checkpoint().sequence
+        print("Resetting checkpoint for %s" % pillow_to_use.checkpoint.checkpoint_id)
+        print("\tOld checkpoint: %s" % pillow_to_use.get_checkpoint().sequence)
         pillow_to_use.checkpoint.reset()
-        print "\n\tNew checkpoint reset to zero"
+        print("\n\tNew checkpoint reset to zero")

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
 import simplejson
@@ -53,14 +54,14 @@ class Command(BaseCommand):
                     try:
                         es.indices.delete(index_info.index)
                     except NotFoundError:
-                        print 'elastic index not present: {}'.format(index_info.index)
+                        print('elastic index not present: {}'.format(index_info.index))
                     else:
-                        print 'deleted elastic index: {}'.format(index_info.index)
+                        print('deleted elastic index: {}'.format(index_info.index))
             else:
-                print 'Safety first!'
+                print('Safety first!')
             return
 
         if flip_all:
             for index_info in es_indices:
                 assume_alias(es, index_info.index, index_info.alias)
-            print simplejson.dumps(es.indices.get_aliases(), indent=4)
+            print(simplejson.dumps(es.indices.get_aliases(), indent=4))

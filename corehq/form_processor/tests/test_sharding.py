@@ -8,12 +8,13 @@ from django.test.utils import override_settings
 
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
-from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, use_sql_backend
 from corehq.sql_db.config import partition_config
 
 DOMAIN = 'sharding-test'
 
 
+@use_sql_backend
 @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardingTests(TestCase):
@@ -108,6 +109,7 @@ PARTITION_DATABASE_CONFIG = {
 }
 
 
+@use_sql_backend
 @override_settings(PARTITION_DATABASE_CONFIG=PARTITION_DATABASE_CONFIG, DATABASES=DATABASES, ALLOW_FORM_PROCESSING_QUERIES=True)
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardAccessorTests(TestCase):

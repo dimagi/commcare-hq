@@ -35,15 +35,13 @@ from dimagi.utils.couch.database import (
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.html import format_html
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.name_to_url import name_to_url
+from dimagi.utils.logging import log_signal_errors
 from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
 from importlib import import_module
-from corehq import toggles
 
 from .exceptions import InactiveTransferDomainException, NameUnavailableException
 
@@ -660,14 +658,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
-        for result in results:
-            # Second argument is None if there was no error
-            if result[1]:
-                notify_exception(
-                    None,
-                    message="Error occured during domain post_save %s: %s" %
-                            (self.name, str(result[1]))
-                )
+        log_signal_errors(results, "Error occurred during domain post_save (%s)", {'domain': self.name})
 
     def save_copy(self, new_domain_name=None, new_hr_name=None, user=None,
                   copy_by_id=None, share_reminders=True,
@@ -932,7 +923,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         for result in results:
             response = result[1]
             if isinstance(response, Exception):
-                raise DomainDeleteException(u"Error occurred during domain pre_delete {}: {}".format(self.name, str(response)))
+                message = u"Error occurred during domain pre_delete {}".format(self.name)
+                raise DomainDeleteException(message, response)
             elif response:
                 assert isinstance(response, list)
                 dynamic_deletion_operations.extend(response)

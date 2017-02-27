@@ -30,16 +30,6 @@
                     },
                     "type": "boolean_expression",
                     "property_value": "episode"
-                },
-                {
-                    "operator": "not_eq",
-                    "expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "migration_created_case"
-                    },
-                    "type": "boolean_expression",
-                    "property_value": "true"
                 }
             ]
         },
@@ -524,16 +514,24 @@
                 "is_nullable": true,
                 "expression": {
                     "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "phi"
+                        "type":"property_name",
+                        "property_name":"name"
                     },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
+                    "type":"related_doc",
+                    "related_doc_type":"Location",
                     "doc_id_expression": {
-                        "datatype": null,
-                        "type": "named",
-                        "name": "person_id"
+                        "value_expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "owner_id"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "datatype": null,
+                            "type": "named",
+                            "name": "person_id"
+                        }
                     }
                 },
                 "column_id": "phi"
@@ -5200,6 +5198,19 @@
                         }
                     ]
                 }
+            },
+            {
+                "filter": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "migration_created_case"
+                    },
+                    "property_value": "true"
+                },
+                "type": "boolean",
+                "column_id": "case_created_by_migration"
             }
         ],
         "named_filters": {

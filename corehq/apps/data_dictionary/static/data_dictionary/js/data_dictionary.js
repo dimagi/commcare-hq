@@ -161,10 +161,14 @@
         };
     };
 
-    $.fn.initializeDataDictionary = function (dataUrl, casePropertyUrl) {
-        var viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl);
+    $(function() {
+        var dataUrl = hqImport('hqwebapp/js/urllib.js').reverse('data_dictionary_json'),
+            casePropertyUrl = hqImport('hqwebapp/js/urllib.js').reverse('update_case_property'),
+            viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl);
         viewModel.init();
-        $(this).koApplyBindings(viewModel);
-        return viewModel;
-    };
+        $('#hq-content').parent().koApplyBindings(viewModel);
+        $('#download-dict').click(function() {
+            window.analytics.usage('Data Dictionary', 'downloaded data dictionary');
+        });
+    });
 })($, _);

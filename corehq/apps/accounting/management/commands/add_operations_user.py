@@ -11,12 +11,19 @@ from django_prbac.models import UserRole, Role, Grant
 class Command(BaseCommand):
     help = 'Grants the user(s) specified the DIMAGI_OPERATIONS_TEAM privilege'
 
-    option_list = (
-        make_option('--remove-user', action='store_true',  default=False,
-                    help='Remove the users specified from the DIMAGI_OPERATIONS_TEAM privilege'),
-    )
+    def add_arguments(self, parser):
+        parser.add_arguments(
+            'usernames',
+            nargs="*",
+        )
+        parser.add_arguments(
+            '--remove-user',
+            action='store_true',
+            default=False,
+            help='Remove the users specified from the DIMAGI_OPERATIONS_TEAM privilege',
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, usernames, **options):
         ops_role = Role.objects.get_or_create(
             name="Dimagi Operations Team",
             slug=privileges.OPERATIONS_TEAM,
@@ -30,11 +37,11 @@ class Command(BaseCommand):
                 from_role=ops_role,
                 to_role=accounting_admin,
             )
-        remove_user = options.get('remove_user', False)
+        remove_user = options['remove_user']
 
-        for arg in args:
+        for username in usernames:
             try:
-                user = User.objects.get(username=arg)
+                user = User.objects.get(username=username)
                 try:
                     user_role = UserRole.objects.get(user=user)
                 except UserRole.DoesNotExist:
@@ -71,4 +78,4 @@ class Command(BaseCommand):
                           % user.username)
 
             except User.DoesNotExist:
-                print("User %s does not exist" % arg)
+                print("User %s does not exist" % username)

@@ -2280,7 +2280,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                               'see: https://confluence.dimagi.com/pages/viewpage.action?pageId=38276915'))
                     hierarchy = hierarchy or parent_child(domain)
                     LocationXpath('').validate(column.field_property, hierarchy)
-                except LocationXpathValidationError, e:
+                except LocationXpathValidationError as e:
                     yield {
                         'type': 'invalid location xpath',
                         'details': unicode(e),
@@ -2433,7 +2433,8 @@ class ModuleDetailsMixin():
                 })
         if self.case_list_filter:
             try:
-                case_list_filter = interpolate_xpath(self.case_list_filter)
+                # test filter is valid, while allowing for advanced user hacks like "foo = 1][bar = 2"
+                case_list_filter = interpolate_xpath('dummy[' + self.case_list_filter + ']')
                 etree.XPath(case_list_filter)
             except (etree.XPathSyntaxError, CaseXPathValidationError):
                 errors.append({
@@ -2534,12 +2535,17 @@ class Module(ModuleBase, ModuleDetailsMixin):
         module.get_or_create_unique_id()
         return module
 
-    def new_form(self, name, lang, attachment=''):
+    def new_form(self, name, lang, attachment=Ellipsis):
+        from corehq.apps.app_manager.views.utils import get_blank_form_xml
+        lang = lang if lang else "en"
+        name = name if name else _("Untitled Form")
         form = Form(
-            name={lang if lang else "en": name if name else _("Untitled Form")},
+            name={lang: name},
         )
         self.forms.append(form)
         form = self.get_form(-1)
+        if attachment == Ellipsis:
+            attachment = get_blank_form_xml(name)
         form.source = attachment
         return form
 
@@ -3078,14 +3084,19 @@ class AdvancedModule(ModuleBase):
         module.get_or_create_unique_id()
         return module
 
-    def new_form(self, name, lang, attachment=''):
+    def new_form(self, name, lang, attachment=Ellipsis):
+        from corehq.apps.app_manager.views.utils import get_blank_form_xml
+        lang = lang if lang else "en"
+        name = name if name else _("Untitled Form")
         form = AdvancedForm(
-            name={lang if lang else "en": name if name else _("Untitled Form")},
+            name={lang: name},
         )
         form.schedule = FormSchedule(enabled=False)
 
         self.forms.append(form)
         form = self.get_form(-1)
+        if attachment == Ellipsis:
+            attachment = get_blank_form_xml(name)
         form.source = attachment
         return form
 

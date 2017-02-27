@@ -47,11 +47,13 @@
       <% } %>
 
       <% if (actions) { %>
+        <div class="caselist-actions">
         <% _.each(actions, function(action, index) { %>
-            <div class="caselist-action-button">
+            <div class="caselist-action-button btn-group">
               <button type="button" class="btn btn-success btn-lg" id="double-management" data-index="<%= index %>"><%= action.text %></button>
             </div>
         <% }) %>
+        </div>
       <% } %>
 
       <% if (pageCount) { %>
@@ -102,8 +104,9 @@
 <script type="text/template" id="case-view-item-template">
     <% _.each(data, function(datum, index) { %>
       <% if (styles[index].displayFormat === 'Image') { %>
-    <!-- todo icon -->
         <td class="module-caselist-column"><img class="module-icon" src="<%= resolveUri(datum) %>"/></td>
+      <% } else if (styles[index].displayFormat === 'Graph') { %>
+        <td class="module-caselist-column"><iframe srcdoc="<%= datum %>" height="300" width="300"></iframe></td>
       <% } else { %>
         <td class="module-caselist-column"><%= datum %></td>
       <% } %>

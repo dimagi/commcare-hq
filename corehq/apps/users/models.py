@@ -26,7 +26,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, log_signal_errors
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
@@ -1298,14 +1298,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         from .signals import couch_user_post_save
         results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
-        for result in results:
-            # Second argument is None if there was no error
-            if result[1]:
-                notify_exception(
-                    None,
-                    message="Error occured while syncing user %s: %s" %
-                            (self.username, repr(result[1]))
-                )
+        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
@@ -1432,14 +1425,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         from .signals import commcare_user_post_save
         results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self)
-        for result in results:
-            # Second argument is None if there was no error
-            if result[1]:
-                notify_exception(
-                    None,
-                    message="Error occured while syncing user %s: %s" %
-                            (self.username, repr(result[1]))
-                )
+        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     def delete(self):
         from corehq.apps.ota.utils import delete_demo_restore_for_user

@@ -36,7 +36,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
                 patch('corehq.apps.app_manager.fixtures.mobile_ucr.ReportFactory') as report_factory_patch:
 
             report_factory_patch.from_spec.return_value = self.get_data_source_mock()
-            report = provider._report_config_to_fixture(report_app_config, user)
+            report = provider.report_config_to_fixture(report_app_config, user)
             self.assertEqual(
                 etree.tostring(report, pretty_print=True),
                 self.get_xml('expected_report')

@@ -28,16 +28,16 @@ class DropboxAuthCallback(View):
                 return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
             else:
                 access_token, user_id, url_state = get_dropbox_auth_flow(request.session).finish(request.GET)
-        except DropboxOAuth2Flow.BadRequestException, e:
+        except DropboxOAuth2Flow.BadRequestException as e:
             return HttpResponse(e, status=400)
         except DropboxOAuth2Flow.BadStateException:
             # Start the auth flow again.
             return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
-        except DropboxOAuth2Flow.CsrfException, e:
+        except DropboxOAuth2Flow.CsrfException as e:
             return HttpResponse(e, status=403)
         except DropboxOAuth2Flow.NotApprovedException:
             return HttpResponseRedirect("/", status=400)
-        except DropboxOAuth2Flow.ProviderException, e:
+        except DropboxOAuth2Flow.ProviderException as e:
             return HttpResponse(e, status=403)
         request.session[DROPBOX_ACCESS_TOKEN] = access_token
         return HttpResponseRedirect(request.session.get('dropbox_next_url', '/'))

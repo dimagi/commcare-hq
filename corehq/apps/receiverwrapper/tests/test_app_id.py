@@ -4,7 +4,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import get_version_from_build_id, get_submit_url
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 from couchforms.util import spoof_submission
 
 
@@ -32,7 +32,6 @@ class TestAppId(TestCase):
         cls.project.delete()
         super(TestAppId, cls).tearDownClass()
 
-    @run_with_all_backends
     def test(self):
         self._test(self.build_id, self.app_id, self.build_id)
         self._test(self.app_id, self.app_id, None)
@@ -66,3 +65,8 @@ class TestAppId(TestCase):
         self.assertEqual(build.version, 3)
         self.assertEqual(get_version_from_build_id(domain, form.build_id),
                          build.version)
+
+
+@use_sql_backend
+class TestAppIdSQL(TestAppId):
+    pass
