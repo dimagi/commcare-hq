@@ -1,8 +1,24 @@
-from celery.task import task
+from celery.schedules import crontab
+from celery.task import task, periodic_task
+from corehq.apps.locations.dbaccessors import (get_user_ids_from_primary_location_ids,
+    generate_user_ids_from_primary_location_ids, get_location_ids_with_location_type)
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.tasks import CELERY_REMINDERS_QUEUE
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
 from corehq.apps.sms.api import send_sms
 from corehq.apps.users.models import CommCareUser
+from custom.icds.messaging.indicators import (
+    AWWAggregatePerformanceIndicator,
+    AWWSubmissionPerformanceIndicator,
+    LSAggregatePerformanceIndicator,
+    LSSubmissionPerformanceIndicator,
+    LSVHNDSurveyIndicator,
+)
+from datetime import datetime
+from django.conf import settings
+
+AWC_LOCATION_TYPE_CODE = 'awc'
+SUPERVISOR_LOCATION_TYPE_CODE = 'supervisor'
 
 
 @task(queue=CELERY_REMINDERS_QUEUE, ignore_result=True)
@@ -30,3 +46,41 @@ def run_indicator(domain, user_id, indicator_class):
 
         for message in messages:
             send_sms(domain, usercase, phone_number, message)
+
+
+def get_awc_location_ids(domain):
+    return get_location_ids_with_location_type(domain, AWC_LOCATION_TYPE_CODE)
+
+
+def get_supervisor_location_ids(domain):
+    return get_location_ids_with_location_type(domain, SUPERVISOR_LOCATION_TYPE_CODE)
+
+
+def is_first_week_of_month():
+    day = datetime.utcnow().day
+    return day <= 7
+
+
+@periodic_task(
+    run_every=crontab(hour=3, minute=30, day_of_week='mon'),
+    queue=settings.CELERY_PERIODIC_QUEUE,
+    ignore_result=True
+)
+def run_weekly_indicators():
+    """
+    Runs the weekly SMS indicators at 9am IST.
+    If it's the first week of the month, also run the monthly indicators.
+    """
+    for domain in settings.ICDS_SMS_INDICATOR_DOMAINS:
+        for user_id in generate_user_ids_from_primary_location_ids(domain, get_awc_location_ids(domain)):
+            if is_first_week_of_month():
+                run_indicator.delay(domain, user_id, AWWAggregatePerformanceIndicator)
+
+            run_indicator.delay(domain, user_id, AWWSubmissionPerformanceIndicator)
+
+        for user_id in generate_user_ids_from_primary_location_ids(domain, get_supervisor_location_ids(domain)):
+            if is_first_week_of_month():
+                run_indicator.delay(domain, user_id, LSAggregatePerformanceIndicator)
+
+            run_indicator.delay(domain, user_id, LSSubmissionPerformanceIndicator)
+            run_indicator.delay(domain, user_id, LSVHNDSurveyIndicator)

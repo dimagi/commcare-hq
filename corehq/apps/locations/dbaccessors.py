@@ -1,7 +1,9 @@
 from itertools import imap, chain
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from corehq.apps.es import UserES
+from corehq.apps.locations.models import SQLLocation
 
 
 def _cc_users_by_location(domain, location_id, include_docs=True, wrap=True, user_class=None):
@@ -134,3 +136,17 @@ def get_user_ids_from_primary_location_ids(domain, location_ids):
             loc = r['location_id']
             ret[r['_id']] = loc
     return ret
+
+
+def generate_user_ids_from_primary_location_ids(domain, location_ids):
+    for location_ids_chunk in chunked(location_ids, 50):
+        for user_id in get_user_ids_from_primary_location_ids(domain, location_ids_chunk).keys():
+            yield user_id
+
+
+def get_location_ids_with_location_type(domain, location_type_code):
+    return SQLLocation.objects.filter(
+        domain=domain,
+        is_archived=False,
+        location_type__code=location_type_code,
+    ).values_list('location_id', flat=True)
