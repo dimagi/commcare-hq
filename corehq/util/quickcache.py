@@ -101,6 +101,14 @@ class QuickCache(object):
             self.cache.set(key, content)
         return content
 
+    def get_cached_value(self, *args, **kwargs):
+        """
+        :returns: The cached value or ``Ellipsis``
+        """
+        key = self.get_cache_key(*args, **kwargs)
+        logger.debug(key)
+        return self.cache.get(key, default=Ellipsis)
+
     def clear(self, *args, **kwargs):
         key = self.get_cache_key(*args, **kwargs)
         self.cache.delete(key)
@@ -314,6 +322,7 @@ def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
         inner.clear = helper.clear
         inner.get_cache_key = helper.get_cache_key
         inner.prefix = helper.prefix
+        inner.get_cached_value = helper.get_cached_value
 
         return inner
 
