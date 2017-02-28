@@ -122,6 +122,8 @@ class LanguageField(forms.CharField):
 class BaseUpdateUserForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain')
+        self.existing_user = kwargs.pop('existing_user')
         super(BaseUpdateUserForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
@@ -131,6 +133,9 @@ class BaseUpdateUserForm(forms.Form):
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        for prop in self.direct_properties:
+            self.initial[prop] = getattr(self.existing_user, prop, "")
 
     @property
     def direct_properties(self):
@@ -168,12 +173,6 @@ class BaseUpdateUserForm(forms.Form):
             existing_user.save()
         return is_update_successful
 
-    def initialize_form(self, domain, existing_user=None):
-        if existing_user is None:
-            return
-
-        for prop in self.direct_properties:
-            self.initial[prop] = getattr(existing_user, prop, "")
 
 
 class UpdateUserRoleForm(BaseUpdateUserForm):
@@ -247,18 +246,10 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         label=ugettext_lazy("Opt out of emails about CommCare updates."),
     )
 
-    class MyAccountInfoFormException(Exception):
-        pass
-
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
-        if not self.user:
-            raise UpdateMyAccountInfoForm.MyAccountInfoFormException("Expected to be passed a user kwarg")
-
-        self.username = self.user.username
         api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
-
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
+        self.username = self.user.username
 
         username_controls = []
         if self.username:
@@ -350,16 +341,13 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
             '<a href="https://wiki.commcarehq.org/display/commcarepublic/Web+Apps">'
             'Web Apps</a>'
         ))
+        if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
+            self.fields['loadtest_factor'].widget = forms.TextInput()
 
     @property
     def direct_properties(self):
         indirect_props = ['role']
         return [k for k in self.fields.keys() if k not in indirect_props]
-
-    def initialize_form(self, domain, existing_user=None):
-        if toggles.ENABLE_LOADTEST_USERS.enabled(domain):
-            self.fields['loadtest_factor'].widget = forms.TextInput()
-        super(UpdateCommCareUserInfoForm, self).initialize_form(domain, existing_user)
 
 
 class RoleForm(forms.Form):
