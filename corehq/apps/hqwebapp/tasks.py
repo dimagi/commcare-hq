@@ -25,7 +25,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
             message="Encountered error while sending email",
             details={
                 'subject': subject,
-                'recipients': ', '.join(recipient),
+                'recipients': ', '.join(recipient_list),
                 'error': e,
             }
         )
