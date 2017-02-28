@@ -1,5 +1,4 @@
 from couchdbkit import ChangesStream
-from django.conf import settings
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.feed.interface import ChangeFeed, Change
 from pillowtop.utils import force_seq_int
