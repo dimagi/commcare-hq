@@ -1,9 +1,5 @@
-$(function () {
-    $(".historyBack").click(function () {
-        history.back();
-        return false;
-    });
-
+/* globals hqDefine */
+hqDefine('app_manager/js/import_app.js', function () {
     function CompressionViewModel(source, post_url){
         var self = this;
         self.name = ko.observable("");
@@ -16,7 +12,15 @@ $(function () {
             return false;
         };
     }
-    var source = hqImport('hqwebapp/js/initial_page_data.js').get('export_json');
-    var post_url = hqImport('hqwebapp/js/urllib.js').reverse('import_app');
-    $('#app-import-form').koApplyBindings(new CompressionViewModel(source, post_url));
+
+    $(function () {
+        $(".historyBack").click(function () {
+            history.back();
+            return false;
+        });
+ 
+        var source = hqImport('hqwebapp/js/initial_page_data.js').get('export_json');
+        var post_url = hqImport('hqwebapp/js/urllib.js').reverse('import_app');
+        $('#app-import-form').koApplyBindings(new CompressionViewModel(source, post_url));
+    });
 });
