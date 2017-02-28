@@ -154,9 +154,19 @@ class EpisodeUpdate(object):
                 latest_case = case
         return latest_case
 
-    def get_adherence_cases_between(self, start_date, end_date):
+    def adherence_cases_between(self, cases, start_date, end_date):
+        """
+        Filter given 'adherence' cases between start_date, end_date
+
+        Args:
+            cases: List of 'adherence' cases
+
+        Returns:
+            List of cases that have 'adherence_date' between start_date and end_date
+
+        """
         open_pertinent_adherence_cases = [
-            case for case in self.get_valid_adherence_cases()
+            case for case in cases
             if (
                 start_date.astimezone(pytz.UTC) <=
                 parse_datetime(case.dynamic_case_properties().get('adherence_date')).astimezone(pytz.UTC) <=
@@ -224,10 +234,11 @@ class EpisodeUpdate(object):
                 update["adherence_latest_date_recorded"] = adherence_schedule_date_start - datetime.timedelta(1)
 
             # calculate 'adherence_total_doses_taken'
-            total_adherence_cases = self.get_valid_adherence_cases()
-            update["adherence_total_doses_taken"] = self.count_doses_taken(total_adherence_cases)
+            all_adherence_cases = self.get_valid_adherence_cases()
+            update["adherence_total_doses_taken"] = self.count_doses_taken(all_adherence_cases)
             # calculate 'aggregated_score_count_taken'
-            adherence_cases = self.get_adherence_cases_between(
+            adherence_cases = self.adherence_cases_between(
+                all_adherence_cases,
                 adherence_schedule_date_start,
                 update["aggregated_score_date_calculated"]
             )
