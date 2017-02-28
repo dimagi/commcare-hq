@@ -5,7 +5,10 @@ from datetime import datetime
 import sys
 
 import simplejson
+
+from django.http import Http404
 from django.conf import settings
+from dateutil import parser
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.modules import to_function
@@ -13,6 +16,10 @@ from dimagi.utils.modules import to_function
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
 from pillowtop.dao.exceptions import DocumentMismatchError, DocumentNotFoundError
+
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.util.quickcache import quickcache
+from corehq.apps.users.models import CouchUser
 
 
 def _get_pillow_instance(full_class_str):
@@ -261,3 +268,34 @@ def ensure_document_exists(change):
     if doc is None:
         pillow_logging.warning("Unable to get document from change: {}".format(change))
         raise DocumentNotFoundError()  # force a retry
+
+
+@quickcache(['domain', 'build_id'], timeout=60 * 60)
+def mark_has_submission(domain, build_id):
+    app = None
+    try:
+        app = get_app(domain, build_id)
+    except Http404:
+        pass
+
+    if app and not app.has_submissions:
+        app.has_submissions = True
+        app.save()
+
+
+def mark_latest_submission(domain, user_id, received_on):
+    user = CouchUser.get_by_user_id(user_id, domain)
+
+    if not user:
+        return
+
+    try:
+        received_on_datetime = parser.parse(received_on)
+    except ValueError:
+        return
+
+    current_last_submission = user.reporting_metadata.last_submission_date
+
+    if current_last_submission is None or current_last_submission < received_on_datetime:
+        user.reporting_metadata.last_submission_date = received_on
+        user.save()
