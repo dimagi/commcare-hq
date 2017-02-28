@@ -774,7 +774,6 @@ class DeviceIdLastUsed(DocumentSchema):
 class ReportingMetadata(DocumentSchema):
 
     last_submission_date = DateTimeProperty()
-    last_sync_date = DateTimeProperty()
 
 
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
