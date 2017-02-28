@@ -7,7 +7,7 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.models import CommCareUser
-from custom.icds.messaging.indicators  import (
+from custom.icds.messaging.indicators import (
     AWWAggregatePerformanceIndicator,
     AWWSubmissionPerformanceIndicator,
     LSAggregatePerformanceIndicator,
