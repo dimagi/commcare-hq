@@ -45,8 +45,8 @@ from corehq.apps.case_search.models import (
     enable_case_search,
     disable_case_search,
 )
-from corehq.apps.dhis2.dbaccessors import get_dhis2_connection
-from corehq.apps.dhis2.forms import Dhis2ConnectionForm
+from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_datavalue_maps
+from corehq.apps.dhis2.forms import Dhis2ConnectionForm, DataValueMapForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
@@ -3108,6 +3108,34 @@ class Dhis2ConnectionView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         return {'dhis2_connection_form': self.dhis2_connection_form}
+
+
+class DataValueMapView(BaseAdminProjectSettingsView):
+    urlname = 'datavalue_map_view'
+    page_title = ugettext_lazy("DHIS2 DataValue Map")
+    template_name = 'domain/admin/dhis2/datavalue_map.html'
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
+            raise Http404()
+        return super(DataValueMapView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def datavalue_map_form(self):
+        try:
+            datavalue_map = get_datavalue_maps(self.request.domain)[0]
+        except IndexError:
+            datavalue_map = None
+        initial = dict(datavalue_map) if datavalue_map else {}
+        if self.request.method == 'POST':
+            return DataValueMapForm(self.request.POST, initial=initial)
+        return DataValueMapForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {'datavalue_map_form': self.datavalue_map_form}
 
 
 from corehq.apps.smsbillables.forms import PublicSMSRateCalculatorForm
