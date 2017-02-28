@@ -232,13 +232,19 @@ class TestAdherenceUpdater(TestCase):
             (
                 datetime(2016, 1, 20),
                 (datetime(2016, 1, 10), 'schedule1'),
+                # if adherence_date is less than adherence_schedule_date_start
                 [(datetime(2016, 1, 22), DOSE_TAKEN_INDICATORS[0])]
             ),
             {
+                # should be purge_date
                 'aggregated_score_date_calculated': date(2016, 1, 20),
+                # co-efficient (aggregated_score_date_calculated - adherence_schedule_date_start)
                 'expected_doses_taken': (10.0 / 7) * int(self.fixture_data['schedule1']),
+                # no doses taken before aggregated_score_date_calculated
                 'aggregated_score_count_taken': 0,
+                # latest adherence taken date
                 'adherence_latest_date_recorded': date(2016, 1, 22),
+                # no doses taken before aggregated_score_date_calculated
                 'adherence_total_doses_taken': 1
             }
         )
@@ -256,11 +262,15 @@ class TestAdherenceUpdater(TestCase):
                     (datetime(2016, 1, 24), DOSE_TAKEN_INDICATORS[0]),
                 ]
             ),
-            {
+            {   # should be purge_date
                 'aggregated_score_date_calculated': date(2016, 1, 20),
+                # co-efficient (aggregated_score_date_calculated - adherence_schedule_date_start)
                 'expected_doses_taken': (10.0 / 7) * int(self.fixture_data['schedule1']),
+                # no dose taken before aggregated_score_date_calculated
                 'aggregated_score_count_taken': 0,
+                # latest recorded
                 'adherence_latest_date_recorded': date(2016, 1, 24),
+                # total 3 taken, unknown is not counted
                 'adherence_total_doses_taken': 3
             }
         )
@@ -278,7 +288,7 @@ class TestAdherenceUpdater(TestCase):
                     (datetime(2016, 1, 14), DOSE_UNKNOWN),
                 ]
             ),
-            {   # set it to 12, because that's latest known
+            {   # set to latest adherence_date, exclude 14th because its unknown
                 'aggregated_score_date_calculated': date(2016, 1, 12),
                 'expected_doses_taken': (2.0 / 7) * int(self.fixture_data['schedule1']),
                 'aggregated_score_count_taken': 2,
