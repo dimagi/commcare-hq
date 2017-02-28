@@ -112,6 +112,7 @@ class EpisodeUpdate(object):
 
     @memoized
     def get_valid_adherence_cases(self):
+        # Returns list of 'adherence' cases of which 'adherence_value' is one of DOSE_KNOWN_INDICATORS
         case_accessor = CaseAccessors(self.case_updater.domain)
         indexed_cases = case_accessor.get_reverse_indexed_cases([self.episode.case_id])
         return [

@@ -202,7 +202,7 @@ class TestAdherenceUpdater(TestCase):
                 # set to zero
                 'expected_doses_taken': 0,
                 'aggregated_score_count_taken': 0,
-                'adherence_total_doses_taken': 0
+                'adherence_total_doses_taken': 0,
                 # 1 day before should be adherence_schedule_date_start
                 'adherence_latest_date_recorded': date(2016, 1, 9),
             }
