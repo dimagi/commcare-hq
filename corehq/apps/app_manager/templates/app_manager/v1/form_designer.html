@@ -17,6 +17,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'moment/moment.js' %}"></script>
     <script src="{% static 'requirejs/require.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
     <script src="{% static 'app_manager/js/app-notifications.js' %}"></script>
     <script src="{% static 'js/ws4redis.js' %}"></script>
 {% endblock %}
@@ -159,3 +160,32 @@
 {% endblock %}
 
 {% block column_style %}hq-flush-content{% endblock %}
+
+{% block modals %}
+    {{ block.super }}
+    {% if not request|toggle_enabled:"VELLUM_ONBOARDING" %}
+        <!-- This will appear on page load, so don't use any animation (normally controlled by .fade) -->
+        <div class="modal rollout-modal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">{% trans 'New Form Builder Available!' %}</h4>
+                    </div>
+                    <div class="modal-body">
+                        {% blocktrans %}
+                            <p>
+                                We did some stuff. Here's a blog link.
+                                Want to turn it on? It's irreversible.
+                                We're rolling it out March 24th regardless.
+                            </p>
+                            <div class="row">
+                                <div class="col-sm-6">YES</div>
+                                <div class="col-sm-6">NO</div>
+                            </div>
+                        {% endblocktrans %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock modals %}

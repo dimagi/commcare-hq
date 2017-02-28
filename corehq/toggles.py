@@ -949,6 +949,13 @@ APP_MANAGER_V2 = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VELLUM_ONBOARDING = StaticToggle(
+    'vellum_onboarding',
+    'Form Builder UI changes related to onboarding',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_USER]
+)
+
 SHOW_PREVIEW_APP_SETTINGS = StaticToggle(
     'preview_app_settings',
     'Show preview app settings button',
