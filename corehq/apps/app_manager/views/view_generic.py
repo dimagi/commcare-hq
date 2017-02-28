@@ -91,7 +91,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 'domain': domain,
                 'app': app,
             })
-        if not app.vellum_case_management:
+        if not app.vellum_case_management and not app.is_remote_app():
             # Soft assert but then continue rendering; template will contain a user-facing warning
             _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
             _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
