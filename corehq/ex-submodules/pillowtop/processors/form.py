@@ -1,10 +1,8 @@
-from dateutil import parser
-
 from .interface import PillowProcessor
 from .utils import mark_has_submission, mark_latest_submission
 
 
-class AppFormSubmissionTrackerProcessor(PillowProcessor):
+class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
     """
     Processor used to process each form and mark the corresponding application as
     having submissions (has_submissions = True).
