@@ -40,7 +40,7 @@ CASE_MAPPING = {
                         'xform_name': {'type': 'string'},
                         'xform_xmlns': {'type': 'string'}
                     },
-                    'type': 'nested'},
+                    'type': 'object'},
         'closed': {'type': 'boolean'},
         'closed_by': {'type': 'string'},
         'closed_on': {'format': DATE_FORMATS_STRING,
@@ -69,7 +69,7 @@ CASE_MAPPING = {
                                    'identifier': {'type': 'string'},
                                    'referenced_id': {'type': 'string'},
                                    'referenced_type': {'type': 'string'}},
-                    'type': 'object'},
+                    'type': 'nested'},
         'initial_processing_complete': {'type': 'boolean'},
         'location_id': {'type': 'string'},
         'modified_on': {'format': DATE_FORMATS_STRING,

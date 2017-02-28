@@ -96,11 +96,8 @@ def active_in_range(gt=None, gte=None, lt=None, lte=None):
 
 def reverse_indexed(case_id):
     return filters.nested(
-        "actions",
-        filters.nested(
-            "actions.indices",
-            filters.term('actions.indices.referenced_id', case_id)
-        )
+        "indices",
+        filters.term('indices.referenced_id', case_id)
     )
 
 

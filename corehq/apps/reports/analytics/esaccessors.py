@@ -1,6 +1,7 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime
 
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters, aggregations, LedgerES
 from corehq.apps.es.aggregations import (
     TermsAggregation,
@@ -60,6 +61,17 @@ def get_last_submission_time_for_users(domain, user_ids, datespan):
 
 def get_active_case_counts_by_owner(domain, datespan, case_types=None, owner_ids=None):
     return _get_case_case_counts_by_owner(domain, datespan, case_types, False, owner_ids)
+
+
+def get_reverse_indexed_cases_es(domain, case_id):
+    # return cases that are reverse-indexed to case with case_id
+    result = (
+        CaseES()
+        .domain(domain)
+        .reverse_indexed(case_id)
+        .run().hits
+    )
+    return [CommCareCase.wrap(r) for r in result]
 
 
 def get_total_case_counts_by_owner(domain, datespan, case_types=None, owner_ids=None):

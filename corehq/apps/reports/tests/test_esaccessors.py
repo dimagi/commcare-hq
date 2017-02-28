@@ -52,6 +52,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
     get_aggregated_ledger_values,
+    get_reverse_indexed_cases_es,
 )
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
@@ -1030,11 +1031,10 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         return case
 
     def test_reverse_index(self):
+        from casexml.apps.case.sharedmodels import CommCareCaseIndex
+        from casexml.apps.case.const import CASE_INDEX_EXTENSION
         child_case_id = uuid.uuid4().hex
         parent_case_id = uuid.uuid4().hex
-        from casexml.apps.case.sharedmodels import CommCareCaseIndex
-        from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
-        from corehq.apps.es import CaseES
         index = CommCareCaseIndex(
             identifier="host",
             referenced_type="host",
@@ -1045,16 +1045,11 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         send_to_elasticsearch('cases', parent_case.to_json())
         case = CommCareCase(_id=child_case_id, domain=self.domain, indices=[index])
         send_to_elasticsearch('cases', case.to_json())
+        self.es.indices.refresh(CASE_INDEX_INFO.index)
 
-        case = self.es.indices.refresh(CASE_INDEX_INFO.index)
-
-        result = (CaseES()
-             .domain(self.domain)
-             .reverse_indexed(parent_case_id)
-             .run())
-
-        self.assertEqual(result.total, 1)
-        print result.hits
+        result = get_reverse_indexed_cases_es(self.domain, parent_case_id)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]._id, child_case_id)
 
     def test_scroll_case_names(self):
         case_one = self._send_case_to_es()
