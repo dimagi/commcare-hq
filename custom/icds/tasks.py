@@ -1,7 +1,9 @@
 from celery.schedules import crontab
 from celery.task import task, periodic_task
-from corehq.apps.locations.dbaccessors import (get_user_ids_from_primary_location_ids,
-    generate_user_ids_from_primary_location_ids, get_location_ids_with_location_type)
+from corehq.apps.locations.dbaccessors import (
+    generate_user_ids_from_primary_location_ids,
+    get_location_ids_with_location_type,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.tasks import CELERY_REMINDERS_QUEUE
 from corehq.apps.reminders.util import get_one_way_number_for_recipient

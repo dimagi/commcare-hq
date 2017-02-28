@@ -1,4 +1,3 @@
-import pytz
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tests.util import (
