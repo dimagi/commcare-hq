@@ -126,7 +126,7 @@ def get_releases_context(request, domain, app_id):
     })
     if not app.is_remote_app():
         if toggles.APP_MANAGER_V2.enabled(domain) and len(app.modules) == 0:
-            context.update({'intro_only', True})
+            context.update({'intro_only': True})
         # Multimedia is not supported for remote applications at this time.
         try:
             multimedia_state = app.check_media_state()
