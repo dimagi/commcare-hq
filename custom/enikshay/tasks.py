@@ -17,14 +17,16 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 
-from .case_utils import get_adherence_cases_between_dates_from_episode, CASE_TYPE_ADHERENCE, CASE_TYPE_EPISODE
+from .case_utils import CASE_TYPE_ADHERENCE, CASE_TYPE_EPISODE
 
 
 DOSE_TAKEN_INDICATORS = [
     'directly_observed_dose',
     'unobserved_dose',
     'self_administered_dose',
+    'missed_dose'
 ]
+DOSE_UNKNOWN = 'missing_data'
 DAILY_SCHEDULE_FIXTURE_NAME = 'adherence_schedules'
 DAILY_SCHEDULE_ID = 'schedule_daily'
 SCHEDULE_ID_FIXTURE = 'id'
@@ -85,7 +87,9 @@ class EpisodeAdherenceUpdater(object):
 
 
 def index_by_adherence_date(adherence_cases):
-    """index by day of `adherence_date` to list of adherence cases that fall on that day.
+    """index by day of `adherence_date` to list of adherence cases
+        - that fall on that day
+        - and have 'adherence_value' as one of DOSE_TAKEN_INDICATORS
 
     Args:
         adherence_cases: list of 'adherence' cases
@@ -124,24 +128,58 @@ class EpisodeUpdate(object):
         """
         return self.episode.dynamic_case_properties().get(property)
 
+    @memoized
+    def get_valid_adherence_cases(self):
+        case_accessor = CaseAccessors(self.case_updater.domain)
+        indexed_cases = case_accessor.get_reverse_indexed_cases([self.episode.case_id])
+        return [
+            case
+            for case in indexed_cases
+            if (not case.closed and case.type == CASE_TYPE_ADHERENCE and
+                case.dynamic_case_properties().get('adherence_value') in DOSE_TAKEN_INDICATORS)
+        ]
+
     def get_latest_adherence_case_for_episode(self):
         """
         return open case of type 'adherence' reverse-indexed to episode that
             has the latest 'adherence_date' property of all
         """
-        case_accessor = CaseAccessors(self.case_updater.domain)
-        indexed_cases = case_accessor.get_reverse_indexed_cases([self.episode.case_id])
         # sometime far back
         latest_date = pytz.UTC.localize(datetime.datetime(1990, 1, 1))
         latest_case = None
-        for case in indexed_cases:
+        for case in self.get_valid_adherence_cases():
             adherence_date = parse_datetime(case.dynamic_case_properties().get('adherence_date'))
-            if (not case.closed and
-               case.type == CASE_TYPE_ADHERENCE and
-               adherence_date > latest_date):
+            if adherence_date > latest_date:
                 latest_date = adherence_date
                 latest_case = case
         return latest_case
+
+    def get_adherence_cases_between(self, start_date, end_date):
+        open_pertinent_adherence_cases = [
+            case for case in self.get_valid_adherence_cases()
+            if (
+                start_date.astimezone(pytz.UTC) <=
+                parse_datetime(case.dynamic_case_properties().get('adherence_date')).astimezone(pytz.UTC) <=
+                end_date.astimezone(pytz.UTC))
+        ]
+
+        return open_pertinent_adherence_cases
+
+    def count_doses_taken(self, adherence_cases):
+        """
+        Args:
+            adherence_cases: list of 'adherence_cases' with its 'adherence_value' as one of DOSE_TAKEN_INDICATORS
+
+        Returns:
+            total count of adherence_cases excluding duplicates on a given day. If there are
+            two adherence_cases on one day at different time, it will be counted as one
+        """
+        by_date = defaultdict(list)
+        for case in adherence_cases:
+            adherence_date = parse_datetime(case.dynamic_case_properties().get('adherence_date')).date()
+            by_date[adherence_date].append(case)
+
+        return len(by_date.keys())
 
     def update_json(self):
         """
@@ -163,43 +201,37 @@ class EpisodeUpdate(object):
             return {}
 
         if adherence_schedule_date_start > self.case_updater.purge_date:
-            return {
+            update = {
                 'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
                 'expected_doses_taken': 0,
-                'aggregated_score_count_taken': 0
+                'aggregated_score_count_taken': 0,
+                'adherence_total_doses_taken': 0,
+                'adherence_latest_date_recorded': adherence_schedule_date_start - datetime.timedelta(days=1)
             }
         else:
             update = {}
             adherence_case = self.get_latest_adherence_case_for_episode()
             if adherence_case:
                 adherence_date = parse_datetime(adherence_case.dynamic_case_properties().get('adherence_date'))
+                update["adherence_latest_date_recorded"] = adherence_date
+                if adherence_date < self.case_updater.purge_date:
+                    update["aggregated_score_date_calculated"] = adherence_date
+                else:
+                    update["aggregated_score_date_calculated"] = self.case_updater.purge_date
             else:
-                adherence_date = None
-            if not adherence_case:
                 update["aggregated_score_date_calculated"] = self.case_updater.purge_date
                 update["aggregated_score_count_taken"] = 0
-            elif adherence_date < self.case_updater.purge_date:
-                update["aggregated_score_date_calculated"] = adherence_date
-            else:
-                update["aggregated_score_date_calculated"] = self.case_updater.purge_date
+                update["adherence_latest_date_recorded"] = adherence_schedule_date_start - datetime.timedelta(1)
 
+            # calculate 'adherence_total_doses_taken'
+            total_adherence_cases = self.get_valid_adherence_cases()
+            update["adherence_total_doses_taken"] = self.count_doses_taken(total_adherence_cases)
             # calculate 'aggregated_score_count_taken'
-            if adherence_case:
-                adherence_cases = get_adherence_cases_between_dates_from_episode(
-                    self.case_updater.domain,
-                    self.episode,
-                    adherence_schedule_date_start,
-                    update["aggregated_score_date_calculated"]
-                )
-                adherence_cases_by_date = index_by_adherence_date(adherence_cases)
-                is_dose_taken_by_date = {}
-                for date, cases in adherence_cases_by_date.iteritems():
-                    is_dose_taken_by_date[date] = any([
-                        case.dynamic_case_properties().get('adherence_value') in DOSE_TAKEN_INDICATORS
-                        for case in cases
-                    ])
-                total_taken_count = is_dose_taken_by_date.values().count(True)
-                update["aggregated_score_count_taken"] = total_taken_count
+            adherence_cases = self.get_adherence_cases_between(
+                adherence_schedule_date_start,
+                update["aggregated_score_date_calculated"]
+            )
+            update["aggregated_score_count_taken"] = self.count_doses_taken(adherence_cases)
 
             # calculate 'expected_doses_taken' score
             dose_data = self.case_updater.get_doses_data()
@@ -215,7 +247,11 @@ class EpisodeUpdate(object):
                     True,
                     "No fixture item found with schedule_id {}".format(adherence_schedule_id)
                 )
-            return update
+        # convert datetime -> date objects
+        for key, val in update.iteritems():
+            if isinstance(val, datetime.datetime):
+                update[key] = val.date()
+        return update
 
     def case_block(self):
         """
