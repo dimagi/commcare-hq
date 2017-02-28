@@ -297,8 +297,9 @@ def app_source(request, domain, app_id):
 @require_can_edit_apps
 def copy_app(request, domain):
     app_id = request.POST.get('app')
+    app = get_app(domain, app_id)
     form = CopyApplicationForm(
-        domain, app_id, request.POST,
+        domain, app, request.POST,
         export_zipped_apps_enabled=toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
     )
     if form.is_valid():
@@ -319,7 +320,6 @@ def copy_app(request, domain):
             if data.get('linked'):
                 extra_properties['master'] = app_id
                 extra_properties['doc_type'] = 'LinkedApplication'
-                app = get_app(None, app_id)
                 if domain not in app.linked_whitelist:
                     app.linked_whitelist.append(domain)
                     app.save()
