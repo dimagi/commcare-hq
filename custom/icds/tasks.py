@@ -1,3 +1,4 @@
+import pytz
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from corehq.apps.locations.dbaccessors import (
@@ -9,6 +10,7 @@ from corehq.apps.reminders.tasks import CELERY_REMINDERS_QUEUE
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
 from corehq.apps.sms.api import send_sms
 from corehq.apps.users.models import CommCareUser
+from corehq.util.timezones.conversions import ServerTime
 from custom.icds.messaging.indicators import (
     AWWAggregatePerformanceIndicator,
     AWWSubmissionPerformanceIndicator,
@@ -59,7 +61,7 @@ def get_supervisor_location_ids(domain):
 
 
 def is_first_week_of_month():
-    day = datetime.utcnow().day
+    day = ServerTime(datetime.utcnow()).user_time(pytz.timezone('Asia/Kolkata')).done().day
     return day <= 7
 
 
