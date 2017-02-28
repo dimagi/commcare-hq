@@ -1,7 +1,7 @@
 from django.test import TestCase
 from dimagi.utils.parsing import string_to_utc_datetime
 
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser, LastSubmission
 
 from pillowtop.processors.form import mark_latest_submission
 
@@ -11,6 +11,10 @@ class MarkLatestSubmissionTest(TestCase):
     domain = 'tracker-domain'
     username = 'tracker-user'
     password = '***'
+    app_id = 'app-id'
+    build_id = 'build-id'
+    version = '2'
+    metadata = {}
 
     @classmethod
     def setUpClass(cls):
@@ -22,7 +26,9 @@ class MarkLatestSubmissionTest(TestCase):
         )
 
     def tearDown(self):
-        self.user.reporting_metadata.last_submission_date = None
+        user = CouchUser.get_by_user_id(self.user._id, self.domain)
+        user.reporting_metadata.last_submission = LastSubmission()
+        user.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -31,13 +37,30 @@ class MarkLatestSubmissionTest(TestCase):
 
     def test_mark_latest_submission_basic(self):
         submission_date = "2017-02-05T00:00:00.000000Z"
-        mark_latest_submission(self.domain, self.user._id, submission_date)
+        mark_latest_submission(
+            self.domain,
+            self.user._id,
+            self.app_id,
+            self.build_id,
+            self.version,
+            self.metadata,
+            submission_date,
+        )
         user = CouchUser.get_by_user_id(self.user._id, self.domain)
 
         self.assertEqual(
-            user.reporting_metadata.last_submission_date,
+            user.reporting_metadata.last_submission.submission_date,
             string_to_utc_datetime(submission_date),
         )
+        self.assertEqual(
+            user.reporting_metadata.last_submission.app_id,
+            self.app_id,
+        )
+        self.assertEqual(
+            user.reporting_metadata.last_submission.build_id,
+            self.build_id,
+        )
+        self.assertEqual(user.reporting_metadata.last_submission.build_version, 2)
 
     def test_mark_latest_submission_do_not_update(self):
         '''
@@ -46,11 +69,27 @@ class MarkLatestSubmissionTest(TestCase):
         submission_date = "2017-02-05T00:00:00.000000Z"
         previous_date = "2017-02-04T00:00:00.000000Z"
 
-        mark_latest_submission(self.domain, self.user._id, submission_date)
+        mark_latest_submission(
+            self.domain,
+            self.user._id,
+            self.app_id,
+            self.build_id,
+            self.version,
+            self.metadata,
+            submission_date,
+        )
         user = CouchUser.get_by_user_id(self.user._id, self.domain)
         rev = user._rev
 
-        mark_latest_submission(self.domain, self.user._id, previous_date)
+        mark_latest_submission(
+            self.domain,
+            self.user._id,
+            self.app_id,
+            self.build_id,
+            self.version,
+            self.metadata,
+            previous_date,
+        )
         user = CouchUser.get_by_user_id(self.user._id, self.domain)
         new_rev = user._rev
 
@@ -58,12 +97,36 @@ class MarkLatestSubmissionTest(TestCase):
 
     def test_mark_latest_submission_error_parsing(self):
         submission_date = "bad-date"
-        mark_latest_submission(self.domain, self.user._id, submission_date)
-        self.assertIsNone(self.user.reporting_metadata.last_submission_date)
+        mark_latest_submission(
+            self.domain,
+            self.user._id,
+            self.app_id,
+            self.build_id,
+            self.version,
+            self.metadata,
+            submission_date,
+        )
+        self.assertIsNone(self.user.reporting_metadata.last_submission.submission_date)
 
         submission_date = "2017-02-05T00:00:00.000000Z"
-        mark_latest_submission('bad-domain', self.user._id, submission_date)
-        self.assertIsNone(self.user.reporting_metadata.last_submission_date)
+        mark_latest_submission(
+            'bad-domain',
+            self.user._id,
+            self.app_id,
+            self.build_id,
+            self.version,
+            self.metadata,
+            submission_date,
+        )
+        self.assertIsNone(self.user.reporting_metadata.last_submission.submission_date)
 
-        mark_latest_submission(self.domain, 'bad-user', submission_date)
-        self.assertIsNone(self.user.reporting_metadata.last_submission_date)
+        mark_latest_submission(
+            self.domain,
+            'bad-user',
+            self.app_id,
+            self.build_id,
+            self.version,
+            self.metadata,
+            submission_date,
+        )
+        self.assertIsNone(self.user.reporting_metadata.last_submission.submission_date)

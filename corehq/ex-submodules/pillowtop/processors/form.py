@@ -5,6 +5,7 @@ from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
+from corehq.apps.receiverwrapper.util import get_app_version_info
 
 from .interface import PillowProcessor
 
@@ -35,9 +36,16 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
 
         user_id = doc.get('user_id')
         received_on = doc.get('received_on')
+        app_id = doc.get('app_id')
+        version = doc.get('version')
+
+        try:
+            metadata = doc['form']['meta']
+        except KeyError:
+            metadata = None
 
         if user_id and domain and received_on:
-            mark_latest_submission(domain, user_id, received_on)
+            mark_latest_submission(domain, user_id, app_id, build_id, version, metadata, received_on)
 
 
 @quickcache(['domain', 'build_id'], timeout=60 * 60)
@@ -53,7 +61,7 @@ def mark_has_submission(domain, build_id):
         app.save()
 
 
-def mark_latest_submission(domain, user_id, received_on):
+def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata, received_on):
     user = CouchUser.get_by_user_id(user_id, domain)
 
     if not user:
@@ -64,8 +72,19 @@ def mark_latest_submission(domain, user_id, received_on):
     except ValueError:
         return
 
-    current_last_submission = user.reporting_metadata.last_submission_date
+    current_last_submission = user.reporting_metadata.last_submission.submission_date
+
+    app_version_info = get_app_version_info(
+        domain,
+        build_id,
+        version,
+        metadata
+    )
 
     if current_last_submission is None or current_last_submission < received_on_datetime:
-        user.reporting_metadata.last_submission_date = received_on_datetime
+        user.reporting_metadata.last_submission.submission_date = received_on_datetime
+        user.reporting_metadata.last_submission.app_id = app_id
+        user.reporting_metadata.last_submission.build_id = build_id
+        user.reporting_metadata.last_submission.build_version = app_version_info.build_version
+        user.reporting_metadata.last_submission.commcare_version = app_version_info.commcare_version
         user.save()

@@ -771,9 +771,17 @@ class DeviceIdLastUsed(DocumentSchema):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
 
 
+class LastSubmission(DocumentSchema):
+    submission_date = DateTimeProperty()
+    app_id = StringProperty()
+    build_id = StringProperty()
+    build_version = IntegerProperty()
+    commcare_version = StringProperty()
+
+
 class ReportingMetadata(DocumentSchema):
 
-    last_submission_date = DateTimeProperty()
+    last_submission = SchemaProperty(LastSubmission)
 
 
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
