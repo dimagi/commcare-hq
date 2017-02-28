@@ -24,6 +24,14 @@ function findLocationTypeCode(level) {
     }
 }
 
+function getLocationData() {
+    var locationKOContext = ko.dataFor($('#group_location_async')[0]);
+    return {
+        locations: locationKOContext.root().toPlainJS().children,
+        selected: locationKOContext.selected_locid(),
+    };
+}
+
 function resetFilters() {
     var today = new Date();
     var twoDigitMonth = ("0" + (today.getMonth() + 1)).slice(-2);
@@ -100,6 +108,28 @@ function getFiltersValues() {
     return filters;
 }
 
+function setFiltersValues(params, locationData) {
+    if (locationData) {
+        var locationKOContext = ko.dataFor($('#group_location_async')[0]);
+        locationKOContext.selected_path([]);
+        locationKOContext.load(locationData.locations, locationData.selected);
+    }
+
+    var date = new Date(params.Month);
+    var twoDigitMonth = ("0" + (date.getMonth() + 1)).slice(-2);
+
+    $('#report_filter_month').select2('val', twoDigitMonth);
+    $('#report_filter_year').select2('val', date.getFullYear());
+
+    $("#report_filter_caste").select2('val', params.Caste);
+    $("#report_filter_minority").select2('val', params.Minority);
+    $("#report_filter_disabled").select2('val', params.Disabled);
+    $("#report_filter_resident").select2('val', params.Resident);
+    $("#report_filter_ccs_status").select2('val', params.ccs_status);
+    $("#report_filter_child_age_tranche").select2('val', params.child_age_tranche);
+    $("#report_filter_thr_beneficiary_type").select2('val', params.thr_beneficiary_type);
+}
+
 function initializeViz(o) {
     tableauOptions = o;
     var placeholderDiv = document.getElementById("tableauPlaceholder");
@@ -127,6 +157,13 @@ function initializeViz(o) {
         var currentSheet = history.state.sheetName;
         switchVisualization(currentSheet, workbook, getFiltersValues());
     });
+
+    $(window).on('popstate', function(event) {
+        var state = event.originalEvent.state;
+        if (state) {
+            setFiltersValues(state.params, state.locationData);
+        }
+    });
 }
 
 function setUpWorkbook(viz) {
@@ -143,14 +180,12 @@ function setUpInitialTableauParams() {
     params.block = tableauOptions.blockCode;
     params[locationKey] = tableauOptions.userLocation;
 
-    var today = new Date();
-    var lastMonth = new Date(today.getFullYear(), today.getMonth() - 1 , 1);
-    params['Month'] = lastMonth.getFullYear() + "-" + (lastMonth.getMonth() + 1) + "-01";
     applyParams(workbook, params);
 
     var historyObject = {
-        'sheetName': tableauOptions.currentSheet,
-        'params': params,
+        sheetName: tableauOptions.currentSheet,
+        params: params,
+        locationData: getLocationData(),
     };
     history.pushState(historyObject, '', tableauOptions.currentSheet);
 }
@@ -290,8 +325,9 @@ function switchVisualization(sheetName, workbook, params) {
 
                 // TODO: historyObject should be an actual object
                 var historyObject = {
-                    'sheetName': sheetName,
-                    'params': params,
+                    sheetName: sheetName,
+                    params: params,
+                    locationData: getLocationData(),
                 };
                 history.pushState(historyObject, sheetName, sheetName);
                 return lastWorksheet;
