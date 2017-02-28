@@ -5,7 +5,6 @@ from datetime import datetime
 import sys
 
 import simplejson
-
 from django.conf import settings
 
 from dimagi.utils.chunked import chunked
