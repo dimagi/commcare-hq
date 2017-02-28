@@ -144,53 +144,34 @@ class BaseUpdateUserForm(forms.Form):
     def clean_email(self):
         return self.cleaned_data['email'].lower()
 
-    def update_user(self, existing_user=None, save=True, **kwargs):
+    def update_user(self, save=True):
         is_update_successful = False
 
-        # From what I can tell, everything that invokes this method invokes it
-        # with a value for existing_user. It also looks like the code below is
-        # not behaving properly for mobile workers when existing_user is None.
-        # If the soft asserts confirm this isn't ever being passed existing_user=None,
-        # I propose making existing_user a required arg and removing the code below
-        # that creates the user.
-        _assert = soft_assert('@'.join(['gcapalbo', 'dimagi.com']), exponential_backoff=False)
-        _assert(existing_user is not None, "existing_user is None")
-
-        if not existing_user and 'email' in self.cleaned_data:
-            from django.contrib.auth.models import User
-            django_user = User()
-            django_user.username = self.cleaned_data['email']
-            django_user.save()
-            existing_user = CouchUser.from_django_user(django_user)
-            existing_user.save()
-            is_update_successful = True
-
         for prop in self.direct_properties:
-            setattr(existing_user, prop, self.cleaned_data[prop])
+            setattr(self.existing_user, prop, self.cleaned_data[prop])
             is_update_successful = True
 
         if is_update_successful and save:
-            existing_user.save()
+            self.existing_user.save()
         return is_update_successful
-
 
 
 class UpdateUserRoleForm(BaseUpdateUserForm):
     role = forms.ChoiceField(choices=(), required=False)
 
-    def update_user(self, existing_user=None, domain=None, **kwargs):
-        is_update_successful = super(UpdateUserRoleForm, self).update_user(existing_user, save=False)
+    def update_user(self):
+        is_update_successful = super(UpdateUserRoleForm, self).update_user(save=False)
 
-        if domain and 'role' in self.cleaned_data:
+        if self.domain and 'role' in self.cleaned_data:
             role = self.cleaned_data['role']
             try:
-                existing_user.set_role(domain, role)
-                existing_user.save()
+                self.existing_user.set_role(self.domain, role)
+                self.existing_user.save()
                 is_update_successful = True
             except KeyError:
                 pass
         elif is_update_successful:
-            existing_user.save()
+            self.existing_user.save()
 
         return is_update_successful
 
