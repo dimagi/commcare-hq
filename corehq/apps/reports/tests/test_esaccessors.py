@@ -1029,6 +1029,33 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         self.es.indices.refresh(CASE_INDEX_INFO.index)
         return case
 
+    def test_reverse_index(self):
+        child_case_id = uuid.uuid4().hex
+        parent_case_id = uuid.uuid4().hex
+        from casexml.apps.case.sharedmodels import CommCareCaseIndex
+        from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
+        from corehq.apps.es import CaseES
+        index = CommCareCaseIndex(
+            identifier="host",
+            referenced_type="host",
+            relationship=CASE_INDEX_EXTENSION,
+            referenced_id=parent_case_id
+        )
+        parent_case = CommCareCase(_id=parent_case_id, domain=self.domain)
+        send_to_elasticsearch('cases', parent_case.to_json())
+        case = CommCareCase(_id=child_case_id, domain=self.domain, indices=[index])
+        send_to_elasticsearch('cases', case.to_json())
+
+        case = self.es.indices.refresh(CASE_INDEX_INFO.index)
+
+        result = (CaseES()
+             .domain(self.domain)
+             .reverse_indexed(parent_case_id)
+             .run())
+
+        self.assertEqual(result.total, 1)
+        print result.hits
+
     def test_scroll_case_names(self):
         case_one = self._send_case_to_es()
         case_two = self._send_case_to_es()
