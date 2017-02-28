@@ -5246,6 +5246,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
 
+    def has_modules(self):
+        return len(self.modules) > 0
+
     @property
     @memoized
     def commtrack_enabled(self):
