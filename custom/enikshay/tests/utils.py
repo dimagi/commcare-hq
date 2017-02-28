@@ -27,7 +27,8 @@ from custom.enikshay.const import (
 from corehq.apps.users.models import CommCareUser
 
 
-def get_person_case_structure(case_id, user_id, extra_update={}):
+def get_person_case_structure(case_id, user_id, extra_update=None):
+    extra_update = extra_update or {}
     update = {
         'name': "Peregrine Took",
         PERSON_FIRST_NAME: "Peregrine",
@@ -75,7 +76,8 @@ def get_occurrence_case_structure(case_id, indexed_person_case):
     )
 
 
-def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update={}):
+def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=None):
+    extra_update = extra_update or {}
     update = {
         'date_of_diagnosis': '2014-09-09',
         'default_adherence_confidence': 'high',
@@ -111,7 +113,8 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update={}
     )
 
 
-def get_adherence_case_structure(indexed_episode_id, adherence_date, extra_update={}):
+def get_adherence_case_structure(indexed_episode_id, adherence_date, extra_update=None):
+    extra_update = extra_update or {}
     update = {
         "person_name": "Pippin",
         "adherence_confidence": "medium",
