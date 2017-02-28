@@ -194,9 +194,9 @@ class TestAdherenceUpdater(TestCase):
                 (datetime(2016, 1, 10), 'schedule1'),
                 []
             ),
-            {   # change
-                'aggregated_score_date_calculated': date(2016, 1, 20),
-                'expected_doses_taken': (10.0 / 7) * int(self.fixture_data['schedule1']),
+            {
+                'aggregated_score_date_calculated': date(2016, 1, 9),
+                'expected_doses_taken': 0,
                 'aggregated_score_count_taken': 0,
                 # 1 day before should be schedule-date-start
                 'adherence_latest_date_recorded': date(2016, 1, 9),

@@ -221,43 +221,45 @@ class EpisodeUpdate(object):
         else:
             update = {}
             adherence_case = self.get_latest_adherence_case_for_episode()
-            if adherence_case:
+            if not adherence_case:
+                update["aggregated_score_date_calculated"] = adherence_schedule_date_start - datetime.timedelta(1)
+                update["aggregated_score_count_taken"] = 0
+                update["adherence_latest_date_recorded"] = adherence_schedule_date_start - datetime.timedelta(1)
+                update["expected_doses_taken"] = 0
+                update["adherence_total_doses_taken"] = 0
+            else:
                 adherence_date = parse_datetime(adherence_case.dynamic_case_properties().get('adherence_date'))
                 update["adherence_latest_date_recorded"] = adherence_date
                 if adherence_date < self.case_updater.purge_date:
                     update["aggregated_score_date_calculated"] = adherence_date
                 else:
                     update["aggregated_score_date_calculated"] = self.case_updater.purge_date
-            else:
-                update["aggregated_score_date_calculated"] = self.case_updater.purge_date
-                update["aggregated_score_count_taken"] = 0
-                update["adherence_latest_date_recorded"] = adherence_schedule_date_start - datetime.timedelta(1)
 
-            # calculate 'adherence_total_doses_taken'
-            all_adherence_cases = self.get_valid_adherence_cases()
-            update["adherence_total_doses_taken"] = self.count_doses_taken(all_adherence_cases)
-            # calculate 'aggregated_score_count_taken'
-            adherence_cases = self.adherence_cases_between(
-                all_adherence_cases,
-                adherence_schedule_date_start,
-                update["aggregated_score_date_calculated"]
-            )
-            update["aggregated_score_count_taken"] = self.count_doses_taken(adherence_cases)
-
-            # calculate 'expected_doses_taken' score
-            dose_data = self.case_updater.get_doses_data()
-            adherence_schedule_id = self.get_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
-            doses_per_week = dose_data.get(adherence_schedule_id)
-            if doses_per_week:
-                update['expected_doses_taken'] = ((
-                    (update['aggregated_score_date_calculated'] - adherence_schedule_date_start)).days / 7.0
-                ) * doses_per_week
-            else:
-                update['expected_doses_taken'] = 0
-                soft_assert(notify_admins=True)(
-                    True,
-                    "No fixture item found with schedule_id {}".format(adherence_schedule_id)
+                # calculate 'adherence_total_doses_taken'
+                all_adherence_cases = self.get_valid_adherence_cases()
+                update["adherence_total_doses_taken"] = self.count_doses_taken(all_adherence_cases)
+                # calculate 'aggregated_score_count_taken'
+                adherence_cases = self.adherence_cases_between(
+                    all_adherence_cases,
+                    adherence_schedule_date_start,
+                    update["aggregated_score_date_calculated"]
                 )
+                update["aggregated_score_count_taken"] = self.count_doses_taken(adherence_cases)
+
+                # calculate 'expected_doses_taken' score
+                dose_data = self.case_updater.get_doses_data()
+                adherence_schedule_id = self.get_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
+                doses_per_week = dose_data.get(adherence_schedule_id)
+                if doses_per_week:
+                    update['expected_doses_taken'] = ((
+                        (update['aggregated_score_date_calculated'] - adherence_schedule_date_start)).days / 7.0
+                    ) * doses_per_week
+                else:
+                    update['expected_doses_taken'] = 0
+                    soft_assert(notify_admins=True)(
+                        True,
+                        "No fixture item found with schedule_id {}".format(adherence_schedule_id)
+                    )
         # convert datetime -> date objects
         for key, val in update.iteritems():
             if isinstance(val, datetime.datetime):
