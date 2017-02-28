@@ -310,16 +310,15 @@ class TestAdherenceUpdater(TestCase):
                     (datetime(2016, 1, 11), DOSE_TAKEN_INDICATORS[0]),
                     (datetime(2016, 1, 12), DOSE_TAKEN_INDICATORS[0]),
                     (datetime(2016, 1, 14), DOSE_UNKNOWN),
-                    (datetime(2016, 1, 21), DOSE_TAKEN_INDICATORS[3])  # dose missed
+                    (datetime(2016, 1, 21), DOSE_MISSING)  # dose missed
                 ]
             ),
             {
                 'aggregated_score_date_calculated': date(2016, 1, 20),
                 'expected_doses_taken': (10.0 / 7) * int(self.fixture_data['schedule1']),
-                # ask clayton
                 'aggregated_score_count_taken': 2,
                 'adherence_latest_date_recorded': date(2016, 1, 21),
-                'adherence_total_doses_taken': 3
+                'adherence_total_doses_taken': 2
             }
         )
 
@@ -349,8 +348,8 @@ class TestAdherenceUpdater(TestCase):
                 datetime(2016, 1, 20),
                 (datetime(2016, 1, 10), 'schedule1'),
                 [
-                    (datetime(2016, 1, 11), DOSE_TAKEN_INDICATORS[0]),
-                    (datetime(2016, 1, 11), DOSE_TAKEN_INDICATORS[3]),
+                    (datetime(2016, 1, 11, 1), DOSE_TAKEN_INDICATORS[0]),
+                    (datetime(2016, 1, 11, 3), DOSE_MISSING),
                 ]
             ),
             {

@@ -24,9 +24,10 @@ DOSE_TAKEN_INDICATORS = [
     'directly_observed_dose',
     'unobserved_dose',
     'self_administered_dose',
-    'missed_dose'
 ]
+DOSE_MISSING = 'missed_dose'
 DOSE_UNKNOWN = 'missing_data'
+DOSE_KNOWN_INDICATORS = DOSE_TAKEN_INDICATORS + [DOSE_MISSING]
 DAILY_SCHEDULE_FIXTURE_NAME = 'adherence_schedules'
 DAILY_SCHEDULE_ID = 'schedule_daily'
 SCHEDULE_ID_FIXTURE = 'id'
@@ -86,25 +87,6 @@ class EpisodeAdherenceUpdater(object):
         return dict((k, int(fixture['doses_per_week'])) for k, fixture in fixtures.items())
 
 
-def index_by_adherence_date(adherence_cases):
-    """index by day of `adherence_date` to list of adherence cases
-        - that fall on that day
-        - and have 'adherence_value' as one of DOSE_TAKEN_INDICATORS
-
-    Args:
-        adherence_cases: list of 'adherence' cases
-
-    Returns:
-        A dict with key as the day of `adherence_date` and value as the list of adherence
-        cases that fall on that day.
-    """
-    by_date = defaultdict(list)
-    for case in adherence_cases:
-        adherence_date = parse_datetime(case.dynamic_case_properties().get('adherence_date')).date()
-        by_date[adherence_date].append(case)
-    return by_date
-
-
 class EpisodeUpdate(object):
     """
     Class to capture adherence related calculations specific to an 'episode' case
@@ -136,7 +118,7 @@ class EpisodeUpdate(object):
             case
             for case in indexed_cases
             if (not case.closed and case.type == CASE_TYPE_ADHERENCE and
-                case.dynamic_case_properties().get('adherence_value') in DOSE_TAKEN_INDICATORS)
+                case.dynamic_case_properties().get('adherence_value') in DOSE_KNOWN_INDICATORS)
         ]
 
     def get_latest_adherence_case_for_episode(self):
@@ -178,7 +160,7 @@ class EpisodeUpdate(object):
     def count_doses_taken(self, adherence_cases):
         """
         Args:
-            adherence_cases: list of 'adherence_cases' with its 'adherence_value' as one of DOSE_TAKEN_INDICATORS
+            adherence_cases: list of 'adherence_cases' with its 'adherence_value' as one of DOSE_KNOWN_INDICATORS
 
         Returns:
             total count of adherence_cases excluding duplicates on a given day. If there are
@@ -187,7 +169,9 @@ class EpisodeUpdate(object):
         by_date = defaultdict(list)
         for case in adherence_cases:
             adherence_date = parse_datetime(case.dynamic_case_properties().get('adherence_date')).date()
-            by_date[adherence_date].append(case)
+            adherence_value = case.dynamic_case_properties().get('adherence_value')
+            if adherence_value in DOSE_TAKEN_INDICATORS:
+                by_date[adherence_date].append(case)
 
         return len(by_date.keys())
 
