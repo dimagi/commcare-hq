@@ -771,6 +771,12 @@ class DeviceIdLastUsed(DocumentSchema):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
 
 
+class ReportingMetadata(DocumentSchema):
+
+    last_submission_date = DateTimeProperty()
+    last_sync_date = DateTimeProperty()
+
+
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
@@ -799,6 +805,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     location_id = StringProperty()
     assigned_location_ids = StringListProperty()
     has_built_app = BooleanProperty(default=False)
+
+    reporting_metadata = SchemaDictProperty(ReportingMetadata)
 
     _user = None
 
