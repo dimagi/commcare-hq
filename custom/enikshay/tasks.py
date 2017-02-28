@@ -25,9 +25,9 @@ DOSE_TAKEN_INDICATORS = [
     'unobserved_dose',
     'self_administered_dose',
 ]
-DOSE_MISSING = 'missed_dose'
+DOSE_MISSED = 'missed_dose'
 DOSE_UNKNOWN = 'missing_data'
-DOSE_KNOWN_INDICATORS = DOSE_TAKEN_INDICATORS + [DOSE_MISSING]
+DOSE_KNOWN_INDICATORS = DOSE_TAKEN_INDICATORS + [DOSE_MISSED]
 DAILY_SCHEDULE_FIXTURE_NAME = 'adherence_schedules'
 DAILY_SCHEDULE_ID = 'schedule_daily'
 SCHEDULE_ID_FIXTURE = 'id'

@@ -177,6 +177,7 @@ class TestAdherenceUpdater(TestCase):
         )
 
     def test_no_adherence_schedule_date_start(self):
+        # if adherence_schedule_date_start then don't update
         self.assert_update(
             (
                 datetime(2016, 1, 17),
@@ -192,15 +193,18 @@ class TestAdherenceUpdater(TestCase):
             (
                 datetime(2016, 1, 20),
                 (datetime(2016, 1, 10), 'schedule1'),
+                # if no adherence_cases for the episode
                 []
             ),
             {
+                # 1 day before adherence_schedule_date_start
                 'aggregated_score_date_calculated': date(2016, 1, 9),
+                # set to zero
                 'expected_doses_taken': 0,
                 'aggregated_score_count_taken': 0,
-                # 1 day before should be schedule-date-start
-                'adherence_latest_date_recorded': date(2016, 1, 9),
                 'adherence_total_doses_taken': 0
+                # 1 day before should be adherence_schedule_date_start
+                'adherence_latest_date_recorded': date(2016, 1, 9),
             }
         )
 
@@ -209,10 +213,13 @@ class TestAdherenceUpdater(TestCase):
             (
                 datetime(2016, 1, 20),
                 (datetime(2016, 1, 10), 'schedule1'),
+                # if adherence_date less than purge_date
                 [(datetime(2016, 1, 15), DOSE_TAKEN_INDICATORS[0])]
             ),
             {
+                # set to latest adherence_date
                 'aggregated_score_date_calculated': date(2016, 1, 15),
+                # co-efficient (aggregated_score_date_calculated - adherence_schedule_date_start)
                 'expected_doses_taken': (5.0 / 7) * int(self.fixture_data['schedule1']),
                 'aggregated_score_count_taken': 1,
                 'adherence_latest_date_recorded': date(2016, 1, 15),
@@ -310,7 +317,7 @@ class TestAdherenceUpdater(TestCase):
                     (datetime(2016, 1, 11), DOSE_TAKEN_INDICATORS[0]),
                     (datetime(2016, 1, 12), DOSE_TAKEN_INDICATORS[0]),
                     (datetime(2016, 1, 14), DOSE_UNKNOWN),
-                    (datetime(2016, 1, 21), DOSE_MISSING)  # dose missed
+                    (datetime(2016, 1, 21), DOSE_MISSED)  # dose missed
                 ]
             ),
             {
@@ -349,7 +356,7 @@ class TestAdherenceUpdater(TestCase):
                 (datetime(2016, 1, 10), 'schedule1'),
                 [
                     (datetime(2016, 1, 11, 1), DOSE_TAKEN_INDICATORS[0]),
-                    (datetime(2016, 1, 11, 3), DOSE_MISSING),
+                    (datetime(2016, 1, 11, 3), DOSE_MISSED),
                 ]
             ),
             {
@@ -358,5 +365,96 @@ class TestAdherenceUpdater(TestCase):
                 'aggregated_score_count_taken': 1,
                 'adherence_latest_date_recorded': date(2016, 1, 11),
                 'adherence_total_doses_taken': 1
+            }
+        )
+
+    def test_two_doses_on_same_day_different_values(self):
+        self.assert_update(
+            (
+                datetime(2016, 1, 20),
+                (datetime(2016, 1, 10), 'schedule1'),
+                [
+                    (datetime(2016, 1, 11, 1), DOSE_TAKEN_INDICATORS[0]),
+                    (datetime(2016, 1, 11, 3), DOSE_TAKEN_INDICATORS[2]),
+                ]
+            ),
+            {
+                'aggregated_score_date_calculated': date(2016, 1, 11),
+                'expected_doses_taken': (1.0 / 7) * int(self.fixture_data['schedule1']),
+                'aggregated_score_count_taken': 1,
+                'adherence_latest_date_recorded': date(2016, 1, 11),
+                'adherence_total_doses_taken': 1
+            }
+        )
+
+    def test_dose_unknown_less(self):
+        self.assert_update(
+            (
+                datetime(2016, 1, 20),
+                (datetime(2016, 1, 10), 'schedule1'),
+                [
+                    (datetime(2016, 1, 11), DOSE_UNKNOWN),
+                ]
+            ),
+            {
+                'aggregated_score_date_calculated': date(2016, 1, 9),
+                'expected_doses_taken': 0,
+                'aggregated_score_count_taken': 0,
+                'adherence_latest_date_recorded': date(2016, 1, 9),
+                'adherence_total_doses_taken': 0
+            }
+        )
+
+    def test_dose_missed_less(self):
+        self.assert_update(
+            (
+                datetime(2016, 1, 20),
+                (datetime(2016, 1, 10), 'schedule1'),
+                [
+                    (datetime(2016, 1, 11), DOSE_MISSED),
+                ]
+            ),
+            {
+                'aggregated_score_date_calculated': date(2016, 1, 11),
+                'expected_doses_taken': (1.0 / 7) * int(self.fixture_data['schedule1']),
+                'aggregated_score_count_taken': 0,
+                'adherence_latest_date_recorded': date(2016, 1, 11),
+                'adherence_total_doses_taken': 0
+            }
+        )
+
+    def test_dose_unknown_greater(self):
+        self.assert_update(
+            (
+                datetime(2016, 1, 20),
+                (datetime(2016, 1, 10), 'schedule1'),
+                [
+                    (datetime(2016, 1, 22), DOSE_UNKNOWN),
+                ]
+            ),
+            {
+                'aggregated_score_date_calculated': date(2016, 1, 9),
+                'expected_doses_taken': 0,
+                'aggregated_score_count_taken': 0,
+                'adherence_latest_date_recorded': date(2016, 1, 9),
+                'adherence_total_doses_taken': 0
+            }
+        )
+
+    def test_dose_missed_greater(self):
+        self.assert_update(
+            (
+                datetime(2016, 1, 20),
+                (datetime(2016, 1, 10), 'schedule1'),
+                [
+                    (datetime(2016, 1, 22), DOSE_MISSED),
+                ]
+            ),
+            {
+                'aggregated_score_date_calculated': date(2016, 1, 20),
+                'expected_doses_taken': (10.0 / 7) * int(self.fixture_data['schedule1']),
+                'aggregated_score_count_taken': 0,
+                'adherence_latest_date_recorded': date(2016, 1, 22),
+                'adherence_total_doses_taken': 0
             }
         )
