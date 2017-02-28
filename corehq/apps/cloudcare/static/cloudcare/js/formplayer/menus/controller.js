@@ -157,7 +157,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 tiles: detailObject.tiles,
                 maxWidth: detailObject.maxWidth,
                 maxHeight: detailObject.maxHeight,
-                prefix: 'persistent',
             });
         },
     };

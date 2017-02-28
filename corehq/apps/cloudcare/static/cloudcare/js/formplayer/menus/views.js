@@ -97,7 +97,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             rowEnd + " / " + colEnd;
     };
     // generate the case tile's style block and insert
-    var buildCellLayout = function (tiles, prefix) {
+    var generateCaseTileStyles = function (tiles) {
         var templateString,
             caseTileStyle,
             caseTileStyleTemplate,
@@ -109,7 +109,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                     return null;
                 }
                 return {
-                    id: prefix + '-grid-style-' + idx,
+                    id: 'grid-style-' + idx,
                     gridStyle: getGridAttributes(tile),
                     fontStyle: tile.fontSize,
                 };
@@ -118,16 +118,19 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 return tile !== null;
             }).value();
 
-        templateString = $("#cell-layout-style-template").html();
+        templateString = $("#case-tile-style-template").html();
         caseTileStyleTemplate = _.template(templateString);
         caseTileStyle = caseTileStyleTemplate({
             models: tileModels,
         });
-        return caseTileStyle;
+
+        // need to remove this attribute so the grid style is re-evaluated
+        $("#case-tiles-style").html(caseTileStyle).data("css-polyfilled", false);
+        $("#inner-tiles-container-style").data("css-polyfilled", false);
     };
 
     // Dynamically generate the CSS style to display multiple tiles per line
-    var buildCellContainerStyle = function (numRows, numColumns, numCasesPerRow) {
+    var makeOuterGridStyle = function (numRows, numColumns, numCasesPerRow) {
         var outerGridTemplateString,
             outerGridStyle,
             outerGridStyleTemplate,
@@ -141,17 +144,18 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             widthPercentage: widthPercentage,
             heightPercentage: heightPercentage,
         };
-        outerGridTemplateString = $("#cell-container-style-template").html();
+        outerGridTemplateString = $("#case-grid-style-template").html();
         outerGridStyleTemplate = _.template(outerGridTemplateString);
         outerGridStyle = outerGridStyleTemplate({
             model: outerGridModel,
         });
-        return outerGridStyle;
+        // need to remove this attribute so the grid style is re-evaluated
+        $("#outer-tiles-container-style").html(outerGridStyle).data("css-polyfilled", false);
     };
 
     // Dynamically generate the CSS style for the grid polyfill to use for the case tile
     // useUniformUnits - true if the grid's cells should have the same height as width
-    var buildCellGridStyle = function (numRows, numColumns, numCasesPerRow, useUniformUnits, prefix) {
+    var makeInnerGridStyle = function (numRows, numColumns, numCasesPerRow, useUniformUnits) {
         var templateString,
             view,
             template,
@@ -173,14 +177,19 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             numColumns: numColumns,
             widthPixels: widthPixels,
             heightPixels: heightPixels,
-            prefix: prefix,
         };
-        templateString = $("#cell-grid-style-template").html();
+        templateString = $("#grid-inner-style-template").html();
         template = _.template(templateString);
         view = template({
             model: model,
         });
-        return view;
+        // need to remove this attribute so the grid style is re-evaluated
+        $("#inner-tiles-container-style").html(view).data("css-polyfilled", false);
+
+        // If we have multiple cases per line, need to generate the outer grid style as well
+        if (numCasesPerRow > 1) {
+            makeOuterGridStyle(numRows, numColumns, numCasesPerRow);
+        }
     };
 
     Views.CaseView = Marionette.ItemView.extend({
@@ -211,11 +220,6 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
     Views.CaseTileView = Views.CaseView.extend({
         template: "#case-tile-view-item-template",
-        templateHelpers: function () {
-            var dict = Views.CaseTileView.__super__.templateHelpers.apply(this, arguments);
-            dict['prefix'] = this.options.prefix;
-            return dict;
-        },
     });
 
     Views.CaseListView = Marionette.CompositeView.extend({
@@ -313,24 +317,12 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         childView: Views.CaseTileView,
         initialize: function (options) {
             Views.CaseTileListView.__super__.initialize.apply(this, arguments);
-
-            var numEntitiesPerRow = options.numEntitiesPerRow || 1;
-            var numRows = options.maxHeight;
-            var numColumns = options.maxWidth;
-            var useUniformUnits = options.useUniformUnits;
-
-            var caseTileStyles = Views.buildCaseTileStyles(options.tiles, numRows, numColumns,
-                numEntitiesPerRow, useUniformUnits, 'list');
-
             var gridPolyfillPath = FormplayerFrontend.request('gridPolyfillPath');
-
-            $("#list-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
-            $("#list-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
-            // If we have multiple cases per line, need to generate the outer grid style as well
-            if (caseTileStyles.length > 2) {
-                $("#list-cell-container-style").html(caseTileStyles[2]).data("css-polyfilled", false);
-            }
-
+            generateCaseTileStyles(options.tiles);
+            makeInnerGridStyle(options.maxHeight,
+                options.maxWidth,
+                options.numEntitiesPerRow || 1,
+                options.useUniformUnits);
             $.getScript(gridPolyfillPath);
         },
 
@@ -349,7 +341,8 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
     Views.GridCaseTileViewItem = Views.CaseTileView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-container-style",
+        className: "formplayer-request case-tile-grid-item",
+        template: "#case-tile-view-item-template",
     });
 
     Views.GridCaseTileListView = Views.CaseTileListView.extend({
@@ -382,7 +375,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         events: {
             'click .js-home': 'onClickHome',
         },
-        onClickHome: function () {
+        onClickHome: function() {
             FormplayerFrontend.trigger('navigateHome');
         },
     });
