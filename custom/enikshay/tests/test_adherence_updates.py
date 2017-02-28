@@ -244,7 +244,7 @@ class TestAdherenceUpdater(TestCase):
                 [
                     # same day, different time
                     (datetime(2016, 1, 21, 1), DOSE_TAKEN_INDICATORS[0]),
-                    (datetime(2016, 1, 21, 3), 'unknown'),
+                    (datetime(2016, 1, 21, 3), DOSE_UNKNOWN),
                     (datetime(2016, 1, 22), DOSE_TAKEN_INDICATORS[0]),
                     (datetime(2016, 1, 24), DOSE_TAKEN_INDICATORS[0]),
                 ]
@@ -266,9 +266,9 @@ class TestAdherenceUpdater(TestCase):
                 [
                     # same day, different time. Set hours different so that case-id becomes different
                     (datetime(2016, 1, 11, 1), DOSE_TAKEN_INDICATORS[0]),
-                    (datetime(2016, 1, 11, 3), 'unknown'),
+                    (datetime(2016, 1, 11, 3), DOSE_UNKNOWN),
                     (datetime(2016, 1, 12), DOSE_TAKEN_INDICATORS[0]),
-                    (datetime(2016, 1, 14), 'unknown'),
+                    (datetime(2016, 1, 14), DOSE_UNKNOWN),
                 ]
             ),
             {   # set it to 12, because that's latest known
@@ -288,8 +288,8 @@ class TestAdherenceUpdater(TestCase):
                 [
                     (datetime(2016, 1, 11), DOSE_TAKEN_INDICATORS[0]),
                     (datetime(2016, 1, 12), DOSE_TAKEN_INDICATORS[0]),
-                    (datetime(2016, 1, 14), 'unknown'),
-                    (datetime(2016, 1, 21), 'unknown')
+                    (datetime(2016, 1, 14), DOSE_UNKNOWN),
+                    (datetime(2016, 1, 21), DOSE_UNKNOWN)
                 ]
             ),
             {
@@ -309,7 +309,7 @@ class TestAdherenceUpdater(TestCase):
                 [
                     (datetime(2016, 1, 11), DOSE_TAKEN_INDICATORS[0]),
                     (datetime(2016, 1, 12), DOSE_TAKEN_INDICATORS[0]),
-                    (datetime(2016, 1, 14), 'unknown'),
+                    (datetime(2016, 1, 14), DOSE_UNKNOWN),
                     (datetime(2016, 1, 21), DOSE_TAKEN_INDICATORS[3])  # dose missed
                 ]
             ),
