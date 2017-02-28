@@ -10,7 +10,7 @@ from pillow_retry.models import PillowError
 from pillow_retry.tasks import process_pillow_retry
 from pillowtop import get_all_pillow_configs
 from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.feed.couch import force_to_change
+from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change, ChangeMeta
 from pillowtop.feed.mock import RandomChangeFeed
 from pillowtop.processors import PillowProcessor
@@ -49,7 +49,6 @@ class GetDocProcessor(PillowProcessor):
 
 
 def create_error(change, message='message', attempts=0, pillow=None, ex_class=None):
-    change = force_to_change(change)
     change.metadata = ChangeMeta(data_source_type='couch', data_source_name='test_commcarehq', document_id=change.id)
     error = PillowError.get_or_create(change, pillow or FakePillow())
     for n in range(0, attempts):
@@ -261,7 +260,7 @@ class PillowRetryTestCase(TestCase):
         self.assertTrue(PillowError.objects.get(pk=error.pk).total_attempts > PillowError.multi_attempts_cutoff())
 
     def test_empty_metadata(self):
-        change = force_to_change({'id': '123'})
+        change = change_from_couch_row({'id': '123'})
         error = PillowError.get_or_create(change, GetDocPillow())
         error.save()
 
