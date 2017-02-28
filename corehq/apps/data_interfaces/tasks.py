@@ -56,7 +56,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
 
 
 @periodic_task(
-    run_every=crontab(hour=0, minute=0, day_of_week='sat'),
+    run_every=crontab(hour=0, minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
     ignore_result=True
 )
