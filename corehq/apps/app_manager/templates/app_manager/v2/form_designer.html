@@ -193,12 +193,7 @@
 
     {% if can_preview_form %}
     <script type="text/html" id="js-fd-app-preview-btn-template">
-      <div class="btn-group js-preview-toggle-container">
-        <button class="btn btn-info js-preview-toggle" type="button">
-          <span class="js-preview-action-show hide">{% trans "Show App Preview" %}</span>
-          <span class="js-preview-action-hide hide">{% trans "Hide App Preview" %}</span>
-        </button>
-      </div>
+        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
     </script>
     {% endif %}
 
