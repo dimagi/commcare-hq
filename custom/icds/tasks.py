@@ -73,15 +73,17 @@ def run_weekly_indicators():
     Runs the weekly SMS indicators at 9am IST.
     If it's the first week of the month, also run the monthly indicators.
     """
+    first_week_of_month_result = is_first_week_of_month()
+
     for domain in settings.ICDS_SMS_INDICATOR_DOMAINS:
         for user_id in generate_user_ids_from_primary_location_ids(domain, get_awc_location_ids(domain)):
-            if is_first_week_of_month():
+            if first_week_of_month_result:
                 run_indicator.delay(domain, user_id, AWWAggregatePerformanceIndicator)
 
             run_indicator.delay(domain, user_id, AWWSubmissionPerformanceIndicator)
 
         for user_id in generate_user_ids_from_primary_location_ids(domain, get_supervisor_location_ids(domain)):
-            if is_first_week_of_month():
+            if first_week_of_month_result:
                 run_indicator.delay(domain, user_id, LSAggregatePerformanceIndicator)
 
             run_indicator.delay(domain, user_id, LSSubmissionPerformanceIndicator)
