@@ -1,6 +1,6 @@
-from dateutil import parser
-
 from django.http import Http404
+
+from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.users.models import CouchUser
@@ -60,12 +60,12 @@ def mark_latest_submission(domain, user_id, received_on):
         return
 
     try:
-        received_on_datetime = parser.parse(received_on)
+        received_on_datetime = string_to_utc_datetime(received_on)
     except ValueError:
         return
 
     current_last_submission = user.reporting_metadata.last_submission_date
 
     if current_last_submission is None or current_last_submission < received_on_datetime:
-        user.reporting_metadata.last_submission_date = received_on
+        user.reporting_metadata.last_submission_date = received_on_datetime
         user.save()
