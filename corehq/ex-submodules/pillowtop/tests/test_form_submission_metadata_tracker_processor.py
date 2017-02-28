@@ -14,7 +14,9 @@ class MarkLatestSubmissionTest(TestCase):
     app_id = 'app-id'
     build_id = 'build-id'
     version = '2'
-    metadata = {}
+    metadata = {
+        'deviceID': 'device-id'
+    }
 
     @classmethod
     def setUpClass(cls):
@@ -59,6 +61,10 @@ class MarkLatestSubmissionTest(TestCase):
         self.assertEqual(
             user.reporting_metadata.last_submission.build_id,
             self.build_id,
+        )
+        self.assertEqual(
+            user.reporting_metadata.last_submission.device_id,
+            self.metadata['deviceID'],
         )
         self.assertEqual(user.reporting_metadata.last_submission.build_version, 2)
 

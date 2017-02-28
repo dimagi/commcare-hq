@@ -83,6 +83,7 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
 
     if current_last_submission is None or current_last_submission < received_on_datetime:
         user.reporting_metadata.last_submission.submission_date = received_on_datetime
+        user.reporting_metadata.last_submission.device_id = metadata.get('deviceID')
         user.reporting_metadata.last_submission.app_id = app_id
         user.reporting_metadata.last_submission.build_id = build_id
         user.reporting_metadata.last_submission.build_version = app_version_info.build_version

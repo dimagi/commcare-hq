@@ -775,6 +775,7 @@ class LastSubmission(DocumentSchema):
     submission_date = DateTimeProperty()
     app_id = StringProperty()
     build_id = StringProperty()
+    device_id = StringProperty()
     build_version = IntegerProperty()
     commcare_version = StringProperty()
 
