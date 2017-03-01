@@ -186,8 +186,27 @@ class FieldColumn(ReportColumn):
     def get_fields(self, data_source_config=None, lang=None):
         return [self.field]
 
+    def _data_source_col_config(self, data_source_config):
+        return filter(
+            lambda c: c['column_id'] == self.field, data_source_config.configured_indicators
+        )[0]
+
+    def _column_data_type(self, data_source_config):
+        return self._data_source_col_config(data_source_config).get('datatype')
+
     def aggregations(self, data_source_config, lang):
-        return filter(None, [ES_AGG_MAP[self.aggregation](self.column_id, self.field)])
+        # SQL supports max and min on strings so hack it into ES
+        if (
+            self.aggregation in ['max', 'min'] and
+            self._column_data_type(data_source_config) and
+            self._column_data_type(data_source_config) not in ['integer', 'decimal']
+        ):
+            aggregation = aggregations.TermsAggregation(self.column_id, self.field, size=1)
+            order = "desc" if self.aggregation == 'max' else 'asc'
+            aggregation = aggregation.order('_term', order=order)
+        else:
+            aggregation = ES_AGG_MAP[self.aggregation](self.column_id, self.field)
+        return filter(None, [aggregation])
 
     def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
         if not from_aggregation:

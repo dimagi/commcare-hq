@@ -917,7 +917,7 @@ EDIT_FORMPLAYER = PredictablyRandomToggle(
     'Edit forms on Formplayer',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.0,
+    randomness=0.1,
 )
 
 PREVIEW_APP = PredictablyRandomToggle(
@@ -940,6 +940,13 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     'Uses latest build for cloudcare instead of latest starred',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+VELLUM_BETA = StaticToggle(
+    'vellum_beta',
+    'Use Vellum beta version',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_USER]
 )
 
 APP_MANAGER_V2 = StaticToggle(
