@@ -52,7 +52,6 @@ branches:
   - je/device-log-details # 2/21
   - revert-14997-revert-14712-br/anonymous-formplayer  # BR 2/16
   - np/django1.10 # NP 2/12
-  - bmb/appv2-usertesting  #B 2/28
   - vellum-onboarding-rollout  # Jenny 3/1
 submodules:
   submodules/touchforms-src:
