@@ -163,7 +163,7 @@
 
 {% block modals %}
     {{ block.super }}
-    {% if not request|toggle_enabled:"VELLUM_ONBOARDING" %}
+    {% if not request|toggle_enabled:"VELLUM_BETA" %}
         <!-- This will appear on page load, so don't use any animation (normally controlled by .fade) -->
         <div class="modal rollout-modal">
             <div class="modal-dialog">
