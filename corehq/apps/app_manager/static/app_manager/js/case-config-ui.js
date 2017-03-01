@@ -10,6 +10,14 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
     var CaseConfig = function (params) {
         var self = this;
         var i;
+        self.help_name = gettext('Case Property Description');
+        self.default_description = gettext("You do not have a description for this case property. If you would like to add one you can do so in the data dictionary.");
+        self.makePopover = function () {
+          $('.property-description').popover({
+              'trigger': 'hover',
+              'placement': 'auto right',
+          });
+        };
 
         self.home = params.home;
         self.actions = (function (a) {
@@ -39,6 +47,8 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
             self.usercasePropertiesMap = ko.mapping.fromJS(propertiesMap);
         };
         self.setUsercasePropertiesMap(params.usercasePropertiesMap);
+
+        self.descriptionDict = params.propertyDescriptions;
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: gettext("You have unchanged case settings"),
@@ -479,6 +489,9 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
             var self = {};
             ko.mapping.fromJS(data, UserCaseTransaction.mapping(self), self);
             self.caseConfig = caseConfig;
+            self.case_type = function () {
+                return 'commcare-user'
+            };
 
             // link self.case_name to corresponding path observable
             // in case_properties for convenience
@@ -636,6 +649,13 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
             self.case_transaction = case_transaction;
             self.isBlank = ko.computed(function () {
                 return !self.key() && !self.path();
+            });
+            self.description = ko.computed(function () {
+                var config = self.case_transaction.caseConfig;
+                var type = config.descriptionDict[self.case_transaction.case_type()];
+                if (type) {
+                    return type[self.key()] || '';
+                }
             });
             return self;
         }

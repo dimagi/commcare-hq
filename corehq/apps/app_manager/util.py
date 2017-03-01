@@ -14,6 +14,7 @@ from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
@@ -276,6 +277,10 @@ class ParentCasePropertyBuilder(object):
                 case_properties.update(p for p in updates if "/" not in p)
             case_properties.update(self.get_save_to_case_updates(form, case_type))
 
+        if toggles.DATA_DICTIONARY.enabled(self.app.domain):
+            data_dict_props = CaseProperty.objects.filter(case_type__domain=self.app.domain, case_type__name=case_type)
+            case_properties |= {prop.name for prop in data_dict_props}
+
         parent_types, contributed_properties = self.get_parent_types_and_contributed_properties(
             case_type, include_shared_properties=include_shared_properties
         )
@@ -435,8 +440,8 @@ def get_casedb_schema(form):
         "id": generation_names[i],
         "name": "{} ({})".format(generation_names[i], " or ".join(ctypes)) if i > 0 else base_case_type,
         "structure": {
-            p: {"description": descriptions_dict.get(base_case_type, {}).get(p, '')}
-            for type in [map[t] for t in ctypes] for p in type},
+            p: {"description": descriptions_dict.get(t, {}).get(p, '')}
+            for t in ctypes for p in map[t]},
         "related": {"parent": {
             "hashtag": "#case/" + generation_names[i + 1],
             "subset": generation_names[i + 1],
