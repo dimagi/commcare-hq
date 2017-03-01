@@ -23,10 +23,12 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
                                            'to turn it on the next time you visit this page.'), 'warning');
                     },
                 });
+                window.analytics.usage("Soft Rollout", "enable", slug);
             });
             $modal.on('click', '.flag-snooze', function() {
                 $.cookie(cookie_name, true, { expires: 3, path: '/' });
                 $modal.modal('hide');
+                window.analytics.usage("Soft Rollout", "snooze", slug);
             });
         }
     });
