@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
 
 import os
@@ -33,4 +34,4 @@ class Command(BaseCommand):
                 form_path = os.path.join(module_dir, form_name)
                 with open(form_path, 'w') as f:
                     f.write(form.source.encode('utf-8'))
-                    print 'wrote {}'.format(form_path)
+                    print('wrote {}'.format(form_path))

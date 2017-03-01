@@ -178,6 +178,26 @@ class ExpressionFromSpecTest(SimpleTestCase):
                 })
 
 
+class PropertyNameExpressionTest(SimpleTestCase):
+    def test_basic(self):
+        wrapped_expression = ExpressionFactory.from_spec({
+            'type': 'property_name',
+            'property_name': 'foo'
+        })
+        self.assertEqual(wrapped_expression({'foo': 'foo_value'}), 'foo_value')
+        self.assertEqual(wrapped_expression({'no': 'value'}), None)
+
+    def test_property_name_expression_with_expression(self):
+        wrapped_expression = ExpressionFactory.from_spec({
+            'type': 'property_name',
+            'property_name': {
+                'type': 'constant',
+                'constant': 'foo',
+            }
+        })
+        self.assertEqual(wrapped_expression({'foo': 'foo_value'}), 'foo_value')
+
+
 class PropertyPathExpressionTest(SimpleTestCase):
 
     def test_datatype(self):

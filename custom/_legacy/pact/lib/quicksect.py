@@ -10,6 +10,7 @@ Intersects ... faster.  Suports GenomicInterval datatype and multiple chromosome
 source:
 http://bitbucket.org/james_taylor/bx-python/src/14b6a6c95da6/lib/bx/intervals/operations/quicksect.py
 """
+from __future__ import print_function
 import time
 import random
 
@@ -64,7 +65,7 @@ class IntervalNode( object ):
         return root
 
     def rotateright( self ):
-        print "rotate right"
+        print("rotate right")
         root = self.left
         self.left = self.left.right
         root.right = self
@@ -80,7 +81,7 @@ class IntervalNode( object ):
         return root
         
     def rotateleft( self ):
-        print "rotate left"
+        print("rotate left")
         root = self.right
         self.right = self.right.left
         root.left = self
@@ -123,13 +124,13 @@ def main():
         end = start + random.randint(1, 1000)
         result = []
         test.intersect( start, end, lambda x: result.append(x.linenum) )
-    print "%f for tree method" % (time.clock() - starttime)
+    print("%f for tree method" % (time.clock() - starttime))
     starttime = time.clock()
     for x in range(5000):
         start = random.randint(0, 10000000)
         end = start + random.randint(1, 1000)
         bad_sect( intlist, start, end)
-    print "%f for linear (bad) method" % (time.clock() - starttime)
+    print("%f for linear (bad) method" % (time.clock() - starttime))
 
 
 def bad_sect( lst, int_start, int_end ):

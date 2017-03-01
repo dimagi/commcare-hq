@@ -24,15 +24,16 @@
     <script src="{% static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
-    {% endcompress %}
     <script src="{% static 'style/js/knockout_subscribables.ko.js' %}"></script>
+    <script src="{% static 'app_manager/js/value-or-none-ui.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
     {% block js_extra %}
-        <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
+        <script src="{% static 'app_manager/js/case-config-ui.js' %}"></script>
     {% endblock %}
     <style>
         #open-referral-action,

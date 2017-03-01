@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from corehq.apps.reminders.models import (CaseReminder, CaseReminderHandler,
     CASE_CRITERIA)
@@ -59,7 +60,7 @@ class Command(BaseCommand):
             if len(v) > 1:
                 num_dups += 1
                 split_key = k.split("|")
-                print "Duplicate found: ", split_key
+                print("Duplicate found: ", split_key)
 
                 handler = CaseReminderHandler.get(split_key[1])
                 if handler.start_condition_type != CASE_CRITERIA:
@@ -73,13 +74,13 @@ class Command(BaseCommand):
                     all_match = all_match and self.reminders_match(reminders[0], r)
                 if all_match:
                     if make_fixes:
-                        print "Removing duplicate(s)..."
+                        print("Removing duplicate(s)...")
                         for r in reminders[1:]:
                             r.retire()
                         c = CommCareCase.get(split_key[2])
                         case_changed_receiver(None, c)
                 else:
-                    print "ERROR: Not all of the reminders with the above key match"
+                    print("ERROR: Not all of the reminders with the above key match")
 
-        print "%s Duplicate(s) were found" % num_dups
+        print("%s Duplicate(s) were found" % num_dups)
 

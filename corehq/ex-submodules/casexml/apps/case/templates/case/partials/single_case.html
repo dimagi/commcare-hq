@@ -114,7 +114,7 @@
                                     <td>
                                         <span data-bind="text: received_on"></span>
                                     <td>
-                                        <span data-bind="text: readable_name"></span>
+                                        <span data-bind="text: readable_name, css: { 'break-all-words': !readable_name().match(/\s/) }"></span>
                                     </td>
                                     <td>
                                         <span data-bind="text: username"></span>

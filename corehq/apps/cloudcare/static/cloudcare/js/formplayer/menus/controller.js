@@ -122,7 +122,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             // we need to map the details and headers JSON to a list for a Backbone Collection
             for (var i = 0; i < headers.length; i++) {
                 var obj = {};
-                obj.data = details[i].replace(/\"/g, "'");
+                obj.data = details[i];
                 obj.header = headers[i];
                 obj.style = styles[i];
                 obj.id = i;
@@ -137,19 +137,27 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
         // return a case tile from a detail object (for persistent case tile)
         getCaseTile: function (detailObject) {
-            var detailModel = [];
-            var obj = {};
-            obj.data = detailObject.details;
-            obj.id = 0;
-            detailModel.push(obj);
-            var detailCollection = new Backbone.Collection();
-            detailCollection.reset(detailModel);
-            return new Menus.Views.CaseTileListView({
-                collection: detailCollection,
+            var detailModel = new Backbone.Model({
+                data: detailObject.details,
+                id: 0,
+            });
+            var numEntitiesPerRow = detailObject.numEntitiesPerRow || 1;
+            var numRows = detailObject.maxHeight;
+            var numColumns = detailObject.maxWidth;
+            var useUniformUnits = detailObject.useUniformUnits || false;
+            var caseTileStyles = Menus.Views.buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
+                numEntitiesPerRow, useUniformUnits, 'persistent');
+            // Style the positioning of the elements within a tile (IE element 1 at grid position 1 / 2 / 4 / 3
+            $("#persistent-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
+            // Style the grid (IE each tile has 6 rows, 12 columns)
+            $("#persistent-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
+            return new Menus.Views.CaseTileView({
+                model: detailModel,
                 styles: detailObject.styles,
                 tiles: detailObject.tiles,
                 maxWidth: detailObject.maxWidth,
                 maxHeight: detailObject.maxHeight,
+                prefix: 'persistent',
             });
         },
     };

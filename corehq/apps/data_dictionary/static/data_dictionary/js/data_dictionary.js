@@ -1,5 +1,5 @@
-/* globals django, COMMCAREHQ */
-(function ($, _) {
+/* globals django, COMMCAREHQ, hqDefine */
+hqDefine('data_dictionary/js/data_dictionary.js', function () {
 
     var CaseType = function (name) {
         var self = this;
@@ -161,10 +161,14 @@
         };
     };
 
-    $.fn.initializeDataDictionary = function (dataUrl, casePropertyUrl) {
-        var viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl);
+    $(function() {
+        var dataUrl = hqImport('hqwebapp/js/urllib.js').reverse('data_dictionary_json'),
+            casePropertyUrl = hqImport('hqwebapp/js/urllib.js').reverse('update_case_property'),
+            viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl);
         viewModel.init();
-        $(this).koApplyBindings(viewModel);
-        return viewModel;
-    };
-})($, _);
+        $('#hq-content').parent().koApplyBindings(viewModel);
+        $('#download-dict').click(function() {
+            window.analytics.usage('Data Dictionary', 'downloaded data dictionary');
+        });
+    });
+});

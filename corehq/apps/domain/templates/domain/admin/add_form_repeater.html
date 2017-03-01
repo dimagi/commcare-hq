@@ -4,77 +4,12 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block js-inline %} {{ block.super }}
-    <script>
-        $(function() {
-            var $testLinkButton = $('#test-forward-link'),
-                $testResult = $('#test-forward-result');
-
-            var handleSuccess = function(resp) {
-                /*
-                 * Handles a successful attempt to test the link. Note, just gets run when HQ returns
-                 * successful not if the link being tested returns successful
-                 */
-                var jsonResp = JSON.parse(resp),
-                    message;
-                $testResult.removeClass("hide text-danger text-success");
-                $testLinkButton.enableButton();
-
-                if (jsonResp.status) {
-                    message = jsonResp.status + ": " + jsonResp.response;
-                } else {
-                    message = jsonResp.response;
-                }
-
-                if (jsonResp.success) {
-                    $testResult.addClass("text-success");
-                    $testResult.text("{% trans 'Success! Response is' %}: " + message);
-                } else {
-                    $testResult.addClass("text-danger");
-                    $testResult.text("{% trans 'Failed! Response is' %}: " + message);
-                }
-            };
-
-            var handleFailure = function(resp) {
-                /*
-                 * Handles an HQ failure to test the URL
-                 */
-                $testLinkButton.enableButton();
-                $testResult
-                    .removeClass("hide text-success")
-                    .addClass("text-danger");
-                $testResult.text("{% trans 'HQ was unable to make the request' %}: " + resp.statusText);
-            };
-
-            $testLinkButton.click(function () {
-                var data = {
-                    url: $('#id_url').val(),
-                    format: $('#id_format').val(),
-                    repeater_type: {{ repeater_type|JSON }},
-                    use_basic_auth: $('#id_use_basic_auth').prop("checked"),
-                    username: $('#id_username').val(),
-                     password: $('#id_password').val()
-                };
-                $testLinkButton.disableButton();
-
-                $.post({
-                    url: "{% url "test_repeater" domain %}",
-                    data: data,
-                    success: handleSuccess,
-                    error: handleFailure,
-                });
-            });
-            $('#id_url').change(function () {
-                if ($(this).val()) {
-                    $testLinkButton.removeClass('disabled');
-                } else {
-                    $testLinkButton.addClass('disabled');
-                }
-            });
-        });
-    </script>
+{% block js %}{{ block.super }}
+    <script src='{% static 'domain/js/add_form_repeater.js' %}'></script>
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl "test_repeater" domain %}
+    {% initial_page_data "repeater_type" repeater_type %}
     {% crispy form %}
 {% endblock %}

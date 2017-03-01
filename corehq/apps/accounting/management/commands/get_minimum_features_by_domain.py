@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management import BaseCommand
 
 from corehq import privileges
@@ -14,7 +15,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         domain_names = args
         privileges = sorted(_privilege_to_response_function().keys())
-        print ','.join(['Project Space'] + privileges + ['Lowest Plan'])
+        print(','.join(['Project Space'] + privileges + ['Lowest Plan']))
         for domain in filter(lambda domain: domain, map(Domain.get_by_name, domain_names)):
             is_privilege_being_used = {
                 priv: _is_domain_using_privilege(domain, priv)
@@ -22,11 +23,11 @@ class Command(BaseCommand):
             }
             using_privileges = [priv for (priv, is_in_use) in is_privilege_being_used.items() if is_in_use]
             minimum_plan = DefaultProductPlan.get_lowest_edition(using_privileges)
-            print ','.join(
+            print(','.join(
                 [domain.name] +
                 ['X' if is_privilege_being_used[priv] else '' for priv in privileges] +
                 [minimum_plan]
-            )
+            ))
 
 
 def _privilege_to_response_function():

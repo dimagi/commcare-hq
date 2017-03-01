@@ -5,6 +5,8 @@ from StringIO import StringIO
 from contextlib import contextmanager
 from datetime import datetime
 
+import pytz
+
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
@@ -18,6 +20,7 @@ from corehq.apps.style.decorators import (
 )
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE, UCR_LABORATORY_BACKEND
+from corehq.util.timezones.utils import get_timezone_for_domain
 from couchexport.shortcuts import export_response
 
 from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR, INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS
@@ -87,7 +90,7 @@ def get_filter_values(filters, request_dict, user=None):
             filter.css_id: filter.get_value(request_dict, user)
             for filter in filters
         }
-    except FilterException, e:
+    except FilterException as e:
         raise UserReportsFilterError(unicode(e))
 
 
@@ -530,11 +533,12 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         ]
 
         if INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS.enabled(self.domain):
+            time_zone = get_timezone_for_domain(self.domain)
             export_table.append([
                 'metadata',
                 [
                     [_('Report Name'), self.title],
-                    [_('Generated On'), datetime.utcnow().strftime('%Y-%m-%d %H:%M')],
+                    [_('Generated On'), datetime.now(pytz.UTC).astimezone(time_zone).strftime('%Y-%m-%d %H:%M')],
                 ] + list(self._get_filter_values())
             ])
         return export_table

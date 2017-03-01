@@ -1,6 +1,41 @@
 {% extends "style/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load compress %}
+
+{% block stylesheets %}
+
+{% if less_debug %}
+<link type="text/less"
+    rel="stylesheet"
+    media="all"
+    href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+<link type="text/less"
+    rel="stylesheet"
+    media="all"
+    href="{% static 'cloudcare/less/formplayer-common.debug.less' %}" />
+<link type="text/less"
+    rel="stylesheet"
+    media="all"
+    href="{% static 'cloudcare/less/formplayer-webapp.debug.less' %}" />
+{% else %}
+{% compress css %}
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
+{% endcompress %}
+{% endif %}
+
+{% endblock %}
 
 {% block js-inline %}{{ block.super }}
     {% include 'cloudcare/includes/touchforms-inline.html' %}
@@ -14,6 +49,7 @@
         var uses_sql_backend = {{ use_sqlite_backend|JSON }};
         var username = "{{ username }}";
         var edit_formplayer = {{ edit_formplayer|JSON }};
+        var restoreAs = edit_context.sessionData.username;
         $('#edit-container').inlineTouchform({
             formUrl: edit_context.formUrl,
             submitUrl: edit_context.submitUrl,
@@ -22,6 +58,7 @@
             formplayerEnabled: edit_formplayer,
             domain: edit_context.domain,
             username: username,
+            restoreAs: restoreAs,
             onsubmit: function () {
                 window.location.href = edit_context.returnUrl;
             },

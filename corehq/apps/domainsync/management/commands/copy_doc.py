@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 from couchdbkit import Database
 from dimagi.utils.couch.database import get_db
@@ -25,9 +26,9 @@ class Command(BaseCommand):
         else:
             doc_ids = doc_ids_or_file.split(',')
 
-        print "Starting copy of {} docs".format(len(doc_ids))
+        print("Starting copy of {} docs".format(len(doc_ids)))
         for doc_id in doc_ids:
-            print 'Copying doc: {}'.format(doc_id)
+            print('Copying doc: {}'.format(doc_id))
             doc_json = sourcedb.get(doc_id)
             if domain:
                 doc_json['domain'] = domain

@@ -295,6 +295,13 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
 )
 
+DHIS2_INTEGRATION = StaticToggle(
+    'dhis2_integration',
+    'DHIS2 Integration',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
@@ -446,14 +453,6 @@ MOBILE_PRIVILEGES_FLAG = StaticToggle(
     'Offer "Enable Privileges on Mobile" flag.',
     TAG_EXPERIMENTAL,
     [NAMESPACE_USER]
-)
-
-MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
-    'multiple_locations',
-    "(Deprecated) Enable multiple locations per user on domain.",
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    description="Don't enable this flag."
 )
 
 PRODUCTS_PER_LOCATION = StaticToggle(
@@ -635,13 +634,6 @@ CUSTOM_INSTANCES = StaticToggle(
     'Inject custom instance declarations',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
-)
-
-LOCATIONS_IN_REPORTS = StaticToggle(
-    'LOCATIONS_IN_REPORTS',
-    "Include locations in report filters",
-    TAG_PRODUCT_PATH,
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 CLOUDCARE_CACHE = StaticToggle(
@@ -851,14 +843,6 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 )
 
 
-PROJECT_HEALTH_DASHBOARD = StaticToggle(
-    'project_health_dashboard',
-    'Shows the project performance dashboard in the reports navigation',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-
 PHONE_NUMBERS_REPORT = StaticToggle(
     'phone_numbers_report',
     "Shows information related to the phone numbers owned by a project's contacts",
@@ -958,6 +942,13 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+VELLUM_BETA = StaticToggle(
+    'vellum_beta',
+    'Use Vellum beta version',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_USER]
+)
+
 APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
@@ -1023,13 +1014,6 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     'user_property_easy_refs',
     'Easy-reference user properties in the form builder.',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-COPY_CASE_CONFIGS = StaticToggle(
-    'copy_case_configs',
-    'Allow copying case list / details screens in basic modules.',
-    TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )
 

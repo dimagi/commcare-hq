@@ -3,11 +3,6 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
-    <script src="{% static 'accounting/js/accounting.software_plan_version_handler.js' %}"></script>
-{% endblock %}
-
 {% block page_content %}
     <p class="lead">
         You are viewing a specific version of this plan.

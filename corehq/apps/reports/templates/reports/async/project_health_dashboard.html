@@ -51,7 +51,7 @@
                 'key': 'high performing',
                 values: _.map(data, function(item) {
                     return {
-                        x: moment(item.month).format("MMMM YYYY"),
+                        x: moment(item.month).format("MMM YYYY"),
                         y: item.performing,
                         z: item.delta_high_performers,
                     };
@@ -61,7 +61,7 @@
                 'key': 'low performing',
                 values: _.map(data, function(item) {
                     return {
-                        x: moment(item.month).format("MMMM YYYY"),
+                        x: moment(item.month).format("MMM YYYY"),
                         y: item.active - item.performing,
                         z: item.delta_low_performers,
                     };
@@ -128,7 +128,7 @@
                 chart.xAxis.showMaxMin(false)
                             .ticks(6)
                             .tickFormat(function(d){
-                                return moment(d).format("MMMM YYYY");
+                                return moment(d).format("MMM YYYY");
                             });
                 chart.tooltipContent(function(key, x, y, e, graph){
                     var d = e.series.values[e.pointIndex];

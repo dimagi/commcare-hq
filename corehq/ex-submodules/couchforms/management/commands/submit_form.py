@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import CommandError, BaseCommand
 from optparse import make_option
 import os
@@ -44,5 +45,5 @@ class Command(BaseCommand):
         elif method == 'python':
             use_curl = False
         
-        print post_data(None, url, path=file, use_curl=use_curl, use_chunked=use_chunked,
-                        is_odk=is_odk, attachments=attachments)
+        print(post_data(None, url, path=file, use_curl=use_curl, use_chunked=use_chunked,
+                        is_odk=is_odk, attachments=attachments))

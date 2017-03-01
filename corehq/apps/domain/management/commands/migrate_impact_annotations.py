@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from corehq.apps.domain.models import Domain
 
@@ -7,7 +8,7 @@ class Command(BaseCommand):
     args = ""
 
     def handle(self, *args, **options):
-        print "Migrating impact annotations"
+        print("Migrating impact annotations")
 
         for domain in Domain.get_all():
             changed = False

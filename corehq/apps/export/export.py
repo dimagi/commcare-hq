@@ -15,10 +15,12 @@ from corehq.util.files import safe_filename
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
+    get_sms_export_base_query,
 )
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
+    SMSExportInstance,
 )
 
 
@@ -70,12 +72,19 @@ class _Writer(object):
             # open the ExportWriter
             headers = []
             table_titles = {}
-            for instance in export_instances:
+            for instance_index, instance in enumerate(export_instances):
                 headers += [
                     (t, (t.get_headers(split_columns=instance.split_multiselects),))
                     for t in instance.selected_tables
                 ]
-                table_titles.update({t: t.label for t in instance.selected_tables})
+                for table_index, table in enumerate(instance.selected_tables):
+                    sheet_name = table.label or "Sheet{}".format(table_index + 1)
+                    if len(export_instances) > 1:
+                        sheet_name = u"{}-{}".format(
+                            instance.name or "Export{}".format(instance_index + 1),
+                            sheet_name
+                        )
+                    table_titles[table] = sheet_name
             self.writer.open(headers, file, table_titles=table_titles, archive_basepath=name)
             yield
             self.writer.close()
@@ -200,6 +209,8 @@ def _get_base_query(export_instance):
         return get_case_export_base_query(
             export_instance.domain, export_instance.case_type
         )
+    if isinstance(export_instance, SMSExportInstance):
+        return get_sms_export_base_query(export_instance.domain)
     else:
         raise Exception(
             "Unknown base query for export instance type {}".format(type(export_instance))

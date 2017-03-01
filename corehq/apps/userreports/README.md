@@ -929,6 +929,7 @@ Property        | Description
 datatype        | The datatype of the indicator. Current valid choices are: "date", "datetime", "string", "decimal", and "integer".
 is_nullable     | Whether the database column should allow null values.
 is_primary_key  | Whether the database column should be (part of?) the primary key. (TODO: this needs to be confirmed)
+create_index    | Creates an index on this column. Only applicable if using the SQL backend
 expression      | Any expression.
 transform       | (optional) transform to be applied to the result of the expression. (see "Report Columns > Transforms" section below)
 
@@ -1223,7 +1224,8 @@ owner                | Select a possible case owner owner (user, group, or locat
 Location choice providers also support two additional configuration options:
 
 * "include_descendants" - Include descendant locations in the results. Defaults to `false`.
-* "show_full_path" - display the full path to the location in the filter.  Defaults to `false`.
+* "show_full_path" - Display the full path to the location in the filter.  Defaults to `false`.
+* "order_by_hierarchy" - By default, locations show up in alphabetical order.  Set this to `true` to instead order by their position in the organization hierarchy.
 
 Example assuming "village" is a location ID, which is converted to names using the location `choice_provider`:
 ```json

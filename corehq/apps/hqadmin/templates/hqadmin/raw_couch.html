@@ -24,6 +24,8 @@
         <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
         <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
         <script src="{% static 'codemirror/addon/fold/brace-fold.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+        <script src="{% static 'hqadmin/js/raw_couch.js' %}"></script>
         {% endif %}
 
         <style>
@@ -92,25 +94,5 @@
             </div>
         </div>
         {% endif %}
-
-        <script>
-            // don't break if offline (Also why I left it as a <pre/>)
-            var use_code_mirror = {{ use_code_mirror|JSON  }};
-            if (use_code_mirror && window.CodeMirror) {
-                var couchDocElement = document.getElementById('couch-document');
-                var myCodeMirror = CodeMirror(function(elt) {
-                    couchDocElement.parentNode.replaceChild(elt, couchDocElement);
-                }, {
-                    value: couchDocElement.textContent,
-                    readOnly: true,
-                    lineNumbers: true,
-                    mode: {name: "javascript", json: true},
-                    viewportMargin: Infinity,
-                    foldGutter: true,
-                    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-                });
-            }
-        </script>
-
     </body>
 </html>

@@ -333,7 +333,8 @@ DropdownEntry.prototype.onPreProcess = function(newValue) {
  * Docs: https://confluence.dimagi.com/display/commcarepublic/Advanced+CommCare+Android+Formatting#AdvancedCommCareAndroidFormatting-SingleSelect"ComboBox"
  */
 function ComboboxEntry(question, options) {
-    var self = this;
+    var self = this,
+        initialOption;
     EntrySingleAnswer.call(this, question, options);
 
     // Specifies the type of matching we will do when a user types a query
@@ -354,6 +355,14 @@ function ComboboxEntry(question, options) {
     });
     self.helpText = function() { return 'Combobox'; };
 
+    // If there is a prexisting answer, set the rawAnswer to the corresponding text.
+    if (question.answer()) {
+        initialOption = self.options()[self.answer() - 1];
+        self.rawAnswer(
+             initialOption ? initialOption.name : Formplayer.Const.NO_ANSWER
+        );
+    }
+
     self.renderAtwho = function() {
         var $input = $('#' + self.entryId);
         $input.atwho('destroy');
@@ -363,6 +372,7 @@ function ComboboxEntry(question, options) {
             data: self.options(),
             maxLen: Infinity,
             tabSelectsMatch: false,
+            limit: 10,
             suffix: '',
             callbacks: {
                 filter: function(query, data) {
@@ -604,7 +614,7 @@ function GeoPointEntry(question, options) {
         self.rawAnswer([]);
     };
 
-    window.gMapsCallback = function() {
+    self.gMapsCallback = function() {
         self.geocoder = new google.maps.Geocoder();
         self.map = new google.maps.Map($('#' + self.entryId)[0], {
             mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -616,12 +626,19 @@ function GeoPointEntry(question, options) {
             self.map.setZoom(self.DEFAULT.anszoom);
         }
         google.maps.event.addListener(self.map, "center_changed", self.updateCenter.bind(self));
-    }
+    };
+
     self.afterRender = function() {
-        if (typeof google === "undefined") {
-            $.getScript(self.apiKey + '&callback=gMapsCallback');
+        if (typeof google === "undefined" && !window.gMapsRequested) {
+            // First entry to attempt to load google
+            window.gMapsRequested = true;
+            $.getScript(self.apiKey, self.gMapsCallback);
+        } else if (typeof google === "undefined" && window.gMapsRequested) {
+            // Waiting for gmaps to load, recursively call afterRender
+            setTimeout(self.afterRender, 400);
         } else {
-            window.gMapsCallback();
+            // google has already been loaded
+            self.gMapsCallback();
         }
     };
 

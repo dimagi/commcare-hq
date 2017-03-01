@@ -36,6 +36,7 @@ from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
+from dimagi.utils.couch.undo import get_deleted_doc_type, is_deleted, undo_delete, soft_delete
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -896,13 +897,16 @@ class ConfigureMapReport(ConfigureReport):
     report_type = 'map'
 
 
-def delete_report(request, domain, report_id):
+def _assert_report_delete_privileges(request):
     if not (toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
             or toggle_enabled(request, toggles.REPORT_BUILDER)
             or toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
             or has_report_builder_add_on_privilege(request)):
         raise Http404()
 
+
+def delete_report(request, domain, report_id):
+    _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
     # Delete the data source too if it's not being used by any other reports.
@@ -916,10 +920,17 @@ def delete_report(request, domain, report_id):
             # No other reports reference this data source.
             data_source.deactivate()
 
-    config.delete()
+    soft_delete(config)
     did_purge_something = purge_report_from_mobile_ucr(config)
 
-    messages.success(request, _(u'Report "{}" deleted!').format(config.title))
+    messages.success(
+        request,
+        _(u'Report "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
+            name=config.title,
+            url=reverse('undo_delete_configurable_report', args=[domain, config._id]),
+        ),
+        extra_tags='html'
+    )
     if did_purge_something:
         messages.warning(
             request,
@@ -930,6 +941,22 @@ def delete_report(request, domain, report_id):
     if not redirect:
         redirect = reverse('configurable_reports_home', args=[domain])
     return HttpResponseRedirect(redirect)
+
+
+def undelete_report(request, domain, report_id):
+    _assert_report_delete_privileges(request)
+    config = get_document_or_404(ReportConfiguration, domain, report_id, additional_doc_types=[
+        get_deleted_doc_type(ReportConfiguration)
+    ])
+    if config and is_deleted(config):
+        undo_delete(config)
+        messages.success(
+            request,
+            _(u'Successfully restored report "{name}"').format(name=config.title)
+        )
+    else:
+        messages.info(request, _(u'Report "{name}" not deleted.').format(name=config.title))
+    return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
 
 
 class ImportConfigReportView(BaseUserConfigReportsView):
@@ -1172,12 +1199,35 @@ def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     adapter = get_indicator_adapter(config)
     adapter.drop_table()
-    config.delete()
+    soft_delete(config)
     if request:
         messages.success(
             request,
-            _(u'Data source "{}" has been deleted.'.format(config.display_name))
+            _(u'Data source "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
+                name=config.display_name,
+                url=reverse('undo_delete_data_source', args=[domain, config._id]),
+            ),
+            extra_tags='html'
         )
+
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def undelete_data_source(request, domain, config_id):
+    config = get_document_or_404(DataSourceConfiguration, domain, config_id, additional_doc_types=[
+        get_deleted_doc_type(DataSourceConfiguration)
+    ])
+    if config and is_deleted(config):
+        undo_delete(config)
+        messages.success(
+            request,
+            _(u'Successfully restored data source "{name}"').format(name=config.display_name)
+        )
+    else:
+        messages.info(request, _(u'Data source "{name}" not deleted.').format(name=config.display_name))
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config._id]
+    ))
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -1393,7 +1443,7 @@ def export_data_source(request, domain, config_id):
 
     # build export
     def get_table(q):
-        yield list(table.columns)
+        yield list(table.columns.keys())
         for row in q:
             yield row
 

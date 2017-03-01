@@ -37,6 +37,7 @@ def _build_raw_indicator(spec, context):
         datatype=wrapped.datatype,
         is_nullable=wrapped.is_nullable,
         is_primary_key=wrapped.is_primary_key,
+        create_index=wrapped.create_index,
     )
     return RawIndicator(
         wrapped.display_name,
@@ -52,6 +53,7 @@ def _build_expression_indicator(spec, context):
         datatype=wrapped.datatype,
         is_nullable=wrapped.is_nullable,
         is_primary_key=wrapped.is_primary_key,
+        create_index=wrapped.create_index,
     )
     return RawIndicator(
         wrapped.display_name,
@@ -141,7 +143,7 @@ class IndicatorFactory(object):
         cls.validate_spec(spec)
         try:
             return cls.constructor_map[spec['type']](spec, context)
-        except BadValueError, e:
+        except BadValueError as e:
             # for now reraise jsonobject exceptions as BadSpecErrors
             raise BadSpecError(str(e))
 

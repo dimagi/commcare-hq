@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import uuid
 import functools
 import json
@@ -120,9 +121,9 @@ def flag_enabled(toggle_class_string):
     """
     Decorate test methods with this to mock the lookup
 
-        @flag_enabled('MULTIPLE_LOCATIONS_PER_USER')
+        @flag_enabled('SELF_DESTRUCT_ON_SUBMIT')
         def test_something_fancy(self):
-            something.which_depends(on.MULTIPLE_LOCATIONS_PER_USER)
+            something.which_depends(on.SELF_DESTRUCT_ON_SUBMIT)
     """
     return mock.patch(
         '.'.join(['corehq.toggles', toggle_class_string, 'enabled']),
@@ -236,9 +237,9 @@ class RunWithMultipleConfigs(object):
             try:
                 call_with_settings(fn_with_pre_and_post, run_config.settings, args, kwargs)
             except Exception:
-                print self.fn, 'failed with the following settings:'
+                print(self.fn, 'failed with the following settings:')
                 for key, value in run_config.settings.items():
-                    print 'settings.{} = {!r}'.format(key, value)
+                    print('settings.{} = {!r}'.format(key, value))
                 raise
 
 
