@@ -366,7 +366,9 @@ function ComboboxEntry(question, options) {
     }
 
     self.renderAtwho = function() {
-        var $input = $('#' + self.entryId);
+        var $input = $('#' + self.entryId),
+            limit = 5,
+            $atwhoView;
         $input.atwho('destroy');
         $input.atwho('setIframe', window.frameElement, true);
         $input.atwho({
@@ -374,13 +376,19 @@ function ComboboxEntry(question, options) {
             data: self.options(),
             maxLen: Infinity,
             tabSelectsMatch: false,
-            limit: 10,
+            limit: limit,
             suffix: '',
             callbacks: {
                 filter: function(query, data) {
-                    return _.filter(data, function(item) {
+                    var results = _.filter(data, function(item) {
                         return ComboboxEntry.filter(query, item, self.matchType);
                     });
+                    $atwhoView = $('.atwho-container .atwho-view');
+                    $atwhoView.attr({
+                        'data-showing': Math.min(limit, results.length),
+                        'data-total': results.length,
+                    });
+                    return results;
                 },
                 matcher: function() {
                     return $input.val();
