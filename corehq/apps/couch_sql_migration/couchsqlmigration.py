@@ -32,6 +32,11 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
+# TODO: check what other domains should be in this list
+DOMAINS_NOT_TO_MIGRATE = {
+    'ews-ghana', 'ils-gateway', 'ils-gateway-train'
+}
+
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
@@ -46,6 +51,7 @@ class CouchSqlDomainMigrator(object):
     def __init__(self, domain, with_progress=True, debug=False):
         from corehq.apps.tzmigration.planning import DiffDB
         assert should_use_sql_backend(domain)
+        assert domain not in DOMAINS_NOT_TO_MIGRATE
 
         self.with_progress = with_progress
         self.debug = debug
