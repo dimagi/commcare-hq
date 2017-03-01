@@ -145,7 +145,8 @@ class BaseCCTests(TestCase):
             self.fail('Additional indicators:\n{}'.format('\t\n'.join(user_data.keys())))
 
 
-@patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es', return_value={'person','dog', CASE_TYPE})
+@patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
+       return_value={'person', 'dog', CASE_TYPE})
 class CallCenterTests(BaseCCTests):
     domain_name = 'callcentertest'
 
@@ -187,8 +188,12 @@ class CallCenterTests(BaseCCTests):
             set(indicator_set.user_to_case_map.keys()),
             set([self.cc_user.get_id, self.cc_user_no_data.get_id])
         )
-        self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
-        self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
+        self.assertEqual(
+            indicator_set.users_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id])
+        )
+        self.assertEqual(
+            indicator_set.owners_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id])
+        )
         self.check_cc_indicators(indicator_set.get_data(), expected_standard_indicators())
 
     def test_standard_indicators_no_legacy(self, mock):
@@ -289,7 +294,10 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_sync_log(self, mock):
-        user_case = CaseAccessors(self.cc_domain.name).get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
+        user_case = (
+            CaseAccessors(self.cc_domain.name)
+            .get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
+        )
 
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
@@ -369,7 +377,10 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_caching(self, mock):
-        user_case = CaseAccessors(self.cc_domain.name).get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
+        user_case = (
+            CaseAccessors(self.cc_domain.name)
+            .get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
+        )
         expected_indicators = {'a': 1, 'b': 2}
         cached_data = CachedIndicators(
             user_id=self.cc_user.get_id,
