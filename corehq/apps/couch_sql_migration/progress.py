@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from corehq.apps.domain_migration_flags.api import (
     set_migration_started, set_migration_not_started,
     get_migration_status)
@@ -20,17 +22,25 @@ def couch_sql_migration_in_progress(domain):
 
 
 def _notify_dimagi_users_on_domain(domain):
-    from corehq.apps.notifications.models import Notification
     from corehq.apps.users.models import WebUser
+    from corehq.apps.hqwebapp.tasks import send_mail_async
+    recipients = [
+        user.get_email() for user in WebUser.by_domain(domain)
+        if '@dimagi.com' in user.username
+    ]
 
-    users = [user for user in WebUser.by_domain(domain) if '@dimagi.com' in user.username]
-    django_users = [user.get_django_user() for user in users]
-    if django_users:
-        notification = Notification(
-            domain_specific=True, domains=[domain], type='alert',
-            content="This project has been migrated to the scale backend.", users_read=django_users
-        )
-        notification.activate()
+    subject = 'CommCare HQ project migrated to the scale backend.'.format(domain)
+    message = """
+    The CommCare HQ project "{}" has been migrated to the scale backend.
+
+    You should not notice anything different but if you do please report a bug.
+    """.format(domain)
+    send_mail_async.delay(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        recipients
+    )
 
 
 def set_couch_sql_migration_complete(domain):
