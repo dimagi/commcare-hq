@@ -91,6 +91,7 @@ EntrySingleAnswer = function(question, options) {
     Entry.call(self, question, options);
     self.valueUpdate = undefined;
     self.rawAnswer = ko.observable(question.answer() || Formplayer.Const.NO_ANSWER);
+    self.placeholderText = '';
 
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 
@@ -341,6 +342,7 @@ function ComboboxEntry(question, options) {
     self.matchType = options.matchType;
     self.lengthLimit = Infinity;
     self.templateType = 'str';
+    self.placeholderText = gettext('Type to filter answers');
 
     self.options = ko.computed(function() {
         return _.map(question.choices(), function(choice, idx) {
