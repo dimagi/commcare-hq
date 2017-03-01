@@ -63,16 +63,6 @@ class TestIndicatorPeriodicTask(TestCase):
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
-        cls.aww1.delete()
-        cls.aww2.delete()
-        cls.aww3.delete()
-        cls.aww4.delete()
-        cls.ls1.delete()
-        cls.ls2.delete()
-        for l in cls.locs.values():
-            l.delete()
-        for l in cls.loc_types.values():
-            l.delete()
         cls.domain_obj.delete()
         super(TestIndicatorPeriodicTask, cls).tearDownClass()
 
