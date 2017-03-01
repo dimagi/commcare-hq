@@ -193,7 +193,7 @@ hqDefine('data_dictionary/js/data_dictionary.js', function () {
 
         this.hideDeprecated = function () {
             self.showAll(false);
-        }
+        };
     };
 
     $(function() {

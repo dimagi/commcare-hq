@@ -278,7 +278,8 @@ class ParentCasePropertyBuilder(object):
             case_properties.update(self.get_save_to_case_updates(form, case_type))
 
         if toggles.DATA_DICTIONARY.enabled(self.app.domain):
-            data_dict_props = CaseProperty.objects.filter(case_type__domain=self.app.domain, case_type__name=case_type)
+            data_dict_props = CaseProperty.objects.filter(case_type__domain=self.app.domain,
+                                                          case_type__name=case_type)
             case_properties |= {prop.name for prop in data_dict_props}
 
         parent_types, contributed_properties = self.get_parent_types_and_contributed_properties(

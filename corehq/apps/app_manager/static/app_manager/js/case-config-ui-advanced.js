@@ -16,10 +16,10 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         self.help_name = gettext('Case Property Description');
         self.default_description = gettext("You do not have a description for this case property. If you would like to add one you can do so in the data dictionary.");
         self.makePopover = function () {
-          $('.property-description').popover({
+            $('.property-description').popover({
               'trigger': 'hover',
-              'placement': 'bottom'
-          });
+              'placement': 'bottom',
+            });
         };
 
         self.home = params.home;
