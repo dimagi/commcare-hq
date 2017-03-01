@@ -1,7 +1,10 @@
 from collections import namedtuple
 
+from datetime import datetime
+
 from sqlagg.filters import IN, AND, GTE, LT, EQ
 
+from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseSingleOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.sqlreport import SqlTabularReport, SqlData
@@ -9,8 +12,11 @@ from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import UCR_ENGINE_ID
+from corehq.util.timezones.utils import get_timezone_for_domain
 from custom.enikshay.reports.filters import EnikshayLocationFilter, EnikshayMigrationFilter
 from custom.utils.utils import clean_IN_filter_value
+
+from django.utils.translation import ugettext as _
 
 TABLE_ID = 'episode'
 
@@ -45,9 +51,44 @@ class MultiReport(CustomProjectReport, GenericReportView):
 class EnikshayMultiReport(MultiReport):
     fields = (DatespanFilter, EnikshayLocationFilter, EnikshayMigrationFilter)
 
+    def _get_filter_values(self):
+        for field in self.fields:
+            field_instance = field(request=self.request, domain=self.domain)
+            if isinstance(field_instance, DatespanFilter):
+                value = field_instance.datespan.default_serialization()
+            elif isinstance(field_instance, BaseMultipleOptionFilter):
+                value = ', '.join(map(lambda s: s.get('text', ''), field_instance.selected))
+            elif isinstance(field_instance, BaseSingleOptionFilter):
+                filter_value = field_instance.selected
+                if not filter_value:
+                    value = unicode(field_instance.default_text)
+                else:
+                    value = [
+                        display_text
+                        for option_value, display_text in field_instance.options
+                        if option_value == filter_value
+                    ][0]
+            else:
+                value = unicode(field_instance.get_value(self.request, self.domain))
+            yield unicode(field.label), value
+
     @property
     def export_table(self):
         export_table = []
+        tz = get_timezone_for_domain(self.domain)
+
+        self._get_filter_values()
+        metadata = [
+            _('metadata'),
+            [
+                [_('Report Name'), self.name],
+                [
+                    _('Generated On'), datetime.now(tz=tz).strftime('%Y-%m-%d %H:%M')
+                ],
+            ] + list(self._get_filter_values())
+        ]
+
+        export_table.append(metadata)
 
         for report in self.reports:
             report_instance = report(self.request, domain=self.domain)
