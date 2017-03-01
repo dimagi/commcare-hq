@@ -123,6 +123,8 @@ class LanguageField(forms.CharField):
 class BaseUpdateUserForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain')
+        self.existing_user = kwargs.pop('existing_user')
         super(BaseUpdateUserForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
@@ -133,6 +135,9 @@ class BaseUpdateUserForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
+        for prop in self.direct_properties:
+            self.initial[prop] = getattr(self.existing_user, prop, "")
+
     @property
     def direct_properties(self):
         return []
@@ -140,59 +145,34 @@ class BaseUpdateUserForm(forms.Form):
     def clean_email(self):
         return self.cleaned_data['email'].lower()
 
-    def update_user(self, existing_user=None, save=True, **kwargs):
+    def update_user(self, save=True):
         is_update_successful = False
 
-        # From what I can tell, everything that invokes this method invokes it
-        # with a value for existing_user. It also looks like the code below is
-        # not behaving properly for mobile workers when existing_user is None.
-        # If the soft asserts confirm this isn't ever being passed existing_user=None,
-        # I propose making existing_user a required arg and removing the code below
-        # that creates the user.
-        _assert = soft_assert('@'.join(['gcapalbo', 'dimagi.com']), exponential_backoff=False)
-        _assert(existing_user is not None, "existing_user is None")
-
-        if not existing_user and 'email' in self.cleaned_data:
-            from django.contrib.auth.models import User
-            django_user = User()
-            django_user.username = self.cleaned_data['email']
-            django_user.save()
-            existing_user = CouchUser.from_django_user(django_user)
-            existing_user.save()
-            is_update_successful = True
-
         for prop in self.direct_properties:
-            setattr(existing_user, prop, self.cleaned_data[prop])
+            setattr(self.existing_user, prop, self.cleaned_data[prop])
             is_update_successful = True
 
         if is_update_successful and save:
-            existing_user.save()
+            self.existing_user.save()
         return is_update_successful
-
-    def initialize_form(self, domain, existing_user=None):
-        if existing_user is None:
-            return
-
-        for prop in self.direct_properties:
-            self.initial[prop] = getattr(existing_user, prop, "")
 
 
 class UpdateUserRoleForm(BaseUpdateUserForm):
     role = forms.ChoiceField(choices=(), required=False)
 
-    def update_user(self, existing_user=None, domain=None, **kwargs):
-        is_update_successful = super(UpdateUserRoleForm, self).update_user(existing_user, save=False)
+    def update_user(self):
+        is_update_successful = super(UpdateUserRoleForm, self).update_user(save=False)
 
-        if domain and 'role' in self.cleaned_data:
+        if self.domain and 'role' in self.cleaned_data:
             role = self.cleaned_data['role']
             try:
-                existing_user.set_role(domain, role)
-                existing_user.save()
+                self.existing_user.set_role(self.domain, role)
+                self.existing_user.save()
                 is_update_successful = True
             except KeyError:
                 pass
         elif is_update_successful:
-            existing_user.save()
+            self.existing_user.save()
 
         return is_update_successful
 
@@ -248,18 +228,11 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         label=ugettext_lazy("Opt out of emails about CommCare updates."),
     )
 
-    class MyAccountInfoFormException(Exception):
-        pass
-
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
-        if not self.user:
-            raise UpdateMyAccountInfoForm.MyAccountInfoFormException("Expected to be passed a user kwarg")
-
-        self.username = self.user.username
+        self.user = kwargs['existing_user']
         api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
-
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
+        self.username = self.user.username
 
         username_controls = []
         if self.username:
@@ -351,16 +324,13 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
             '<a href="https://wiki.commcarehq.org/display/commcarepublic/Web+Apps">'
             'Web Apps</a>'
         ))
+        if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
+            self.fields['loadtest_factor'].widget = forms.TextInput()
 
     @property
     def direct_properties(self):
         indirect_props = ['role']
         return [k for k in self.fields.keys() if k not in indirect_props]
-
-    def initialize_form(self, domain, existing_user=None):
-        if toggles.ENABLE_LOADTEST_USERS.enabled(domain):
-            self.fields['loadtest_factor'].widget = forms.TextInput()
-        super(UpdateCommCareUserInfoForm, self).initialize_form(domain, existing_user)
 
 
 class RoleForm(forms.Form):

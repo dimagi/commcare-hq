@@ -387,7 +387,7 @@ hqDefine('accounting/js/accounting.payment_method_handler.js', function () {
             var feature_sum =_.reduce(self.features(), function(memo, feature){
                 return memo + parseFloat(feature.addAmount());
             }, 0);
-            var sum = product_sum + feature_sum + self.general_credit().addAmount();
+            var sum = product_sum + feature_sum + parseFloat(self.general_credit().addAmount());
             return isNaN(sum) ? 0.0 : sum;
         });
 

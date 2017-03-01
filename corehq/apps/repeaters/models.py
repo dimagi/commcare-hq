@@ -607,6 +607,7 @@ class RepeatRecord(Document):
         if self.repeater.allow_retries(response) and self.overall_tries < self.max_possible_tries:
             self.set_next_try()
         else:
+            self.last_checked = datetime.utcnow()
             self.cancel()
         self.failure_reason = reason
         log_counter(REPEATER_ERROR_COUNT, {

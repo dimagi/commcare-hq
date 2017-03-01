@@ -47,8 +47,37 @@ function run_tests() {
         exit 1
     fi
     shift
+    echo "Datadog Testing"
+    echo ${DATADOG_API_KEY:0:2}
+
+    now=`date +%s`
     setup $TEST
+    delta=$((`date +%s` - $now))
+
+    send_metrics_to_datadog "setup" 20
+
+    now=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
+    delta=$((`date +%s` - $now))
+
+    send_metrics_to_datadog "tests" $delta
+}
+
+function send_metrics_to_datadog() {
+
+    currenttime=$(date +%s)
+
+    curl  -X POST -H "Content-type: application/json" \
+    -d "{ \"series\" :
+             [{\"metric\":\"travis.timings.$1\",
+              \"points\":[[$currenttime, $2]],
+              \"type\":\"gauge\",
+              \"host\":\"travis-ci.org\",
+              \"tags\":[\"environment:travis\", \"test_type:$TEST\", \"partition:$NOSE_DIVIDED_WE_RUN\"]}
+            ]
+        }" \
+    "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}"
+
 }
 
 function _run_tests() {

@@ -864,6 +864,9 @@ ZIPLINE_API_URL = ''
 ZIPLINE_API_USER = ''
 ZIPLINE_API_PASSWORD = ''
 
+# Set to the list of domain names for which we will run the ICDS SMS indicators
+ICDS_SMS_INDICATOR_DOMAINS = []
+
 KAFKA_URL = 'localhost:9092'
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
