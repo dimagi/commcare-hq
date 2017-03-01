@@ -813,12 +813,14 @@ def delete_report(request, domain, report_id):
     soft_delete(config)
     did_purge_something = purge_report_from_mobile_ucr(config)
 
-    messages.success(request, _(u'Report "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
-                name=config.title,
-                url=reverse('undo_delete_configurable_report', args=[domain, config._id]),
-            ),
-            extra_tags='html'
-        )
+    messages.success(
+        request,
+        _(u'Report "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
+            name=config.title,
+            url=reverse('undo_delete_configurable_report', args=[domain, config._id]),
+        ),
+        extra_tags='html'
+    )
     if did_purge_something:
         messages.warning(
             request,
@@ -1097,6 +1099,7 @@ def delete_data_source_shared(domain, config_id, request=None):
             ),
             extra_tags='html'
         )
+
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
