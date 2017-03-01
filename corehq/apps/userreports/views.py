@@ -807,7 +807,7 @@ def delete_report(request, domain, report_id):
             # No other reports reference this data source.
             data_source.deactivate()
 
-    config.delete()
+    soft_delete(config)
     did_purge_something = purge_report_from_mobile_ucr(config)
 
     messages.success(request, _(u'Report "{}" deleted!').format(config.title))
