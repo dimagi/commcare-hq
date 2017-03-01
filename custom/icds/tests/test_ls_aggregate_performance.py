@@ -72,12 +72,6 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls.aww.delete()
-        cls.ls.delete()
-        for l in cls.locs.values():
-            l.delete()
-        for l in cls.loc_types.values():
-            l.delete()
         cls.domain_obj.delete()
         super(TestAWWAggregatePerformanceIndicator, cls).tearDownClass()
 
