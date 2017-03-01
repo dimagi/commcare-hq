@@ -3,7 +3,7 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
         var $modal = $(".rollout-modal"),
             slug = $modal.data("slug"),
             cookie_name = "snooze_" + slug;
-        if (!$.cookie(cookie_name)) {
+        if ($modal.length && !$.cookie(cookie_name)) {
             $modal.modal({
                 backdrop: 'static',
                 keyboard: false,
@@ -11,16 +11,14 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
             });
             $modal.on('click', '.flag-enable', function() {
                 $.get({
-                    url: '',    // TODO
-                    data: {
-                        // TODO
-                    },
+                    url: hqImport('hqwebapp/js/urllib.js').reverse('enable_toggle', slug),
                     success: function() {
                         window.location.reload(true);
                     },
                     error: function() {
-                        alert_user(gettext('We could not turn on the new feature. You will have the opportunity' +
-                                           'to turn it on the next time you visit this page.'), 'warning');
+                        $modal.modal('hide');
+                        alert_user(gettext('We could not turn on the new feature. You will have the opportunity ' +
+                                           'to turn it on the next time you visit this page.'), 'danger');
                     },
                 });
                 window.analytics.usage("Soft Rollout", "enable", slug);

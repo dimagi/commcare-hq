@@ -17,7 +17,9 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'moment/moment.js' %}"></script>
     <script src="{% static 'requirejs/require.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
+    {% if not request|toggle_enabled:'VELLUM_BETA' %}
+        <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
+    {% endif %}
     <script src="{% static 'app_manager/js/app-notifications.js' %}"></script>
     <script src="{% static 'js/ws4redis.js' %}"></script>
 {% endblock %}
@@ -163,8 +165,9 @@
 
 {% block modals %}
     {{ block.super }}
-    {% with slug="VELLUM_BETA" name="New Form Builder" %}
-    {% if not request|toggle_enabled:slug %}
+    {% with slug="vellum_beta" name="New Form Builder" %}
+    {% registerurl 'enable_toggle' slug %}
+    {% if not request|toggle_enabled:'VELLUM_BETA' %}
         <!-- This will appear on page load, so don't use any animation (normally controlled by .fade) -->
         {% blocktrans %}
         <div class="modal rollout-modal" data-slug="{{ slug }}">

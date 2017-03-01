@@ -13,8 +13,9 @@ from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.models import CouchUser
 from corehq.apps.style.decorators import use_datatables
 from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
+from dimagi.utils.web import json_response
 from toggle.models import Toggle
-from toggle.shortcuts import clear_toggle_cache, parse_toggle
+from toggle.shortcuts import clear_toggle_cache, parse_toggle, set_toggle
 
 NOT_FOUND = "Not Found"
 
@@ -195,6 +196,11 @@ class ToggleEditView(ToggleBaseView):
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
         return HttpResponse(json.dumps(data), content_type="application/json")
+
+
+def enable_toggle(request, toggle):
+    set_toggle(toggle, request.user.username, True, namespace=NAMESPACE_USER)
+    return json_response({'success': True})
 
 
 def _get_usage_info(toggle):
