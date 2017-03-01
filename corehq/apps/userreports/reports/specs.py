@@ -194,13 +194,16 @@ class FieldColumn(ReportColumn):
     def _column_data_type(self, data_source_config):
         return self._data_source_col_config(data_source_config).get('datatype')
 
-    def aggregations(self, data_source_config, lang):
-        # SQL supports max and min on strings so hack it into ES
-        if (
+    def _use_terms_aggregation_for_max_min(self, data_source_config):
+        return (
             self.aggregation in ['max', 'min'] and
             self._column_data_type(data_source_config) and
             self._column_data_type(data_source_config) not in ['integer', 'decimal']
-        ):
+        )
+
+    def aggregations(self, data_source_config, lang):
+        # SQL supports max and min on strings so hack it into ES
+        if self._use_terms_aggregation_for_max_min(data_source_config):
             aggregation = aggregations.TermsAggregation(self.column_id, self.field, size=1)
             order = "desc" if self.aggregation == 'max' else 'asc'
             aggregation = aggregation.order('_term', order=order)
@@ -213,6 +216,8 @@ class FieldColumn(ReportColumn):
             value = row[self.field]
         elif self.aggregation == 'simple':
             value = row['past_bucket_values'][self.field]
+        elif self._use_terms_aggregation_for_max_min(data_source_config):
+            value = row[self.column_id]['buckets'][0]['key']
         else:
             value = int(row[self.column_id]['value'])
 

@@ -98,7 +98,9 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
         cls._delete_everything()
         super(TestReportAggregation, cls).tearDownClass()
 
-    def _create_report(self, aggregation_columns, columns, specific_backend=UCR_SQL_BACKEND):
+    def _create_report(
+            self, aggregation_columns, columns, specific_backend=UCR_SQL_BACKEND, sort_expression=None
+            ):
         backend_id = settings.OVERRIDE_UCR_BACKEND or specific_backend
         report_config = ReportConfiguration(
             domain=self.domain,
@@ -107,6 +109,8 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             aggregation_columns=aggregation_columns,
             columns=columns,
         )
+        if sort_expression:
+            report_config.sort_expression = sort_expression
         report_config.save()
         return report_config
 
@@ -181,6 +185,47 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
                     [u'report_column_display_first_name', u'report_column_display_number'],
                     [u'Ada', 3],
                     [u'Alan', 6]
+                ]
+            ]]
+        )
+
+    @run_with_all_ucr_backends
+    def test_max_aggregation_by_string_column(self):
+        report_config = self._create_report(
+            aggregation_columns=['indicator_col_id_number'],
+            columns=[
+                {
+                    "type": "field",
+                    "display": "report_column_display_first_name",
+                    "field": 'indicator_col_id_first_name',
+                    'aggregation': 'max'
+                },
+                {
+                    "type": "field",
+                    "display": "report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'column_id': 'report_column_col_id_number',
+                    'aggregation': 'simple'
+                }
+            ],
+            sort_expression=[
+                {
+                    "field": "report_column_col_id_number",
+                    "order": "DESC"
+                },
+            ]
+        )
+        view = self._create_view(report_config)
+
+        self.assertEqual(
+            view.export_table,
+            [[
+                u'foo',
+                [
+                    [u'report_column_display_first_name', u'report_column_display_number'],
+                    [u'Alan', 4],
+                    [u'Ada', 3],
+                    [u'Alan', 2],
                 ]
             ]]
         )
