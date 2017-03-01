@@ -5,7 +5,7 @@
 {% load i18n %}
 
 {% block js %} {{ block.super }}
-<script src="{% static 'users/js/project_settings.js' %}"></script>
+    <script src="{% static 'domain/js/my_project_settings.js' %}"></script>
 {% endblock %}
 
 {% block stylesheets %}
@@ -17,55 +17,8 @@
     </style>
 {% endblock %}
 
-{% block js-inline %} {{ block.super }}
-<script>
-    $(function() {
-        $('#my-project-settings-form').koApplyBindings(new HQTimezoneHandler({
-            override: {{ override_global_tz|BOOL }}
-        }));
-
-        var $globalTimezone = $('#id_global_timezone'),
-                $userTimezone = $('#id_user_timezone'),
-                $overrideGlobalTimezone = $('#id_override_global_tz');
-
-        var $matchMessage = $('<span class="help-block" />');
-        $userTimezone.parent().append($matchMessage);
-
-        var $matchTzButton = $('<a href="#" class="btn btn-default" style="margin-left: 1em;" />').text("{% trans 'Reset to Default' %}");
-        $matchTzButton.click(function () {
-            $userTimezone.val($globalTimezone.val());
-            $userTimezone.change();
-            return false;
-        });
-        $userTimezone.after($matchTzButton);
-
-        compare_global_user_timezones();
-        $userTimezone.change(compare_global_user_timezones);
-
-        $('#update-proj-settings').click(function () {
-            if ($(this).hasClass('disabled'))
-                return false;
-        });
-
-        function compare_global_user_timezones() {
-            if($globalTimezone.val() == $userTimezone.val()) {
-                $userTimezone.parent().parent().addClass('has-success').removeClass('has-warning');
-                $matchMessage.html('{% blocktrans %}This matches the global setting of <strong>'+$globalTimezone.val()+'</strong>.{% endblocktrans %}');
-            } else {
-                $userTimezone.parent().parent().addClass('has-warning').removeClass('has-success');
-                $matchMessage.html('{% blocktrans %}<strong>'+$userTimezone.val()+'</strong> does not match global setting of <strong>'+$globalTimezone.val()+'</strong>.{% endblocktrans %}');
-            }
-        }
-
-        if ({{ no_domain_membership|JSON }}) {
-            var err_txt = "You may not override this project space's timezone because you only have access to this project space through an Organization. " +
-                    "You must be added to the project space as a member in order to override your timezone.";
-            $overrideGlobalTimezone.parent().html(err_txt)
-        }
-    });
-</script>
-{% endblock %}
-
 {% block page_content %}
+    {% initial_page_data "override_global_tz" override_global_tz %}
+    {% initial_page_data "no_domain_membership" no_domain_membership %}
     {% crispy my_project_settings_form %}
 {% endblock %}

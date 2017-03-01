@@ -134,21 +134,23 @@ class MyAccountSettingsView(BaseMyAccountView):
         language_choices = langcodes.get_all_langs_for_select()
         api_key = self.get_or_create_api_key()
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
-        if self.request.method == 'POST':
-            form = UpdateMyAccountInfoForm(
-                self.request.POST, user=self.request.couch_user,
-                api_key=api_key
-            )
-        else:
-            form = UpdateMyAccountInfoForm(
-                user=self.request.couch_user,
-                api_key=api_key
-            )
         try:
             domain = self.request.domain
         except AttributeError:
             domain = ''
-        form.initialize_form(domain, existing_user=self.request.couch_user)
+        if self.request.method == 'POST':
+            form = UpdateMyAccountInfoForm(
+                self.request.POST,
+                api_key=api_key,
+                domain=domain,
+                existing_user=self.request.couch_user,
+            )
+        else:
+            form = UpdateMyAccountInfoForm(
+                api_key=api_key,
+                domain=domain,
+                existing_user=self.request.couch_user,
+            )
         form.load_language(language_choices)
         return form
 
@@ -214,7 +216,7 @@ class MyAccountSettingsView(BaseMyAccountView):
             return self.form_actions[self.form_type]()
         if self.settings_form.is_valid():
             old_lang = self.request.couch_user.language
-            self.settings_form.update_user(existing_user=self.request.couch_user)
+            self.settings_form.update_user()
             new_lang = self.request.couch_user.language
             if new_lang != old_lang:
                 # update the current session's language setting

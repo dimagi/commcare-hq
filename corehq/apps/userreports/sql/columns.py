@@ -14,6 +14,7 @@ def column_to_sql(column):
         _get_column_type(column.datatype),
         nullable=column.is_nullable,
         primary_key=column.is_primary_key,
+        index=column.create_index,
     )
 
 

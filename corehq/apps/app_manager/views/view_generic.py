@@ -92,7 +92,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 'domain': domain,
                 'app': app,
             })
-        if not app.vellum_case_management:
+        if not app.vellum_case_management and not app.is_remote_app():
             # Soft assert but then continue rendering; template will contain a user-facing warning
             _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
             _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
@@ -252,7 +252,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     domain_names.sort()
     if app and copy_app_form is None:
         toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
-        copy_app_form = CopyApplicationForm(domain, app_id, export_zipped_apps_enabled=toggle_enabled)
+        copy_app_form = CopyApplicationForm(domain, app, export_zipped_apps_enabled=toggle_enabled)
         context.update({
             'domain_names': domain_names,
         })
@@ -296,9 +296,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     domain_obj = Domain.get_by_name(domain)
     context.update({
-        'show_live_preview': should_show_preview_app(
+        'show_live_preview': app and should_show_preview_app(
             request,
-            domain_obj,
+            app,
             request.couch_user.username
         ),
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')

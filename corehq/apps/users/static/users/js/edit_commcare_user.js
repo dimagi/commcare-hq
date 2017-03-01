@@ -1,4 +1,5 @@
-$(function () {
+/* globals hqDefine */
+hqDefine('users/js/edit_commcare_user.js', function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
         couch_user_id = initial_page_data('couch_user_id'),
         activeTabCookie = 'active_tab',

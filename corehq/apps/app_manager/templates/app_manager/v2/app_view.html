@@ -64,10 +64,7 @@
 {% block pre_form_content %}
   <div class="appmanager-page-actions">
       {% if can_preview_form %}
-      <button type="button" class="btn btn-info js-preview-toggle" style="display: none;">
-        <span class="js-preview-action-show hide">{% trans "Show App Preview" %}</span>
-        <span class="js-preview-action-hide hide">{% trans "Hide App Preview" %}</span>
-      </button>
+        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
       {% endif %}
       {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
           <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">

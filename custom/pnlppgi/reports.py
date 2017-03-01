@@ -133,14 +133,6 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
                 'html': "%.2f%%" % percent
             }
 
-        users = CommCareUser.by_domain(self.domain)
-        users_dict = {}
-        for user in users:
-            if user.location_id not in users_dict:
-                users_dict.update({user.location_id: [user.get_id]})
-            else:
-                users_dict[user.location_id].append(user.get_id)
-
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
         data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
         selected_location = location_filter(self.request, location_filter_selected=True)

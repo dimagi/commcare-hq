@@ -60,17 +60,14 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -290,67 +278,58 @@
+@@ -290,67 +278,55 @@
      </script>
  {% endblock %}
  
 +{% block pre_form_content %}
 +    {% if can_preview_form %}
 +    <div class="appmanager-page-actions">
-+        <button type="button" class="btn btn-info js-preview-toggle" style="display: none;">
-+          <span class="js-preview-action-show hide">{% trans "Show App Preview" %}</span>
-+          <span class="js-preview-action-hide hide">{% trans "Hide App Preview" %}</span>
-+        </button>
++        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
 +    </div>
 +    {% endif %}
 +
@@ -173,7 +170,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -362,6 +341,7 @@
+@@ -362,6 +338,7 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -181,7 +178,7 @@
              {% if form.form_type == 'advanced_form' and module.has_schedule %}
                   <li>
                       <a href="#visit-scheduler" data-toggle="tab">
-@@ -369,45 +349,46 @@
+@@ -369,45 +346,46 @@
                       </a>
                   </li>
              {% endif %}
@@ -263,7 +260,7 @@
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
                      <p class="alert alert-warning">
-@@ -477,7 +458,7 @@
+@@ -477,7 +455,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -272,7 +269,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -490,23 +471,25 @@
+@@ -490,23 +468,25 @@
                      </p>
                  {% endif %}
              </div>

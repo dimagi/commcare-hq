@@ -85,7 +85,7 @@ def extend(d1, d2):
 
 urlpatterns =[
     url(r'^domain/select/$', select, name='domain_select'),
-    url(r'^domain/autocomplete/(?P<field>\w+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
+    url(r'^domain/autocomplete/(?P<field>[\w-]+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
     url(r'^domain/transfer/(?P<guid>\w+)/activate$',
         ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
     url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
