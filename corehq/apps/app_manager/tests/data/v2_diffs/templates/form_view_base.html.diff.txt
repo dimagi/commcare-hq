@@ -60,7 +60,7 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -285,67 +273,58 @@
+@@ -290,67 +278,58 @@
      </script>
  {% endblock %}
  
@@ -173,7 +173,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -357,6 +336,7 @@
+@@ -362,6 +341,7 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -181,7 +181,7 @@
              {% if form.form_type == 'advanced_form' and module.has_schedule %}
                   <li>
                       <a href="#visit-scheduler" data-toggle="tab">
-@@ -364,45 +344,46 @@
+@@ -369,45 +349,46 @@
                       </a>
                   </li>
              {% endif %}
@@ -263,7 +263,7 @@
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
                      <p class="alert alert-warning">
-@@ -472,7 +453,7 @@
+@@ -477,7 +458,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -272,7 +272,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -485,23 +466,25 @@
+@@ -490,23 +471,25 @@
                      </p>
                  {% endif %}
              </div>
