@@ -42,7 +42,6 @@
           <h2 class="appnav-name">
             <a href="{% url "view_app" domain app.id %}"
                class="appnav-responsive">
-                <i class="fa fa-mobile appnav-name-icon"></i>
                 <span class="variable-app_name">{{ app.name }}</span>
             </a>
           </h2>
@@ -90,7 +89,7 @@
             <i class="fa fa-file-o"></i>
             {% trans "Surveys" %}
             <p>{% blocktrans %}
-              <i class="fa fa-info-circle"></i> Collect data<br/>once.
+              Collect data once.
             {% endblocktrans %}</p>
           </button>
           </button>
@@ -100,7 +99,7 @@
             <i class="fa fa-bars"></i>
             {% trans "Case List" %}
             <p>{% blocktrans %}
-              <i class="fa fa-info-circle"></i> Track items<br/>over time.
+              Track items over time.
             {% endblocktrans %}</p>
           </button>
         </div>
