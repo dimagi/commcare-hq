@@ -4628,6 +4628,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     case_sharing = BooleanProperty(default=False)
     vellum_case_management = BooleanProperty(default=False)
 
+    # legacy property; kept around to be able to identify (deprecated) v1 apps
+    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
+
+    def assert_app_v2(self):
+        assert self.application_version == APP_V2
+
     build_profiles = SchemaDictProperty(BuildProfile)
 
     # each language is a key and the value is a list of multimedia referenced in that language
@@ -5239,12 +5245,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_grid_menus = BooleanProperty(default=False)
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
-
-    # legacy property; kept around to be able to identify (deprecated) v1 apps
-    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
-
-    def assert_app_v2(self):
-        assert self.application_version == APP_V2
 
     @property
     @memoized

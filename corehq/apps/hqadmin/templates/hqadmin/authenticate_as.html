@@ -1,8 +1,10 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
 {% load crispy_forms_tags %}
+{% load hq_shared_tags %}
 {% load i18n %}
 
 {% block reportcontent %}
+{% initial_page_data "url" page_url %}
 <div class="row">
     <div class="col-xs-12">
         <h2>{{ current_page.title }}</h2>
@@ -20,18 +22,6 @@
 </div>
 {% endblock %}
 
-{% block js-inline %} {{ block.super }}
-    <script>
-        $('#id_username, #id_domain').change(function() {
-            var username = $('#id_username').val(),
-                domain = $('#id_domain').val();
-
-            var action = '{{ page_url }}' + username + '/';
-            if (domain) {
-                action += domain + '/'
-            }
-
-            $('#auth-as-form').attr('action', action);
-        });
-    </script>
+{% block js %} {{ block.super }}
+    <script src="{% static 'hqadmin/js/authenticate_as.js' %}"></script>
 {% endblock %}

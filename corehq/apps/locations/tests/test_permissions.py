@@ -1,11 +1,12 @@
 import json
-import mock
 import uuid
 import random
 import string
 from StringIO import StringIO
+import mock
 
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -207,7 +208,9 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     def _assert_edit_location_gives_status(self, location, status_code):
         location_id = self.locations[location].location_id
         url = reverse(EditLocationView.urlname, args=[self.domain, location_id])
-        self._assert_url_returns_status(url, status_code)
+        noop = lambda *args, **kwargs: HttpResponse()
+        with mock.patch.object(EditLocationView, 'get', noop):
+            self._assert_url_returns_status(url, status_code)
 
     def test_can_edit_child_location(self):
         self._assert_edit_location_gives_status("Boston", 200)
