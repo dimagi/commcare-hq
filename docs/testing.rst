@@ -21,18 +21,15 @@ Sometimes classes share the same base class and inherit the ``setUpClass`` funct
         def setUpClass(cls):
             ...
 
-        def _my_helper_function(self):
-            ...
-
 
     class MyTestClass(MyBaseTestClass):
 
-        def test(self):
+        def test1(self):
             ...
 
     class MyTestClassTwo(MyBaseTestClass):
 
-        def test(self):
+        def test2(self):
             ...
 
 
@@ -42,27 +39,16 @@ In the above example the ``setUpClass`` is run twice, once for ``MyTestClass`` a
 
     # GOOD EXAMPLE
 
-    class MyTextMixin(object)
-
-        def _my_helper_function(self):
-            ...
-
-    class MyTestClass(TestCase, MyTextMixin):
+    class MyBigTestClass(TestCase):
 
         @classmethod
         def setUpClass(cls):
             ...
 
-        def test(self):
+        def test1(self):
             ...
 
-    class MyTestClassTwo(TestCase, MyTextMixin):
-
-        @classmethod
-        def setUpClass(cls):
-            ...
-
-        def test(self):
+        def test2(self):
             ...
 
 However this can lead to giant Test classes. If you find that all the tests in a package or module are sharing
