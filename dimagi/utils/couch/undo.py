@@ -15,8 +15,7 @@ class DeleteDocRecord(DeleteRecord):
 
     def undo(self):
         doc = self.get_doc()
-        doc.doc_type = doc.doc_type.rstrip(DELETED_SUFFIX)
-        doc.save()
+        undo_delete(doc)
 
 
 class UndoableDocument(Document):
@@ -55,3 +54,8 @@ def get_deleted_doc_type(document_class_or_instance):
     else:
         base_name = document_class_or_instance.__name__
     return '{}{}'.format(base_name, DELETED_SUFFIX)
+
+
+def undo_delete(document):
+    document.doc_type = document.doc_type.rstrip(DELETED_SUFFIX)
+    document.save()
