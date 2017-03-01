@@ -44,7 +44,7 @@ from corehq.pillows.utils import get_deleted_doc_types
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.couch.undo import get_deleted_doc_type
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from django.conf import settings
@@ -108,7 +108,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         super(DataSourceConfiguration, self).save(**params)
 
     def soft_delete(self):
-        self.doc_type += DELETED_SUFFIX
+        self.doc_type = get_deleted_doc_type(self)
         self.save()
 
 
