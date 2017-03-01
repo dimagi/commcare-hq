@@ -5247,7 +5247,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                      choices=['none', 'all', 'some'])
 
     def has_modules(self):
-        return len(self.modules) > 0
+        return len(self.modules) > 0 and not self.is_remote_app()
 
     @property
     @memoized
