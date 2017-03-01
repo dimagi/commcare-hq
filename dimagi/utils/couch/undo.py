@@ -48,6 +48,11 @@ def is_deleted(doc):
         return False
 
 
+def soft_delete(document):
+    document.doc_type = get_deleted_doc_type(document)
+    document.save()
+
+
 def get_deleted_doc_type(document_class_or_instance):
     if isinstance(document_class_or_instance, Document):
         base_name = document_class_or_instance.doc_type
