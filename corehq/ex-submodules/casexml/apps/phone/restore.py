@@ -307,7 +307,7 @@ class CachedPayload(object):
                 self.payload_path = file_reference.path
             except Exception as e:
                 # don't fail hard if anything goes wrong since this is an edge case optimization
-                soft_assert(to=['czue' + '@' + 'dimagi.com'])(False, u'Error finalizing cached log: {}'.format(e))
+                soft_assert(notify_admins=True)(False, u'Error finalizing cached log: {}'.format(e))
 
 
 class CachedResponse(object):
