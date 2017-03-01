@@ -1080,7 +1080,6 @@ def delete_data_source_shared(domain, config_id, request=None):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def undelete_data_source(request, domain, config_id):
-    print get_deleted_doc_type(DataSourceConfiguration)
     config = get_document_or_404(DataSourceConfiguration, domain, config_id, additional_doc_types=[
         get_deleted_doc_type(DataSourceConfiguration)
     ])
