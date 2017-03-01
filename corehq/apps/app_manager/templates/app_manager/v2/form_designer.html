@@ -26,6 +26,9 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'moment/moment.js' %}"></script>
     <script src="{% static 'requirejs/require.js' %}"></script>
+    {% if not request|toggle_enabled:'VELLUM_BETA' %}
+        <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
+    {% endif %}
     <script src="{% static 'app_manager/js/app-notifications.js' %}"></script>
     <script src="{% static 'js/ws4redis.js' %}"></script>
 {% endblock %}
@@ -272,3 +275,46 @@
 {% block column_style %}hq-flush-content{% endblock %}
 
 {% block footer %}{% endblock %}
+
+{% block modals %}
+    {{ block.super }}
+    {% with slug="vellum_beta" name="New Form Builder" %}
+    {% registerurl 'enable_toggle' slug %}
+    {% if not request|toggle_enabled:'VELLUM_BETA' %}
+        <!-- This will appear on page load, so don't use any animation (normally controlled by .fade) -->
+        {% blocktrans %}
+        <div class="modal rollout-modal" data-slug="{{ slug }}">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">{{ name }} Available!</h4>
+                    </div>
+                    <div class="modal-body">
+                            <p>
+                                We're about to release changes to make form builder easier to use.
+                                <a href="#">Check them out here.</a>
+                            </p>
+                            <p>
+                                These changes will be rolled out permanently on <strong>March 24th</strong>, but if
+                                you'd like, you can turn them on now.
+                            </p>
+                            <div class="row">
+                                <div class="col-sm-6 text-center">
+                                    <button class="btn btn-lg btn-primary btn-full-width flag-enable">
+                                        Yes, turn on {{ name }}!
+                                    </button>
+                                </div>
+                                <div class="col-sm-6 text-center">
+                                    <button class="btn btn-lg btn-default btn-full-width flag-snooze">
+                                        No, remind me later
+                                    </button>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblocktrans %}
+    {% endif %}
+    {% endwith %}
+{% endblock modals %}
