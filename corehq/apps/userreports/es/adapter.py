@@ -7,6 +7,7 @@ from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.es.aggregations import MissingAggregation
 from corehq.elastic import get_es_new, ESError
+from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.es_utils import (
     set_index_reindex_settings,
@@ -164,6 +165,7 @@ class IndicatorESAdapter(IndicatorAdapter):
     def refresh_table(self):
         self.es.indices.refresh(index=self.table_name)
 
+    @unit_testing_only
     def clear_table(self):
         self.rebuild_table()
 
