@@ -942,6 +942,13 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+VELLUM_BETA = StaticToggle(
+    'vellum_beta',
+    'Use Vellum beta version',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_USER]
+)
+
 APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
