@@ -787,13 +787,16 @@ class ConfigureMapReport(ConfigureChartReport):
         return ConfigureMapReportForm
 
 
-def delete_report(request, domain, report_id):
+def _assert_report_delete_privileges(request):
     if not (toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
             or toggle_enabled(request, toggles.REPORT_BUILDER)
             or toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
             or has_report_builder_add_on_privilege(request)):
         raise Http404()
 
+
+def delete_report(request, domain, report_id):
+    _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
     # Delete the data source too if it's not being used by any other reports.
