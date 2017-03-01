@@ -40,7 +40,7 @@ from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
-from dimagi.utils.couch.undo import get_deleted_doc_type, is_deleted, undo_delete
+from dimagi.utils.couch.undo import get_deleted_doc_type, is_deleted, undo_delete, soft_delete
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -1063,7 +1063,7 @@ def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     adapter = get_indicator_adapter(config)
     adapter.drop_table()
-    config.soft_delete()
+    soft_delete(config)
     if request:
         messages.success(
             request,
