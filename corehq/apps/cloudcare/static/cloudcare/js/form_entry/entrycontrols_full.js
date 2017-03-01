@@ -385,8 +385,7 @@ function ComboboxEntry(question, options) {
                     });
                     $atwhoView = $('.atwho-container .atwho-view');
                     $atwhoView.attr({
-                        'data-showing': Math.min(limit, results.length),
-                        'data-total': results.length,
+                        'data-message': 'Showing ' + Math.min(limit, results.length) + ' of ' + results.length,
                     });
                     return results;
                 },
