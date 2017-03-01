@@ -72,8 +72,8 @@ database and ``TestCase``.
 
 CommCareHQ also has some custom in mocking tools.
 
-    - `Fake Couch <https://github.com/dimagi/fakecouch>`_ - Fake implementation of CouchDBKit api for testing purposes.
-    - `ESQueryFake <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/es/fake/es_query_fake.py>`_ - For faking ES queries.
+- `Fake Couch <https://github.com/dimagi/fakecouch>`_ - Fake implementation of CouchDBKit api for testing purposes.
+- `ESQueryFake <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/es/fake/es_query_fake.py>`_ - For faking ES queries.
 
 
 Squashing Migrations
