@@ -3,7 +3,7 @@
 
     var CaseType = function (name) {
         var self = this;
-        self.name = ko.observable(name);
+        self.name = name;
         self.properties = ko.observableArray();
 
         self.init = function (group_dict, changeSaveButton) {
@@ -11,24 +11,26 @@
                 var groupObj = new PropertyListItem(group, true, group, self.name);
                 self.properties.push(groupObj);
                 _.each(properties, function (prop) {
-                    var propObj = new PropertyListItem(prop.name, false, prop.group, self.name, prop.data_type, prop.description);
+                    var propObj = new PropertyListItem(prop.name, false, prop.group, self.name, prop.data_type, prop.description, prop.deprecated);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.dataType.subscribe(changeSaveButton);
+                    propObj.deprecated.subscribe(changeSaveButton);
                     self.properties.push(propObj);
                 });
             });
         };
     };
 
-    var PropertyListItem = function (name, isGroup, groupName, caseType, dataType, description) {
+    var PropertyListItem = function (name, isGroup, groupName, caseType, dataType, description, deprecated) {
         var self = this;
-        self.name = ko.observable(name);
+        self.name = name;
         self.expanded = ko.observable(true);
         self.isGroup = isGroup;
         self.group = ko.observable(groupName);
         self.caseType = caseType;
         self.dataType = ko.observable(dataType);
         self.description = ko.observable(description);
+        self.deprecated = ko.observable(deprecated || false);
         self.availableDataTypes = ko.observableArray([
             {value: 'date', display: django.gettext('Date')},
             {value: 'plain', display: django.gettext('Plain')},
@@ -53,6 +55,14 @@
         self.toggle = function () {
             self.expanded(!self.expanded());
         };
+
+        self.deprecateProperty = function () {
+            self.deprecated(true);
+        };
+
+        self.restoreProperty = function () {
+            self.deprecated(false);
+        };
     };
 
     var DataDictionaryModel = function (dataUrl, casePropertyUrl) {
@@ -62,6 +72,7 @@
         self.newPropertyName = ko.observable();
         self.newGroupName = ko.observable();
         self.casePropertyList = ko.observableArray();
+        self.showAll = ko.observable(false);
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function() {
@@ -70,15 +81,16 @@
                 _.each(self.casePropertyList(), function(element) {
                     if (!element.isGroup) {
                         var data = {
-                            'caseType': element.caseType(),
-                            'name': element.name(),
+                            'caseType': element.caseType,
+                            'name': element.name,
                             'data_type': element.dataType(),
                             'group': currentGroup,
                             'description': element.description(),
+                            'deprecated': element.deprecated(),
                         };
                         postProperties.push(data);
                     } else {
-                        currentGroup = element.name();
+                        currentGroup = element.name;
                     }
                 });
                 self.saveButton.ajax({
@@ -119,7 +131,7 @@
 
         this.getActiveCaseType = function () {
             return _.find(self.caseTypes(), function (prop) {
-                return prop.name() === self.activeCaseType();
+                return prop.name === self.activeCaseType();
             });
         };
 
@@ -141,7 +153,7 @@
                     return;
                 }
             }
-            self.activeCaseType(caseType.name());
+            self.activeCaseType(caseType.name);
             self.casePropertyList(self.activeCaseTypeData());
             self.saveButton.setState('saved');
         };
@@ -149,6 +161,8 @@
         this.newCaseProperty = function () {
             var prop = new PropertyListItem(self.newPropertyName(), false, '', self.activeCaseType());
             prop.dataType.subscribe(changeSaveButton);
+            prop.description.subscribe(changeSaveButton);
+            prop.deprecated.subscribe(changeSaveButton);
             self.newPropertyName('');
             self.casePropertyList.push(prop);
         };
@@ -162,7 +176,7 @@
         this.toggleGroup = function (group) {
             group.toggle();
             var groupIndex = _.findIndex(self.casePropertyList(), function (element) {
-                return element.name() === group.name();
+                return element.name === group.name;
             });
             var i = groupIndex + 1;
             var next = self.casePropertyList()[i];
@@ -172,6 +186,14 @@
                 next = self.casePropertyList()[i];
             }
         };
+
+        this.showDeprecated = function () {
+            self.showAll(true);
+        };
+
+        this.hideDeprecated = function () {
+            self.showAll(false);
+        }
     };
 
     $(function() {
