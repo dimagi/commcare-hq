@@ -1062,7 +1062,7 @@ def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     adapter = get_indicator_adapter(config)
     adapter.drop_table()
-    config.delete()
+    config.soft_delete()
     if request:
         messages.success(
             request,
