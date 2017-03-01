@@ -25,8 +25,7 @@ def _notify_dimagi_users_on_domain(domain):
     from corehq.apps.users.models import WebUser
     from corehq.apps.hqwebapp.tasks import send_mail_async
     recipients = [
-        user.get_email() for user in WebUser.by_domain(domain)
-        if '@dimagi.com' in user.username
+        user.get_email() for user in WebUser.by_domain(domain) if user.is_dimagi
     ]
 
     subject = 'CommCare HQ project migrated to the scale backend.'.format(domain)
