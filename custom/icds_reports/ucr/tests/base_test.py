@@ -8,7 +8,7 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import iteratively_build_table
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
@@ -58,14 +58,16 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        adapter = IndicatorSqlAdapter(self.datasource)
+        adapter.clear_table()
 
-    def _rebuild_table_get_query_object(self):
-        rebuild_indicators(self.datasource._id)
+    def _get_query_object(self):
         adapter = IndicatorSqlAdapter(self.datasource)
         return adapter.get_query_object()
 
     def _run_iterative_monthly_test(self, case_id, cases, start_date=date(2015, 12, 1)):
-        query = self._rebuild_table_get_query_object().filter_by(doc_id=case_id)
+        iteratively_build_table(self.datasource)
+        query = self._get_query_object().filter_by(doc_id=case_id)
         self.assertEqual(query.count(), 7)
 
         for index, test_values in cases:
