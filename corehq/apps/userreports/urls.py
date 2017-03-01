@@ -22,7 +22,7 @@ from corehq.apps.userreports.views import (
     choice_list_api,
     ExpressionDebuggerView,
     evaluate_expression,
-    undelete_data_source)
+    undelete_data_source, undelete_report)
 
 urlpatterns = [
     url(r'^$', UserConfigReportsHomeView.as_view(),
@@ -35,6 +35,7 @@ urlpatterns = [
         name=EditConfigReportView.urlname),
     url(r'^reports/source/(?P<report_id>[\w-]+)/$', report_source_json, name='configurable_report_json'),
     url(r'^reports/delete/(?P<report_id>[\w-]+)/$', delete_report, name='delete_configurable_report'),
+    url(r'^reports/undelete/(?P<report_id>[\w-]+)/$', undelete_report, name='undo_delete_configurable_report'),
     url(r'^data_sources/create/$', CreateDataSourceView.as_view(),
         name=CreateDataSourceView.urlname),
     url(r'^data_sources/create_from_app/$', CreateDataSourceFromAppView.as_view(),

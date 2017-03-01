@@ -813,7 +813,12 @@ def delete_report(request, domain, report_id):
     soft_delete(config)
     did_purge_something = purge_report_from_mobile_ucr(config)
 
-    messages.success(request, _(u'Report "{}" deleted!').format(config.title))
+    messages.success(request, _(u'Report "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
+                name=config.title,
+                url=reverse('undo_delete_configurable_report', args=[domain, config._id]),
+            ),
+            extra_tags='html'
+        )
     if did_purge_something:
         messages.warning(
             request,
@@ -824,6 +829,22 @@ def delete_report(request, domain, report_id):
     if not redirect:
         redirect = reverse('configurable_reports_home', args=[domain])
     return HttpResponseRedirect(redirect)
+
+
+def undelete_report(request, domain, report_id):
+    _assert_report_delete_privileges(request)
+    config = get_document_or_404(ReportConfiguration, domain, report_id, additional_doc_types=[
+        get_deleted_doc_type(ReportConfiguration)
+    ])
+    if config and is_deleted(config):
+        undo_delete(config)
+        messages.success(
+            request,
+            _(u'Successfully restored report "{name}"').format(name=config.title)
+        )
+    else:
+        messages.info(request, _(u'Report "{name}" not deleted.').format(name=config.title))
+    return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
 
 
 class ImportConfigReportView(BaseUserConfigReportsView):
