@@ -917,7 +917,7 @@ EDIT_FORMPLAYER = PredictablyRandomToggle(
     'Edit forms on Formplayer',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.0,
+    randomness=0.1,
 )
 
 PREVIEW_APP = PredictablyRandomToggle(
