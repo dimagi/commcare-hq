@@ -22,7 +22,7 @@ class DeleteDocRecord(DeleteRecord):
 class UndoableDocument(Document):
     def soft_delete(self, domain_included=True):
         if not self.doc_type.endswith(DELETED_SUFFIX):
-            self.doc_type += DELETED_SUFFIX
+            self.doc_type = get_deleted_doc_type(self)
             extra_args = {}
             if domain_included:
                 extra_args["domain"] = self.domain
@@ -47,3 +47,11 @@ def is_deleted(doc):
         return doc and doc['doc_type'].endswith(DELETED_SUFFIX)
     except KeyError:
         return False
+
+
+def get_deleted_doc_type(document_class_or_instance):
+    if isinstance(document_class_or_instance, Document):
+        base_name = document_class_or_instance.doc_type
+    else:
+        base_name = document_class_or_instance.__name__
+    return '{}{}'.format(base_name, DELETED_SUFFIX)
