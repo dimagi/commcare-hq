@@ -10,7 +10,7 @@ couch_user_post_save = Signal(providing_args=["couch_user"])
 
 # Called during user validation. Used for additional validation or modification.
 # Receivers should return None or a [('field_name', 'error message')] list
-clean_commcare_user = Signal(providing_args=["cleaned_data"])
+clean_commcare_user = Signal(providing_args=["form"])
 
 
 @receiver(user_logged_in)

@@ -355,7 +355,7 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         cleaned_data = super(UpdateCommCareUserInfoForm, self).clean()
         from .signals import clean_commcare_user
         results = clean_commcare_user.send(sender='UpdateCommCareUserInfoForm',
-                                           cleaned_data=self.cleaned_data)
+                                           form=self)
         # Add in any errors from custom signal receivers
         for receiver, errors in results:
             if errors:

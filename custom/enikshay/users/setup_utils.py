@@ -52,7 +52,7 @@ def validate_role_unchanged(domain, user):
     """Web user role is not editable"""
 
 
-def get_allowable_user_data_types(domain, user):
+def get_allowable_usertypes(domain, user):
     """Restrict choices for custom user data role field based on the chosen
     location's type"""
     location = user.get_sql_location(domain)
