@@ -101,7 +101,7 @@ class OTARestoreUser(object):
     def get_owner_ids(self):
         raise NotImplementedError()
 
-    def get_call_center_indicators(self):
+    def get_call_center_indicators(self, config):
         raise NotImplementedError()
 
     def get_case_sharing_groups(self):
