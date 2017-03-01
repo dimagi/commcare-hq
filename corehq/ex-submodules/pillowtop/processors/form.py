@@ -3,7 +3,7 @@ from django.http import Http404
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, LastSubmission
 from corehq.util.quickcache import quickcache
 from corehq.apps.receiverwrapper.util import get_app_version_info
 
@@ -72,7 +72,15 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
     except ValueError:
         return
 
-    current_last_submission = user.reporting_metadata.last_submission.submission_date
+    last_submissions = filter(
+        lambda submission: submission.app_id == app_id,
+        user.reporting_metadata.last_submissions,
+    )
+    if last_submissions:
+        assert len(last_submissions) == 1, 'Must only have one last submission per app'
+        last_submission = last_submissions[0]
+    else:
+        last_submission = None
 
     app_version_info = get_app_version_info(
         domain,
@@ -81,11 +89,17 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
         metadata
     )
 
-    if current_last_submission is None or current_last_submission < received_on_datetime:
-        user.reporting_metadata.last_submission.submission_date = received_on_datetime
-        user.reporting_metadata.last_submission.device_id = metadata.get('deviceID')
-        user.reporting_metadata.last_submission.app_id = app_id
-        user.reporting_metadata.last_submission.build_id = build_id
-        user.reporting_metadata.last_submission.build_version = app_version_info.build_version
-        user.reporting_metadata.last_submission.commcare_version = app_version_info.commcare_version
+    if last_submission is None or last_submission.submission_date < received_on_datetime:
+
+        if last_submission is None:
+            last_submission = LastSubmission()
+            user.reporting_metadata.last_submissions.append(last_submission)
+
+        last_submission.submission_date = received_on_datetime
+        last_submission.device_id = metadata.get('deviceID')
+        last_submission.app_id = app_id
+        last_submission.build_id = build_id
+        last_submission.build_version = app_version_info.build_version
+        last_submission.commcare_version = app_version_info.commcare_version
+
         user.save()

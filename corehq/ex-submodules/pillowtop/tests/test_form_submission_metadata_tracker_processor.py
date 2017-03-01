@@ -29,7 +29,7 @@ class MarkLatestSubmissionTest(TestCase):
 
     def tearDown(self):
         user = CouchUser.get_by_user_id(self.user._id, self.domain)
-        user.reporting_metadata.last_submission = LastSubmission()
+        user.reporting_metadata.last_submissions = []
         user.save()
 
     @classmethod
@@ -50,23 +50,26 @@ class MarkLatestSubmissionTest(TestCase):
         )
         user = CouchUser.get_by_user_id(self.user._id, self.domain)
 
+        self.assertEqual(len(user.reporting_metadata.last_submissions), 1)
+        last_submission = user.reporting_metadata.last_submissions[0]
+
         self.assertEqual(
-            user.reporting_metadata.last_submission.submission_date,
+            last_submission.submission_date,
             string_to_utc_datetime(submission_date),
         )
         self.assertEqual(
-            user.reporting_metadata.last_submission.app_id,
+            last_submission.app_id,
             self.app_id,
         )
         self.assertEqual(
-            user.reporting_metadata.last_submission.build_id,
+            last_submission.build_id,
             self.build_id,
         )
         self.assertEqual(
-            user.reporting_metadata.last_submission.device_id,
+            last_submission.device_id,
             self.metadata['deviceID'],
         )
-        self.assertEqual(user.reporting_metadata.last_submission.build_version, 2)
+        self.assertEqual(last_submission.build_version, 2)
 
     def test_mark_latest_submission_do_not_update(self):
         '''
@@ -99,6 +102,7 @@ class MarkLatestSubmissionTest(TestCase):
         user = CouchUser.get_by_user_id(self.user._id, self.domain)
         new_rev = user._rev
 
+        self.assertEqual(len(user.reporting_metadata.last_submissions), 1)
         self.assertEqual(rev, new_rev)
 
     def test_mark_latest_submission_error_parsing(self):
@@ -112,7 +116,7 @@ class MarkLatestSubmissionTest(TestCase):
             self.metadata,
             submission_date,
         )
-        self.assertIsNone(self.user.reporting_metadata.last_submission.submission_date)
+        self.assertListEqual(self.user.reporting_metadata.last_submissions, [])
 
         submission_date = "2017-02-05T00:00:00.000000Z"
         mark_latest_submission(
@@ -124,7 +128,7 @@ class MarkLatestSubmissionTest(TestCase):
             self.metadata,
             submission_date,
         )
-        self.assertIsNone(self.user.reporting_metadata.last_submission.submission_date)
+        self.assertListEqual(self.user.reporting_metadata.last_submissions, [])
 
         mark_latest_submission(
             self.domain,
@@ -135,4 +139,28 @@ class MarkLatestSubmissionTest(TestCase):
             self.metadata,
             submission_date,
         )
-        self.assertIsNone(self.user.reporting_metadata.last_submission.submission_date)
+        self.assertListEqual(self.user.reporting_metadata.last_submissions, [])
+
+    def test_mark_latest_submission_multiple(self):
+        submission_date = "2017-02-05T00:00:00.000000Z"
+        mark_latest_submission(
+            self.domain,
+            self.user._id,
+            self.app_id,
+            self.build_id,
+            self.version,
+            self.metadata,
+            submission_date,
+        )
+        mark_latest_submission(
+            self.domain,
+            self.user._id,
+            'other-app-id',
+            self.build_id,
+            self.version,
+            self.metadata,
+            submission_date,
+        )
+        user = CouchUser.get_by_user_id(self.user._id, self.domain)
+        self.assertEqual(len(user.reporting_metadata.last_submissions), 2)
+

@@ -782,7 +782,7 @@ class LastSubmission(DocumentSchema):
 
 class ReportingMetadata(DocumentSchema):
 
-    last_submission = SchemaProperty(LastSubmission)
+    last_submissions = SchemaListProperty(LastSubmission)
 
 
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
