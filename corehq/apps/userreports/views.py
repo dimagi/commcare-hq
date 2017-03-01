@@ -40,6 +40,7 @@ from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
+from dimagi.utils.couch.undo import get_deleted_doc_type, is_deleted, undo_delete
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -1066,8 +1067,31 @@ def delete_data_source_shared(domain, config_id, request=None):
     if request:
         messages.success(
             request,
-            _(u'Data source "{}" has been deleted.'.format(config.display_name))
+            _(u'Data source "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
+                name=config.display_name,
+                url=reverse('undo_delete_data_source', args=[domain, config._id]),
+            ),
+            extra_tags='html'
         )
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def undelete_data_source(request, domain, config_id):
+    print get_deleted_doc_type(DataSourceConfiguration)
+    config = get_document_or_404(DataSourceConfiguration, domain, config_id, additional_doc_types=[
+        get_deleted_doc_type(DataSourceConfiguration)
+    ])
+    if config and is_deleted(config):
+        undo_delete(config)
+        messages.success(
+            request,
+            _(u'Successfully restored data source "{name}"').format(name=config.display_name)
+        )
+    else:
+        messages.info(request, _(u'Data source "{name}" not deleted.').format(name=config.display_name))
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config._id]
+    ))
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
