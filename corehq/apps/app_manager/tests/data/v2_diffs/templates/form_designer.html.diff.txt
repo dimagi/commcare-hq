@@ -22,7 +22,7 @@
  {% endblock %}
  
  {% block js %}{{ block.super }}
-@@ -56,6 +65,7 @@
+@@ -57,6 +66,7 @@
                  onFormSave: function (data) {
                      var app_manager = hqImport('app_manager/js/app_manager.js')
                      app_manager.updateDOM(data.update);
@@ -30,7 +30,7 @@
                      {% if request.couch_user.days_since_created == 0 %}
                          analytics.workflow('Saved the Form Builder within first 24 hours');
                      {% endif %}
-@@ -126,12 +136,11 @@
+@@ -127,12 +137,11 @@
              csrftoken: $.cookie('csrftoken')
          };
  
@@ -44,7 +44,7 @@
  
                  $('#formdesigner').vellum(VELLUM_OPTIONS);
  
-@@ -148,14 +157,67 @@
+@@ -149,17 +158,70 @@
              });
          });
          analytics.workflow('Entered the Form Builder');
@@ -113,3 +113,6 @@
  {% block column_style %}hq-flush-content{% endblock %}
 +
 +{% block footer %}{% endblock %}
+ 
+ {% block modals %}
+     {{ block.super }}
