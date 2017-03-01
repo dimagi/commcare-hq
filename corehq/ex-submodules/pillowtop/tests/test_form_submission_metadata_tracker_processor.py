@@ -1,7 +1,7 @@
 from django.test import TestCase
 from dimagi.utils.parsing import string_to_utc_datetime
 
-from corehq.apps.users.models import CommCareUser, CouchUser, LastSubmission
+from corehq.apps.users.models import CommCareUser, CouchUser
 
 from pillowtop.processors.form import mark_latest_submission
 
@@ -163,4 +163,3 @@ class MarkLatestSubmissionTest(TestCase):
         )
         user = CouchUser.get_by_user_id(self.user._id, self.domain)
         self.assertEqual(len(user.reporting_metadata.last_submissions), 2)
-
