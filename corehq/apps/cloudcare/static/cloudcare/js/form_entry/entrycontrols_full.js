@@ -614,7 +614,7 @@ function GeoPointEntry(question, options) {
         self.rawAnswer([]);
     };
 
-    window.gMapsCallback = function() {
+    self.gMapsCallback = function() {
         self.geocoder = new google.maps.Geocoder();
         self.map = new google.maps.Map($('#' + self.entryId)[0], {
             mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -626,12 +626,19 @@ function GeoPointEntry(question, options) {
             self.map.setZoom(self.DEFAULT.anszoom);
         }
         google.maps.event.addListener(self.map, "center_changed", self.updateCenter.bind(self));
-    }
+    };
+
     self.afterRender = function() {
-        if (typeof google === "undefined") {
-            $.getScript(self.apiKey + '&callback=gMapsCallback');
+        if (typeof google === "undefined" && !window.gMapsRequested) {
+            // First entry to attempt to load google
+            window.gMapsRequested = true;
+            $.getScript(self.apiKey, self.gMapsCallback);
+        } else if (typeof google === "undefined" && window.gMapsRequested) {
+            // Waiting for gmaps to load, recursively call afterRender
+            setTimeout(self.afterRender, 400);
         } else {
-            window.gMapsCallback();
+            // google has already been loaded
+            self.gMapsCallback();
         }
     };
 
