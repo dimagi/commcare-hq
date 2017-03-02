@@ -50,11 +50,15 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
             cls.domain,
         )
         cls.casefactory = CaseFactory(domain=cls.domain)
+        adapter = IndicatorSqlAdapter(cls.datasource)
+        adapter.build_table()
 
     @classmethod
     def tearDownClass(cls):
-        super(BaseICDSDatasourceTest, cls).tearDownClass()
         cls._call_center_domain_mock.stop()
+        adapter = IndicatorSqlAdapter(cls.datasource)
+        adapter.drop_table()
+        super(BaseICDSDatasourceTest, cls).tearDownClass()
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
