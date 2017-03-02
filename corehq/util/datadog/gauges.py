@@ -1,4 +1,3 @@
-from django.conf import settings
 from functools import wraps
 from celery.task import periodic_task
 from corehq.util.datadog import statsd, datadog_logger
