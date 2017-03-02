@@ -905,7 +905,7 @@ try:
                 globals()[attr] = getattr(custom_settings_module, attr)
     else:
         from localsettings import *
-except ImportError as error:
+except ImportError, error:
     if error.message != 'No module named localsettings':
         raise error
     # fallback in case nothing else is found - used for readthedocs
