@@ -125,7 +125,7 @@ class PillowBase(object):
 
     def _record_checkpoint_in_datadog(self):
         for topic, value in self.get_last_checkpoint_sequence().iteritems():
-            datadog_gauge('commcare.change_feed.topics'.format(topic), value, tags=[
+            datadog_gauge('commcare.change_feed.processed_offsets'.format(topic), value, tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 'topic:{}'.format(topic),
             ])
