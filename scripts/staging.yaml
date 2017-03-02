@@ -52,6 +52,7 @@ branches:
   - je/device-log-details # 2/21
   - revert-14997-revert-14712-br/anonymous-formplayer  # BR 2/16
   - np/django1.10 # NP 2/12
+  - nc/adherence-mockup  # Noah 3/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
