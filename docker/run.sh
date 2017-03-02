@@ -47,15 +47,12 @@ function run_tests() {
         exit 1
     fi
     shift
-    echo "Datadog Testing"
-
-    echo ${DATADOG_API_KEY:0:2}
 
     now=`date +%s`
     setup $TEST
     delta=$((`date +%s` - $now))
 
-    send_metrics_to_datadog "setup" 20
+    send_metrics_to_datadog "setup" $delta
 
     now=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
