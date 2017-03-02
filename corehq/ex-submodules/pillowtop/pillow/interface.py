@@ -150,13 +150,14 @@ class PillowBase(object):
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change)
 
     def __record_change_metric_in_datadog(self, metric, change):
-        datadog_counter(metric, tags=[
-            'datasource:{}'.format(change.metadata.data_source_name),
-            'document_type:{}'.format(change.metadata.document_type),
-            'domain:{}'.format(change.metadata.domain),
-            'is_deletion:{}'.format(change.metadata.is_deletion),
-            'pillow_name:{}'.format(self.get_name()),
-        ])
+        if change.metadata is not None:
+            datadog_counter(metric, tags=[
+                'datasource:{}'.format(change.metadata.data_source_name),
+                'document_type:{}'.format(change.metadata.document_type),
+                'domain:{}'.format(change.metadata.domain),
+                'is_deletion:{}'.format(change.metadata.is_deletion),
+                'pillow_name:{}'.format(self.get_name()),
+            ])
 
 
 class ChangeEventHandler(object):
