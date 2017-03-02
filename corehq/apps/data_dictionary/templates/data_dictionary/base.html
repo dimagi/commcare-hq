@@ -34,12 +34,17 @@
     <div data-bind="saveButton: saveButton"></div>
     <div class="row">
         <div class="col-md-10">
-            <a class="btn btn-info" id="download-dict" href="{% url "export_data_dictionary" domain %}">{% trans "Export to Excel" %}</a>
-            <a class="btn btn-default" href="{% url "upload_data_dict" domain %}">{% trans "Import from Excel" %}</a>
             <h3 data-bind="text: $root.activeCaseType()"></h3>
-            <br/>
-            <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-info">{% trans "Show Deprecated Properties" %}</button>
-            <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-info">{% trans "Hide Deprecated Properties" %}</button>
+            <a class="btn btn-info" id="download-dict" href="{% url "export_data_dictionary" domain %}">
+                 <i class="fa fa-cloud-download"></i>
+                {% trans "Export to Excel" %}
+            </a>
+            <a class="btn btn-default" href="{% url "upload_data_dict" domain %}">
+                <i class="fa fa-cloud-upload"></i>
+                {% trans "Import from Excel" %}
+            </a>
+            <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default btn-float-right">{% trans "Show Deprecated Properties" %}</button>
+            <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-default btn-float-right">{% trans "Hide Deprecated Properties" %}</button>
             <table id="data-dictionary-table" class="table">
                 <thead>
                     <th></th>
@@ -65,7 +70,8 @@
                         </td>
                         <td data-bind="text: name"></td>
                         <td>
-                            <select data-bind="
+                            <select class ="form-control"
+                                    data-bind="
                                 options: availableDataTypes,
                                 optionsCaption: 'Select a data type',
                                 optionsText: 'display',
@@ -81,10 +87,10 @@
                             "></textarea>
                         </td>
                         <!-- ko if: !deprecated() -->
-                        <td><button data-bind="click: deprecateProperty" class="btn btn-danger">{% trans "Deprecate Property" %}</button></td>
+                        <td><button data-bind="click: deprecateProperty" class="btn btn-warning btn-sm">{% trans "Deprecate Property" %}</button></td>
                         <!-- /ko -->
                         <!-- ko if: deprecated() -->
-                        <td><button data-bind="click: restoreProperty" class="btn btn-success">{% trans "Restore Property" %}</button></td>
+                        <td><button data-bind="click: restoreProperty" class="btn btn-info btn-sm">{% trans "Restore Property" %}</button></td>
                         <!-- /ko -->
                     </tr>
                     <!-- /ko -->

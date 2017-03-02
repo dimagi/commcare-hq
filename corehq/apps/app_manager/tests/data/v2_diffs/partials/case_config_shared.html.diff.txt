@@ -113,7 +113,7 @@
 -                        afterRender: $root.makePopover
 -                    }"></div>
 -                    <p class="help-block" data-bind="html: validate, visible: validate"></p>
--                    <div class="property-description" style="width: 210px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+-                    <div class="property-description"
 +    <div class="panel-heading">
 +      <h4 class="panel-title panel-title-nolink">
 +        <i class="fa fa-save"></i> {% trans "Save Question Answers to Case Properties" %}
@@ -153,7 +153,7 @@
 +                            afterRender: $root.makePopover
 +                        }"></div>
 +                        <p class="help-block" data-bind="html: validate, visible: validate"></p>
-+                        <div class="property-description" style="width: 210px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
++                        <div class="property-description"
                            data-bind="text: $data.description, attr: {'data-content': $data.description}">
 -                    </div>
 -                </td>

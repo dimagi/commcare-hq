@@ -8,19 +8,10 @@ PROPERTY_TYPE_CHOICES = (
     ('plain', 'Plain'),
     ('number', 'Number'),
     ('select', 'Select'),
-    ('audio', 'Audio'),
     ('barcode', 'Barcode'),
     ('gps', 'GPS'),
-    ('image', 'Image'),
     ('phone_number', 'Phone Number'),
     ('password', 'Password'),
-    ('signature', 'Signature'),
-    ('video', 'Video'),
-    ('balance', 'Balance'),
-    ('transfer', 'Transfer'),
-    ('dispense', 'Dispense'),
-    ('receive', 'Receive'),
-    ('save_to_case', 'Save To Case'),
     ('', 'No Type Currently Selected')
 )
 

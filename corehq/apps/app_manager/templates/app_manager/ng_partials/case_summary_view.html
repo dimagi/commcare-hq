@@ -119,7 +119,7 @@
                         <tr ng-repeat="form in property.forms" id="{{ caseType.name }}:{{ property.name }}"
                             ng-class="{'danger': property.has_errors}">
                             <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.name }}</td>
-                            <td>{{ property.description }}</td>
+                            <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.description }}</td>
                             <td>
                                 {% verbatim %}
                                     <a ng-href="{{ getModuleUrl(form.form_id, lang) }}">
