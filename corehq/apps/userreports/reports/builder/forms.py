@@ -1188,7 +1188,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         widget=forms.HiddenInput,
         error_messages={"required": ugettext_lazy("At least one column is required")},
     )
-    column_legend_fine_print = ugettext_noop("Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
+    column_legend_fine_print = ugettext_noop(u"Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
 
     @property
     def container_fieldset(self):
@@ -1284,7 +1284,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
-    column_legend_fine_print = ugettext_noop('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
+    column_legend_fine_print = ugettext_noop(u'Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
     group_by = forms.ChoiceField(label=_("Show one row for each"))
 
     @property
@@ -1380,7 +1380,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 class ConfigureWorkerReportForm(ConfigureTableReportForm):
     # This is a ConfigureTableReportForm, but with a predetermined aggregation
     report_type = 'worker'
-    column_legend_fine_print = ugettext_noop('Add columns for this report to aggregate. Each property you add will create a column for every value of that property. For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
+    column_legend_fine_print = ugettext_noop(u'Add columns for this report to aggregate. Each property you add will create a column for every value of that property. For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
 
     def __init__(self, *args, **kwargs):
         super(ConfigureWorkerReportForm, self).__init__(*args, **kwargs)
