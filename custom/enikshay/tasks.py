@@ -14,6 +14,7 @@ from corehq import toggles
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.apps.reports.analytics.esaccessors import get_reverse_indexed_cases_es
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 
@@ -113,8 +114,7 @@ class EpisodeUpdate(object):
     @memoized
     def get_valid_adherence_cases(self):
         # Returns list of 'adherence' cases of which 'adherence_value' is one of DOSE_KNOWN_INDICATORS
-        case_accessor = CaseAccessors(self.case_updater.domain)
-        indexed_cases = case_accessor.get_reverse_indexed_cases([self.episode.case_id])
+        indexed_cases = get_reverse_indexed_cases_es(self.case_updater.domain, self.episode.case_id)
         return [
             case
             for case in indexed_cases

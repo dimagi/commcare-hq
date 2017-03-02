@@ -4,8 +4,12 @@ from django.test import TestCase
 
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField
+from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
 from custom.enikshay.tasks import *
+from pillowtop.es_utils import initialize_index_and_mapping
 from .utils import *
 
 
@@ -20,6 +24,8 @@ class TestAdherenceUpdater(TestCase):
             "123",
         )
         cls.setupFixtureData()
+        cls.es = get_es_new()
+        initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
 
     def setUp(self):
         super(TestAdherenceUpdater, self).setUp()
@@ -29,6 +35,7 @@ class TestAdherenceUpdater(TestCase):
         self.episode_id = u"episode"
         FormProcessorTestUtils.delete_all_cases()
         self.case_updater = EpisodeAdherenceUpdater(self.domain)
+        initialize_index_and_mapping(self.es, CASE_INDEX_INFO)
 
     @classmethod
     def setupFixtureData(cls):
@@ -86,7 +93,11 @@ class TestAdherenceUpdater(TestCase):
         cls.data_type.delete()
         for data_item in cls.data_items:
             data_item.delete()
+        ensure_index_deleted(CASE_INDEX_INFO.index)
         super(TestAdherenceUpdater, cls).tearDownClass()
+
+    def tearDown(self):
+        ensure_index_deleted(CASE_INDEX_INFO.index)
 
     def _create_episode_case(self, adherence_schedule_date_start, adherence_schedule_id):
         person = get_person_case_structure(
@@ -108,10 +119,13 @@ class TestAdherenceUpdater(TestCase):
             }
         )
         cases = {case.case_id: case for case in self.factory.create_or_update_cases([episode_structure])}
+        episode = cases[self.episode_id]
+        send_to_elasticsearch('cases', episode.to_json())
+        self.es.indices.refresh(CASE_INDEX_INFO.index)
         return cases[self.episode_id]
 
     def _create_adherence_cases(self, adherence_cases):
-        return self.factory.create_or_update_cases([
+        cases = self.factory.create_or_update_cases([
             get_adherence_case_structure(
                 self.episode_id,
                 adherence_date,
@@ -122,6 +136,9 @@ class TestAdherenceUpdater(TestCase):
             )
             for (adherence_date, adherence_value) in adherence_cases
         ])
+        for case in cases:
+            send_to_elasticsearch('cases', case.to_json())
+        self.es.indices.refresh(CASE_INDEX_INFO.index)
 
     def assert_update(self, input, output):
         update = self.calculate_adherence_update(input)
