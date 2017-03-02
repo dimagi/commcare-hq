@@ -1476,6 +1476,11 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "FRI_SMS_SHIFT": "custom.fri.api.shift_custom_content_handler",
     "FRI_SMS_OFF_DAY": "custom.fri.api.off_day_custom_content_handler",
     "UCLA_MESSAGE_BANK": "custom.ucla.api.ucla_message_bank_content",
+    "UCLA_GENERAL_HEALTH": "custom.ucla.api.general_health_message_bank_content",
+    "UCLA_MENTAL_HEALTH": "custom.ucla.api.mental_health_message_bank_content",
+    "UCLA_SEXUAL_HEALTH": "custom.ucla.api.sexual_health_message_bank_content",
+    "UCLA_MED_ADHERENCE": "custom.ucla.api.med_adherence_message_bank_content",
+    "UCLA_SUBSTANCE_ABUSE": "custom.ucla.api.substance_use_message_bank_content",
 }
 
 # These are custom templates which can wrap default the sms/chat.html template
