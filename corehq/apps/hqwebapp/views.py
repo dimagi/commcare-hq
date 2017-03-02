@@ -563,6 +563,7 @@ def bug_report(req):
 
         message += ((
             u"software plan: {software_plan}\n"
+            u"Is self start: {self_started}\n"
             u"Feature Flags: {feature_flags}\n"
             u"Feature Previews: {feature_previews}\n"
             u"Is scale backend: {scale_backend}\n"
@@ -572,6 +573,7 @@ def bug_report(req):
             u"Sentry Error: {sentry_error}\n"
         ).format(
             software_plan=software_plan,
+            self_started=domain_object.internal.self_started,
             feature_flags=toggles.toggles_dict(username=report['username'], domain=domain).keys(),
             feature_previews=feature_previews.previews_dict(domain).keys(),
             scale_backend=should_use_sql_backend(domain),
