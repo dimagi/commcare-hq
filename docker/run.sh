@@ -42,34 +42,69 @@ function setup() {
 
 function run_tests() {
     TEST="$1"
-    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" ]; then
+    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" -a "$TEST" != "python-sharded-and-javascript" ]; then
         echo "Unknown test suite: $TEST"
         exit 1
     fi
     shift
+    echo "Datadog Testing"
+    echo ${DATADOG_API_KEY:0:2}
+
+    now=`date +%s`
     setup $TEST
+    delta=$((`date +%s` - $now))
+
+    send_metrics_to_datadog "setup" 20
+
+    now=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
+    delta=$((`date +%s` - $now))
+
+    send_metrics_to_datadog "tests" $delta
+}
+
+function send_metrics_to_datadog() {
+
+    currenttime=$(date +%s)
+
+    curl  -X POST -H "Content-type: application/json" \
+    -d "{ \"series\" :
+             [{\"metric\":\"travis.timings.$1\",
+              \"points\":[[$currenttime, $2]],
+              \"type\":\"gauge\",
+              \"host\":\"travis-ci.org\",
+              \"tags\":[\"environment:travis\", \"test_type:$TEST\", \"partition:$NOSE_DIVIDED_WE_RUN\"]}
+            ]
+        }" \
+    "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}"
+
 }
 
 function _run_tests() {
     TEST=$1
     shift
-    if [ "$TEST" == "python-sharded" ]; then
+    if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript" ]; then
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
-        TESTS=" \
-            corehq.form_processor \
-            corehq.sql_db \
-            couchforms \
-            casexml.apps.case \
-            casexml.apps.phone \
-            corehq.apps.receiverwrapper \
-            corehq.apps.dump_reload.tests.test_sql_dump_load:TestSQLDumpLoadShardedModels"
+        TESTS="--attr=sql_backend"
     else
         TESTS=""
     fi
 
-    if [ "$TEST" != "javascript" ]; then
+    if [ "$TEST" == "python-sharded-and-javascript" ]; then
+        ./manage.py create_kafka_topics
+        echo "coverage run manage.py test $@ $TESTS"
+        /vendor/bin/coverage run manage.py test "$@" $TESTS
+
+        ./manage.py migrate --noinput
+        ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
+        host=127.0.0.1 /mnt/wait.sh hq:8000
+        # HACK curl to avoid
+        # Warning: PhantomJS timed out, possibly due to a missing Mocha run() call.
+        curl http://localhost:8000/mocha/app_manager/ &> /dev/null
+        echo "grunt mocha $@"
+        grunt mocha "$@"
+    elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
         echo "coverage run manage.py test $@ $TESTS"
         /vendor/bin/coverage run manage.py test "$@" $TESTS

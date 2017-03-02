@@ -4,6 +4,7 @@ Utilities for administering kafka.
 
 This can be run locally when connected to the VPN.
 """
+from __future__ import print_function
 import json
 from string import ljust
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
@@ -17,11 +18,11 @@ def get_num_partitions(client, broker):
 
 
 def print_broker_info(client):
-    print ljust("Broker ID", 10), ljust("partitions", 11), "URL"
+    print(ljust("Broker ID", 10), ljust("partitions", 11), "URL")
     for broker, meta in client.brokers.items():
-        print ljust(str(broker), 10),
-        print ljust(str(get_num_partitions(client, broker)), 11),
-        print "{}:{}".format(meta.host, meta.port)
+        print(ljust(str(broker), 10), end=' ')
+        print(ljust(str(get_num_partitions(client, broker)), 11), end=' ')
+        print("{}:{}".format(meta.host, meta.port))
 
 
 def print_topics(client):
@@ -33,7 +34,7 @@ def print_topics(client):
         'topics': [{'topic': topic} for topic in client.topics],
         'version': 1,
     }
-    print json.dumps(topics_dict, indent=4)
+    print(json.dumps(topics_dict, indent=4))
 
 
 def main():

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import re
 from collections import defaultdict
 from optparse import make_option
@@ -18,26 +19,26 @@ BAD_FORM_PROBLEM_TEMPLATE = "Form was missing multimedia attachments. Replaced b
 
 class Command(BaseCommand):
     help = 'Replace xforms missing attachments with xfrom duplicates containing attachments.'
-    args = '<ids_file_path> <log_path>'
 
-    option_list = (
-        make_option(
+    def add_arguments(self, parser):
+        parser.add_argument('ids_file_path')
+        parser.add_argument('log_path')
+        parser.add_argument(
             '--dry-run',
             action='store_true',
             dest='dry_run',
             default=False,
             help="Don't do the actual modifications, but still log what would be affected."
-        ),
-        make_option(
+        )
+        parser.add_argument(
             '--no-input',
             action='store_true',
             dest='no_input',
             default=False,
             help='Skip important confirmation warnings.'
-        ),
-    )
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, ids_file_path, log_path, **options):
 
         self.dups_by_domain = {}
         # e.g.
@@ -56,11 +57,11 @@ class Command(BaseCommand):
                 """
             )
             if confirm != "y":
-                print "\n\t\tSwap duplicates cancelled."
+                print("\n\t\tSwap duplicates cancelled.")
                 return
 
-        ids_file_path = args[0].strip()
-        log_path = args[1].strip()
+        ids_file_path = ids_file_path.strip()
+        log_path = log_path.strip()
 
         one_dup_counts = defaultdict(lambda: 0)
         multi_dups_counts = defaultdict(lambda: 0)
@@ -89,17 +90,17 @@ class Command(BaseCommand):
                         self.log_no_dups(log_file, bad_xform_id, domain)
                         no_dups_counts[domain] += 1
 
-        print "Found {} forms with no duplicates".format(sum(no_dups_counts.values()))
-        print "Found {} forms with one duplicate".format(sum(one_dup_counts.values()))
-        print "Found {} forms with multiple duplicates".format(sum(multi_dups_counts.values()))
-        print ""
+        print("Found {} forms with no duplicates".format(sum(no_dups_counts.values())))
+        print("Found {} forms with one duplicate".format(sum(one_dup_counts.values())))
+        print("Found {} forms with multiple duplicates".format(sum(multi_dups_counts.values())))
+        print("")
         domains = set(no_dups_counts.keys()) | set(one_dup_counts.keys()) | set(multi_dups_counts.keys())
         domains = sorted(list(domains))
         for domain in domains:
-            print domain
-            print "\t{} forms with no duplicates".format(no_dups_counts[domain])
-            print "\t{} forms with one duplicate". format(one_dup_counts[domain])
-            print "\t{} forms with multiple duplicates".format(multi_dups_counts[domain])
+            print(domain)
+            print("\t{} forms with no duplicates".format(no_dups_counts[domain]))
+            print("\t{} forms with one duplicate". format(one_dup_counts[domain]))
+            print("\t{} forms with multiple duplicates".format(multi_dups_counts[domain]))
 
     def get_duplicates(self, domain, xform_id):
 
@@ -194,6 +195,6 @@ class Command(BaseCommand):
     @staticmethod
     def _print_progress(i, total_submissions):
         if i % 20 == 0 and i != 0:
-            print "Progress: {} of {} ({})  {}".format(
+            print("Progress: {} of {} ({})  {}".format(
                 i, total_submissions, round(i / float(total_submissions), 2), datetime.now()
-            )
+            ))

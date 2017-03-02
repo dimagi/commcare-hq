@@ -21,7 +21,7 @@ def import_products(domain, importer):
     for row in importer.worksheet:
         try:
             p = Product.from_excel(row, custom_data_validator)
-        except Exception, e:
+        except Exception as e:
             results['errors'].append(
                 _(u'Failed to import product {name}: {ex}'.format(
                     name=row['name'] or '',

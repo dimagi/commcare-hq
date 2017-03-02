@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 
 from django.core.management.base import BaseCommand
@@ -28,7 +29,7 @@ class Command(BaseCommand):
             )
 
             if confirm != 'yes':
-                print "\tWipe cancelled."
+                print("\tWipe cancelled.")
                 return
 
         processor = FluffPillowProcessor(pillow.indicator_class)

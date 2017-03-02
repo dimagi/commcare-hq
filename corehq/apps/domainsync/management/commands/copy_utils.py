@@ -1,3 +1,4 @@
+from __future__ import print_function
 from casexml.apps.stock.models import StockReport, StockTransaction, DocDomainMapping
 from corehq.apps.products.models import SQLProduct
 from phonelog.models import DeviceReportEntry
@@ -27,10 +28,10 @@ def copy_postgres_data_for_docs(remote_postgres_slug, doc_ids, simulate=False):
             **{'{}__in'.format(doc_field): doc_ids}
         )
         count = query_set.count()
-        print "Copying {} models ({})".format(model.__name__, count)
+        print("Copying {} models ({})".format(model.__name__, count))
         if not simulate:
             for i, item in enumerate(query_set):
                 # this can cause primary key conflicts to overwrite local data I think. Oh well?
                 item.save(using='default')
-                print 'Synced {}/{} {}'.format(i + 1, count, model.__name__)
+                print('Synced {}/{} {}'.format(i + 1, count, model.__name__))
 

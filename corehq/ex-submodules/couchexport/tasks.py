@@ -18,7 +18,7 @@ logging = get_task_logger(__name__)
 def export_async(custom_export, download_id, format=None, filename=None, **kwargs):
     try:
         export_files = custom_export.get_export_files(format=format, process=export_async, **kwargs)
-    except SchemaMismatchException, e:
+    except SchemaMismatchException as e:
         # fire off a delayed force update to prevent this from happening again
         rebuild_schemas.delay(custom_export.index)
         expiry = 10*60*60

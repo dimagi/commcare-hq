@@ -535,7 +535,7 @@
       {
         "display_name": null,
         "transform": {},
-        "datatype": "integer",
+        "datatype": "decimal",
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "attended_children_percent",

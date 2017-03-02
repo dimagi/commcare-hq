@@ -28,6 +28,7 @@ hqDefine('accounting/js/accounting.credits.js', function () {
         self.products = products;
         self.features = features;
         self.paymentHandler = paymentHandler;
+        self.general_credit = ko.observable(new GeneralCreditItem(paymentHandler));
 
         self.triggerPayment = function(paymentMethod) {
             self.paymentHandler.reset();
@@ -35,8 +36,21 @@ hqDefine('accounting/js/accounting.credits.js', function () {
             self.paymentHandler.costItem(new PrepaymentItems({
                 products: self.products,
                 features: self.features,
+                general_credit: self.general_credit,
             }));
         };
+    };
+
+    var GeneralCreditItem = function(paymentHandler) {
+        'use strict';
+        var self = this;
+        self.name = ko.observable("Credits");
+        self.creditType = ko.observable("general_credit");
+        self.addAmount = ko.observable(0);
+        self.addAmountValid = ko.computed(function(){
+            return  parseFloat(self.addAmount()) === 0 || (parseFloat(self.addAmount()) >= 0.5);
+        });
+        self.paymentHandler = paymentHandler;
     };
 
     var CreditItem = function (category, data, paymentHandler, can_purchase_credits) {
@@ -48,6 +62,7 @@ hqDefine('accounting/js/accounting.credits.js', function () {
         self.recurringInterval = ko.observable(data.recurring_interval);
         self.creditType = ko.observable(data.type);
         self.usage = ko.observable(data.usage);
+        self.limit = ko.observable(data.limit);
         self.remaining = ko.observable(data.remaining);
         self.monthlyFee = ko.observable(data.monthly_fee);
         self.amount = ko.observable((data.subscription_credit) ? data.subscription_credit.amount : 0);

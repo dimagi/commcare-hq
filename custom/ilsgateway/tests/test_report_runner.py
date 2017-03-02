@@ -24,7 +24,6 @@ class TestReportRunner(TestCase):
         SupplyPointStatus.objects.all().delete()
         StockTransaction.objects.all().delete()
         StockReport.objects.all().delete()
-        generator.delete_all_subscriptions()
         cls.domain.delete()
         super(TestReportRunner, cls).tearDownClass()
 

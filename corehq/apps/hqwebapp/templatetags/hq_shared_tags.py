@@ -100,6 +100,7 @@ except (ImportError, SyntaxError):
     resource_versions = {}
 
 
+@register.filter
 @register.simple_tag
 def static(url):
     resource_url = url
@@ -443,7 +444,7 @@ def maintenance_alert():
         return ''
     else:
         return format_html(
-            '<div class="alert alert-warning" style="text-align: center; margin-bottom: 0;">{}</div>',
+            '<div class="alert alert-warning alert-maintenance" style="text-align: center; margin-bottom: 0;">{}</div>',
             mark_safe(alert.html),
         )
 

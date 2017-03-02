@@ -1,3 +1,4 @@
+from __future__ import print_function
 import csv
 
 from django.core.management.base import BaseCommand, CommandError
@@ -64,12 +65,12 @@ though deletion would be re-confirmed so dont panic
         _print_final_debug_info(self.xform_ids, self.filtered_xform_ids, self.case_ids)
         if self.data_to_delete() and self.delete_permitted():
             self.delete_forms_and_cases()
-            print "Process Completed!! Keep copy of files %s, %s" % (XFORM_FILENAME, CASE_FILE_NAME)
+            print("Process Completed!! Keep copy of files %s, %s" % (XFORM_FILENAME, CASE_FILE_NAME))
         else:
-            print 'Process Finished w/o Changes..'
+            print('Process Finished w/o Changes..')
 
     def iterate_forms_and_collect_case_ids(self):
-        print "Iterating Through %s XForms and Collecting Case Ids" % len(self.xform_ids)
+        print("Iterating Through %s XForms and Collecting Case Ids" % len(self.xform_ids))
         for xform in self.forms_accessor.iter_forms(self.xform_ids):
             # Get app version by fetching app corresponding to xform build_id since xform.form
             # does not have updated app version unless form was updated for that version
@@ -80,7 +81,7 @@ though deletion would be re-confirmed so dont panic
                 self.filtered_xform_ids.append(xform.form_id)
                 self.case_ids = self.case_ids.union(get_case_ids_from_form(xform))
             else:
-                print 'skipping xform id: %s' % xform.form_id
+                print('skipping xform id: %s' % xform.form_id)
         if self.case_ids:
             self.print_case_details()
 
@@ -113,16 +114,16 @@ though deletion would be re-confirmed so dont panic
         return len(self.filtered_xform_ids) != 0 or len(self.case_ids) != 0
 
     def delete_forms_and_cases(self):
-        print 'Proceeding with deleting forms and cases'
+        print('Proceeding with deleting forms and cases')
         self.forms_accessor.soft_delete_forms(self.filtered_xform_ids)
         self.case_accessors.soft_delete_cases(list(self.case_ids))
 
 
 def _print_form_details(xform, file_writer, app_version_built_with):
-    print XFORM_HEADER
+    print(XFORM_HEADER)
     form_details = _form_details(xform, app_version_built_with)
     file_writer.writerow(form_details)
-    print form_details
+    print(form_details)
 
 
 def _form_details(xform, app_version_built_with):
@@ -130,10 +131,10 @@ def _form_details(xform, app_version_built_with):
 
 
 def _print_case_details(case, file_writer):
-    print CASE_HEADER
+    print(CASE_HEADER)
     case_details = _case_details(case)
     file_writer.writerow(case_details)
-    print case_details
+    print(case_details)
 
 
 def _case_details(case):
@@ -141,19 +142,19 @@ def _case_details(case):
 
 
 def _raise_xform_domain_mismatch(xform):
-    print "XForm app_id %s" % xform.app_id
-    print "XForm domain %s" % xform.domain
+    print("XForm app_id %s" % xform.app_id)
+    print("XForm domain %s" % xform.domain)
     raise CommandError("XForm didn't match with app_id or domain")
 
 
 def _print_final_debug_info(xform_ids, filtered_xform_ids, case_ids):
-    print "Final Debug Info:"
-    print "Form Ids Total(%i) :" % len(xform_ids), xform_ids
-    print "Filtered Form Ids(%i) :" % len(filtered_xform_ids), filtered_xform_ids
-    print "Case Ids(%i) :" % len(case_ids), case_ids
+    print("Final Debug Info:")
+    print("Form Ids Total(%i) :" % len(xform_ids), xform_ids)
+    print("Filtered Form Ids(%i) :" % len(filtered_xform_ids), filtered_xform_ids)
+    print("Case Ids(%i) :" % len(case_ids), case_ids)
 
 
 def _notify_parsed_args(domain_name, app_id, version_number, test_run):
-    print 'Received request for domain : %s with app_id : %s to soft delete data before version number %s' % \
-          (domain_name, app_id, version_number)
-    print 'Test run : %s' % test_run
+    print('Received request for domain : %s with app_id : %s to soft delete data before version number %s' % \
+          (domain_name, app_id, version_number))
+    print('Test run : %s' % test_run)

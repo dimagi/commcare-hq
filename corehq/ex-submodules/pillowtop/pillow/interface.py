@@ -107,7 +107,7 @@ class PillowBase(object):
     def process_with_error_handling(self, change):
         try:
             self.process_change(change)
-        except Exception, ex:
+        except Exception as ex:
             handle_pillow_error(self, change, ex)
 
     @abstractmethod
@@ -152,10 +152,7 @@ class ConstructedPillow(PillowBase):
         return self._name
 
     def document_store(self):
-        # todo: replace with NotImplementedError once it's clear this isn't necessary
-        _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), send_to_ops=False)
-        _assert(False, 'Something is still calling ConstructedPillow.document_store')
-        return None
+        raise NotImplementedError()
 
     @property
     def checkpoint(self):

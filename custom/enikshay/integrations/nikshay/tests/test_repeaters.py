@@ -1,6 +1,7 @@
 import json
+from collections import namedtuple
 from datetime import datetime
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import flag_enabled
@@ -11,7 +12,6 @@ from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator,
     ENIKSHAY_ID,
 )
-from corehq.form_processor.tests.utils import run_with_all_backends
 from casexml.apps.case.mock import CaseStructure
 from corehq.apps.repeaters.models import RepeatRecord
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
@@ -74,6 +74,7 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
         self.create_case(nikshay_registered_case)
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
 
     def setUp(self):
@@ -94,7 +95,6 @@ class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
     def test_available_for_domain(self):
         self.assertTrue(NikshayRegisterPatientRepeater.available_for_domain(self.domain))
 
-    @run_with_all_backends
     def test_trigger(self):
         # nikshay not enabled
         self.create_case(self.episode)
@@ -108,7 +108,6 @@ class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
         self._create_nikshay_registered_case()
         self.assertEqual(1, len(self.repeat_records().all()))
 
-    @run_with_all_backends
     def test_trigger_different_case_type(self):
         # different case type
         self.create_case(self.person)
@@ -116,13 +115,13 @@ class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
         self.assertEqual(0, len(self.repeat_records().all()))
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayRegisterPatientPayloadGenerator, self).setUp()
         self.cases = self.create_case_structure()
         self.assign_person_to_location(self.phi.location_id)
 
-    @run_with_all_backends
     def test_payload_properties(self):
         episode_case = self._create_nikshay_enabled_case()
         payload = (json.loads(
@@ -159,7 +158,21 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
     def _assert_case_property_equal(self, case, case_property, expected_value):
         self.assertEqual(case.dynamic_case_properties().get(case_property), expected_value)
 
-    @run_with_all_backends
+    def test_username_password(self):
+        episode_case = self._create_nikshay_enabled_case()
+        username = "arwen"
+        password = "Hadhafang"
+
+        MockRepeater = namedtuple('MockRepeater', 'username password')
+        MockRepeatRecord = namedtuple('MockRepeatRecord', 'repeater')
+
+        repeat_record = MockRepeatRecord(MockRepeater(username=username, password=password))
+        payload = (json.loads(
+            NikshayRegisterPatientPayloadGenerator(None).get_payload(repeat_record, episode_case))
+        )
+        self.assertEqual(payload['regBy'], username)
+        self.assertEqual(payload['password'], password)
+
     def test_handle_success(self):
         nikshay_id = "NIKSHAY!"
         self._create_nikshay_enabled_case()
@@ -186,7 +199,6 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self._assert_case_property_equal(updated_episode_case, 'nikshay_id', nikshay_id)
         self.assertEqual(updated_episode_case.external_id, nikshay_id)
 
-    @run_with_all_backends
     def test_handle_bad_nikshay_response(self):
         self._create_nikshay_enabled_case()
         payload_generator = NikshayRegisterPatientPayloadGenerator(None)
@@ -215,7 +227,6 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
             'No Nikshay ID received: {}'.format(response)
         )
 
-    @run_with_all_backends
     def test_handle_duplicate(self):
         payload_generator = NikshayRegisterPatientPayloadGenerator(None)
         payload_generator.handle_failure(
@@ -238,7 +249,6 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self._assert_case_property_equal(updated_episode_case, 'nikshay_registered', 'true')
         self._assert_case_property_equal(updated_episode_case, 'nikshay_error', 'duplicate')
 
-    @run_with_all_backends
     def test_handle_failure(self):
         message = {
             "Nikshay_Message": "Success",

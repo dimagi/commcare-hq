@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from corehq.apps.users.models import WebUser
 
@@ -8,6 +9,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         user = args[0].strip()
-        print "Deleting user %s" % user
+        print("Deleting user %s" % user)
         WebUser.get_by_username(user).delete()
-        print "Operation completed"
+        print("Operation completed")

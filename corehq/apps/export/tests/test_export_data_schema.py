@@ -7,6 +7,7 @@ from corehq.apps.export.models.new import MAIN_TABLE, \
     PathNode, _question_path_to_path_nodes
 
 from corehq.util.context_managers import drop_connected_signals
+from corehq.util.test_utils import softer_assert
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.models import (
@@ -593,6 +594,21 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(len(schema.group_schemas), 1)
+
+    @softer_assert()
+    def test_process_app_failure(self):
+        '''
+        This ensures that the schema generated will not fail if there is an error processing one of the
+        applications.
+        '''
+        with patch(
+                'corehq.apps.export.models.new.FormExportDataSchema._process_app_build',
+                side_effect=Exception('boom')):
+            FormExportDataSchema.generate_schema_from_builds(
+                self.current_app.domain,
+                self.current_app._id,
+                'my_sweet_xmlns'
+            )
 
     def test_build_from_saved_schema(self):
         app = self.current_app

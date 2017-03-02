@@ -14,6 +14,7 @@ from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from couchdbkit.exceptions import DocTypeError
@@ -148,16 +149,20 @@ def save_xform(app, form, xml):
         if not xform.data_node.tag_xmlns or xform.data_node.tag_xmlns == GENERIC_XMLNS:  #no xmlns
             xform, xml = change_xmlns(xform, GENERIC_XMLNS)
 
+    form.source = xml
+
     # For registration forms, assume that the first question is the case name
     # unless something else has been specified
     if toggles.APP_MANAGER_V2.enabled(app.domain):
         if form.is_registration_form():
-            if not form.actions.open_case.name_path:
-                questions = form.get_questions([app.default_language])
-                if len(questions):
-                    form.actions.open_case.name_path = questions[0]['value']
-
-    form.source = xml
+            questions = form.get_questions([app.default_language])
+            path = form.actions.open_case.name_path
+            if path:
+                name_questions = [q for q in questions if q['value'] == path]
+                if not len(name_questions):
+                    path = None
+            if not path and len(questions):
+                form.actions.open_case.name_path = questions[0]['value']
 
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
@@ -404,6 +409,7 @@ def get_casedb_schema(form):
     builder = ParentCasePropertyBuilder(app, ['case_name'], per_type_defaults)
     related = builder.get_parent_type_map(case_types, allow_multiple_parents=True)
     map = builder.get_case_property_map(case_types, include_parent_properties=False)
+    descriptions_dict = get_case_property_description_dict(app.domain)
 
     if base_case_type:
         # Generate hierarchy of case types, represented as a list of lists of strings:
@@ -428,7 +434,9 @@ def get_casedb_schema(form):
     subsets = [{
         "id": generation_names[i],
         "name": "{} ({})".format(generation_names[i], " or ".join(ctypes)) if i > 0 else base_case_type,
-        "structure": {p: {} for type in [map[t] for t in ctypes] for p in type},
+        "structure": {
+            p: {"description": descriptions_dict.get(base_case_type, {}).get(p, '')}
+            for type in [map[t] for t in ctypes] for p in type},
         "related": {"parent": {
             "hashtag": "#case/" + generation_names[i + 1],
             "subset": generation_names[i + 1],

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import re
 import sh
 from sh_verbose import ShVerbose
@@ -24,7 +25,7 @@ class OriginalBranch(object):
         try:
             self.git.checkout(self.original_branch)
         except Exception as err:
-            print "cannot checkout '{}': {}".format(self.original_branch, err)
+            print("cannot checkout '{}': {}".format(self.original_branch, err))
 
 
 def git_current_branch(git=None):
@@ -123,8 +124,8 @@ def print_one_way_merge_details(branch1, branch2, git, known_branches=None):
 
     commit = git_bisect_merge_conflict(branch1, branch2, git)
     if commit:
-        print '  * First conflicting commit on {0}:\n'.format(branch2)
-        print _left_pad(' ' * 4, git.log('-n1', commit))
+        print('  * First conflicting commit on {0}:\n'.format(branch2))
+        print(_left_pad(' ' * 4, git.log('-n1', commit)))
         branches = git.branch('--remote', '--contains', commit)
         other_branches = [
             format_branch(*b)
@@ -134,11 +135,11 @@ def print_one_way_merge_details(branch1, branch2, git, known_branches=None):
         ]
         if other_branches:
             msg = 'This commit also appears on these branches:'
-            print _left_pad(' ' * 4, msg)
+            print(_left_pad(' ' * 4, msg))
             for branch in other_branches:
-                print _left_pad(' ' * 4, '* {}'.format(branch))
+                print(_left_pad(' ' * 4, '* {}'.format(branch)))
     else:
-        print '  * No conflicting commits on {0}'.format(branch2)
+        print('  * No conflicting commits on {0}'.format(branch2))
 
 
 def print_merge_details(branch1, branch2, git, known_branches=None):
@@ -163,6 +164,6 @@ if __name__ == '__main__':
             print ('usage: python scripts/gitutils.py '
                    'show-conflict <branch1> <branch2>')
     else:
-        print 'usage: python scripts/gitutils.py <command> [args...]\n'
-        print 'Available commands:'
-        print _left_pad('   ', '\n'.join(options))
+        print('usage: python scripts/gitutils.py <command> [args...]\n')
+        print('Available commands:')
+        print(_left_pad('   ', '\n'.join(options)))

@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='caseuploadrecord',
             name='upload_file_meta',
-            field=models.ForeignKey(to='case_importer.CaseUploadFileMeta', null=True),
+            field=models.ForeignKey(to='case_importer.CaseUploadFileMeta', null=True, on_delete=models.CASCADE),
         ),
     ]

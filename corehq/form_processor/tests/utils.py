@@ -5,7 +5,9 @@ from uuid import uuid4
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from django.test.utils import override_settings
 from nose.tools import nottest
+from nose.plugins.attrib import attr
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
@@ -166,8 +168,12 @@ run_with_all_backends = functools.partial(
             pre_run=lambda *args, **kwargs: args[0].setUp(),
         ),
     ],
-    nose_tags={'dual_backend': True}
+    nose_tags={'all_backends': True}
 )
+
+
+def use_sql_backend(cls):
+    return attr(sql_backend=True)(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
 
 
 @unit_testing_only

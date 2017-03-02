@@ -61,6 +61,7 @@ from corehq.apps.style.decorators import (
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
+    SubscriptionAdjustmentError,
 )
 from corehq.apps.accounting.payment_handlers import (
     BulkStripePaymentHandler,
@@ -136,6 +137,7 @@ from corehq.apps.repeaters.utils import get_all_repeater_types, get_repeater_aut
 from corehq.apps.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
+    RECORD_CANCELLED_STATE,
     RECORD_SUCCESS_STATE,
 )
 from corehq.apps.reports.generic import GenericTabularReport
@@ -539,6 +541,34 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
 
 @require_POST
 @require_can_edit_web_users
+def cancel_repeat_record(request, domain):
+    try:
+        record = RepeatRecord.get(request.POST.get('record_id'))
+    except ResourceNotFound:
+        return HttpResponse(status=404)
+    record.cancel()
+    record.save()
+    if not record.cancelled:
+        return HttpResponse(status=400)
+    return HttpResponse('OK')
+
+
+@require_POST
+@require_can_edit_web_users
+def requeue_repeat_record(request, domain):
+    try:
+        record = RepeatRecord.get(request.POST.get('record_id'))
+    except ResourceNotFound:
+        return HttpResponse(status=404)
+    record.requeue()
+    record.save()
+    if record.cancelled:
+        return HttpResponse(status=400)
+    return HttpResponse('OK')
+
+
+@require_POST
+@require_can_edit_web_users
 def drop_repeater(request, domain, repeater_id):
     rep = Repeater.get(repeater_id)
     rep.retire()
@@ -584,7 +614,7 @@ def test_repeater(request, domain):
                                                 "response": resp.content,
                                                 "status": resp.status_code}))
 
-        except Exception, e:
+        except Exception as e:
             errors = str(e)
         return HttpResponse(json.dumps({"success": False, "response": errors}))
     else:
@@ -672,6 +702,13 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
 
+        if subscription:
+            credit_lines = CreditLine.get_non_general_credits_by_subscription(subscription)
+            credit_lines = [cl for cl in credit_lines if cl.balance > 0]
+            has_credits_in_non_general_credit_line = len(credit_lines) > 0
+        else:
+            has_credits_in_non_general_credit_line = False
+
         info = {
             'products': [self.get_product_summary(plan_version, self.account, subscription)],
             'features': self.get_feature_summary(plan_version, self.account, subscription),
@@ -693,6 +730,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'date_end': date_end,
             'cards': cards,
             'next_subscription': next_subscription,
+            'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line
         }
         info['has_account_level_credit'] = (
             any(
@@ -742,14 +780,16 @@ class DomainSubscriptionView(DomainAccountingSettings):
             usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
             feature_type = feature_rate.feature.feature_type
             if feature_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
-                remaining = _('Unlimited')
+                remaining = limit = _('Unlimited')
             else:
-                remaining = feature_rate.monthly_limit - usage
+                limit = feature_rate.monthly_limit
+                remaining = limit - usage
                 if remaining < 0:
                     remaining = _("%d over limit") % (-1 * remaining)
             return {
                 'name': get_feature_name(feature_type, self.product),
                 'usage': usage,
+                'limit': limit,
                 'remaining': remaining,
                 'type': feature_type,
                 'recurring_interval': get_feature_recurring_interval(feature_type),
@@ -1130,7 +1170,15 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
                     for pt in SoftwareProductType.CHOICES
                     if Decimal(request.POST.get(pt[0], 0)) > 0]
 
-        return products + features
+        items = products + features
+
+        if Decimal(request.POST.get('general_credit', 0)) > 0:
+            items.append({
+                'type': 'General Credits',
+                'amount': Decimal(request.POST.get('general_credit', 0))
+            })
+
+        return items
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
@@ -1188,7 +1236,7 @@ class WireInvoiceView(View):
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
             wire_invoice_factory.create_wire_invoice(balance)
-        except Exception, e:
+        except Exception as e:
             return json_response({'error': {'message', e}})
 
         return json_response({'success': True})
@@ -1265,8 +1313,15 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             try:
                 form.process_subscription_management()
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-            except NewSubscriptionError as e:
-                messages.error(self.request, e.message)
+            except (NewSubscriptionError, SubscriptionAdjustmentError) as e:
+                messages.error(self.request, mark_safe(
+                    'This request will require Ops assistance. '
+                    'Please explain to <a href="mailto:%(ops_email)s">%(ops_email)s</a>'
+                    ' what you\'re trying to do and report the following error: <strong>"%(error)s"</strong>' % {
+                        'error': e.message,
+                        'ops_email': settings.ACCOUNTS_EMAIL,
+                    }
+                ))
         return self.get(request, *args, **kwargs)
 
     @property
@@ -1777,10 +1832,14 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
+        app_forms = self.app_forms
+        fixture_forms = self.fixture_forms
         context = {
             'form': self.snapshot_settings_form,
-            'app_forms': self.app_forms,
-            'fixture_forms': self.fixture_forms,
+            'app_forms': app_forms,
+            'app_ids': [app.id for app, form in app_forms],
+            'fixture_forms': fixture_forms,
+            'fixture_ids': [data.id for data, form in fixture_forms],
             'can_publish_as_org': self.can_publish_as_org,
             'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'countries', 'region'),
         }
@@ -2217,6 +2276,26 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
     ]
 
+    def _make_cancel_payload_button(self, record_id):
+        return '''
+                <a
+                    class="btn btn-default cancel-record-payload"
+                    role="button"
+                    data-record-id={}>
+                    Cancel Payload
+                </a>
+                '''.format(record_id)
+
+    def _make_requeue_payload_button(self, record_id):
+        return '''
+                <a
+                    class="btn btn-default requeue-record-payload"
+                    role="button"
+                    data-record-id={}>
+                    Requeue Payload
+                </a>
+                '''.format(record_id)
+
     def _make_view_payload_button(self, record_id):
         return '''
         <a
@@ -2248,6 +2327,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         elif record.state == RECORD_PENDING_STATE:
             label_cls = 'warning'
             label_text = _('Pending')
+        elif record.state == RECORD_CANCELLED_STATE:
+            label_cls = 'danger'
+            label_text = _('Cancelled')
         elif record.state == RECORD_FAILURE_STATE:
             label_cls = 'danger'
             label_text = _('Failed')
@@ -2300,11 +2382,16 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             lambda record: [
                 self._make_state_label(record),
                 record.url if record.url else _(u'Unable to generate url for record'),
-                self._format_date(record.last_checked) if record.last_checked else None,
-                self._format_date(record.next_check) if record.next_check else None,
+                self._format_date(record.last_checked) if record.last_checked else '---',
+                self._format_date(record.next_check) if record.next_check else '---',
                 escape(record.failure_reason) if not record.succeeded else None,
+                record.overall_tries if record.overall_tries > 0 else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
+                self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
+                else self._make_cancel_payload_button(record.get_id) if not record.cancelled
+                and not record.succeeded
+                else None
             ],
             records
         )
@@ -2317,8 +2404,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('Last sent date')),
             DataTablesColumn(_('Retry Date')),
             DataTablesColumn(_('Failure Reason')),
+            DataTablesColumn(_('Failure Count')),
             DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
+            DataTablesColumn(_('Cancel or Requeue payload'))
         )
 
 

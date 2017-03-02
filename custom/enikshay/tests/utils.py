@@ -22,6 +22,7 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_FIRST_NAME,
     TREATMENT_SUPPORTER_LAST_NAME,
     TREATMENT_SUPPORTER_PHONE,
+    WEIGHT_BAND,
 )
 from corehq.apps.users.models import CommCareUser
 
@@ -119,6 +120,7 @@ class ENikshayCaseStructureMixin(object):
                     TREATMENT_SUPPORTER_FIRST_NAME: "Gandalf",
                     TREATMENT_SUPPORTER_LAST_NAME: "The Grey",
                     TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone,
+                    WEIGHT_BAND: "adult_55-69"
                 }
             },
             indices=[CaseIndex(

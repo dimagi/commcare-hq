@@ -72,8 +72,8 @@ class ConfigurableReportTableManagerMixin(object):
             sql_adapter = get_indicator_adapter(adapter.config)
             tables_by_engine[sql_adapter.engine_id][sql_adapter.get_table().name] = sql_adapter
 
-        _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
-        _notify_cory = lambda msg, obj: _assert(False, msg, obj)
+        _assert = soft_assert(notify_admins=True)
+        _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
 
         for engine_id, table_map in tables_by_engine.items():
             engine = connection_manager.get_engine(engine_id)
@@ -87,10 +87,9 @@ class ConfigurableReportTableManagerMixin(object):
                 sql_adapter = table_map[table_name]
                 if not sql_adapter.config.is_static:
                     try:
-                        rev_before_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
                         self.rebuild_table(sql_adapter)
                     except TableRebuildError as e:
-                        _notify_cory(six.text_type(e), sql_adapter.config.to_json())
+                        _notify_rebuild(six.text_type(e), sql_adapter.config.to_json())
                 else:
                     self.rebuild_table(sql_adapter)
 
