@@ -10,15 +10,13 @@ from django.db import connections
 celery_task_logger = logging.getLogger('celery.task')
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+# @periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
 def move_ucr_data_into_aggregation_tables():
 
     if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:
         with connections[settings.ICDS_UCR_DATABASE_ALIAS].cursor() as cursor:
 
             path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_locations_table.sql')
-            # This seems like it shouldn't be updated often. Should only happen
-            # if there's been a change in the table since yesterday?
             celery_task_logger.info("Starting icds reports update_location_tables")
             with open(path, "r") as sql_file:
                 sql_to_execute = sql_file.read()
