@@ -62,30 +62,22 @@ function run_tests() {
     send_counter_metric_to_datadog
 }
 
-function send_metrics_to_datadog() {
-
-    currenttime=$(date +%s)
-
-    curl  -X POST -H "Content-type: application/json" \
-    -d "{ \"series\" :
-             [{\"metric\":\"travis.timings.$1\",
-              \"points\":[[$currenttime, $2]],
-              \"type\":\"gauge\",
-              \"host\":\"travis-ci.org\",
-              \"tags\":[\"environment:travis\", \"test_type:$TEST\", \"partition:$NOSE_DIVIDED_WE_RUN\"]}
-            ]
-        }" \
-    "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}"
-
+function send_timing_metrics_to_datadog() {
+    send_metric_to_datadog "travis.timings.$1" $2 "gauge"
 }
 
 function send_counter_metric_to_datadog() {
+    send_metric_to_datadog "travis.count" 1 "counter"
+}
+
+function send_metric_to_datadog() {
+
     currenttime=$(date +%s)
     curl  -X POST -H "Content-type: application/json" \
     -d "{ \"series\" :
-             [{\"metric\":\"travis.count\",
-              \"points\":[[$currenttime, 1]],
-              \"type\":\"counter\",
+             [{\"metric\":\"$1\",
+              \"points\":[[$currenttime, $2]],
+              \"type\":\"$3\",
               \"host\":\"travis-ci.org\",
               \"tags\":[\"environment:travis\", \"test_type:$TEST\", \"partition:$NOSE_DIVIDED_WE_RUN\"]}
             ]
