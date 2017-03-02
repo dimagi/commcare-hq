@@ -1,3 +1,4 @@
+/* globals alert_user */
 hqDefine("hqwebapp/js/rollout_modal.js", function() {
     $(function() {
         var $modal = $(".rollout-modal"),
