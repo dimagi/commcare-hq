@@ -34,6 +34,8 @@ import httpagentparser
 from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
+
+from corehq.apps.accounting.utils import log_accounting_info
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
 
@@ -736,6 +738,7 @@ class BasePageView(TemplateView):
         """
         Returns a response with a template rendered with the given context.
         """
+        log_accounting_info(self.template_name)
         return render(self.request, self.template_name, context)
 
 
