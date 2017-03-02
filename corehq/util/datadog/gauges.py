@@ -31,12 +31,6 @@ def datadog_counter(name, enforce_prefix='commcare', tags=None):
 
 
 def _datadog_record(fn, name, value, enforce_prefix='commcare', tags=None):
-    default_tags = {
-        'environment': settings.SERVER_ENVIRONMENT,
-    }
-    if tags is not None:
-        default_tags.update(tags)
-
     _enforce_prefix(name, enforce_prefix)
     try:
         fn(name, value, tags=tags)

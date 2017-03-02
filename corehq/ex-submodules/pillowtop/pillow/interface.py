@@ -125,20 +125,20 @@ class PillowBase(object):
 
     def _record_checkpoint_in_datadog(self):
         for topic, value in self.get_last_checkpoint_sequence().iteritems():
-            datadog_gauge('commcare.change_feed.topics'.format(topic), points=value, tags={
-                'pillow_name': self.get_name(),
-                'topic': topic,
-            })
-            datadog_counter('commcare.change_feed.topics.counter'.format(topic), tags={
-                'pillow_name': self.get_name(),
-                'topic': topic,
-            })
+            datadog_gauge('commcare.change_feed.topics'.format(topic), value, tags=[
+                'pillow_name:{}'.format(self.get_name()),
+                'topic:{}'.format(topic),
+            ])
+            datadog_counter('commcare.change_feed.topics.counter'.format(topic), tags=[
+                'pillow_name:{}'.format(self.get_name()),
+                'topic:{}'.format(topic),
+            ])
 
         for topic, offset in self.get_change_feed().get_current_offsets().iteritems():
-            datadog_gauge('commcare.change_feed.current_offsets'.format(topic), points=offset, tags={
-                'pillow_name': self.get_name(),
-                'topic': topic,
-            })
+            datadog_gauge('commcare.change_feed.current_offsets'.format(topic), offset, tags=[
+                'pillow_name:{}'.format(self.get_name()),
+                'topic:{}'.format(topic),
+            ])
 
     def _record_change_in_datadog(self, change):
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change)
@@ -150,13 +150,13 @@ class PillowBase(object):
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change)
 
     def __record_change_metric_in_datadog(self, metric, change):
-        datadog_counter(metric, tags={
-            'datasource': change.metadata.data_source_name,
-            'document_type': change.metadata.document_type,
-            'domain': change.metadata.domain,
-            'is_deletion': change.metadata.is_deletion,
-            'pillow_name': self.get_name(),
-        })
+        datadog_counter(metric, tags=[
+            'datasource:{}'.format(change.metadata.data_source_name),
+            'document_type:{}'.format(change.metadata.document_type),
+            'domain:{}'.format(change.metadata.domain),
+            'is_deletion:{}'.format(change.metadata.is_deletion),
+            'pillow_name:{}'.format(self.get_name()),
+        ])
 
 
 class ChangeEventHandler(object):
