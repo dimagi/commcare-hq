@@ -1050,6 +1050,8 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         result = get_reverse_indexed_cases_es(self.domain, parent_case_id)
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]._id, child_case_id)
+        result = get_reverse_indexed_cases_es(self.domain, "some_other")
+        self.assertEqual(len(result), 0)
 
     def test_scroll_case_names(self):
         case_one = self._send_case_to_es()
