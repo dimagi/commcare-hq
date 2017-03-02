@@ -104,8 +104,9 @@ class PillowBase(object):
                         self.fire_change_processed_event(change, context)
                         self._record_change_success_in_datadog(change)
                 else:
-                    self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
-                    self._record_checkpoint_in_datadog()
+                    updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
+                    if updated:
+                        self._record_checkpoint_in_datadog()
         except PillowtopCheckpointReset:
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
