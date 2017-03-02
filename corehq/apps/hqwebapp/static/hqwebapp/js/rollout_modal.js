@@ -4,14 +4,19 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
             slug = $modal.data("slug"),
             cookie_name = "snooze_" + slug;
         if ($modal.length && !$.cookie(cookie_name)) {
+            var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
             $modal.modal({
                 backdrop: 'static',
                 keyboard: false,
                 show: true,
             });
             $modal.on('click', '.flag-enable', function() {
-                $.get({
-                    url: hqImport('hqwebapp/js/urllib.js').reverse('enable_toggle', slug),
+                $.post({
+                    url: initial_page_data("toggle_url"),
+                    data: {
+                        item_list: JSON.stringify([initial_page_data("toggle_item")]),
+                        append: 1,
+                    },
                     success: function() {
                         window.location.reload(true);
                     },
