@@ -75,4 +75,4 @@ class Day(object):
         self.month_string = self.date.strftime("%b") if self.date.day == 1 else 0
         self.day_string = self.date.day
         self.display = True
-        self.adherence = random.random() > .25
+        self.adherence = random.random() > .1
