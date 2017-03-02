@@ -12,8 +12,12 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
-from corehq.apps.userreports.reports.builder.columns import \
-    QuestionColumnOption, ColumnOption, CountColumn, MultiselectQuestionColumnOption
+from corehq.apps.userreports.reports.builder.columns import (
+    QuestionColumnOption,
+    ColumnOption,
+    CountColumn,
+    MultiselectQuestionColumnOption,
+)
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -46,7 +50,9 @@ from corehq.apps.userreports.reports.builder import (
     make_form_question_indicator,
     make_owner_name_indicator,
     get_filter_format_from_question_type,
-    make_user_name_indicator, make_multiselect_question_indicator)
+    make_user_name_indicator,
+    make_multiselect_question_indicator,
+)
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
@@ -60,6 +66,14 @@ REPORT_BUILDER_FILTER_TYPE_MAP = {
     'Value': 'pre',
 }
 
+STATIC_CASE_PROPS = [
+    "closed",
+    "modified_on",
+    "name",
+    "opened_on",
+    "owner_id",
+    "user_id",
+]
 
 class FilterField(JsonField):
     """
@@ -364,14 +378,6 @@ class DataSourceBuilder(object):
             'owner_name': _('Case Owner'),
             'mobile worker': _('Mobile Worker Last Updating Case'),
         }
-        static_case_props = [
-            "closed",
-            "modified_on",
-            "name",
-            "opened_on",
-            "owner_id",
-            "user_id",
-        ]
 
         properties = OrderedDict()
         for property in case_properties:
@@ -381,7 +387,7 @@ class DataSourceBuilder(object):
                 column_id=get_column_name(property),
                 text=property_map.get(property, property.replace('_', ' ')),
                 source=property,
-                is_non_numeric=property in static_case_props,
+                is_non_numeric=property in STATIC_CASE_PROPS,
             )
         properties['computed/owner_name'] = cls._get_owner_name_pseudo_property()
         properties['computed/user_name'] = cls._get_user_name_pseudo_property()
@@ -475,19 +481,13 @@ def _legend(title, subtext):
 
 class DataSourceForm(forms.Form):
     report_name = forms.CharField()
-    chart_type = forms.ChoiceField(
-        choices=[
-            ('bar', _('Bar')),
-            ('pie', _("Pie")),
-        ],
-    )
 
-    def __init__(self, domain, report_type, max_allowed_reports, *args, **kwargs):
+    def __init__(self, domain, max_allowed_reports, *args, **kwargs):
         super(DataSourceForm, self).__init__(*args, **kwargs)
         self.domain = domain
-        self.report_type = report_type
         self.max_allowed_reports = max_allowed_reports
 
+        # TODO: Map reports.
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.source_type_field.label = _('Forms or Cases')
         self.app_source_helper.source_type_field.choices = [("case", _("Cases")), ("form", _("Forms"))]
@@ -495,13 +495,14 @@ class DataSourceForm(forms.Form):
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
         report_source_help_texts = {
-            "source_type": _("<strong>Form</strong>: display data from form submissions.<br/><strong>Case</strong>: display data from your cases. You must be using case management for this option."),
+            "source_type": _(
+                "<strong>Form</strong>: Display data from form submissions.<br/>"
+                "<strong>Case</strong>: Display data from your cases. You must be using case management for this "
+                "option."),
             "application": _("Which application should the data come from?"),
             "source": _("Choose the case type or form from which to retrieve data for this report."),
         }
         self.fields.update(report_source_fields)
-
-        self.fields['chart_type'].required = self.report_type == "chart"
 
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"
@@ -509,9 +510,6 @@ class DataSourceForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
-        chart_type_crispy_field = None
-        if self.report_type == 'chart':
-            chart_type_crispy_field = FieldWithHelpBubble('chart_type', help_bubble_text=_("<strong>Bar</strong> shows one vertical bar for each value in your case or form. <strong>Pie</strong> shows what percentage of the total each value is."))
         report_source_crispy_fields = []
         for k in report_source_fields.keys():
             if k in report_source_help_texts:
@@ -521,18 +519,16 @@ class DataSourceForm(forms.Form):
             else:
                 report_source_crispy_fields.append(k)
 
-        top_fields = [
-            FieldWithHelpBubble(
-                'report_name',
-                help_bubble_text=_('Web users will see this name in the "Reports" section of CommCareHQ and can click to view the report'))
-        ]
-        if chart_type_crispy_field:
-            top_fields.append(chart_type_crispy_field)
-
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _('{} Report'.format(self.report_type.capitalize())),
-                *top_fields
+                _('Report'),
+                FieldWithHelpBubble(
+                    'report_name',
+                    help_bubble_text=_(
+                        'Web users will see this name in the "Reports" section of CommCareHQ and can click to '
+                        'view the report'
+                    )
+                )
             ),
             crispy.Fieldset(
                 _('Data'), *report_source_crispy_fields
@@ -566,7 +562,7 @@ class DataSourceForm(forms.Form):
             raise forms.ValidationError(_(
                 "Too many reports!\n"
                 "Creating this report would cause you to go over the maximum "
-                "number of report builder reports allowed in this domain. Your"
+                "number of report builder reports allowed in this domain. Your "
                 "limit is {number}. "
                 "To continue, delete another report and try again. "
             ).format(number=self.max_allowed_reports))
@@ -583,6 +579,8 @@ ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculati
 class ConfigureNewReportBase(forms.Form):
     user_filters = FilterField(required=False)
     default_filters = FilterField(required=False)
+    report_title = forms.CharField(widget=forms.HiddenInput, required=False)
+    report_description = forms.CharField(widget=forms.HiddenInput, required=False)
     button_text = ugettext_noop('Done')
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -629,35 +627,6 @@ class ConfigureNewReportBase(forms.Form):
             )
         ]
         # Add a back button if we aren't editing an existing report
-        if not self.existing_report:
-            buttons.insert(
-                0,
-                crispy.HTML(
-                    '<a class="btn btn-default" href="{}" style="margin-right: 4px">{}</a>'.format(
-                        reverse(
-                            'report_builder_select_source',
-                            args=(self.domain, self.report_type),
-                        ),
-                        _('Back')
-                    )
-                ),
-            )
-        # Add a "delete report" button if we are editing an existing report
-        else:
-            buttons.insert(
-                0,
-                crispy.HTML(
-                    '<a id="delete-report-button" class="btn btn-danger pull-right" href="{}">{}</a>'.format(
-                        reverse(
-                            'delete_configurable_report',
-                            args=(self.domain, self.existing_report._id),
-                        ) + "?{}".format(urlencode(
-                            {'redirect': reverse('reports_home', args=[self.domain])}
-                        )),
-                        _('Delete Report')
-                    )
-                )
-            )
         self.helper.layout = crispy.Layout(
             self.container_fieldset,
             hqcrispy.FormActions(crispy.ButtonHolder(*buttons)),
@@ -697,6 +666,12 @@ class ConfigureNewReportBase(forms.Form):
                 # meta properties
                 option = ColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric)
             options[id_] = option
+
+        # NOTE: Count columns aren't useful for table reports. But we need it in the column options because
+        # the options are currently static, after loading the report builder a user can switch to an agged report.
+        count_col = CountColumn("Number of Cases" if self.source_type == "case" else "Number of Forms")
+        options[count_col.id] = count_col
+
         return options
 
     @property
@@ -754,7 +729,7 @@ class ConfigureNewReportBase(forms.Form):
 
     def _get_data_source_configuration_kwargs(self):
         if self._is_multiselect_chart_report:
-            base_item_expression = self.ds_builder.base_item_expression(True, self.aggregation_field)
+            base_item_expression = self.ds_builder.base_item_expression(True, self.cleaned_data['group_by'][0])
         else:
             base_item_expression = self.ds_builder.base_item_expression(False)
         return dict(
@@ -805,6 +780,8 @@ class ConfigureNewReportBase(forms.Form):
         self.existing_report.columns = self._report_columns
         self.existing_report.filters = self._report_filters
         self.existing_report.configured_charts = self._report_charts
+        self.existing_report.title = self.cleaned_data['report_title'] or _("Report Builder Report")
+        self.existing_report.description = self.cleaned_data['report_description']
         self.existing_report.validate()
         self.existing_report.save()
         return self.existing_report
@@ -819,6 +796,31 @@ class ConfigureNewReportBase(forms.Form):
         report = ReportConfiguration(
             domain=self.domain,
             config_id=data_source_config_id,
+            title=self.cleaned_data['report_title'] or self.report_name,
+            aggregation_columns=self._report_aggregation_cols,
+            columns=self._report_columns,
+            filters=self._report_filters,
+            configured_charts=self._report_charts,
+            description=self.cleaned_data['report_description'],
+            report_meta=ReportMeta(
+                created_by_builder=True,
+                builder_report_type=self.report_type
+            )
+        )
+        report.validate()
+        report.save()
+        return report
+
+    def create_temp_report(self, data_source_id):
+        """
+        Creates and saves a report config.
+
+        :raises BadSpecError if report is invalid
+        """
+        from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
+        report = ReportConfiguration(
+            domain=self.domain,
+            config_id=data_source_id,
             title=self.report_name,
             aggregation_columns=self._report_aggregation_cols,
             columns=self._report_columns,
@@ -1056,137 +1058,13 @@ class ConfigureNewReportBase(forms.Form):
         return []
 
 
-class ConfigureBarChartReportForm(ConfigureNewReportBase):
-    group_by = forms.ChoiceField(label=_("Bar Chart Categories"))
-    report_type = 'chart'
-
-    def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
-        super(ConfigureBarChartReportForm, self).__init__(
-            report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
-        )
-        if self.source_type == "form":
-            self.fields['group_by'].widget = QuestionSelect(attrs={'class': 'input-large'})
-        else:
-            self.fields['group_by'].widget = Select2(attrs={'class': 'input-large'})
-        self.fields['group_by'].choices = self._group_by_choices
-
-        # Set initial value of group_by
-        if self.existing_report:
-            existing_agg_cols = existing_report.aggregation_columns
-            assert len(existing_agg_cols) < 2
-            if existing_agg_cols:
-                self.fields['group_by'].initial = self._get_property_id_by_indicator_id(existing_agg_cols[0])
-
-    @property
-    def container_fieldset(self):
-        return crispy.Fieldset(
-            _('Chart'),
-            FieldWithHelpBubble(
-                'group_by',
-                help_bubble_text=_(
-                    "The values of the selected property will be aggregated "
-                    "and shown as bars in the chart."
-                ),
-                placeholder=_("Select Property..."),
-            ),
-            self.user_filter_fieldset,
-            self.default_filter_fieldset
-        )
-
-    @property
-    def aggregation_field(self):
-        return self.cleaned_data["group_by"]
-
-    @property
-    def _report_aggregation_cols(self):
-        return [
-            self.data_source_properties[self.aggregation_field].column_id
-        ]
-
-    @property
-    def _report_charts(self):
-        agg_col = self.data_source_properties[self.aggregation_field].column_id
-        return [{
-            "type": "multibar",
-            "x_axis_column": agg_col,
-            "y_axis_columns": ["count"],
-        }]
-
-    @property
-    def _report_columns(self):
-        agg_col_id = self.data_source_properties[self.aggregation_field].column_id
-        agg_disp = self.data_source_properties[self.aggregation_field].text
-        return [
-            {
-                "format": "default",
-                "aggregation": "simple",
-                "field": agg_col_id,
-                "type": "field",
-                "display": agg_disp
-            },
-            {
-                "format": "default",
-                "aggregation": "sum",
-                "field": "count",
-                "type": "field",
-                "display": "Count"
-            }
-        ]
-
-    @property
-    def _group_by_choices(self):
-        return [(p.id, p.text) for p in self.data_source_properties.values()]
-
-    @property
-    @memoized
-    def _is_multiselect_chart_report(self):
-        """
-        Return True if this is a chart report aggregated by a multiselect question.
-        The data sources for these sorts of reports are handled differently than other reports.
-        """
-        agg_property = self.data_source_properties[self.aggregation_field]
-        return agg_property.type == "question" and agg_property.source['type'] == "MSelect"
-
-
-class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
-    group_by = forms.ChoiceField(label=_("Pie Chart Segments"))
-
-    @property
-    def container_fieldset(self):
-        return crispy.Fieldset(
-            _('Chart Properties'),
-            FieldWithHelpBubble(
-                'group_by',
-                help_bubble_text=_(
-                    "The values of the selected property will be aggregated "
-                    "and shows as the sections of the pie chart."
-                ),
-                placeholder=_(
-                    "Select Property..."
-                ),
-            ),
-            self.user_filter_fieldset,
-            self.default_filter_fieldset
-        )
-
-    @property
-    def _report_charts(self):
-        agg = self.data_source_properties[self.aggregation_field].column_id
-        return [{
-            "type": "pie",
-            "aggregation_column": agg,
-            "value_column": "count",
-        }]
-
-
 class ConfigureListReportForm(ConfigureNewReportBase):
     report_type = 'list'
     columns = JsonField(
         expected_type=list,
         null_values=([],),
-        required=True,
+        required=False,
         widget=forms.HiddenInput,
-        error_messages={"required": ugettext_lazy("At least one column is required")},
     )
     column_legend_fine_print = ugettext_noop("Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
 
@@ -1227,6 +1105,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     def initial_columns(self):
         if self.existing_report:
             reverse_agg_map = {
+                'simple': 'Group By',
                 'avg': 'Average',
                 'sum': 'Sum',
                 'expand': 'Count per Choice'
@@ -1260,13 +1139,73 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     )
                 )
             return cols
-        return [ColumnViewModel(
-                    display_text='',
+        else:
+            return self._get_default_columns()
+
+    def _get_default_columns(self):
+        if self.source_type == "case":
+            return self._get_default_case_report_columns()
+        else:
+            return self._get_default_form_report_columns()
+
+    def _get_default_case_report_columns(self):
+        cols = []
+        cols.append(ColumnViewModel(
+            display_text="Name",
+            exists_in_current_version=True,
+            property="name",
+            data_source_field=self.data_source_properties['name'].column_id,
+            calculation="Count per Choice"
+        ))
+        cols.append(ColumnViewModel(
+            display_text="Owner",
+            exists_in_current_version=True,
+            property="computed/owner_name",
+            data_source_field=self.data_source_properties['computed/owner_name'].column_id,
+            calculation="Count per Choice"
+        ))
+        case_props_found = 0
+
+        skip_list = set(["computed/owner_name", "computed/user_name"] + STATIC_CASE_PROPS)
+        for prop in self.data_source_properties.values():
+            if prop.type == "case_property" and prop.id not in skip_list:
+                case_props_found += 1
+                cols.append(ColumnViewModel(
+                    display_text=prop.text,
                     exists_in_current_version=True,
-                    property=None,
-                    data_source_field=None,
-                    calculation=_('Count per Choice')
-                )]
+                    property=prop.id,
+                    data_source_field=prop.column_id,  #
+                    calculation="Count per Choice",
+                ))
+                if case_props_found == 3:
+                    break
+        return cols
+
+    def _get_default_form_report_columns(self):
+        cols = []
+        prop = self.data_source_properties['username']
+        cols.append(ColumnViewModel(
+            display_text=prop.text,
+            exists_in_current_version=True,
+            property=prop.id,
+            data_source_field=prop.column_id,
+            calculation="Count per Choice"
+        ))
+        for prop in self.data_source_properties.values():
+            questions_found = 0
+            if prop.type == "question":
+                questions_found += 1
+                cols.append(ColumnViewModel(
+                    display_text=prop.text,
+                    exists_in_current_version=True,
+                    property=prop.id,
+                    data_source_field=prop.column_id,
+                    calculation="Count per Choice",
+                ))
+                if questions_found == 4:
+                    break
+        return cols
+
 
     @property
     def _report_columns(self):
@@ -1282,10 +1221,21 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         return ['doc_id']
 
 
-class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
+class ConfigureTableReportForm(ConfigureListReportForm):
     report_type = 'table'
     column_legend_fine_print = ugettext_noop('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
-    group_by = forms.ChoiceField(label=_("Show one row for each"))
+    group_by = forms.MultipleChoiceField(label=_("Show one row for each"))
+    chart = forms.CharField(widget=forms.HiddenInput)
+
+    def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
+        super(ConfigureTableReportForm, self).__init__(
+            report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
+        )
+        if self.source_type == "form":
+            self.fields['group_by'].widget = QuestionSelect(attrs={'class': 'input-large'})
+        else:
+            self.fields['group_by'].widget = Select2(attrs={'class': 'input-large'})
+        self.fields['group_by'].choices = self._group_by_choices
 
     @property
     def container_fieldset(self):
@@ -1305,25 +1255,42 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
     @property
     def _report_charts(self):
-        # Override the behavior inherited from ConfigureBarChartReportForm
+
+        def get_non_agged_columns():
+            return [c for c in self._report_columns if c['aggregation'] != "simple"]
+        if get_non_agged_columns():
+            if self.cleaned_data['chart'] == "bar":
+                return [{
+                    "type": "multibar",
+                    "x_axis_column": "column_agg_0",
+                    # TODO: Possibly use more columns?
+                    "y_axis_columns": [{"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()],
+                }]
+            elif self.cleaned_data['chart'] == "pie":
+                return [{
+                    "type": "pie",
+                    "aggregation_column": "column_agg_0",
+                    "value_column": get_non_agged_columns()[0]['column_id'],
+                }]
         return []
 
     @property
     def _is_multiselect_chart_report(self):
+        """
+        Return True if this is a chart report aggregated by a multiselect question.
+        The data sources for these sorts of reports are handled differently than other reports.
+        """
+        # Disabling this feature for now
         return False
-
-    @property
-    @memoized
-    def report_column_options(self):
-        options = super(ConfigureTableReportForm, self).report_column_options
-        count_col = CountColumn("Number of Cases" if self.source_type == "case" else "Number of Forms")
-        options[count_col.id] = count_col
-        return options
+        # if self.cleaned_data['chart'] in ("pie", "bar"):
+        #     agg_property = self.data_source_properties[self.cleaned_data['group_by'][0]]
+        #     return agg_property.type == "question" and agg_property.source['type'] == "MSelect"
+        # return False
 
     @property
     def _report_columns(self):
-        agg_field_id = self.data_source_properties[self.aggregation_field].column_id
-        agg_field_text = self.data_source_properties[self.aggregation_field].text
+        agg_fields = self.cleaned_data['group_by']
+        agg_field_ids = set(self.data_source_properties[agg_field].column_id for agg_field in agg_fields)
 
         columns = []
         for i, conf in enumerate(self.cleaned_data['columns']):
@@ -1332,50 +1299,39 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
                     i,
                     conf['display_text'],
                     conf['calculation'],
-                    is_aggregated_on=conf["property"] == self.aggregation_field
+                    is_aggregated_on=conf["property"] in agg_fields
                 )
             )
 
         # Add the aggregation indicator to the columns if it's not already present.
-        displaying_agg_column = any(
-            c for c in self.cleaned_data['columns'] if c['property'] == self.aggregation_field
-        )
-        if not displaying_agg_column:
-            columns = self._get_column_option_by_indicator_id(agg_field_id).to_column_dicts(
-                "agg", agg_field_text, 'simple', is_aggregated_on=True
-            ) + columns
-        else:
-            # Don't expand the aggregation column
-            for c in columns:
-                if c['field'] == agg_field_id:
-                    c['aggregation'] = "simple"
-        return columns
+        extra_cols = []
+        existing_columns = set(c['property'] for c in self.cleaned_data['columns'])
+        for index, agg_field in enumerate(agg_fields):
+            if agg_field not in existing_columns:
+                agg_field_id = self.data_source_properties[agg_field].column_id
+                agg_field_text = self.data_source_properties[agg_field].text
+                extra_cols += self._get_column_option_by_indicator_id(agg_field_id).to_column_dicts(
+                    "agg_{}".format(index), agg_field_text, 'simple', is_aggregated_on=True
+                )
+        columns = extra_cols + columns
 
-    @property
-    @memoized
-    def initial_columns(self):
-        # columns are ColumnViewModels (not ColumnOptions)
-        columns = super(ConfigureTableReportForm, self).initial_columns
+        # Don't expand the aggregation columns
+        for c in columns:
+            if c['field'] in agg_field_ids:
+                c['aggregation'] = "simple"
 
-        # Remove the aggregation indicator from the columns.
-        # It gets removed because we want it to be a column in the report,
-        # but we don't want it to appear in the builder.
-        if self.existing_report:
-            agg_properties = [
-                self._get_property_id_by_indicator_id(c)
-                for c in self.existing_report.aggregation_columns
-            ]
-            return [c for c in columns if c.property not in agg_properties]
         return columns
 
     @property
     @memoized
     def _report_aggregation_cols(self):
-        # we want the bar chart behavior, which is reproduced here:
         return [
-            self.data_source_properties[self.aggregation_field].column_id
+            self.data_source_properties[f].column_id for f in self.cleaned_data["group_by"]
         ]
 
+    @property
+    def _group_by_choices(self):
+        return [(p.id, p.text) for p in self.data_source_properties.values()]
 
 class ConfigureWorkerReportForm(ConfigureTableReportForm):
     # This is a ConfigureTableReportForm, but with a predetermined aggregation
@@ -1431,7 +1387,7 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
 
 class ConfigureMapReportForm(ConfigureListReportForm):
     report_type = 'map'
-    location = forms.ChoiceField(label="Location field")
+    location = forms.ChoiceField(label="Location field", required=False)
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
         super(ConfigureMapReportForm, self).__init__(
@@ -1488,19 +1444,26 @@ class ConfigureMapReportForm(ConfigureListReportForm):
 
     @property
     def _report_columns(self):
-        loc_field_id = self.data_source_properties[self.location_field].column_id
-        loc_field_text = self.data_source_properties[self.location_field].text
-
         columns = super(ConfigureMapReportForm, self)._report_columns
 
-        # Add the location indicator to the columns if it's not already present.
-        displaying_loc_column = bool([c for c in columns if c['field'] == loc_field_id])
-        if not displaying_loc_column:
-            columns = columns + [{
-                "column_id": loc_field_id,
-                "type": "location",
-                'field': loc_field_id,
-                'display': loc_field_text
-            }]
+        if self.location_field:
+            loc_field_id = self.data_source_properties[self.location_field].column_id
+            loc_field_text = self.data_source_properties[self.location_field].text
+
+            displaying_loc_column = False
+            for c in columns:
+                if c['field'] == loc_field_id:
+                    c['type'] = "location"
+                    displaying_loc_column = True
+                    break
+
+            # Add the location indicator to the columns if it's not already present.
+            if not displaying_loc_column:
+                columns = columns + [{
+                    "column_id": loc_field_id,
+                    "type": "location",
+                    'field': loc_field_id,
+                    'display': loc_field_text
+                }]
 
         return columns
