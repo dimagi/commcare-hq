@@ -125,7 +125,14 @@ class PillowBase(object):
         pass
 
     def _record_checkpoint_in_datadog(self):
-        for topic, value in self.get_last_checkpoint_sequence().iteritems():
+        sequence = self.get_last_checkpoint_sequence()
+        change_feed = self.get_change_feed()
+        if not isinstance(sequence, dict):
+            topics = change_feed.topics
+            assert len(topics) == 1
+            sequence = {topics[0]: int(sequence)}
+
+        for topic, value in sequence.iteritems():
             datadog_gauge('commcare.change_feed.processed_offsets'.format(topic), value, tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 'topic:{}'.format(topic),
@@ -135,7 +142,7 @@ class PillowBase(object):
                 'topic:{}'.format(topic),
             ])
 
-        for topic, offset in self.get_change_feed().get_current_offsets().iteritems():
+        for topic, offset in change_feed.get_current_offsets().iteritems():
             datadog_gauge('commcare.change_feed.current_offsets'.format(topic), offset, tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 'topic:{}'.format(topic),
