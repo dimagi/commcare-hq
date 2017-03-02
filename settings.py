@@ -899,7 +899,7 @@ try:
             custom_settings_module = importlib.import_module(custom_settings)
             try:
                 attrlist = custom_settings_module.__all__
-            except AttributeError:
+            except AttributeError, e:
                 attrlist = dir(custom_settings_module)
             for attr in attrlist:
                 globals()[attr] = getattr(custom_settings_module, attr)
