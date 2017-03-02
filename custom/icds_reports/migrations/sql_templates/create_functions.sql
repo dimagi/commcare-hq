@@ -493,7 +493,6 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(ccs_status)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx3') || ' ON ' || quote_ident(_tablename) || '(trimester)';
-    -- is a month query actually useful since the tables are partitioned by months? (general q for every table)
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx4') || ' ON ' || quote_ident(_tablename) || '(month)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx5') || ' ON ' || quote_ident(_tablename) || '(caste)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(disabled)';
@@ -844,7 +843,6 @@ BEGIN
 		'WHERE month = ' || quote_literal(_start_date) || ' AND caste != ' || quote_literal(_all_text) || ' GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
 
-    -- haven't looked at this query yet
 	-- Pass to combine THR information from ccs record and child health table
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' SET thr_score = ' ||
 	'CASE WHEN ((thr_rations_21_plus_distributed_ccs + thr_rations_21_plus_distributed_child)::numeric / ' ||
@@ -853,7 +851,6 @@ BEGIN
 		'(CASE WHEN (thr_eligible_child + thr_eligible_ccs) = 0 THEN 1 ELSE (thr_eligible_child + thr_eligible_ccs) END)) >= 0.5 THEN 10 ' ||
 		'ELSE 1 END';
 
-    -- haven't looked at this query yet
 	-- Pass to calculate awc score and ranks
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' SET (' ||
 		'awc_score, ' ||
@@ -1189,9 +1186,6 @@ DECLARE
 BEGIN
 	all_text = 'All';
 	null_value = NULL;
-
-    -- should there be indexes created on this table?
-    -- it doesn't appear to be filtered in this file. maybe tableau touches it?
 
 	EXECUTE 'INSERT INTO awc_location (SELECT ' ||
 		quote_nullable(all_text) || ', ' ||
