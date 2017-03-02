@@ -70,6 +70,7 @@ from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import get_url_base
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -90,6 +91,7 @@ from dimagi.utils.web import get_url_base, parse_int
 import commcare_translations
 from corehq.util import bitly
 from corehq.util import view_utils
+from corehq.util.string_utils import random_string
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -5236,6 +5238,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
+
+    anonymous_cloudcare_enabled = BooleanProperty(default=False)
+    anonymous_cloudcare_hash = StringProperty(default=random_string)
+
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
@@ -5248,6 +5254,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
+
+    @property
+    def anonymous_cloudcare_url(self):
+        from corehq.apps.cloudcare.views import SingleAppLandingPageView
+
+        return view_utils.absolute_reverse(SingleAppLandingPageView.urlname, args=[
+            self.domain,
+            self.anonymous_cloudcare_hash
+        ])
 
     @property
     @memoized
