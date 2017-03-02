@@ -7,9 +7,9 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.filters.select import YearFilter
-from custom.icds_reports.filters import IcdsLocationFilter, CasteFilter, MinorityFilter, DisabledFilter, \
-    ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter
+from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
+    ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
+    TableauLocationFilter, ICDSYearFilter
 from . import const
 from .exceptions import TableauTokenException
 
@@ -22,8 +22,8 @@ class TableauView(TemplateView):
 
     filters = [
         ICDSMonthFilter,
-        YearFilter,
-        IcdsLocationFilter,
+        ICDSYearFilter,
+        TableauLocationFilter,
         CasteFilter,
         MinorityFilter,
         DisabledFilter,

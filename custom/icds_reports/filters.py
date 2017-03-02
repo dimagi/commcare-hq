@@ -1,23 +1,35 @@
 from datetime import datetime
 
+import pytz
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.util import load_locs_json
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.filters.select import MonthFilter
+from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from dimagi.utils.decorators.memoized import memoized
 
 
-def location_hierarchy_config(domain):
+def location_hierarchy_config(domain, location_types=None):
+    location_types = location_types or ['state', 'district', 'block']
     return [
         (loc_type.name, [loc_type.parent_type.name if loc_type.parent_type else None])
         for loc_type in Domain.get_by_name(
             domain
-        ).location_types if loc_type.code in ['state', 'district', 'block']
+        ).location_types if loc_type.code in location_types
     ]
 
 
-class ICDSMonthFilter(MonthFilter):
+class ICDSTableauFilterMixin(object):
+    def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None,
+                 css_label=None, css_field=None):
+        css_label = 'col-xs-4 col-md-3 col-lg-3 control-label'
+        super(ICDSTableauFilterMixin, self).__init__(
+            request, domain, timezone, parent_report, css_label, css_field
+        )
+
+
+class ICDSMonthFilter(ICDSTableauFilterMixin, MonthFilter):
 
     @property
     @memoized
@@ -25,9 +37,17 @@ class ICDSMonthFilter(MonthFilter):
         return self.get_value(self.request, self.domain) or "%02d" % datetime.now().month
 
 
+class ICDSYearFilter(ICDSTableauFilterMixin, YearFilter):
+    pass
+
+
 class IcdsLocationFilter(AsyncLocationFilter):
 
     auto_drill = False
+
+    @property
+    def location_hierarchy_config(self):
+        return location_hierarchy_config(self.domain)
 
     @property
     def filter_context(self):
@@ -47,11 +67,21 @@ class IcdsLocationFilter(AsyncLocationFilter):
             'loc_id': loc_id,
             'locations': load_locs_json(self.domain, loc_id, user=user),
             'make_optional': self.make_optional,
-            'hierarchy': location_hierarchy_config(self.domain)
+            'hierarchy': self.location_hierarchy_config
         }
 
 
-class CasteFilter(BaseSingleOptionFilter):
+class TableauLocationFilter(ICDSTableauFilterMixin, IcdsLocationFilter):
+
+    @property
+    def location_hierarchy_config(self):
+        return location_hierarchy_config(
+            self.domain,
+            location_types=['state', 'district', 'block', 'supervisor', 'awc']
+        )
+
+
+class CasteFilter(ICDSTableauFilterMixin, BaseSingleOptionFilter):
     slug = 'caste'
     label = 'Caste'
 
@@ -71,7 +101,7 @@ class CasteFilter(BaseSingleOptionFilter):
         ]
 
 
-class MinorityFilter(BaseSingleOptionFilter):
+class MinorityFilter(ICDSTableauFilterMixin, BaseSingleOptionFilter):
     slug = 'minority'
     label = 'Minority'
 
@@ -89,7 +119,7 @@ class MinorityFilter(BaseSingleOptionFilter):
         ]
 
 
-class DisabledFilter(BaseSingleOptionFilter):
+class DisabledFilter(ICDSTableauFilterMixin, BaseSingleOptionFilter):
     slug = 'disabled'
     label = 'Disabled'
 
@@ -107,7 +137,7 @@ class DisabledFilter(BaseSingleOptionFilter):
         ]
 
 
-class ResidentFilter(BaseSingleOptionFilter):
+class ResidentFilter(ICDSTableauFilterMixin, BaseSingleOptionFilter):
     slug = 'resident'
     label = 'Resident'
 
@@ -125,7 +155,7 @@ class ResidentFilter(BaseSingleOptionFilter):
         ]
 
 
-class MaternalStatusFilter(BaseSingleOptionFilter):
+class MaternalStatusFilter(ICDSTableauFilterMixin, BaseSingleOptionFilter):
     slug = 'ccs_status'
     label = 'Maternal status'
 
@@ -143,7 +173,7 @@ class MaternalStatusFilter(BaseSingleOptionFilter):
         ]
 
 
-class ChildAgeFilter(BaseSingleOptionFilter):
+class ChildAgeFilter(ICDSTableauFilterMixin, BaseSingleOptionFilter):
     slug = 'child_age_tranche'
     label = 'Child age'
 
@@ -167,7 +197,7 @@ class ChildAgeFilter(BaseSingleOptionFilter):
         ]
 
 
-class THRBeneficiaryType(BaseSingleOptionFilter):
+class THRBeneficiaryType(ICDSTableauFilterMixin, BaseSingleOptionFilter):
     slug = 'thr_beneficiary_type'
     label = 'THR Beneficiary Type'
 

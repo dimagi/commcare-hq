@@ -83,6 +83,17 @@ function getFiltersValues() {
         }
     });
 
+    if (locationKOContext.selected_location() && locationKOContext.selected_location().type() === 'awc') {
+        selectedUUIDs[locationLevel - 1] = locationKOContext.selected_locid();
+        locationLevel++;
+    }
+
+    var state = selectedUUIDs[0];
+    var district = selectedUUIDs[1];
+    var block = selectedUUIDs[2];
+    var supervisor = selectedUUIDs[3];
+    var awc = selectedUUIDs[4];
+
     var locationTypeCode = findLocationTypeCode(locationLevel);
 
     var filters = {
@@ -94,17 +105,21 @@ function getFiltersValues() {
         Resident: resident,
         ccs_status: maternalStatus,
         thr_beneficiary_type: beneficiaryType,
-        state: selectedUUIDs[0] || 'All',
-        district: selectedUUIDs[1] || 'All',
-        block: selectedUUIDs[2] || 'All',
+        state: state || 'All',
+        district: district || 'All',
+        block: block || 'All',
+        supervisor: supervisor || 'All',
+        awc: awc || 'All',
         view_by: locationLevel,
+        user_awc: '',
+        user_supervisor: '',
         user_state: '',
         user_district: '',
         user_block: '',
         user_national: '',
     };
 
-    filters['user_' + locationTypeCode] = selectedUUIDs[0] || selectedUUIDs[1] || selectedUUIDs[2] || 'All';
+    filters['user_' + locationTypeCode] = awc || supervisor || block || district || state || 'All';
     return filters;
 }
 
@@ -171,19 +186,19 @@ function setUpWorkbook(viz) {
 }
 
 function setUpInitialTableauParams() {
-    var locationKey = 'user_' + tableauOptions.userLocationLevel;
-
     var params = getFiltersValues();
-    params.view_by = LOCATIONS_MAP[tableauOptions.userLocationLevel];
-    params.state = tableauOptions.stateCode;
-    params.district = tableauOptions.districtCode;
-    params.block = tableauOptions.blockCode;
-    params[locationKey] = tableauOptions.userLocation;
 
-    applyParams(workbook, params);
+    var sheetName = tableauOptions.currentSheet;
+
+    if (sheetName === 'Dashboard' && params.awc && params.awc !== 'All') {
+        sheetName = 'AWC-Info';
+        switchVisualization(sheetName, workbook, params);
+    } else {
+        applyParams(workbook, params);
+    }
 
     var historyObject = {
-        sheetName: tableauOptions.currentSheet,
+        sheetName: sheetName,
         params: params,
         locationData: getLocationData(),
     };
@@ -286,7 +301,6 @@ ICDS workbook will have following paramter convention
     e.g. js_sheet_Nutrition: '{"is_drilldown": "True"}'
 */
 function navigateToSheet(sheetName, workbook, params){
-
     workbook.getParametersAsync()
         .then(changeViz)
         .otherwise(function(err) {
@@ -316,6 +330,13 @@ function extractSheetName(pair, sheetName) {
 function switchVisualization(sheetName, workbook, params) {
     // TODO: Handle the case where we are in the same sheet, might just need to apply filters then?
     var worksheets;
+
+    if (sheetName === 'Dashboard' && params.awc && params.awc !== 'All') {
+        sheetName = 'AWC-Info';
+    } else if (sheetName === 'AWC-Info' && (!params.awc || params.awc === 'All')) {
+        sheetName = 'Dashboard';
+    }
+
     workbook.activateSheetAsync(sheetName)
             .then(function(dashboard) {
                 worksheets = dashboard.getWorksheets();
