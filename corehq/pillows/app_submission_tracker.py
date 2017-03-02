@@ -13,18 +13,18 @@ from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDep
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
+from pillowtop.processors.form import AppFormSubmissionTrackerProcessor
 from pillowtop.reindexer.reindexer import Reindexer
 
 
-def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerProcessor'):
+def get_app_form_submission_tracker_pillow(pillow_id='AppFormSubmissionTrackerPillow'):
     """
     This gets a pillow which iterates through all forms and marks the corresponding app
     as having submissions. This could be expanded to be more generic and include
     other processing that needs to happen on each form
     """
-    checkpoint = PillowCheckpoint('form-submission-metadata-tracker')
-    form_processor = FormSubmissionMetadataTrackerProcessor()
+    checkpoint = PillowCheckpoint('app-form-submission-tracker')
+    form_processor = AppFormSubmissionTrackerProcessor()
     change_feed = KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='form-processsor')
     return ConstructedPillow(
         name=pillow_id,
@@ -85,7 +85,7 @@ class AppFormSubmissionReindexer(Reindexer):
         self.doc_provider = doc_provider
         self.chunk_size = chunk_size
         self.doc_processor = AppFormSubmissionReindexDocProcessor(
-            FormSubmissionMetadataTrackerProcessor(),
+            AppFormSubmissionTrackerProcessor(),
             data_source_type,
             data_source_name,
         )
