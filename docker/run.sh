@@ -59,6 +59,7 @@ function run_tests() {
     delta=$((`date +%s` - $now))
 
     send_metrics_to_datadog "tests" $delta
+    send_counter_metric_to_datadog
 }
 
 function send_metrics_to_datadog() {
@@ -76,6 +77,20 @@ function send_metrics_to_datadog() {
         }" \
     "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}"
 
+}
+
+function send_counter_metric_to_datadog() {
+    currenttime=$(date +%s)
+    curl  -X POST -H "Content-type: application/json" \
+    -d "{ \"series\" :
+             [{\"metric\":\"travis.count\",
+              \"points\":[[$currenttime, 1]],
+              \"type\":\"counter\",
+              \"host\":\"travis-ci.org\",
+              \"tags\":[\"environment:travis\", \"test_type:$TEST\", \"partition:$NOSE_DIVIDED_WE_RUN\"]}
+            ]
+        }" \
+    "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}"
 }
 
 function _run_tests() {
