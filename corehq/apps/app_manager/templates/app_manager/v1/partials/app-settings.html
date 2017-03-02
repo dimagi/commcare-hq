@@ -153,7 +153,7 @@
 </script>
 
 <inline-edit params="
-    value: '{{ app.name|escapejs }}',
+    value: '{{ app.name|html_name|escapejs }}',
     readOnlyClass: 'h3',
     url: '{% url "edit_app_attr" domain app.id 'name' %}',
     placeholder: '{% trans "Untitled App"|escapejs %}',
@@ -163,7 +163,7 @@
 "></inline-edit>
 <br />
 <inline-edit params="
-    value: '{{ app.short_comment|escapejs }}',
+    value: '{{ app.short_comment|html_name|escapejs }}',
     url: '{% url "edit_app_attr" domain app.id 'comment' %}',
     placeholder: '{% trans "Enter app description here"|escapejs %}',
     saveValueName: 'comment',
