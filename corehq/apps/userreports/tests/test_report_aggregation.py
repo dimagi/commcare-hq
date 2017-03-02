@@ -629,7 +629,6 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def _create_data_source(cls):
-
         cls.data_source = DataSourceConfiguration(
             domain=cls.domain,
             display_name=cls.domain,

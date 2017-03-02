@@ -217,7 +217,11 @@ class FieldColumn(ReportColumn):
         elif self.aggregation == 'simple':
             value = row['past_bucket_values'][self.field]
         elif self._use_terms_aggregation_for_max_min(data_source_config):
-            value = row[self.column_id]['buckets'][0]['key']
+            buckets = row[self.column_id].get('buckets', [])
+            if buckets:
+                value = buckets[0]['key']
+            else:
+                value = ''
         else:
             value = int(row[self.column_id]['value'])
 
