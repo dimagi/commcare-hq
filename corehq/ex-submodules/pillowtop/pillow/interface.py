@@ -3,6 +3,7 @@ from abc import ABCMeta, abstractproperty, abstractmethod
 import sys
 
 from corehq.util.soft_assert import soft_assert
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from dimagi.utils.logging import notify_exception
 from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.exceptions import PillowtopCheckpointReset
@@ -89,6 +90,7 @@ class PillowBase(object):
         try:
             for change in self.get_change_feed().iter_changes(since=since, forever=forever):
                 if change:
+                    self._record_change_in_datadog(change)
                     try:
                         context.changes_seen += 1
                         self.process_with_error_handling(change)
@@ -96,11 +98,15 @@ class PillowBase(object):
                         notify_exception(None, u'processor error in pillow {} {}'.format(
                             self.get_name(), e,
                         ))
+                        self._record_change_exception_in_datadog(change)
                         raise
                     else:
                         self.fire_change_processed_event(change, context)
+                        self._record_change_success_in_datadog(change)
                 else:
-                    self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
+                    updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
+                    if updated:
+                        self._record_checkpoint_in_datadog()
         except PillowtopCheckpointReset:
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
@@ -117,6 +123,49 @@ class PillowBase(object):
     @abstractmethod
     def fire_change_processed_event(self, change, context):
         pass
+
+    def _record_checkpoint_in_datadog(self):
+        sequence = self.get_last_checkpoint_sequence()
+        change_feed = self.get_change_feed()
+        if not isinstance(sequence, dict):
+            topics = change_feed.topics
+            assert len(topics) == 1
+            sequence = {topics[0]: int(sequence)}
+
+        datadog_counter('commcare.change_feed.change_feed.checkpoint', tags=[
+            'pillow_name:{}'.format(self.get_name()),
+        ])
+
+        for topic, value in sequence.iteritems():
+            datadog_gauge('commcare.change_feed.processed_offsets'.format(topic), value, tags=[
+                'pillow_name:{}'.format(self.get_name()),
+                'topic:{}'.format(topic),
+            ])
+
+        for topic, offset in change_feed.get_current_offsets().iteritems():
+            datadog_gauge('commcare.change_feed.current_offsets'.format(topic), offset, tags=[
+                'pillow_name:{}'.format(self.get_name()),
+                'topic:{}'.format(topic),
+            ])
+
+    def _record_change_in_datadog(self, change):
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change)
+
+    def _record_change_success_in_datadog(self, change):
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change)
+
+    def _record_change_exception_in_datadog(self, change):
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change)
+
+    def __record_change_metric_in_datadog(self, metric, change):
+        if change.metadata is not None:
+            datadog_counter(metric, tags=[
+                'datasource:{}'.format(change.metadata.data_source_name),
+                'document_type:{}'.format(change.metadata.document_type),
+                'domain:{}'.format(change.metadata.domain),
+                'is_deletion:{}'.format(change.metadata.is_deletion),
+                'pillow_name:{}'.format(self.get_name()),
+            ])
 
 
 class ChangeEventHandler(object):
