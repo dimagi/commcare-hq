@@ -171,7 +171,7 @@ function setUpNav(viz) {
 Navigation back in the UI.
 */
 window.onpopstate = function (event) {
-    popParams(event.state.params, event.state.sheetName, event.state.locationData)
+    popParams(event.state.params, event.state.sheetName, event.state.locationData);
 };
 
 function onMarksSelection(marksEvent) {
@@ -209,7 +209,7 @@ function onMarksSelection(marksEvent) {
     function applyMarks(marks) {
         workbook.getParametersAsync().then(function(currentTableauParams) {
             var newParams = {};
-            newSheet = null;
+            var newSheet = null;
             _.each(marks, function(mark) {
                 var pairs = mark.getPairs();
                 _.each(pairs, function(pair){
@@ -275,7 +275,7 @@ function processAndApplyParams(navigationContext) {
     }
 
     //Will no-op if the target sheet is the same as the current sheet
-    workbook.activateSheetAsync(navigationContext.sheetName).then(function(dashboard) {
+    workbook.activateSheetAsync(navigationContext.sheetName).then(function() {
         applyParams(navigationContext.params);
     });
 }
@@ -319,7 +319,7 @@ function getCurrentParams() {
     if (history.state && history.state.params) {
         return history.state.params;
     }
-    return {}
+    return {};
 }
 
 /*
