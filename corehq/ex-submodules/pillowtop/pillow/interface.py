@@ -132,12 +132,12 @@ class PillowBase(object):
             assert len(topics) == 1
             sequence = {topics[0]: int(sequence)}
 
+        datadog_counter('commcare.change_feed.change_feed.checkpoint', tags=[
+            'pillow_name:{}'.format(self.get_name()),
+        ])
+
         for topic, value in sequence.iteritems():
             datadog_gauge('commcare.change_feed.processed_offsets'.format(topic), value, tags=[
-                'pillow_name:{}'.format(self.get_name()),
-                'topic:{}'.format(topic),
-            ])
-            datadog_counter('commcare.change_feed.topics.counter'.format(topic), tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 'topic:{}'.format(topic),
             ])
