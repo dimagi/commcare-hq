@@ -12,17 +12,9 @@ var viz = {},
     };
 
 var tableauOptions = {};
-
-function findLocationTypeCode(level) {
-    for (var key in LOCATIONS_MAP) {
-        if (LOCATIONS_MAP.hasOwnProperty(key)) {
-            var value = LOCATIONS_MAP[key];
-            if (value === level) {
-                return key;
-            }
-        }
-    }
-}
+var initialParams = {};
+var initialLocationData = {};
+var awcOnlySheets = [];
 
 function getLocationData() {
     var locationKOContext = ko.dataFor($('#group_location_async')[0]);
@@ -32,22 +24,10 @@ function getLocationData() {
     };
 }
 
-function resetFilters() {
-    var today = new Date();
-    var twoDigitMonth = ("0" + (today.getMonth() + 1)).slice(-2);
-
-    $('#report_filter_month').select2('val', twoDigitMonth);
-    $('#report_filter_year').select2('val', today.getFullYear());
-    $("#report_filter_caste").select2('val', 'All');
-    $("#report_filter_child_age_tranche").select2('val', 'All');
-    $("#report_filter_minority").select2('val', 'All');
-    $("#report_filter_disabled").select2('val', 'All');
-    $("#report_filter_resident").select2('val', 'All');
-    $("#report_filter_ccs_status").select2('val', 'All');
-    $("#report_filter_thr_beneficiary_type").select2('val', 'All');
-
+function updateLocationFilter(locationData) {
     var locationKOContext = ko.dataFor($('#group_location_async')[0]);
-    locationKOContext.reset();
+    locationKOContext.selected_path([]);
+    locationKOContext.load(locationData.locations, locationData.selected);
 }
 
 function getFiltersValues() {
@@ -56,23 +36,15 @@ function getFiltersValues() {
     var dateStr = year + '-' + month + '-01';
 
     var caste = $('#report_filter_caste').val();
-
     var childAge = $('#report_filter_child_age_tranche').val();
-
     var minority = $('#report_filter_minority').val();
-
     var disabled = $('#report_filter_disabled').val();
-
     var resident = $('#report_filter_resident').val();
-
     var maternalStatus = $('#report_filter_ccs_status').val();
-
     var beneficiaryType = $('#report_filter_thr_beneficiary_type').val();
-
     var locationKOContext = ko.dataFor($('#group_location_async')[0]);
 
     var selectedUUIDs = [];
-
     var locationLevel = 1;
 
     locationKOContext.selected_path().forEach(function(loc) {
@@ -94,15 +66,13 @@ function getFiltersValues() {
     var supervisor = selectedUUIDs[3];
     var awc = selectedUUIDs[4];
 
-    var locationTypeCode = findLocationTypeCode(locationLevel);
-
     var filters = {
-        Month: dateStr,
-        Caste: caste,
+        month: dateStr,
+        caste: caste,
         child_age_tranche: childAge,
-        Minority: minority,
-        Disabled: disabled,
-        Resident: resident,
+        minority: minority,
+        disabled: disabled,
+        resident: resident,
         ccs_status: maternalStatus,
         thr_beneficiary_type: beneficiaryType,
         state: state || 'All',
@@ -110,36 +80,25 @@ function getFiltersValues() {
         block: block || 'All',
         supervisor: supervisor || 'All',
         awc: awc || 'All',
-        view_by: locationLevel,
-        user_awc: '',
-        user_supervisor: '',
-        user_state: '',
-        user_district: '',
-        user_block: '',
-        user_national: '',
     };
 
-    filters['user_' + locationTypeCode] = awc || supervisor || block || district || state || 'All';
     return filters;
 }
 
 function setFiltersValues(params, locationData) {
     if (locationData) {
-        var locationKOContext = ko.dataFor($('#group_location_async')[0]);
-        locationKOContext.selected_path([]);
-        locationKOContext.load(locationData.locations, locationData.selected);
+        updateLocationFilter(locationData);
     }
 
-    var date = new Date(params.Month);
-    var twoDigitMonth = ("0" + (date.getMonth() + 1)).slice(-2);
-
+    var date = new Date(params.month);
+    var twoDigitMonth = ("0" + (date.getUTCMonth() + 1)).slice(-2);
     $('#report_filter_month').select2('val', twoDigitMonth);
-    $('#report_filter_year').select2('val', date.getFullYear());
+    $('#report_filter_year').select2('val', date.getUTCFullYear());
 
-    $("#report_filter_caste").select2('val', params.Caste);
-    $("#report_filter_minority").select2('val', params.Minority);
-    $("#report_filter_disabled").select2('val', params.Disabled);
-    $("#report_filter_resident").select2('val', params.Resident);
+    $("#report_filter_caste").select2('val', params.caste);
+    $("#report_filter_minority").select2('val', params.minority);
+    $("#report_filter_disabled").select2('val', params.disabled);
+    $("#report_filter_resident").select2('val', params.resident);
     $("#report_filter_ccs_status").select2('val', params.ccs_status);
     $("#report_filter_child_age_tranche").select2('val', params.child_age_tranche);
     $("#report_filter_thr_beneficiary_type").select2('val', params.thr_beneficiary_type);
@@ -155,54 +114,36 @@ function initializeViz(o) {
         hideTabs: true,
         hideToolbar: true,
         onFirstInteractive: function () {
-            setUpWorkbook(viz);
-            setUpInitialTableauParams();
-            setUpNav(viz);
+            workbook = viz.getWorkbook();
+            workbook.getParametersAsync().then(function(tableauParams) {
+                var awcOnlySheetsJSON = getParamValue(tableauParams, 'js_awc_only_sheets');
+                if (awcOnlySheetsJSON) {
+                    awcOnlySheets = JSON.parse(awcOnlySheetsJSON.value);
+                }
+                setUpNav(viz);
+                setUpInitialTableauParams();
+            });
         },
     };
     viz = new tableau.Viz(placeholderDiv, url, options);
 
     $("#resetFilters").click(function () {
-        var currentSheet = history.state.sheetName;
-        resetFilters();
-        switchVisualization(currentSheet, workbook, getFiltersValues());
+        setFiltersValues(initialParams, initialLocationData);
+        pushParams(initialParams, null);
     });
 
     $("#applyFilters").click(function() {
-        var currentSheet = history.state.sheetName;
-        switchVisualization(currentSheet, workbook, getFiltersValues());
+        pushParams(getFiltersValues(), null);
     });
-
-    $(window).on('popstate', function(event) {
-        var state = event.originalEvent.state;
-        if (state) {
-            setFiltersValues(state.params, state.locationData);
-        }
-    });
-}
-
-function setUpWorkbook(viz) {
-    workbook = viz.getWorkbook();
 }
 
 function setUpInitialTableauParams() {
     var params = getFiltersValues();
-
     var sheetName = tableauOptions.currentSheet;
+    initialParams = _.clone(params);
+    initialLocationData = getLocationData();
 
-    if (sheetName === 'Dashboard' && params.awc && params.awc !== 'All') {
-        sheetName = 'AWC-Info';
-        switchVisualization(sheetName, workbook, params);
-    } else {
-        applyParams(workbook, params);
-    }
-
-    var historyObject = {
-        sheetName: sheetName,
-        params: params,
-        locationData: getLocationData(),
-    };
-    history.pushState(historyObject, '', tableauOptions.currentSheet);
+    pushParams(params, sheetName);
 }
 
 function setUpNav(viz) {
@@ -210,209 +151,183 @@ function setUpNav(viz) {
 
     // Filter out the sheets for a single AWC. These are accessed via drilldown
     sheets = _.filter(sheets, function(sheet) {
-        return (sheet.getName() !== "Demographics" && sheet.getName() !== 'AWC-Info');
+        return !_.contains(awcOnlySheets, sheet.getName());
     });
     _.each(sheets, function(sheet) {
-        addNavigationLink(sheet.getName(), sheet.getIsActive());
+        var html = "<li><a href='#' class='nav-link'>" + sheet.getName() + "</a></li>";
+        $(".dropdown-menu").append(html);
     });
 
     $(".nav-link").click(function (e){
         var link = $(this);
         var sheetName = link[0].textContent;
-        var params = history.state.params;
-        navigateToSheet(sheetName, workbook, params);
+        //No need to change params when changing sheets
+        pushParams({}, sheetName);
         e.preventDefault();
     });
 
     viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, onMarksSelection);
 }
 
-function addNavigationLink(sheetName) {
-    var html = "<li><a href='#' class='nav-link'>" + sheetName + "</a></li>";
-    $(".dropdown-menu").append(html);
-}
-
-function onMarksSelection(marksEvent) {
-    return marksEvent.getMarksAsync().then(updateViz);
-}
-
 /*
-From selected marks, extracts new sheet to render, new paramters/filters to apply, and updates the viz with them
-
-ICDS workbooks will have new sheet/paramter info in following attributes of the mark
-
-- 'js_sheet: <sheet name to navigate to>': New sheet to navigate to
-    e.g. js_sheet: Nutrition
-- 'js_param_<param_name>: <param_value>': New paramters to apply
-    e.g. js_param_state: Andhra Pradesh
+Navigation back in the UI.
 */
-function updateViz(marks) {
-    clearDebugInfo();
-    // marks is an array of what the user has clicked
-    var debugHtml = ["<ul>"],
-        // default the sheet to navigate to to the current one
-        currentSheet = history.state.sheetName,
-        newSheet = currentSheet,
-        newParams = {};
-
-    function buildParams(currentParams) {
-
-        _.each(marks, function(mark) {
-            var pairs = mark.getPairs();
-
-            _.each(pairs, function(pair){
-                debugHtml.push("<li><b>" + pair.fieldName + "</b>: "+ pair.formattedValue + "</li>");
-                newSheet = extractSheetName(pair, newSheet);
-                var newParam = extractParam(pair, currentParams);
-                $.extend(newParams, newParam);
-            });
-
-            debugHtml.push("</ul>");
-        });
-
-        debugHtml = debugHtml.join("");
-
-        $("#debugbar").append(debugHtml);
-
-        // Add inspect button listener
-        if( tableauOptions.isDebug ) {
-            $("#inspectButton").unbind('click').click(function() {
-                switchVisualization(newSheet, workbook, newParams);
-            }).prop('disabled', false);
-        } else {
-            switchVisualization(newSheet, workbook, newParams);
-        }
-
-    }
-
-    workbook.getParametersAsync()
-        .then(buildParams)
-        .otherwise(function(err) {
-            // TODO: Better error rendering
-            alert(err);
-        });
-}
-
-/*
-Extracts the hardcoded param-list for the sheetName and renders the sheet with given params and extracted params
-
-ICDS workbook will have following paramter convention
-- 'js_sheet_<sheet_name>: json-string specifying new params as key-value pairs':
-    e.g. js_sheet_Nutrition: '{"is_drilldown": "True"}'
-*/
-function navigateToSheet(sheetName, workbook, params){
-    workbook.getParametersAsync()
-        .then(changeViz)
-        .otherwise(function(err) {
-            // TODO: Better error rendering
-            alert(err);
-        });
-
-    function changeViz(currentParams) {
-        var extraParams = extractHardcodedSheetParams(currentParams, sheetName);
-        $.extend(params, extraParams);
-        switchVisualization(sheetName, workbook, params);
-    }
-
-}
-
-/*
-Given attribute key-value pair, extracts new sheetName specified in 'js_sheet: <new_sheet>', if attribute name is
-not js_sheet returns current sheetName
-*/
-function extractSheetName(pair, sheetName) {
-    if((pair.fieldName === 'js_sheet' || pair.fieldName === 'ATTR(js_sheet)') && pair.formattedValue !== 'CURRENT') {
-        return pair.formattedValue;
-    }
-    return sheetName;
-}
-
-function switchVisualization(sheetName, workbook, params) {
-    // TODO: Handle the case where we are in the same sheet, might just need to apply filters then?
-    var worksheets;
-
-    if (sheetName === 'Dashboard' && params.awc && params.awc !== 'All') {
-        sheetName = 'AWC-Info';
-    } else if (sheetName === 'AWC-Info' && (!params.awc || params.awc === 'All')) {
-        sheetName = 'Dashboard';
-    }
-
-    workbook.activateSheetAsync(sheetName)
-            .then(function(dashboard) {
-                worksheets = dashboard.getWorksheets();
-
-                // I need the last worksheet to return a promise like object when all the iteration is complete
-                var lastWorksheet = applyParams(workbook, params, lastWorksheet);
-
-                // TODO: historyObject should be an actual object
-                var historyObject = {
-                    sheetName: sheetName,
-                    params: params,
-                    locationData: getLocationData(),
-                };
-                history.pushState(historyObject, sheetName, sheetName);
-                return lastWorksheet;
-            }).otherwise(function(err){
-                // TODO: same thing with this alert as above
-                alert(err);
-            });
-
-}
-
-function applyParams(workbook, params, lastWorksheet) {
-    _.each(params, function(value, key) {
-        // TODO: This is the last param to be set, not the last to finish executing. Need to only run when last param is set (something like _.join())
-        lastWorksheet = workbook.changeParameterValueAsync(key, value);
-    });
-    return lastWorksheet;
-}
-
-function clearDebugInfo() {
-    $("#debugbar").empty();
-    // TODO: Disabling the button doesn't work
-    $("#inspectButton").prop('disabled', true);
-}
-
 window.onpopstate = function (event) {
-    if(!event.state.sheetName) {
-        alert('History object needs a location to navigate to');
-    }
-    if(event.state.sheetName === 'base') {
-        viz.revertAllAsync();
-        clearDebugInfo();
-    } else {
-        workbook.activateSheetAsync(event.state.sheetName).then(function() {
-            applyParams(workbook, event.state.params);
-        }).otherwise(function(err) {
-            alert(err);
-        });
-    }
+    popParams(event.state.params, event.state.sheetName, event.state.locationData)
 };
 
-/*
-Given an attribute pair and existingParams, extracts and returns new paramter specified by
-'js_param_<paramname>: <paramvalue>'
-*/
-function extractParam(pair, currentParams){
-    var newParam = {};
-    var PARAM_SUBSTRING = 'ATTR(js_param_',
-        PARAM_UNCHANGED = 'CURRENT';
-    if(pair.fieldName.includes(PARAM_SUBSTRING)) {
-        var param_key = pair.fieldName.slice(PARAM_SUBSTRING.length, -1),
-            param_value = pair.formattedValue;
+function onMarksSelection(marksEvent) {
+    /*
+    Given an attribute pair and existingParams, extracts and returns new paramter specified by
+    'js_param_<paramname>: <paramvalue>'
+    */
+    function extractParam(pair, currentTableauParams){
+        var newParam = {};
+        var PARAM_SUBSTRING = 'ATTR(js_param_',
+            PARAM_UNCHANGED = 'CURRENT';
+        if(pair.fieldName.includes(PARAM_SUBSTRING)) {
+            var param_key = pair.fieldName.slice(PARAM_SUBSTRING.length, -1),
+                param_value = pair.formattedValue;
 
-        if(param_value === PARAM_UNCHANGED) {
-            newParam[param_key] = getParamValue(currentParams, param_key);
-        } else {
-            newParam[param_key] = param_value;
+            if(param_value === PARAM_UNCHANGED) {
+                newParam[param_key] = getParamValue(currentTableauParams, param_key);
+            } else {
+                newParam[param_key] = param_value;
+            }
         }
+        return newParam;
     }
-    return newParam;
+
+    /*
+    From selected marks, extracts new sheet to render, new paramters/filters to apply, and updates the viz with them
+
+    ICDS workbooks will have new sheet/paramter info in following attributes of the mark
+
+    - 'js_sheet: <sheet name to navigate to>': New sheet to navigate to
+        e.g. js_sheet: Nutrition
+    - 'js_param_<param_name>: <param_value>': New paramters to apply
+        e.g. js_param_state: Andhra Pradesh
+    */
+    function applyMarks(marks) {
+        workbook.getParametersAsync().then(function(currentTableauParams) {
+            var newParams = {};
+            newSheet = null;
+            _.each(marks, function(mark) {
+                var pairs = mark.getPairs();
+                _.each(pairs, function(pair){
+                    if((pair.fieldName === 'js_sheet' || pair.fieldName === 'ATTR(js_sheet)') && pair.formattedValue !== 'CURRENT') {
+                        newSheet = pair.formattedValue;
+                    }
+                    var newParam = extractParam(pair, currentTableauParams);
+                    $.extend(newParams, newParam);
+                });
+            });
+
+            pushParams(newParams, newSheet);
+        }).otherwise(function(err) {
+            // TODO: Better error rendering
+            alert(err);
+        });
+    }
+
+    return marksEvent.getMarksAsync().then(applyMarks);
 }
 
+/*
+    This will process and update the params and then apply to the viz.  sheetName is optional
+*/
+function processAndApplyParams(navigationContext) {
+    function applyParams(params) {
+        _.each(params, function(value, key) {
+            workbook.changeParameterValueAsync(key, value);
+        });
+    }
 
-function getParamValue(params, param_key){
-    var matchingParams = _.filter(params, function(param) {
+    //Override the sheetName if someone is filtering to the AWC level (or moving away)
+    var currentParams = getCurrentParams();
+    if (currentParams.awc === 'All' && navigationContext.params.awc !== 'All' && !_.contains(awcOnlySheets, navigationContext.sheetName)) {
+        //User manually filtered to a single AWC
+        navigationContext.sheetName = 'AWC-Info';
+    } else if (currentParams.awc !== 'All' && navigationContext.params.awc === 'All' && _.contains(awcOnlySheets, navigationContext.sheetName)) {
+        //User changed the filter away from an AWC and is currently on an AWC only sheet
+        navigationContext.sheetName = 'Dashboard';
+    } else if (currentParams.awc !== 'All' && !_.contains(awcOnlySheets, navigationContext.sheetName)) {
+        //User was on AWC only page then changed the report to one that does not support a single AWC
+        navigationContext.params.awc = 'All';
+        navigationContext.locationData.selected = navigationContext.params.supervisor;
+        updateLocationFilter(navigationContext.locationData);
+    }
+
+    //Calculate View By (based on if a location level is set and its value)
+    if (navigationContext.params.state === 'All') {
+        navigationContext.params.view_by = 1;
+    } else if (navigationContext.params.district === 'All') {
+        navigationContext.params.view_by = 2;
+    } else if (navigationContext.params.block === 'All') {
+        navigationContext.params.view_by = 3;
+    } else if (navigationContext.params.supervisor === 'All') {
+        navigationContext.params.view_by = 4;
+    } else if (navigationContext.params.awc === 'All') {
+        navigationContext.params.view_by = 5;
+    } else {
+        navigationContext.params.view_by = 6;
+    }
+
+    //If there is a sheet, do a navigation, otherwise just apply the new parameters
+    if (!navigationContext.sheetName) {
+        applyParams(navigationContext.params);
+    } else {
+        workbook.activateSheetAsync(navigationContext.sheetName).then(function(dashboard) {
+            applyParams(navigationContext.params);
+        });
+    }
+}
+
+/*
+    This function will apply the desired parameters and sheet and add an entry
+    to the browser history.  sheetName is optional
+*/
+function pushParams(params, sheetName) {
+    //Extend params with currentParams so we have a full set
+    var navigationContext = {
+        sheetName: sheetName,
+        params: $.extend({}, getCurrentParams(), params),
+        locationData: getLocationData(),
+    };
+    //navigation context will get updated by function
+    processAndApplyParams(navigationContext);
+
+    if (!navigationContext.sheetName) {
+        navigationContext.sheetName = history.state.sheetName;
+    }
+    history.pushState(navigationContext, sheetName, sheetName);
+}
+
+/*
+    This function will reset the UI filters and update the viz.  Its used when popping from the browser history
+*/
+function popParams(params, targetSheet, locationData) {
+    setFiltersValues(params, locationData);
+    var navigationContext = {
+        sheetName: sheetName,
+        params: params,
+        locationData: locationData,
+    };
+    processAndApplyParams(navigationContext);
+}
+
+function getCurrentParams() {
+    if (history.state && history.state.params) {
+        return history.state.params;
+    }
+    return {}
+}
+
+/*
+    Will return a parameter value from an array of TableauParameters
+*/
+function getParamValue(tableauParams, param_key) {
+    var matchingParams = _.filter(tableauParams, function(param) {
         return param.getName() === param_key;
     });
     // There should be one matching param
@@ -421,25 +336,5 @@ function getParamValue(params, param_key){
     }
     else {
         return null;
-    }
-}
-
-/*
-Extracts hardcoded JSON paramters for sheetName specified in a param called 'js_sheet_<sheetName>'
-*/
-function extractHardcodedSheetParams(params, sheetName){
-    var key = 'js_sheet_' + sheetName;
-    var sheetParam = getParamValue(params, key);
-
-    if (sheetParam && sheetParam.formattedValue) {
-        try {
-            return JSON.parse(sheetParam.formattedValue);
-        }
-        catch(e) {
-            return {};
-        }
-    }
-    else {
-        return {};
     }
 }
