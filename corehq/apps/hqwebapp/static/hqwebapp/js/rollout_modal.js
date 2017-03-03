@@ -4,7 +4,7 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
         var $modal = $(".rollout-modal"),
             slug = $modal.data("slug"),
             cookie_name = "snooze_" + slug;
-        if ($modal.length && !$.cookie(cookie_name)) {
+        if (false && $modal.length && !$.cookie(cookie_name)) {
             var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
             $modal.modal({
                 backdrop: 'static',
