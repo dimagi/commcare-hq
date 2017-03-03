@@ -241,6 +241,6 @@
     {% include "app_manager/v2/partials/fixture_case_selection.html" %}
 {% endif %}
 
-{% if detail.type == 'case' and is_search_enabled %}
+{% if detail.type == 'case' and js_options.is_search_enabled %}
 {% include 'app_manager/v2/partials/case_search_properties.html' %}
 {% endif %}
