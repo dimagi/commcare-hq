@@ -1,15 +1,18 @@
 from django.test import TestCase, override_settings
-from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
+from corehq.util.test_utils import flag_enabled
+from corehq.apps.custom_data_fields import CustomDataFieldsDefinition, CustomDataEditor
 from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
+from corehq.apps.users.models import CommCareUser, UserRole, Permissions
+from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE, UserFieldsView
 from corehq.apps.users.forms import UpdateCommCareUserInfoForm
+from corehq.apps.users.signals import clean_commcare_user
 from .utils import setup_enikshay_locations
 from ..users.setup_utils import get_allowable_usertypes, validate_nikshay_code, USER_TYPES
 
 
+@flag_enabled('ENIKSHAY')
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestUserSetupUtils(TestCase):
     domain = 'enikshay-user-setup'
@@ -20,6 +23,7 @@ class TestUserSetupUtils(TestCase):
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.save()
         cls.location_types, cls.locations = setup_enikshay_locations(cls.domain)
+
         # set up data fields
         cls.user_fields = CustomDataFieldsDefinition.get_or_create(
             cls.domain, CUSTOM_USER_DATA_FIELD_TYPE)
@@ -29,6 +33,14 @@ class TestUserSetupUtils(TestCase):
             CustomDataField(slug='nikshay_id'),
         ]
         cls.user_fields.save()
+
+        role = UserRole(
+            domain=cls.domain,
+            name='pass',
+            permissions=Permissions(edit_commcare_users=True,
+                                    access_all_locations=False),
+        )
+        role.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -76,14 +88,31 @@ class TestUserSetupUtils(TestCase):
             'role': '',
             'form_type': 'update-user',
             'email': 'atargaryon@nightswatch.onion',
-            'data-field-usertype': 'tbhv',  # invalid usertype
+            'data-field-usertype': ['tbhv'],  # invalid usertype
         }
-        form = UpdateCommCareUserInfoForm(
+        user_form = UpdateCommCareUserInfoForm(
             data=data,
             existing_user=user,
             domain=self.domain,
         )
-        self.assertFalse(form.is_valid())
+        custom_data = CustomDataEditor(
+            field_view=UserFieldsView,
+            domain=self.domain,
+            existing_custom_data=user.user_data,
+            post_dict=data,
+        )
+        self.assertTrue(user_form.is_valid())
+        self.assertTrue(custom_data.is_valid())
+        clean_commcare_user.send(
+            'BaseEditUserView.update_user',
+            domain=self.domain,
+            user=user,
+            forms={'UpdateCommCareUserInfoForm': user_form,
+                   'CustomDataEditor': custom_data}
+        )
+        self.assertTrue(user_form.is_valid())
+        self.assertFalse(custom_data.is_valid())  # there should be an error
+
         data['data-field-usertype'] = 'dto'  # valid usertype
         form = UpdateCommCareUserInfoForm(
             data=data,

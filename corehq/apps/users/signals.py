@@ -8,9 +8,9 @@ from corehq.elastic import send_to_elasticsearch
 commcare_user_post_save = Signal(providing_args=["couch_user"])
 couch_user_post_save = Signal(providing_args=["couch_user"])
 
-# Called during user validation. Used for additional validation or modification.
-# Receivers should return None or a [('field_name', 'error message')] list
-clean_commcare_user = Signal(providing_args=["form"])
+# Called after user validation, before save.
+# Used for additional validation or modification.
+clean_commcare_user = Signal(providing_args=["domain", "user", "forms"])
 
 
 @receiver(user_logged_in)

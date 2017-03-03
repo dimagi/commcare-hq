@@ -351,18 +351,6 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         indirect_props = ['role']
         return [k for k in self.fields.keys() if k not in indirect_props]
 
-    def clean(self):
-        cleaned_data = super(UpdateCommCareUserInfoForm, self).clean()
-        from .signals import clean_commcare_user
-        results = clean_commcare_user.send(sender='UpdateCommCareUserInfoForm',
-                                           form=self)
-        # Add in any errors from custom signal receivers
-        for receiver, errors in results:
-            if errors:
-                for field, error in errors:
-                    self.add_error(field, error)
-        return cleaned_data
-
 
 class RoleForm(forms.Form):
 
