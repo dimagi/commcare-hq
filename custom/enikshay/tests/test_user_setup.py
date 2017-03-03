@@ -34,18 +34,18 @@ class TestUserSetupUtils(TestCase):
         ]
         cls.user_fields.save()
 
-        role = UserRole(
-            domain=cls.domain,
-            name='pass',
-            permissions=Permissions(edit_commcare_users=True,
-                                    access_all_locations=False),
-        )
-        role.save()
-
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
         super(TestUserSetupUtils, cls).tearDownClass()
+
+    def assertValid(self, form):
+        msg = "{} has errors: \n{}".format(form.__class__.__name__, form.errors.as_text())
+        self.assertTrue(form.is_valid(), msg)
+
+    def assertInvalid(self, form):
+        msg = "{} has no errors".format(form.__class__.__name__)
+        self.assertFalse(form.is_valid(), msg)
 
     def make_location(self, name, loc_type, parent):
         loc = SQLLocation.objects.create(
@@ -78,7 +78,10 @@ class TestUserSetupUtils(TestCase):
         user.set_location(self.locations['STO'])
         self.assertEqual(get_allowable_usertypes(self.domain, user), ['sto'])
 
-    def test_form_usertypes(self):
+    @mock.patch('custom.enikshay.user_setup.set_user_role', mock.MagicMock)
+    def test_signal(self):
+        # This test runs the whole callback via a signal as an integration test
+        # To verify that it's working, it checks for errors triggered in `get_allowable_usertypes`
         user = self.make_user('atargaryon@nightswatch.onion', 'DTO')
         data = {
             'first_name': 'Aemon',
@@ -101,8 +104,8 @@ class TestUserSetupUtils(TestCase):
             existing_custom_data=user.user_data,
             post_dict=data,
         )
-        self.assertTrue(user_form.is_valid())
-        self.assertTrue(custom_data.is_valid())
+        self.assertValid(user_form)
+        self.assertValid(custom_data)
         clean_commcare_user.send(
             'BaseEditUserView.update_user',
             domain=self.domain,
@@ -110,8 +113,8 @@ class TestUserSetupUtils(TestCase):
             forms={'UpdateCommCareUserInfoForm': user_form,
                    'CustomDataEditor': custom_data}
         )
-        self.assertTrue(user_form.is_valid())
-        self.assertFalse(custom_data.is_valid())  # there should be an error
+        self.assertValid(user_form)
+        self.assertInvalid(custom_data)  # there should be an error
 
         data['data-field-usertype'] = 'dto'  # valid usertype
         form = UpdateCommCareUserInfoForm(
@@ -119,12 +122,11 @@ class TestUserSetupUtils(TestCase):
             existing_user=user,
             domain=self.domain,
         )
-        self.assertTrue(form.is_valid())
+        self.assertValid(form)
 
     def test_validate_nikshay_code(self):
         loc1 = self.make_location('winterfell', 'tu', 'DTO')
         loc2 = self.make_location('castle_black', 'tu', 'DTO')
-        # TODO make this trigger on save?
         self.assertTrue(validate_nikshay_code(self.domain, loc2))
         loc2.metadata['nikshay_code'] = loc1.metadata['nikshay_code']
         self.assertFalse(validate_nikshay_code(self.domain, loc2))
