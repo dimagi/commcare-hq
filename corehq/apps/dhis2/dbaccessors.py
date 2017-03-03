@@ -15,13 +15,13 @@ def get_dhis2_connection(domain_name):
 
 
 @quickcache(['domain_name'])
-def get_datavalue_maps(domain_name):
-    from corehq.apps.dhis2.models import DataValueMap
+def get_dataset_maps(domain_name):
+    from corehq.apps.dhis2.models import DataSetMap
 
-    results = DataValueMap.get_db().view(
+    results = DataSetMap.get_db().view(
         'by_domain_doc_type_date/view',
         key=[domain_name, 'DataValueMap', None],
         include_docs=True,
         reduce=False,
     ).all()
-    return [DataValueMap.wrap(result['doc']) for result in results]
+    return [DataSetMap.wrap(result['doc']) for result in results]

@@ -4,7 +4,7 @@ import logging
 
 import requests
 
-from dimagi.ext.couchdbkit import Document, StringProperty
+from dimagi.ext.couchdbkit import Document, StringProperty, DocumentSchema, SchemaListProperty
 from dimagi.ext.jsonobject import JsonObject
 
 
@@ -15,18 +15,31 @@ class Dhis2Connection(Document):
     password = StringProperty()
 
 
-class DataValueMap(Document):
+class DataValueMap(DocumentSchema):
+    column = StringProperty(required=True)
+    data_element_id = StringProperty(required=True)
+    category_option_combo_id = StringProperty(required=True)
+    comment = StringProperty()
+
+
+class DataSetMap(Document):
+    # domain and UCR uniquely identify a DataSetMap
     domain = StringProperty()
-    report = StringProperty()  # a UCR
-    # UCR columns to be mapped to DHIS2 DataValue properties:
-    data_element_column = StringProperty(required=True)
-    # period_column = StringProperty(required=True)  # MVP: report (month) period as YYYYMM
+    ucr_id = StringProperty()
+
     org_unit_column = StringProperty(required=True)
-    category_option_combo_column = StringProperty(required=True)
-    value_column = StringProperty(required=True)
+    # period_column = StringProperty(required=True)  # MVP: report (month) period as YYYYMM
+    data_value_maps = SchemaListProperty(DataValueMap)
+
+    # Optional for DHIS2:
     complete_date_column = StringProperty()
     attribute_option_combo_column = StringProperty()  # (DHIS2 defaults this to categoryOptionCombo)
-    comment_column = StringProperty()
+
+    def get_data_values(self, ucr_data):
+        """
+        Returns rows of dataElementID, categoryOptionComboID, value and comment for this DataSet
+        """
+        # TODO: ...
 
 
 # MVP: "monthly"

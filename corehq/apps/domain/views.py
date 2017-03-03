@@ -45,7 +45,7 @@ from corehq.apps.case_search.models import (
     enable_case_search,
     disable_case_search,
 )
-from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_datavalue_maps
+from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
 from corehq.apps.dhis2.forms import Dhis2ConnectionForm, DataValueMapForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.forms import LocationFixtureForm
@@ -3125,7 +3125,7 @@ class DataValueMapView(BaseAdminProjectSettingsView):
     @memoized
     def datavalue_map_form(self):
         try:
-            datavalue_map = get_datavalue_maps(self.request.domain)[0]
+            datavalue_map = get_dataset_maps(self.request.domain)[0]
         except IndexError:
             datavalue_map = None
         initial = dict(datavalue_map) if datavalue_map else {}

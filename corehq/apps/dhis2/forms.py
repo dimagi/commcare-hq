@@ -8,8 +8,8 @@ from crispy_forms.helper import FormHelper
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_datavalue_maps
-from corehq.apps.dhis2.models import Dhis2Connection, DataValueMap
+from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
+from corehq.apps.dhis2.models import Dhis2Connection, DataSetMap
 from corehq.apps.style import crispy as hqcrispy
 
 
@@ -102,23 +102,17 @@ class DataValueMapForm(forms.Form):
 
     def save(self, domain):
         try:
-            try:
-                # No reason we can't have many per domain, but for the MVP just offer one.
-                datavalue_map = get_datavalue_maps(domain.name)[0]
-            except IndexError:
-                datavalue_map = None
-
-            if datavalue_map is None:
-                datavalue_map = DataValueMap(domain=domain.name)
-            datavalue_map.report = self.cleaned_data['report']
-            datavalue_map.data_element_column = self.cleaned_data['data_element_column']
-            datavalue_map.org_unit_column = self.cleaned_data['org_unit_column']
-            datavalue_map.category_option_combo_column = self.cleaned_data['category_option_combo_column']
-            datavalue_map.value_column = self.cleaned_data['value_column']
-            datavalue_map.complete_date_column = self.cleaned_data['complete_date_column']
-            datavalue_map.attribute_option_combo_column = self.cleaned_data['attribute_option_combo_column']
-            datavalue_map.comment_column = self.cleaned_data['comment_column']
-            datavalue_map.save()
+            dataset_maps = get_dataset_maps(domain.name)
+            dataset_map = dataset_maps[0] if dataset_maps else DataSetMap(domain=domain.name)
+            dataset_map.report = self.cleaned_data['report']
+            dataset_map.data_element_column = self.cleaned_data['data_element_column']
+            dataset_map.org_unit_column = self.cleaned_data['org_unit_column']
+            dataset_map.category_option_combo_column = self.cleaned_data['category_option_combo_column']
+            dataset_map.value_column = self.cleaned_data['value_column']
+            dataset_map.complete_date_column = self.cleaned_data['complete_date_column']
+            dataset_map.attribute_option_combo_column = self.cleaned_data['attribute_option_combo_column']
+            dataset_map.comment_column = self.cleaned_data['comment_column']
+            dataset_map.save()
             return True
         except Exception as err:
             logging.error('Unable to save DHIS2 DataValue map: %s' % err)
