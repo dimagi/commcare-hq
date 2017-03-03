@@ -48,6 +48,8 @@ function run_tests() {
     fi
     shift
 
+    echo $TRAVIS_BUILD_ID
+
     now=`date +%s`
     setup $TEST
     delta=$((`date +%s` - $now))
