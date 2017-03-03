@@ -1,3 +1,4 @@
+import mock
 from django.test import TestCase, override_settings
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition, CustomDataEditor
@@ -9,7 +10,7 @@ from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_F
 from corehq.apps.users.forms import UpdateCommCareUserInfoForm
 from corehq.apps.users.signals import clean_commcare_user
 from .utils import setup_enikshay_locations
-from ..user_setup import get_allowable_usertypes, validate_nikshay_code, USER_TYPES
+from ..user_setup import get_allowable_usertypes, validate_nikshay_code, USER_TYPES, set_user_role
 
 
 @flag_enabled('ENIKSHAY')
@@ -69,6 +70,15 @@ class TestUserSetupUtils(TestCase):
         user.set_location(self.locations[location])
         return user
 
+    def make_role(self, name):
+        role = UserRole(
+            domain=self.domain,
+            name=name,
+            permissions=Permissions(),
+        )
+        role.save()
+        self.addCleanup(role.delete)
+
     def test_get_allowable_usertypes(self):
         user = self.make_user('jon-snow@website', 'DTO')
         self.assertEqual(user.get_sql_location(self.domain).location_type.name, 'dto')
@@ -123,6 +133,37 @@ class TestUserSetupUtils(TestCase):
             domain=self.domain,
         )
         self.assertValid(form)
+
+    def test_set_user_role(self):
+        user = self.make_user('lordcommander@nightswatch.onion', 'DTO')
+        data = {
+            'first_name': 'Jeor',
+            'last_name': 'Mormont',
+            'language': '',
+            'loadtest_factor': '',
+            'role': '',
+            'form_type': 'update-user',
+            'email': 'lordcommander@nightswatch.onion',
+        }
+        user_form = UpdateCommCareUserInfoForm(
+            data=data,
+            existing_user=user,
+            domain=self.domain,
+        )
+        self.assertValid(user_form)
+        set_user_role(self.domain, user, 'dto', user_form)
+        # The corresponding role doesn't exist yet!
+        self.assertInvalid(user_form)
+
+        self.make_role('dto')
+        user_form = UpdateCommCareUserInfoForm(
+            data=data,
+            existing_user=user,
+            domain=self.domain,
+        )
+        self.assertValid(user_form)
+        set_user_role(self.domain, user, 'dto', user_form)
+        self.assertValid(user_form)
 
     def test_validate_nikshay_code(self):
         loc1 = self.make_location('winterfell', 'tu', 'DTO')

@@ -18,6 +18,7 @@ def user_save_callback(sender, domain, user, forms, **kwargs):
                 if custom_data.form.cleaned_data['usertype'] else None)
 
     validate_usertype(domain, user, usertype, custom_data)
+    set_user_role(domain, user, usertype, user_form)
 
 
 def get_allowable_usertypes(domain, user):
@@ -40,6 +41,23 @@ def validate_usertype(domain, user, usertype, custom_data):
     if usertype not in allowable_usertypes:
         msg = _("'User Type' must be one of the following: {}").format(', '.join(allowable_usertypes))
         custom_data.form.add_error('usertype', msg)
+
+
+def set_user_role(domain, user, usertype, user_form):
+    """Auto-assign mobile workers a role based on usertype"""
+    from corehq.apps.users.models import UserRole
+    roles = UserRole.by_domain_and_name(domain, usertype)
+    if len(roles) == 0:
+        msg = _("There is no role called '{}', you cannot create this user "
+                "until that role is created.").format(usertype)
+        user_form.add_error(None, msg)
+    elif len(roles) > 1:
+        msg = _("There are more than one roles called '{}', please delete or "
+                "rename one.").format(usertype)
+        user_form.add_error(None, msg)
+    else:
+        role = roles[0]
+        user.set_role(domain, role.get_qualified_id())
 
 
 def connect_signals():
@@ -72,10 +90,6 @@ USER_TYPES = [
     # UserType('mo-drtb', 'TBD', 'N/A'),
     # UserType('sa', 'TBD', 'N/A'),
 ]
-
-
-def get_user_data_role(domain, user):
-    """Auto-assign mobile workers a role based on a custom user data field"""
 
 
 def validate_role_unchanged(domain, user):
