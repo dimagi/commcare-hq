@@ -45,19 +45,17 @@ function getFiltersValues() {
     var locationKOContext = ko.dataFor($('#group_location_async')[0]);
 
     var selectedUUIDs = [];
-    var locationLevel = 1;
 
     locationKOContext.selected_path().forEach(function(loc) {
         var uuid = loc.uuid();
         if (uuid) {
             selectedUUIDs.push(uuid);
-            locationLevel++;
         }
     });
 
-    if (locationKOContext.selected_location() && locationKOContext.selected_location().type() === 'awc') {
-        selectedUUIDs[locationLevel - 1] = locationKOContext.selected_locid();
-        locationLevel++;
+    //Sometimes the bottom location doesn't appear in the selected path above
+    if (locationKOContext.selected_location() && locationKOContext.selected_location().uuid() !== selectedUUIDs[selectedUUIDs.length - 1]) {
+        selectedUUIDs.push(locationKOContext.selected_location().uuid());
     }
 
     var state = selectedUUIDs[0];
@@ -245,7 +243,7 @@ function processAndApplyParams(navigationContext) {
 
     //Override the sheetName if someone is filtering to the AWC level (or moving away)
     var currentParams = getCurrentParams();
-    if (currentParams.awc && currentParams.awc !== 'All' &&  navigationContext.params.awc === 'All' && !_.contains(awcOnlySheets, navigationContext.sheetName)) {
+    if (currentParams.awc && currentParams.awc !== 'All' &&  navigationContext.params.awc !== 'All' && !_.contains(awcOnlySheets, navigationContext.sheetName)) {
         //Current Filter = single awc, new filter = single awc, but target sheet is a multi AWC sheet
         //Example: On a single AWC report, user used dropdown to changed visible report
         navigationContext.params.awc = 'All';
