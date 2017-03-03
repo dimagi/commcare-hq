@@ -52,17 +52,17 @@ function run_tests() {
     setup $TEST
     delta=$((`date +%s` - $now))
 
-    send_metrics_to_datadog "setup" $delta
+    send_timing_metric_to_datadog "setup" $delta
 
     now=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
     delta=$((`date +%s` - $now))
 
-    send_metrics_to_datadog "tests" $delta
+    send_timing_metric_to_datadog "tests" $delta
     send_counter_metric_to_datadog
 }
 
-function send_timing_metrics_to_datadog() {
+function send_timing_metric_to_datadog() {
     send_metric_to_datadog "travis.timings.$1" $2 "gauge"
 }
 
