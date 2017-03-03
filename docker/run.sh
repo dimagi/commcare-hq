@@ -48,8 +48,6 @@ function run_tests() {
     fi
     shift
 
-    echo $TRAVIS_BUILD_ID
-
     now=`date +%s`
     setup $TEST
     delta=$((`date +%s` - $now))
@@ -81,7 +79,14 @@ function send_metric_to_datadog() {
               \"points\":[[$currenttime, $2]],
               \"type\":\"$3\",
               \"host\":\"travis-ci.org\",
-              \"tags\":[\"environment:travis\", \"test_type:$TEST\", \"partition:$NOSE_DIVIDED_WE_RUN\"]}
+              \"tags\":[
+                \"environment:travis\",
+                \"travis_build:$TRAVIS_BUILD_ID\",
+                \"travis_number:$TRAVIS_BUILD_NUMBER\",
+                \"travis_job_number:$TRAVIS_JOB_NUMBER\",
+                \"test_type:$TEST\",
+                \"partition:$NOSE_DIVIDED_WE_RUN\"
+              ]}
             ]
         }" \
     "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}"
