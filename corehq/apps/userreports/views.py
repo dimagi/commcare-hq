@@ -578,12 +578,18 @@ class ConfigureChartReport(ReportBuilderView):
             report_form = self.report_form
         except Exception as e:
             self.template_name = 'userreports/report_error.html'
-            error_response = {
-                'report_id': self.existing_report.get_id,
-                'is_static': self.existing_report.is_static,
-                'error_message': '',
-                'details': six.text_type(e)
-            }
+            if self.existing_report is not None:
+                error_response = {
+                    'report_id': self.existing_report.get_id,
+                    'is_static': self.existing_report.is_static,
+                    'error_message': '',
+                    'details': six.text_type(e)
+                }
+            else:
+                error_response = {
+                    'error_message': '',
+                    'details': six.text_type(e)
+                }
             return self._handle_exception(error_response, e)
 
         return {
