@@ -1,4 +1,5 @@
 from collections import namedtuple
+from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.users.signals import clean_commcare_user
 
@@ -13,17 +14,32 @@ def user_save_callback(sender, domain, user, forms, **kwargs):
     if not user_form and custom_data:
         raise AssertionError("Expected user form and custom data form to be submitted")
 
-    allowed_usertypes = get_allowable_usertypes(domain, user)
-    usertype = custom_data.form.cleaned_data['usertype']
-    if custom_data.form.cleaned_data['usertype'] not in allowed_usertypes:
-        custom_data.form.add_error(
-            'usertype',
-            "'User Type' must be one of the following: {}".format(', '.join(allowed_usertypes))
-        )
+    usertype = (custom_data.form.cleaned_data['usertype'][0]
+                if custom_data.form.cleaned_data['usertype'] else None)
 
-    # role = set_user_role(domain, user)
-    # if role and :
-    # user.set_role(domain, role_id)  # 'user-role:'
+    validate_usertype(domain, user, usertype, custom_data)
+
+
+def get_allowable_usertypes(domain, user):
+    """Restrict choices for custom user data role field based on the chosen
+    location's type"""
+    location = user.get_sql_location(domain)
+    if not location:
+        return []
+    loc_type = location.location_type.code
+    return [
+        ut.user_type for ut in USER_TYPES
+        if ut.location_type == loc_type
+    ]
+
+
+def validate_usertype(domain, user, usertype, custom_data):
+    """Restrict choices for custom user data role field based on the chosen
+    location's type"""
+    allowable_usertypes = get_allowable_usertypes(domain, user)
+    if usertype not in allowable_usertypes:
+        msg = _("'User Type' must be one of the following: {}").format(', '.join(allowable_usertypes))
+        custom_data.form.add_error('usertype', msg)
 
 
 def connect_signals():
@@ -46,8 +62,8 @@ USER_TYPES = [
     UserType('deo', 'dto', mgmt_reports),
     UserType('cto', 'cto', reports),
     UserType('sto', 'sto', mgmt_reports),
-    # TODO this one has loc type listed as "dto + drtb-hiv", what's that about?
-    # note says that "dto location must be set as primary"
+    # TODO this one has loc type listed as "dto + drtb-hiv"
+    # User must be assigned to both loc types, with dto as primary"
     UserType('drtb-hiv', 'drtb-hiv', reports),
 
     # The following user types are not in 1.0
@@ -64,19 +80,6 @@ def get_user_data_role(domain, user):
 
 def validate_role_unchanged(domain, user):
     """Web user role is not editable"""
-
-
-def get_allowable_usertypes(domain, user):
-    """Restrict choices for custom user data role field based on the chosen
-    location's type"""
-    location = user.get_sql_location(domain)
-    if not location:
-        return []
-    loc_type = location.location_type.code
-    return [
-        ut.user_type for ut in USER_TYPES
-        if ut.location_type == loc_type
-    ]
 
 
 def get_user_data_code(domain, user):
