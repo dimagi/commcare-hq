@@ -1,20 +1,34 @@
 from collections import namedtuple
-"""
-Autogenerate some stuff when users and locations are saved
-[User] Auto-assign mobile workers a role based on a custom user data field
-[User] Add a mobile worker code (custom user data) that's unique across all users at that location
-[Location] Autogenerate site_code based on custom location data nikshay code and the codes of the ancestor locations
+from corehq import toggles
+from corehq.apps.users.signals import clean_commcare_user
 
-Perform additional validation or modification BEFORE saving
-[Location] When locations are created, enforce that a custom location data field (Nikshay code) is unique amongst sibling locations
-[User] Force a location to be chosen
-[User] Block location reassignment on subsequent edits
-[User] Web user role is not editable
-[Location] Block edit of custom location data nikshay code
 
-Have a custom field with a fancy widget and validation
-[User] Restrict choices for custom user data role field based on the chosen location's type
-"""
+def user_save_callback(sender, domain, user, forms, **kwargs):
+    if (not toggles.ENIKSHAY.enabled(domain)
+            or not user.is_commcare_user()):
+        return
+
+    user_form = forms.get('UpdateCommCareUserInfoForm')
+    custom_data = forms.get('CustomDataEditor')
+    if not user_form and custom_data:
+        raise AssertionError("Expected user form and custom data form to be submitted")
+
+    allowed_usertypes = get_allowable_usertypes(domain, user)
+    usertype = custom_data.form.cleaned_data['usertype']
+    if custom_data.form.cleaned_data['usertype'] not in allowed_usertypes:
+        custom_data.form.add_error(
+            'usertype',
+            "'User Type' must be one of the following: {}".format(', '.join(allowed_usertypes))
+        )
+
+    # role = set_user_role(domain, user)
+    # if role and :
+    # user.set_role(domain, role_id)  # 'user-role:'
+
+
+def connect_signals():
+    clean_commcare_user.connect(user_save_callback, dispatch_uid="user_save_callback")
+
 
 reports = "View All Phase 1 Reports"
 mgmt_reports = "Edit Mobile Workers, View All Phase 1 Reports"

@@ -2,7 +2,7 @@ from corehq.preindex import ExtraPreindexPlugin
 from django.apps import AppConfig
 from django.conf import settings
 
-from .users.signals import connect_signals
+from .user_setup import connect_signals
 
 
 class EnikshayAppConfig(AppConfig):

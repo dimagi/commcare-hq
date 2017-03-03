@@ -9,7 +9,7 @@ from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_F
 from corehq.apps.users.forms import UpdateCommCareUserInfoForm
 from corehq.apps.users.signals import clean_commcare_user
 from .utils import setup_enikshay_locations
-from ..users.setup_utils import get_allowable_usertypes, validate_nikshay_code, USER_TYPES
+from ..user_setup import get_allowable_usertypes, validate_nikshay_code, USER_TYPES
 
 
 @flag_enabled('ENIKSHAY')
