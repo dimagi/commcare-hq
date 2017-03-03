@@ -468,7 +468,7 @@ def _legend(title, subtext):
     Return a string to be used in a crispy form Fieldset legend.
     This function is just a light wrapped around some simple templating.
     """
-    return '{title}</br><div class="subtext"><small>{subtext}</small></div>'.format(
+    return u'{title}</br><div class="subtext"><small>{subtext}</small></div>'.format(
         title=title, subtext=subtext
     )
 
