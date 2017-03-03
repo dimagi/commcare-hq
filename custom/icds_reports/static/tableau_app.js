@@ -305,7 +305,7 @@ function pushParams(params, sheetName) {
 /*
     This function will reset the UI filters and update the viz.  Its used when popping from the browser history
 */
-function popParams(params, targetSheet, locationData) {
+function popParams(params, sheetName, locationData) {
     setFiltersValues(params, locationData);
     var navigationContext = {
         sheetName: sheetName,
