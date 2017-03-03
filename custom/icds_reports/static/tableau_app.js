@@ -245,17 +245,20 @@ function processAndApplyParams(navigationContext) {
 
     //Override the sheetName if someone is filtering to the AWC level (or moving away)
     var currentParams = getCurrentParams();
-    if (currentParams.awc === 'All' && navigationContext.params.awc !== 'All' && !_.contains(awcOnlySheets, navigationContext.sheetName)) {
-        //User manually filtered to a single AWC
-        navigationContext.sheetName = 'AWC-Info';
-    } else if (currentParams.awc !== 'All' && navigationContext.params.awc === 'All' && _.contains(awcOnlySheets, navigationContext.sheetName)) {
-        //User changed the filter away from an AWC and is currently on an AWC only sheet
-        navigationContext.sheetName = 'Dashboard';
-    } else if (currentParams.awc !== 'All' && !_.contains(awcOnlySheets, navigationContext.sheetName)) {
-        //User was on AWC only page then changed the report to one that does not support a single AWC
+    if (currentParams.awc && currentParams.awc !== 'All' &&  navigationContext.params.awc === 'All' && !_.contains(awcOnlySheets, navigationContext.sheetName)) {
+        //Current Filter = single awc, new filter = single awc, but target sheet is a multi AWC sheet
+        //Example: On a single AWC report, user used dropdown to changed visible report
         navigationContext.params.awc = 'All';
         navigationContext.locationData.selected = navigationContext.params.supervisor;
         updateLocationFilter(navigationContext.locationData);
+    } else if (navigationContext.params.awc && navigationContext.params.awc !== 'All' &&  !_.contains(awcOnlySheets, navigationContext.sheetName)) {
+        //New filter targets a single AWC but target sheet is multi AWC
+        //Example: User manually filtered to a single AWC
+        navigationContext.sheetName = 'AWC-Info';
+    } else if (navigationContext.params.awc === 'All' && _.contains(awcOnlySheets, navigationContext.sheetName)) {
+        //New filter targets multiple AWCs but target sheet is single AWC
+        //Example: User changed filters away from a single AWC on a single AWC sheet
+        navigationContext.sheetName = 'Dashboard';
     }
 
     //Calculate View By (based on if a location level is set and its value)
@@ -273,14 +276,10 @@ function processAndApplyParams(navigationContext) {
         navigationContext.params.view_by = 6;
     }
 
-    //If there is a sheet, do a navigation, otherwise just apply the new parameters
-    if (!navigationContext.sheetName) {
+    //Will no-op if the target sheet is the same as the current sheet
+    workbook.activateSheetAsync(navigationContext.sheetName).then(function(dashboard) {
         applyParams(navigationContext.params);
-    } else {
-        workbook.activateSheetAsync(navigationContext.sheetName).then(function(dashboard) {
-            applyParams(navigationContext.params);
-        });
-    }
+    });
 }
 
 /*
@@ -288,18 +287,20 @@ function processAndApplyParams(navigationContext) {
     to the browser history.  sheetName is optional
 */
 function pushParams(params, sheetName) {
+    if (!sheetName) {
+        sheetName = history.state.sheetName;
+    }
+
     //Extend params with currentParams so we have a full set
     var navigationContext = {
         sheetName: sheetName,
         params: $.extend({}, getCurrentParams(), params),
         locationData: getLocationData(),
     };
+
     //navigation context will get updated by function
     processAndApplyParams(navigationContext);
 
-    if (!navigationContext.sheetName) {
-        navigationContext.sheetName = history.state.sheetName;
-    }
     history.pushState(navigationContext, sheetName, sheetName);
 }
 
