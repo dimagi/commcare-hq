@@ -11,7 +11,8 @@ from corehq.apps.repeaters.dbaccessors import iterate_repeat_records
 from corehq.apps.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
-)
+    RECORD_PENDING_STATE,
+    RECORD_FAILURE_STATE)
 
 logging = get_task_logger(__name__)
 
@@ -60,9 +61,10 @@ def process_repeat_record(repeat_record):
         if repeat_record.repeater.doc_type.endswith(DELETED_SUFFIX):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
                 repeat_record.doc_type += DELETED_SUFFIX
+                repeat_record.save()
         else:
-            repeat_record.fire()
-        repeat_record.save()
+            if repeat_record.state == RECORD_PENDING_STATE or repeat_record.state == RECORD_FAILURE_STATE:
+                repeat_record.fire()
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
 
