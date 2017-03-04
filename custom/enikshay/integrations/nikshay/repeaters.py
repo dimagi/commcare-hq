@@ -50,7 +50,7 @@ def test_submission(episode_case):
     except SQLLocation.DoesNotExist:
         raise NikshayLocationNotFound(
             "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
-                .format(location_id=person_case.owner_id, person_id=person_case.case_id)
+            .format(location_id=person_case.owner_id, person_id=person_case.case_id)
         )
     return phi_location.metadata.get('is_test', "yes") == "yes"
 
