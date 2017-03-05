@@ -128,6 +128,9 @@ class PillowBase(object):
         from pillowtop.feed.couch import CouchChangeFeed
         from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 
+        if self.checkpoint is None:
+            return {}
+
         sequence = self.get_last_checkpoint_sequence()
         change_feed = self.get_change_feed()
 
