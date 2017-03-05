@@ -6,6 +6,8 @@ from corehq.apps.locations.models import SQLLocation
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
+from casexml.apps.case.xform import get_case_updates
+from casexml.apps.case.xml.parser import CaseUpdateAction
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.exceptions import (
     ENikshayCaseNotFound,
@@ -210,3 +212,22 @@ def get_person_locations(person_case):
         )
     except (KeyError, AttributeError) as e:
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
+
+
+def case_properties_changed(case, case_properties):
+    if isinstance(case_properties, basestring):
+        case_properties = [case_properties]
+
+    last_case_action = case.actions[-1]
+    if last_case_action.is_case_create:
+        return False
+
+    update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
+    property_changed = any(
+        action for action in update_actions
+        if isinstance(action, CaseUpdateAction)
+        and any(
+            case_property in action.dynamic_properties for case_property in case_properties
+        )
+    )
+    return property_changed

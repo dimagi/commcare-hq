@@ -10,9 +10,14 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_LAST_NAME,
     TREATMENT_SUPPORTER_PHONE,
     TREATMENT_START_DATE,
+    TREATMENT_OUTCOME_DATE,
+    TREATMENT_OUTCOME,
 )
 from custom.enikshay.case_utils import get_person_case_from_episode, get_person_locations
-from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
+from custom.enikshay.integrations.nikshay.repeaters import (
+    NikshayRegisterPatientRepeater,
+    NikshayTreatmentOutcomeRepeater,
+)
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.exceptions import NikshayLocationNotFound
 from custom.enikshay.integrations.nikshay.field_mappings import (
@@ -24,26 +29,19 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     disease_classification,
     dcexpulmonory,
     dcpulmonory,
+    treatment_outcome,
 )
 from custom.enikshay.case_utils import update_case
 
 ENIKSHAY_ID = 8
 
 
-@RegisterGenerator(NikshayRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
-class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
+class BaseNikshayPayloadGenerator(BasePayloadGenerator):
     @property
     def content_type(self):
         return 'application/json'
 
-    def get_payload(self, repeat_record, episode_case):
-        """
-        https://docs.google.com/document/d/1yUWf3ynHRODyVVmMrhv5fDhaK_ufZSY7y0h9ke5rBxU/edit#heading=h.a9uhx3ql595c
-        """
-        person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
-        episode_case_properties = episode_case.dynamic_case_properties()
-        person_case_properties = person_case.dynamic_case_properties()
-
+    def _get_credentials(self, repeat_record):
         try:
             username = repeat_record.repeater.username
         except AttributeError:
@@ -53,18 +51,42 @@ class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
         except AttributeError:
             password = ""
 
-        properties_dict = {
+        return username, password
+
+    def _base_properties(self, repeat_record, person_case):
+        username, password = self._get_credentials(repeat_record)
+        return {
             "regBy": username,
             "password": password,
-            "Local_ID": person_case.get_id,
             "Source": ENIKSHAY_ID,
-            "dotcenter": "NA",
             "IP_From": "127.0.0.1",
         }
+
+    def handle_exception(self, exception, repeat_record):
+        if isinstance(exception, RequestConnectionError):
+            update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": unicode(exception)})
+
+
+@RegisterGenerator(NikshayRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
+class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
+    def get_payload(self, repeat_record, episode_case):
+        """
+        https://docs.google.com/document/d/1yUWf3ynHRODyVVmMrhv5fDhaK_ufZSY7y0h9ke5rBxU/edit#heading=h.a9uhx3ql595c
+        """
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+        episode_case_properties = episode_case.dynamic_case_properties()
+        person_case_properties = person_case.dynamic_case_properties()
+
+        properties_dict = self._base_properties(repeat_record, person_case)
+        properties_dict.update({
+            "dotcenter": "NA",
+            "Local_ID": person_case.get_id,
+        })
+
         try:
             properties_dict.update(_get_person_case_properties(person_case, person_case_properties))
         except NikshayLocationNotFound as e:
-            _save_error_message(person_case.domain, person_case.case_id, e)
+            update_case(person_case.domain, person_case.case_id, {"nikshay_error": unicode(e)})
         properties_dict.update(_get_episode_case_properties(episode_case_properties))
         return json.dumps(properties_dict)
 
@@ -73,35 +95,36 @@ class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
         # without it this would actually be a failure
         try:
             nikshay_id = _get_nikshay_id_from_response(response)
-            update_case(
-                payload_doc.domain,
-                payload_doc.case_id,
-                {
+            kwargs = {
+                "updated_properties": {
                     "nikshay_registered": "true",
                     "nikshay_id": nikshay_id,
                     "nikshay_error": "",
                 },
-                external_id=nikshay_id,
-            )
+                "external_id": nikshay_id
+            }
         except NikshayResponseException as e:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, e.message)
+            kwargs = {
+                "updated_properties": {
+                    "nikshay_registered": "false",
+                    "nikshay_error": unicode(e.message)
+                }
+            }
+        update_case(payload_doc.domain, payload_doc.case_id, **kwargs)
 
     def handle_failure(self, response, payload_doc, repeat_record):
         if response.status_code == 409:  # Conflict
-            update_case(
-                payload_doc.domain,
-                payload_doc.case_id,
-                {
-                    "nikshay_registered": "true",
-                    "nikshay_error": "duplicate",
-                },
-            )
+            case_props = {
+                "nikshay_registered": "true",
+                "nikshay_error": "duplicate",
+            }
         else:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
+            case_props = {
+                "nikshay_registered": "false",
+                "nikshay_error": unicode(response.json())
+            }
 
-    def handle_exception(self, exception, repeat_record):
-        if isinstance(exception, RequestConnectionError):
-            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception))
+        update_case(payload_doc.domain, payload_doc.case_id, case_props)
 
 
 def _get_nikshay_id_from_response(response):
@@ -208,12 +231,35 @@ def _get_episode_case_properties(episode_case_properties):
     return episode_properties
 
 
-def _save_error_message(domain, case_id, error):
-    update_case(
-        domain,
-        case_id,
-        {
-            "nikshay_registered": "false",
-            "nikshay_error": error,
-        },
-    )
+@RegisterGenerator(NikshayTreatmentOutcomeRepeater, 'case_json', 'JSON', is_default=True)
+class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
+
+    def get_payload(self, repeat_record, episode_case):
+        """
+        https://docs.google.com/document/d/1yUWf3ynHRODyVVmMrhv5fDhaK_ufZSY7y0h9ke5rBxU/edit#heading=h.6zwqb0ms7iz9
+        """
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+        episode_case_properties = episode_case.dynamic_case_properties()
+        base_properties = self._base_properties(repeat_record, person_case)
+        base_properties.update({
+            "PatientID": episode_case_properties.get("nikshay_id"),
+            "OutcomeDate": episode_case_properties.get(TREATMENT_OUTCOME_DATE),
+            "Outcome": treatment_outcome.get(TREATMENT_OUTCOME, '0'),
+            "MO": "{} {}".format(
+                episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME),
+                episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME),
+            ),
+            "MORemark": "None Collected in eNikshay",
+        })
+        return base_properties
+
+    def handle_success(self, response, payload_doc, repeat_record):
+        update_case(payload_doc.domain, payload_doc.case_id, {
+            "treatment_outcome_nikshay_registered": "true",
+            "treatment_outcome_nikshay_error": "",
+        })
+
+    def handle_failure(self, response, payload_doc, repeat_record):
+        update_case(payload_doc.domain, payload_doc.case_id, {
+            "treatment_outcome_nikshay_error": unicode(response.json())
+        })
