@@ -1,15 +1,15 @@
 /* globals LOAD_LOCS_URL, REQUIRED */
 
-function api_get_children(loc_uuid, callback) {
+function api_get_children(loc_uuid, callback, loc_url) {
     var params = (loc_uuid ? {parent_id: loc_uuid} : {});
     $('#loc_ajax').show().removeClass('hide');
-    $.getJSON(LOAD_LOCS_URL, params, function(allData) {
+    $.getJSON(loc_url, params, function(allData) {
         $('#loc_ajax').hide().addClass('hide');
         callback(allData.objects);
     });
 }
 
-function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_filter, func, show_location_filter) {
+function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_filter, func, show_location_filter, loc_url) {
     var model = this;
 
     this.default_caption = default_caption || 'All';
@@ -79,7 +79,7 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
 
     // load location hierarchy and set initial path
     this.load = function(locs, selected) {
-        this.root(new model.func({name: '_root', children: locs}, this));
+        this.root(new model.func({name: '_root', children: locs}, this, undefined, undefined, undefined, loc_url));
         this.path_push(this.root());
 
         if (selected) {
@@ -96,7 +96,7 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
     };
 }
 
-function LocationModel(data, root, depth, func, withAllOption) {
+function LocationModel(data, root, depth, func, withAllOption, loc_url) {
     var loc = this;
 
     this.name = ko.observable();
@@ -182,7 +182,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
                 children.splice(0, 0, {name: '_all'});
         }
         this.children($.map(children, function(e) {
-            var child = new loc.func(e, root, loc.depth + 1);
+            var child = new loc.func(e, root, loc.depth + 1, undefined, undefined, loc_url);
             return (child.filter() ? child : null);
         }));
         this.children_loaded = true;
@@ -192,7 +192,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
         api_get_children(this.uuid(), function(resp) {
             loc.set_children(resp);
             callback(loc);
-        });
+        }, loc_url);
     };
 
     //warning: duplicate code with location_tree.async.js
