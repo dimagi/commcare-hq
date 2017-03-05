@@ -139,7 +139,6 @@ class RepeaterTest(BaseRepeaterTest):
                     return_value=MockResponse(status_code=404, reason='Not Found')) as mock_post:
                 repeat_record.fire()
                 self.assertEqual(mock_post.call_count, 3)
-            repeat_record.save()
 
         next_check_time = now() + timedelta(minutes=60)
 
@@ -186,7 +185,6 @@ class RepeaterTest(BaseRepeaterTest):
                     force_send=False,
                     timeout=POST_TIMEOUT,
                 )
-            repeat_record.save()
 
         # The following is pretty fickle and depends on which of
         #   - corehq.apps.repeaters.signals
