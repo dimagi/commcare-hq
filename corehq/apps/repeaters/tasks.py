@@ -62,8 +62,7 @@ def process_repeat_record(repeat_record):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
                 repeat_record.doc_type += DELETED_SUFFIX
                 repeat_record.save()
-        else:
-            if repeat_record.state == RECORD_PENDING_STATE or repeat_record.state == RECORD_FAILURE_STATE:
+        elif repeat_record.state == RECORD_PENDING_STATE or repeat_record.state == RECORD_FAILURE_STATE:
                 repeat_record.fire()
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
