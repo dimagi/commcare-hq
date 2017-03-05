@@ -1,4 +1,5 @@
 import json
+import re
 
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
@@ -8,6 +9,7 @@ from django.http import QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
+from django.conf import settings
 
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
@@ -27,6 +29,22 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     def clean_username(self):
         username = self.cleaned_data['username'].lower()
         return username
+
+    def clean_password(self):
+        password = self.cleaned_data['password']
+        if settings.ENABLE_PASSWORD_HASHING and settings.PASSWORD_HASHING_REGEX and settings.PASSWORD_DECODER:
+            reg_exp = settings.PASSWORD_HASHING_REGEX
+            if re.match(reg_exp, password):
+                stripped_password = re.match(reg_exp, password).groups()[0]
+                decoded_password = settings.PASSWORD_DECODER(stripped_password)
+                if re.match(reg_exp, decoded_password):
+                    return re.match(reg_exp, decoded_password).groups()[0]
+                else:
+                    return ''
+            else:
+                return ''
+        else:
+            return password
 
     def clean(self):
         lockout_message = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password.'))
