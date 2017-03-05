@@ -248,7 +248,6 @@ class RepeaterTest(BaseRepeaterTest):
             for repeat_record in RepeatRecord.all():
                 self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
 
-
     @run_with_all_backends
     def test_process_repeat_record_locking(self):
         self.assertEqual(len(RepeatRecord.all()), 2)
