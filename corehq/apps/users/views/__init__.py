@@ -283,8 +283,9 @@ class BaseEditUserView(BaseUserSettingsView):
                     user=self.editable_user,
                     forms={self.commtrack_form.__class__.__name__: self.commtrack_form}
                 )
-                self.commtrack_form.save(self.editable_user)
-                saved = True
+                if self.commtrack_form.is_valid():
+                    self.commtrack_form.save(self.editable_user)
+                    saved = True
         elif self.request.POST['form_type'] == "update-user":
             self.form_user_update.is_valid()
             forms = {self.form_user_update.__class__.__name__: self.form_user_update}

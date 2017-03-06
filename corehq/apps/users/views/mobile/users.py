@@ -779,6 +779,18 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         self.request.POST = form_data
 
+        self._mobile_worker_form.is_valid()
+        self.custom_data.is_valid()
+        clean_commcare_user.send(
+            'MobileWorkerListView.create_mobile_worker',
+            domain=self.domain,
+            user=None,
+            forms={
+                self._mobile_worker_form.__class__.__name__: self._mobile_worker_form,
+                self.custom_data.__class__.__name__: self.custom_data,
+            }
+        )
+
         if not self._mobile_worker_form.is_valid() or not self.custom_data.is_valid():
             return {
                 'error': _("Forms did not validate"),

@@ -5,26 +5,33 @@ from corehq.apps.users.signals import clean_commcare_user
 
 
 def user_save_callback(sender, domain, user, forms, **kwargs):
-    if (not toggles.ENIKSHAY.enabled(domain)
-            or not user.is_commcare_user()):
+    if not toggles.ENIKSHAY.enabled(domain):
         return
 
-    user_form = forms.get('UpdateCommCareUserInfoForm')
+    new_user_form = forms.get('NewMobileWorkerForm')
+    update_user_form = forms.get('UpdateCommCareUserInfoForm')
     custom_data = forms.get('CustomDataEditor')
-    if not user_form and custom_data:
-        raise AssertionError("Expected user form and custom data form to be submitted")
+    location_form = forms.get('CommtrackUserForm')
 
-    usertype = (custom_data.form.cleaned_data['usertype'][0]
-                if custom_data.form.cleaned_data['usertype'] else None)
+    if update_user_form or new_user_form:
+        if not custom_data:
+            raise AssertionError("Expected user form and custom data form to be submitted together")
+        usertype = custom_data.form.cleaned_data['usertype']
+        if new_user_form:
+            location = validate_location(domain, new_user_form)
+            # set_user_role(domain, user, usertype, update_user_form)
+        else:
+            location = user.get_sql_location(domain)
+            validate_usertype(domain, location, usertype, custom_data)
+            validate_role_unchanged(domain, user, update_user_form)
 
-    validate_usertype(domain, user, usertype, custom_data)
-    set_user_role(domain, user, usertype, user_form)
+    if location_form:
+        location_form.add_error('assigned_locations', _("You cannot edit the location of existing users."))
 
 
-def get_allowable_usertypes(domain, user):
+def get_allowable_usertypes(domain, location):
     """Restrict choices for custom user data role field based on the chosen
     location's type"""
-    location = user.get_sql_location(domain)
     if not location:
         return []
     loc_type = location.location_type.code
@@ -34,10 +41,10 @@ def get_allowable_usertypes(domain, user):
     ]
 
 
-def validate_usertype(domain, user, usertype, custom_data):
+def validate_usertype(domain, location, usertype, custom_data):
     """Restrict choices for custom user data role field based on the chosen
     location's type"""
-    allowable_usertypes = get_allowable_usertypes(domain, user)
+    allowable_usertypes = get_allowable_usertypes(domain, location)
     if usertype not in allowable_usertypes:
         msg = _("'User Type' must be one of the following: {}").format(', '.join(allowable_usertypes))
         custom_data.form.add_error('usertype', msg)
@@ -58,6 +65,34 @@ def set_user_role(domain, user, usertype, user_form):
     else:
         role = roles[0]
         user.set_role(domain, role.get_qualified_id())
+
+
+def get_user_data_code(domain, user):
+    """Add a mobile worker code (custom user data) that's unique across all
+    users at that location"""
+
+
+def validate_role_unchanged(domain, user, user_form):
+    """Web user role is not editable"""
+    existing_role = user.get_domain_membership(domain).role
+    existing_role_id = existing_role.get_qualified_id()
+    specified_role_id = user_form.cleaned_data['role']
+    if existing_role_id != specified_role_id:
+        msg = _("You cannot modify the user's role.  It must be {}").format(existing_role.name)
+        user_form.add_error('role', msg)
+
+
+def validate_location(domain, user_form):
+    """Force a location to be chosen"""
+    from corehq.apps.locations.models import SQLLocation
+    location_id = user_form.cleaned_data['location_id']
+    if location_id:
+        try:
+            return SQLLocation.active_objects.get(
+                domain=domain, location_id=location_id)
+        except SQLLocation.DoesNotExist:
+            pass
+    user_form.add_error('location_id', _("You must select a location."))
 
 
 def connect_signals():
@@ -90,23 +125,6 @@ USER_TYPES = [
     # UserType('mo-drtb', 'TBD', 'N/A'),
     # UserType('sa', 'TBD', 'N/A'),
 ]
-
-
-def validate_role_unchanged(domain, user):
-    """Web user role is not editable"""
-
-
-def get_user_data_code(domain, user):
-    """Add a mobile worker code (custom user data) that's unique across all
-    users at that location"""
-
-
-def validate_has_location(domain, user):
-    """Force a location to be chosen"""
-
-
-def validate_location_unchanged(domain, user):
-    """Block location reassignment on subsequent edits"""
 
 
 def get_site_code(domain, location):
