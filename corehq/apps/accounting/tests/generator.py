@@ -26,7 +26,6 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionType,
 )
-from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import unit_testing_only
 import six
