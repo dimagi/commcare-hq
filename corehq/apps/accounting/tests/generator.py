@@ -22,14 +22,12 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscriber,
     Subscription,
-    SubscriptionAdjustment,
     SubscriptionType,
     SoftwarePlanVersion,
     SoftwareProduct,
     SoftwareProductRate,
 )
-from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import unit_testing_only
 import six
 from six.moves import range
