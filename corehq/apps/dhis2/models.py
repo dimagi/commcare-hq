@@ -27,19 +27,40 @@ class DataSetMap(Document):
     domain = StringProperty()
     ucr_id = StringProperty()
 
-    org_unit_column = StringProperty(required=True)
-    # period_column = StringProperty(required=True)  # MVP: report (month) period as YYYYMM
-    data_value_maps = SchemaListProperty(DataValueMap)
+    data_set_id = StringProperty()  # If UCR adds values to an existing DataSet
+    org_unit_id = StringProperty()  # If all values are for the same OrganisationUnit.
+    org_unit_column = StringProperty()  # if not org_unit_id: use org_unit_column
+    period = StringProperty()  # If all values are for the same period. MVP: period is monthly, formatted YYYYMM
+    period_column = StringProperty()  # if not period: use period_column
+    datavalue_maps = SchemaListProperty(DataValueMap)
 
     # Optional for DHIS2:
     complete_date_column = StringProperty()
     attribute_option_combo_column = StringProperty()  # (DHIS2 defaults this to categoryOptionCombo)
 
-    def get_data_values(self, ucr_data):
+    def __init__(self):
+        self._datavalue_map_dict = None
+
+    @property
+    def datavalue_map_dict(self):
+        if self._datavalue_map_dict is None:
+            self._datavalue_map_dict = {dvm.column: dvm for dvm in self.datavalue_maps}
+        return self._datavalue_map_dict
+
+    def get_datavalues(self, ucr_data):
         """
-        Returns rows of dataElementID, categoryOptionComboID, value and comment for this DataSet
+        Returns rows of "dataElementID", "categoryOptionComboID", "value", and optionally "period", "orgUnit" and
+        "comment" for this DataSet
         """
         # TODO: ...
+
+    def get_dataset(self):
+        # dataset = {
+        #     'dataValues': [
+        #         self.get_datavalues(row) for row in iter_ucr_data(self.ucr_id)
+        #     ]
+        # }
+        pass
 
 
 # MVP: "monthly"
