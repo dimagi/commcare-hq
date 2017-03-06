@@ -27,7 +27,7 @@ class UsersMiddleware(object):
             request.domain = view_kwargs['domain']
         if 'org' in view_kwargs:
             request.org = view_kwargs['org']
-        if request.user.is_anonymous() and 'domain' in view_kwargs:
+        if request.user.is_anonymous and 'domain' in view_kwargs:
             if ANONYMOUS_WEB_APPS_USAGE.enabled(view_kwargs['domain']):
                 request.couch_user = CouchUser.get_anonymous_mobile_worker(request.domain)
         if request.user and request.user.is_authenticated:
