@@ -1,11 +1,13 @@
 import httplib
 import json
 import logging
+from itertools import chain
 
 import requests
 
+from corehq.apps.dhis2.utils import get_ucr_data
+from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import Document, StringProperty, DocumentSchema, SchemaListProperty
-from dimagi.ext.jsonobject import JsonObject
 
 
 class Dhis2Connection(Document):
@@ -32,43 +34,80 @@ class DataSetMap(Document):
     org_unit_column = StringProperty()  # if not org_unit_id: use org_unit_column
     period = StringProperty()  # If all values are for the same period. MVP: period is monthly, formatted YYYYMM
     period_column = StringProperty()  # if not period: use period_column
+
+    attribute_option_combo_id = StringProperty()  # Optional. DHIS2 defaults this to categoryOptionCombo
+    complete_date = StringProperty()  # Optional
+
     datavalue_maps = SchemaListProperty(DataValueMap)
 
-    # Optional for DHIS2:
-    complete_date_column = StringProperty()
-    attribute_option_combo_column = StringProperty()  # (DHIS2 defaults this to categoryOptionCombo)
+    @quickcache(['self.domain', 'self.ucr_id'])
+    def get_datavalue_map_dict(self):
+        dict_ = {dvm.column: dict(dvm, is_org_unit=False, is_period=False) for dvm in self.datavalue_maps}
+        if self.org_unit_column:
+            dict_[self.org_unit_column] = {'is_org_unit': True, 'is_period': False}
+        if self.period_column:
+            dict_[self.period_column] = {'is_org_unit': False, 'is_period': True}
+        return dict_
 
-    def __init__(self):
-        self._datavalue_map_dict = None
-
-    @property
-    def datavalue_map_dict(self):
-        if self._datavalue_map_dict is None:
-            self._datavalue_map_dict = {dvm.column: dvm for dvm in self.datavalue_maps}
-        return self._datavalue_map_dict
-
-    def get_datavalues(self, ucr_data):
+    def get_datavalues(self, ucr_row):
         """
         Returns rows of "dataElementID", "categoryOptionComboID", "value", and optionally "period", "orgUnit" and
-        "comment" for this DataSet
+        "comment" for this DataSet where ucr_row looks like::
+
+            {
+                "org_unit_id": "ABC",
+                "data_element_cat_option_combo_1": 123,
+                "data_element_cat_option_combo_2": 456,
+                "data_element_cat_option_combo_3": 789,
+            }
+
         """
-        # TODO: ...
+        dv_map = self.get_datavalue_map_dict()
+        datavalues = []
+        org_unit = None
+        period = None
+        # First pass is to collate data element IDs and values
+        for key, value in ucr_row.items():
+            if key in dv_map:
+                if dv_map[key]['is_org_unit']:
+                    org_unit = value
+                elif dv_map[key]['is_period']:
+                    period = value
+                else:
+                    datavalue = {
+                        'dataElementID': dv_map[key]['data_element_id'],
+                        'categoryOptionComboID': dv_map[key]['category_option_combo_id'],
+                        'value': value,
+                    }
+                    if dv_map[key].get('comment'):
+                        datavalue['comment'] = dv_map[key]['comment']
+                    datavalues.append(datavalue)
+        # Second pass is to set period and org unit
+        if period or org_unit:
+            for datavalue in datavalues:
+                if period:
+                    datavalue['period'] = period
+                if org_unit:
+                    datavalue['orgUnit'] = org_unit
+        return datavalues
 
     def get_dataset(self):
-        # dataset = {
-        #     'dataValues': [
-        #         self.get_datavalues(row) for row in iter_ucr_data(self.ucr_id)
-        #     ]
-        # }
-        pass
+        ucr_data = get_ucr_data(self.domain, self.ucr_id)
 
-
-# MVP: "monthly"
-# class ReportPeriod(Document):
-#     domain = StringProperty()
-#     report = StringProperty()  # a UCR
-#     period = StringProperty()
-#     #  DHIS2 offers weekly, monthly, two-monthly, quarterly, six-monthly, financial-yearly & annually
+        dataset = {
+            'dataValues': [dv for dv in chain(self.get_datavalues(row) for row in ucr_data)]
+        }
+        if self.data_set_id:
+            dataset['dataSet'] = self.data_set_id
+        if self.org_unit_id:
+            dataset['orgUnit'] = self.org_unit_id
+        if self.period:  # TODO: Should we rather pull this from the report config date range?
+            dataset['period'] = self.period
+        if self.attribute_option_combo_id:
+            dataset['attributeOptionCombo'] = self.attribute_option_combo_id
+        if self.complete_date:
+            dataset['completeDate'] = self.complete_date
+        return dataset
 
 
 class JsonApiError(Exception):
@@ -224,14 +263,3 @@ class JsonApiRequest(object):
             )
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
-
-
-class DataValue(JsonObject):
-    dataElement = StringProperty()
-    period = StringProperty()
-    orgUnit = StringProperty()
-    categoryOptionCombo = StringProperty()
-    value = StringProperty()
-    completeDate = StringProperty()
-    attributeOptionCombo = StringProperty()
-    comment = StringProperty()
