@@ -70,17 +70,17 @@ class FilterTestCase(SimpleTestCase):
         conf = {"display": "foo"}
         conf.update(shared_conf)
         filter = ReportFilterFactory.from_spec(conf)
-        self.assertEqual(filter.context(None, lang=None)['label'], "foo")
-        self.assertEqual(filter.context(None, lang="fr")['label'], "foo")
+        self.assertEqual(filter.context({}, None, lang=None)['label'], "foo")
+        self.assertEqual(filter.context({}, None, lang="fr")['label'], "foo")
 
         # Translation
         conf = {"display": {"en": "english", "fr": "french"}}
         conf.update(shared_conf)
         filter = ReportFilterFactory.from_spec(conf)
-        self.assertEqual(filter.context(None, lang=None)['label'], "english")
-        self.assertEqual(filter.context(None, lang="fr")['label'], "french")
-        self.assertEqual(filter.context(None, lang="en")['label'], "english")
-        self.assertEqual(filter.context(None, lang="es")['label'], "english")
+        self.assertEqual(filter.context({}, None, lang=None)['label'], "english")
+        self.assertEqual(filter.context({}, None, lang="fr")['label'], "french")
+        self.assertEqual(filter.context({}, None, lang="en")['label'], "english")
+        self.assertEqual(filter.context({}, None, lang="es")['label'], "english")
 
 
 class DateFilterTestCase(SimpleTestCase):

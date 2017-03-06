@@ -28,21 +28,37 @@ class BaseFilter(object):
         self.name = name
         self.params = params or []
 
-    def get_value(self, context, user=None):
+    def get_value(self, request_params, user=None):
+        """
+        Args:
+            request_params: is a dict of request.GET or request.POST params
+            user: couch-user object
+
+        Retruns:
+            selected or default filter value
+        """
         kwargs = {
             "request_user": user
         }
-        if self.check_context(context):
-            kwargs.update({param.name: context[param.name] for param in self.params if param.name in context})
+        if self.all_required_params_are_in_context(request_params):
+            kwargs.update(
+                {param.name: request_params[param.name] for param in self.params if param.name in request_params}
+            )
             return self.value(**kwargs)
         else:
             return self.default_value(request_user=user)
 
-    def check_context(self, context):
+    def all_required_params_are_in_context(self, context):
         return all(slug.name in context for slug in self.params if slug.required)
 
     def value(self, **kwargs):
         """
+        Args:
+            kwargs: a dict of self.params and their values obtained from request
+
+        Returns:
+            Should return the value selected for this filter
+
         Override this and return the value. This method will only be called if all required
         parameters are present in the filter context. All the parameters present in the context
         will be passed in as keyword arguments.
@@ -60,14 +76,17 @@ class BaseFilter(object):
         """
         return None
 
-    def context(self, values, lang=None):
+    def context(self, request_params, request_user, lang=None):
         """
         Context for rendering the filter.
+
+        Args:
+            request_params: is a dict of request.GET or request.POST params
         """
         context = {
             'label': localize(self.label, lang),
             'css_id': self.css_id,
-            'value': values,
+            'value': self.get_value(request_params, request_user),
         }
         context.update(self.filter_context())
         return context
@@ -337,8 +356,9 @@ class DynamicChoiceListFilter(BaseFilter):
         self.url_generator = url_generator
         self.choice_provider = choice_provider
 
-    def context(self, values, lang=None):
-        context = super(DynamicChoiceListFilter, self).context(values, lang)
+    def context(self, request_params, request_user, lang=None):
+        values = self.get_value(request_params, request_user)
+        context = super(DynamicChoiceListFilter, self).context(request_params, request_user, lang)
         context['value'] = self._format_values_for_display(values)
         return context
 
