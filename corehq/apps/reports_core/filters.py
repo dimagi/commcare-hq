@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, time
+from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.userreports.expressions.getters import transform_from_datatype
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, CHOICE_DELIMITER
@@ -11,6 +12,7 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.conf import settings
+from django.core.urlresolvers import reverse
 import six
 from six.moves import range
 
@@ -388,3 +390,37 @@ class DynamicChoiceListFilter(BaseFilter):
                 return choice_provider_default
 
         return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
+
+
+class LocationDrilldownFilter(BaseFilter):
+    template = 'reports_core/filters/location_async/location_async.html'
+    javascript_template = 'reports_core/filters/location_async/location_async.js'
+
+    def __init__(self, name, field, datatype, label, domain, css_id=None):
+        params = [
+            FilterParam(name, True),
+        ]
+        super(LocationDrilldownFilter, self).__init__(name=name, params=params)
+        self.datatype = datatype
+        self.field = field
+        self.label = label
+        self.css_id = css_id or self.name
+        self.domain = domain
+
+    @property
+    def api_root(self):
+        return reverse('api_dispatch_list', kwargs={'domain': self.domain,
+                                                    'resource_name': 'location_internal',
+                                                    'api_name': 'v0.5'})
+
+    def filter_context(self):
+        return {
+            'input_name': self.name,
+            'loc_id': None,
+            'hierarchy': location_hierarchy_config(self.domain),
+            'locations': load_locs_json(self.domain),
+            'loc_url': self.api_root
+        }
+
+    def value(self, **kwargs):
+        return kwargs.get(self.name, None)
