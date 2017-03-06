@@ -33,7 +33,7 @@ from corehq.apps.app_manager.exceptions import (
     BlankXFormError,
     ConflictingCaseTypeError,
     FormNotFoundException, XFormValidationFailed)
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.templatetags.xforms_extras import trans, html_trans, html_name
 from corehq.apps.programs.models import Program
 from corehq.apps.app_manager.util import (
     get_all_case_properties,
@@ -260,14 +260,15 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
 
     if should_edit("name"):
         name = request.POST['name']
-        form.name[lang] = name
+        form.name[lang] = html_name(name)
         xform = form.wrapped_xform()
         if xform.exists():
             xform.set_name(name)
             save_xform(app, form, xform.render())
         resp['update'] = {'.variable-form_name': trans(form.name, [lang], use_delim=False)}
     if should_edit('comment'):
-        form.comment = request.POST['comment']
+        form.comment = html_name(request.POST['comment'])
+
     if should_edit("xform") or "xform" in request.FILES:
         try:
             # support FILES for upload and POST for ajax post from Vellum

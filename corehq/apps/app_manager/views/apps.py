@@ -21,6 +21,7 @@ from django.contrib import messages
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
     IncompatibleFormTypeException, RearrangeError
+from corehq.apps.app_manager.templatetags.xforms_extras import html_name, html_trans
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, CASE_TYPE_CONFLICT_MSG
 from corehq import toggles, privileges
@@ -678,7 +679,8 @@ def edit_app_attr(request, domain, app_id, attr):
 
     if should_edit("name"):
         clear_app_cache(request, domain)
-        name = hq_settings['name']
+        name = html_name(hq_settings['name'])
+        app.name = name
         resp['update'].update({
             '.variable-app_name': name,
             '[data-id="{id}"]'.format(id=app_id): ApplicationsTab.make_app_title(name, app.doc_type),
@@ -709,6 +711,9 @@ def edit_app_attr(request, domain, app_id, attr):
         app['profile_url'] = hq_settings['profile_url']
     if should_edit("manage_urls"):
         require_remote_app()
+
+    if should_edit('comment') and request.POST.get('comment'):
+        app.comment = html_name(request.POST['comment'])
 
     app.save(resp)
     # this is a put_attachment, so it has to go after everything is saved
