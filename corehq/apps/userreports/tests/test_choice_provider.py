@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod
 from django.test import SimpleTestCase
 import mock
@@ -16,6 +17,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     OwnerChoiceProvider, StaticChoiceProvider, SearchableChoice)
 from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership
 from corehq.apps.users.util import normalize_username
+import six
 
 
 class StaticChoiceProviderTest(SimpleTestCase):
@@ -38,7 +40,7 @@ class StaticChoiceProviderTest(SimpleTestCase):
         )
 
 
-class ChoiceProviderTestMixin(object):
+class ChoiceProviderTestMixin(six.with_metaclass(ABCMeta, object)):
     """
     A mixin for a creating uniform tests for different ChoiceProvider subclasses.
 
@@ -55,7 +57,6 @@ class ChoiceProviderTestMixin(object):
     4. Implement the abstract test methods according to the suggestions in the docstrings
 
     """
-    __metaclass__ = ABCMeta
     choice_provider = None
     static_choice_provider = None
     choice_query_context = ChoiceQueryContext
@@ -120,8 +121,6 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
 
     @classmethod
     def setUpClass(cls):
-        delete_all_locations()
-        delete_all_users()
         super(LocationChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
         choice_tuples = [
@@ -130,7 +129,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
                 location.get_path_display(),
                 searchable_text=[location.site_code, location.name]
             ))
-            for location in cls.locations.itervalues()
+            for location in six.itervalues(cls.locations)
         ]
         choice_tuples.sort()
         choices = [choice for name, choice in choice_tuples]
@@ -147,6 +146,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
     def tearDownClass(cls):
         cls.domain_obj.delete()
         delete_all_locations()
+        delete_all_users()
 
     def test_query_search(self):
         # Searching for something common to all locations gets you all locations

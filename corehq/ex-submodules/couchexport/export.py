@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import itertools
 from couchexport.exceptions import SchemaMismatchException,\
     UnsupportedExportFormat
@@ -155,6 +156,21 @@ def export_raw(headers, data, file, format=Format.XLS_2007,
                     ("2", "old dimagi", "529 main st."))))
 
     """
+    context = export_raw_to_writer(headers=headers, data=data, file=file, format=format,
+                                   max_column_size=max_column_size, separator=separator)
+    with context:
+        pass
+
+
+@contextmanager
+def export_raw_to_writer(headers, data, file, format=Format.XLS_2007,
+                         max_column_size=2000, separator='|'):
+    """
+    exposing export_raw as a context manager gives the caller the opportunity
+    to interact with `writer` before it is closed. The caller could, for example,
+    add excel styling or excel properties.
+
+    """
     # transform docs onto output and save
     writer = get_writer(format)
 
@@ -165,6 +181,7 @@ def export_raw(headers, data, file, format=Format.XLS_2007,
     # do the same for the data
     data = FormattedRow.wrap_all_rows(data)
     writer.write(data)
+    yield writer
     writer.close()
 
 

@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
+from corehq.util.test_utils import unit_testing_only
 
 
 class IndicatorAdapter(object):
@@ -18,6 +20,10 @@ class IndicatorAdapter(object):
         raise NotImplementedError
 
     def refresh_table(self):
+        raise NotImplementedError
+
+    @unit_testing_only
+    def clear_table(self):
         raise NotImplementedError
 
     def get_query_object(self):

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
@@ -20,6 +21,6 @@ class Command(BaseCommand):
             month_year = dateutil.parser.parse(arg)
             datespan_list.append(DateSpan.from_month(month_year.month, month_year.year))
         generator = GIRTableGenerator(datespan_list)
-        print "Building GIR table... for time range {}".format(datespan_list)
+        print("Building GIR table... for time range {}".format(datespan_list))
         generator.build_table()
-        print "Finished!"
+        print("Finished!")

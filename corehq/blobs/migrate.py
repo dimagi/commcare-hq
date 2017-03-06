@@ -65,6 +65,7 @@ models' attachments to the blob database:
 
 That's it, you're done!
 """
+from __future__ import print_function
 import json
 import os
 import traceback

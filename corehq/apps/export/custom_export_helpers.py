@@ -95,7 +95,7 @@ class CustomExportHelper(object):
                 assert self.custom_export.doc_type == 'SavedExportSchema', 'bad export doc type'
                 assert self.custom_export.type == self.export_type, 'wrong export type specified'
                 assert self.custom_export.index[0] == domain, 'bad export doc domain'
-            except AssertionError, e:
+            except AssertionError as e:
                 raise BadExportConfiguration(str(e))
         else:
             self.custom_export = self.ExportSchemaClass(type=self.export_type)

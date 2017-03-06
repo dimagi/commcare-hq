@@ -13,7 +13,7 @@ from couchexport.export import export_raw
 from couchexport.models import Format
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.translations import (
+from corehq.apps.app_manager.app_translations import (
     process_bulk_app_translation_upload,
     expected_bulk_app_sheet_rows,
     expected_bulk_app_sheet_headers,
@@ -466,7 +466,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         missing_cols = set()
         sheet = self.form1_worksheet
         rows = get_unicode_dicts(sheet)
-        with patch('corehq.apps.app_manager.translations.save_xform') as save_xform_patch:
+        with patch('corehq.apps.app_manager.app_translations.app_translations.save_xform') as save_xform_patch:
             msgs = update_form_translations(sheet, rows, missing_cols, self.app)
             self.assertEqual(msgs, [])
             expected_xform = self.get_xml('expected_xform').decode('utf-8')

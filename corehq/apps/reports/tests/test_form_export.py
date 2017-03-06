@@ -1,3 +1,4 @@
+from __future__ import print_function
 from StringIO import StringIO
 import json
 import datetime

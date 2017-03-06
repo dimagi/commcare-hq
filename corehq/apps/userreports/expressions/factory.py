@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import functools
 import json
 import datetime
@@ -9,13 +10,14 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec, \
     IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec, \
-    CaseSharingGroupsExpressionSpec, ReportingGroupsExpressionSpec
+    CaseSharingGroupsExpressionSpec, ReportingGroupsExpressionSpec, CoalesceExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
 from corehq.apps.userreports.expressions.list_specs import FilterItemsExpressionSpec, \
     MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec, SortItemsExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler
+import six
 
 
 def _make_filter(spec, context):
@@ -34,6 +36,14 @@ _constant_expression = functools.partial(_simple_expression_generator, ConstantG
 _property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
 _iteration_number_expression = functools.partial(_simple_expression_generator, IterationNumberExpressionSpec)
+
+
+def _property_name_expression(spec, context):
+    expression = PropertyNameGetterSpec.wrap(spec)
+    expression.configure(
+        ExpressionFactory.from_spec(expression.property_name, context=context)
+    )
+    return expression
 
 
 def _named_expression(spec, context):
@@ -56,7 +66,7 @@ def _switch_expression(spec, context):
     wrapped = SwitchExpressionSpec.wrap(spec)
     wrapped.configure(
         ExpressionFactory.from_spec(wrapped.switch_on, context),
-        {k: ExpressionFactory.from_spec(v, context) for k, v in wrapped.cases.iteritems()},
+        {k: ExpressionFactory.from_spec(v, context) for k, v in six.iteritems(wrapped.cases)},
         ExpressionFactory.from_spec(wrapped.default, context),
     )
     return wrapped
@@ -188,6 +198,7 @@ def _get_case_sharing_groups_expression(spec, context):
     )
     return wrapped
 
+
 def _get_reporting_groups_expression(spec, context):
     wrapped = ReportingGroupsExpressionSpec.wrap(spec)
     wrapped.configure(
@@ -248,6 +259,15 @@ def _split_string_expression(spec, context):
     return wrapped
 
 
+def _coalesce_expression(spec, context):
+    wrapped = CoalesceExpressionSpec.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.expression, context),
+        ExpressionFactory.from_spec(wrapped.default_expression, context),
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -280,6 +300,7 @@ class ExpressionFactory(object):
         'flatten': _flatten_expression,
         'sort_items': _sort_items_expression,
         'split_string': _split_string_expression,
+        'coalesce': _coalesce_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 
@@ -308,7 +329,7 @@ class ExpressionFactory(object):
                                  'Valid options are: {}').format(
                 spec.get('type', '[missing]'),
                 spec,
-                ', '.join(cls.spec_map.keys()),
+                ', '.join(cls.spec_map),
             ))
         except (TypeError, BadValueError) as e:
             raise BadSpecError(_('Problem creating getter: {}. Message is: {}').format(

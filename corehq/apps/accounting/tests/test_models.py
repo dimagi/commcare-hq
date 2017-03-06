@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from decimal import Decimal
 import mock
@@ -153,8 +154,6 @@ class TestSubscription(BaseAccountingTest):
         self.dimagi_user.delete()
         self.domain.delete()
 
-        generator.delete_all_subscriptions()
-        generator.delete_all_accounts()
         super(TestSubscription, self).tearDown()
 
 

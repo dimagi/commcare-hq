@@ -6,10 +6,10 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -9,32 +9,33 @@
-     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
+@@ -11,104 +11,111 @@
      <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
      <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
+     <script src="{% static 'app_manager/js/module-view.js' %}"></script>
 -    {% include "app_manager/v1/partials/xpathValidator.html" %}
 +    {% include "app_manager/v2/partials/xpathValidator.html" %}
  {% endblock %}
@@ -42,53 +42,23 @@
      {% include 'style/partials/key_value_mapping.html' %}
 -    {% include 'app_manager/v1/partials/graph_configuration_modal.html' %}
 +    {% include 'app_manager/v2/partials/graph_configuration_modal.html' %}
- 
-     <script>
-+        {% if module.case_type != "" %}
-         $(function () {
-             var state = hqImport('app_manager/js/detail-screen-config.js').state;
-             var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
-@@ -86,6 +87,7 @@
-                 }
-             }
-         });
-+        {% endif %}
-         $(function () {
-             var moduleType = {{ module.module_type|JSON }};
-             var showCaseTypeError = function(message) {
-@@ -102,6 +104,15 @@
-                 if (value !== valueNoSpaces) {
-                     $(this).val(valueNoSpaces);
-                 }
-+
-+                if (!valueNoSpaces) {
-+                    $(this).closest('.form-group').addClass('has-error');
-+                    showCaseTypeError(
-+                        gettext("Case type is required.")
-+                    );
-+                    return;
-+                }
-+
-                 if (!valueNoSpaces.match(/^[\w-]*$/g)) {
-                     $(this).closest('.form-group').addClass('has-error');
-                     showCaseTypeError(
-@@ -112,7 +123,6 @@
-                     showCaseTypeError(
-                         gettext("'commcare-user' is a reserved case type. Please change the case type")
-                     );
--
-                 } else {
-                     $(this).closest('.form-group').removeClass('has-error');
-                     hideCaseTypeError();
-@@ -230,63 +240,69 @@
-     </script>
- {% endblock %}
- 
-+{% block pre_page_content %}
-+  {% include 'app_manager/v2/partials/module_view_heading.html' %}
 +{% endblock %}
 +
++{% block pre_form_content %}
++  {% include 'app_manager/v2/partials/module_view_heading.html' %}
+ {% endblock %}
+ 
  {% block form-view %}
+-    {% initial_page_data 'module_brief' module_brief %}
+-    {% initial_page_data 'details' details %}
+-    {% initial_page_data 'js_options' js_options %}
+-    {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
+-    {% initial_page_data 'case_list_form_options' case_list_form_options %}
+-    {% initial_page_data 'case_list_form_not_allowed_reason' case_list_form_not_allowed_reason  %}
+-    {% initial_page_data 'parent_modules' parent_modules %}
+-    {% initial_page_data 'shadow_module_options' shadow_module_options %}
+-    {% registerurl "edit_module_detail_screens" domain app.id module.id %}
+-    {% registerurl "validate_module_for_build" domain app.id module.id %}
 -    {% include 'app_manager/v1/partials/module_view_heading.html' %}
 -<div class="tabbable">
 -<ul class="nav nav-tabs" id="module-view-tabs">
@@ -96,6 +66,16 @@
 -    <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
 -    {% if module.module_type != 'shadow' %}
 -    <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
++  {% initial_page_data 'module_brief' module_brief %}
++  {% initial_page_data 'details' details %}
++  {% initial_page_data 'js_options' js_options %}
++  {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
++  {% initial_page_data 'case_list_form_options' case_list_form_options %}
++  {% initial_page_data 'case_list_form_not_allowed_reason' case_list_form_not_allowed_reason  %}
++  {% initial_page_data 'parent_modules' parent_modules %}
++  {% initial_page_data 'shadow_module_options' shadow_module_options %}
++  {% registerurl "edit_module_detail_screens" domain app.id module.id %}
++  {% registerurl "validate_module_for_build" domain app.id module.id %}
 +  <div class="tabbable appmanager-tabs-container">
 +
 +    {% if module.case_type != "" %}
@@ -120,6 +100,9 @@
 +                </li>
 +              {% endif %}
 +            {% endfor %}
++            {% if details and app.advanced_app_builder and app|get_available_modules_for_case_list_configuration:module %}
++                <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
++            {% endif %}
 +          {% endif %}
 +        {% endblock %}{# endblock tab-headers #}
 +      </ul>
@@ -139,6 +122,9 @@
 -    </li>
 -    {% endif %}
 -    {% endfor %}
+-    {% if details and app|get_available_modules_for_case_list_configuration:module %}
+-        <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+-    {% endif %}
 -    {% endblock %}{# endblock tab-headers #}
 -</ul>
 -<div class="spacer"></div>
@@ -164,6 +150,15 @@
 +              </div>
 +            {% endif %}
 +          {% endfor %}
++          {% if details and app.advanced_app_builder%}
++            {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
++            {% if available_modules %}
++            <div class="tab-pane" id="module-actions">
++                {% include 'app_manager/v2/partials/module_actions.html' %}
++            </div>
++            {% endif %}
++            {% endwith %}
++          {% endif %}
 +        {% endif %}
 +      {% endblock %}
      </div>
@@ -172,7 +167,8 @@
 -            {% include "app_manager/v1/partials/module_view_case_management.html" %}
 -        {% endblock %}
 -    </div>
--
++</div>
+ 
 -    {% for detail in details %}
 -    <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
 -        {% include 'app_manager/v1/partials/case_list.html' %}
@@ -183,9 +179,22 @@
 -    </div>
 -    {% endif %}
 -    {% endfor %}
+-    {% if details %}
+-        {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
+-        {% if available_modules %}
+-            <div class="tab-pane" id="module-actions">
+-                {% include 'app_manager/v1/partials/module_actions.html' %}
+-            </div>
+-        {% endif %}
+-        {% endwith %}
+-    {% endif %}
 -    {% endblock %}{# endblock tab-content #}
- </div>
 -</div>
+-</div>
+ <script type="text/html" id="module-forms-template">
+     <div class="checkbox">
+         <label>
+@@ -122,10 +129,10 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
@@ -196,6 +205,5 @@
  {% block breadcrumbs %}
      {{ block.super }}
 -    {% include 'app_manager/v1/partials/module_view_breadcrumbs.html' %}
--{% endblock %}
 +    {% include 'app_manager/v2/partials/module_view_breadcrumbs.html' %}
-+{% endblock %}
+ {% endblock %}

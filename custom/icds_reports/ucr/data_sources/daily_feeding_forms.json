@@ -473,6 +473,7 @@
         "transform": {},
         "datatype": "date",
         "is_primary_key": false,
+        "create_index": true,
         "is_nullable": true,
         "column_id": "month",
         "type": "expression",
@@ -535,7 +536,7 @@
       {
         "display_name": null,
         "transform": {},
-        "datatype": "integer",
+        "datatype": "decimal",
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "attended_children_percent",

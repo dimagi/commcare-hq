@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django import forms
@@ -14,7 +15,7 @@ class PublicSMSRateCalculatorForm(forms.Form):
         super(PublicSMSRateCalculatorForm, self).__init__(*args, **kwargs)
 
         isd_codes = []
-        countries = sorted(COUNTRIES.items(), key=lambda x: x[1].encode('utf-8'))
+        countries = sorted(list(COUNTRIES.items()), key=lambda x: x[1].encode('utf-8'))
         for country_shortcode, country_name in countries:
             country_isd_code = country_code_for_region(country_shortcode)
             isd_codes.append((country_isd_code, country_name))
@@ -29,7 +30,7 @@ class PublicSMSRateCalculatorForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Field(
                 'country_code',
-                css_class="input-xxlarge",
+                css_class="input-xxlarge ko-select2",
                 data_bind="value: country_code",
                 placeholder=_("Please Select a Country Code"),
             ),

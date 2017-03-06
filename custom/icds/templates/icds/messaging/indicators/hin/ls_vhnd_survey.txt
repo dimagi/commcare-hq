@@ -1,0 +1,1 @@
+VHND hasn't been conducted at the following AWC in the last 30 days: {{ location_names }}

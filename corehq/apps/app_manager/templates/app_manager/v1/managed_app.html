@@ -11,99 +11,7 @@
     <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}
-    {{ block.super }}
-    <script>
-        $(function () {
-            var init = hqImport('app_manager/js/app_manager.js').init;
-            init({
-                appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-                commcareVersion: {{ app.commcare_minor_release|JSON }},
-                latestCommcareVersion: {% if latest_commcare_version %}{{ latest_commcare_version|JSON }}{% else %}null{% endif %}
-            });
-        });
-        $(function () {
-            $('.btn-langcode-preprocessed').each( function () {
-                langcodeTag.button_tag($(this), $(this).text());
-                if ($(this).hasClass('langcode-input')) {
-                    var $langcodeInput = $(this).parent().find("input");
-                    var that = this;
-                    if ($langcodeInput) {
-                        $langcodeInput.change(function () {
-                            if ($(this).val() == "")
-                                $(that).show();
-                            else
-                                $(that).hide();
-                        });
-                    }
-                }
-            });
-        });
-    </script>
-    {% if app.get_doc_type == "Application" %}
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-            $('.edit-form-pencil').tooltip({
-                title: "{% trans "Edit in form builder" %}",
-                placement: 'auto'
-            });
-            $('.edit-form-li').each(function () {
-                var $this = $(this);
-                if (!{{ formdesigner|JSON }} || !$this.hasClass("active")) {
-                    var $pencil = $this.find('.edit-form-pencil');
-                    $pencil.addClass('no-data');
-                    $this.hover(function() {
-                        $pencil.removeClass('no-data');
-                    }, function() {
-                        $pencil.addClass('no-data');
-                    });
-                }
-            });
-        });
-    </script>
-    {% endif %}
-    <script>
-        $(function () {
-            // https://github.com/twitter/bootstrap/issues/6122
-            // this is necessary to get popovers to be able to extend
-            // outside the borders of their containing div
-            //
-            // http://manage.dimagi.com/default.asp?183618
-            // Firefox 40 considers hovering on a select a mouseleave event and thus kills the select
-            // dropdown. The focus and blur events are to ensure that we do not trigger overflow hidden
-            // if we are in a select
-            var inSelectElement = false,
-                $tabContent = $('.tab-content');
-            $tabContent.css('overflow', 'visible');
-            $tabContent.on('mouseenter', '.collapse', function () {
-                $(this).css('overflow','visible');
-            });
-            $tabContent.on('mouseleave', '.collapse', function () {
-                if (inSelectElement) { return; }
-                $(this).css('overflow','hidden');
-            });
-            $tabContent.on('focus', '.collapse', function() {
-                inSelectElement = true;
-            });
-            $tabContent.on('blur', '.collapse', function() {
-                inSelectElement = false;
-            });
-        });
-    </script>
-    <script>
-        $(function() {
-            gaTrackLink($('#edit_label'), 'App Builder', 'Open Form', 'Edit Label');
-            {% for module in app.get_modules %}
-                {% for form in module.get_forms %}
-                    gaTrackLink($('#view_form_{{ module.id }}_{{ form.id }}_sidebar'), 'App Builder', 'View Form', 'Sidebar');
-                    gaTrackLink($('#edit_pen_{{ module.id }}_{{ form.id }}'), 'App Builder', 'Open Form', 'Edit Pen');
-                {% endfor %}
-            {% endfor %}
-        });
-    </script>
+    <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -132,7 +40,7 @@
             </a>
         </li>
 
-        {% if show_live_preview %}
+        {% if show_live_preview and can_preview_form %}
         <li>
           <a class="js-preview-toggle">
               <i class="fa fa-mobile-phone preview-icon"></i>
@@ -202,12 +110,22 @@
                     <li class="edit-module-li {% ifequal module.id selected_module.id %}{% if not form %}
                         active{% endif %}{% endifequal %}"
                         data-index="{{ module.id }}">
-                        <a href="{% url "view_module" domain app.id module.id %}">
+                        <a href="{% url "view_module" domain app.id module.id %}"
+                            >
                             <i class="drag_handle"></i>
-                            {% if module.module_type == 'advanced' %}<i class="fa fa-flask appmanager-icon-type"></i>
-                            {% elif module.module_type == 'report' %}<i class="fa fa-bar-chart appmanager-icon-type"></i>
-                            {% elif module.module_type == 'shadow' %}<i class="fa fa-folder-open-o appmanager-icon-type"></i>
-                            {% else %}<i class="fa fa-folder-open"></i>{% endif %}
+                            <i
+                            {% if module.module_type == 'advanced' %}class="fa fa-flask appmanager-icon-type"
+                            {% elif module.module_type == 'report' %}class="fa fa-bar-chart appmanager-icon-type"
+                            {% elif module.module_type == 'shadow' %}class="fa fa-folder-open-o appmanager-icon-type"
+                            {% else %}class="fa fa-folder-open"{% endif %}
+
+                            {% if module.case_type and app.get_case_types|length > 1 %}
+                            title="Case Type: {{ module.case_type }}"
+                            data-toggle="tooltip"
+                            data-placement="top"
+                            {% endif %}
+                            ></i>
+
                             <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
                                 {{ module.name|html_trans:langs }}
 
@@ -350,5 +268,8 @@
 {% endblock %}
 
 {% block app-content %}
+    {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
+    {% initial_page_data 'app_subset' app_subset %}
+    {% initial_page_data 'formdesigner' formdesigner %}
     {% block form-view %}{% endblock %}
 {% endblock %}

@@ -32,6 +32,9 @@ class TimingPlugin(Plugin):
                           default=env.get('NOSE_PRETTY_TIMING'),
                           help='Print timing info in a format that is better '
                                'for reviewing in text mode (not CSV).')
+        parser.add_option('--threshold', type=int,
+                          default=env.get('NOSE_TIMING_THRESHOLD'),
+                          help='Only print timing info for events above this threshold (seconds).')
 
     def configure(self, options, conf):
         """Configure plugin.
@@ -40,6 +43,7 @@ class TimingPlugin(Plugin):
         self.conf = conf
         self.timing_file = options.timing_file
         self.pretty_output = options.pretty_output
+        self.threshold = options.threshold
 
     def begin(self):
         self.output = (open(self.timing_file, "w")
@@ -58,17 +62,22 @@ class TimingPlugin(Plugin):
     def end_event(self, event, context):
         now = time.time()
         name = uniform_description(context)
+        duration = now - self.event_start
+        if self.threshold and duration < self.threshold:
+            self.event_start = now
+            return
+
         if self.pretty_output:
             self.output.write("{time:>-6,.2f}  {event} {name}\n".format(
                 event=event,
                 name=name,
-                time=now - self.event_start,
+                time=duration,
             ))
         else:
             self.csv.writerow([
                 event,
                 name,
-                now - self.event_start,
+                duration,
                 self.event_start,
             ])
         self.event_start = now

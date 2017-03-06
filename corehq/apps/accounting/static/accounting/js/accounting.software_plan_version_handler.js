@@ -1,3 +1,14 @@
+$(function() {
+    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
+    var planVersionFormHandler = new SoftwarePlanVersionFormHandler(
+        initial_page_data('role'),
+        initial_page_data('feature_rates'),
+        initial_page_data('product_rates')
+    );
+    $('#roles').koApplyBindings(planVersionFormHandler);
+    planVersionFormHandler.init();
+});
+
 var SoftwarePlanVersionFormHandler = function (role, featureRates, productRates) {
     'use strict';
     var self = this;
@@ -12,7 +23,6 @@ var SoftwarePlanVersionFormHandler = function (role, featureRates, productRates)
         self.productRates.init();
     };
 };
-
 
 var RateAsyncManager = function (objClass, options) {
     'use strict';

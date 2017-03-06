@@ -35,6 +35,12 @@
                             Link to other form is selected, but we don't recognize the form you provided.
                             {% endblocktrans %}
                             {% include "app_manager/v1/partials/form_error_message.html" %}
+                        {% case "form link to missing root" %}
+                            {% blocktrans %}
+                            Please check that end of form navigation is correct. It appears to be pointing
+                            to a parent module form, but the module doesn't have a parent.
+                            {% endblocktrans %}
+                            {% include "app_manager/v1/partials/form_error_message.html" %}
                         {% case "no ref detail" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
@@ -57,6 +63,9 @@
                             Make sure your key has only letters, numbers, space characters, underscores, and dashes.
                         {% case "no modules" %}
                             This application has no modules.
+                        {% case "missing module" %}
+                            This application is missing a module. If you have deleted any modules recently, make sure that
+                            you have removed all references to them. If you continue to experience problems, please report an issue.
                         {% case "no forms" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>

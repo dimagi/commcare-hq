@@ -1,3 +1,4 @@
+from __future__ import print_function
 import uuid
 import re
 from collections import defaultdict
@@ -38,23 +39,23 @@ def unique_ids_map_log_message(app_id, domain, form_unique_id):
 
 class Command(BaseCommand):
     help = 'Fix forms with "undefined" xmlns'
-    args = '<prev_log_path> <log_path>'
 
-    option_list = (
-        make_option(
+    def add_arguments(self, parser):
+        parser.add_argument('prev_log_path')
+        parser.add_argument('log_path')
+        parser.add_argument(
             '--dry-run',
             action='store_true',
             dest='dry_run',
             default=False,
-            help="Don't do the actual modifications, but still log what would be affected"
-        ),
-    )
+            help="Don't do the actual modifications, but still log what would be affected",
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, prev_log_path, log_path, **options):
 
         dry_run = options.get("dry_run", True)
-        prev_log_path = args[0].strip()
-        log_path = args[1].strip()
+        prev_log_path = prev_log_path.strip()
+        log_path = log_path.strip()
 
         unique_id_to_xmlns_map = {}
         app_to_unique_ids_map = defaultdict(set)
@@ -101,7 +102,7 @@ class Command(BaseCommand):
                     unique_id = get_form_unique_id(xform_instance)
                 except (MultipleFormsMissingXmlns, FormNameMismatch) as e:
                     log_file.write(e.message)
-                    print e.message
+                    print(e.message)
                     continue
 
                 if unique_id:
@@ -143,14 +144,14 @@ class Command(BaseCommand):
                             dry_run
                         )
                     else:
-                        print 'Could not find unique_id {} in build {}'.format(form_unique_id, build._id)
+                        print('Could not find unique_id {} in build {}'.format(form_unique_id, build._id))
 
     @staticmethod
     def _print_progress(i, total_submissions):
         if i % 200 == 0 and i != 0:
-            print "Progress: {} of {} ({})  {}".format(
+            print("Progress: {} of {} ({})  {}".format(
                 i, total_submissions, round(i / float(total_submissions), 2), datetime.now()
-            )
+            ))
 
 
 def get_submissions_without_xmlns():

@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 import random
+import uuid
 from datetime import date, timedelta
 
 from django.test import TestCase
@@ -23,13 +25,7 @@ class TestExplicitCommunitySubscriptions(TestCase):
     def setUpClass(cls):
         super(TestExplicitCommunitySubscriptions, cls).setUpClass()
 
-        # TODO - remove once messy tests are cleaned up
-        for domain in Domain.get_all():
-            domain.delete()
-
-        assert len(list(Domain.get_all())) == 0
-
-        cls.domain = Domain(name='test')
+        cls.domain = Domain(name=str(uuid.uuid4()))
         cls.domain.save()
         cls.from_date = date.today()
 
@@ -42,11 +38,6 @@ class TestExplicitCommunitySubscriptions(TestCase):
     def tearDownClass(cls):
         cls.domain.delete()
         super(TestExplicitCommunitySubscriptions, cls).tearDownClass()
-
-    def tearDown(self):
-        generator.delete_all_subscriptions()
-        generator.delete_all_accounts()
-        super(TestExplicitCommunitySubscriptions, self).tearDown()
 
     def test_no_preexisting_subscription(self):
         self._assign_community_subscriptions()

@@ -75,7 +75,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "smslogs",
-        "index": "test_smslogs_708c77f8e5fe00286fa5791e9fa7d45f",
+        "index": "test_smslogs_2017-02-09",
         "type": "sms"
     },
     {

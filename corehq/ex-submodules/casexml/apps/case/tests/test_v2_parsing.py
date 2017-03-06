@@ -13,7 +13,7 @@ from datetime import datetime
 from casexml.apps.case.xml import V2, V2_NAMESPACE
 from casexml.apps.case import const
 from casexml.apps.phone import xml
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -31,7 +31,6 @@ class Version2CaseParsingTest(TestCase):
         delete_all_cases()
         super(Version2CaseParsingTest, cls).tearDownClass()
 
-    @run_with_all_backends
     def testParseCreate(self):
         self._test_parse_create()
 
@@ -50,14 +49,13 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("v2_case_type", case.type)
         self.assertEqual("test case name", case.name)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(1, len(case.actions))
             [action] = case.actions
             self.assertEqual("http://openrosa.org/case/test/create", action.xform_xmlns)
             self.assertEqual("v2 create", action.xform_name)
             self.assertEqual("bar-user-id", case.actions[0].user_id)
 
-    @run_with_all_backends
     def testParseUpdate(self):
         self._test_parse_create()
         
@@ -73,11 +71,10 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("updated case name", case.name)
         self.assertEqual("something dynamic", case.dynamic_case_properties()['dynamic'])
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(2, len(case.actions))
             self.assertEqual("bar-user-id", case.actions[1].user_id)
 
-    @run_with_all_backends
     def testParseNoop(self):
         self._test_parse_create()
 
@@ -90,13 +87,12 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual(datetime(2011, 12, 7, 13, 44, 50), case.modified_on)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(2, len(case.actions))
             self.assertEqual("bar-user-id", case.actions[1].user_id)
 
         self.assertEqual(2, len(case.xform_ids))
 
-    @run_with_all_backends
     def testParseClose(self):
         self._test_parse_create()
         
@@ -108,7 +104,6 @@ class Version2CaseParsingTest(TestCase):
         self.assertTrue(case.closed)
         self.assertEqual("bar-user-id", case.closed_by)
 
-    @run_with_all_backends
     def testParseNamedNamespace(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "named_namespace.xml")
         with open(file_path, "rb") as f:
@@ -121,10 +116,9 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("cc_bihar_pregnancy", case.type)
         self.assertEqual("TEST", case.name)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(2, len(case.actions))
 
-    @run_with_all_backends
     def testParseWithIndices(self):
         self._test_parse_create()
 
@@ -150,7 +144,7 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("bop", case.get_index("baz_ref").referenced_type)
         self.assertEqual("some_other_referenced_id", case.get_index("baz_ref").referenced_id)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             # check the action
             self.assertEqual(2, len(case.actions))
             [_, index_action] = case.actions
@@ -175,6 +169,11 @@ class Version2CaseParsingTest(TestCase):
                 </index>
             </case>"""
         check_xml_line_by_line(self, expected_v2_response, v2response)
+
+
+@use_sql_backend
+class Version2CaseParsingTestSQL(Version2CaseParsingTest):
+    pass
 
 
 class SimpleParsingTests(SimpleTestCase):

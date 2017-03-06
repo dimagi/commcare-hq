@@ -8,6 +8,8 @@ import json
 import logging
 from urllib import urlencode
 
+from django.core.exceptions import ValidationError
+from django.db import models
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
@@ -15,6 +17,7 @@ from django.conf import settings
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from jsonfield import JSONField
 
 from sqlalchemy.util import immutabledict
 
@@ -1099,3 +1102,54 @@ class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfigurat
     def clear_caches(self):
         super(HQGroupExportConfiguration, self).clear_caches()
         self.by_domain.clear(self.__class__, self.domain)
+
+
+def ordering_config_validator(value):
+
+    error = ValidationError(
+        _('The config format is invalid'),
+        params={'value': value}
+    )
+
+    if not isinstance(value, list):
+        raise error
+    for group in value:
+        if not isinstance(group, list) or len(group) != 2:
+            raise error
+        if not isinstance(group[0], basestring):
+            raise error
+        if not isinstance(group[1], list):
+            raise error
+        for report in group[1]:
+            if not isinstance(report, basestring):
+                raise error
+
+
+class ReportsSidebarOrdering(models.Model):
+    domain = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        unique=True
+    )
+    # Example config value:
+    # [
+    #     ["Adherence", [
+    #         "DynamicReport7613ac1402e2c41db782526e9c43e040",
+    #         "DynamicReport1233ac1402e2c41db782526e9c43e040"
+    #     ]],
+    #     ["Test Results", [
+    #         "DynamicReport4563ac1402e2c41db782526e9c43e040",
+    #         "DynamicReportmy-static-ucr-id"
+    #     ]]
+    # ]
+    config = JSONField(
+        validators=[ordering_config_validator],
+        default=list,
+        help_text=(
+            "An array of arrays. Each array represents a heading in the sidebar navigation. "
+            "The first item in each array is a string, which will be the title of the heading. The second item in "
+            "the array is another array, each item of which is the name of a report class. Each of these reports "
+            "will be listed under the given heading in the sidebar nav."
+        )
+    )

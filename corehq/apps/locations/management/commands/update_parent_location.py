@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.locations.models import SQLLocation
 
@@ -36,23 +37,23 @@ class Command(BaseCommand):
             raise CommandError("Usage: python manage.py update_parent_location "
                                "<location_id_to_update> <new_parent_location_id>")
 
-        print 'Validating locations...'
+        print('Validating locations...')
         loc_to_update, new_parent_loc = self.validate_locations(args[0], args[1])
-        print 'done'
+        print('done')
 
-        print 'Updating new parent...'
+        print('Updating new parent...')
         loc_to_update.parent = new_parent_loc
         loc_to_update.save()
-        print 'done'
+        print('done')
 
-        print 'Updating lineage for all couch locations...'
+        print('Updating lineage for all couch locations...')
         for descendant in loc_to_update.get_descendants(include_self=False):
             # We have to do this to sync the lineage to the couch Location
             descendant.save()
-        print 'done'
+        print('done')
 
-        print 'Double-checking location types...'
+        print('Double-checking location types...')
         for descendant in loc_to_update.get_descendants(include_self=True):
             if descendant.location_type.parent_type != descendant.parent.location_type:
-                print 'Mismatch found in location type hierarchy for location %s' % descendant.location_id
-        print 'done'
+                print('Mismatch found in location type hierarchy for location %s' % descendant.location_id)
+        print('done')

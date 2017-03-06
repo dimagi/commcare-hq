@@ -180,10 +180,12 @@ class ToggleEditView(ToggleBaseView):
         if item_list:
             item_list = json.loads(item_list)
             item_list = [u.strip() for u in item_list if u and u.strip()]
+            if request.POST.get('append', None):
+                item_list.extend(toggle.enabled_users)
 
         previously_enabled = set(toggle.enabled_users)
         currently_enabled = set(item_list)
-        toggle.enabled_users = item_list
+        toggle.enabled_users = list(currently_enabled)
         toggle.save()
 
         changed_entries = previously_enabled ^ currently_enabled  # ^ means XOR

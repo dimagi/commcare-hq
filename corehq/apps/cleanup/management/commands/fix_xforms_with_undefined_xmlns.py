@@ -1,3 +1,4 @@
+from __future__ import print_function
 import re
 from datetime import datetime
 from itertools import chain
@@ -37,30 +38,28 @@ class Command(BaseCommand):
      " It will only fix xforms that are submitted against builds that have"
      " already been repaired.")
 
-    args = '<log_path>'
-
-    option_list = (
-        make_option(
+    def add_arguments(self, parser):
+        parser.add_argument('log_path')
+        parser.add_argument(
             '--dry-run',
             action='store_true',
             dest='dry_run',
             default=False,
-            help="Don't do the actual modifications, but still log what would be affected"
-        ),
-        make_option(
+            help="Don't do the actual modifications, but still log what would be affected",
+        )
+        parser.add_argument(
             '--noinput',
             action='store_true',
             dest='noinput',
             default=False,
-            help="Run the command without interactive input"
+            help="Run the command without interactive input",
         )
-    )
 
-    def handle(self, *args, **options):
+    def handle(self, log_path, **options):
 
         dry_run = options.get("dry_run", True)
         noinput = options.get("noinput", False)
-        log_path = args[0].strip()
+        log_path = log_path.strip()
 
         if not noinput and not dry_run:
             confirm = raw_input(
@@ -70,7 +69,7 @@ class Command(BaseCommand):
                 """
             )
             if confirm != "y":
-                print "\n\t\tSwap duplicates cancelled."
+                print("\n\t\tSwap duplicates cancelled.")
                 return
 
         with open(log_path, "w") as log_file:
@@ -89,7 +88,7 @@ class Command(BaseCommand):
                 except MultiplePreviouslyFixedForms as e:
                     if xform_instance.build_id not in unfixable_builds:
                         unfixable_builds.add(xform_instance.build_id)
-                        print e.message
+                        print(e.message)
                     _log(log_file, WARNING, MULTI_MATCH, xform_instance)
                     continue
                 except CantMatchAForm as e:
@@ -114,9 +113,9 @@ class Command(BaseCommand):
     @staticmethod
     def _print_progress(i, total_submissions):
         if i % 200 == 0 and i != 0:
-            print "Progress: {} of {} ({})  {}".format(
+            print("Progress: {} of {} ({})  {}".format(
                 i, total_submissions, round(i / float(total_submissions), 2), datetime.now()
-            )
+            ))
 
 
 def _log(stream, level, event, xform=None, xform_id=None):

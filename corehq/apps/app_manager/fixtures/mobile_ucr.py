@@ -44,7 +44,7 @@ class ReportFixturesProvider(object):
         reports_elem = E.reports(last_sync=datetime.utcnow().isoformat())
         for report_config in report_configs:
             try:
-                reports_elem.append(self._report_config_to_fixture(report_config, restore_user))
+                reports_elem.append(self.report_config_to_fixture(report_config, restore_user))
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 continue
@@ -59,7 +59,7 @@ class ReportFixturesProvider(object):
         return [root]
 
     @staticmethod
-    def _report_config_to_fixture(report_config, restore_user):
+    def report_config_to_fixture(report_config, restore_user):
         report, data_source = ReportFixturesProvider._get_report_and_data_source(
             report_config.report_id, restore_user.domain
         )

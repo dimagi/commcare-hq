@@ -1,3 +1,4 @@
+from __future__ import print_function
 from copy import copy
 from optparse import make_option
 
@@ -28,7 +29,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for db_alias in settings.DATABASES.keys():
-            print '\n======================= Migrating DB: {} ======================='.format(db_alias)
+            print('\n======================= Migrating DB: {} ======================='.format(db_alias))
             call_options = copy(options)
             call_options['database'] = db_alias
             call_command(

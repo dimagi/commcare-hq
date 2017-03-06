@@ -123,6 +123,11 @@ hqDefine('app_manager/js/preview_app.js', function() {
         }
     };
 
+    module.forceShowPreview = function () {
+        _private.showAppPreview(false);
+        localStorage.setItem(module.DATA.OPEN, module.DATA.OPEN);
+    };
+
     module.initPreviewWindow = function (layoutController) {
 
         var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW),
@@ -144,6 +149,15 @@ hqDefine('app_manager/js/preview_app.js', function() {
         $togglePreviewBtn.click(_private.toggleAppPreview);
 
         var _resizeAppPreview = function () {
+
+            var $nav = $(layoutController.selector.navigation),
+                $alerts = $('.alert-maintenance');
+            var maxHeight = $appPreview.find('.preview-phone-container').outerHeight() + $nav.outerHeight() + 80;
+
+            if ($alerts.length > 0) {
+                maxHeight = maxHeight + $alerts.outerHeight();
+            }
+
             $appPreview.height($(window).outerHeight() + 'px');
 
             if (localStorage.getItem(module.DATA.OPEN)) {
@@ -156,9 +170,6 @@ hqDefine('app_manager/js/preview_app.js', function() {
                 $messages.removeClass('offset-for-preview');
             }
 
-            var $nav = $(layoutController.selector.navigation);
-
-            var maxHeight = $appPreview.find('.preview-phone-container').outerHeight() + $nav.outerHeight() + 80;
             if (($(window).height() <  maxHeight
                 && $appPreview.data(module.DATA.POSITION) === module.POSITION.FIXED)
             ) {

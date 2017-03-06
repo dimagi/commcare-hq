@@ -2,14 +2,13 @@
 import uuid
 
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.utils import get_simple_form_xml
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@use_sql_backend
 class SerializationTests(TestCase):
 
     @classmethod
