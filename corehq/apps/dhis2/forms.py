@@ -59,17 +59,10 @@ class Dhis2ConnectionForm(forms.Form):
 
 
 class DataValueMapForm(forms.Form):
-    report = forms.UUIDField()  # a UCR
-    data_element_column = forms.CharField(label=_('Column containing Data Element ID'), required=True)
-    # period_column # MVP: report (month) period as YYYYMM
-    org_unit_column = forms.CharField(label=_('Column containing Org Unit ID'), required=True)
-    category_option_combo_column = forms.CharField(label=_('Column containing Category Option Combo ID'),
-                                                   required=True)
-    value_column = forms.CharField(label=_('Column containing Value'), required=True)
-    complete_date_column = forms.CharField(label=_('Column containing Complete Date'))
-    attribute_option_combo_column = forms.CharField(label=_('Column containing Attribute Option Combo ID'),
-                                                    help_text=_('Defaults to Category Option Combo in DHIS2'))
-    comment_column = forms.CharField(label=_('Column containing Comment'))
+    column = forms.CharField(label=_('UCR Column'), required=True)
+    data_element_id = forms.CharField(label=_('DataElementID'), required=True)
+    category_option_combo_id = forms.CharField(label=_('CategoryOptionComboID'), required=True)
+    comment = forms.CharField(label=_('DHIS2 Comment'))
 
     def __init__(self, *args, **kwargs):
         super(DataValueMapForm, self).__init__(*args, **kwargs)
@@ -78,22 +71,53 @@ class DataValueMapForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
+            'column',
+            'data_element_id',
+            'category_option_combo_id',
+            'comment',
+        )
+
+
+class DataSetMapForm(forms.Form):
+    ucr_id = forms.CharField(label=_('UCR ID'), required=True)
+
+    data_set_id = forms.CharField(label=_('DataSetID'),
+                                  help_text=_('Valid if this UCR adds values to an existing DHIS2 DataSet'))
+
+    org_unit_id = forms.CharField(label=_('OrgUnitID'),
+                                  help_text=_('Valid if all values are for the same OrganisationUnit'))
+    org_unit_column = forms.CharField(label=_('Column containing OrgUnitID'))
+
+    period = forms.CharField(label=_('Period (YYYYMM)'),
+                             help_text=_('Valid if all values are for the same Period'))
+    period_column = forms.CharField(label=_('Column containing Period'))
+
+    attribute_option_combo_id = forms.CharField(label=_('AttributeOptionComboID'),
+                                                help_text=_('Defaults to Category Option Combo in DHIS2'))
+    complete_date = forms.CharField(label=_('CompleteDate'))
+
+    def __init__(self, *args, **kwargs):
+        super(DataSetMapForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _('Edit DHIS2 DataValue map'),
-                crispy.Field('report'),
-                crispy.Field('data_element_column'),
-
+                _('Edit DHIS2 DataSet map'),
+                crispy.Field('ucr_id'),
+                crispy.Field('data_set_id'),
+                crispy.Field('org_unit_id'),
                 crispy.Field('org_unit_column'),
-                crispy.Field('category_option_combo_column'),
-                crispy.Field('value_column'),
+                crispy.Field('period'),
+                crispy.Field('period_column'),
+                crispy.Field('attribute_option_combo_id'),
+                crispy.Field('complete_date'),
 
-                crispy.Field('complete_date_column'),
-                crispy.Field('attribute_option_combo_column'),
-                crispy.Field('comment_column'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
-                    _("Update DHIS2 DataValue map"),
+                    _("Update DHIS2 DataSet map"),
                     type="submit",
                     css_class='btn-primary',
                 )
@@ -103,15 +127,17 @@ class DataValueMapForm(forms.Form):
     def save(self, domain):
         try:
             dataset_maps = get_dataset_maps(domain.name)
+            # MVP: For now just one UCR mapped
             dataset_map = dataset_maps[0] if dataset_maps else DataSetMap(domain=domain.name)
-            dataset_map.report = self.cleaned_data['report']
-            dataset_map.data_element_column = self.cleaned_data['data_element_column']
+            dataset_map.ucr_id = self.cleaned_data['ucr_id']
+            dataset_map.data_set_id = self.cleaned_data['data_set_id']
+            dataset_map.org_unit_id = self.cleaned_data['org_unit_id']
             dataset_map.org_unit_column = self.cleaned_data['org_unit_column']
-            dataset_map.category_option_combo_column = self.cleaned_data['category_option_combo_column']
-            dataset_map.value_column = self.cleaned_data['value_column']
-            dataset_map.complete_date_column = self.cleaned_data['complete_date_column']
-            dataset_map.attribute_option_combo_column = self.cleaned_data['attribute_option_combo_column']
-            dataset_map.comment_column = self.cleaned_data['comment_column']
+            dataset_map.period = self.cleaned_data['period']
+            dataset_map.period_column = self.cleaned_data['period_column']
+            dataset_map.attribute_option_combo_id = self.cleaned_data['attribute_option_combo_id']
+            dataset_map.complete_date = self.cleaned_data['complete_date']
+
             dataset_map.save()
             return True
         except Exception as err:
