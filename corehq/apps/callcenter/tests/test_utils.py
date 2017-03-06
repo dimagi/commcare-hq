@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.callcenter.utils import (
     sync_call_center_user_case,
     is_midnight_for_domain,
@@ -170,6 +171,11 @@ class CallCenterUtilsTests(TestCase):
         sync_call_center_user_case(self.user)
         case = self._get_user_case()
         self.assertEqual(case.owner_id, cases[0].owner_id)
+
+    def test_opened_by_id_is_system(self):
+        sync_call_center_user_case(self.user)
+        case = self._get_user_case()
+        self.assertEqual(case.opened_by, CALLCENTER_USER)
 
     def _get_user_case(self, user_id=None):
         return CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(user_id or self.user._id, CASE_TYPE)
