@@ -62,7 +62,7 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
         return allowed_case_types_and_users and (
             not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
             not episode_case_properties.get('nikshay_id', False) and
-            not episode_case_properties.get('treatment_outcome_nikshay_registered', False) and
+            not episode_case_properties.get('treatment_outcome_nikshay_registered', False) == 'true' and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME])
         )
 
