@@ -182,7 +182,6 @@ hqDefine('data_dictionary/js/data_dictionary.js', function () {
             casePropertyUrl = hqImport('hqwebapp/js/urllib.js').reverse('update_case_property'),
             typeChoices = hqImport('hqwebapp/js/initial_page_data.js').get('typeChoices'),
             viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl, typeChoices);
-        debugger;
         viewModel.init();
         $('#hq-content').parent().koApplyBindings(viewModel);
         $('#download-dict').click(function() {
