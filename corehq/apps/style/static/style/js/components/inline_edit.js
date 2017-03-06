@@ -100,7 +100,28 @@ hqDefine('style/js/components/inline_edit.js', function() {
                     success: function (data) {
                         self.isSaving(false);
                         self.hasError(false);
-                        self.serverValue = self.readOnlyValue;
+                        self.serverValue = self.readOnlyValue
+                        if (data.update[".variable-app_name"]) {
+                           var sanitized_value = $("<div/>").html(DOMPurify.sanitize(self.value())).text()
+                           self.value(sanitized_value);
+                           self.serverValue = data.update[".variable-app_name"];
+                           self.readOnlyValue = data.update[".variable-app_name"];
+                        }
+
+                        if (data.update[".variable-module_name"]) {
+                           var sanitized_value = $("<div/>").html(DOMPurify.sanitize(self.value())).text()
+                           self.value(sanitized_value);
+                           self.serverValue = data.update[".variable-module_name"];
+                           self.readOnlyValue = data.update[".variable-module_name"];
+                        }
+
+                        if (data.update[".variable-form_name"]) {
+                           var sanitized_value = $("<div/>").html(DOMPurify.sanitize(self.value())).text()
+                           self.value(sanitized_value);
+                           self.serverValue = data.update[".variable-form_name"];
+                           self.readOnlyValue = data.update[".variable-form_name"];
+                        }
+
                         if (self.postSave) {
                             self.postSave(data);
                         }
