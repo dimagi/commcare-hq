@@ -166,8 +166,7 @@
 {% block modals %}
     {{ block.super }}
     {% with slug="vellum_beta" name="New Form Builder" %}
-    {% initial_page_data "toggle_item" toggle_item %}
-    {% initial_page_data "toggle_url" toggle_url %}
+    {% registerurl "enable_vellum_beta" %}
     {% if not request|toggle_enabled:'VELLUM_BETA' %}
         <!-- This will appear on page load, so don't use any animation (normally controlled by .fade) -->
         <div class="modal rollout-modal" data-slug="{{ slug }}">
