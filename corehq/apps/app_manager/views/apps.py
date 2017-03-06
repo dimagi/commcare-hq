@@ -435,7 +435,6 @@ def import_app(request, domain):
         return render(request, template, {
             'domain': domain,
             'app': app,
-            'is_appmanager_admin': True,
         })
 
 

@@ -83,11 +83,6 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
 
     <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
-    {% if not is_appmanager_admin %}
-    <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
-    <script src="{% static 'app_manager/js/apps_base.js' %}"></script>
-    {% endif %}
-
 {% endblock %}
 
 {% block page_breadcrumbs %}{% endblock %}
