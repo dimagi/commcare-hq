@@ -6,6 +6,7 @@ import tinys3
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
+from corehq.apps.users.models import WebUser
 from corehq.util.dates import unix_time
 from corehq.apps.analytics.utils import get_instance_string
 from datetime import datetime, date, timedelta
@@ -86,6 +87,20 @@ def _track_on_hubspot(webuser, properties):
                 ]}
             ),
         )
+
+
+def _track_on_hubspot_by_email(email, properties):
+    # Note: Hubspot recommends OAuth instead of api key
+    _hubspot_post(
+        url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+            urllib.quote(email)
+        ),
+        data=json.dumps(
+            {'properties': [
+                {'property': k, 'value': v} for k, v in properties.items()
+            ]}
+        ),
+    )
 
 
 def set_analytics_opt_out(webuser, analytics_enabled):
@@ -283,6 +298,14 @@ def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
         'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
     }
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta, extra_fields=ab)
+
+
+@analytics_task()
+def job_candidate_hubspot_update(user_email):
+    properties = {
+        'job_candidate': True
+    }
+    _track_on_hubspot_by_email(user_email, properties=properties)
 
 
 @analytics_task()
