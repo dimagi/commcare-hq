@@ -19,7 +19,7 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs
 from corehq import toggles, feature_previews
-from corehq.apps.app_manager.templatetags.xforms_extras import trans, html_trans, html_name
+from corehq.apps.app_manager.templatetags.xforms_extras import trans, html_name
 from corehq.apps.app_manager.const import (
     CAREPLAN_GOAL,
     CAREPLAN_TASK,

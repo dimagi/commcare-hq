@@ -33,7 +33,7 @@ from corehq.apps.app_manager.exceptions import (
     BlankXFormError,
     ConflictingCaseTypeError,
     FormNotFoundException, XFormValidationFailed)
-from corehq.apps.app_manager.templatetags.xforms_extras import trans, html_trans, html_name
+from corehq.apps.app_manager.templatetags.xforms_extras import trans, html_name
 from corehq.apps.programs.models import Program
 from corehq.apps.app_manager.util import (
     get_all_case_properties,

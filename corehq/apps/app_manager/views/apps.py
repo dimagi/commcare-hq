@@ -21,7 +21,7 @@ from django.contrib import messages
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
     IncompatibleFormTypeException, RearrangeError
-from corehq.apps.app_manager.templatetags.xforms_extras import html_name, html_trans
+from corehq.apps.app_manager.templatetags.xforms_extras import html_name
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, CASE_TYPE_CONFLICT_MSG
 from corehq import toggles, privileges
