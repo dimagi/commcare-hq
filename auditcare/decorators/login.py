@@ -253,11 +253,5 @@ def log_request(request, login_unsuccessful):
             attempt.failures_since_start=failures
             attempt.save()
             log.info('AXES: New login failure by %s. Creating access record.', ip)
-    else:
-        #it's a successful login.
-
-        #if we're django 1.3, this will have already been logged.
-        if django.get_version() < '1.3':
-            AccessAudit.audit_login(request, request.user)
 
     return True
