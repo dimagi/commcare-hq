@@ -7,7 +7,7 @@
     name: 'comment',
     id:'comment-id',
     readOnlyClass: 'app-comment',
-    value: '{{ module.comment|escapejs }}',
+    value: '{{ module.comment|html_name|escapejs }}',
     placeholder: '{% trans "Enter module description here"|escapejs %}',
     url: '{% url "edit_module_attr" domain app.id module.id 'comment' %}',
     saveValueName: 'comment',

@@ -119,7 +119,7 @@ def _input_trans(template, name, langs=None, allow_blank=True):
     for lang in langs:
         if lang in name:
             if langs and lang == langs[0]:
-                options['value'] = name[lang]
+                options['value'] = html_name(name[lang])
                 options['placeholder'] = '' if allow_blank else placeholder
             else:
                 options['placeholder'] = name[lang] if (allow_blank or name[lang] != '') else placeholder
