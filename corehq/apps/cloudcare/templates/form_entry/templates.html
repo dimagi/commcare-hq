@@ -386,12 +386,13 @@
 </script>
 
 <script type="text/html" id="str-entry-ko-template">
-    <input type="text" class="form-control" data-bind="
+    <input autocomplete="off" type="text" class="form-control" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
         attr: {
             maxlength: lengthLimit,
             id: entryId,
+            placeholder: placeholderText
         }
     "/>
     <span class="help-block type" data-bind="

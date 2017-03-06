@@ -474,7 +474,7 @@ def _legend(title, subtext):
     Return a string to be used in a crispy form Fieldset legend.
     This function is just a light wrapped around some simple templating.
     """
-    return '{title}</br><div class="subtext"><small>{subtext}</small></div>'.format(
+    return u'{title}</br><div class="subtext"><small>{subtext}</small></div>'.format(
         title=title, subtext=subtext
     )
 
@@ -1066,7 +1066,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         required=False,
         widget=forms.HiddenInput,
     )
-    column_legend_fine_print = ugettext_noop("Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
+    column_legend_fine_print = ugettext_noop(u"Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
 
     @property
     def container_fieldset(self):
@@ -1336,7 +1336,7 @@ class ConfigureTableReportForm(ConfigureListReportForm):
 class ConfigureWorkerReportForm(ConfigureTableReportForm):
     # This is a ConfigureTableReportForm, but with a predetermined aggregation
     report_type = 'worker'
-    column_legend_fine_print = ugettext_noop('Add columns for this report to aggregate. Each property you add will create a column for every value of that property. For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
+    column_legend_fine_print = ugettext_noop(u'Add columns for this report to aggregate. Each property you add will create a column for every value of that property. For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
 
     def __init__(self, *args, **kwargs):
         super(ConfigureWorkerReportForm, self).__init__(*args, **kwargs)

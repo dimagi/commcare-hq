@@ -538,7 +538,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 'metadata',
                 [
                     [_('Report Name'), self.title],
-                    [_('Generated On'), datetime.now(pytz.UTC).astimezone(time_zone).strftime('%Y-%m-%d %H:%M')],
+                    [_('Generated On'), datetime.now(time_zone).strftime('%Y-%m-%d %H:%M')],
                 ] + list(self._get_filter_values())
             ])
         return export_table

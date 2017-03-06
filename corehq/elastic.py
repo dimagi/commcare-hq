@@ -38,12 +38,7 @@ def get_es_new():
             }
             for host in es_hosts
         ]
-        get_es_new._es_client = Elasticsearch(
-            hosts,
-            sniff_on_start=True,
-            sniff_on_connection_fail=True,
-            sniffer_timeout=60
-        )
+        get_es_new._es_client = Elasticsearch(hosts)
     return get_es_new._es_client
 
 

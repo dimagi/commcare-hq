@@ -5,12 +5,9 @@
 
 {% block js %}
     {{ block.super }}
-    {% compress js %}
+    {% if rendered_as == 'print' %}
         <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-        <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-        <script src="{% static 'style/js/hq.helpers.js' %}"></script>
-    {% endcompress %}
-
+    {% endif %}
     <style>
         @page {
             size: A4 landscape;

@@ -13,8 +13,9 @@ from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.elastic import es_query
 from corehq.util.dates import iso_string_to_datetime
+from custom.common.filters import RestrictedAsyncLocationFilter
 from custom.m4change.constants import REJECTION_REASON_DISPLAY_NAMES, MCCT_SERVICE_TYPES
-from custom.m4change.filters import ServiceTypeFilter, M4ChangeAsyncLocationFilter
+from custom.m4change.filters import ServiceTypeFilter
 from custom.m4change.models import McctStatus
 from custom.m4change.reports import get_location_hierarchy_by_id
 from custom.m4change.utils import get_case_by_id, get_property, get_form_ids_by_status
@@ -107,7 +108,7 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
         include_inactive = True
 
         fields = [
-            M4ChangeAsyncLocationFilter,
+            RestrictedAsyncLocationFilter,
             'custom.m4change.fields.DateRangeField',
             'custom.m4change.fields.CaseSearchField',
             ServiceTypeFilter
