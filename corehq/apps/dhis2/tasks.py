@@ -2,21 +2,6 @@ from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
 from corehq.apps.dhis2.models import JsonApiRequest
 
 
-def iter_ucr_data(report_id):
-    """
-    Generates rows as dictionaries, given a UCR ID. The dictionary expects to have the following format:
-
-    {
-        "org_unit_id": "ABC",
-        "data_element_cat_option_combo_1": 123,
-        "data_element_cat_option_combo_2": 456,
-        "data_element_cat_option_combo_3": 789,
-    }
-
-    """
-    yield
-
-
 def send_datavalues(domain_name):
     """
     Sends a data set of data values in the following format:
@@ -47,5 +32,4 @@ def send_datavalues(domain_name):
         dhis2_conn.password,
     )
     for dataset_map in dataset_maps:
-        # TODO: Refactor into class Dhis2Request(JsonApiRequest).postDataSet(report_data, dataset_map)
-        api.post('dataValueSets', dataset_map.get_dataset)
+        api.post('dataValueSets', dataset_map.get_dataset())
