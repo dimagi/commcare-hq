@@ -1,5 +1,4 @@
 from __future__ import print_function
-from optparse import make_option
 
 import re
 from django.conf import settings

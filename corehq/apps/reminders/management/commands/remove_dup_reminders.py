@@ -4,7 +4,6 @@ from corehq.apps.reminders.models import (CaseReminder, CaseReminderHandler,
     CASE_CRITERIA)
 from corehq.apps.reminders.signals import case_changed_receiver
 from casexml.apps.case.models import CommCareCase
-from optparse import make_option
 
 
 class Command(BaseCommand):

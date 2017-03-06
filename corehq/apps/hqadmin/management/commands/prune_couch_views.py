@@ -1,6 +1,5 @@
 from __future__ import print_function
 from collections import defaultdict
-from optparse import make_option
 from couchdbkit import Database
 
 from django.core.management.base import BaseCommand

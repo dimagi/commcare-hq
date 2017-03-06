@@ -1,6 +1,6 @@
 from __future__ import print_function
 import json
-from optparse import make_option
+
 from corehq.util.couch import IterDB
 from corehq.util.log import with_progress_bar
 from couchforms.const import DEVICE_LOG_XMLNS

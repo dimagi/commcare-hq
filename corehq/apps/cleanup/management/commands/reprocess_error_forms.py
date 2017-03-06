@@ -11,7 +11,6 @@ from couchforms.models import XFormInstance
 from dimagi.utils.parsing import string_to_datetime
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from optparse import make_option
 
 from corehq.apps.cleanup.xforms import iter_problem_forms
 from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch

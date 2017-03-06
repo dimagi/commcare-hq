@@ -1,6 +1,5 @@
 from collections import namedtuple
 import logging
-from optparse import make_option
 from django.core.management import BaseCommand
 from corehq.apps.app_manager.models import Application
 from corehq.util.couch import iter_update, DocUpdate

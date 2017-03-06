@@ -1,9 +1,7 @@
 from __future__ import print_function
 import json
-from optparse import make_option
 import os
 from django.core.management import BaseCommand
-import sys
 from casexml.apps.phone.checksum import Checksum
 
 

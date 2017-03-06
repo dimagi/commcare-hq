@@ -1,6 +1,6 @@
 from __future__ import print_function
 import traceback
-from optparse import make_option
+
 from django.core.management.base import BaseCommand
 
 from corehq.apps.export.utils import migrate_domain

@@ -1,5 +1,4 @@
 from getpass import getpass
-from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from django.core.urlresolvers import reverse
 import requests

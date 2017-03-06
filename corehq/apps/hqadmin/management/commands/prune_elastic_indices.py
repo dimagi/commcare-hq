@@ -1,5 +1,5 @@
 from __future__ import print_function
-from optparse import make_option
+
 import elasticsearch
 from django.core.management import BaseCommand
 from corehq.elastic import get_es_new

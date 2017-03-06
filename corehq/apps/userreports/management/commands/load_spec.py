@@ -1,8 +1,7 @@
 from __future__ import print_function
 import json
-from optparse import make_option
 from couchdbkit import ResourceNotFound
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from dimagi.utils.decorators.log_exception import log_exception

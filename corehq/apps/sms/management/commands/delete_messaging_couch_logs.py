@@ -5,7 +5,6 @@ from corehq.apps.sms.models import (SMSLog, SMS, CallLog, LastReadMessage,
 from custom.fri.models import FRISMSLog
 from dimagi.utils.couch.database import iter_docs_with_retry, iter_bulk_delete_with_doc_type_verification
 from django.core.management.base import BaseCommand
-from optparse import make_option
 
 
 # Number of seconds to wait between each bulk delete operation

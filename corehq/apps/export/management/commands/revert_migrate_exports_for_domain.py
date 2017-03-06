@@ -1,5 +1,5 @@
 from __future__ import print_function
-from optparse import make_option
+
 from django.core.management.base import BaseCommand
 
 from corehq.apps.export.utils import revert_migrate_domain

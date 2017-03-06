@@ -2,8 +2,6 @@ from __future__ import print_function
 import datetime
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import CommandError, BaseCommand
-from optparse import make_option
-from pillowtop import get_pillow_by_name
 from pillowtop.feed.interface import Change
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import REINDEX_FNS
 from corehq.util.doc_processor.couch import CouchDocumentProvider

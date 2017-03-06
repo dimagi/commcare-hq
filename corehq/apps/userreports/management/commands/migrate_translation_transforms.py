@@ -1,5 +1,5 @@
 from __future__ import print_function
-from optparse import make_option
+
 from django.core.management.base import BaseCommand
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class

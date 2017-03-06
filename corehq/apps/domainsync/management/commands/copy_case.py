@@ -1,5 +1,5 @@
 from __future__ import print_function
-from optparse import make_option
+
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from casexml.apps.case.models import CommCareCase

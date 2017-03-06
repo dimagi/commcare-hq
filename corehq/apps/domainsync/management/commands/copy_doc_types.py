@@ -1,8 +1,7 @@
 import logging
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from couchdbkit.client import Database
-from optparse import make_option
 
 logger = logging.getLogger(__name__)
 

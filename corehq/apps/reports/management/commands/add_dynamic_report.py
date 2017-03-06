@@ -1,5 +1,4 @@
 from django.core.management import BaseCommand
-from optparse import make_option
 import json
 import sys
 from corehq.apps.domain.models import Domain, DynamicReportSet, DynamicReportConfig

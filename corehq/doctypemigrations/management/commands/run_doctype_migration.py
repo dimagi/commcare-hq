@@ -1,4 +1,3 @@
-from optparse import make_option
 import re
 from django.core.management import BaseCommand, CommandError
 from corehq.doctypemigrations.migrator_instances import get_migrator_by_slug, \

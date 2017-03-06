@@ -1,4 +1,3 @@
-from optparse import make_option
 from django.core.management import BaseCommand
 
 

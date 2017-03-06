@@ -1,6 +1,6 @@
 from __future__ import print_function
 import logging
-from optparse import make_option
+
 from couchdbkit import Database, BulkSaveError
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.models import CommCareCase
