@@ -129,8 +129,35 @@
             csrftoken: $.cookie('csrftoken')
         };
 
-        {% include 'app_manager/v1/partials/form_designer_requirejs_config.html' with vellum_debug=vellum_debug %}
-
+        var CKEDITOR_BASEPATH = "{% static vellum_ckeditor_path %}";
+        
+        define("jquery", [], function () { return window.jQuery; });
+        define("jquery.bootstrap", ["jquery"], function () {});
+        define("underscore", [], function () { return window._; });
+        define("moment", [], function () { return window.moment; });
+        
+        require.config({
+            {% comment %} 
+            to use non-built files in HQ:
+                * clone Vellum into submodules/formdesigner
+                * Run make in that directory (requires node.js)
+                * set settings.VELLUM_DEBUG to "dev" or "dev-min"
+            {% endcomment %}
+            {% if not vellum_debug %}
+            baseUrl: "{% static vellum_js_path %}",
+            {% elif vellum_debug == "dev-min" %}
+            baseUrl: "{% static 'formdesigner/_build/src' %}",
+            {% else %}
+            baseUrl: "{% static 'formdesigner/src' %}",
+            {% endif %}
+            // handle very bad connections
+            waitSeconds: 60,
+            urlArgs: 'version={% cachebuster vellum_main_components_path %}{% cachebuster vellum_local_deps_path %}',
+            paths: {
+                'jquery.vellum': 'main'
+            }
+        });
+        
         require(["jquery", "jquery.vellum", "moment"], function ($) {
             $(function () {
                 $("#edit").hide();
