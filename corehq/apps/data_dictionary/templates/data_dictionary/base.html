@@ -31,6 +31,7 @@
 {% block page_content %}
     {% registerurl 'data_dictionary_json' domain %}
     {% registerurl 'update_case_property' domain %}
+    {% initial_page_data 'typeChoices' question_types %}
     <div data-bind="saveButton: saveButton"></div>
     <div class="row">
         <div class="col-md-10">
@@ -72,7 +73,7 @@
                         <td>
                             <select class ="form-control"
                                     data-bind="
-                                options: availableDataTypes,
+                                options: $root.availableDataTypes,
                                 optionsCaption: 'Select a data type',
                                 optionsText: 'display',
                                 optionsValue: 'value',

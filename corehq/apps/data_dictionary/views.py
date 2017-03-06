@@ -18,7 +18,7 @@ from corehq.apps.case_importer.tracking.filestorage import make_temp_file
 from corehq.apps.data_dictionary.util import save_case_property
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.data_dictionary import util
-from corehq.apps.data_dictionary.models import CaseType, CaseProperty
+from corehq.apps.data_dictionary.models import CaseType, CaseProperty, PROPERTY_TYPE_CHOICES
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.style.decorators import use_jquery_ui
@@ -159,6 +159,7 @@ class DataDictionaryView(BaseProjectDataView):
                 couch_user=self.request.couch_user,
                 project=self.request.project
             ),
+            'question_types': [{'value': k, 'display': v} for k, v in PROPERTY_TYPE_CHOICES if k],
         })
         return main_context
 

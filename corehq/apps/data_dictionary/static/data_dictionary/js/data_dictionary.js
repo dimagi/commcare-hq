@@ -31,17 +31,6 @@ hqDefine('data_dictionary/js/data_dictionary.js', function () {
         self.dataType = ko.observable(dataType);
         self.description = ko.observable(description);
         self.deprecated = ko.observable(deprecated || false);
-        self.availableDataTypes = ko.observableArray([
-            {value: 'date', display: django.gettext('Date')},
-            {value: 'plain', display: django.gettext('Plain')},
-            {value: 'number', display: django.gettext('Number')},
-            {value: 'select', display: django.gettext('Select')},
-            {value: 'integer', display: django.gettext('Integer')},
-            {value: 'barcode', display: django.gettext('Barcode')},
-            {value: 'gps', display: django.gettext('GPS')},
-            {value: 'phone_number', display: django.gettext('Phone Number')},
-            {value: 'password', display: django.gettext('Password')},
-        ]);
 
         self.toggle = function () {
             self.expanded(!self.expanded());
@@ -56,7 +45,7 @@ hqDefine('data_dictionary/js/data_dictionary.js', function () {
         };
     };
 
-    var DataDictionaryModel = function (dataUrl, casePropertyUrl) {
+    var DataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices) {
         var self = this;
         self.caseTypes = ko.observableArray();
         self.activeCaseType = ko.observable();
@@ -64,6 +53,7 @@ hqDefine('data_dictionary/js/data_dictionary.js', function () {
         self.newGroupName = ko.observable();
         self.casePropertyList = ko.observableArray();
         self.showAll = ko.observable(false);
+        self.availableDataTypes = typeChoices;
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function() {
@@ -190,7 +180,9 @@ hqDefine('data_dictionary/js/data_dictionary.js', function () {
     $(function() {
         var dataUrl = hqImport('hqwebapp/js/urllib.js').reverse('data_dictionary_json'),
             casePropertyUrl = hqImport('hqwebapp/js/urllib.js').reverse('update_case_property'),
-            viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl);
+            typeChoices = hqImport('hqwebapp/js/initial_page_data.js').get('typeChoices'),
+            viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl, typeChoices);
+        debugger;
         viewModel.init();
         $('#hq-content').parent().koApplyBindings(viewModel);
         $('#download-dict').click(function() {
