@@ -24,7 +24,6 @@ class GreenHouseCandidate(View):
         super(GreenHouseCandidate, self).dispatch(request=request, args=args, kwargs=kwargs)
 
     def post(self, request, *args, **kwargs):
-        meta = get_meta(request)
         body_unicode = request.body.decode('utf-8')
         data = json.loads(body_unicode)
         try:
