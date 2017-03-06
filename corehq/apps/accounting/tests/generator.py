@@ -71,19 +71,6 @@ def create_arbitrary_web_user_name(is_dimagi=False):
     return "%s@%s.com" % (unique_name(), 'dimagi' if is_dimagi else 'gmail')
 
 
-@unit_testing_only
-def arbitrary_web_user(is_dimagi=False):
-    domain = arbitrary_domain()
-    username = create_arbitrary_web_user_name(is_dimagi=is_dimagi)
-    try:
-        web_user = WebUser.create(domain.name, username, 'test123')
-    except Exception:
-        web_user = WebUser.get_by_username(username)
-    web_user.is_active = True
-    web_user.save()
-    return web_user
-
-
 def billing_account(web_user_creator, web_user_contact):
     account_name = data_gen.arbitrary_unique_name(prefix="BA")[:40]
     currency = Currency.objects.get(code=settings.DEFAULT_CURRENCY)
