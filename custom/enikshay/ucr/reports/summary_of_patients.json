@@ -11,10 +11,10 @@
         "np-migration-3"
     ],
     "data_source_table": "episode",
-    "report_id": "new_patient_summary_phi",
+    "report_id": "summary_of_patients",
     "config": {
         "description": "",
-        "title": "New Patient Summary (PHI)",
+        "title": "Summary of Patients",
         "sort_expression": [],
         "visible": true,
         "configured_charts": [],
@@ -44,6 +44,18 @@
         ],
         "columns": [
             {
+                "display": "Total number of patients undergoing treatment",
+                "type": "field",
+                "field": "patient_on_ip_or_cp",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Number of patients on IP",
                 "type": "field",
                 "field": "patient_on_ip",
@@ -59,18 +71,6 @@
                 "display": "Number of patients on CP",
                 "type": "field",
                 "field": "patient_on_cp",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Total number of patients undergoing treatment",
-                "type": "field",
-                "field": "patient_on_ip_or_cp",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
