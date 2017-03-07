@@ -27,25 +27,25 @@ class TestRepeatRecordDBAccessors(TestCase):
             domain=cls.domain,
             failure_reason='Some python error',
             repeater_id=cls.repeater_id,
-            next_event=before,
+            next_check=before,
         )
         success = RepeatRecord(
             domain=cls.domain,
             succeeded=True,
             repeater_id=cls.repeater_id,
-            next_event=before,
+            next_check=before,
         )
         pending = RepeatRecord(
             domain=cls.domain,
             succeeded=False,
             repeater_id=cls.repeater_id,
-            next_event=before,
+            next_check=before,
         )
         other_id = RepeatRecord(
             domain=cls.domain,
             succeeded=False,
             repeater_id=cls.other_id,
-            next_event=before,
+            next_check=before,
         )
 
         cls.records = [
