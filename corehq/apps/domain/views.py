@@ -46,7 +46,13 @@ from corehq.apps.case_search.models import (
     disable_case_search,
 )
 from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
-from corehq.apps.dhis2.forms import Dhis2ConnectionForm, DataSetMapForm
+from corehq.apps.dhis2.forms import (
+    Dhis2ConnectionForm,
+    DataSetMapForm,
+    DataValueMapFormSet,
+    DataValueMapFormSetHelper,
+)
+from corehq.apps.dhis2.models import DataValueMap
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
@@ -3091,6 +3097,15 @@ class Dhis2ConnectionView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/dhis2/connection_settings.html'
 
     @method_decorator(domain_admin_required)
+    def post(self, request, *args, **kwargs):
+        form = self.dhis2_connection_form
+        if form.is_valid():
+            form.save(self.domain)
+            return HttpResponseRedirect(self.page_url)
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
             raise Http404()
@@ -3116,26 +3131,56 @@ class DataSetMapView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/dhis2/dataset_map.html'
 
     @method_decorator(domain_admin_required)
+    def post(self, request, *args, **kwargs):
+        datavalue_maps = []
+        formset = self.datavalue_map_formset
+        if formset.is_valid():
+            for form in formset:
+                form.append_to(datavalue_maps)
+
+        form = self.dataset_map_form
+        if form.is_valid():
+            form.save(self.domain, datavalue_maps)
+            return HttpResponseRedirect(self.page_url)
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
             raise Http404()
         return super(DataSetMapView, self).dispatch(request, *args, **kwargs)
 
-    @property
     @memoized
-    def dataset_map_form(self):
+    def get_initial(self):
         try:
             dataset_map = get_dataset_maps(self.request.domain)[0]
         except IndexError:
             dataset_map = None
         initial = dict(dataset_map) if dataset_map else {}
+        return initial
+
+    @property
+    def dataset_map_form(self):
+        initial = self.get_initial()
         if self.request.method == 'POST':
             return DataSetMapForm(self.request.POST, initial=initial)
         return DataSetMapForm(initial=initial)
 
     @property
+    def datavalue_map_formset(self):
+        initial = self.get_initial()
+        if self.request.method == 'POST':
+            return DataValueMapFormSet(self.request.POST, initial=initial)
+        return DataValueMapFormSet(initial=initial)
+
+    @property
     def page_context(self):
-        return {'dataset_map_form': self.dataset_map_form}
+        return {
+            'dataset_map_form': self.dataset_map_form,
+            'datavalue_map_formset': self.datavalue_map_formset,
+            'datavalue_map_formset_helper': DataValueMapFormSetHelper(),
+        }
 
 
 from corehq.apps.smsbillables.forms import PublicSMSRateCalculatorForm

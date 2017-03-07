@@ -5,5 +5,16 @@
 {% load i18n %}
 
 {% block page_content %}
+<form class="form-horizontal" method="post">
+
     {% crispy dataset_map_form %}
+
+    {% crispy datavalue_map_formset datavalue_map_formset_helper %}
+
+    <div class="form-actions">
+        <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
+            <button type="submit" class="btn btn-primary">{% trans "Update DHIS2 DataSet map" %}</button>
+        </div>
+    </div>
+</form>
 {% endblock %}
