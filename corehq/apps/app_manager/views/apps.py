@@ -131,7 +131,7 @@ def default_new_app(request, domain):
     if toggles.APP_MANAGER_V2.enabled(domain):
         app.profile = {
             'properties': {
-                'advanced_app_builder': 'true',
+                'advanced_app_builder': 'false',
             },
         }
     else:
