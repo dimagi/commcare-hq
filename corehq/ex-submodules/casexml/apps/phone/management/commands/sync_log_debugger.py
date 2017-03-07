@@ -1,9 +1,7 @@
 from __future__ import print_function
 import json
-from optparse import make_option
 import os
 from django.core.management import BaseCommand
-import sys
 from casexml.apps.phone.checksum import Checksum
 
 
@@ -28,48 +26,54 @@ class Command(BaseCommand):
        (it's a N choose X problem so gets very slow after --depth > 1 if you
         have a significant number of cases in the log)
     """
-    option_list = (
-        make_option('--debugger',
-                    action='store_true',
-                    dest='debugger',
-                    default=False,
-                    help="Drop into a debugger at the end of running the command for manual queries"),
-        make_option('--check',
-                    action='store',
-                    dest='check_hash',
-                    default=None,
-                    help=("Run a hash check. Removes cases one by one from the passed-in synclog until "
-                          "they hash matches CHECK_HASH")),
-        make_option('--index',
-                    action='store',
-                    dest='index',
-                    default=0,
-                    help=("if you have more than one file passed in, <index> is the one "
-                          "that --check will be run on")),
-        make_option('--depth',
-                    action='store',
-                    dest='depth',
-                    default=1,
-                    help=("specify the number of cases to try removing until you find a match in --check"
-                          "(it's a N choose X problem so gets very slow after --depth > 1 if you"
-                          "have a significant number of cases in the log)\n")),
-    )
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'sync_log',
+            dest='sync_logs',
+            help="A json file of the synclog you are trying to compare. Passing "
+                 "in a folder will compare all of the files in that folder.",
+            nargs='+',
+        )
+        parser.add_argument(
+            '--debugger',
+            action='store_true',
+            dest='debugger',
+            default=False,
+            help="Drop into a debugger at the end of running the command for manual queries",
+        )
+        parser.add_argument(
+            '--check',
+            dest='check_hash',
+            default=None,
+            help=("Run a hash check. Removes cases one by one from the passed-in synclog until "
+                  "they hash matches CHECK_HASH"),
+        )
+        parser.add_argument(
+            '--index',
+            dest='index',
+            default=0,
+            help=("if you have more than one file passed in, <index> is the one "
+                  "that --check will be run on"),
+            type=int,
+        )
+        parser.add_argument(
+            '--depth',
+            action='store',
+            dest='depth',
+            default=1,
+            help=("specify the number of cases to try removing until you find a match in --check"
+                  "(it's a N choose X problem so gets very slow after --depth > 1 if you"
+                  "have a significant number of cases in the log)\n"),
+            type=int,
+        )
+
+    def handle(self, sync_logs, **options):
         from casexml.apps.phone.models import properly_wrap_sync_log, SyncLog, SimplifiedSyncLog
-
-        if len(args) < 1:
-            print(
-                "Usage:\n"
-                "./manage.py sync_log_debugger <synclog1> [synclog2 synclog3]...\n"
-                "    <synclog> is a json file of the synclog you are trying to compare. Passing\n"
-                "    in a folder will compare all of the files in that folder.\n"
-            )
-            sys.exit(0)
 
         logs = []
         log_names = []
-        for filename in args:
+        for filename in sync_logs:
             if os.path.isdir(filename):
                 filenames = [os.path.join(filename, item) for item in sorted(os.listdir(filename))]
             else:

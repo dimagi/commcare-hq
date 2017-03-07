@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 from datetime import datetime
-from optparse import make_option
+
 from django.core.management import BaseCommand, CommandError
 from corehq.blobs.migrate import MIGRATIONS
 from corehq.util.decorators import change_log_level
