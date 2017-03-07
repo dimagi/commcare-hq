@@ -53,3 +53,17 @@ def get_active_schedule_instance_ids(start_timestamp, end_timestamp):
         values=['schedule_instance_id']
     ):
         yield schedule_instance_id
+
+
+def get_schedule_instances_for_schedule(schedule):
+    from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule, ScheduleForeignKeyMixin
+    from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
+
+    if isinstance(schedule, AlertSchedule):
+        schedule_filter = Q(alert_schedule_id=schedule.pk)
+    elif isinstance(schedule, TimedSchedule):
+        schedule_filter = Q(timed_schedule_id=schedule.pk)
+    else:
+        raise ScheduleForeignKeyMixin.UnknownScheduleType()
+
+    return run_query_across_partitioned_databases(ScheduleInstance, schedule_filter)

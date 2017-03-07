@@ -174,3 +174,9 @@ class Content(models.Model):
         representing the contact who should receive the content.
         """
         raise NotImplementedError()
+
+
+class Broadcast(ScheduleORMForeignKeyMixin):
+    domain = models.CharField(max_length=126, db_index=True)
+    start_date = models.DateField(null=True)
+    last_sent_timestamp = models.DateTimeField(null=True)

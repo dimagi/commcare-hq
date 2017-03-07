@@ -6,7 +6,7 @@ from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.messaging.scheduling.models import SchedulePartitionedForeignKeyMixin
+from corehq.messaging.scheduling.models import SchedulePartitionedForeignKeyMixin, TimedSchedule
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import save_schedule_instance
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from datetime import tzinfo
@@ -133,6 +133,15 @@ class ScheduleInstance(SchedulePartitionedForeignKeyMixin):
                         yield user
         else:
             raise self.UnknownRecipient(self.recipient_type)
+
+    def recalculate_schedule(self, schedule):
+        if isinstance(schedule, TimedSchedule):
+            self.current_event_num = 0
+            self.schedule_iteration_num = 1
+            self.active = True
+            schedule.set_first_event_due_timestamp(self, self.start_date)
+            schedule.move_to_next_event_not_in_the_past(self)
+            save_schedule_instance(self)
 
     def handle_current_event(self):
         content = self.memoized_schedule.get_current_event_content(self)
