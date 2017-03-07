@@ -1,29 +1,33 @@
 from __future__ import print_function
 from django.core.management import call_command
-from django.core.management.base import CommandError, BaseCommand
-from optparse import make_option
-import os
+from django.core.management.base import BaseCommand
 import settings
 
 
 class Command(BaseCommand):
-    option_list = (
-    #       make_option('--file', action='store', dest='file', default=None, help='File to upload REQUIRED', type='string'),
-    #       make_option('--url', action='store', dest='url', default=None, help='URL to upload to*', type='string'),
-    make_option('--xmlreporting', action='store_true', dest='xml_reporting', default=False,
-                help='Use xml reporting for build server integration (default=False)'),
-    make_option('--all', action='store_true', dest='test_all', default=False,
-                help='Test ALL apps in project. (default=False)'),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--xmlreporting',
+            action='store_true',
+            dest='xml_reporting',
+            default=False,
+            help='Use xml reporting for build server integration (default=False)',
+        )
+        parser.add_argument(
+            '--all',
+            action='store_true',
+            dest='test_all',
+            default=False,
+            help='Test ALL apps in project. (default=False)',
+        )
+
     help = "Test only the relevant apps as defined in the settings file for your project.  Ignore django standard and other third party apps."
-    args = ''#"[--file <filename> --url <url> [optional --method {curl | python} --chunked --odk]]"
     label = "Test a subset of the apps for your project"
 
-    def handle(self, *args, **options):
-        verbosity = int(options.get('verbosity', 1))
+    def handle(self, **options):
         xmlreporting = options.get('xml_reporting', False)
         test_all = options.get('test_all', False)
-
 
         if xmlreporting:
             settings.TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.run_tests'
@@ -38,5 +42,3 @@ class Command(BaseCommand):
             print(args)
 
             call_command(*args)
-
-
