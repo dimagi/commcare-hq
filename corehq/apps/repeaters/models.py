@@ -558,6 +558,7 @@ class RepeatRecord(Document):
             tries = 0
             post_info = PostInfo(self.get_payload(), headers, force_send, max_tries)
             self.post(post_info, tries=tries)
+            self.save()
 
     def post(self, post_info, tries=0):
         tries += 1

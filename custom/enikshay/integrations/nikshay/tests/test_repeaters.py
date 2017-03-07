@@ -5,6 +5,7 @@ from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import flag_enabled
+from custom.enikshay.exceptions import NikshayLocationNotFound
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin, ENikshayLocationStructureMixin
 
@@ -75,7 +76,7 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
+class TestNikshayRegisterPatientRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
 
     def setUp(self):
         super(TestNikshayRegisterPatientRepeater, self).setUp()
@@ -100,7 +101,15 @@ class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
         self.create_case(self.episode)
         self.assertEqual(0, len(self.repeat_records().all()))
 
+        person = self.create_case(self.person)[0]
+        with self.assertRaisesMessage(
+                NikshayLocationNotFound,
+                "Location with id {location_id} not found. This is the owner for person with "
+                "id: {person_id}".format(location_id=person.owner_id, person_id=self.person_id)
+        ):
+            self._create_nikshay_enabled_case()
         # nikshay enabled, should register a repeat record
+        self.assign_person_to_location(self.phi.location_id)
         self._create_nikshay_enabled_case()
         self.assertEqual(1, len(self.repeat_records().all()))
         #
@@ -114,6 +123,21 @@ class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
         self._create_nikshay_enabled_case(case_id=self.person_id)
         self.assertEqual(0, len(self.repeat_records().all()))
 
+    def test_trigger_test_submission(self):
+        self.phi.metadata['is_test'] = 'yes'
+        self.phi.save()
+        self.create_case(self.episode)
+        self.assign_person_to_location(self.phi.location_id)
+        self._create_nikshay_enabled_case()
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+    def test_trigger_non_test_submission(self):
+        self.phi.metadata['is_test'] = 'no'
+        self.phi.save()
+        self.create_case(self.episode)
+        self.assign_person_to_location(self.phi.location_id)
+        self._create_nikshay_enabled_case()
+        self.assertEqual(1, len(self.repeat_records().all()))
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):

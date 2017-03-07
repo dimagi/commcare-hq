@@ -124,17 +124,37 @@ class PillowBase(object):
     def fire_change_processed_event(self, change, context):
         pass
 
-    def _record_checkpoint_in_datadog(self):
+    def _normalize_checkpoint_sequence(self):
+        from pillowtop.feed.couch import CouchChangeFeed
+        from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+
+        if self.checkpoint is None:
+            return {}
+
         sequence = self.get_last_checkpoint_sequence()
         change_feed = self.get_change_feed()
-        if not isinstance(sequence, dict):
-            topics = change_feed.topics
-            assert len(topics) == 1
-            sequence = {topics[0]: int(sequence)}
 
+        if not isinstance(sequence, dict):
+            if isinstance(change_feed, KafkaChangeFeed):
+                topics = change_feed.topics
+                assert len(topics) == 1
+                topic = topics[0]
+            elif isinstance(change_feed, CouchChangeFeed):
+                topic = change_feed.couch_db
+            else:
+                return {}
+
+            sequence = {topic: int(sequence)}
+        return sequence
+
+    def _record_checkpoint_in_datadog(self):
         datadog_counter('commcare.change_feed.change_feed.checkpoint', tags=[
             'pillow_name:{}'.format(self.get_name()),
         ])
+
+    def _record_change_in_datadog(self, change):
+        change_feed = self.get_change_feed()
+        sequence = self._normalize_checkpoint_sequence()
 
         for topic, value in sequence.iteritems():
             datadog_gauge('commcare.change_feed.processed_offsets'.format(topic), value, tags=[
@@ -148,7 +168,6 @@ class PillowBase(object):
                 'topic:{}'.format(topic),
             ])
 
-    def _record_change_in_datadog(self, change):
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change)
 
     def _record_change_success_in_datadog(self, change):

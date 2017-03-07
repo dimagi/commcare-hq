@@ -177,6 +177,7 @@ class TestSendToElasticsearch(SimpleTestCase):
             es_doc = self.es.get_source(self.index, TEST_INDEX_INFO.type, doc['_id'])
             for prop in doc:
                 self.assertEqual(doc[prop], es_doc[prop])
+            self.assertTrue(all(prop in doc for prop in es_doc))
         else:
             self.assertEqual(0, get_doc_count(self.es, self.index))
 
@@ -185,6 +186,13 @@ class TestSendToElasticsearch(SimpleTestCase):
         self._send_to_es_and_check(doc)
 
         doc['property'] = 'bazz'
+        self._send_to_es_and_check(doc, update=True)
+
+    def test_replace_doc(self):
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
+        self._send_to_es_and_check(doc)
+
+        del doc['property']
         self._send_to_es_and_check(doc, update=True)
 
     def test_delete_doc(self):

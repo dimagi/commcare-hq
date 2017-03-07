@@ -5,7 +5,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, N
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
-from custom.m4change.filters import M4ChangeAsyncLocationFilter
+from custom.common.filters import RestrictedAsyncLocationFilter
 from custom.m4change.reports import validate_report_parameters, get_location_hierarchy_by_id
 from custom.m4change.reports.reports import M4ChangeReport
 from custom.m4change.reports.sql_data import LdHmisCaseSqlData
@@ -33,7 +33,7 @@ class LdHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
     report_template_path = "m4change/report_content.html"
 
     fields = [
-        M4ChangeAsyncLocationFilter,
+        RestrictedAsyncLocationFilter,
         MonthFilter,
         YearFilter
     ]

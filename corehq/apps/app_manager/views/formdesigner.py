@@ -9,7 +9,6 @@ from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
-from django.core.urlresolvers import reverse
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.notifications import get_facility_for_form, notify_form_opened
 
@@ -39,7 +38,6 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
-from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.tour import tours
 from corehq.apps.analytics import ab_tests
 from corehq.apps.domain.models import Domain
@@ -156,8 +154,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'include_fullstory': include_fullstory,
         'notifications_enabled': request.user.is_superuser,
         'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
-        'toggle_url': reverse(ToggleEditView.urlname, args=["vellum_beta"]),
-        'toggle_item': request.user.username,
     })
     notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
 

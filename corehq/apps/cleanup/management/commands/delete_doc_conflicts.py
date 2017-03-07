@@ -1,5 +1,5 @@
 import logging
-from optparse import make_option
+
 from couchdbkit.exceptions import BulkSaveError
 from corehq.util.couch import categorize_bulk_save_errors
 from dimagi.utils.couch.database import get_db
@@ -29,17 +29,17 @@ def bulk_delete(db, docs):
 class Command(BaseCommand):
     help = 'Delete document conflicts'
 
-    option_list = (
-        make_option(
+    def add_arguments(self, parser):
+        parser.add_argument(
             '--batch_size',
             action='store',
-            type='int',
+            type=int,
             dest='batch',
             default=500,
-            help="Only process this many docs."),
-    )
+            help="Only process this many docs.",
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         db = get_db()
         while True:
             results = db.view('doc_conflicts/conflicts', reduce=False, limit=options['batch'], include_docs=True, conflicts=True)
