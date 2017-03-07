@@ -40,11 +40,11 @@ class Dhis2ConnectionForm(forms.Form):
             ),
         )
 
-    def save(self, domain):
+    def save(self, domain_name):
         try:
-            dhis2_conn = get_dhis2_connection(domain.name)
+            dhis2_conn = get_dhis2_connection(domain_name)
             if dhis2_conn is None:
-                dhis2_conn = Dhis2Connection(domain=domain.name)
+                dhis2_conn = Dhis2Connection(domain=domain_name)
             dhis2_conn.server_url = self.cleaned_data['server_url']
             dhis2_conn.username = self.cleaned_data['username']
             if self.cleaned_data['password']:
@@ -113,22 +113,14 @@ class DataSetMapForm(forms.Form):
                 crispy.Field('period_column'),
                 crispy.Field('attribute_option_combo_id'),
                 crispy.Field('complete_date'),
-
-            ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    _("Update DHIS2 DataSet map"),
-                    type="submit",
-                    css_class='btn-primary',
-                )
             ),
         )
 
-    def save(self, domain):
+    def save(self, domain_name):
         try:
-            dataset_maps = get_dataset_maps(domain.name)
+            dataset_maps = get_dataset_maps(domain_name)
             # MVP: For now just one UCR mapped
-            dataset_map = dataset_maps[0] if dataset_maps else DataSetMap(domain=domain.name)
+            dataset_map = dataset_maps[0] if dataset_maps else DataSetMap(domain=domain_name)
             dataset_map.ucr_id = self.cleaned_data['ucr_id']
             dataset_map.data_set_id = self.cleaned_data['data_set_id']
             dataset_map.org_unit_id = self.cleaned_data['org_unit_id']
