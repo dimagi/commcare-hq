@@ -16,13 +16,13 @@ class Command(BaseCommand):
     help = 'Populate a fresh db with standard set of Software Plans.'
 
     def add_arguments(self, parser):
-        parser.add_arguments(
+        parser.add_argument(
             '--verbose',
             action='store_true',
             default=False,
             help='Enable debug output',
         )
-        parser.add_arguments(
+        parser.add_argument(
             '--testing',
             action='store_true',
             default=False,
