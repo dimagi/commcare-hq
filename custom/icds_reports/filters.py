@@ -7,6 +7,7 @@ from corehq.apps.locations.util import load_locs_json
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
+from custom.common.filters import RestrictedAsyncLocationFilter
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -71,7 +72,9 @@ class IcdsLocationFilter(AsyncLocationFilter):
         }
 
 
-class TableauLocationFilter(ICDSTableauFilterMixin, IcdsLocationFilter):
+class TableauLocationFilter(ICDSTableauFilterMixin, RestrictedAsyncLocationFilter):
+
+    auto_drill = False
 
     @property
     def location_hierarchy_config(self):
