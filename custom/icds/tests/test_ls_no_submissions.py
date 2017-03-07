@@ -37,23 +37,13 @@ class TestLSSubmissionPerformanceIndicator(TestCase):
             ])
         ]
         cls.loc_types = setup_location_types_with_structure(cls.domain, location_type_structure)
-        for l in cls.loc_types.values():
-            l.save()
         cls.locs = setup_locations_with_structure(cls.domain, location_structure)
-        for l in cls.locs.values():
-            l.save()
         cls.ls = cls._make_user('ls', cls.locs['LSL'])
         cls.aww = cls._make_user('aww', cls.locs['AWC1'])
 
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
-        cls.aww.delete()
-        cls.ls.delete()
-        for l in cls.locs.values():
-            l.delete()
-        for l in cls.loc_types.values():
-            l.delete()
         cls.domain_obj.delete()
         super(TestLSSubmissionPerformanceIndicator, cls).tearDownClass()
 

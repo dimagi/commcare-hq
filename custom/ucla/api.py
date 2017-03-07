@@ -16,20 +16,40 @@ def notify_dimagi_project_admins(domain, message):
     _assert(False, message)
 
 
-def ucla_message_bank_content(reminder, handler, recipient):
+def general_health_message_bank_content(reminder, handler, recipient):
+    return _generic_message_bank_content('general_health', reminder, handler, recipient)
+
+
+def mental_health_message_bank_content(reminder, handler, recipient):
+    return _generic_message_bank_content('mental_health', reminder, handler, recipient)
+
+
+def sexual_health_message_bank_content(reminder, handler, recipient):
+    return _generic_message_bank_content('sexual_health', reminder, handler, recipient)
+
+
+def med_adherence_message_bank_content(reminder, handler, recipient):
+    return _generic_message_bank_content('med_adherence', reminder, handler, recipient)
+
+
+def substance_use_message_bank_content(reminder, handler, recipient):
+    return _generic_message_bank_content('substance_use', reminder, handler, recipient)
+
+
+def _generic_message_bank_content(fixture_name, reminder, handler, recipient):
     domain = reminder.domain
-    message_bank = FixtureDataType.by_domain_tag(domain, 'message_bank').first()
+    message_bank = FixtureDataType.by_domain_tag(domain, fixture_name).first()
 
     if not message_bank:
-        message = u"Lookup Table message_bank not found in {}".format(domain)
+        message = u"Lookup Table {} not found in {}".format(fixture_name, domain)
         notify_dimagi_project_admins(domain, message=message)
         return None
 
     fields = message_bank.fields_without_attributes
 
     if any(field not in fields for field in REQUIRED_FIXTURE_FIELDS):
-        message = u"message_bank in {} must have {}".format(
-            domain, ','.join(REQUIRED_FIXTURE_FIELDS)
+        message = u"{} in {} must have {}".format(
+            fixture_name, domain, ','.join(REQUIRED_FIXTURE_FIELDS)
         )
         notify_dimagi_project_admins(domain, message=message)
         return None
@@ -61,10 +81,10 @@ def ucla_message_bank_content(reminder, handler, recipient):
 
     if len(custom_messages) != 1:
         if not custom_messages:
-            message = u"No message for risk {}, seq {} in domain {}"
+            message = u"No message for risk {}, seq {} in domain {} in fixture {}"
         else:
-            message = u"Multiple messages for risk {}, seq {} in domain {}"
-        message = message.format(risk_profile, current_message_seq_num, domain)
+            message = u"Multiple messages for risk {}, seq {} in domain {} in fixture {}"
+        message = message.format(risk_profile, current_message_seq_num, domain, fixture_name)
         notify_dimagi_project_admins(domain, message=message)
         return None
 

@@ -5,6 +5,7 @@ from StringIO import StringIO
 from collections import Counter
 from datetime import datetime
 
+from nose.plugins.attrib import attr
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
 from django.db.models.signals import post_save
@@ -109,6 +110,7 @@ class BaseDumpLoadTest(TestCase):
                 self.assertIn('raw', args, message)
 
 
+@attr(sql_backend=True)
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     maxDiff = None
@@ -222,6 +224,12 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             pre_json = serializers.serialize('python', [pre])[0]
             post_json = serializers.serialize('python', [post])[0]
             self.assertDictEqual(pre_json, post_json)
+
+    def tearDown(self):
+        from corehq.apps.data_interfaces.models import AutomaticUpdateAction, AutomaticUpdateRuleCriteria
+        AutomaticUpdateAction.objects.all().delete()
+        AutomaticUpdateRuleCriteria.objects.all().delete()
+        super(TestSQLDumpLoad, self).tearDown()
 
     def test_case_search_config(self):
         from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchConfigJSON

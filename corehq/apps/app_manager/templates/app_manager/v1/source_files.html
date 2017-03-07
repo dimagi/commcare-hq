@@ -56,8 +56,6 @@
 
 {% block js %}{{ block.super }}
     {% compress js %}
-        <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
         <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
         <script src="{% static 'app_manager/js/source_files.js' %}"></script>
     {% endcompress %}

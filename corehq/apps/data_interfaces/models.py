@@ -1,3 +1,4 @@
+import pytz
 import re
 from collections import defaultdict
 
@@ -217,6 +218,16 @@ class AutomaticUpdateRuleCriteria(models.Model):
 
         return date_or_string
 
+    def clean_datetime(self, timestamp):
+        if not isinstance(timestamp, datetime):
+            timestamp = datetime.combine(timestamp, time(0, 0))
+
+        if timestamp.tzinfo:
+            # Convert to UTC and make it a naive datetime for comparison to datetime.utcnow()
+            timestamp = timestamp.astimezone(pytz.utc).replace(tzinfo=None)
+
+        return timestamp
+
     def check_days_before(self, case, now):
         values = self.get_case_values(case)
         for date_to_check in values:
@@ -225,8 +236,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
             if not isinstance(date_to_check, date):
                 continue
 
-            if not isinstance(date_to_check, datetime):
-                date_to_check = datetime.combine(date_to_check, time(0, 0))
+            date_to_check = self.clean_datetime(date_to_check)
 
             days = int(self.property_value)
             if now < (date_to_check - timedelta(days=days)):
@@ -242,8 +252,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
             if not isinstance(date_to_check, date):
                 continue
 
-            if not isinstance(date_to_check, datetime):
-                date_to_check = datetime.combine(date_to_check, time(0, 0))
+            date_to_check = self.clean_datetime(date_to_check)
 
             days = int(self.property_value)
             if now >= (date_to_check + timedelta(days=days)):

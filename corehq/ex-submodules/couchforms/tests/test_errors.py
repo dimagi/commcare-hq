@@ -1,13 +1,12 @@
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import softer_assert
 
 
 class CaseProcessingErrorsTest(TestCase):
 
-    @run_with_all_backends
     def test_no_case_id(self):
         """
         submit form with a case block that has no case_id
@@ -40,7 +39,6 @@ class CaseProcessingErrorsTest(TestCase):
         self.assertTrue(xform.is_error)
         self.assertEqual(xform.problem, 'IllegalCaseId: case_id must not be empty')
 
-    @run_with_all_backends
     @softer_assert()
     def test_uses_referrals(self):
         # submit form with a case block that uses referrals
@@ -68,3 +66,8 @@ class CaseProcessingErrorsTest(TestCase):
         )
         self.assertTrue(xform.is_error)
         self.assertEqual(xform.problem, 'UsesReferrals: Sorry, referrals are no longer supported!')
+
+
+@use_sql_backend
+class CaseProcessingErrorsTestSQL(CaseProcessingErrorsTest):
+    pass

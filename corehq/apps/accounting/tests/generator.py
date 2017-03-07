@@ -67,10 +67,14 @@ def unique_name():
 
 
 @unit_testing_only
+def create_arbitrary_web_user_name(is_dimagi=False):
+    return "%s@%s.com" % (unique_name(), 'dimagi' if is_dimagi else 'gmail')
+
+
+@unit_testing_only
 def arbitrary_web_user(is_dimagi=False):
-    domain = Domain(name=unique_name()[:25])
-    domain.save()
-    username = "%s@%s.com" % (unique_name(), 'dimagi' if is_dimagi else 'gmail')
+    domain = arbitrary_domain()
+    username = create_arbitrary_web_user_name(is_dimagi=is_dimagi)
     try:
         web_user = WebUser.create(domain.name, username, 'test123')
     except Exception:
@@ -86,7 +90,7 @@ def billing_account(web_user_creator, web_user_contact, currency=None, save=True
     currency = currency or Currency.objects.get(code=settings.DEFAULT_CURRENCY)
     billing_account = BillingAccount(
         name=account_name,
-        created_by=web_user_creator.username,
+        created_by=web_user_creator,
         currency=currency,
     )
     if save:
@@ -102,7 +106,7 @@ def arbitrary_contact_info(account, web_user_creator):
         account=account,
         first_name=data_gen.arbitrary_firstname(),
         last_name=data_gen.arbitrary_lastname(),
-        email_list=[web_user_creator.username],
+        email_list=[web_user_creator],
         phone_number="+15555555",
         company_name="Company Name",
         first_line="585 Mass Ave",

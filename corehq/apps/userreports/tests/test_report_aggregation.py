@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.conf import settings
 from django.http import HttpRequest
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from corehq.apps.userreports.const import UCR_BACKENDS, UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.exceptions import UserReportsError
@@ -10,12 +10,12 @@ from corehq.apps.userreports.models import DataSourceConfiguration, \
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
-from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
 from corehq.apps.userreports.util import get_indicator_adapter
 import six
 
 
-class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
+class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
     """
     Integration tests for configurable report aggregation
     """
@@ -34,79 +34,70 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def _create_data_source(cls):
-        cls.data_sources = {}
-        cls.adapters = {}
-
-        # this is a hack to have both sql and es backends created in a class
-        # method. alternative would be to have these created on each test run
-        for backend_id in UCR_BACKENDS:
-            config = DataSourceConfiguration(
-                backend_id=backend_id,
-                domain=cls.domain,
-                display_name=cls.domain,
-                referenced_doc_type='CommCareCase',
-                table_id="foo",
-                configured_filter={
-                    "type": "boolean_expression",
-                    "operator": "eq",
+        cls.data_source = DataSourceConfiguration(
+            domain=cls.domain,
+            display_name=cls.domain,
+            referenced_doc_type='CommCareCase',
+            table_id="foo",
+            configured_filter={
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                },
+                "property_value": cls.case_type,
+            },
+            configured_indicators=[
+                {
+                    "type": "expression",
                     "expression": {
                         "type": "property_name",
-                        "property_name": "type"
+                        "property_name": 'first_name'
                     },
-                    "property_value": cls.case_type,
+                    "column_id": 'indicator_col_id_first_name',
+                    "display_name": 'indicator_display_name_first_name',
+                    "datatype": "string"
                 },
-                configured_indicators=[
-                    {
-                        "type": "expression",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": 'first_name'
-                        },
-                        "column_id": 'indicator_col_id_first_name',
-                        "display_name": 'indicator_display_name_first_name',
-                        "datatype": "string"
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'number'
                     },
-                    {
-                        "type": "expression",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": 'number'
-                        },
-                        "column_id": 'indicator_col_id_number',
-                        "datatype": "integer"
-                    },
-                ],
-            )
-            config.validate()
-            config.save()
-            rebuild_indicators(config._id)
-            adapter = get_indicator_adapter(config)
-            adapter.refresh_table()
-            cls.data_sources[backend_id] = config
-            cls.adapters[backend_id] = adapter
+                    "column_id": 'indicator_col_id_number',
+                    "datatype": "integer"
+                },
+            ],
+        )
+        cls.data_source.validate()
+        cls.data_source.save()
+        rebuild_indicators(cls.data_source._id)
+        cls.adapter = get_indicator_adapter(cls.data_source)
+        cls.adapter.refresh_table()
 
     @classmethod
     def setUpClass(cls):
-        super(TestReportAggregation, cls).setUpClass()
+        super(TestReportAggregationSQL, cls).setUpClass()
         cls._create_data()
         cls._create_data_source()
 
     @classmethod
     def tearDownClass(cls):
-        for key, adapter in six.iteritems(cls.adapters):
-            adapter.drop_table()
+        cls.adapter.drop_table()
         cls._delete_everything()
-        super(TestReportAggregation, cls).tearDownClass()
+        super(TestReportAggregationSQL, cls).tearDownClass()
 
-    def _create_report(self, aggregation_columns, columns, specific_backend=UCR_SQL_BACKEND):
-        backend_id = settings.OVERRIDE_UCR_BACKEND or specific_backend
+    def _create_report(self, aggregation_columns, columns, sort_expression=None):
         report_config = ReportConfiguration(
             domain=self.domain,
-            config_id=self.data_sources[backend_id]._id,
+            config_id=self.data_source._id,
             title='foo',
             aggregation_columns=aggregation_columns,
             columns=columns,
         )
+        if sort_expression:
+            report_config.sort_expression = sort_expression
         report_config.save()
         return report_config
 
@@ -117,7 +108,6 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
         view._report_config_id = report_config._id
         return view
 
-    @run_with_all_ucr_backends
     def test_aggregation_by_column_not_in_report(self):
         """
         Confirm that aggregation works when the aggregated by column does
@@ -147,7 +137,6 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
-    @run_with_all_ucr_backends
     def test_aggregation_by_column_in_report(self):
         """
         Confirm that aggregation works when the aggregated by column appears in
@@ -185,7 +174,46 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
-    @run_with_all_ucr_backends
+    def test_max_aggregation_by_string_column(self):
+        report_config = self._create_report(
+            aggregation_columns=['indicator_col_id_number'],
+            columns=[
+                {
+                    "type": "field",
+                    "display": "report_column_display_first_name",
+                    "field": 'indicator_col_id_first_name',
+                    'aggregation': 'max'
+                },
+                {
+                    "type": "field",
+                    "display": "report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'column_id': 'report_column_col_id_number',
+                    'aggregation': 'simple'
+                }
+            ],
+            sort_expression=[
+                {
+                    "field": "report_column_col_id_number",
+                    "order": "DESC"
+                },
+            ]
+        )
+        view = self._create_view(report_config)
+
+        self.assertEqual(
+            view.export_table,
+            [[
+                u'foo',
+                [
+                    [u'report_column_display_first_name', u'report_column_display_number'],
+                    [u'Alan', 4],
+                    [u'Ada', 3],
+                    [u'Alan', 2],
+                ]
+            ]]
+        )
+
     def test_aggregation_by_indicator_in_percent_column(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_number'],
@@ -223,7 +251,6 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
-    @run_with_all_ucr_backends
     def test_aggregation_by_column_with_new_id(self):
         """
         Confirm that aggregation works when the aggregated by column appears in
@@ -263,7 +290,6 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
-    @run_with_all_ucr_backends
     def test_sort_expression(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -325,7 +351,6 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
-    @run_with_all_ucr_backends
     def test_total_row(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -374,7 +399,6 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
-    @run_with_all_ucr_backends
     def test_no_total_row(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -422,7 +446,6 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
-    @run_with_all_ucr_backends
     def test_total_row_first_column_value(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -471,7 +494,6 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
-    @run_with_all_ucr_backends
     def test_totaling_noninteger_column(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -491,7 +513,6 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
         with self.assertRaises(UserReportsError):
             view.export_table
 
-    @run_with_all_ucr_backends
     def test_total_row_with_expanded_column(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -541,6 +562,9 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
+class TestReportAggregationES(TestReportAggregationSQL):
     def test_total_row_with_min_column(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -568,8 +592,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
                     'aggregation': 'min',
                     'calculate_total': True,
                 },
-            ],
-            specific_backend=UCR_ES_BACKEND  # FIXME sqlagg sums for all totals
+            ]
         )
         view = self._create_view(report_config)
 
@@ -592,7 +615,8 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
         )
 
 
-class TestReportMultipleAggregations(ConfigurableReportTestMixin, TestCase):
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
+class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
     @classmethod
     def _create_data(cls):
         for row in [
@@ -605,83 +629,76 @@ class TestReportMultipleAggregations(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def _create_data_source(cls):
-        cls.data_sources = {}
-        cls.adapters = {}
-
-        for backend_id in UCR_BACKENDS:
-            config = DataSourceConfiguration(
-                backend_id=backend_id,
-                domain=cls.domain,
-                display_name=cls.domain,
-                referenced_doc_type='CommCareCase',
-                table_id="foo",
-                configured_filter={
-                    "type": "boolean_expression",
-                    "operator": "eq",
+        cls.data_source = DataSourceConfiguration(
+            domain=cls.domain,
+            display_name=cls.domain,
+            referenced_doc_type='CommCareCase',
+            table_id="foo",
+            configured_filter={
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                },
+                "property_value": cls.case_type,
+            },
+            configured_indicators=[
+                {
+                    "type": "expression",
                     "expression": {
                         "type": "property_name",
-                        "property_name": "type"
+                        "property_name": 'state'
                     },
-                    "property_value": cls.case_type,
+                    "column_id": 'indicator_col_id_state',
+                    "display_name": 'indicator_display_name_state',
+                    "datatype": "string"
                 },
-                configured_indicators=[
-                    {
-                        "type": "expression",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": 'state'
-                        },
-                        "column_id": 'indicator_col_id_state',
-                        "display_name": 'indicator_display_name_state',
-                        "datatype": "string"
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'city'
                     },
-                    {
-                        "type": "expression",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": 'city'
-                        },
-                        "column_id": 'indicator_col_id_city',
-                        "display_name": 'indicator_display_name_city',
-                        "datatype": "string"
+                    "column_id": 'indicator_col_id_city',
+                    "display_name": 'indicator_display_name_city',
+                    "datatype": "string"
+                },
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'number'
                     },
-                    {
-                        "type": "expression",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": 'number'
-                        },
-                        "column_id": 'indicator_col_id_number',
-                        "datatype": "integer"
-                    },
-                ],
-            )
-            config.validate()
-            config.save()
-            rebuild_indicators(config._id)
-            adapter = get_indicator_adapter(config)
-            adapter.refresh_table()
-            cls.data_sources[backend_id] = config
-            cls.adapters[backend_id] = adapter
+                    "column_id": 'indicator_col_id_number',
+                    "datatype": "integer"
+                },
+            ],
+        )
+        cls.data_source.validate()
+        cls.data_source.save()
+        rebuild_indicators(cls.data_source._id)
+        adapter = get_indicator_adapter(cls.data_source)
+        adapter.refresh_table()
+        cls.adapter = adapter
 
     @classmethod
     def setUpClass(cls):
-        super(TestReportMultipleAggregations, cls).setUpClass()
+        super(TestReportMultipleAggregationsSQL, cls).setUpClass()
         cls._create_data()
         cls._create_data_source()
 
     @classmethod
     def tearDownClass(cls):
-        for key, adapter in six.iteritems(cls.adapters):
-            adapter.drop_table()
+        cls.adapter.drop_table()
         cls._delete_everything()
-        super(TestReportMultipleAggregations, cls).tearDownClass()
+        super(TestReportMultipleAggregationsSQL, cls).tearDownClass()
 
     def _create_report(self, aggregation_columns, columns, filters=None):
         backend_id = settings.OVERRIDE_UCR_BACKEND or UCR_SQL_BACKEND
         report_config = ReportConfiguration(
             domain=self.domain,
-            config_id=self.data_sources[backend_id]._id,
+            config_id=self.data_source._id,
             title='foo',
             aggregation_columns=aggregation_columns,
             columns=columns,
@@ -729,7 +746,6 @@ class TestReportMultipleAggregations(ConfigurableReportTestMixin, TestCase):
         view._report_config_id = report_config._id
         return view
 
-    @run_with_all_ucr_backends
     def test_with_multiple_agg_columns(self):
         report_config = self._create_default_report()
         view = self._create_view(report_config)
@@ -751,7 +767,6 @@ class TestReportMultipleAggregations(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
-    @run_with_all_ucr_backends
     def test_with_prefilter(self):
         report_config = self._create_default_report(
             filters=[
@@ -783,3 +798,8 @@ class TestReportMultipleAggregations(ConfigurableReportTestMixin, TestCase):
                 ]
             ]]
         )
+
+
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
+class TestReportMultipleAggregationsES(TestReportMultipleAggregationsSQL):
+    pass

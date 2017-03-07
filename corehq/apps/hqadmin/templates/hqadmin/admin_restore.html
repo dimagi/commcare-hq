@@ -18,6 +18,8 @@
             <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
             <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
             <script src="{% static 'codemirror/addon/fold/xml-fold.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+            <script src="{% static 'hqadmin/js/admin_restore.js' %}"></script>
         {% endcompress %}
 
         <style>
@@ -79,22 +81,5 @@
                         </div>
                     </div>
                 </div>
-        <script>
-            var payloadElement = document.getElementById('payload');
-            var myCodeMirror = CodeMirror(function(elt) {
-                payloadElement.parentNode.replaceChild(elt, payloadElement);
-            }, {
-                value: payloadElement.textContent,
-                readOnly: true,
-                lineNumbers: true,
-                mode: {name: "text/xml", json: true},
-                viewportMargin: Infinity,
-                foldGutter: true,
-                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-            });
-
-            $("#timingTable").treetable();
-        </script>
-
     </body>
 </html>

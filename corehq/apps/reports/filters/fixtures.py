@@ -117,6 +117,10 @@ class AsyncLocationFilter(BaseReportFilter):
         return load_locs_json(self.domain, loc_id, user=self.request.couch_user)
 
     @property
+    def location_hierarchy_config(self):
+        return location_hierarchy_config(self.domain)
+
+    @property
     def filter_context(self):
         api_root = self.api_root
         user = self.request.couch_user
@@ -133,7 +137,7 @@ class AsyncLocationFilter(BaseReportFilter):
             'loc_id': loc_id,
             'locations': self.load_locations_json(loc_id),
             'make_optional': self.make_optional,
-            'hierarchy': location_hierarchy_config(self.domain)
+            'hierarchy': self.location_hierarchy_config
         }
 
     @classmethod
