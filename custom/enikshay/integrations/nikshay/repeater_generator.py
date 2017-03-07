@@ -335,6 +335,10 @@ class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
     def handle_failure(self, response, payload_doc, repeat_record):
         _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
 
+    def handle_exception(self, exception, repeat_record):
+        if isinstance(exception, RequestConnectionError):
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception))
+
 
 def _get_nikshay_id_from_response(response):
     try:
