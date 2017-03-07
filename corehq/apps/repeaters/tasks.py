@@ -1,13 +1,16 @@
 from datetime import datetime
+from celery.schedules import crontab
 
 from django.conf import settings
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from redis.exceptions import LockError
+from corehq.util.datadog.gauges import datadog_gauge_task
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
-from corehq.apps.repeaters.dbaccessors import iterate_repeat_records
+from corehq.apps.repeaters.dbaccessors import iterate_repeat_records, \
+    get_overdue_repeat_record_count
 from corehq.apps.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
@@ -74,3 +77,10 @@ def _get_repeat_record_lock_key(record):
     every time we execute a `save()` call.
     """
     return 'repeat_record_in_progress-{}_{}'.format(record._id, record._rev)
+
+
+repeaters_overdue = datadog_gauge_task(
+    'commcare.repeaters.overdue',
+    get_overdue_repeat_record_count,
+    run_every=crontab()  # every minute
+)
