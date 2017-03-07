@@ -5,6 +5,7 @@ import logging
 import re
 
 from restkit.errors import NoMoreData
+from rest_framework.authtoken.models import Token
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
@@ -14,6 +15,8 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
+from corehq.apps.users.util import format_username
+from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
@@ -23,7 +26,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, log_signal_errors
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
@@ -771,6 +774,20 @@ class DeviceIdLastUsed(DocumentSchema):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
 
 
+class LastSubmission(DocumentSchema):
+    submission_date = DateTimeProperty()
+    app_id = StringProperty()
+    build_id = StringProperty()
+    device_id = StringProperty()
+    build_version = IntegerProperty()
+    commcare_version = StringProperty()
+
+
+class ReportingMetadata(DocumentSchema):
+
+    last_submissions = SchemaListProperty(LastSubmission)
+
+
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
@@ -799,6 +816,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     location_id = StringProperty()
     assigned_location_ids = StringListProperty()
     has_built_app = BooleanProperty(default=False)
+    analytics_enabled = BooleanProperty(default=True)
+
+    reporting_metadata = SchemaProperty(ReportingMetadata)
 
     _user = None
 
@@ -1174,6 +1194,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             return None
 
+    @classmethod
+    def get_anonymous_mobile_worker(cls, domain):
+        return cls.get_by_username(
+            format_username(ANONYMOUS_USERNAME, domain)
+        )
 
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
@@ -1220,6 +1245,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @classmethod
     def from_django_user(cls, django_user):
         return cls.get_by_username(django_user.username)
+
+    @classmethod
+    def from_django_user_include_anonymous(cls, domain, django_user):
+        if django_user.is_anonymous():
+            return cls.get_anonymous_mobile_worker(domain)
+        else:
+            return cls.get_by_username(django_user.username)
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='',
@@ -1283,14 +1315,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         from .signals import couch_user_post_save
         results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
-        for result in results:
-            # Second argument is None if there was no error
-            if result[1]:
-                notify_exception(
-                    None,
-                    message="Error occured while syncing user %s: %s" %
-                            (self.username, repr(result[1]))
-                )
+        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
@@ -1386,6 +1411,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
 
+    is_anonymous = BooleanProperty(default=False)
+
     @classmethod
     def wrap(cls, data):
         # migrations from using role_id to using the domain_memberships
@@ -1415,14 +1442,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         from .signals import commcare_user_post_save
         results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self)
-        for result in results:
-            # Second argument is None if there was no error
-            if result[1]:
-                notify_exception(
-                    None,
-                    message="Error occured while syncing user %s: %s" %
-                            (self.username, repr(result[1]))
-                )
+        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     def delete(self):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -1447,8 +1467,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.user_data              = old_couch_user.default_account.user_data
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, commit=True,
-               **kwargs):
+    def create(cls,
+            domain,
+            username,
+            password,
+            email=None,
+            uuid='',
+            date='',
+            phone_number=None,
+            is_anonymous=False,
+            commit=True,
+            **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
@@ -1462,11 +1491,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
+        commcare_user.is_anonymous = is_anonymous
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
+
+        if is_anonymous:
+            assert commit, 'Commit must be true when creating an anonymous user'
+            django_user = commcare_user.get_django_user()
+            Token.objects.create(user=django_user)
 
         return commcare_user
 
@@ -1996,6 +2031,10 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def is_global_admin(self):
         # override this function to pass global admin rights off to django
         return self.is_superuser
+
+    @property
+    def is_anonymous(self):
+        return False
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):

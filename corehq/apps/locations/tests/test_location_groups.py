@@ -1,34 +1,59 @@
 from mock import patch
-from corehq.apps.locations.fixtures import location_fixture_generator
-from corehq.apps.locations.tests.util import make_loc
-from corehq.apps.locations.tests.test_locations import LocationTestBase
+
+from django.test import TestCase
+
+from corehq.apps.commtrack.tests.util import bootstrap_location_types
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import flag_enabled
 
+from ..fixtures import location_fixture_generator
+from .util import make_loc
+
 
 @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
-class LocationGroupTest(LocationTestBase):
+class LocationGroupTest(TestCase):
 
-    def setUp(self):
-        super(LocationGroupTest, self).setUp()
-        self.test_state = make_loc(
+    @classmethod
+    def setUpClass(cls):
+        super(LocationGroupTest, cls).setUpClass()
+        cls.domain = create_domain('locations-test')
+        cls.domain.convert_to_commtrack()
+        bootstrap_location_types(cls.domain.name)
+        cls.loc = make_loc('loc', type='outlet', domain=cls.domain.name)
+
+        cls.user = CommCareUser.create(
+            cls.domain.name,
+            'username',
+            'password',
+            first_name='Bob',
+            last_name='Builder',
+        )
+        cls.user.set_location(cls.loc)
+
+        cls.test_state = make_loc(
             'teststate',
             type='state',
-            domain=self.domain.name
+            domain=cls.domain.name
         )
-        self.test_village = make_loc(
+        cls.test_village = make_loc(
             'testvillage',
             type='village',
-            parent=self.test_state,
-            domain=self.domain.name
+            parent=cls.test_state,
+            domain=cls.domain.name
         )
-        self.test_outlet = make_loc(
+        cls.test_outlet = make_loc(
             'testoutlet',
             type='outlet',
-            parent=self.test_village,
-            domain=self.domain.name
+            parent=cls.test_village,
+            domain=cls.domain.name
         )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        super(LocationGroupTest, cls).tearDownClass()
 
     def test_group_name(self):
         # just location name for top level
@@ -114,6 +139,11 @@ class LocationGroupTest(LocationTestBase):
         }
         self.loc.save()
 
+        def cleanup():
+            self.loc.metadata = {}
+            self.loc.save()
+        self.addCleanup(cleanup)
+
         self.assertDictEqual(
             {
                 'commcare_location_type': self.loc.location_type_name,
@@ -129,9 +159,8 @@ class LocationGroupTest(LocationTestBase):
         """
         Ensures that a user without a location will still receive an empty fixture
         """
-        self.domain.commtrack_enabled = True
-        self.domain.save()
-        self.loc.delete()
+        self.user.unset_location()
+        self.addCleanup(self.user.set_location, self.loc)
 
         fixture = location_fixture_generator(self.user.to_ota_restore_user(), '2.0')
         self.assertEqual(len(fixture), 1)
@@ -142,8 +171,7 @@ class LocationGroupTest(LocationTestBase):
         Ensures that a domain that doesn't use locations doesn't send an empty
         location fixture
         """
-        self.domain.save()
-        self.loc.delete()
-
+        self.user.unset_location()
+        self.addCleanup(self.user.set_location, self.loc)
         fixture = location_fixture_generator(self.user.to_ota_restore_user(), '2.0')
         self.assertEqual(len(fixture), 0)

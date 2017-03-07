@@ -8,20 +8,6 @@
 <script src="{% static 'data_dictionary/js/data_dictionary.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}
-<script>
-    $(function () {
-        $('#hq-content').parent().initializeDataDictionary(
-            "{% url 'data_dictionary_json' domain %}",
-            "{% url 'update_case_property' domain %}"
-        );
-        $('#download-dict').click(function() {
-            window.analytics.usage('Data Dictionary', 'downloaded data dictionary');
-        })
-    });
-</script>
-{% endblock %}
-
 {% block page_breadcrumbs %}
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
@@ -43,6 +29,8 @@
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl 'data_dictionary_json' domain %}
+    {% registerurl 'update_case_property' domain %}
     <div data-bind="saveButton: saveButton"></div>
     <div class="row">
         <div class="col-md-10">

@@ -1,0 +1,9 @@
+Aggregrate Performance Report:
+
+Home Visits - {{ visits }}
+
+Received adequate THR / Due for THR - {{ thr_distribution }}
+
+Number of children weighed - {{ children_weighed }}
+
+Days AWC open - {{ days_open }}

@@ -16,7 +16,9 @@ from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.decorators import use_select2
 
 from custom.icds.messaging.indicators import (
+    AWWAggregatePerformanceIndicator,
     AWWSubmissionPerformanceIndicator,
+    LSAggregatePerformanceIndicator,
     LSSubmissionPerformanceIndicator,
     LSVHNDSurveyIndicator,
 )
@@ -32,6 +34,8 @@ class IndicatorTestForm(forms.Form):
         label=ugettext_lazy("Indicator"),
         choices=(
             ('aww_sub_perf', 'AWW #1 (Submission Performance)'),
+            ('aww_agg_perf', 'AWW #2 (Aggregate Performance)'),
+            ('ls_agg_perf', 'LS #1 (Aggregate Performance)'),
             ('ls_vhnd_survey', 'LS #2 (VHND Survey)'),
             ('ls_sub_perf', 'LS #6 (Submission Performance)'),
         ),
@@ -92,7 +96,9 @@ class IndicatorTestPage(BaseDomainView):
 
 def get_indicator_class(slug):
     return {
+        'aww_agg_perf': AWWAggregatePerformanceIndicator,
         'aww_sub_perf': AWWSubmissionPerformanceIndicator,
+        'ls_agg_perf': LSAggregatePerformanceIndicator,
         'ls_sub_perf': LSSubmissionPerformanceIndicator,
         'ls_vhnd_survey': LSVHNDSurveyIndicator,
     }[slug]

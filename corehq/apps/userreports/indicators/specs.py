@@ -63,6 +63,7 @@ class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     datatype = DataTypeProperty(required=True)
     is_nullable = BooleanProperty(default=True)
     is_primary_key = BooleanProperty(default=False)
+    create_index = BooleanProperty(default=False)
 
     @property
     def getter(self):
@@ -76,6 +77,7 @@ class ExpressionIndicatorSpec(IndicatorSpecBase):
     datatype = DataTypeProperty(required=True)
     is_nullable = BooleanProperty(default=True)
     is_primary_key = BooleanProperty(default=False)
+    create_index = BooleanProperty(default=False)
     expression = DefaultProperty(required=True)
     transform = DictProperty(required=False)
 

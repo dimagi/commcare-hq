@@ -763,12 +763,12 @@
             "kenya": {
               "default": 0,
               "cases": {
-                "awendo": 34320,
-                "nyatike": 49571,
-                "rongo": 26969,
-                "suna_east": 32161,
-                "suna_west": 41020,
-                "uriri": 42786
+                "awendo": 36511,
+                "nyatike": 51064,
+                "rongo": 34127,
+                "suna_east": 32021,
+                "suna_west": 30664,
+                "uriri": 42440
               },
               "type": "switch",
               "switch_on": {

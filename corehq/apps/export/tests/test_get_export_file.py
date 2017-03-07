@@ -501,12 +501,12 @@ class WriterTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export),
                 {
-                    u'My table': {
+                    u'Export1-My table': {
                         u'headers': [u'Q3'],
                         u'rows': [[u'baz'], [u'bop']],
 
                     },
-                    u'My other table': {
+                    u'Export2-My other table': {
                         u'headers': [u'Q4'],
                         u'rows': [[u'bar'], [u'boop']],
                     }
@@ -795,13 +795,13 @@ class ExportTest(SimpleTestCase):
         )
 
         expected = {
-            'My table': {
+            'Export1-My table': {
                 "A1": "Foo column",
                 "A2": "apple",
                 "A3": "apple",
                 "A4": "apple",
             },
-            "My table1": {
+            "Export2-My table": {
                 "A1": "Bar column",
                 "A2": "banana",
                 "A3": "banana",
@@ -811,7 +811,7 @@ class ExportTest(SimpleTestCase):
 
         with export_file as export:
             wb = load_workbook(StringIO(export))
-            self.assertEqual(wb.get_sheet_names(), ["My table", "My table1"])
+            self.assertEqual(wb.get_sheet_names(), ["Export1-My table", "Export2-My table"])
 
             for sheet in expected.keys():
                 for cell in expected[sheet].keys():

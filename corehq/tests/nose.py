@@ -173,7 +173,7 @@ class HqdbContext(DatabaseContext):
     and migrated.
 
     When using REUSE_DB=1, you may also want to provide a value for the
-    --reuse_db option, either reset, flush, migrate, or teardown.
+    --reusedb option, either reset, flush, migrate, or teardown.
     ./manage.py test --help will give you a description of these.
     """
 

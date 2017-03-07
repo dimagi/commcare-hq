@@ -61,7 +61,7 @@
     {% if intro_only %}
     $(function () {
         var previewApp = hqImport('app_manager/js/preview_app.js');
-        previewApp.makePreviewHidden();
+        previewApp.forceShowPreview();
     });
     {% endif %}
 
@@ -74,15 +74,23 @@
 </script>
 
 {% if intro_only %}
-  <p class="lead">
-    <i class="fa fa-arrow-left"></i>
+  <div class="helpbubble helpbubble-primary helpbubble-left pull-left" style="max-width: 300px;">
   {% blocktrans %}
-    Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to the left to start building your Application!
+    <p class="lead">
+      Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to start building your App!
+    </p>
+    <p class="alert alert-info">
+      <i class="fa fa-info-circle"></i> Use AppBuilder to <strong>create</strong> and <strong>customize</strong> your CommCare Application for Mobile and Web.
+    </p>
   {% endblocktrans %}
-  </p>
-  <p class="alert alert-info">
-    <i class="fa fa-info-circle"></i> Use AppBuilder to <strong>create</strong> and <strong>customize</strong> your CommCare Application for Mobile and Web.
-  </p>
+  </div>
+  <div class="helpbubble helpbubble-secondary helpbubble-right pull-right" style="max-width: 300px;">
+  {% blocktrans %}
+    <p class="lead">
+      As you build your App, check out the <strong>App Preview</strong> to demo it in real time!
+    </p>
+  {% endblocktrans %}
+  </div>
 {% else %}
 
 {% if intro_only and build_profile_access %}

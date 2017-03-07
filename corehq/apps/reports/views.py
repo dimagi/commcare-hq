@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, date
 import itertools
 import json
 from wsgiref.util import FileWrapper
+from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.utils import get_domain_module_map
@@ -523,8 +524,9 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
-    saved_export = SavedBasicExport.get(export_id)
-    return _download_saved_export(req, domain, saved_export)
+    with CriticalSection(['saved-export-{}'.format(export_id)]):
+        saved_export = SavedBasicExport.get(export_id)
+        return _download_saved_export(req, domain, saved_export)
 
 
 @csrf_exempt
@@ -532,10 +534,11 @@ def hq_download_saved_export(req, domain, export_id):
 @require_form_deid_export_permission
 @require_GET
 def hq_deid_download_saved_export(req, domain, export_id):
-    saved_export = SavedBasicExport.get(export_id)
-    if not saved_export.is_safe:
-        raise Http404()
-    return _download_saved_export(req, domain, saved_export)
+    with CriticalSection(['saved-export-{}'.format(export_id)]):
+        saved_export = SavedBasicExport.get(export_id)
+        if not saved_export.is_safe:
+            raise Http404()
+        return _download_saved_export(req, domain, saved_export)
 
 
 def _download_saved_export(req, domain, saved_export):
@@ -789,7 +792,8 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
         send_html_email_async.delay(
             subject, email, body,
-            email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+            email_from=settings.DEFAULT_FROM_EMAIL,
+            ga_track=True,
             ga_tracking_info={
                 'cd4': request.domain,
                 'cd10': report_slug
@@ -800,7 +804,8 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
             body = render_full_report_notification(request, content).content
             send_html_email_async.delay(
                 subject, recipient, body,
-                email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+                email_from=settings.DEFAULT_FROM_EMAIL,
+                ga_track=True,
                 ga_tracking_info={
                     'cd4': request.domain,
                     'cd10': report_slug
@@ -1726,7 +1731,7 @@ class EditFormInstance(View):
         instance_id = self.kwargs.get('instance_id', None)
 
         def _error(msg):
-            messages.error(request, msg)
+            messages.error(request, mark_safe(msg))
             url = reverse('render_form_data', args=[domain, instance_id])
             return HttpResponseRedirect(url)
 
@@ -1768,6 +1773,17 @@ class EditFormInstance(View):
             non_parents = filter(lambda cb: cb.path == [], case_blocks)
             if len(non_parents) == 1:
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
+                case = CaseAccessors(domain).get_case(edit_session_data['case_id'])
+                if case.closed:
+                    return _error(_(
+                        u'Case <a href="{case_url}">{case_name}</a> is closed. Please reopen the '
+                        u'case before editing the form'
+                    ).format(
+                        case_url=reverse('case_details', args=[domain, case.case_id]),
+                        case_name=case.name,
+                    ))
+                elif case.is_deleted:
+                    return _error(_(u'Case <a href="{}" is deleted. Cannot edit this form.').format(case.case_id))
 
         edit_session_data['is_editing'] = True
         edit_session_data['function_context'] = {

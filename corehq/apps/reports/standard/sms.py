@@ -314,8 +314,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     @property
     @memoized
     def uses_locations(self):
-        return (toggles.LOCATIONS_IN_REPORTS.enabled(self.domain)
-                and Domain.get_by_name(self.domain).uses_locations)
+        return Domain.get_by_name(self.domain).uses_locations
 
     @property
     @memoized

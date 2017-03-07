@@ -17,6 +17,7 @@ from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.util.timezones.utils import get_timezone_for_domain
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -1309,11 +1310,16 @@ class ExportDataSchema(Document):
                 continue
 
             app = Application.wrap(app_doc)
-            current_schema = cls._process_app_build(
-                current_schema,
-                app,
-                identifier,
-            )
+            try:
+                current_schema = cls._process_app_build(
+                    current_schema,
+                    app,
+                    identifier,
+                )
+            except Exception as e:
+                _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
+                _soft_assert(False, 'Failed to process app {}. {}'.format(app._id, e))
+                continue
 
             # Only record the version of builds on the schema. We don't care about
             # whether or not the schema has seen the current build because that always

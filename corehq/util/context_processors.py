@@ -66,6 +66,8 @@ def current_url_name(request):
 
 
 def js_api_keys(request):
+    if hasattr(request, 'couch_user') and not request.couch_user.analytics_enabled:
+        return {}  # disable js analytics
     d = {}
     d.update(settings.ANALYTICS_IDS)
     d.update({"ANALYTICS_CONFIG": settings.ANALYTICS_CONFIG})
