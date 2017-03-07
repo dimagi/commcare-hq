@@ -1,14 +1,15 @@
 from __future__ import print_function
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    option_list = ()
     help = 'Outputs to STDOUT apache config for your project runtime.'
-    args = "mkserverinstance [host] [port]"
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('host')
+        parser.add_argument('port')
+
+    def handle(self, host, port, **options):
         outstring = """
         <VirtualHost *:80>
             SetEnv SendCL 1 #for chunked encoding
@@ -25,9 +26,7 @@ class Command(BaseCommand):
         </VirtualHost>
         """
 
-        arg_dict = {}
-        if len(args) != 2:
-            raise CommandError('Usage is %s' % self.args)
-        arg_dict['host'] = args[0]
-        arg_dict['port'] = args[1]
-        print(outstring % arg_dict)
+        print(outstring % {
+            'host': host,
+            'port': port,
+        })
