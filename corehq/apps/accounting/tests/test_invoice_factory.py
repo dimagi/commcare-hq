@@ -36,10 +36,6 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self.domain.delete()
         super(TestDomainInvoiceFactory, self).tearDown()
 
-    def _clean_subs(self):
-        SubscriptionAdjustment.objects.all().delete()
-        Subscription.objects.all().delete()
-
     def test_feature_charges(self):
         domain_under_limits = generator.arbitrary_domain()
         self.assertTrue(self.community.feature_charges_exist_for_domain(self.domain))
@@ -57,7 +53,6 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self.assertEqual(len(community_ranges), 1)
         self.assertEqual(community_ranges[0][0], self.invoice_start)
         self.assertEqual(community_ranges[0][1], subscription.date_start)
-        self._clean_subs()
 
     def test_incomplete_ending_coverage(self):
         some_plan = generator.subscribable_plan_version()
@@ -72,7 +67,6 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self.assertEqual(community_ranges[0][0], subscription.date_end)
         self.assertEqual(community_ranges[0][1],
                          self.invoice_end + datetime.timedelta(days=1))
-        self._clean_subs()
 
     def test_patchy_coverage(self):
         some_plan = generator.subscribable_plan_version()
@@ -99,7 +93,6 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self.assertEqual(len(subscriptions), 3)
         community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
         self.assertEqual(len(community_ranges), 4)
-        self._clean_subs()
 
     def test_full_coverage(self):
         some_plan = generator.subscribable_plan_version()
@@ -111,7 +104,6 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         subscriptions = self.invoice_factory._get_subscriptions()
         community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
         self.assertEqual(len(community_ranges), 0)
-        self._clean_subs()
 
     def test_no_coverage(self):
         subscriptions = self.invoice_factory._get_subscriptions()
