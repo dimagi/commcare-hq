@@ -128,8 +128,8 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         for u in self.user_roles:
             user_role = UserRole.get(u.get_id)
             user_role.permissions = Permissions(
-                view_reports=True, edit_commcare_users=True, edit_apps=True,
-                edit_data=True
+                view_reports=True, edit_commcare_users=True, edit_locations=True,
+                edit_apps=True, edit_data=True
             )
             user_role.save()
 

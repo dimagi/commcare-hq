@@ -1139,6 +1139,7 @@ class ProjectUsersTab(UITab):
     @property
     def _is_viewable(self):
         return self.domain and (self.couch_user.can_edit_commcare_users() or
+                                self.couch_user.can_edit_locations() or
                                 self.couch_user.can_edit_web_users())
 
     @property
