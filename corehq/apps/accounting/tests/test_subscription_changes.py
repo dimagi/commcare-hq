@@ -181,6 +181,10 @@ class TestSubscriptionChangeResourceConflict(BaseAccountingTest):
         )
         self.domain.save()
 
+    def tearDown(self):
+        self.domain.delete()
+        super(TestSubscriptionChangeResourceConflict, self).tearDown()
+
     def test_domain_changes(self):
         role = Mock()
         role.memberships_granted.all.return_value = []

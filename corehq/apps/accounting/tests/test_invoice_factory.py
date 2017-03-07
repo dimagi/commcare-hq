@@ -32,6 +32,10 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
             self.invoice_start, self.invoice_end, self.domain
         )
 
+    def tearDown(self):
+        self.domain.delete()
+        super(TestDomainInvoiceFactory, self).tearDown()
+
     def _clean_subs(self):
         SubscriptionAdjustment.objects.all().delete()
         Subscription.objects.all().delete()
@@ -40,6 +44,7 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         domain_under_limits = generator.arbitrary_domain()
         self.assertTrue(self.community.feature_charges_exist_for_domain(self.domain))
         self.assertFalse(self.community.feature_charges_exist_for_domain(domain_under_limits))
+        domain_under_limits.delete()
 
     def test_incomplete_starting_coverage(self):
         some_plan = generator.subscribable_plan_version()
