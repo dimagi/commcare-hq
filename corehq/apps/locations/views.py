@@ -31,6 +31,7 @@ from corehq.apps.custom_data_fields import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.permissions import location_safe
@@ -47,6 +48,7 @@ from .permissions import (
     is_locations_admin,
     can_edit_location,
     require_can_edit_locations,
+    user_can_edit_location_types,
     can_edit_location_types,
     user_can_edit_any_location,
     can_edit_any_location,
@@ -60,9 +62,13 @@ from .util import load_locs_json, location_hierarchy_config, dump_locations
 logger = logging.getLogger(__name__)
 
 
-@require_can_edit_locations
+@locations_access_required
 def default(request, domain):
-    return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
+    if request.couch_user.can_edit_locations():
+        return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
+    elif user_can_edit_location_types(request.couch_user, request.project):
+        return HttpResponseRedirect(reverse(LocationTypesView.urlname, args=[domain]))
+    return no_permissions(request)
 
 
 def lock_locations(func):
