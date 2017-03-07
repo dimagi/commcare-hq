@@ -16,7 +16,7 @@ def update_config(config):
     config.update(dict({get_INFilter_element_bindparam('owner_id', idx): val for idx, val in enumerate(users, 0)}))
 
 
-@quickcache(timeout=3600)
+@quickcache([], timeout=3600)
 def users_locations():
     try:
         group = Group.get('daa2641cf722f8397207c9041bfe5cb3')
