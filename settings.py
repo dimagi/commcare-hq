@@ -186,6 +186,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'rest_framework.authtoken',
     'djcelery',
     'djtables',
     'django_prbac',
@@ -327,6 +328,7 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
+    'corehq.apps.dhis2',
     'corehq.util',
     'dimagi.ext',
     'corehq.doctypemigrations',
@@ -865,6 +867,9 @@ ZIPLINE_API_URL = ''
 ZIPLINE_API_USER = ''
 ZIPLINE_API_PASSWORD = ''
 
+# Set to the list of domain names for which we will run the ICDS SMS indicators
+ICDS_SMS_INDICATOR_DOMAINS = []
+
 KAFKA_URL = 'localhost:9092'
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
@@ -1274,6 +1279,7 @@ COUCHDB_APPS = [
     'couchexport',
     'custom_data_fields',
     'hqadmin',
+    'dhis2',
     'ext',
     'facilities',
     'fluff_filter',
@@ -1473,7 +1479,11 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "FRI_SMS_CATCHUP_CONTENT": "custom.fri.api.catchup_custom_content_handler",
     "FRI_SMS_SHIFT": "custom.fri.api.shift_custom_content_handler",
     "FRI_SMS_OFF_DAY": "custom.fri.api.off_day_custom_content_handler",
-    "UCLA_MESSAGE_BANK": "custom.ucla.api.ucla_message_bank_content",
+    "UCLA_GENERAL_HEALTH": "custom.ucla.api.general_health_message_bank_content",
+    "UCLA_MENTAL_HEALTH": "custom.ucla.api.mental_health_message_bank_content",
+    "UCLA_SEXUAL_HEALTH": "custom.ucla.api.sexual_health_message_bank_content",
+    "UCLA_MED_ADHERENCE": "custom.ucla.api.med_adherence_message_bank_content",
+    "UCLA_SUBSTANCE_USE": "custom.ucla.api.substance_use_message_bank_content",
 }
 
 # These are custom templates which can wrap default the sms/chat.html template
@@ -1531,9 +1541,9 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.domain.get_domain_kafka_to_elasticsearch_pillow',
         },
         {
-            'name': 'AppFormSubmissionTrackerPillow',
+            'name': 'FormSubmissionMetadataTrackerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.app_submission_tracker.get_app_form_submission_tracker_pillow',
+            'instance': 'corehq.pillows.app_submission_tracker.get_form_submission_metadata_tracker_pillow',
         },
     ],
     'core_ext': [
@@ -1737,11 +1747,11 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_monthly_summary.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary_dmc.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary_phi.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_patients.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'mdr_suspects.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patient_overview_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patients_due_to_follow_up.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'treatment_outcome_mobile.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_treatment_outcome_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json')
 ]
 
@@ -1959,7 +1969,7 @@ else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
 
 REST_FRAMEWORK = {
-    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
+    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
 }
 
 SENTRY_CONFIGURED = False

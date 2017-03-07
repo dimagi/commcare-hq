@@ -6,6 +6,7 @@ from casexml.apps.case.mock import CaseBlock
 import uuid
 from xml.etree import ElementTree
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
@@ -62,7 +63,7 @@ class _UserCaseHelper(object):
             create=True,
             case_id=uuid.uuid4().hex,
             owner_id=self.owner_id,
-            user_id=self.owner_id,
+            user_id=CALLCENTER_USER,
             case_type=case_type,
             case_name=fields.pop('name', None),
             update=fields

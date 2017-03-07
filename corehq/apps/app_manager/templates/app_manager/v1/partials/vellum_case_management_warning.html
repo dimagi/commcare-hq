@@ -1,5 +1,5 @@
 {% load i18n %}
-{% if not app.vellum_case_management %}
+{% if not app.vellum_case_management and not app.is_remote_app %}
     <div class="alert alert-danger">
         {% blocktrans %}
             This application uses an outdated form of case management and may behave unexpectedly.

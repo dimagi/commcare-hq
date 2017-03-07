@@ -124,7 +124,9 @@ BEGIN
 		'counsel_immediate_breastfeeding, ' ||
 		'weight_recorded_in_month FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
-		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
+    EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
+
+    -- There may be better indexes to put here. Should investigate what tableau queries
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -186,6 +188,7 @@ BEGIN
 		'postnatal FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
 		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
+        -- There may be better indexes to put here. Should investigate what tableau queries
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -220,6 +223,7 @@ BEGIN
 		'FROM ' || quote_ident(_daily_attendance_tablename) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
+        -- There may be better indexes to put here. Should investigate what tableau queries
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -302,6 +306,11 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(disabled)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(minority)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(resident)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx9') || ' ON ' || quote_ident(_tablename) || '(awc_id)'; -- for second query
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx10') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)'; -- for third query
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx11') || ' ON ' || quote_ident(_tablename) || '(block_id)'; -- for fourth query
+
+    -- may want a double index on month and caste for aggregate location query
 
 	--Roll up by location
 	_rollup_text = 'sum(valid_in_month), ' ||
@@ -489,6 +498,11 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(disabled)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(minority)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(resident)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx9') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx10') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx11') || ' ON ' || quote_ident(_tablename) || '(block_id)';
+
+    -- may want a double index on month and caste for aggregate  location query
 
 	--Roll up by location
 	_rollup_text = 'sum(valid_in_month), ' ||
@@ -732,6 +746,12 @@ BEGIN
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(month)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx3') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx4') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx5') || ' ON ' || quote_ident(_tablename) || '(block_id)';
+
+    -- maybe have a double index on month and awc_id ? for next query
+    -- maybe add a multi column index on month, is_launched and awc_id for query line ~930
 
 	-- Aggregate daily attendance table.  Not using monthly table as it doesn't have all indicators
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
@@ -1006,6 +1026,7 @@ BEGIN
 		'FROM ' || quote_ident(_infra_tablename) || ' ' ||
 		'WHERE month <= ' || quote_literal(_end_date) || ' ORDER BY awc_id, submitted_on DESC) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
+    -- could possibly add multicol indexes to make order by faster?
 
 
 	-- Roll Up by Location

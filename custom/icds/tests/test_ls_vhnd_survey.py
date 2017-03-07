@@ -44,12 +44,6 @@ class TestLSVHNDSurveyIndicator(TestCase):
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
-        cls.aww.delete()
-        cls.ls.delete()
-        for l in cls.locs.values():
-            l.delete()
-        for l in cls.loc_types.values():
-            l.delete()
         cls.domain_obj.delete()
         super(TestLSVHNDSurveyIndicator, cls).tearDownClass()
 

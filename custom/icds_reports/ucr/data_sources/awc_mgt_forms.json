@@ -132,6 +132,7 @@
         "transform": {},
         "datatype": "date",
         "is_primary_key": false,
+        "create_index": true,
         "is_nullable": true,
         "column_id": "month",
         "type": "expression",

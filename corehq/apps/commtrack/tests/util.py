@@ -142,13 +142,14 @@ def extract_balance_xml(xml_payload):
     return []
 
 
-def get_single_balance_block(case_id, product_id, quantity, date_string=None, section_id='stock'):
+def get_single_balance_block(case_id, product_id, quantity, date_string=None, section_id='stock', type=None):
     date_string = date_string or json_format_datetime(datetime.utcnow())
     return """
-<balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="{date}" section-id="{section_id}">
+<balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="{date}" section-id="{section_id}"{type}>
     <entry id="{product_id}" quantity="{quantity}" />
 </balance>""".format(
-        case_id=case_id, product_id=product_id, quantity=quantity, date=date_string, section_id=section_id
+        case_id=case_id, product_id=product_id, quantity=quantity, date=date_string, section_id=section_id,
+        type=' type="{}"'.format(type) if type else ''
     ).strip()
 
 

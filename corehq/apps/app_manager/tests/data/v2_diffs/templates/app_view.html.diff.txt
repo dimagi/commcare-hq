@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,393 +1,117 @@
+@@ -1,397 +1,114 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -17,6 +17,7 @@
 -    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 -    <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
 -    <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+-    <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
 -
 -    {# these scripts are for releases.html, but including them there causes hard-to-reproduce problems #}
 -    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
@@ -182,6 +183,9 @@
 -                }
 -            );
 -        }
+-        function anonymousAppUrl() {
+-            return '{{ app.anonymous_cloudcare_url }}';
+-        }
 -    </script>
 -    <script>
 -        $(function () {
@@ -339,10 +343,7 @@
 +{% block pre_form_content %}
 +  <div class="appmanager-page-actions">
 +      {% if can_preview_form %}
-+      <button type="button" class="btn btn-info js-preview-toggle" style="display: none;">
-+        <span class="js-preview-action-show hide">{% trans "Show App Preview" %}</span>
-+        <span class="js-preview-action-hide hide">{% trans "Hide App Preview" %}</span>
-+      </button>
++        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
 +      {% endif %}
 +      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
 +          <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
