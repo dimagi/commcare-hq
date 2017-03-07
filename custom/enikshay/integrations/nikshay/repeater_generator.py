@@ -43,6 +43,7 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
 from custom.enikshay.case_utils import update_case
 
 ENIKSHAY_ID = 8
+NIKSHAY_NULL_DATE = '1990-01-01'
 
 
 @RegisterGenerator(NikshayRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
@@ -301,15 +302,17 @@ class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
             "HIVTestDate": datetime.datetime.strptime(person_case_properties.get('hiv_test_date'),
                                                       '%Y-%m-%d').strftime('%d/%m/%Y'),
             # might not be available if cpt_initiated is no
-            "CPTDeliverDate": datetime.datetime.strptime(person_case_properties.get('cpt_initiation_date'),
-                                                         '%Y-%m-%d').strftime('%d/%m/%Y'),
-            # might not be available if art_initiated is no
-            "ARTCentreDate": datetime.datetime.strptime(person_case_properties.get('art_initiation_date'),
-                                                        '%Y-%m-%d').strftime('%d/%m/%Y'),
+            "CPTDeliverDate": datetime.datetime.strptime(
+                person_case_properties.get('cpt_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
+            ).strftime('%d/%m/%Y'),
+            "ARTCentreDate": datetime.datetime.strptime(
+                person_case_properties.get('art_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
+            ).strftime('%d/%m/%Y'),
             "InitiatedOnART": art_initiated.get(person_case_properties.get('art_initiated')),
             # might not be available if art_initiated is no
-            "InitiatedDate": datetime.datetime.strptime(person_case_properties.get('art_initiation_date'),
-                                                        '%Y-%m-%d').strftime('%d/%m/%Y'),
+            "InitiatedDate": datetime.datetime.strptime(
+                person_case_properties.get('art_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
+            ).strftime('%d/%m/%Y'),
             "Source": ENIKSHAY_ID,
             "regby": repeat_record.repeater.username,
             "password": repeat_record.repeater.password,
