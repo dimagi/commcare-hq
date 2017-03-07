@@ -38,6 +38,7 @@ class Command(BaseCommand):
 
     def handle(self, num_pool, username, **options):
         start = datetime.utcnow()
+        self.num_pool = num_pool
         no_email = options['no_mail']
 
         self.handle_sync()
