@@ -702,20 +702,16 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         ])
     ]
 
-    @classmethod
-    def setUpClass(cls):
-        super(LocationDrilldownFilterTest, cls).setUpClass()
-        cls.report = ReportConfiguration(domain=cls.domain)
-        cls.filter = ReportFilterFactory.from_spec({
+    def test_filter(self):
+        report = ReportConfiguration(domain=self.domain)
+        filter = ReportFilterFactory.from_spec({
             "slug": "block_id_drill",
             "type": "location_drilldown",
             "field": "block_id",
             "display": "Drilldown by Location",
-        }, cls.report)
+        }, report)
 
-    def test_filter(self):
-
-        self.assertEqual(type(self.filter), LocationDrilldownFilter)
+        self.assertEqual(type(filter), LocationDrilldownFilter)
 
         filter_context_expected = {
             'input_name': 'block_id_drill',
@@ -725,7 +721,7 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
             'loc_url': '/a/{}/api/v0.5/location_internal/'.format(self.domain)
         }
 
-        self.assertDictEqual(self.filter.filter_context(), filter_context_expected)
+        self.assertDictEqual(filter.filter_context(), filter_context_expected)
 
     def test_filter_value(self):
         filter = ReportFilter.wrap({
@@ -735,4 +731,4 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
             "display": "Drilldown by Location",
         })
         filter_value = LocationDrilldownFilterValue(filter, 'Middlesex')
-        self.assertDictEqual(filter_value.to_sql_values(), {'block_id_drill', 'Middlesex'})
+        self.assertDictEqual(filter_value.to_sql_values(), {'block_id_drill': 'Middlesex'})
