@@ -1,5 +1,12 @@
+from datetime import datetime
+
+from celery.schedules import crontab
+from celery.task import periodic_task
+
+from corehq import toggles
 from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
 from corehq.apps.dhis2.models import JsonApiRequest
+from corehq.apps.domain.models import Domain
 
 
 def send_datavalues(domain_name):
@@ -32,4 +39,16 @@ def send_datavalues(domain_name):
         dhis2_conn.password,
     )
     for dataset_map in dataset_maps:
-        api.post('dataValueSets', dataset_map.get_dataset())
+        if dataset_map.day_to_send == datetime.today().day:
+            api.post('dataValueSets', dataset_map.get_dataset())
+
+
+@periodic_task(
+    run_every=crontab(minute=3, hour=3),
+    queue='background_queue'
+)
+def send_datasets_for_all_domains():
+    for row in Domain.get_all(include_docs=False):
+        domain_name = row['key']
+        if toggles.DHIS2_INTEGRATION.enabled(domain_name):
+            send_datavalues(domain_name)

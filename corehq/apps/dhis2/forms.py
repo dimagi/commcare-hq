@@ -102,6 +102,7 @@ class DataValueMapFormSetHelper(FormHelper):
 class DataSetMapForm(forms.Form):
     ucr_id = forms.CharField(label=_('UCR ID'), required=True)
 
+    day_to_send = forms.IntegerField(label=_('Day of month to send data'), required=True)
     data_set_id = forms.CharField(
         label=_('DataSetID'),
         help_text=_('Valid if this UCR adds values to an existing DHIS2 DataSet'),
@@ -140,6 +141,7 @@ class DataSetMapForm(forms.Form):
             crispy.Fieldset(
                 _('Edit DHIS2 DataSet map'),
                 crispy.Field('ucr_id'),
+                crispy.Field('day_to_send'),
                 crispy.Field('data_set_id'),
                 crispy.Field('org_unit_id'),
                 crispy.Field('org_unit_column'),
@@ -157,6 +159,7 @@ class DataSetMapForm(forms.Form):
             # MVP: For now just one UCR mapped
             dataset_map = dataset_maps[0] if dataset_maps else DataSetMap(domain=domain_name)
             dataset_map.ucr_id = self.cleaned_data['ucr_id']
+            dataset_map.day_to_send = self.cleaned_data['day_to_send']
             dataset_map.data_set_id = self.cleaned_data['data_set_id']
             dataset_map.org_unit_id = self.cleaned_data['org_unit_id']
             dataset_map.org_unit_column = self.cleaned_data['org_unit_column']

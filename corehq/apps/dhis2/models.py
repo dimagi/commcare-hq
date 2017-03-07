@@ -7,7 +7,7 @@ import requests
 
 from corehq.apps.dhis2.utils import get_ucr_data
 from corehq.util.quickcache import quickcache
-from dimagi.ext.couchdbkit import Document, StringProperty, DocumentSchema, SchemaListProperty
+from dimagi.ext.couchdbkit import Document, StringProperty, DocumentSchema, SchemaListProperty, IntegerProperty
 
 
 class Dhis2Connection(Document):
@@ -29,6 +29,7 @@ class DataSetMap(Document):
     domain = StringProperty()
     ucr_id = StringProperty()
 
+    day_to_send = IntegerProperty()
     data_set_id = StringProperty()  # If UCR adds values to an existing DataSet
     org_unit_id = StringProperty()  # If all values are for the same OrganisationUnit.
     org_unit_column = StringProperty()  # if not org_unit_id: use org_unit_column
