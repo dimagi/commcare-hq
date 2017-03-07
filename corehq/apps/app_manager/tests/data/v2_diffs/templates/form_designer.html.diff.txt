@@ -64,13 +64,12 @@
                      {% if request.couch_user.days_since_created == 0 %}
                          analytics.workflow('Saved the Form Builder within first 24 hours');
                      {% endif %}
-@@ -129,12 +159,11 @@
-             csrftoken: $.cookie('csrftoken')
-         };
- 
--        {% include 'app_manager/v1/partials/form_designer_requirejs_config.html' with vellum_debug=vellum_debug %}
-+        {% include 'app_manager/v2/partials/form_designer_requirejs_config.html' with vellum_debug=vellum_debug %}
- 
+@@ -157,11 +187,10 @@
+                 'jquery.vellum': 'main'
+             }
+         });
+-        
++
          require(["jquery", "jquery.vellum", "moment"], function ($) {
              $(function () {
                  $("#edit").hide();
@@ -78,7 +77,7 @@
  
                  $('#formdesigner').vellum(VELLUM_OPTIONS);
  
-@@ -151,17 +180,96 @@
+@@ -178,17 +207,96 @@
              });
          });
          analytics.workflow('Entered the Form Builder');
