@@ -1,6 +1,5 @@
 import json
 from copy import copy
-from datetime import datetime
 
 from django.conf import settings
 from kafka import KafkaConsumer
