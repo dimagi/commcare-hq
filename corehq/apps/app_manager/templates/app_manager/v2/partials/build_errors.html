@@ -33,6 +33,12 @@
                             Link to other form is selected, but we don't recognize the form you provided.
                             {% endblocktrans %}
                             {% include "app_manager/v2/partials/form_error_message.html" %}
+                        {% case "form link to missing root" %}
+                            {% blocktrans %}
+                            Please check that end of form navigation is correct. It appears to be pointing
+                            to a parent menu form, but the menu doesn't have a parent.
+                            {% endblocktrans %}
+                            {% include "app_manager/v1/partials/form_error_message.html" %}
                         {% case "no ref detail" %}
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             uses referrals but doesn't have

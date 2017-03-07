@@ -49,7 +49,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "restoreAs": user.restoreAs,
                 "domain": user.domain,
                 "app_id": params.appId,
-                "locale": user.language,
+                "locale": displayOptions.language,
                 "selections": params.steps,
                 "offset": params.page * 10,
                 "search_text": params.search,

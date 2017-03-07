@@ -110,7 +110,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
 
         return [
             {"key": "Completude", 'values': com},
-            {"key": "Promptitude", 'values': prom},
+            {"key": "Promptitude", 'values': prom, 'color': 'red'},
         ]
 
     @property
@@ -127,19 +127,11 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
         def cell_format(data):
             percent = 0
             if isinstance(data, dict):
-                percent = 100
+                percent = 1
             return {
                 'sort_key': percent,
-                'html': "%.2f%%" % percent
+                'html': "oui" if percent else "non"
             }
-
-        users = CommCareUser.by_domain(self.domain)
-        users_dict = {}
-        for user in users:
-            if user.location_id not in users_dict:
-                users_dict.update({user.location_id: [user.get_id]})
-            else:
-                users_dict[user.location_id].append(user.get_id)
 
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=self.no_value))
         data = formatter.format(self.data, keys=self.keys, group_by=self.group_by)
@@ -185,6 +177,14 @@ class WeeklyMalaria(MalariaReport):
     name = u'Données de la semaine'
 
     report_template_path = 'pnlppgi/weekly_malaria.html'
+
+    @property
+    def rendered_report_title(self):
+        week = self.request.GET.get('week', False)
+        year = self.request.GET.get('year', False)
+        if week and year:
+            return self.name + (' [Week %s/%s]' % (week, year))
+        return self.name
 
     @property
     def fields(self):
@@ -355,6 +355,13 @@ class CumulativeMalaria(MalariaReport):
     @property
     def fields(self):
         return [LocationBaseDrilldownOptionFilter, YearFilter]
+
+    @property
+    def rendered_report_title(self):
+        year = self.request.GET.get('year', False)
+        if year:
+            return self.name + (' [Year %s]' % year)
+        return self.name
 
     @property
     def config(self):

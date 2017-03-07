@@ -9,6 +9,7 @@ from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
+from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 
@@ -32,7 +33,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
-        except ProgrammingError, e:
+        except ProgrammingError as e:
             raise TableRebuildError('problem rebuilding UCR table {}: {}'.format(self.config, e))
         finally:
             self.session_helper.Session.commit()
@@ -41,7 +42,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.session_helper.Session.remove()
         try:
             build_table(self.engine, self.get_table())
-        except ProgrammingError, e:
+        except ProgrammingError as e:
             raise TableRebuildError('problem building UCR table {}: {}'.format(self.config, e))
         finally:
             self.session_helper.Session.commit()
@@ -58,6 +59,13 @@ class IndicatorSqlAdapter(IndicatorAdapter):
     def refresh_table(self):
         # SQL is always fresh
         pass
+
+    @unit_testing_only
+    def clear_table(self):
+        table = self.get_table()
+        with self.engine.begin() as connection:
+            delete = table.delete()
+            connection.execute(delete)
 
     def get_query_object(self):
         """

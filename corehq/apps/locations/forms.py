@@ -57,7 +57,7 @@ class LocationForm(forms.Form):
     )
     name = forms.CharField(
         label=ugettext_lazy('Name'),
-        max_length=100,
+        max_length=255,
     )
     location_type = forms.CharField(
         label=ugettext_lazy('Organization Level'),

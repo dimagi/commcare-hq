@@ -216,6 +216,10 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
                         }
                     )
 
+        # Clear indices and attachments
+        self.case.indices = []
+        self.case.case_attachments = {}
+
         # already deleted means it was explicitly set to "deleted",
         # as opposed to getting set to that because it has no actions
         already_deleted = self.case.doc_type == 'CommCareCase-Deleted' and primary_actions(self.case)

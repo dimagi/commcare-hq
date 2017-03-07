@@ -1,3 +1,4 @@
+from __future__ import print_function
 import datetime
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.repeaters.models import RepeatRecord
@@ -18,5 +19,4 @@ class Command(BaseCommand):
         records = RepeatRecord.all(domain=domain, due_before=next_year)
         for record in records:
             record.fire(post_fn=simple_post)
-            record.save()
-            print '{} {}'.format(record._id, 'successful' if record.succeeded else 'failed')
+            print('{} {}'.format(record._id, 'successful' if record.succeeded else 'failed'))

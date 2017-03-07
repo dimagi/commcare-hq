@@ -763,12 +763,12 @@
             "kenya": {
               "default": 0,
               "cases": {
-                "awendo": 34320,
-                "nyatike": 49571,
-                "rongo": 26969,
-                "suna_east": 32161,
-                "suna_west": 41020,
-                "uriri": 42786
+                "awendo": 36511,
+                "nyatike": 51064,
+                "rongo": 34127,
+                "suna_east": 32021,
+                "suna_west": 30664,
+                "uriri": 42440
               },
               "type": "switch",
               "switch_on": {
@@ -1258,7 +1258,29 @@
                 "Nyakanga": 7119,
                 "Nyakisasa": 5641,
                 "Nyamatongo": 8100,
-                "Nyambiti": 6340,
+                "Nyambiti": {
+                  "type": "switch",
+                  "cases": {
+                    "Kwimba": 4300,
+                    "Chato": 2040
+                  },
+                  "switch_on": {
+                    "value_expression": {
+                      "type": "property_path",
+                      "property_path": [
+                        "user_data",
+                        "level_2_name"
+                      ]
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                      "type": "property_name",
+                      "property_name": "owner_id"
+                    }
+                  },
+                  "default": 0
+                },
                 "Nyamikoma": 5900,
                 "Nyamilama": 7400,
                 "Nyampande": 6400,

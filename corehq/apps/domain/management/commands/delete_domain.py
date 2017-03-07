@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 
 from django.core.management.base import BaseCommand
@@ -21,7 +22,7 @@ class Command(BaseCommand):
         domain_name = args[0].strip()
         domain = Domain.get_by_name(domain_name)
         if not domain:
-            print u'domain with name "{}" not found'.format(domain_name)
+            print(u'domain with name "{}" not found'.format(domain_name))
             return
         if not options['noinput']:
             confirm = raw_input(
@@ -33,8 +34,8 @@ class Command(BaseCommand):
                 """.format(domain_name)
             )
             if confirm != domain_name:
-                print "\n\t\tDomain deletion cancelled."
+                print("\n\t\tDomain deletion cancelled.")
                 return
-        print u"Deleting domain {}".format(domain_name)
+        print(u"Deleting domain {}".format(domain_name))
         domain.delete()
-        print "Operation completed"
+        print("Operation completed")

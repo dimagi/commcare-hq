@@ -7,20 +7,35 @@ from corehq.apps.sms.models import PhoneBlacklist, SMS, PhoneNumber
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from django.test import TestCase
 
 
-class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
+class OptTestCase(DomainSubscriptionMixin, TestCase):
 
-    def setUp(self):
-        super(OptTestCase, self).setUp()
-        self.domain = 'opt-test'
+    @classmethod
+    def setUpClass(cls):
+        super(OptTestCase, cls).setUpClass()
+        cls.domain = 'opt-test'
+        cls.domain_obj = Domain(name=cls.domain)
+        cls.domain_obj.sms_case_registration_enabled = True
+        cls.domain_obj.save()
 
-        self.domain_obj = Domain(name=self.domain)
-        self.domain_obj.sms_case_registration_enabled = True
-        self.domain_obj.save()
+        cls.setup_subscription(cls.domain, SoftwarePlanEdition.ADVANCED)
+        cls.backend, cls.backend_mapping = setup_default_sms_test_backend()
 
-        self.setup_subscription(self.domain_obj.name, SoftwarePlanEdition.ADVANCED)
-        self.backend, self.backend_mapping = setup_default_sms_test_backend()
+    @classmethod
+    def tearDownClass(cls):
+        cls.backend_mapping.delete()
+        cls.backend.delete()
+        FormProcessorTestUtils.delete_all_cases(cls.domain)
+        cls.teardown_subscription()
+        cls.domain_obj.delete()
+        super(OptTestCase, cls).tearDownClass()
+
+    def tearDown(self):
+        PhoneBlacklist.objects.all().delete()
+        SMS.objects.filter(domain=self.domain).delete()
+        delete_domain_phone_numbers(self.domain)
 
     def get_last_sms(self, phone_number):
         return SMS.objects.filter(domain=self.domain, phone_number=phone_number).order_by('-date')[0]
@@ -93,12 +108,3 @@ class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
         self.assertEqual(sms.text, 'hello')
         self.assertFalse(sms.error)
         self.assertIsNone(sms.system_error_message)
-
-    def tearDown(self):
-        FormProcessorTestUtils.delete_all_cases(self.domain)
-        PhoneBlacklist.objects.all().delete()
-        delete_domain_phone_numbers(self.domain)
-        self.backend_mapping.delete()
-        self.backend.delete()
-        self.domain_obj.delete()
-        self.teardown_subscription()

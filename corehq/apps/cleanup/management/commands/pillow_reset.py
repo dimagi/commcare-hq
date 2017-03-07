@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 from datetime import datetime
 from couchdbkit import ResourceNotFound
@@ -27,7 +28,7 @@ class Command(BaseCommand):
                 try:
                     checkpoint_doc = db.get(checkpoint_doc_name)
                 except ResourceNotFound:
-                    print 'ERROR - checkpoint {} not found!'.format(checkpoint_doc_name)
+                    print('ERROR - checkpoint {} not found!'.format(checkpoint_doc_name))
                     continue
 
                 def _fmt(seq_id):
@@ -36,11 +37,11 @@ class Command(BaseCommand):
                     else:
                         return seq_id
 
-                print 'resetting {} from {} to {}...'.format(
+                print('resetting {} from {} to {}...'.format(
                     checkpoint_doc_name,
                     _fmt(checkpoint_doc['seq']),
                     _fmt(config.seq),
-                )
+                ))
                 # add metadata properties in case we need to revert this for any reason
                 checkpoint_doc['reset_from'] = checkpoint_doc['seq']
                 checkpoint_doc['reset_on'] = json_format_datetime(datetime.utcnow())
@@ -50,7 +51,7 @@ class Command(BaseCommand):
         if raw_input('Commit the above resets to the database? (y/n) \n').lower() == 'y':
             db.bulk_save(checkpoints)
         else:
-            print 'pillow checkpoints not saved.'
+            print('pillow checkpoints not saved.')
 
 
 class PillowResetConfig(JsonObject):

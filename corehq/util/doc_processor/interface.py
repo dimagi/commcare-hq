@@ -1,6 +1,7 @@
+from __future__ import print_function
 import weakref
 from abc import ABCMeta, abstractmethod
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import six
 
@@ -16,6 +17,8 @@ DOCS_SKIPPED_WARNING = """
         during migration. Run the migration again until you do not see this
         message.
         """
+
+MIN_PROGRESS_INTERVAL = timedelta(minutes=5)
 
 
 class BaseDocProcessor(six.with_metaclass(ABCMeta)):
@@ -223,11 +226,17 @@ class DocumentProcessorController(object):
         if self.visited % self.chunk_size == 0:
             self.document_iterator.set_iterator_detail('progress', {"visited": self.visited, "total": self.total})
 
-        if self.attempted % self.chunk_size == 0:
+        now = datetime.now()
+        attempted = self.attempted
+        last_attempted = getattr(self, "_last_attempted", None)
+        if ((attempted % self.chunk_size == 0 and attempted != last_attempted)
+                or now >= getattr(self, "_next_progress_update", now)):
             elapsed, remaining = self.timing
             self.progress_logger.progress(
                 self.processed, self.visited, self.total, elapsed, remaining
             )
+            self._last_attempted = attempted
+            self._next_progress_update = now + MIN_PROGRESS_INTERVAL
 
     def _processing_complete(self):
         if self.session_visited:

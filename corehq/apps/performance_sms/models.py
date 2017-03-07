@@ -1,7 +1,10 @@
 from corehq.apps.groups.models import Group
+from corehq.apps.performance_sms import parser
+from corehq.apps.performance_sms.exceptions import InvalidParameterException
 from corehq.apps.reports.daterange import get_simple_dateranges
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext as _
 
 
 DAILY = "daily"
@@ -51,3 +54,18 @@ class PerformanceConfiguration(Document):
     @property
     def is_advanced(self):
         return len(self.template_variables) > 1
+
+    def validate(self):
+        """
+        Will raise an exception if it can be detected that this is invalid. This currently checks
+        template validity and all global variables are available.
+        """
+        # ensure template is valid
+        params = parser.get_parsed_params(self.template)
+        # ensure all global variables are available in template_variables
+        variable_slugs = {x.slug for x in self.template_variables}
+        for param in params:
+            if param.namespace == parser.GLOBAL_NAMESPACE and param.variable not in variable_slugs:
+                raise InvalidParameterException(_("Template variable '{}' not found in configuration!").format(
+                    param.variable
+                ))

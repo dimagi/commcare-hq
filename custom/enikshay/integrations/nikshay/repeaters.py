@@ -1,5 +1,7 @@
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
+
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.models import CaseRepeater
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import NIKSHAY_INTEGRATION
@@ -8,6 +10,8 @@ from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.repeaters.signals import create_repeat_records
+from custom.enikshay.case_utils import get_person_case_from_episode
+from custom.enikshay.exceptions import NikshayLocationNotFound
 
 
 class NikshayRegisterPatientRepeater(CaseRepeater):
@@ -34,8 +38,21 @@ class NikshayRegisterPatientRepeater(CaseRepeater):
         return allowed_case_types_and_users and (
             not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
             not episode_case_properties.get('nikshay_id', False) and
-            episode_pending_registration_changed(episode_case)
+            episode_pending_registration_changed(episode_case) and
+            not test_submission(episode_case)
         )
+
+
+def test_submission(episode_case):
+    person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+    try:
+        phi_location = SQLLocation.objects.get(location_id=person_case.owner_id)
+    except SQLLocation.DoesNotExist:
+        raise NikshayLocationNotFound(
+            "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
+            .format(location_id=person_case.owner_id, person_id=person_case.case_id)
+        )
+    return phi_location.metadata.get('is_test', "yes") == "yes"
 
 
 def episode_pending_registration_changed(case):

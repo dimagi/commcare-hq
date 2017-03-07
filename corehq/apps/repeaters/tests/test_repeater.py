@@ -18,7 +18,7 @@ from corehq.apps.repeaters.models import (
     FormRepeater,
     RepeatRecord,
 )
-from corehq.apps.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT
+from corehq.apps.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT, RECORD_SUCCESS_STATE
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
@@ -139,7 +139,6 @@ class RepeaterTest(BaseRepeaterTest):
                     return_value=MockResponse(status_code=404, reason='Not Found')) as mock_post:
                 repeat_record.fire()
                 self.assertEqual(mock_post.call_count, 3)
-            repeat_record.save()
 
         next_check_time = now() + timedelta(minutes=60)
 
@@ -186,7 +185,6 @@ class RepeaterTest(BaseRepeaterTest):
                     force_send=False,
                     timeout=POST_TIMEOUT,
                 )
-            repeat_record.save()
 
         # The following is pretty fickle and depends on which of
         #   - corehq.apps.repeaters.signals
@@ -217,6 +215,38 @@ class RepeaterTest(BaseRepeaterTest):
         with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_fire:
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
+
+    @run_with_all_backends
+    def test_repeat_record_status_check(self):
+        self.assertEqual(len(RepeatRecord.all()), 2)
+
+        # Do not trigger cancelled records
+        for repeat_record in RepeatRecord.all():
+            repeat_record.cancelled = True
+            repeat_record.save()
+        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_fire:
+            check_repeaters()
+            self.assertEqual(mock_fire.call_count, 0)
+
+        # trigger force send records if not cancelled and tries not exhausted
+        for repeat_record in RepeatRecord.all():
+            with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout',
+                       return_value=MockResponse(status_code=200, reason='')
+                       ) as mock_fire:
+                repeat_record.fire(force_send=True)
+                self.assertEqual(mock_fire.call_count, 1)
+
+        # all records should be in SUCCESS state after force try
+        for repeat_record in RepeatRecord.all():
+                self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
+                self.assertEqual(repeat_record.overall_tries, 1)
+
+        # not trigger records succeeded triggered after cancellation
+        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_fire:
+            check_repeaters()
+            self.assertEqual(mock_fire.call_count, 0)
+            for repeat_record in RepeatRecord.all():
+                self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
 
     @run_with_all_backends
     def test_process_repeat_record_locking(self):

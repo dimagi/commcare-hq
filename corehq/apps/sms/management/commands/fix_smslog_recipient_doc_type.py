@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.sms.models import SMS
 from corehq.apps.users.models import CouchUser
@@ -12,7 +13,7 @@ class Command(BaseCommand):
             raise CommandError("Usage: python manage.py fix_smslog_recipient_doc_type <domain1 domain2 ...>")
 
         for domain in args:
-            print "*** Processing Domain %s ***" % domain
+            print("*** Processing Domain %s ***" % domain)
             user_cache = {}
             for msg in SMS.by_domain(domain):
                 if msg.couch_recipient:
@@ -26,7 +27,7 @@ class Command(BaseCommand):
                             except Exception:
                                 user = None
                             if user is None:
-                                print "Could not find user %s" % msg.couch_recipient
+                                print("Could not find user %s" % msg.couch_recipient)
                         user_cache[msg.couch_recipient] = user
                         if user and msg.couch_recipient_doc_type != user.doc_type:
                             msg.couch_recipient_doc_type = user.doc_type

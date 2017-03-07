@@ -563,8 +563,8 @@ class DomainGlobalSettingsForm(forms.Form):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper[3] = twbscrispy.PrependedText('delete_logo', '')
-        self.helper[4] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper[4] = twbscrispy.PrependedText('delete_logo', '')
+        self.helper[5] = twbscrispy.PrependedText('call_center_enabled', '')
         self.helper.all().wrap_together(crispy.Fieldset, 'Edit Basic Information')
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -706,7 +706,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
                 domain.cloudcare_releases = cloudcare_releases
             domain.save()
             return True
-        except Exception, e:
+        except Exception as e:
             logging.exception("couldn't save project settings - error is %s" % e)
             return False
 

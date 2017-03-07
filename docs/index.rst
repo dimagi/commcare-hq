@@ -23,6 +23,7 @@ Welcome to CommCareHQ's documentation!
    maps
    ui_helpers
    class_views
+   testing
    forms
    management_commands
    commtrack

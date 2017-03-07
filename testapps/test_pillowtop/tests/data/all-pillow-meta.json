@@ -114,7 +114,7 @@
     "GroupToUserPillow": {
         "advertised_name": "GroupToUserPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "GroupToUserPillow-test_hqusers_2016-09-29",
+        "checkpoint_id": "GroupToUserPillow-test_hqusers_2017-02-03",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "GroupToUserPillow"
     },
@@ -226,7 +226,7 @@
     "SqlSMSPillow": {
         "advertised_name": "SqlSMSPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "SqlSMSPillow-test_smslogs_708c77f8e5fe00286fa5791e9fa7d45f",
+        "checkpoint_id": "SqlSMSPillow-test_smslogs_2017-02-09",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "SqlSMSPillow"
     },
@@ -254,7 +254,7 @@
     "UnknownUsersPillow": {
         "advertised_name": "UnknownUsersPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "UnknownUsersPillow-test_hqusers_2016-09-29",
+        "checkpoint_id": "UnknownUsersPillow-test_hqusers_2017-02-03",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UnknownUsersPillow"
     },
@@ -275,7 +275,7 @@
     "UserPillow": {
         "advertised_name": "UserPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "UserPillow-test_hqusers_2016-09-29",
+        "checkpoint_id": "UserPillow-test_hqusers_2017-02-03",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UserPillow"
     },
@@ -307,12 +307,12 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "XFormToElasticsearchPillow"
     },
-    "AppFormSubmissionTrackerPillow": {
-        "advertised_name": "AppFormSubmissionTrackerPillow",
+    "FormSubmissionMetadataTrackerPillow": {
+        "advertised_name": "FormSubmissionMetadataTrackerPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "app-form-submission-tracker",
+        "checkpoint_id": "form-submission-metadata-tracker",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
-        "name": "AppFormSubmissionTrackerPillow"
+        "name": "FormSubmissionMetadataTrackerPillow"
     },
     "kafka-ucr-main": {
         "advertised_name": "kafka-ucr-main",

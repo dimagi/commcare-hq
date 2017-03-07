@@ -19,6 +19,8 @@ def get_parsed_params(message_template):
 
     Raises an InvalidParameterException if any parameters aren't in the right format.
     """
+    if message_template is None:
+        return []
     return [parse_param(param) for param in extract_params(message_template)]
 
 
