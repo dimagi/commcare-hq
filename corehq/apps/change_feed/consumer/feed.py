@@ -1,5 +1,6 @@
 import json
 from copy import copy
+from datetime import datetime
 
 from django.conf import settings
 from kafka import KafkaConsumer
@@ -157,7 +158,7 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
     def fire_change_processed(self, change, context):
         if self.should_update_checkpoint(context):
             updated_to = self.change_feed.get_current_checkpoint_offsets()
-            self.checkpoint.update_to(json.dumps(updated_to))
+            self.update_checkpoint(json.dumps(updated_to))
 
 
 def change_from_kafka_message(message):
