@@ -1,10 +1,12 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
+import json
 from mock import patch
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 
 from django.test import TestCase
+from casexml.apps.case.xform import cases_referenced_by_xform
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
@@ -17,12 +19,13 @@ from corehq.apps.repeaters.models import (
     CaseRepeater,
     FormRepeater,
     RepeatRecord,
-)
+    ShortFormRepeater)
 from corehq.apps.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT, RECORD_SUCCESS_STATE
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.const import DEVICE_LOG_XMLNS
+from dimagi.utils.parsing import json_format_datetime
 
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
@@ -81,7 +84,7 @@ class BaseRepeaterTest(TestCase):
 
     @classmethod
     def post_xml(cls, xml, domain_name):
-        submit_form_locally(xml, domain_name)
+        return submit_form_locally(xml, domain_name)
 
     @classmethod
     def repeat_records(cls, domain_name):
@@ -350,6 +353,43 @@ class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.post_xml(self.xform_xml, self.domain_name)
         payload = self.repeat_records(self.domain_name).all()[0].get_payload()
         self.assertXMLEqual(self.xform_xml, payload)
+
+
+class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ShortFormRepeaterTest, cls).setUpClass()
+
+        cls.domain_name = "test-domain"
+        cls.domain = create_domain(cls.domain_name)
+        cls.repeater = ShortFormRepeater(
+            domain=cls.domain_name,
+            url="short-form-repeater-url",
+        )
+        cls.repeater.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        cls.repeater.delete()
+        super(ShortFormRepeaterTest, cls).tearDownClass()
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases(self.domain_name)
+        delete_all_repeat_records()
+        super(ShortFormRepeaterTest, self).tearDown()
+
+    @run_with_all_backends
+    def test_payload(self):
+        _, form, _ = self.post_xml(self.xform_xml, self.domain_name)
+        payload = self.repeat_records(self.domain_name).all()[0].get_payload()
+        cases = cases_referenced_by_xform(form)
+        self.assertEqual(json.loads(payload), {
+            'received_on': json_format_datetime(form.received_on),
+            'form_id': form.form_id,
+            'case_ids': [case.case_id for case in cases]
+        })
 
 
 class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
