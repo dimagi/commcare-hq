@@ -1005,7 +1005,7 @@ class FormBase(DocumentSchema):
         if (
                 self.source == '' or
                 len(self.get_questions(self.get_app().langs, include_triggers=True)) == 0
-                ):
+           ):
             errors.append(dict(type="blank form", **meta))
         else:
             try:
