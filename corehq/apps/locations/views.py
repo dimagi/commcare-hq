@@ -32,7 +32,6 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.permissions import location_safe
 from corehq.util import reverse
@@ -47,6 +46,7 @@ from .permissions import (
     locations_access_required,
     is_locations_admin,
     can_edit_location,
+    require_can_edit_locations,
     can_edit_location_types,
     user_can_edit_any_location,
     can_edit_any_location,
@@ -60,7 +60,7 @@ from .util import load_locs_json, location_hierarchy_config, dump_locations
 logger = logging.getLogger(__name__)
 
 
-@locations_access_required
+@require_can_edit_locations
 def default(request, domain):
     return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
 
@@ -143,7 +143,7 @@ def check_pending_locations_import(redirect=False):
 class BaseLocationView(BaseDomainView):
     section_name = ugettext_lazy("Locations")
 
-    @method_decorator(locations_access_required)
+    @method_decorator(require_can_edit_locations)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -174,7 +174,6 @@ class LocationsListView(BaseLocationView):
     template_name = 'locations/manage/locations.html'
 
     @use_jquery_ui
-    @method_decorator(require_can_edit_commcare_users)
     @method_decorator(check_pending_locations_import())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationsListView, self).dispatch(request, *args, **kwargs)
@@ -236,10 +235,15 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
 
 
-class LocationTypesView(BaseLocationView):
+class LocationTypesView(BaseDomainView):
     urlname = 'location_types'
     page_title = ugettext_noop("Organization Levels")
     template_name = 'locations/location_types.html'
+    section_name = ugettext_lazy("Locations")
+
+    @property
+    def section_url(self):
+        return reverse(LocationsListView.urlname, args=[self.domain])
 
     @method_decorator(can_edit_location_types)
     @use_jquery_ui
@@ -662,7 +666,8 @@ class EditLocationView(NewLocationView):
     @property
     @memoized
     def users_form(self):
-        if not self.can_access_all_locations:
+        if (not self.request.couch_user.can_edit_commcare_users()
+                or not self.can_access_all_locations):
             return None
         form = UsersAtLocationForm(
             domain_object=self.domain_object,
@@ -818,7 +823,7 @@ class LocationImportView(BaseLocationView):
         )
 
 
-@locations_access_required
+@require_can_edit_locations
 def location_importer_job_poll(request, domain, download_id,
                                template="style/partials/download_status.html"):
     template = "locations/manage/partials/locations_upload_status.html"
@@ -835,7 +840,7 @@ def location_importer_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
-@locations_access_required
+@require_can_edit_locations
 def location_export(request, domain):
     if not LocationType.objects.filter(domain=domain).exists():
         messages.error(request, _("You need to define organization levels before "
