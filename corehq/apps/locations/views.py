@@ -728,52 +728,6 @@ class EditLocationView(NewLocationView):
             raise Http404()
 
 
-class BaseSyncView(BaseLocationView):
-    source = ""
-    sync_urlname = None
-    section_name = ugettext_lazy("Project Settings")
-
-    @property
-    def page_context(self):
-        return {
-            'settings': self.settings_context,
-            'source': self.source,
-            'sync_url': self.sync_urlname
-        }
-
-    @property
-    def settings_context(self):
-        key = "%s_config" % self.source
-        if hasattr(self.domain_object.commtrack_settings, key):
-            return {
-                "source_config": getattr(self.domain_object.commtrack_settings, key)._doc,
-            }
-        else:
-            return {}
-
-    def post(self, request, *args, **kwargs):
-        payload = json.loads(request.POST.get('json'))
-
-        #TODO add server-side input validation here (currently validated on client)
-        key = "%s_config" % self.source
-        if "source_config" in payload:
-            for item in payload['source_config']:
-                if hasattr(self.domain_object.commtrack_settings, key):
-                    setattr(
-                        getattr(self.domain_object.commtrack_settings, key),
-                        item,
-                        payload['source_config'][item]
-                    )
-
-        self.domain_object.commtrack_settings.save()
-
-        return self.get(request, *args, **kwargs)
-
-    @property
-    def section_url(self):
-        return reverse('settings_default', args=(self.domain,))
-
-
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Organization Structure Import Status')
