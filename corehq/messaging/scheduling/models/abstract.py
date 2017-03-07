@@ -4,10 +4,6 @@ from django.db import models
 
 
 class ScheduleForeignKeyMixin(models.Model):
-    # These are ids rather than ForeignKeys because some subclasses of
-    # ScheduleForeignKeyMixin are partitioned models.
-    timed_schedule_id = models.IntegerField(null=True, db_index=True)
-    alert_schedule_id = models.IntegerField(null=True, db_index=True)
 
     class Meta:
         abstract = True
@@ -51,6 +47,30 @@ class ScheduleForeignKeyMixin(models.Model):
             self.alert_schedule_id = value.pk
         else:
             raise self.UnknownScheduleType()
+
+
+class SchedulePartitionedForeignKeyMixin(ScheduleForeignKeyMixin):
+    """
+    This version of the ScheduleForeignKeyMixin should be used with partitioned models.
+    Django ForeignKey fields cannot be used.
+    """
+    timed_schedule_id = models.IntegerField(null=True, db_index=True)
+    alert_schedule_id = models.IntegerField(null=True, db_index=True)
+
+    class Meta:
+        abstract = True
+
+
+class ScheduleORMForeignKeyMixin(ScheduleForeignKeyMixin):
+    """
+    This version of the ScheduleForeignKeyMixin should be used with non-partitioned models.
+    Django ForeignKey fields are used to make queries easier.
+    """
+    timed_schedule = models.ForeignKey('scheduling.TimedSchedule', null=True, on_delete=models.CASCADE)
+    alert_schedule = models.ForeignKey('scheduling.AlertSchedule', null=True, on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
 
 
 class Schedule(models.Model):

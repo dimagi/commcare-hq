@@ -6,7 +6,7 @@ from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.messaging.scheduling.models import ScheduleForeignKeyMixin
+from corehq.messaging.scheduling.models import SchedulePartitionedForeignKeyMixin
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import save_schedule_instance
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from datetime import tzinfo
@@ -15,7 +15,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 
 
-class ScheduleInstance(ScheduleForeignKeyMixin):
+class ScheduleInstance(SchedulePartitionedForeignKeyMixin):
     schedule_instance_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     domain = models.CharField(max_length=126)
     recipient_type = models.CharField(max_length=126)
