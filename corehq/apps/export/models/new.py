@@ -844,6 +844,13 @@ class ExportInstance(BlobMixin, Document):
         """
         return self.fetch_attachment(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, stream=stream)
 
+    def copy_export(self):
+        export_json = self.to_json()
+        del export_json['_id']
+        export_json['name'] = '{} - Copy'.format(self.name)
+        new_export = self.__class__.wrap(export_json)
+        return new_export
+
 
 class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
