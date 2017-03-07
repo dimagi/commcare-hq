@@ -849,7 +849,7 @@ class ExportInstance(BlobMixin, Document):
         del export_json['_id']
         export_json['name'] = '{} - Copy'.format(self.name)
         new_export = self.__class__.wrap(export_json)
-        new_export.save()
+        return new_export
 
 
 class CaseExportInstance(ExportInstance):

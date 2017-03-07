@@ -2433,8 +2433,10 @@ class CopyExportView(View):
     def get(self, request, domain, export_id, *args, **kwargs):
         try:
             export = get_properly_wrapped_export_instance(export_id)
-            export.copy_export()
         except ResourceNotFound:
             messages.error(request, _('You can only copy new exports.'))
+        else:
+            new_export = export.copy_export()
+            new_export.save()
         referer = request.META.get('HTTP_REFERER', reverse('data_interfaces_default', args=[domain]))
         return HttpResponseRedirect(referer)
