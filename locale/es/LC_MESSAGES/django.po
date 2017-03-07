@@ -17110,7 +17110,7 @@ msgstr ""
 "\n"
 "La integración de Tablero de Excel solo está disponible en el Plan Estándar "
 "o uno superior.\n"
-"Haga clic <a href=\"%(software_plan_url)s">aquí</a> para administrar el plan "
+"Haga clic <a href=\"%(software_plan_url)s\">aquí</a> para administrar el plan "
 "de software para su proyecto."
 
 #: corehq/apps/export/templates/export/customize_export_new.html:111
@@ -17136,7 +17136,7 @@ msgstr ""
 "\n"
 "Las exportaciones guardadas diariamente solo están disponibles en el Plan "
 "Estándar o uno superior.\n"
-"Haga clic <a href=\"%(software_plan_url)s">aquí</a> para administrar el plan "
+"Haga clic <a href=\"%(software_plan_url)s\">aquí</a> para administrar el plan "
 "de software para su proyecto."
 
 #: corehq/apps/export/templates/export/customize_export_new.html:141
