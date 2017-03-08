@@ -169,7 +169,8 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
             "Local_ID": person_case.get_id,
             "IP_From": "127.0.0.1",
             "IntervalId": interval_id,
-            "PatientWeight": episode_case_properties.get('weight'),
+            # since weight is not taken and is mandatory we send 1
+            "PatientWeight": test_case_properties.get('weight', 1),
             "SmearResult": result_grade,
             "Source": ENIKSHAY_ID,
             "DMC": dmc_code
