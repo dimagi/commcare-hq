@@ -299,11 +299,13 @@ class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
         )
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
+        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
+                            "hiv_nikshay_registered", "hiv_nikshay_error")
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception))
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
+                                "hiv_nikshay_registered", "hiv_nikshay_error")
 
 
 def _get_nikshay_id_from_response(response):
@@ -410,12 +412,12 @@ def _get_episode_case_properties(episode_case_properties):
     return episode_properties
 
 
-def _save_error_message(domain, case_id, error):
+def _save_error_message(domain, case_id, error, reg_field="nikshay_registered", error_field="nikshay_error"):
     update_case(
         domain,
         case_id,
         {
-            "nikshay_registered": "false",
-            "nikshay_error": error,
+            reg_field: "false",
+            error_field: error,
         },
     )
