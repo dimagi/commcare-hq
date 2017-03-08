@@ -274,7 +274,7 @@ class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
             "ARTCentreDate": datetime.datetime.strptime(
                 person_case_properties.get('art_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
             ).strftime('%d/%m/%Y'),
-            "InitiatedOnART": art_initiated.get(person_case_properties.get('art_initiated')),
+            "InitiatedOnART": art_initiated.get(person_case_properties.get('art_initiated', 'no')),
             # might not be available if art_initiated is no
             "InitiatedDate": datetime.datetime.strptime(
                 person_case_properties.get('art_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
