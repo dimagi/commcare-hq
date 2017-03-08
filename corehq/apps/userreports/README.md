@@ -61,6 +61,7 @@ An overview of the design, API and data structures used here.
         - [Dynamic choice lists](#dynamic-choice-lists)
             - [Choice providers](#choice-providers)
         - [Choice lists](#choice-lists)
+        - [Drilldown by Location](#drilldown-by-location)
         - [Internationalization](#internationalization)
     - [Report Columns](#report-columns)
         - [Field columns](#field-columns)
@@ -1255,6 +1256,17 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
     {"value": "doctor", "display": "Doctor"},
     {"value": "nurse"}
   ]
+}
+```
+
+### Drilldown by Location
+
+This filter allows selection of a location for filtering by drilling down from top level.
+```
+{
+  "type": "location_drilldown",
+  "slug": "by_location",
+  "field": "district_id",
 }
 ```
 
