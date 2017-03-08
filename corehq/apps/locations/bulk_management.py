@@ -327,13 +327,16 @@ class LocationExcelValidator(object):
         actual = set(type_sheet_reader.headers)
         expected = set(LOCATION_TYPE_SHEET_HEADERS.values())
         if actual != expected:
-            raise LocationExcelSheetError(
-                _(u"'types' sheet should contain exactly '{expected}' as the sheet headers. "
-                  "'{missing}' are missing")
-                .format(
-                    expected=", ".join(expected),
-                    missing=", ".join(expected - actual))
+            message = (u"'types' sheet should contain exactly '{expected}' as the sheet headers. "
+                       "'{missing}' are missing")
+            if actual - expected:
+                message = message + " '{extra}' are not recognized"
+            message = message.format(
+                expected=", ".join(expected),
+                missing=", ".join(expected - actual),
+                extra=", ".join(actual - expected),
             )
+            raise LocationExcelSheetError(_(message))
 
         # all listed types should have a corresponding locations sheet
         type_stubs = self._get_types(type_sheet_reader)
