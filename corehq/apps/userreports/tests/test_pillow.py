@@ -12,8 +12,10 @@ from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
+from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
+from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
     ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow, get_kafka_ucr_static_pillow
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -52,19 +54,27 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         self.assertTrue(table_manager.needs_bootstrap())
 
 
-class IndicatorPillowTestBase(TestCase):
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
+class IndicatorPillowTest(TestCase):
 
-    def setUp(self):
-        super(IndicatorPillowTestBase, self).setUp()
-        self.config = get_sample_data_source()
-        self.config.save()
-        self.adapter = get_indicator_adapter(self.config)
-        self.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
+    @classmethod
+    def setUpClass(cls):
+        super(IndicatorPillowTest, cls).setUpClass()
+        cls.config = get_sample_data_source()
+        cls.config.save()
+        cls.adapter = get_indicator_adapter(cls.config)
+        cls.adapter.build_table()
+        cls.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
+        cls.pillow = get_kafka_ucr_pillow()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.config.delete()
+        cls.adapter.drop_table()
+        super(IndicatorPillowTest, cls).tearDownClass()
 
     def tearDown(self):
-        self.config.delete()
-        self.adapter.drop_table()
-        super(IndicatorPillowTestBase, self).tearDown()
+        self.adapter.clear_table()
 
     @patch('corehq.apps.userreports.specs.datetime')
     def _check_sample_doc_state(self, expected_indicators, datetime_mock):
@@ -84,27 +94,15 @@ class IndicatorPillowTestBase(TestCase):
                     )
                 )
 
-
-class IndicatorPillowTest(IndicatorPillowTestBase):
-
-    @softer_assert()
-    def setUp(self):
-        super(IndicatorPillowTest, self).setUp()
-        self.pillow = get_kafka_ucr_pillow()
-        self.pillow.bootstrap(configs=[self.config])
-        with trap_extra_setup(KafkaUnavailableError):
-            self.pillow.get_change_feed().get_current_offsets()
-
-    @run_with_all_ucr_backends
     def test_stale_rebuild(self):
-        later_config = copy(self.config)
+        # rebuild indicators in another test will save this
+        later_config = DataSourceConfiguration.get(self.config._id)
         later_config.save()
         self.assertNotEqual(self.config._rev, later_config._rev)
         with self.assertRaises(StaleRebuildError):
             self.pillow.rebuild_table(get_indicator_adapter(self.config))
 
     @patch('corehq.apps.userreports.specs.datetime')
-    @run_with_all_ucr_backends
     def test_change_transport(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -112,19 +110,15 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         self._check_sample_doc_state(expected_indicators)
 
     @patch('corehq.apps.userreports.specs.datetime')
-    @run_with_all_ucr_backends
     def test_rebuild_indicators(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
-        self.config.save()
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
         CommCareCase.get_db().save_doc(sample_doc)
         self.addCleanup(lambda id: CommCareCase.get_db().delete_doc(id), sample_doc['_id'])
         rebuild_indicators(self.config._id)
         self._check_sample_doc_state(expected_indicators)
 
-    @run_with_all_ucr_backends
     def test_bad_integer_datatype(self):
-        self.config.save()
         bad_ints = ['a', '', None]
         for bad_value in bad_ints:
             self.pillow.process_change(doc_to_change({
@@ -139,7 +133,6 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         self.assertEqual(len(bad_ints), self.adapter.get_query_object().count())
 
     @patch('corehq.apps.userreports.specs.datetime')
-    @run_with_all_ucr_backends
     def test_basic_doc_processing(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -147,7 +140,6 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         self._check_sample_doc_state(expected_indicators)
 
     @patch('corehq.apps.userreports.specs.datetime')
-    @run_with_all_ucr_backends
     def test_not_relevant_to_domain(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -157,7 +149,6 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         self.assertEqual(0, self.adapter.get_query_object().count())
 
     @patch('corehq.apps.userreports.specs.datetime')
-    @run_with_all_ucr_backends
     def test_process_doc_from_couch(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -178,7 +169,6 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
 
     @patch('corehq.apps.userreports.specs.datetime')
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-    @run_with_all_ucr_backends
     def test_process_doc_from_sql(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
@@ -193,6 +183,11 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         self._check_sample_doc_state(expected_indicators)
 
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+
+
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
+class IndicatorPillowTestES(IndicatorPillowTest):
+    pass
 
 
 class ProcessRelatedDocTypePillowTest(TestCase):
@@ -251,7 +246,15 @@ class ProcessRelatedDocTypePillowTest(TestCase):
             self.assertEqual(int(row.parent_property), i)
 
 
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class StaticKafkaIndicatorPillowTest(TestCase):
+
+    def setUp(self):
+        self.pillow = get_kafka_ucr_static_pillow()
+
+    def tearDown(self):
+        for adapter in self.pillow._processor.table_adapters_by_domain.values():
+            adapter.drop_table()
 
     @patch(
         'corehq.apps.userreports.pillow.'
@@ -261,9 +264,13 @@ class StaticKafkaIndicatorPillowTest(TestCase):
         'corehq.apps.userreports.pillow.'
         'ConfigurableReportTableManagerMixin.rebuild_tables_if_necessary',
         MagicMock(return_value=None))
-    @run_with_all_ucr_backends
     def test_bootstrap_can_be_called(self):
-        get_kafka_ucr_static_pillow().bootstrap()
+        self.pillow.bootstrap()
+
+
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
+class StaticKafkaIndicatorPillowTestES(StaticKafkaIndicatorPillowTest):
+    pass
 
 
 class IndicatorConfigFilterTest(SimpleTestCase):
