@@ -58,7 +58,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
     cases_to_rebuild = set()
 
     for form in FormAccessors(domain).iter_forms(form_id_list):
-        if form.domain != domain or form.is_error:
+        if form.domain != domain or not form.is_normal:
             continue
 
         # rebuild all cases anyways since we don't know if this has run or not if the task was killed
