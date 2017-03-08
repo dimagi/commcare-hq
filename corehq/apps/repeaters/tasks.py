@@ -62,6 +62,7 @@ def check_repeaters():
 def process_repeat_record(repeat_record):
     if repeat_record.state == RECORD_FAILURE_STATE and repeat_record.overall_tries >= repeat_record.max_possible_tries:
         repeat_record.cancel()
+        repeat_record.save()
         return
     if repeat_record.cancelled:
         return
