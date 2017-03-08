@@ -1,6 +1,5 @@
 from __future__ import print_function
 from datetime import datetime
-from optparse import make_option
 from dateutil import parser
 
 from django.core.management.base import BaseCommand

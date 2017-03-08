@@ -1364,6 +1364,7 @@ class DailySavedExportListView(BaseExportListView):
             'emailedExport': emailed_export,
             'editUrl': reverse(edit_view.urlname, args=(self.domain, export.get_id)),
             'downloadUrl': reverse(download_view.urlname, args=(self.domain, export.get_id)),
+            'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
     @allow_remote_invocation
@@ -1579,6 +1580,7 @@ class FormExportListView(BaseExportListView):
             'editUrl': reverse(edit_view.urlname,
                                args=(self.domain, export.get_id)),
             'downloadUrl': self._get_download_url(export.get_id, isinstance(export, FormExportSchema)),
+            'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
     def _get_download_url(self, export_id, is_legacy):
@@ -1725,6 +1727,7 @@ class CaseExportListView(BaseExportListView):
             'emailedExport': emailed_export,
             'editUrl': reverse(edit_view.urlname, args=(self.domain, export.get_id)),
             'downloadUrl': self._get_download_url(export._id, isinstance(export, CaseExportSchema)),
+            'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
     def _get_download_url(self, export_id, is_legacy):
@@ -2415,3 +2418,25 @@ def download_daily_saved_export(req, domain, export_instance_id):
     return build_download_saved_export_response(
         payload, export_instance.export_format, export_instance.filename
     )
+
+
+class CopyExportView(View):
+    urlname = 'copy_export'
+
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.couch_user.can_edit_data():
+            raise Http404
+        else:
+            return super(CopyExportView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, domain, export_id, *args, **kwargs):
+        try:
+            export = get_properly_wrapped_export_instance(export_id)
+        except ResourceNotFound:
+            messages.error(request, _('You can only copy new exports.'))
+        else:
+            new_export = export.copy_export()
+            new_export.save()
+        referer = request.META.get('HTTP_REFERER', reverse('data_interfaces_default', args=[domain]))
+        return HttpResponseRedirect(referer)

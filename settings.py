@@ -326,6 +326,7 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
+    'corehq.apps.dhis2',
     'corehq.util',
     'dimagi.ext',
     'corehq.doctypemigrations',
@@ -1276,6 +1277,7 @@ COUCHDB_APPS = [
     'couchexport',
     'custom_data_fields',
     'hqadmin',
+    'dhis2',
     'ext',
     'facilities',
     'fluff_filter',
@@ -1743,11 +1745,11 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_monthly_summary.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary_dmc.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary_phi.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_patients.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'mdr_suspects.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patient_overview_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patients_due_to_follow_up.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'treatment_outcome_mobile.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_treatment_outcome_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json')
 ]
 

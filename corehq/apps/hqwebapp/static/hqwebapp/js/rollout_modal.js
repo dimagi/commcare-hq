@@ -4,8 +4,7 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
         var $modal = $(".rollout-modal"),
             slug = $modal.data("slug"),
             cookie_name = "snooze_" + slug;
-        if (false && $modal.length && !$.cookie(cookie_name)) {
-            var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
+        if ($modal.length && !$.cookie(cookie_name)) {
             $modal.modal({
                 backdrop: 'static',
                 keyboard: false,
@@ -13,11 +12,7 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
             });
             $modal.on('click', '.flag-enable', function() {
                 $.post({
-                    url: initial_page_data("toggle_url"),
-                    data: {
-                        item_list: JSON.stringify([initial_page_data("toggle_item")]),
-                        append: 1,
-                    },
+                    url: hqImport("hqwebapp/js/urllib.js").reverse("enable_vellum_beta"),
                     success: function() {
                         window.location.reload(true);
                     },

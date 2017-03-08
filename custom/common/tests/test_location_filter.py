@@ -1,7 +1,7 @@
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import WebUser
-from custom.m4change.filters import RestrictedLocationDrillDown
+from custom.common.filters import RestrictedLocationDrillDown
 
 
 class TestLocationFilter(LocationHierarchyTestCase):

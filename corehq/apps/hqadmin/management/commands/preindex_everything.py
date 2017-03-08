@@ -1,5 +1,5 @@
 from __future__ import print_function
-from optparse import make_option
+
 import traceback
 from cStringIO import StringIO
 from django.core.management import call_command

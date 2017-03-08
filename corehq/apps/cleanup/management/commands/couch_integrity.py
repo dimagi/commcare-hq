@@ -1,9 +1,8 @@
 from __future__ import print_function
 import json
 import requests
-from optparse import make_option
 from collections import defaultdict
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from django.conf import settings
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
 from jsonobject.base import DefaultProperty
@@ -50,24 +49,27 @@ from jsonobject.base import DefaultProperty
 # CI_DIMAGI003_CLOUDANT_COM_PASSWORD = '***'
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = ("Run couch views on docs from different database instances."
             "See couch_integrity/basic.json for example config")
     label = "config file"
 
-    option_list = LabelCommand.option_list + (
-        make_option(
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'filename',
+        )
+        parser.add_argument(
             '--wiggle',
             dest='wiggle',
             default=0,
-            type="int",
-            help='Define how much doc counts can be off by'
-        ),
-    )
+            type=int,
+            help='Define how much doc counts can be off by',
+        )
 
-    def handle_label(self, *labels, **options):
+
+    def handle_label(self, filename, **options):
         wiggle = options['wiggle']
-        with open(labels[0]) as f:
+        with open(filename) as f:
             integrity_config = IntegrityConfig.wrap(json.loads(f.read()))
             integrity_check(integrity_config, wiggle)
 

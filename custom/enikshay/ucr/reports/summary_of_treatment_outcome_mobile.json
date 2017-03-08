@@ -11,10 +11,10 @@
         "np-migration-3"
     ],
     "data_source_table": "episode",
-    "report_id": "treatment_outcome_mobile",
+    "report_id": "summary_of_treatment_outcome",
     "config": {
         "description": "",
-        "title": "Treatment Overview - Mobile Report",
+        "title": "Summary of Treatment Outcome",
         "sort_expression": [],
         "visible": false,
         "configured_charts": [],
@@ -148,7 +148,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Total Retreatment Cases with Treatment Outcome - Cured",
+                "display": "Total Previously Treated Cases with Treatment Outcome - Cured",
                 "type": "field",
                 "field": "retreatment_cured",
                 "aggregation": "sum",
@@ -160,7 +160,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Total Retreatment Cases with Treatment Outcome - Treatment Completed",
+                "display": "Total Previously Treated Cases with Treatment Outcome - Treatment Completed",
                 "type": "field",
                 "field": "retreatment_treatment_complete",
                 "aggregation": "sum",
@@ -172,7 +172,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Total Retreatment Cases with Treatment Outcome - Died",
+                "display": "Total Previously Treated Cases with Treatment Outcome - Died",
                 "type": "field",
                 "field": "retreatment_died",
                 "aggregation": "sum",
@@ -184,7 +184,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Total Retreatment Cases with Treatment Outcome - Treatment Failure",
+                "display": "Total Previously Treated Cases with Treatment Outcome - Treatment Failure",
                 "type": "field",
                 "field": "retreatment_failure",
                 "aggregation": "sum",
@@ -196,7 +196,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Total Retreatment Cases with Treatment Outcome - Loss to Follow-up",
+                "display": "Total Previously Treated Cases with Treatment Outcome - Loss to Follow-up",
                 "type": "field",
                 "field": "retreatment_loss_to_follow_up",
                 "aggregation": "sum",
@@ -208,7 +208,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Total Retreatment Cases with Treatment Outcome - Regimen changed",
+                "display": "Total Previously Treated Cases with Treatment Outcome - Regimen changed",
                 "type": "field",
                 "field": "retreatment_regimen_changed",
                 "aggregation": "sum",
@@ -220,7 +220,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Total Retreatment Cases with Treatment Outcome - Not evaluated",
+                "display": "Total Previously Treated Cases with Treatment Outcome - Not evaluated",
                 "type": "field",
                 "field": "retreatment_not_evaluated",
                 "aggregation": "sum",
@@ -232,7 +232,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Total Retreatment Cases",
+                "display": "Total Previously Treated Cases",
                 "type": "field",
                 "field": "retreatment_treatment_outcome_updated",
                 "aggregation": "sum",

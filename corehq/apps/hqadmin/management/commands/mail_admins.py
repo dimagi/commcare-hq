@@ -1,7 +1,7 @@
 import sys
 import json
 import requests
-from optparse import make_option
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.core.mail import mail_admins
