@@ -6,6 +6,7 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from dimagi.utils.logging import notify_exception
 from pillowtop.const import CHECKPOINT_MIN_WAIT
+from pillowtop.utils import force_seq_int
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
 
@@ -144,7 +145,7 @@ class PillowBase(object):
             else:
                 return {}
 
-            sequence = {topic: int(sequence)}
+            sequence = {topic: force_seq_int(sequence)}
         return sequence
 
     def _record_checkpoint_in_datadog(self):
