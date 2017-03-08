@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import logout as django_logout, password_reset_confirm
+from django.contrib.auth.views import logout as django_logout, password_reset_confirm, password_reset_complete
 from django.core import cache
 from django.core.mail.message import EmailMessage
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
@@ -232,6 +232,13 @@ def domain_reset_pwd(request, domain, uidb64, token, template_name='login_and_pa
         request, uidb64, token, template_name,
         set_password_form=HQSetPasswordForm, extra_context=extra_context
     )
+
+
+def domain_reset_pwd_complete(request, domain,
+                              template_name='login_and_password/password_reset_complete.html',
+                              extra_context=None):
+    extra_context = {'domain_name': domain} if extra_context is None else dict(extra_context, domain_name=domain)
+    return password_reset_complete(request, template_name, extra_context)
 
 
 def server_up(req):

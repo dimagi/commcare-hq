@@ -15,7 +15,7 @@ from corehq.apps.hqwebapp.views import (
     MaintenanceAlertsView, redirect_to_default,
     yui_crossdomain, password_change, no_permissions, login, logout, bug_report, debug_notify,
     quick_find, osdd, create_alert, activate_alert, deactivate_alert, jserror, dropbox_upload, domain_login,
-    retrieve_download, toggles_js, couch_doc_counts, server_up, domain_reset_pwd)
+    retrieve_download, toggles_js, couch_doc_counts, server_up, domain_reset_pwd, domain_reset_pwd_complete)
 
 urlpatterns = [
     url(r'^$', redirect_to_default),
@@ -65,12 +65,12 @@ domain_specific = [
          'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
         name='domain_reset_pwd_email'),
     # This url is linked to from mobile login page
-    # url(r'^reset_pwd_email/$', exception_safe_password_reset,
-    #     {'template_name': 'login_and_password/mobile_password_reset_form.html',
-    #      'email_template_name': 'login_and_password/domain_mobile_reset_pwd_email.html',
-    #      'from_email': settings.DEFAULT_FROM_EMAIL,
-    #      'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
-    #     name='domain_mobile_reset_pwd_email'),
+    url(r'^reset_pwd_email/$', exception_safe_password_reset,
+        {'template_name': 'login_and_password/mobile_password_reset_form.html',
+         'email_template_name': 'login_and_password/domain_mobile_reset_pwd_email.html',
+         'from_email': settings.DEFAULT_FROM_EMAIL,
+         'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
+        name='domain_mobile_reset_pwd_email'),
 
     url(r'^reset_pwd/web/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$', domain_reset_pwd,
         name='domain_reset_pwd'),

@@ -1,0 +1,52 @@
+{% extends "style/base_mobile.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Reset your password" %}{% endblock %}
+
+{% block header %}
+    <div class="page-header container-fluid">
+        <h1>{% blocktrans %}Welcome to {{ display_name }}!{% endblock %}</h1>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <form class="form-horizontal form-login" name="form" method="post" >
+        {% csrf_token %}
+        {% for global_error in form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ global_error }}
+        </div>
+        {% endfor %}
+        <input name="domain" type="hidden" value="{{ domain }}"/>
+        <input name="token" type="hidden" value="{{ token }}"/>
+
+        <fieldset>
+        {% for field in form.visible_fields %}
+            <div class="form-group{% if field.errors %} error{% endif %}">
+                <label class="control-label col-xs-3" for="{{ field.id }}">{{ field.label }}</label>
+                <div class="col-xs-9">
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="help-inline">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+        </fieldset>
+
+        <div class="form-actions">
+            <div class="col-xs-offset-3">
+                <button tabindex="3" type="submit" class="btn btn-primary">{% trans "Submit" %}</button>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        $(function () {
+            $('#id_new_password1').attr('tabindex', '1').focus();
+            $('#id_new_password2').attr('tabindex', '2');
+            $('input[type="password"]').addClass('form-control');
+        });
+    </script>
+{% endblock %}
+{% block mobile-logout %}{% endblock %}

@@ -68,7 +68,7 @@
                     {% endfor %}
                     {% if field.name == "password" %}
                         <p class="help-block">
-                            <a href="{% url "password_reset_email" %}">
+                            <a href="{% url 'domain_mobile_reset_pwd_email' domain %}">
                                 {% trans "Forgot your password?" %}
                             </a>
                         </p>
