@@ -40,16 +40,19 @@ class NikshayRegisterPatientRepeater(CaseRepeater):
         # and (episode.nikshay_registered != 'true'  or episode.nikshay_id != '')
         allowed_case_types_and_users = self._allowed_case_type(episode_case) and self._allowed_user(episode_case)
         episode_case_properties = episode_case.dynamic_case_properties()
-        return allowed_case_types_and_users and (
-            not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
-            not episode_case_properties.get('nikshay_id', False) and
-            episode_pending_registration_changed(episode_case) and
-            not test_submission(episode_case)
-        )
+        if allowed_case_types_and_users:
+            person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+            return (
+                not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
+                not episode_case_properties.get('nikshay_id', False) and
+                episode_pending_registration_changed(episode_case) and
+                not test_submission(person_case)
+            )
+        else:
+            return False
 
 
-def test_submission(episode_case):
-    person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+def test_submission(person_case):
     try:
         phi_location = SQLLocation.objects.get(location_id=person_case.owner_id)
     except SQLLocation.DoesNotExist:
@@ -125,7 +128,6 @@ class NikshayHIVTestRepeater(CaseRepeater):
         # CPTDeliverDate changes OR
         # InitiatedDate/Art Initiated date changes
         allowed_case_types_and_users = self._allowed_case_type(person_case) and self._allowed_user(person_case)
-        allowed_case_types_and_users = self._allowed_case_type(person_case) and self._allowed_user(person_case)
         if allowed_case_types_and_users:
             episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
             episode_case_properties = episode_case.dynamic_case_properties()
@@ -133,6 +135,7 @@ class NikshayHIVTestRepeater(CaseRepeater):
             return allowed_case_types_and_users and (
                 episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 episode_case_properties.get('nikshay_id') and
+                not test_submission(person_case) and
                 (
                     related_dates_changed(person_case) or
                     person_hiv_status_changed(person_case)
