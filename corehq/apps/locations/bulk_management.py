@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.utils.translation import ugettext as _
+from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -327,16 +327,15 @@ class LocationExcelValidator(object):
         actual = set(type_sheet_reader.headers)
         expected = set(LOCATION_TYPE_SHEET_HEADERS.values())
         if actual != expected:
-            message = (u"'types' sheet should contain exactly '{expected}' as the sheet headers. "
-                       "'{missing}' are missing")
+            message = ugettext_lazy(u"'types' sheet should contain exactly '{expected}' as the sheet headers. "
+                                    "'{missing}' are missing")
             if actual - expected:
-                message = message + " '{extra}' are not recognized"
-            message = message.format(
+                message = string_concat(message, ugettext_lazy(" '{extra}' are not recognized"))
+            raise LocationExcelSheetError(message.format(
                 expected=", ".join(expected),
                 missing=", ".join(expected - actual),
                 extra=", ".join(actual - expected),
-            )
-            raise LocationExcelSheetError(_(message))
+            ))
 
         # all listed types should have a corresponding locations sheet
         type_stubs = self._get_types(type_sheet_reader)
