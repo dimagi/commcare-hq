@@ -4,7 +4,6 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.util.test_utils import flag_enabled
 
 
-@flag_enabled('GRID_MENUS')
 class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
     def test_that_grid_style_is_added(self):
         """
@@ -69,7 +68,6 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
 
     def test_grid_menu_for_none(self):
         factory = AppFactory(build_version='2.24.3')
-        self.assertTrue(factory.app.grid_menu_toggle_enabled())
         factory.app.create_profile()
         factory.app.grid_form_menus = 'none'
         factory.new_basic_module('registration', 'patient')
@@ -103,7 +101,6 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
 
     def test_grid_menu_for_some(self):
         factory = AppFactory(build_version='2.24.3')
-        self.assertTrue(factory.app.grid_menu_toggle_enabled())
         factory.app.create_profile()
         factory.app.grid_form_menus = 'some'
         factory.new_basic_module('registration', 'patient')
@@ -152,7 +149,6 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
 
     def test_grid_menu_for_all(self):
         factory = AppFactory(build_version='2.24.3')
-        self.assertTrue(factory.app.grid_menu_toggle_enabled())
         factory.app.create_profile()
         factory.app.grid_form_menus = 'all'
         factory.new_basic_module('registration', 'patient')

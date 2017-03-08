@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 
 from celery.task import task
@@ -55,7 +56,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None):
             config.save()
 
         adapter.rebuild_table()
-        _iteratively_build_table(config)
+        iteratively_build_table(config)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
@@ -67,14 +68,12 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         adapter = get_indicator_adapter(config, can_handle_laboratory=True)
         if not id_is_static(indicator_config_id):
-            # Save the start time now in case anything goes wrong. This way we'll be
-            # able to see if the rebuild started a long time ago without finishing.
-            config.meta.build.initiated = datetime.datetime.utcnow()
-            config.meta.build.finished = False
+            config.meta.build.initiated_in_place = datetime.datetime.utcnow()
+            config.meta.build.finished_in_place = False
             config.save()
 
         adapter.build_table()
-        _iteratively_build_table(config)
+        iteratively_build_table(config, in_place=True)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
@@ -91,10 +90,10 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
             _build_indicators(config, get_document_store(config.domain, config.referenced_doc_type), relevant_ids,
                               resume_helper)
             last_id = relevant_ids[-1]
-            _iteratively_build_table(config, last_id, resume_helper)
+            iteratively_build_table(config, last_id, resume_helper)
 
 
-def _iteratively_build_table(config, last_id=None, resume_helper=None):
+def iteratively_build_table(config, last_id=None, resume_helper=None, in_place=False):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
 
@@ -113,15 +112,22 @@ def _iteratively_build_table(config, last_id=None, resume_helper=None):
 
     if not id_is_static(indicator_config_id):
         resume_helper.clear_ids()
-        config.meta.build.finished = True
+        if in_place:
+            config.meta.build.finished_in_place = True
+        else:
+            config.meta.build.finished = True
         try:
             config.save()
         except ResourceConflict:
             current_config = DataSourceConfiguration.get(config._id)
             # check that a new build has not yet started
-            if config.meta.build.initiated == current_config.meta.build.initiated:
-                current_config.meta.build.finished = True
-                current_config.save()
+            if in_place:
+                if config.meta.build.initiated_in_place == current_config.meta.build.initiated_in_place:
+                    current_config.meta.build.finished_in_place = True
+            else:
+                if config.meta.build.initiated == current_config.meta.build.initiated:
+                    current_config.meta.build.finished = True
+            current_config.save()
         adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
         adapter.after_table_build()
 

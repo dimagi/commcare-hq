@@ -194,10 +194,12 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         super(LocationChoiceProvider, self).__init__(report, filter_slug)
         self.include_descendants = False
         self.show_full_path = False
+        self.order_by_hierarchy = False
 
     def configure(self, spec):
         self.include_descendants = spec.get('include_descendants', self.include_descendants)
         self.show_full_path = spec.get('show_full_path', self.show_full_path)
+        self.order_by_hierarchy = spec.get('order_by_hierarchy', self.order_by_hierarchy)
 
     def _locations_query(self, query_text, user):
         active_locations = SQLLocation.active_objects
@@ -211,7 +213,9 @@ class LocationChoiceProvider(ChainableChoiceProvider):
 
     def query(self, query_context):
         # todo: consider making this an extensions framework similar to custom expressions
-        locations = self._locations_query(query_context.query, query_context.user).order_by('name')
+        locations = self._locations_query(query_context.query, query_context.user)
+        if not self.order_by_hierarchy:
+            locations = locations.order_by('name')
 
         return self._locations_to_choices(
             locations[query_context.offset:query_context.offset + query_context.limit]

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
 from datetime import date, timedelta
 from corehq.elastic import get_es_new
@@ -15,7 +16,7 @@ class Command(BaseCommand):
     args = "days_ago <index_1> <index_2> ..."
 
     def handle(self, *args, **options):
-        print "Restoring ES indices from snapshot"
+        print("Restoring ES indices from snapshot")
         if len(args) < 1:
             raise CommandError('Usage is restore_es_snapshot %s' % self.args)
         date = self.get_date(args)

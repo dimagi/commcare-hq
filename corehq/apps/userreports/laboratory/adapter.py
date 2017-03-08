@@ -34,6 +34,10 @@ class IndicatorLaboratoryAdapter(IndicatorAdapter):
         self.es_adapter.refresh_table()
         self.sql_adapter.refresh_table()
 
+    def clear_table(self):
+        self.es_adapter.clear_table()
+        self.sql_adapter.clear_table()
+
     def get_query_object(self):
         raise NotImplementedError
 

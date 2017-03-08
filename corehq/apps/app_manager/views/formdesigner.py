@@ -1,5 +1,6 @@
 import json
 import logging
+from os.path import isdir, join
 
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceConflict
@@ -128,11 +129,21 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     if tours.VELLUM_CASE_MANAGEMENT.is_enabled(request.user) and form.requires_case():
         request.guided_tour = tours.VELLUM_CASE_MANAGEMENT.get_tour_data()
 
+    vellum_base = 'corehq/apps/app_manager/static/app_manager/js/'
+    vellum_dir = 'vellum'
+    if toggles.VELLUM_BETA.enabled(request.user.username) and isdir(join(vellum_base, 'vellum_beta')):
+        vellum_dir = 'vellum_beta'
+
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
-        'vellum_debug': settings.VELLUM_DEBUG,
+        'vellum_debug': settings.VELLUM_DEBUG and not toggles.VELLUM_BETA.enabled(request.user.username),
         'nav_form': form,
+        'vellum_style_path': 'app_manager/js/{}/style.css'.format(vellum_dir),
+        'vellum_ckeditor_path': 'app_manager/js/{}/lib/ckeditor/'.format(vellum_dir),
+        'vellum_js_path': 'app_manager/js/{}/src'.format(vellum_dir),
+        'vellum_main_components_path': 'app_manager/js/{}/src/main-components.js'.format(vellum_dir),
+        'vellum_local_deps_path': 'app_manager/js/{}/src/local-deps.js'.format(vellum_dir),
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
         'sessionid': request.COOKIES.get('sessionid'),
@@ -146,14 +157,11 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     })
     notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
 
-    live_preview_ab = ab_tests.ABTest(ab_tests.LIVE_PREVIEW, request)
     domain_obj = Domain.get_by_name(domain)
     context.update({
-        'live_preview_ab': live_preview_ab.context,
-        'is_onboarding_domain': domain_obj.is_onboarding_domain,
         'show_live_preview': should_show_preview_app(
             request,
-            domain_obj,
+            app,
             request.couch_user.username,
         ),
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
@@ -166,7 +174,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     )
 
     response = render(request, template, context)
-    live_preview_ab.update_response(response)
     return response
 
 

@@ -35,7 +35,7 @@ def parse_xml(string):
         string = string.encode("utf-8")
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
-    except ET.ParseError, e:
+    except ET.ParseError as e:
         raise XFormException(_(u"Error parsing XML: {}").format(e))
 
 
@@ -768,11 +768,11 @@ class XForm(WrappedNode):
                 if key.startswith(vellum_ns):
                     del node.attrib[key]
 
-    def add_missing_instances(self):
+    def add_missing_instances(self, domain):
         from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
         instance_declarations = self.get_instance_ids()
         missing_unknown_instances = set()
-        instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths('', [self.render()])
+        instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(domain, [self.render()])
         for instance_id in unknown_instance_ids:
             if instance_id not in instance_declarations:
                 missing_unknown_instances.add(instance_id)
@@ -997,6 +997,7 @@ class XForm(WrappedNode):
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
+                    "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
                 }
 
                 # Include meta information about the stock entry

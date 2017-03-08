@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 
 from couchdbkit import ResourceNotFound
@@ -37,7 +38,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options['print_kafka_offsets']:
             start, end = self.get_min_max_offsets()
-            print "\n\nKakfa topic offset range: {} - {}".format(start, end)
+            print("\n\nKakfa topic offset range: {} - {}".format(start, end))
             return
 
         start_offset = options['offset_start']
@@ -52,7 +53,7 @@ class Command(BaseCommand):
         if start_offset > end_offset:
             raise CommandError("Start greater than end: {} > {}".format(start_offset, end_offset))
 
-        print 'Using kafka offset range: {} - {}'.format(start_offset, end_offset)
+        print('Using kafka offset range: {} - {}'.format(start_offset, end_offset))
 
         if options['find_start_offset']:
             find_first_match = FindFirstMatch(start_offset, end_offset, check_user_at_offset)
@@ -61,7 +62,7 @@ class Command(BaseCommand):
                 raise CommandError("Unable to find first matching offset. "
                                    "Try a different search range.")
             else:
-                print "\nFirst matching offset = {}".format(first_matching_offset)
+                print("\nFirst matching offset = {}".format(first_matching_offset))
             return
 
         check = options['check']
@@ -93,7 +94,7 @@ class Command(BaseCommand):
             restore_domain_membership(user, check=check)
 
             if change.sequence_id % 100 == 0:
-                print "Processed up to offset: {}".format(change.sequence_id)
+                print("Processed up to offset: {}".format(change.sequence_id))
 
     def get_min_max_offsets(self):
         end = get_multi_topic_offset([COMMCARE_USER])[COMMCARE_USER]
@@ -135,21 +136,21 @@ def restore_domain_membership(user, check=False):
                 continue
 
             if check:
-                print 'Ready to patch user: {} ({})'.format(user.domain, doc_id)
+                print('Ready to patch user: {} ({})'.format(user.domain, doc_id))
                 old = json.dumps(user.domain_membership.to_json(), indent=2)
-                print 'Old domain membership: \n{}\n'.format(old)
+                print('Old domain membership: \n{}\n'.format(old))
                 new = json.dumps(prev_user.domain_membership.to_json(), indent=2)
-                print 'New domain membership: \n{}\n'.format(new)
+                print('New domain membership: \n{}\n'.format(new))
                 if not confirm('Proceed with updating user?'):
                     return
 
-            print "Patching user: {} ({})".format(user.domain, doc_id)
+            print("Patching user: {} ({})".format(user.domain, doc_id))
             prev_domain_membership = prev_user.domain_membership
             user.domain_membership = prev_domain_membership
             user.save()
             return
 
-    print 'Unable to fix user: {} ({})'.format(user.domain, doc_id)
+    print('Unable to fix user: {} ({})'.format(user.domain, doc_id))
 
 
 def get_doc_revisions(db, doc_id):

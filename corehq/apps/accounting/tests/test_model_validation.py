@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import date
 
 from django.core.exceptions import ValidationError
@@ -15,14 +16,6 @@ from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 
 
 class TestCreditAdjustmentValidation(BaseAccountingTest):
-
-    def tearDown(self):
-        CreditAdjustment.objects.all().delete()
-        LineItem.objects.all().delete()
-        Invoice.objects.all().delete()
-        generator.delete_all_subscriptions()
-        generator.delete_all_accounts()
-        super(TestCreditAdjustmentValidation, self).tearDown()
 
     def test_clean(self):
         account = BillingAccount.objects.create(

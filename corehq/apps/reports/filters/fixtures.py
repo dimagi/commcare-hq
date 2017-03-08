@@ -112,6 +112,9 @@ class AsyncLocationFilter(BaseReportFilter):
                                                     'resource_name': 'location_internal',
                                                     'api_name': 'v0.5'})
 
+    def load_locations_json(self, loc_id):
+        return load_locs_json(self.domain, loc_id, user=self.request.couch_user)
+
     @property
     def filter_context(self):
         api_root = self.api_root
@@ -121,13 +124,12 @@ class AsyncLocationFilter(BaseReportFilter):
             domain_membership = user.get_domain_membership(self.domain)
             if domain_membership:
                 loc_id = domain_membership.location_id
-
         return {
             'api_root': api_root,
-            'control_name': self.label, # todo: cleanup, don't follow this structure
-            'control_slug': self.slug, # todo: cleanup, don't follow this structure
+            'control_name': self.label,  # todo: cleanup, don't follow this structure
+            'control_slug': self.slug,  # todo: cleanup, don't follow this structure
             'loc_id': loc_id,
-            'locations': load_locs_json(self.domain, loc_id, user=user),
+            'locations': self.load_locations_json(loc_id),
             'make_optional': self.make_optional,
             'hierarchy': location_hierarchy_config(self.domain)
         }

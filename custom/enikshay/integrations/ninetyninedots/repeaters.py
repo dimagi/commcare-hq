@@ -13,9 +13,19 @@ from casexml.apps.case.xform import get_case_updates
 
 from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
-    get_episode_case_from_adherence
+    get_episode_case_from_adherence,
+    CASE_TYPE_EPISODE,
+    CASE_TYPE_PERSON,
 )
-from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER, TREATMENT_OUTCOME
+from custom.enikshay.const import (
+    TREATMENT_OUTCOME,
+    NINETYNINEDOTS_EPISODE_PROPERTIES,
+    NINETYNINEDOTS_PERSON_PROPERTIES,
+)
+from custom.enikshay.case_utils import (
+    get_occurrence_case_from_episode,
+    get_person_case_from_occurrence,
+)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
@@ -65,15 +75,15 @@ class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
 
 class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
     """Update patient records a patient in 99DOTS
-    Case Type: Person
-    Trigger: When phone number changes
+    Case Type: Person, Episode
+    Trigger: When any pertinent property changes
     Side Effects:
         Error: dots_99_error = 'error message'
     Endpoint: https://www.99dots.org/Dimagi99DOTSAPI/updatePatient
 
     """
 
-    friendly_name = _("99DOTS Patient Update (person case type)")
+    friendly_name = _("99DOTS Patient Update (person & episode case type)")
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -85,13 +95,22 @@ class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
             return False
 
         try:
-            registered_episode = episode_registered_with_99dots(
-                get_open_episode_case_from_person(case.domain, case.case_id)
-            )
+            if case.type == CASE_TYPE_PERSON:
+                person_case = case
+                episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+                props_changed = case_properties_changed(person_case, NINETYNINEDOTS_PERSON_PROPERTIES)
+                registered_episode = episode_registered_with_99dots(episode_case)
+            elif case.type == CASE_TYPE_EPISODE:
+                episode_case = case
+                props_changed = case_properties_changed(episode_case, NINETYNINEDOTS_EPISODE_PROPERTIES)
+                registered_episode = (episode_registered_with_99dots(episode_case)
+                                      and not case_properties_changed(episode_case, 'dots_99_registered'))
+            else:
+                return False
         except ENikshayCaseNotFound:
             return False
 
-        return phone_number_changed(case) and registered_episode
+        return registered_episode and props_changed
 
 
 class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
@@ -156,40 +175,30 @@ class NinetyNineDotsTreatmentOutcomeRepeater(Base99DOTSRepeater):
         episode_case_properties = episode_case.dynamic_case_properties()
         enabled = episode_case_properties.get('dots_99_enabled') == 'true'
         registered = episode_case_properties.get('dots_99_registered') == 'true'
-        return enabled and registered and treatment_outcome_changed(episode_case)
+        return enabled and registered and case_properties_changed(episode_case, [TREATMENT_OUTCOME])
 
 
 def episode_registered_with_99dots(episode):
     return episode.dynamic_case_properties().get('dots_99_registered', False) == 'true'
 
 
-def treatment_outcome_changed(case):
+def case_properties_changed(case, case_properties):
+    if isinstance(case_properties, basestring):
+        case_properties = [case_properties]
+
     last_case_action = case.actions[-1]
     if last_case_action.is_case_create:
         return False
 
     update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
-    treatment_outcome_changed = any(
+    property_changed = any(
         action for action in update_actions
         if isinstance(action, CaseUpdateAction)
-        and (TREATMENT_OUTCOME in action.dynamic_properties)
+        and any(
+            case_property in action.dynamic_properties for case_property in case_properties
+        )
     )
-    return treatment_outcome_changed
-
-
-def phone_number_changed(case):
-    last_case_action = case.actions[-1]
-    if last_case_action.is_case_create:
-        return False
-
-    update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
-    phone_number_changed = any(
-        action for action in update_actions
-        if isinstance(action, CaseUpdateAction)
-        and (PRIMARY_PHONE_NUMBER in action.dynamic_properties or
-             BACKUP_PHONE_NUMBER in action.dynamic_properties)
-    )
-    return phone_number_changed
+    return property_changed
 
 
 def create_case_repeat_records(sender, case, **kwargs):

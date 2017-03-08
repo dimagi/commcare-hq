@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import deepcopy
 import datetime
 from elasticsearch import NotFoundError, RequestError
@@ -6,11 +7,13 @@ from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.es.aggregations import MissingAggregation
 from corehq.elastic import get_es_new, ESError
+from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.es_utils import (
     set_index_reindex_settings,
     set_index_normal_settings,
 )
+import six
 
 
 # These settings tell ES to not tokenize strings
@@ -39,6 +42,7 @@ DATATYPE_MAP = {
     'integer': 'long',
     'decimal': 'double',
     'array': 'string',
+    'boolean': 'long',
 }
 
 
@@ -72,7 +76,7 @@ class ESAlchemy(object):
     def __getitem__(self, sliced_or_int):
         hits = self.es[sliced_or_int]
         hits = [self._hit_to_row(hit) for hit in hits]
-        if isinstance(sliced_or_int, (int, long)):
+        if isinstance(sliced_or_int, six.integer_types):
             return hits[0]
         return hits
 
@@ -161,6 +165,10 @@ class IndicatorESAdapter(IndicatorAdapter):
     def refresh_table(self):
         self.es.indices.refresh(index=self.table_name)
 
+    @unit_testing_only
+    def clear_table(self):
+        self.rebuild_table()
+
     def get_query_object(self):
         return ESAlchemy(self.table_name, self.config)
 
@@ -205,7 +213,9 @@ class IndicatorESAdapter(IndicatorAdapter):
 def build_es_mapping(data_source_config):
     properties = {}
     for indicator in data_source_config.configured_indicators:
-        datatype = indicator.get('datatype', 'string')
+        datatype = indicator.get('type')
+        if datatype not in DATATYPE_MAP:
+            datatype = indicator.get('datatype', 'string')
         properties[indicator['column_id']] = {
             "type": DATATYPE_MAP[datatype],
         }

@@ -567,11 +567,18 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     };
 
     self.matcher = function(flag, subtext) {
-        var match, regexp;
+        var match, regexp, currentQuery;
         // Match text that starts with the flag and then looks like a path.
         regexp = new RegExp('([\\s\(]+|^)' + RegExp.escape(flag) + '([\\w/-]*)$', 'gi');
         match = regexp.exec(subtext);
-        return match ? match[2] : null;
+        if (!match) {
+            return null;
+        }
+        currentQuery = match[2]
+        if (currentQuery.length < 2) {
+            return null;
+        }
+        return currentQuery;
     };
 
     /**
@@ -583,8 +590,18 @@ Formplayer.ViewModels.EvaluateXPath = function() {
         self.$xpath = $('#xpath');
         self.$xpath.atwho('destroy');
         self.$xpath.atwho('setIframe', window.frameElement, true);
+        self.$xpath.off('inserted.atwho');
+        self.$xpath.on('inserted.atwho', function(atwhoEvent, $li, e) {
+            var input = atwhoEvent.currentTarget
+
+            // Move cursor back one so we are inbetween the parenthesis
+            if (input.setSelectionRange && $li.data().itemData.type === 'Function') {
+                input.setSelectionRange(input.selectionStart - 1, input.selectionStart - 1);
+            }
+        });
         self.$xpath.atwho({
             at: '',
+            suffix: '',
             data: autocompleteData,
             searchKey: 'value',
             maxLen: Infinity,
@@ -678,6 +695,9 @@ Formplayer.Const = {
     // Appearance attributes
     NUMERIC: 'numeric',
     MINIMAL: 'minimal',
+    COMBOBOX: 'combobox',
+    COMBOBOX_MULTIWORD: 'multiword',
+    COMBOBOX_FUZZY: 'fuzzy',
 
     // Note it's important to differentiate these two
     NO_PENDING_ANSWER: undefined,
@@ -774,6 +794,7 @@ Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
 
     return form;
 };
+
 
 Formplayer.Utils.getIconFromType = function(type) {
     var icon = '';

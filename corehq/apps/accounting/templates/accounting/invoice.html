@@ -5,18 +5,7 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'accounting/js/adjust-balance-modal.js' %}"></script>
-    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    {% if adjust_balance_form %}
-    <script>
-        (function () {
-            var AdjustBalanceFormModel = hqImport('accounting/js/adjust-balance-modal.js').AdjustBalanceFormModel;
-            $('#adjust-balance-form-{{ invoice_info_form.invoice.id }}').koApplyBindings(new AdjustBalanceFormModel());
-        }());
-    </script>
-    {% endif %}
+    <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}

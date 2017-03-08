@@ -1,3 +1,4 @@
+from __future__ import print_function
 from gevent import monkey; monkey.patch_all()
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain_of_type
 from itertools import islice
@@ -72,7 +73,7 @@ class Command(BaseCommand):
             if form_label_filter is not None and form_label_filter != label_name:
                 continue
             xmlns = label['key'][-2]
-            print "\n\nGetting Forms of Type %s and XMLNS %s for domain %s" % (label_name, xmlns, domain)
+            print("\n\nGetting Forms of Type %s and XMLNS %s for domain %s" % (label_name, xmlns, domain))
 
             relevant_forms = XFormInstance.get_db().view(
                 "all_forms/view",
@@ -90,7 +91,7 @@ class Command(BaseCommand):
                 endkey=['submission xmlns', domain, xmlns, {}],
             ).all()]
 
-            print "Found %d forms with matching XMLNS %s" % (num_forms, xmlns)
+            print("Found %d forms with matching XMLNS %s" % (num_forms, xmlns))
             relevant_indicators = FormIndicatorDefinition.get_all(
                 namespace=MVP.NAMESPACE,
                 domain=domain,
@@ -104,7 +105,7 @@ class Command(BaseCommand):
                     form_ids, XFormInstance)
 
     def update_indicators_for_case_type(self, case_type, domain):
-        print "\n\n\nFetching %s cases in domain %s...." % (case_type, domain)
+        print("\n\n\nFetching %s cases in domain %s...." % (case_type, domain))
         relevant_indicators = CaseIndicatorDefinition.get_all(
             namespace=MVP.NAMESPACE,
             domain=domain,
@@ -114,11 +115,11 @@ class Command(BaseCommand):
         if relevant_indicators:
             num_cases = get_number_of_cases_in_domain_of_type(domain, case_type=case_type)
 
-            print ("\nFound the following Case Indicator Definitions "
-                   "for Case Type %s in Domain %s") % (case_type, domain)
-            print "--%s\n" % "\n--".join([i.slug for i in relevant_indicators])
+            print(("\nFound the following Case Indicator Definitions "
+                   "for Case Type %s in Domain %s") % (case_type, domain))
+            print("--%s\n" % "\n--".join([i.slug for i in relevant_indicators]))
 
-            print "Found %d possible cases for update." % num_cases
+            print("Found %d possible cases for update." % num_cases)
             case_ids = get_case_ids_in_domain(domain, type=case_type)
 
             self._throttle_updates(
@@ -143,12 +144,12 @@ class Command(BaseCommand):
             sys.stdout.flush()
 
         for indicator in indicators:
-            print "Indicator %s v.%d, %s" % (indicator.slug, indicator.version, domain)
+            print("Indicator %s v.%d, %s" % (indicator.slug, indicator.version, domain))
             pool = Pool(POOL_SIZE)
             for doc in docs:
                 pool.spawn(_update_doc, doc)
             pool.join()  # blocking
-            print "\n"
+            print("\n")
 
     def _throttle_updates(self, document_type, indicators, total_docs, domain,
                           doc_ids, document_class, limit=300):
@@ -157,14 +158,14 @@ class Command(BaseCommand):
             doc_ids = islice(doc_ids, self.start_at_record, None)
 
         for skip in range(self.start_at_record, total_docs, limit):
-            print "\n\nUpdating %s %d to %d of %d\n" % (
-                document_type, skip, min(total_docs, skip + limit), total_docs)
+            print("\n\nUpdating %s %d to %d of %d\n" % (
+                document_type, skip, min(total_docs, skip + limit), total_docs))
 
             matching_docs = map(
                 document_class.wrap,
                 iter_docs(document_class.get_db(), islice(doc_ids, limit))
             )
             self.update_indicators(indicators, matching_docs, domain)
-            print "Pausing..."
+            print("Pausing...")
             time.sleep(3)
-            print "Going..."
+            print("Going...")

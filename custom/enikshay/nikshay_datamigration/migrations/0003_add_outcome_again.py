@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Outcome',
             fields=[
-                ('PatientId', models.OneToOneField(primary_key=True, serialize=False, to='nikshay_datamigration.PatientDetail')),
+                ('PatientId', models.OneToOneField(primary_key=True, serialize=False, to='nikshay_datamigration.PatientDetail', on_delete=models.CASCADE)),
                 ('Outcome', models.CharField(max_length=255, choices=[(b'NULL', b'NULL'), (b'0', b'0'), (b'1', b'1'), (b'2', b'2'), (b'3', b'3'), (b'4', b'4'), (b'5', b'5'), (b'6', b'6'), (b'7', b'7')])),
                 ('OutcomeDate', models.CharField(max_length=255, null=True)),
                 ('MO', models.CharField(max_length=255, null=True)),

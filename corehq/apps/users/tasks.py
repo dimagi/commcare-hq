@@ -13,7 +13,6 @@ from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import json_format_datetime
 from soil import DownloadBase
 from casexml.apps.case.xform import get_case_ids_from_form
 
@@ -71,6 +70,33 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
     detail = UserArchivedRebuild(user_id=user_id)
     for case_id in cases_to_rebuild - deleted_cases:
         _rebuild_case_with_retries.delay(domain, case_id, detail)
+
+
+@task(queue='background_queue', ignore_result=True, acks_late=True)
+def tag_system_forms_as_deleted(domain, deleted_forms, deleted_cases, deletion_id, deletion_date):
+    form_ids_to_delete = set()
+    for case_id in deleted_cases:
+        xform_ids = CaseAccessors(domain).get_case_xform_ids(case_id)
+        form_ids_to_delete |= set(xform_ids) - deleted_forms
+
+    def _is_safe_to_delete(form):
+        if form.domain != domain:
+            return False
+
+        case_ids = get_case_ids_from_form(form)
+        cases_touched_by_form_not_deleted = case_ids - deleted_cases
+        for case in CaseAccessors(domain).iter_cases(cases_touched_by_form_not_deleted):
+            if not case.is_deleted:
+                return False
+
+        # all cases touched by this form are deleted
+        return True
+
+    for form in FormAccessors(domain).iter_forms(form_ids_to_delete):
+        if not _is_safe_to_delete(form):
+            form_ids_to_delete.remove(form.form_id)
+
+    FormAccessors(domain).soft_delete_forms(list(form_ids_to_delete), deletion_date, deletion_id)
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
@@ -172,3 +198,9 @@ def reset_demo_user_restore_task(couch_user, domain):
 
     DownloadBase.set_progress(reset_demo_user_restore_task, 100, 100)
     return {'messages': results}
+
+
+@task
+def remove_unused_custom_fields_from_users_task(domain):
+    from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
+    remove_unused_custom_fields_from_users(domain)

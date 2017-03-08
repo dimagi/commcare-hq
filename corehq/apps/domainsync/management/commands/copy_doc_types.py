@@ -1,36 +1,39 @@
 import logging
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from couchdbkit.client import Database
-from optparse import make_option
 
 logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
     help = "Copies all docs of some types from one database to another. Pretty brute force and single-threaded."
-    args = '<sourcedb> <destdb> [<doc_type>, ...]'
-    option_list = (
-        make_option('--doc-types',
-                    action='store',
-                    dest='doc_types',
-                    default='',
-                    help='Comma-separated list of Document Types to copy'),
-        make_option('--pretend',
-                    action='store_true',
-                    dest='pretend',
-                    default=False,
-                    help='Don\'t copy anything, print what would be copied.'),
-    )
 
-    def handle(self, *args, **options):
-        if len(args) != 2:
-            raise CommandError('Usage is copy_doc_types %s' % self.args)
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'sourcedb',
+        )
+        parser.add_argument(
+            'destdb',
+        )
+        parser.add_argument(
+            'doc_type',
+            dest='doc_types',
+            help='Comma-separated list of Document Types to copy',
+            nargs='*',
+        )
+        parser.add_argument(
+            '--pretend',
+            action='store_true',
+            dest='pretend',
+            default=False,
+            help='Don\'t copy anything, print what would be copied.',
+        )
 
-        sourcedb = Database(args[0])
-        destdb = Database(args[1])
+    def handle(self, sourcedb, destdb, doc_types, **options):
+        sourcedb = Database(sourcedb)
+        destdb = Database(destdb)
         pretend = options['pretend']
-        doc_types = options['doc_types'].split(',')
 
         if pretend:
             logger.info("**** Simulated run, no data will be copied. ****")
@@ -77,8 +80,8 @@ class Command(BaseCommand):
             else:
                 nextkey = rows[-1]['key']
 
-    def copy_docs(self, sourcedb, destdb, pretend=False, doc_types=[]):
-
+    def copy_docs(self, sourcedb, destdb, pretend=False, doc_types=None):
+        doc_types = doc_types or []
         metadata = sourcedb.view('_all_docs', limit=0)
         processed = 0
 

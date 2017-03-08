@@ -31,6 +31,8 @@ from corehq.apps.accounting.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.util.test_utils import unit_testing_only
+import six
+from six.moves import range
 
 
 @unit_testing_only
@@ -65,17 +67,20 @@ def unique_name():
 
 
 @unit_testing_only
-def arbitrary_web_user(save=True, is_dimagi=False):
-    domain = Domain(name=unique_name()[:25])
-    domain.save()
-    username = "%s@%s.com" % (unique_name(), 'dimagi' if is_dimagi else 'gmail')
+def create_arbitrary_web_user_name(is_dimagi=False):
+    return "%s@%s.com" % (unique_name(), 'dimagi' if is_dimagi else 'gmail')
+
+
+@unit_testing_only
+def arbitrary_web_user(is_dimagi=False):
+    domain = arbitrary_domain()
+    username = create_arbitrary_web_user_name(is_dimagi=is_dimagi)
     try:
         web_user = WebUser.create(domain.name, username, 'test123')
     except Exception:
         web_user = WebUser.get_by_username(username)
     web_user.is_active = True
-    if save:
-        web_user.save()
+    web_user.save()
     return web_user
 
 
@@ -85,7 +90,7 @@ def billing_account(web_user_creator, web_user_contact, currency=None, save=True
     currency = currency or Currency.objects.get(code=settings.DEFAULT_CURRENCY)
     billing_account = BillingAccount(
         name=account_name,
-        created_by=web_user_creator.username,
+        created_by=web_user_creator,
         currency=currency,
     )
     if save:
@@ -101,7 +106,7 @@ def arbitrary_contact_info(account, web_user_creator):
         account=account,
         first_name=data_gen.arbitrary_firstname(),
         last_name=data_gen.arbitrary_lastname(),
-        email_list=[web_user_creator.username],
+        email_list=[web_user_creator],
         phone_number="+15555555",
         company_name="Company Name",
         first_line="585 Mass Ave",
@@ -110,12 +115,6 @@ def arbitrary_contact_info(account, web_user_creator):
         postal_code="02139",
         country="US",
     )
-
-
-@unit_testing_only
-def delete_all_accounts():
-    BillingContactInfo.objects.all().delete()
-    BillingAccount.objects.all().delete()
 
 
 @unit_testing_only
@@ -210,7 +209,7 @@ class FakeStripeCard(mock.MagicMock):
     @metadata.setter
     def metadata(self, value):
         """Stripe returns everything as JSON. This will do for testing"""
-        self._metadata = {k: str(v) for k, v in value.iteritems()}
+        self._metadata = {k: str(v) for k, v in six.iteritems(value)}
 
     def save(self):
         pass

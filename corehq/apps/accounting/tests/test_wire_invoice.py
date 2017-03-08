@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 from django.core import mail
 
@@ -20,13 +21,10 @@ class TestWireInvoice(BaseInvoiceTestCase):
         self.invoices = Invoice.objects.all()
         self.domain_name = self.invoices[0].get_domain()
 
-    def tearDown(self):
-        super(TestWireInvoice, self).tearDown()
-
     def test_factory(self):
         factory = DomainWireInvoiceFactory(
             self.domain_name,
-            contact_emails=[self.dimagi_user.username],
+            contact_emails=[self.dimagi_user],
         )
         balance = Decimal(100)
 

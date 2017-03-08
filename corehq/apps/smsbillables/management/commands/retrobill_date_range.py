@@ -1,3 +1,4 @@
+from __future__ import print_function
 import datetime
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS
@@ -33,11 +34,11 @@ class Command(BaseCommand):
             for sms_log in result:
                 if options.get('create', False):
                     SmsBillable.create(sms_log)
-                    print 'Created billable for SMS %s in domain %s from %s' \
-                          % (sms_log.couch_id, domain.name, sms_log.date)
+                    print('Created billable for SMS %s in domain %s from %s' \
+                          % (sms_log.couch_id, domain.name, sms_log.date))
                 else:
-                    print 'Found SMS %s in domain %s from %s' \
-                          % (sms_log.couch_id, domain.name, sms_log.date)
+                    print('Found SMS %s in domain %s from %s' \
+                          % (sms_log.couch_id, domain.name, sms_log.date))
                 num_sms += 1
 
-        print 'Number of SMSs in datetime range: %d' % num_sms
+        print('Number of SMSs in datetime range: %d' % num_sms)

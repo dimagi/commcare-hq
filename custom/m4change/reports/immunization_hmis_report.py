@@ -1,10 +1,11 @@
 from django.utils.translation import ugettext as _
 
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from custom.common.filters import RestrictedAsyncLocationFilter
 from custom.m4change.reports import validate_report_parameters, get_location_hierarchy_by_id
 from custom.m4change.reports.reports import M4ChangeReport
 from custom.m4change.reports.sql_data import ImmunizationHmisCaseSqlData
@@ -19,6 +20,7 @@ def _get_row(row_data, form_data, key):
     return rows
 
 
+@location_safe
 class ImmunizationHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
     ajax_pagination = False
     asynchronous = True
@@ -31,7 +33,7 @@ class ImmunizationHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
     report_template_path = "m4change/report_content.html"
 
     fields = [
-        AsyncLocationFilter,
+        RestrictedAsyncLocationFilter,
         MonthFilter,
         YearFilter
     ]
@@ -42,8 +44,10 @@ class ImmunizationHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
 
         domain = config["domain"]
         location_id = config["location_id"]
+        user = config["user"]
+
         sql_data = ImmunizationHmisCaseSqlData(domain=domain, datespan=config["datespan"]).data
-        locations = get_location_hierarchy_by_id(location_id, domain)
+        locations = get_location_hierarchy_by_id(location_id, domain, user)
         row_data = ImmunizationHmisReport.get_initial_row_data()
 
         for location_id in locations:
@@ -137,7 +141,8 @@ class ImmunizationHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
         row_data = ImmunizationHmisReport.get_report_data({
             "location_id": self.request.GET.get("location_id", None),
             "datespan": self.datespan,
-            "domain": str(self.domain)
+            "domain": str(self.domain),
+            "user": self.request.couch_user
         })
 
         for row in row_data:

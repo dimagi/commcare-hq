@@ -69,6 +69,8 @@ class PillowCheckpoint(object):
         """
         Update the checkpoint timestamp without altering the sequence.
         :param min_interval: minimum interval between timestamp updates
+
+        :returns: Returns True if it updated the checkpoint, False otherwise
         """
         checkpoint = self.get_or_create_wrapped(verify_unchanged=True)
         now = datetime.utcnow()
@@ -80,6 +82,8 @@ class PillowCheckpoint(object):
         if do_update:
             checkpoint.timestamp = now
             checkpoint.save()
+            return True
+        return False
 
 
 class PillowCheckpointEventHandler(ChangeEventHandler):
@@ -108,11 +112,13 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
             time_hit = seconds_since_last_update >= self.max_checkpoint_delay
         return context.do_set_checkpoint and (frequency_hit or time_hit)
 
+    def update_checkpoint(self, new_seq):
+        self.checkpoint.update_to(new_seq)
+        self.last_update = datetime.utcnow()
+
     def fire_change_processed(self, change, context):
         if self.should_update_checkpoint(context):
-            updated_to = change['seq']
-            self.checkpoint.update_to(updated_to)
-            self.last_update = datetime.utcnow()
+            self.update_checkpoint(change['seq'])
 
 
 def get_default_django_checkpoint_for_legacy_pillow_class(pillow_class):
