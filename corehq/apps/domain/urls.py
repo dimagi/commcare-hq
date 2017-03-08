@@ -70,9 +70,6 @@ from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 
 
-def extend(d1, d2):
-    return dict(d1.items() + d2.items())
-
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
     url(r'^domain/autocomplete/(?P<field>[\w-]+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
@@ -81,32 +78,32 @@ urlpatterns = [
     url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
         DeactivateTransferDomainView.as_view(), name='deactivate_transfer_domain'),
 
-    url(r'^accounts/password_change/$', password_change, {'template_name': 'login_and_password/password_change_form.html'}, name='password_change'),
+    url(r'^accounts/password_change/$', password_change,
+        {'template_name': 'login_and_password/password_change_form.html'},
+        name='password_change'),
     url(r'^accounts/password_change_done/$', password_change_done,
-        extend({'template_name': 'login_and_password/password_change_done.html'},
-               {'extra_context': {'current_page': {'page_name': _('Password Change Complete')}}}),
+        {'template_name': 'login_and_password/password_change_done.html',
+         'extra_context': {'current_page': {'page_name': _('Password Change Complete')}}},
         name='password_change_done'),
 
     url(r'^accounts/password_reset_email/$', exception_safe_password_reset,
-        extend({'template_name': 'login_and_password/password_reset_form.html'},
-               {'password_reset_form': ConfidentialPasswordResetForm,
-                'from_email': settings.DEFAULT_FROM_EMAIL,
-                'extra_context': {'current_page': {'page_name': _('Password Reset')}}}),
+        {'template_name': 'login_and_password/password_reset_form.html',
+         'password_reset_form': ConfidentialPasswordResetForm, 'from_email': settings.DEFAULT_FROM_EMAIL,
+         'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
         name='password_reset_email'),
     url(r'^accounts/password_reset_email/done/$', password_reset_done,
-        extend({'template_name': 'login_and_password/password_reset_done.html'},
-               {'extra_context': {'current_page': {'page_name': _('Reset My Password')}}}),
+        {'template_name': 'login_and_password/password_reset_done.html',
+         'extra_context': {'current_page': {'page_name': _('Reset My Password')}}},
         name='password_reset_done'),
 
     url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
-        PasswordResetView.as_view(),  extend({'template_name': 'login_and_password/password_reset_confirm.html'},
-                                                {'set_password_form': HQSetPasswordForm,
-                                                'extra_context': {'current_page':
-                                                    {'page_name': _('Password Reset Confirmation')}}}),
+        PasswordResetView.as_view(),
+        {'template_name': 'login_and_password/password_reset_confirm.html', 'set_password_form': HQSetPasswordForm,
+         'extra_context': {'current_page': {'page_name': _('Password Reset Confirmation')}}},
         name=PasswordResetView.urlname),
     url(r'^accounts/password_reset_confirm/done/$', password_reset_complete,
-        extend({'template_name': 'login_and_password/password_reset_complete.html'},
-               {'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}}),
+        {'template_name': 'login_and_password/password_reset_complete.html',
+         'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}},
         name='password_reset_complete')
 ]
 
