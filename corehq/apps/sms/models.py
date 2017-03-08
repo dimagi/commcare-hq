@@ -2143,6 +2143,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
 
     def delete(self, *args, **kwargs):
         self.__clear_caches()
+        self.__clear_shared_domain_cache([])
         return super(SQLMobileBackend, self).delete(*args, **kwargs)
 
 

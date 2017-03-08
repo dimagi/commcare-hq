@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.users.models import CouchUser
 from corehq.util.translation import localize
-from dimagi.utils.django.email import send_HTML_email
+from corehq.util.log import send_HTML_email
 
 
 @task

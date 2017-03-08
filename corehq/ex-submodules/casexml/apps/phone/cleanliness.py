@@ -115,7 +115,7 @@ def set_cleanliness_flags(domain, owner_id, force_full=False, raise_soft_asserti
 
         # filter out docs where we expect this to be broken (currently just web users)
         if not _is_web_user(owner_id) and raise_soft_assertions:
-            _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False, fail_if_debug=False)
+            _assert = soft_assert(notify_admins=True, exponential_backoff=False, fail_if_debug=False)
             _assert(False, 'Cleanliness flags out of sync for user {} in domain {}!'.format(
                 owner_id, domain
             ))

@@ -2,20 +2,20 @@ from __future__ import print_function
 from corehq.apps.sms.mixin import VerifiedNumber
 from dimagi.utils.couch.database import iter_bulk_delete_with_doc_type_verification
 from django.core.management.base import BaseCommand
-from optparse import make_option
 
 
 class Command(BaseCommand):
-    args = ""
     help = ("Deletes all messaging phone numbers stored in couch")
-    option_list = (
-        make_option("--delete-interval",
-                    action="store",
-                    dest="delete_interval",
-                    type="int",
-                    default=5,
-                    help="The number of seconds to wait between each bulk delete."),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--delete-interval",
+            action="store",
+            dest="delete_interval",
+            type=int,
+            default=5,
+            help="The number of seconds to wait between each bulk delete.",
+        )
 
     def get_couch_ids(self):
         result = VerifiedNumber.view(
@@ -56,5 +56,5 @@ class Command(BaseCommand):
         )
         print('Deleted %s documents' % count)
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         self.delete_models(options['delete_interval'])

@@ -1,4 +1,5 @@
-$(function(){
+/* globals hqDefine */
+hqDefine('toggle_ui/js/flags.js', function () {
     var dataTableElem = '.datatable';
     var viewModel = {
         tagFilter: ko.observable(null)

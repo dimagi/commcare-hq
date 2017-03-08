@@ -112,13 +112,7 @@ legend .subtext {
 }
 
 #case-config-ko, #usercase-config-ko {
-    @select2Width: 210px;
-
-    .case-config-select2s(@select2Width);
-
-    .wide-select2s {
-        .case-config-select2s(@select2Width * 1.5);
-    }
+    .case-config-select2s(100%);
 }
 
 // hack to fix issues with placeholder not showing up fully
@@ -248,4 +242,13 @@ textarea.vertical-resize {
 
 table .ko-inline-edit .read-only:hover {
     background-color: @cc-neutral-hi;
+}
+
+table .select2-container .select2-choice {
+  white-space: normal;
+}
+
+table .select2-container .select2-choice > .select2-chosen {
+  white-space: normal;
+  margin-right: 0;
 }

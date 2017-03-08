@@ -21,7 +21,6 @@ from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
-from optparse import make_option
 
 
 ONE_HOUR = 60 * 60
@@ -39,21 +38,17 @@ def unique_ids_map_log_message(app_id, domain, form_unique_id):
 
 class Command(BaseCommand):
     help = 'Fix forms with "undefined" xmlns'
-    args = '<prev_log_path> <log_path>'
-
-    option_list = (
-        make_option(
-            '--dry-run',
-            action='store_true',
-            dest='dry_run',
-            default=False,
-            help="Don't do the actual modifications, but still log what would be affected"
-        ),
-    )
 
     def add_arguments(self, parser):
         parser.add_argument('prev_log_path')
         parser.add_argument('log_path')
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            dest='dry_run',
+            default=False,
+            help="Don't do the actual modifications, but still log what would be affected",
+        )
 
     def handle(self, prev_log_path, log_path, **options):
 

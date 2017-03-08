@@ -11,7 +11,6 @@ from couchforms.models import XFormInstance
 from dimagi.utils.parsing import string_to_datetime
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from optparse import make_option
 
 from corehq.apps.cleanup.xforms import iter_problem_forms
 from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
@@ -65,26 +64,30 @@ def reprocess_form_cases(form):
 
 
 class Command(BaseCommand):
-    args = '<domain> <since>'
     help = ('Reprocesses all documents tagged as errors and tries to '
             'regenerate the appropriate case blocks for them. Can pass in '
             'a domain and date to process forms received after that date or '
             'just a domain to process all problem forms in the domain.')
-    option_list = (
-        make_option('--dryrun', action='store_true', dest='dryrun', default=False,
-            help="Don't do the actual reprocessing, just print the ids that would be affected"),
-    )
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'domain',
+        )
+        parser.add_argument(
+            'since',
+            nargs='?',
+        )
+        parser.add_argument(
+            '--dryrun',
+            action='store_true',
+            dest='dryrun',
+            default=False,
+            help="Don't do the actual reprocessing, just print the ids that would be affected",
+        )
 
-        if len(args) == 1:
-            domain = args[0]
-            since = None
-        elif len(args) == 2:
-            domain = args[0]
-            since = string_to_datetime(args[1])
-        else:
-            raise CommandError('Usage: %s\n%s' % (self.args, self.help))
+    def handle(self, domain, since, **options):
+        if since:
+            since = string_to_datetime(since)
 
         if should_use_sql_backend(domain):
             raise CommandError('This command only works for couch-based domains.')

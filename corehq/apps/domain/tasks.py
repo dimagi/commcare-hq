@@ -10,7 +10,7 @@ from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.users.models import WebUser
 
-from dimagi.utils.django.email import send_HTML_email
+from corehq.util.log import send_HTML_email
 from dimagi.utils.web import get_url_base
 
 

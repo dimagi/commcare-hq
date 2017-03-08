@@ -37,23 +37,13 @@ class TestLSVHNDSurveyIndicator(TestCase):
             ])
         ]
         cls.loc_types = setup_location_types_with_structure(cls.domain, location_type_structure)
-        for l in cls.loc_types.values():
-            l.save()
         cls.locs = setup_locations_with_structure(cls.domain, location_structure)
-        for l in cls.locs.values():
-            l.save()
         cls.ls = cls._make_user('ls', cls.locs['LSL'])
         cls.aww = cls._make_user('aww', cls.locs['AWC1'])
 
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
-        cls.aww.delete()
-        cls.ls.delete()
-        for l in cls.locs.values():
-            l.delete()
-        for l in cls.loc_types.values():
-            l.delete()
         cls.domain_obj.delete()
         super(TestLSVHNDSurveyIndicator, cls).tearDownClass()
 
@@ -84,21 +74,21 @@ class TestLSVHNDSurveyIndicator(TestCase):
 
     def test_survey_date_today(self, last_subs):
         last_subs.return_value = {
-            self.aww.get_id: self._make_form(self.aww.get_id, self.today)
+            self.aww.get_id: [self._make_form(self.aww.get_id, self.today)]
         }
         indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
         self.assertEqual(len(indicator.get_messages()), 0)
 
     def test_form_sent_thirty_six_days_ago(self, last_subs):
         last_subs.return_value = {
-            self.aww.get_id: self._make_form(self.aww.get_id, self.today - timedelta(days=36))
+            self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=36))]
         }
         indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
         self.assertEqual(len(indicator.get_messages()), 0)
 
     def test_form_sent_thirty_seven_days_ago(self, last_subs):
         last_subs.return_value = {
-            self.aww.get_id: self._make_form(self.aww.get_id, self.today - timedelta(days=37))
+            self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=37))]
         }
         indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
         messages = indicator.get_messages()
@@ -110,8 +100,8 @@ class TestLSVHNDSurveyIndicator(TestCase):
         self.addCleanup(UserESFake.remove_doc, aww_2.get_id)
         self.addCleanup(aww_2.delete)
         last_subs.return_value = {
-            self.aww.get_id: self._make_form(self.aww.get_id, self.today - timedelta(days=37)),
-            aww_2.get_id: self._make_form(aww_2.get_id, self.today - timedelta(days=37))
+            self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=37))],
+            aww_2.get_id: [self._make_form(aww_2.get_id, self.today - timedelta(days=37))]
         }
         indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
         messages = indicator.get_messages()
@@ -125,8 +115,8 @@ class TestLSVHNDSurveyIndicator(TestCase):
         self.addCleanup(UserESFake.remove_doc, aww_2.get_id)
         self.addCleanup(aww_2.delete)
         last_subs.return_value = {
-            self.aww.get_id: self._make_form(self.aww.get_id, self.today - timedelta(days=15)),
-            aww_2.get_id: self._make_form(aww_2.get_id, self.today - timedelta(days=37))
+            self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=15))],
+            aww_2.get_id: [self._make_form(aww_2.get_id, self.today - timedelta(days=37))]
         }
         indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
         messages = indicator.get_messages()
