@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,61 +1,101 @@
+@@ -1,47 +1,87 @@
  {% load i18n %}
  {% load xforms_extras %}
 -<div id="languages-and-translations" class="tab-pane">
