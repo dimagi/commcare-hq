@@ -188,7 +188,7 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
         lab_serial_number = test_case_properties.get('lab_serial_number', None)
         test_result_grade = test_case_properties.get('result_grade', None)
         bacilli_count = test_case_properties.get('bacilli_count', None)
-        result_grade = smear_result_grade.get(test_result_grade, bacilli_count)
+        result_grade = self.get_result_grade(test_result_grade, bacilli_count)
 
         if any(mandatory_value is None for mandatory_value in [lab_serial_number, result_grade]):
             raise RequiredValueMissing("Mandatory value missing in one of the following "
