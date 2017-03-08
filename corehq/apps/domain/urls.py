@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.conf.urls import url
 from django.contrib.auth.views import (
     password_change,
@@ -6,11 +7,10 @@ from django.contrib.auth.views import (
     password_reset_done,
 )
 from django.utils.translation import ugettext as _
-from django.conf import settings
 from django.views.generic import RedirectView
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
-from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
+from corehq.apps.domain.forms import HQSetPasswordForm
 from corehq.apps.domain.views import (
     ActivateTransferDomainView,
     AddFormRepeaterView,
@@ -92,14 +92,13 @@ urlpatterns = [
 
     url(r'^accounts/password_reset_email/$', exception_safe_password_reset,
         {'template_name': 'login_and_password/password_reset_form.html',
-         'password_reset_form': ConfidentialPasswordResetForm, 'from_email': settings.DEFAULT_FROM_EMAIL,
+         'from_email': settings.DEFAULT_FROM_EMAIL,
          'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
         name='password_reset_email'),
     url(r'^accounts/password_reset_email/done/$', password_reset_done,
         {'template_name': 'login_and_password/password_reset_done.html',
          'extra_context': {'current_page': {'page_name': _('Reset My Password')}}},
         name='password_reset_done'),
-
     url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
         PasswordResetView.as_view(),
         {'template_name': 'login_and_password/password_reset_confirm.html', 'set_password_form': HQSetPasswordForm,

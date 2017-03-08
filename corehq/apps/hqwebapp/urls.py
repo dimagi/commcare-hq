@@ -1,5 +1,9 @@
+from django.conf import settings
 from django.conf.urls import include, url
-from corehq.apps.domain.views import PublicSMSRatesView
+from django.utils.translation import ugettext as _
+
+from corehq.apps.domain.forms import HQSetPasswordForm
+from corehq.apps.domain.views import PublicSMSRatesView, exception_safe_password_reset, PasswordResetView
 from corehq.apps.settings.views import (
     TwoFactorProfileView, TwoFactorSetupView, TwoFactorSetupCompleteView,
     TwoFactorBackupTokensView, TwoFactorDisableView, TwoFactorPhoneSetupView,
@@ -11,7 +15,7 @@ from corehq.apps.hqwebapp.views import (
     MaintenanceAlertsView, redirect_to_default,
     yui_crossdomain, password_change, no_permissions, login, logout, bug_report, debug_notify,
     quick_find, osdd, create_alert, activate_alert, deactivate_alert, jserror, dropbox_upload, domain_login,
-    retrieve_download, toggles_js, couch_doc_counts, server_up)
+    retrieve_download, toggles_js, couch_doc_counts, server_up, domain_reset_pwd)
 
 urlpatterns = [
     url(r'^$', redirect_to_default),
@@ -52,6 +56,38 @@ domain_specific = [
     url(r'^login/$', domain_login, name='domain_login'),
     url(r'^login/mobile/$', domain_login, name='domain_mobile_login',
         kwargs={'template_name': 'login_and_password/mobile_login.html'}),
+
+    # This url is linked to from web login page
+    url(r'^reset_pwd_email/$', exception_safe_password_reset,
+        {'template_name': 'login_and_password/password_reset_form.html',
+         'email_template_name': 'login_and_password/domain_reset_pwd_email.html',
+         'from_email': settings.DEFAULT_FROM_EMAIL,
+         'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
+        name='domain_reset_pwd_email'),
+    # This url is linked to from mobile login page
+    # url(r'^reset_pwd_email/$', exception_safe_password_reset,
+    #     {'template_name': 'login_and_password/mobile_password_reset_form.html',
+    #      'email_template_name': 'login_and_password/domain_mobile_reset_pwd_email.html',
+    #      'from_email': settings.DEFAULT_FROM_EMAIL,
+    #      'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
+    #     name='domain_mobile_reset_pwd_email'),
+
+    url(r'^reset_pwd/web/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$', domain_reset_pwd,
+        name='domain_reset_pwd'),
+    url(r'^reset_pwd/mobile/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$', domain_reset_pwd,
+        {'template_name': 'login_and_password/domain_mobile_reset_pwd.html'},
+        name='domain_mobile_reset_pwd'),
+
+    url(r'^reset_pwd_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
+        PasswordResetView.as_view(),
+        {'template_name': 'login_and_password/password_reset_confirm.html', 'set_password_form': HQSetPasswordForm,
+         'extra_context': {'current_page': {'page_name': _('Password Reset Confirmation')}}},
+        name='domain_reset_pwd_confirm'),
+    url(r'^reset_pwd_confirm/done/$', domain_reset_pwd_complete,
+        {'template_name': 'login_and_password/password_reset_complete.html',
+         'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}},
+        name='domain_reset_pwd_complete'),
+
     url(r'^retreive_download/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
         retrieve_download, {'template': 'style/includes/file_download.html'},
         name='hq_soil_download'),

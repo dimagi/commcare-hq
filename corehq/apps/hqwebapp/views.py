@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import logout as django_logout
+from django.contrib.auth.views import logout as django_logout, password_reset_confirm
 from django.core import cache
 from django.core.mail.message import EmailMessage
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
@@ -36,6 +36,7 @@ from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
+from corehq.apps.domain.forms import HQSetPasswordForm
 from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
 
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -212,6 +213,25 @@ def password_change(req):
         password_form = AdminPasswordChangeForm(user_to_edit)
     template_name = "password_change.html"
     return render(req, template_name, {"form": password_form})
+
+
+# Corresponds to django.contrib.auth.views.password_reset_confirm()
+# Handles when a user clicks the link in their "reset password" e-mail and prompts for a new password
+def domain_reset_pwd(request, domain, uidb64, token, template_name='login_and_password/reset_pwd.html'):
+    domain_instance = Domain.get_by_name(domain)
+    if not domain_instance:
+        raise Http404
+    request.project = domain_instance
+
+    extra_context = {
+        'domain': domain,
+        'display_name': domain_instance.display_name() or domain,
+        'current_page': {'page_name': _('Welcome to %s!') % domain_instance.display_name()},
+    }
+    return password_reset_confirm(
+        request, uidb64, token, template_name,
+        set_password_form=HQSetPasswordForm, extra_context=extra_context
+    )
 
 
 def server_up(req):

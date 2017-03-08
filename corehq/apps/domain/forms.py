@@ -1262,7 +1262,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, PasswordResetForm):
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
 
-    def __init__(self, domain_name, *args, **kwargs):
+    def __init__(self, domain_name=None, *args, **kwargs):
         self.domain_name = domain_name
         super(HQPasswordResetForm, self).__init__(*args, **kwargs)
 
