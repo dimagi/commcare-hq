@@ -60,6 +60,12 @@ def check_repeaters():
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record):
+    if repeat_record.state == RECORD_FAILURE_STATE and repeat_record.overall_tries >= repeat_record.max_possible_tries:
+        repeat_record.cancel()
+        return
+    if repeat_record.cancelled:
+        return
+
     try:
         if repeat_record.repeater.doc_type.endswith(DELETED_SUFFIX):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
