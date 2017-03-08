@@ -400,7 +400,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
                          )
         self.assertEqual(payload['LabNo'], self.test_case.dynamic_case_properties().get('lab_serial_number'))
         self.assertEqual(payload['IntervalId'], 0)
-        self.assertEqual(payload['PatientWeight'], '40')
+        self.assertEqual(payload['PatientWeight'], 1)
         self.assertEqual(payload["SmearResult"], 11)
         self.assertEqual(payload["DMC"], 123)
         self.assertEqual(payload["PatientID"], DUMMY_NIKSHAY_ID)
@@ -553,7 +553,8 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
             self.domain,
             self.person_id,
             {
-                "hiv_status": "unknown"
+                "hiv_status": "unknown",
+                "owner_id": self.phi.location_id,
             }
         )
         self.assertEqual(1, len(self.repeat_records().all()))
