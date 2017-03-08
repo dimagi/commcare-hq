@@ -187,14 +187,21 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
 
         lab_serial_number = test_case_properties.get('lab_serial_number', None)
         test_result_grade = test_case_properties.get('result_grade', None)
-        result_grade = smear_result_grade.get(test_result_grade)
+        bacilli_count = test_case_properties.get('bacilli_count', None)
+        result_grade = smear_result_grade.get(test_result_grade, bacilli_count)
 
-        if any(mandatory_value is None for mandatory_value in [interval_id, lab_serial_number, result_grade]):
+        if any(mandatory_value is None for mandatory_value in [lab_serial_number, result_grade]):
             raise RequiredValueMissing("Mandatory value missing in one of the following "
                                        "LabSerialNo: {lab_serial_number}, ResultGrade: {result_grade}"
                                        .format(lab_serial_number=lab_serial_number,
                                                result_grade=test_result_grade))
         return interval_id, lab_serial_number, result_grade
+
+    def get_result_grade(self, test_result_grade, bacilli_count):
+        if test_result_grade in smear_result_grade.keys():
+            return smear_result_grade.get(test_result_grade)
+        elif test_result_grade == 'scanty':
+            return smear_result_grade.get("SC-{b_count}".format(b_count=bacilli_count), None)
 
     def _formatted_date(self, value):
         return datetime.datetime.strptime(value, '%Y-%m-%d').strftime('%d/%m/%Y')
