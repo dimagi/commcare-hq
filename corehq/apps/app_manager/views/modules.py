@@ -255,17 +255,12 @@ def _get_report_module_context(app, module):
 
     all_reports = ReportConfiguration.by_domain(app.domain) + \
                   StaticReportConfiguration.by_domain(app.domain)
-    warnings = []
     validity = module.check_report_validity()
 
     # We're now proactively deleting these references, so after that's been
     # out for a while, this can be removed (say June 2016 or later)
     if not validity.is_valid:
         module.report_configs = validity.valid_report_configs
-        warnings.append(
-            gettext_lazy('Your app contains references to reports that are '
-                         'deleted. These will be removed on save.')
-        )
 
     filter_choices = [
         {'slug': f.doc_type, 'description': f.short_description} for f in get_all_mobile_filter_configs()
@@ -277,7 +272,6 @@ def _get_report_module_context(app, module):
     return {
         'all_reports': [_report_to_config(r) for r in all_reports],
         'current_reports': [r.to_json() for r in module.report_configs],
-        'warnings': warnings,
         'filter_choices': filter_choices,
         'auto_filter_choices': auto_filter_choices,
         'daterange_choices': [choice._asdict() for choice in get_simple_dateranges()],

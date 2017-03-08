@@ -409,6 +409,12 @@ hqDefine('app_manager/js/report-module.js', function () {
             self.reports.push(report);
         }
     }
+
+    $(function () {
+        var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
+        setupValidation(hqImport('hqwebapp/js/urllib.js').reverse('validate_module_for_build'));
+    });
+
     return {
         ReportModule: ReportModule,
         StaticFilterData: StaticFilterData,
