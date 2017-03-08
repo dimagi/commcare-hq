@@ -85,6 +85,9 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
         )
         self.create_case(nikshay_registered_case)
 
+    def update_case_with(self, case_id, case_attrs):
+        update_case(self.domain, case_id, case_attrs)
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayRegisterPatientRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
@@ -328,28 +331,94 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
     def test_available_for_domain(self):
         self.assertTrue(NikshayFollowupRepeater.available_for_domain(self.domain))
 
+    def test_followup_for_tests(self):
+        self.assertEqual(NikshayFollowupRepeater().followup_for_tests, ['end_of_ip', 'end_of_cp'])
+
     @run_with_all_backends
     def test_trigger(self):
+        self.repeat_record_count = 0
+
+        def check_repeat_record_added():
+            if len(self.repeat_records().all()) > self.repeat_record_count:
+                self.repeat_record_count = len(self.repeat_records().all())
+                return True
+            else:
+                return False
+
         self.assertEqual(0, len(self.repeat_records().all()))
+
         delete_all_locations()
         locations = self._setup_enikshay_locations(self.domain)
+
         self.dmc_location = locations['DMC']
         self.dmc_location.metadata['nikshay_code'] = 123
+        self.dmc_location.metadata['is_test'] = 'no'
         self.dmc_location.save()
 
-        self.factory.create_or_update_cases(
-            [self.lab_referral, self.episode])
-        update_case(
-            self.domain,
-            self.episode_id,
-            {
-                "nikshay_registered": 'true',
-            },
-        )
-        # ToDo: This fails due to length in indices being 2
-        # self.factory.create_or_update_cases([self.test])
-        #
-        # self.assertEqual(1, len(self.repeat_records().all()))
+        self.factory.create_or_update_cases([self.lab_referral, self.episode])
+
+        # skip if episode case not nikshay registered
+        self.update_case_with(self.test_id, {"date_tested": datetime.now()})
+        self.assertFalse(check_repeat_record_added())
+
+        self.update_case_with(self.episode_id, {"nikshay_registered": 'true'})
+
+        # skip if episode case has no nikshay_id
+        self.update_case_with(self.test_id, {"date_tested": datetime.now()})
+        self.assertFalse(check_repeat_record_added())
+
+        self.update_case_with(self.episode_id, {"nikshay_id": DUMMY_NIKSHAY_ID})
+
+        self.update_case_with(self.test_id, {"date_tested": datetime.now()})
+        self.assertTrue(check_repeat_record_added())
+
+        # skip if test submission
+        self.dmc_location.metadata['is_test'] = 'yes'
+        self.dmc_location.save()
+        self.update_case_with(self.test_id, {"date_tested": datetime.now()})
+        self.assertFalse(check_repeat_record_added())
+        self.dmc_location.metadata['is_test'] = 'no'
+        self.dmc_location.save()
+
+        self.update_case_with(self.test_id, {"date_tested": datetime.now()})
+        self.assertTrue(check_repeat_record_added())
+
+        # allow update for diagnostic tests irrespective of the follow up test reason
+        self.update_case_with(self.test_id, {
+            "date_tested": datetime.now(),
+            "purpose_of_testing": 'diagnostic',
+            "follow_up_test_reason": 'end_of_no_p',
+        })
+        self.assertTrue(check_repeat_record_added())
+
+        # ensure followup test reason is in the allowed ones
+        self.update_case_with(self.test_id, {
+            "date_tested": datetime.now(),
+            "purpose_of_testing": 'just like that',
+            "follow_up_test_reason": 'end_of_no_p'
+        })
+        self.assertFalse(check_repeat_record_added())
+
+        self.update_case_with(self.test_id, {
+            "date_tested": datetime.now(),
+            "purpose_of_testing": 'just like that',
+            "follow_up_test_reason": 'end_of_ip',
+        })
+        self.assertTrue(check_repeat_record_added())
+
+        # ensure date tested is added for the test
+        self.update_case_with(self.test_id, {
+            "follow_up_test_reason": 'end_of_ip'
+        })
+        self.assertFalse(check_repeat_record_added())
+
+        # ensure test type is in the allowed ones
+        self.update_case_with(self.test_id, {
+            "date_tested": datetime.now(),
+            "follow_up_test_reason": 'end_of_ip',
+            "test_type_value": 'irrelevant-test'
+        })
+        self.assertFalse(check_repeat_record_added())
 
 
 class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
@@ -407,6 +476,16 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
 
     @run_with_all_backends
     def test_intervalId(self):
+        update_case(self.domain, self.test_id, {
+            "purpose_of_testing": "diagnostic",
+            "follow_up_test_reason": "not sure"
+        }, external_id=DUMMY_NIKSHAY_ID)
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        payload = (json.loads(
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case))
+        )
+        self.assertEqual(payload['IntervalId'], 0)
+
         update_case(self.domain,
             self.test_id,
             {
@@ -420,6 +499,28 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case))
         )
         self.assertEqual(payload['IntervalId'], 4)
+
+    def test_result_grade(self):
+        update_case(self.domain, self.test_id, {
+            "purpose_of_testing": "diagnostic",
+            "result_grade": "1+"
+        })
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        payload = (json.loads(
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case))
+        )
+        self.assertEqual(payload['SmearResult'], 11)
+
+        update_case(self.domain, self.test_id, {
+            "purpose_of_testing": "diagnostic",
+            "result_grade": "scanty",
+            "bacilli_count": '1'
+        })
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        payload = (json.loads(
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case))
+        )
+        self.assertEqual(payload['SmearResult'], 1)
 
     def test_mandatory_field_interval_id(self):
         update_case(self.domain,
@@ -454,24 +555,44 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
     def test_mandatory_field_smear_result(self):
-        update_case(self.domain,
-                    self.test_id,
-                    {
-                        "result_grade": "999++"
-                    },
-                    )
+        self.update_case_with(self.test_id, {"result_grade": "scanty"})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
 
         with self.assertRaisesMessage(
                 RequiredValueMissing,
-                "Mandatory value missing in one of the following LabSerialNo: {lab_serial_number}, ResultGrade: "
-                "{result_grade}"
-                .format(
-                    lab_serial_number=test_case.dynamic_case_properties().get('lab_serial_number'),
-                    result_grade="999++")
+                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
+                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="scanty")
                 ):
 
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
+
+        self.update_case_with(self.test_id, {"result_grade": "scanty", "bacilli_count": "10"})
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+
+        with self.assertRaisesMessage(
+                RequiredValueMissing,
+                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
+                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="scanty")
+        ):
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
+
+        self.update_case_with(self.test_id, {"result_grade": "5+"})
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+
+        with self.assertRaisesMessage(
+                RequiredValueMissing,
+                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
+                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="5+")
+        ):
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
+
+        self.update_case_with(self.test_id, {"result_grade": "1+"})
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
+
+        self.update_case_with(self.test_id, {"result_grade": "scanty", "bacilli_count": "1"})
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
     def test_mandatory_field_dmc_code(self):
         lab_referral_case = CaseAccessors(self.domain).get_case(self.lab_referral_id)
