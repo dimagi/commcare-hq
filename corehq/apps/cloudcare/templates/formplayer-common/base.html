@@ -38,7 +38,6 @@
                   rel="stylesheet"
                   media="all"
                   href="{% static 'cloudcare/less/formplayer-common.debug.less' %}" />
-	    {% block less_debug %}{% endblock %}
         {% else %}
           {% compress css %}
             <link type="text/less"
@@ -72,9 +71,9 @@
             <link rel="stylesheet"
                   href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}" />
           {% endcompress %}
-          {% block css %}{% endblock %}
-
         {% endif %}
+        {% block css %}{% endblock %}
+
         <link rel="stylesheet"
               href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
         <link type="text/css"
