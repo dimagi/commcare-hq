@@ -111,13 +111,14 @@ class PathNode(DocumentSchema):
     # This is true if this step in the path corresponds with an array (such as a repeat group)
     is_repeat = BooleanProperty(default=False)
 
+    def __key(self):
+        return (type(self), self.doc_type, self.name, self.is_repeat)
+
     def __eq__(self, other):
-        return (
-            type(self) == type(other) and
-            self.doc_type == other.doc_type and
-            self.name == other.name and
-            self.is_repeat == other.is_repeat
-        )
+        return self.__key() == other.__key()
+
+    def __hash__(self):
+        return hash(self.__key())
 
 
 class ExportItem(DocumentSchema):
@@ -1341,6 +1342,8 @@ class ExportDataSchema(Document):
         if inferred_schema:
             current_schema = cls._merge_schemas(current_schema, inferred_schema)
 
+        current_schema = cls._reorder_schema_from_app(current_schema, app_id, identifier)
+
         current_schema.domain = domain
         current_schema.app_id = app_id
         current_schema.version = cls.schema_version()
@@ -1351,6 +1354,43 @@ class ExportDataSchema(Document):
             original_id,
             original_rev
         )
+        return current_schema
+
+    @classmethod
+    def _reorder_schema_from_app(cls, current_schema, app_id, identifier):
+        app = Application.get(app_id)
+        ordered_schema = cls._process_app_build(
+            cls(),
+            app,
+            identifier,
+        )
+        return cls._reorder_schema_from_schema(current_schema, ordered_schema)
+
+    @classmethod
+    def _reorder_schema_from_schema(cls, current_schema, ordered_schema):
+        # First create a dictionary that maps item path to order number
+        # {
+        #   (PathNode(), PathNode()): 0
+        #   (PathNode(), PathNode()): 1
+        #   ...
+        # }
+
+        orders = {}
+        for group_schema in ordered_schema.group_schemas:
+            for idx, item in enumerate(group_schema.items):
+                orders[tuple(item.path)] = idx
+
+        # Next iterate through current schema and order the ones that have an order
+        # and put the rest at the bottom. The ones not ordered are deleted items
+        for group_schema in current_schema.group_schemas:
+            ordered_items = [None] * len(group_schema.items)
+            unordered_items = []
+            for idx, item in enumerate(group_schema.items):
+                if tuple(item.path) in orders:
+                    ordered_items.insert(orders[tuple(item.path)], item)
+                else:
+                    unordered_items.append(item)
+            group_schema.items = filter(None, ordered_items) + unordered_items
         return current_schema
 
     @classmethod
