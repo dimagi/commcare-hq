@@ -35,7 +35,7 @@ def reset_checkpoint(checkpoint_id):
 class PillowCheckpoint(object):
 
     def __init__(self, checkpoint_id):
-        self.checkpoint_id = checkpoint_id
+        self.checkpoint_id = 'temp_{}'.format(checkpoint_id)
         self._last_checkpoint = None
 
     def get_or_create_wrapped(self, verify_unchanged=False):
