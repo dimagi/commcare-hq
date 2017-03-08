@@ -128,13 +128,7 @@ def default_new_app(request, domain):
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
 
-    if toggles.APP_MANAGER_V2.enabled(domain):
-        app.profile = {
-            'properties': {
-                'advanced_app_builder': 'false',
-            },
-        }
-    else:
+    if not toggles.APP_MANAGER_V2.enabled(domain):
         # APP MANAGER V2 is completely blank on new app
         module = Module.new_module(_("Untitled Module"), lang)
         app.add_module(module)
