@@ -106,7 +106,7 @@ smear_result_grade = {
 
 hiv_status = {
     'reactive': 'Pos',
-    'non-reactive': 'Neg',
+    'non_reactive': 'Neg',
     'unknown': 'Unknown',
 }
 
