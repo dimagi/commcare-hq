@@ -93,7 +93,6 @@ class NikshayFollowupRepeater(CaseRepeater):
             episode_case_properties = episode_case.dynamic_case_properties()
             lab_referral_case = get_lab_referral_from_test(test_case.domain, test_case.get_id)
             return (
-                not test_submission(lab_referral_case) and
                 date_tested_added_for_test(test_case) and
                 test_case_properties.get('nikshay_registered', 'false') == 'false' and
                 test_case_properties.get('test_type_value', '') in ['microscopy-zn', 'microscopy-fluorescent'] and
@@ -102,7 +101,8 @@ class NikshayFollowupRepeater(CaseRepeater):
                 (
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
                     test_case_properties.get('follow_up_test_reason') in self.followup_for_tests
-                )
+                ) and
+                not test_submission(lab_referral_case)
             )
         else:
             return False
