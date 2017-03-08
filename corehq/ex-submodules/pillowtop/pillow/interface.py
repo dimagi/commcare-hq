@@ -155,15 +155,21 @@ class PillowBase(object):
     def _record_change_in_datadog(self, change):
         change_feed = self.get_change_feed()
         sequence = self._normalize_checkpoint_sequence()
+        current_offsets = change_feed.get_current_offsets()
 
         for topic, value in sequence.iteritems():
-            datadog_gauge('commcare.change_feed.processed_offsets'.format(topic), value, tags=[
+            datadog_gauge('commcare.change_feed.processed_offsets', value, tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 'topic:{}'.format(topic),
             ])
+            if topic in current_offsets:
+                datadog_gauge('commcare.change_feed.need_processing', current_offsets[topic] - value, tags=[
+                    'pillow_name:{}'.format(self.get_name()),
+                    'topic:{}'.format(topic),
+                ])
 
-        for topic, offset in change_feed.get_current_offsets().iteritems():
-            datadog_gauge('commcare.change_feed.current_offsets'.format(topic), offset, tags=[
+        for topic, offset in current_offsets.iteritems():
+            datadog_gauge('commcare.change_feed.current_offsets', offset, tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 'topic:{}'.format(topic),
             ])
