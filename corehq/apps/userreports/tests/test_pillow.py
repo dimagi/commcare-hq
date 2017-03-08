@@ -148,6 +148,16 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
 
     @patch('corehq.apps.userreports.specs.datetime')
     @run_with_all_ucr_backends
+    def test_not_relevant_to_domain(self, datetime_mock):
+        datetime_mock.utcnow.return_value = self.fake_time_now
+        sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
+        sample_doc['domain'] = 'not-this-domain'
+        self.pillow.process_change(doc_to_change(sample_doc))
+        self.adapter.refresh_table()
+        self.assertEqual(0, self.adapter.get_query_object().count())
+
+    @patch('corehq.apps.userreports.specs.datetime')
+    @run_with_all_ucr_backends
     def test_process_doc_from_couch(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
