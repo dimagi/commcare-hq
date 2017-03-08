@@ -17,7 +17,7 @@ from dateutil.relativedelta import relativedelta
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.forms import SetPasswordForm, PasswordResetForm
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
@@ -82,12 +82,16 @@ from corehq.privileges import (
     REPORT_BUILDER_TRIAL,
 )
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
+
+
+_soft_assert_username_unique = soft_assert('@'.join(('nhooper', 'dimagi.com')))
 
 
 def tf_choices(true_txt, false_txt):
@@ -1245,98 +1249,33 @@ class NoAutocompleteMixin(object):
                 field.widget.attrs.update({'autocomplete': 'off'})
 
 
-class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
+class HQPasswordResetForm(NoAutocompleteMixin, PasswordResetForm):
     """
     Only finds users and emails forms where the USERNAME is equal to the
-    email specified (preventing Mobile Workers from using this form to submit).
+    email specified. We know the domain from the URL, so usernames
+    containing '@' are web users, otherwise they are mobile workers.
 
     This small change is why we can't use the default PasswordReset form.
     """
-    email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
-                             widget=forms.TextInput(attrs={'class': 'form-control'}))
+    email = forms.CharField(label=ugettext_lazy("Username"), max_length=254,
+                            widget=forms.TextInput(attrs={'class': 'form-control'}))
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
-    error_messages = {
-        'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
-                                 "registered?"),
-        'unusable': ugettext_lazy("The user account associated with this email address cannot reset the "
-                                  "password."),
-    }
 
-    def clean_email(self):
-        UserModel = get_user_model()
-        email = self.cleaned_data["email"]
-        matching_users = UserModel._default_manager.filter(username__iexact=email)
+    def __init__(self, domain_name, *args, **kwargs):
+        self.domain_name = domain_name
+        super(HQPasswordResetForm, self).__init__(*args, **kwargs)
 
-        # below here is not modified from the superclass
-        if not len(matching_users):
-            raise forms.ValidationError(self.error_messages['unknown'])
-        if not any(user.is_active for user in matching_users):
-            # none of the filtered users are active
-            raise forms.ValidationError(self.error_messages['unknown'])
-        if any((user.password == UNUSABLE_PASSWORD_PREFIX)
-               for user in matching_users):
-            raise forms.ValidationError(self.error_messages['unusable'])
-        return email
-
-    def save(self, domain_override=None,
-             subject_template_name='registration/password_reset_subject.txt',
-             email_template_name='registration/password_reset_email.html',
-             # WARNING: Django 1.7 passes this in automatically. do not remove
-             html_email_template_name=None,
-             use_https=False, token_generator=default_token_generator,
-             from_email=None, request=None, **kwargs):
+    def get_users(self, email):
         """
-        Generates a one-use only link for resetting password and sends to the
-        user.
+        Given an email, return matching user(s) who should receive a reset.
         """
-        UserModel = get_user_model()
-        email = self.cleaned_data["email"]
-
-        # this is the line that we couldn't easily override in PasswordForm where
-        # we specifically filter for the username, not the email, so that
-        # mobile workers who have the same email set as a web worker don't
-        # get a password reset email.
-        active_users = UserModel._default_manager.filter(
-            username__iexact=email, is_active=True)
-
-        # the code below is copied from default PasswordForm
-        for user in active_users:
-            # Make sure that no email is sent to a user that actually has
-            # a password marked as unusable
-            if not user.has_usable_password():
-                continue
-            if not domain_override:
-                current_site = get_current_site(request)
-                site_name = current_site.name
-                domain = current_site.domain
-            else:
-                site_name = domain = domain_override
-            c = {
-                'email': user.email,
-                'domain': domain,
-                'site_name': site_name,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'user': user,
-                'token': token_generator.make_token(user),
-                'protocol': 'https' if use_https else 'http',
-            }
-            subject = render_to_string(subject_template_name, c)
-            # Email subject *must not* contain newlines
-            subject = ''.join(subject.splitlines())
-            email = render_to_string(email_template_name, c)
-            send_mail_async.delay(subject, email, from_email, [user.email])
-
-
-class ConfidentialPasswordResetForm(HQPasswordResetForm):
-
-    def clean_email(self):
-        try:
-            return super(ConfidentialPasswordResetForm, self).clean_email()
-        except forms.ValidationError:
-            # The base class throws various emails that give away information about the user;
-            # we can pretend all is well since the save() method is safe for missing users.
-            return self.cleaned_data['email']
+        username = email if '@' in email else ''.join(
+            (email, '@', self.domain_name, '.', settings.HQ_ACCOUNT_ROOT)
+        )
+        active_users = get_user_model()._default_manager.filter(
+            username__iexact=username, is_active=True)
+        return (u for u in active_users if u.has_usable_password())
 
 
 class HQSetPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
