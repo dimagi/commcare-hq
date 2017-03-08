@@ -6,7 +6,7 @@ from celery.task import periodic_task
 from corehq import toggles
 from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
 from corehq.apps.dhis2.models import JsonApiRequest
-from corehq.apps.domain.models import Domain
+from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
 def send_datavalues(domain_name):
@@ -48,7 +48,5 @@ def send_datavalues(domain_name):
     queue='background_queue'
 )
 def send_datasets_for_all_domains():
-    for row in Domain.get_all(include_docs=False):
-        domain_name = row['key']
-        if toggles.DHIS2_INTEGRATION.enabled(domain_name):
-            send_datavalues(domain_name)
+    for domain_name in find_domains_with_toggle_enabled(toggles.DHIS2_INTEGRATION):
+        send_datavalues(domain_name)
