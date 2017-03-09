@@ -7,7 +7,7 @@ from corehq.apps.locations.signals import clean_location
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
 
 
-def user_save_callback(sender, domain, user, forms, **kwargs):
+def clean_user_callback(sender, domain, user, forms, **kwargs):
     if not toggles.ENIKSHAY.enabled(domain):
         return
 
@@ -98,7 +98,8 @@ def validate_location(domain, user_form):
     user_form.add_error('location_id', _("You must select a location."))
 
 
-def location_save_callback(sender, domain, location, forms, **kwargs):
+
+def clean_location_callback(sender, domain, location, forms, **kwargs):
     if not toggles.ENIKSHAY.enabled(domain):
         return
 
@@ -110,10 +111,19 @@ def location_save_callback(sender, domain, location, forms, **kwargs):
     else:
         validate_nikshay_code_unchanged(location, location_form)
 
+    set_available_tests(location, location_form)
+    set_site_code(location_form)
 
-def get_site_code(domain, location):
+
+def set_site_code(location_form):
     """Autogenerate site_code based on custom location data nikshay code and
     the codes of the ancestor locations."""
+    # TODO How is this supposed to work if 'nikshay_code' isn't always required?
+    nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code') or ''
+    ancestor_codes = [l.metadata.get('nikshay_code') or ''
+                      for l in location_form['parent'].get_ancestors(include_self=True)]
+    ancestor_codes.append(nikshay_code)
+    location_form.cleaned_data['site_code'] = '-'.join(ancestor_codes)
 
 
 def validate_nikshay_code(domain, location_form):
@@ -145,9 +155,15 @@ def validate_nikshay_code_unchanged(location, location_form):
         location_form.custom_data.form.add_error('nikshay_code', msg)
 
 
+def set_available_tests(location, location_form):
+    if location_form.cleaned_data['loctype'] == 'cdst':
+        # TODO find the real field name
+        location.metadata['list of available tests'] = 'cbnaat'
+
+
 def connect_signals():
-    clean_location.connect(location_save_callback, dispatch_uid="location_save_callback")
-    clean_commcare_user.connect(user_save_callback, dispatch_uid="user_save_callback")
+    clean_location.connect(clean_location_callback, dispatch_uid="clean_location_callback")
+    clean_commcare_user.connect(clean_user_callback, dispatch_uid="clean_user_callback")
 
 
 reports = "View All Phase 1 Reports"
