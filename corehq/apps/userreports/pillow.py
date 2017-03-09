@@ -168,8 +168,11 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
             change_processed_event_handler=event_handler
         )
         # set by the superclass constructor
-        assert self._processor is not None
-        assert self._processor.bootstrapped is not None
+        assert self._processors is not None
+        assert len(self._processors) == 1
+        assert self._processors.bootstrapped is not None
+
+        self._processor = self._processors[0]
 
     def bootstrap(self, configs=None):
         self._processor.bootstrap(configs)
