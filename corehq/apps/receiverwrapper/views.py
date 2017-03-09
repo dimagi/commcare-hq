@@ -1,6 +1,5 @@
 import logging
 from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.loading import get_db
 from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
@@ -25,7 +24,7 @@ from corehq.apps.receiverwrapper.util import (
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
-from corehq.util import datadog
+from corehq.util.datadog.gauges import datadog_gauge, datadog_counter
 from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
 from corehq.util.datadog.utils import log_counter
 from corehq.util.timer import TimingContext
@@ -100,7 +99,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
         'domain:{}'.format(domain)
     ]
-    datadog.statsd.increment(counter_name, tags=tags)
+    datadog_counter(counter_name, tags=tags)
 
     if response.status_code == 400:
         logging.error(
@@ -109,12 +108,10 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         )
     elif response.status_code == 201:
 
-        datadog.statsd.gauge(
-            'commcare.xform_submissions.timings', timer.duration, tags=tags)
+        datadog_gauge('commcare.xform_submissions.timings', timer.duration, tags=tags)
         # normalize over number of items (form or case) saved
-        datadog.statsd.gauge(
-            'commcare.xform_submissions.normalized_timings',
-            timer.duration/(1 + len(result.cases)), tags=tags)
+        normalized_time = timer.duration / (1 + len(result.cases))
+        datadog_gauge('commcare.xform_submissions.normalized_timings', normalized_time, tags=tags)
 
     return response
 
