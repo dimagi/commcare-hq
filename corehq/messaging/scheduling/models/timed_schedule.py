@@ -1,4 +1,4 @@
-from corehq.messaging.scheduling.models.abstract import Schedule, Event
+from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from datetime import timedelta, datetime
 from dimagi.utils.decorators.memoized import memoized
@@ -102,3 +102,8 @@ class TimedEvent(Event):
     schedule = models.ForeignKey('scheduling.TimedSchedule', on_delete=models.CASCADE)
     day = models.IntegerField()
     time = models.TimeField()
+
+
+class ScheduledBroadcast(Broadcast):
+    schedule = models.ForeignKey('scheduling.TimedSchedule', on_delete=models.CASCADE)
+    start_date = models.DateField()

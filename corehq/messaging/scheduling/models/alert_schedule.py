@@ -1,4 +1,4 @@
-from corehq.messaging.scheduling.models.abstract import Schedule, Event
+from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
 from datetime import timedelta, datetime
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models
@@ -65,3 +65,7 @@ class AlertSchedule(Schedule):
 class AlertEvent(Event):
     schedule = models.ForeignKey('scheduling.AlertSchedule', on_delete=models.CASCADE)
     time_to_wait = models.TimeField()
+
+
+class ImmediateBroadcast(Broadcast):
+    schedule = models.ForeignKey('scheduling.AlertSchedule', on_delete=models.CASCADE)

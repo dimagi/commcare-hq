@@ -61,18 +61,6 @@ class SchedulePartitionedForeignKeyMixin(ScheduleForeignKeyMixin):
         abstract = True
 
 
-class ScheduleORMForeignKeyMixin(ScheduleForeignKeyMixin):
-    """
-    This version of the ScheduleForeignKeyMixin should be used with non-partitioned models.
-    Django ForeignKey fields are used to make queries easier.
-    """
-    timed_schedule = models.ForeignKey('scheduling.TimedSchedule', null=True, on_delete=models.CASCADE)
-    alert_schedule = models.ForeignKey('scheduling.AlertSchedule', null=True, on_delete=models.CASCADE)
-
-    class Meta:
-        abstract = True
-
-
 class Schedule(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
     active = models.BooleanField(default=True)
@@ -175,8 +163,10 @@ class Content(models.Model):
         raise NotImplementedError()
 
 
-class Broadcast(ScheduleORMForeignKeyMixin):
+class Broadcast(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=1000)
-    start_date = models.DateField(null=True)
     last_sent_timestamp = models.DateTimeField(null=True)
+
+    class Meta:
+        abstract = True
