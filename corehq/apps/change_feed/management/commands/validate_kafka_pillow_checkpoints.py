@@ -1,4 +1,5 @@
-from optparse import make_option
+from __future__ import print_function
+
 from django.core.management import BaseCommand
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
@@ -36,7 +37,7 @@ def validate_checkpoints(print_only):
                     pillow.pillow_id, e
                 )
                 if print_only:
-                    print message
+                    print(message)
                 else:
                     raise Exception(message)
 

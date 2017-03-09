@@ -17,7 +17,8 @@ from celery.task import task
 from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
+from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instance_ids
+from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
 from couchexport.files import Temp
@@ -25,7 +26,7 @@ from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.django.email import send_HTML_email
+from corehq.util.log import send_HTML_email
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime
 from soil import DownloadBase
@@ -51,7 +52,6 @@ from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
 )
-from .dbaccessors import get_all_hq_group_export_configs
 from .export import save_metadata_export_to_tempfile
 from .models import (
     FormExportSchema,
@@ -139,13 +139,13 @@ def monthly_reports():
 
 @periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def saved_exports():
-    for group_config in get_all_hq_group_export_configs():
-        export_for_group_async.delay(group_config)
+    for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
+        export_for_group_async.delay(group_config_id)
 
-    for daily_saved_export in get_all_daily_saved_export_instances():
+    for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
         from corehq.apps.export.tasks import rebuild_export_task
         last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-        rebuild_export_task.delay(daily_saved_export, last_access_cutoff)
+        rebuild_export_task.delay(daily_saved_export_id, last_access_cutoff)
 
 
 @task(queue='background_queue', ignore_result=True)
@@ -156,9 +156,10 @@ def rebuild_export_task(groupexport_id, index, last_access_cutoff=None, filter=N
 
 
 @task(queue='saved_exports_queue', ignore_result=True)
-def export_for_group_async(group_config):
+def export_for_group_async(group_config_id):
     # exclude exports not accessed within the last 7 days
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+    group_config = HQGroupExportConfiguration.get(group_config_id)
     export_for_group(group_config, last_access_cutoff=last_access_cutoff)
 
 
@@ -185,7 +186,7 @@ def update_calculated_properties():
             if props['cp_300th_form'] is None:
                 del props['cp_300th_form']
             send_to_elasticsearch("domains", props)
-        except Exception, e:
+        except Exception as e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 
 

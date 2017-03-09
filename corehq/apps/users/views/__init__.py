@@ -207,10 +207,10 @@ class BaseEditUserView(BaseUserSettingsView):
             raise NotImplementedError("You must specify a form to update the user!")
 
         if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
-            form = self.user_update_form_class(data=self.request.POST)
+            form = self.user_update_form_class(
+                data=self.request.POST, domain=self.domain, existing_user=self.editable_user)
         else:
-            form = self.user_update_form_class()
-            form.initialize_form(domain=self.request.domain, existing_user=self.editable_user)
+            form = self.user_update_form_class(domain=self.domain, existing_user=self.editable_user)
 
         if self.can_change_user_roles:
             form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
@@ -261,7 +261,7 @@ class BaseEditUserView(BaseUserSettingsView):
     def update_user(self):
         if self.form_user_update.is_valid():
             old_lang = self.request.couch_user.language
-            if self.form_user_update.update_user(existing_user=self.editable_user, domain=self.domain):
+            if self.form_user_update.update_user():
                 # if editing our own account we should also update the language in the session
                 if self.editable_user._id == self.request.couch_user._id:
                     new_lang = self.request.couch_user.language

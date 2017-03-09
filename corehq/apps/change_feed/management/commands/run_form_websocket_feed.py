@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from django.core.management import BaseCommand
 from django_countries.data import COUNTRIES
 from corehq.apps.change_feed import topics
@@ -35,7 +37,7 @@ class Command(BaseCommand):
             help="Use 'compact' mode - don't include additional domain metadata (faster)",
         )
 
-    def handle(self, **options):
+    def handle(self, *args, **options):
         since = options['from']
         sleep = float(options['sleep'] or '.01')
         last_domain = None
@@ -45,7 +47,7 @@ class Command(BaseCommand):
                 # this is just helpful for demos to find domain transitions
                 if change.metadata.domain != last_domain:
                     last_domain = change.metadata.domain
-                    print change.sequence_id, last_domain
+                    print(change.sequence_id, last_domain)
 
                 metadata = change.metadata.to_json()
                 if not options['compact']:

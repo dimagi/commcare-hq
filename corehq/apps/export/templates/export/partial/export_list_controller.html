@@ -16,8 +16,8 @@
     {% endif %}
     <p>
         {% block lead_text %}
-        {% blocktrans %}
-            Exports are a way to download data from CommCare HQ
+        {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+            Exports are a way to download data from {{ hq_name }}
             in a variety of formats (CSV, Excel, etc.) for use in
             third-party data analysis tools.
         {% endblocktrans %}
@@ -97,8 +97,9 @@
                         <th class="col-sm-6">{% trans 'Name' %}</th>
                         {% if has_edit_permissions %}
                         <th class="col-sm-1">{% block second_column_header %}{% trans 'Edit' %}{% endblock %}</th>
+                        <th ng-if="!export.isLegacy" class="col-sm-1">{% trans 'Copy' %}</th>
                         {% endif %}
-                        <th class="col-sm-2">{% block third_column_header %}{{ export_type_caps }}{% endblock %}</th>
+                        <th class="col-sm-1">{% block third_column_header %}{{ export_type_caps }}{% endblock %}</th>
                         {%  if allow_bulk_export %}
                         <th class="col-sm-3">
                             {% blocktrans %}Bulk {{ export_type_caps }}:{% endblocktrans %}
@@ -280,6 +281,13 @@
                                     <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
                                     <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
 
+                                </a>
+                            </div>
+                        </td>
+                        <td>
+                            <div ng-if="isLocationSafeForUser(export) && !export.isLegacy">
+                                <a href="{% angularjs %}{{ export.copyUrl }}{% endangularjs %}" class="btn btn-default">
+                                    <span>{% trans 'Copy' %}</span>
                                 </a>
                             </div>
                         </td>

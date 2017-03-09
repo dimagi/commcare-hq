@@ -4,6 +4,7 @@ Utilities for administering elasticsearch
 
 These can be run locally when connected to the VPN
 """
+from __future__ import print_function
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from collections import namedtuple
 import json
@@ -14,7 +15,7 @@ from elasticsearch.client import ClusterClient, NodesClient, CatClient, IndicesC
 
 
 def pprint(data):
-    print json.dumps(data, indent=4)
+    print(json.dumps(data, indent=4))
 
 
 def confirm(msg):
@@ -42,21 +43,21 @@ def get_nodes_info(es):
 
 def cluster_status(es):
     cluster = ClusterClient(es)
-    print "\nCLUSTER HEALTH"
+    print("\nCLUSTER HEALTH")
     pprint(cluster.health())
-    print "\nPENDING TASKS"
+    print("\nPENDING TASKS")
     pprint(cluster.pending_tasks())
-    print "\nNODES"
+    print("\nNODES")
     for node in get_nodes_info(es):
-        print node.name, node.docs
-    print "\nSHARD ALLOCATION"
+        print(node.name, node.docs)
+    print("\nSHARD ALLOCATION")
     cat = CatClient(es)
-    print cat.allocation(v=True)
+    print(cat.allocation(v=True))
 
 
 def shard_status(es):
     cat = CatClient(es)
-    print cat.shards(v=True)
+    print(cat.shards(v=True))
 
 
 def cluster_settings(es):
@@ -83,36 +84,36 @@ def cancel_replica_shards(es):
 
 def decommission_node(es):
     cluster = ClusterClient(es)
-    print "The nodes are:"
+    print("The nodes are:")
     nodes = get_nodes_info(es)
     for node in nodes:
-        print node.name, node.docs
+        print(node.name, node.docs)
     confirm("Are you sure you want to decommission a node?")
     node_name = raw_input("Which one would you like to decommission?\nname:")
     names = [node.name for node in nodes]
     if node_name not in names:
-        print "You must enter one of {}".format(", ".join(names))
+        print("You must enter one of {}".format(", ".join(names)))
         return
     confirm("This will remove all shards from {}, okay?".format(node_name))
     cmd = {"transient": {"cluster.routing.allocation.exclude._name": node_name}}
     pprint(cluster.put_settings(cmd))
-    print "The node is now being decommissioned."
+    print("The node is now being decommissioned.")
 
 
 def force_zone_awareness(es):
     cluster = ClusterClient(es)
-    print "NODE SETTINGS:"
+    print("NODE SETTINGS:")
     for node in get_nodes_info(es):
         pprint(node.settings)
     zones = raw_input("\nEnter the zone names, separated by a comma\n")
     confirm("Are you sure these zones exist?")
     cmd = {"persistent": {"cluster.routing.allocation.awareness.force.zone.values": zones,
                           "cluster.routing.allocation.awareness.attributes": "zone"}}
-    print "This will add the following settings"
+    print("This will add the following settings")
     pprint(cmd)
     confirm("Okay?")
     pprint(cluster.put_settings(cmd))
-    print "Finished"
+    print("Finished")
 
 
 def clear_zone_awareness(es):
@@ -123,7 +124,7 @@ def clear_zone_awareness(es):
                           "cluster.routing.allocation.awareness.attributes": ""}}
     confirm("Remove the allocation awareness settings from the cluster?")
     pprint(cluster.put_settings(cmd))
-    print "Cleared"
+    print("Cleared")
 
 
 def pending_tasks(es):

@@ -5,8 +5,6 @@
 
 {% block js %}{{ block.super }}
     {% compress js %}
-        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/compression.js' %}"></script>
         <script src="{% static 'app_manager/js/import_app.js' %}"></script>
     {% endcompress %}

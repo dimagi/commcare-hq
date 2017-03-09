@@ -21,6 +21,7 @@ NOSE_PLUGINS = [
     'corehq.tests.nose.HqTestFinderPlugin',
     'corehq.tests.noseplugins.dividedwerun.DividedWeRunPlugin',
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
+    'corehq.tests.noseplugins.cmdline_params.CmdLineParametersPlugin',
 
     # The following are not enabled by default
     'corehq.tests.noseplugins.logfile.LogFilePlugin',

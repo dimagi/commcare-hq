@@ -1,3 +1,4 @@
+from __future__ import print_function
 from copy import copy
 from datetime import datetime
 from itertools import groupby
@@ -16,6 +17,7 @@ from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.util.timezones.utils import get_timezone_for_domain
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -842,6 +844,13 @@ class ExportInstance(BlobMixin, Document):
         """
         return self.fetch_attachment(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, stream=stream)
 
+    def copy_export(self):
+        export_json = self.to_json()
+        del export_json['_id']
+        export_json['name'] = '{} - Copy'.format(self.name)
+        new_export = self.__class__.wrap(export_json)
+        return new_export
+
 
 class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
@@ -1308,11 +1317,16 @@ class ExportDataSchema(Document):
                 continue
 
             app = Application.wrap(app_doc)
-            current_schema = cls._process_app_build(
-                current_schema,
-                app,
-                identifier,
-            )
+            try:
+                current_schema = cls._process_app_build(
+                    current_schema,
+                    app,
+                    identifier,
+                )
+            except Exception as e:
+                _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
+                _soft_assert(False, 'Failed to process app {}. {}'.format(app._id, e))
+                continue
 
             # Only record the version of builds on the schema. We don't care about
             # whether or not the schema has seen the current build because that always
@@ -2295,12 +2309,12 @@ class ConversionMeta(DocumentSchema):
     info = ListProperty()
 
     def pretty_print(self):
-        print '---' * 15
-        print '{:<20}| {}'.format('Original Path', self.path)
-        print '{:<20}| {}'.format('Failure Reason', self.failure_reason)
+        print('---' * 15)
+        print('{:<20}| {}'.format('Original Path', self.path))
+        print('{:<20}| {}'.format('Failure Reason', self.failure_reason))
         for idx, line in enumerate(self.info):
             prefix = 'Info' if idx == 0 else ''
-            print '{:<20}| {}'.format(prefix, line)
+            print('{:<20}| {}'.format(prefix, line))
 
 
 class ExportMigrationMeta(Document):

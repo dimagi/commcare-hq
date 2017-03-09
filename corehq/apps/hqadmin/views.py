@@ -9,6 +9,7 @@ from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
+from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import add_months
@@ -88,7 +89,7 @@ from . import service_checks, escheck
 from .forms import AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm, ReprocessMessagingCaseUpdatesForm
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
-from .reporting.reports import get_project_spaces, get_stats_data
+from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from .utils import get_celery_stats
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
@@ -311,7 +312,7 @@ def system_ajax(request):
             try:
                 t = cresource.get("api/tasks", params_dict={'limit': task_limit}).body_string()
                 all_tasks = json.loads(t)
-            except Exception, ex:
+            except Exception as ex:
                 return json_response({'error': "Error with getting from celery_flower: %s" % ex}, status_code=500)
 
             for task_id, traw in all_tasks.items():
@@ -598,13 +599,18 @@ def stats_data(request):
 
     domains = get_project_spaces(facets=domain_params)
 
-    return json_response(get_stats_data(
-        histo_type,
-        domains,
-        request.datespan,
-        interval,
-        **stats_kwargs
-    ))
+    try:
+        return json_response(get_stats_data(
+            histo_type,
+            domains,
+            request.datespan,
+            interval,
+            **stats_kwargs
+        ))
+    except HistoTypeNotFoundException:
+        return HttpResponseBadRequest(
+            'histogram_type param must be one of <ul><li>{}</li></ul>'
+            .format('</li><li>'.join(HISTO_TYPE_TO_FUNC.keys())))
 
 
 @require_superuser

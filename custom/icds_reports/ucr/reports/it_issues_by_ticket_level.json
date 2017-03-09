@@ -33,7 +33,9 @@
         "field": "block_id",
         "choice_provider": {
           "include_descendants": true,
-          "type": "location"
+          "type": "location",
+          "order_by_hierarchy": true,
+          "show_full_path": true
         },
         "display": "Filter by Area"
       },

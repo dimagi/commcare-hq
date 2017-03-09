@@ -636,13 +636,6 @@ CUSTOM_INSTANCES = StaticToggle(
     namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
-LOCATIONS_IN_REPORTS = StaticToggle(
-    'LOCATIONS_IN_REPORTS',
-    "Include locations in report filters",
-    TAG_PRODUCT_PATH,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 CLOUDCARE_CACHE = StaticToggle(
     'cloudcare_cache',
     'Aggresively cache case list, can result in stale data',
@@ -850,14 +843,6 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 )
 
 
-PROJECT_HEALTH_DASHBOARD = StaticToggle(
-    'project_health_dashboard',
-    'Shows the project performance dashboard in the reports navigation',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-
 PHONE_NUMBERS_REPORT = StaticToggle(
     'phone_numbers_report',
     "Shows information related to the phone numbers owned by a project's contacts",
@@ -932,7 +917,7 @@ EDIT_FORMPLAYER = PredictablyRandomToggle(
     'Edit forms on Formplayer',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.1,
+    randomness=0.5,
 )
 
 PREVIEW_APP = PredictablyRandomToggle(
@@ -955,6 +940,13 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     'Uses latest build for cloudcare instead of latest starred',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+VELLUM_BETA = StaticToggle(
+    'vellum_beta',
+    'Use Vellum beta version',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_USER]
 )
 
 APP_MANAGER_V2 = StaticToggle(
@@ -1025,18 +1017,18 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-COPY_CASE_CONFIGS = StaticToggle(
-    'copy_case_configs',
-    'Allow copying case list / details screens in basic modules.',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN]
-)
-
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
+)
+
+ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
+    'anonymous_web_apps_usage',
+    'Allow anonymous users to access web apps applications',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(

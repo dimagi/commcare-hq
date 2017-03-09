@@ -5,6 +5,7 @@ set -euo pipefail  # bash strict mode - exit on hard failures
 # https://confluence.dimagi.com/display/commcarehq/Internationalization+and+Localization+-+Transifex+Translations
 
 function abort () {
+    echo $@
     echo "Aborting."
     exit 1
 }

@@ -50,7 +50,7 @@
 -            <div class="col-sm-4">
 -                <select class="form-control" name="fixture_type" data-bind="value: fixtureType">
 -                    <option value="">{% trans "Select One" %}</option>
--                    {% for fixture_type in fixture_columns_by_type %}
+-                    {% for fixture_type in js_options.fixture_columns_by_type %}
 -                        <option value="{{ fixture_type }}">{{ fixture_type }}</option>
 -                    {% endfor %}
 -                </select>
@@ -65,7 +65,7 @@
 +                <div class="col-sm-4">
 +                    <select class="form-control" name="fixture_type" data-bind="value: fixtureType">
 +                        <option value="">{% trans "Select One" %}</option>
-+                        {% for fixture_type in fixture_columns_by_type %}
++                        {% for fixture_type in js_options.fixture_columns_by_type %}
 +                            <option value="{{ fixture_type }}">{{ fixture_type }}</option>
 +                        {% endfor %}
 +                    </select>

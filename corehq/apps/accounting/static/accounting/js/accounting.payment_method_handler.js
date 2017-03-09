@@ -377,6 +377,7 @@ hqDefine('accounting/js/accounting.payment_method_handler.js', function () {
         var self = this;
         self.products = data.products;
         self.features = data.features;
+        self.general_credit = data.general_credit;
 
         self.amount = ko.computed(function(){
             var product_sum = _.reduce(self.products(), function(memo, product){
@@ -386,7 +387,7 @@ hqDefine('accounting/js/accounting.payment_method_handler.js', function () {
             var feature_sum =_.reduce(self.features(), function(memo, feature){
                 return memo + parseFloat(feature.addAmount());
             }, 0);
-            var sum = product_sum + feature_sum;
+            var sum = product_sum + feature_sum + parseFloat(self.general_credit().addAmount());
             return isNaN(sum) ? 0.0 : sum;
         });
 

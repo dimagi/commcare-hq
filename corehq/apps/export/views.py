@@ -260,7 +260,7 @@ class BaseExportView(BaseProjectDataView):
     def post(self, request, *args, **kwargs):
         try:
             export_id = self.commit(request)
-        except Exception, e:
+        except Exception as e:
             if self.is_async:
                 # todo: this can probably be removed as soon as
                 # http://manage.dimagi.com/default.asp?157713 is resolved
@@ -506,6 +506,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     show_date_range = False
     check_for_multimedia = False
     filter_form_class = None
+    sms_export = False
 
     @use_daterangepicker
     @use_select2
@@ -1220,8 +1221,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     def update_emailed_es_export_data(self, in_data):
         from corehq.apps.export.tasks import rebuild_export_task
         export_instance_id = in_data['export']['id']
-        export_instance = get_properly_wrapped_export_instance(export_instance_id)
-        rebuild_export_task.delay(export_instance)
+        rebuild_export_task.delay(export_instance_id)
         return format_angular_success({})
 
     @allow_remote_invocation
@@ -1364,6 +1364,7 @@ class DailySavedExportListView(BaseExportListView):
             'emailedExport': emailed_export,
             'editUrl': reverse(edit_view.urlname, args=(self.domain, export.get_id)),
             'downloadUrl': reverse(download_view.urlname, args=(self.domain, export.get_id)),
+            'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
     @allow_remote_invocation
@@ -1436,7 +1437,7 @@ class DailySavedExportListView(BaseExportListView):
                     export.filters = filters
                     export.save()
                     from corehq.apps.export.tasks import rebuild_export_task
-                    rebuild_export_task.delay(export)
+                    rebuild_export_task.delay(export_id)
                 return format_angular_success()
             else:
                 return format_angular_error("Problem saving dashboard feed filters: Invalid form")
@@ -1579,6 +1580,7 @@ class FormExportListView(BaseExportListView):
             'editUrl': reverse(edit_view.urlname,
                                args=(self.domain, export.get_id)),
             'downloadUrl': self._get_download_url(export.get_id, isinstance(export, FormExportSchema)),
+            'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
     def _get_download_url(self, export_id, is_legacy):
@@ -1725,6 +1727,7 @@ class CaseExportListView(BaseExportListView):
             'emailedExport': emailed_export,
             'editUrl': reverse(edit_view.urlname, args=(self.domain, export.get_id)),
             'downloadUrl': self._get_download_url(export._id, isinstance(export, CaseExportSchema)),
+            'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
     def _get_download_url(self, export_id, is_legacy):
@@ -2033,7 +2036,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
 
             except ResourceNotFound:
                 raise Http404()
-            except Exception, e:
+            except Exception as e:
                 _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
                 _soft_assert(False, 'Failed to convert export {}. {}'.format(self.export_id, e))
                 messages.error(
@@ -2399,7 +2402,7 @@ def download_daily_saved_export(req, domain, export_instance_id):
     if should_update_export(export_instance.last_accessed):
         try:
             from corehq.apps.export.tasks import rebuild_export_task
-            rebuild_export_task.delay(export_instance)
+            rebuild_export_task.delay(export_instance_id)
         except Exception:
             notify_exception(
                 req,
@@ -2415,3 +2418,25 @@ def download_daily_saved_export(req, domain, export_instance_id):
     return build_download_saved_export_response(
         payload, export_instance.export_format, export_instance.filename
     )
+
+
+class CopyExportView(View):
+    urlname = 'copy_export'
+
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.couch_user.can_edit_data():
+            raise Http404
+        else:
+            return super(CopyExportView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, domain, export_id, *args, **kwargs):
+        try:
+            export = get_properly_wrapped_export_instance(export_id)
+        except ResourceNotFound:
+            messages.error(request, _('You can only copy new exports.'))
+        else:
+            new_export = export.copy_export()
+            new_export.save()
+        referer = request.META.get('HTTP_REFERER', reverse('data_interfaces_default', args=[domain]))
+        return HttpResponseRedirect(referer)

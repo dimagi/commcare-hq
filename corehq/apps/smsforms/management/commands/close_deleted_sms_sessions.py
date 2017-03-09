@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from corehq.apps.smsforms.models import SQLXFormsSession, XFORMS_SESSION_SMS
@@ -20,9 +21,9 @@ class Command(BaseCommand):
             try:
                 get_raw_instance(session.session_id)['output']
             except InvalidSessionIdException:
-                print "Closing %s %s" % (session.domain, session._id)
+                print("Closing %s %s" % (session.domain, session._id))
                 session.end(False)
                 session.save()
             except Exception as e:
-                print "An unexpected error occurred when processing %s %s" % (session.domain, session._id)
-                print e
+                print("An unexpected error occurred when processing %s %s" % (session.domain, session._id))
+                print(e)
