@@ -9,6 +9,7 @@ from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
+from django.http import Http404
 
 from corehq.apps.reports.models import HQUserType
 from soil.progress import set_task_progress
@@ -29,6 +30,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_latest_app_ids_and_versions,
     get_app_ids_in_domain,
+    get_app,
 )
 from corehq.apps.app_manager.models import Application, AdvancedFormActions
 from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
@@ -1358,7 +1360,11 @@ class ExportDataSchema(Document):
 
     @classmethod
     def _reorder_schema_from_app(cls, current_schema, app_id, identifier):
-        app = Application.get(app_id)
+        try:
+            app = get_app(current_schema.domain, app_id)
+        except Http404:
+            return current_schema
+
         ordered_schema = cls._process_app_build(
             cls(),
             app,
