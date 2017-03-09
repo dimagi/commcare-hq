@@ -156,7 +156,10 @@ def _get_export_documents(export_instance, filters):
     for filter in filters:
         query = query.filter(filter.to_es_filter())
     # size here limits each scroll request, not the total number of results
-    return query.size(1000).scroll()
+    # We believe we can occasionally hit the 5m limit to process a single scroll window
+    # with a window size of 1000 (https://manage.dimagi.com/default.asp?248384).
+    # Thus, smaller window size is intentional
+    return query.size(500).scroll()
 
 
 def get_export_size(export_instance, filters):

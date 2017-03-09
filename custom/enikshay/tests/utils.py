@@ -196,6 +196,7 @@ class ENikshayLocationStructureMixin(object):
         self.phi = locations['PHI']
         self.phi.metadata = {
             'nikshay_code': '2',
+            'is_test': 'no',
         }
         self.phi.save()
         super(ENikshayLocationStructureMixin, self).setUp()

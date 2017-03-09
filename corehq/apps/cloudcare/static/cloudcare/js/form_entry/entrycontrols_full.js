@@ -91,6 +91,7 @@ EntrySingleAnswer = function(question, options) {
     Entry.call(self, question, options);
     self.valueUpdate = undefined;
     self.rawAnswer = ko.observable(question.answer() || Formplayer.Const.NO_ANSWER);
+    self.placeholderText = '';
 
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 
@@ -341,6 +342,7 @@ function ComboboxEntry(question, options) {
     self.matchType = options.matchType;
     self.lengthLimit = Infinity;
     self.templateType = 'str';
+    self.placeholderText = gettext('Type to filter answers');
 
     self.options = ko.computed(function() {
         return _.map(question.choices(), function(choice, idx) {
@@ -364,7 +366,9 @@ function ComboboxEntry(question, options) {
     }
 
     self.renderAtwho = function() {
-        var $input = $('#' + self.entryId);
+        var $input = $('#' + self.entryId),
+            limit = 5,
+            $atwhoView;
         $input.atwho('destroy');
         $input.atwho('setIframe', window.frameElement, true);
         $input.atwho({
@@ -372,13 +376,18 @@ function ComboboxEntry(question, options) {
             data: self.options(),
             maxLen: Infinity,
             tabSelectsMatch: false,
-            limit: 10,
+            limit: limit,
             suffix: '',
             callbacks: {
                 filter: function(query, data) {
-                    return _.filter(data, function(item) {
+                    var results = _.filter(data, function(item) {
                         return ComboboxEntry.filter(query, item, self.matchType);
                     });
+                    $atwhoView = $('.atwho-container .atwho-view');
+                    $atwhoView.attr({
+                        'data-message': 'Showing ' + Math.min(limit, results.length) + ' of ' + results.length,
+                    });
+                    return results;
                 },
                 matcher: function() {
                     return $input.val();

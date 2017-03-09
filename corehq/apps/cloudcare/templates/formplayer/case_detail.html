@@ -11,7 +11,7 @@
     <% if (style.displayFormat === 'Graph') { %>
         <td><iframe srcdoc="<%= data %>" height="300" width="300"></iframe></td>
     <% } else if (style.displayFormat === 'Image') { %>
-        <td class="module-caselist-column"><img class="module-icon" src="<%= resolveUri(datum) %>"/></td>
+        <td class="module-caselist-column"><img class="module-icon" src="<%= resolveUri(data) %>"/></td>
     <% } else { %>
         <td><%- data %></td>
     <% } %>
