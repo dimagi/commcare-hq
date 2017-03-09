@@ -129,19 +129,18 @@ def _get_indicator_doc_from_class_and_id(indicator_class, doc_id):
 
 
 class FluffPillow(ConstructedPillow):
-    def __init__(self, indicator_class, processor):
-        self.indicator_class = indicator_class
-        self.kafka_topic = indicator_class().kafka_topic
+    def __init__(self, indicator_name, kafka_topic, processor):
+        self.kafka_topic = kafka_topic
         self.domains = processor.domains
         self.doc_type = processor.doc_type
 
-        name = '{}Pillow'.format(indicator_class.__name__)
+        name = '{}Pillow'.format(indicator_name)
         checkpoint = PillowCheckpoint('fluff.{}.{}'.format(name, get_machine_id()))
 
         super(FluffPillow, self).__init__(
             name=name,
             checkpoint=checkpoint,
-            change_feed=KafkaChangeFeed(topics=[self.kafka_topic], group_id=indicator_class.__name__),
+            change_feed=KafkaChangeFeed(topics=[self.kafka_topic], group_id=indicator_name),
             processor=processor,
             change_processed_event_handler=PillowCheckpointEventHandler(
                 checkpoint=checkpoint, checkpoint_frequency=1000,
@@ -153,7 +152,8 @@ def get_fluff_pillow(indicator_class, delete_filtered=False):
     processor = FluffPillowProcessor(indicator_class, delete_filtered=delete_filtered)
 
     return FluffPillow(
-        indicator_class=indicator_class,
+        indicator_name=indicator_class.__name__,
+        kafka_topic=indicator_class().kafka_topic,
         processor=processor,
     )
 
