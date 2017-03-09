@@ -1,3 +1,4 @@
+from corehq.messaging.scheduling.exceptions import UnknownScheduleType
 from corehq.sql_db.util import (
     get_object_from_partitioned_database,
     save_object_to_partitioned_database,
@@ -64,6 +65,6 @@ def get_schedule_instances_for_schedule(schedule):
     elif isinstance(schedule, TimedSchedule):
         schedule_filter = Q(timed_schedule_id=schedule.pk)
     else:
-        raise ScheduleForeignKeyMixin.UnknownScheduleType()
+        raise UnknownScheduleType()
 
     return run_query_across_partitioned_databases(ScheduleInstance, schedule_filter)

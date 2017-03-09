@@ -1,18 +1,18 @@
 from datetime import datetime
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models
+from corehq.messaging.scheduling.exceptions import (
+    NoAvailableSchedule,
+    UnknownScheduleType,
+    NoAvailableContent,
+    UnknownContentType,
+)
 
 
 class ScheduleForeignKeyMixin(models.Model):
 
     class Meta:
         abstract = True
-
-    class NoAvailableSchedule(Exception):
-        pass
-
-    class UnknownScheduleType(Exception):
-        pass
 
     @property
     def schedule(self):
@@ -23,7 +23,7 @@ class ScheduleForeignKeyMixin(models.Model):
         elif self.alert_schedule_id:
             return AlertSchedule.objects.get(pk=self.alert_schedule_id)
 
-        raise self.NoAvailableSchedule()
+        raise NoAvailableSchedule()
 
     @property
     @memoized
@@ -46,7 +46,7 @@ class ScheduleForeignKeyMixin(models.Model):
         elif isinstance(value, AlertSchedule):
             self.alert_schedule_id = value.pk
         else:
-            raise self.UnknownScheduleType()
+            raise UnknownScheduleType()
 
 
 class SchedulePartitionedForeignKeyMixin(ScheduleForeignKeyMixin):
@@ -112,12 +112,6 @@ class ContentForeignKeyMixin(models.Model):
     class Meta:
         abstract = True
 
-    class NoAvailableContent(Exception):
-        pass
-
-    class UnknownContentType(Exception):
-        pass
-
     @property
     def content(self):
         if self.sms_content_id:
@@ -129,7 +123,7 @@ class ContentForeignKeyMixin(models.Model):
         elif self.ivr_survey_content_id:
             return self.ivr_survey_content
 
-        raise self.NoAvailableContent()
+        raise NoAvailableContent()
 
     @property
     @memoized
@@ -159,7 +153,7 @@ class ContentForeignKeyMixin(models.Model):
         elif isinstance(value, IVRSurveyContent):
             self.ivr_survey_content = value
         else:
-            raise self.UnknownContentType()
+            raise UnknownContentType()
 
 
 class Event(ContentForeignKeyMixin):
