@@ -4,6 +4,7 @@ import sys
 
 from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.utils import force_seq_int
@@ -91,10 +92,11 @@ class PillowBase(object):
         try:
             for change in self.get_change_feed().iter_changes(since=since, forever=forever):
                 if change:
-                    self._record_change_in_datadog(change)
+                    timer = TimingContext()
                     try:
                         context.changes_seen += 1
-                        self.process_with_error_handling(change)
+                        with timer:
+                            self.process_with_error_handling(change)
                     except Exception as e:
                         notify_exception(None, u'processor error in pillow {} {}'.format(
                             self.get_name(), e,
@@ -104,6 +106,7 @@ class PillowBase(object):
                     else:
                         self.fire_change_processed_event(change, context)
                         self._record_change_success_in_datadog(change)
+                    self._record_change_in_datadog(change, timer)
                 else:
                     updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
                     if updated:
@@ -153,7 +156,7 @@ class PillowBase(object):
             'pillow_name:{}'.format(self.get_name()),
         ])
 
-    def _record_change_in_datadog(self, change):
+    def _record_change_in_datadog(self, change, timer):
         change_feed = self.get_change_feed()
         sequence = self._normalize_checkpoint_sequence()
         current_offsets = change_feed.get_current_offsets()
@@ -175,7 +178,7 @@ class PillowBase(object):
                 'topic:{}'.format(topic),
             ])
 
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change)
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change, timer)
 
     def _record_change_success_in_datadog(self, change):
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change)
@@ -183,15 +186,19 @@ class PillowBase(object):
     def _record_change_exception_in_datadog(self, change):
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change)
 
-    def __record_change_metric_in_datadog(self, metric, change):
+    def __record_change_metric_in_datadog(self, metric, change, timer=None):
         if change.metadata is not None:
-            datadog_counter(metric, tags=[
+            tags = [
                 'datasource:{}'.format(change.metadata.data_source_name),
                 'document_type:{}'.format(change.metadata.document_type),
                 'domain:{}'.format(change.metadata.domain),
                 'is_deletion:{}'.format(change.metadata.is_deletion),
-                'pillow_name:{}'.format(self.get_name()),
-            ])
+                'pillow_name:{}'.format(self.get_name())
+            ]
+            datadog_counter(metric, tags=tags)
+
+            if timer:
+                datadog_gauge('commcare.change_feed.processing_time', timer.duration, tags=tags)
 
 
 class ChangeEventHandler(object):
