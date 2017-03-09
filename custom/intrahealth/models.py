@@ -220,7 +220,7 @@ def IntraHealthFormFluffPillow(delete_filtered=False):
             TauxDeRuptureFluff,
             LivraisonFluff,
         ],
-        name='IntraHealthFormFluffPillow',
+        name='IntraHealthFormFluff',
         kafka_topic=get_topic(get_doc_meta_object_from_document(XFormInstance().to_json())),
         delete_filtered=delete_filtered
     )

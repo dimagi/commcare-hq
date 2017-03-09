@@ -170,9 +170,8 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         # set by the superclass constructor
         assert self._processors is not None
         assert len(self._processors) == 1
-        assert self._processors.bootstrapped is not None
-
         self._processor = self._processors[0]
+        assert self._processor.bootstrapped is not None
 
     def bootstrap(self, configs=None):
         self._processor.bootstrap(configs)
