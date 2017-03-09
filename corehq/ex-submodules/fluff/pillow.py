@@ -158,6 +158,24 @@ def get_fluff_pillow(indicator_class, delete_filtered=False):
     )
 
 
+def get_multi_fluff_pillow(indicator_classes, name, kafka_topic, delete_filtered=False):
+    processors = [
+        FluffPillowProcessor(cls, delete_filtered=delete_filtered)
+        for cls in indicator_classes
+    ]
+    domains = list(set(d for cls in indicator_classes for d in cls.domains))
+    doc_types = list(set(cls.document_class._doc_type for cls in indicator_classes))
+    assert len(doc_types) == 1
+
+    return FluffPillow(
+        indicator_name=name,
+        kafka_topic=kafka_topic,
+        processor=processors,
+        domains=domains,
+        doc_type=doc_types[0]
+    )
+
+
 def get_fluff_pillow_configs():
     from pillowtop import get_all_pillow_configs
     return [
