@@ -169,9 +169,21 @@
                             afterRender: $root.makePopover
                         }"></div>
                         <p class="help-block" data-bind="html: validate, visible: validate"></p>
-                        <div class="property-description"
-                          data-bind="text: $data.description, attr: {'data-content': $data.description}">
-                        </div>
+                        <!-- ko if: $data.description -->
+                        <inline-edit params="
+                            value: $data && $data.description,
+                            rows: 3,
+                            cols: 30,
+                            placeholder: '{% trans "Click here to add a description" %}',
+                            url: '{% url "update_property_description" domain %}',
+                            saveParams: {'caseType': $data && $data.caseType, 'name':  $data && $data.key},
+                            saveValueName: 'description',
+                            errorMessage: '{% trans "Error updating description. Please try again." %}',
+                            readOnlyClass: 'property-description',
+                            readOnlyAttrs: {'data-content': $data && $data.description},
+                            afterRenderFunc: $root.makePopover,
+                        "></inline-edit>
+                        <!-- /ko -->
                     </td>
                 </tr>
             </tbody>

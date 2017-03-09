@@ -113,7 +113,7 @@ def get_case_property_description_dict(domain):
     return descriptions_dict
 
 
-def save_case_property(name, case_type=None, domain=None, data_type=None,
+def save_case_property(name, case_type, domain=None, data_type=None,
                        description=None, group=None, deprecated=None):
     """
     Takes a case property to update and returns an error if there was one

@@ -96,6 +96,19 @@ def update_case_property(request, domain):
         return JsonResponse({"status": "success"})
 
 
+@login_and_domain_required
+@toggles.DATA_DICTIONARY.required_decorator()
+def update_case_property_description(request, domain):
+    case_type = request.POST.get('caseType')
+    name = request.POST.get('name')
+    description = request.POST.get('description')
+    error = save_case_property(name, case_type, domain, description=description)
+    if error:
+        return JsonResponse({"status": "failed", "errors": error}, status=400)
+    else:
+        return JsonResponse({"status": "success"})
+
+
 def _export_data_dictionary(domain):
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
         Prefetch('properties', queryset=CaseProperty.objects.order_by('name'))

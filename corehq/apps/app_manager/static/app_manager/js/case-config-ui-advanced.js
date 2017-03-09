@@ -14,9 +14,8 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
     var CaseConfig = function (params) {
         var self = this;
         self.help_name = gettext('Case Property Description');
-        self.default_description = gettext("You do not have a description for this case property. If you would like to add one you can do so in the data dictionary.");
         self.makePopover = function () {
-            $('.property-description').popover({
+            $('.read-only').popover({
                 'trigger': 'hover',
                 'placement': 'bottom',
             });
@@ -1129,9 +1128,12 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             self.isBlank = ko.computed(function () {
                 return !self.key() && !self.path();
             });
+            self.caseType = ko.computed(function () {
+                return self.action.case_type();
+            });
             self.description = ko.computed(function () {
                 var config = self.action.config;
-                var type = config.descriptionDict[self.action.case_type()];
+                var type = config.descriptionDict[self.caseType()];
                 if (type) {
                     return type[self.key()] || '';
                 }

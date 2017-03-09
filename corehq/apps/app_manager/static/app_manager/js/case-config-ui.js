@@ -11,9 +11,8 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         var self = this;
         var i;
         self.help_name = gettext('Case Property Description');
-        self.default_description = gettext("You do not have a description for this case property. If you would like to add one you can do so in the data dictionary.");
         self.makePopover = function () {
-            $('.property-description').popover({
+            $('.read-only').popover({
                 'trigger': 'hover',
                 'placement': 'auto right',
             });
@@ -650,11 +649,24 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
             self.isBlank = ko.computed(function () {
                 return !self.key() && !self.path();
             });
-            self.description = ko.computed(function () {
-                var config = self.case_transaction.caseConfig;
-                var type = config.descriptionDict[self.case_transaction.case_type()];
-                if (type) {
-                    return type[self.key()] || '';
+            self.caseType = ko.computed(function () {
+                return self.case_transaction.case_type();
+            });
+            self.updatedDescription = ko.observable('');
+            self.description = ko.computed({
+                read: function () {
+                    if (self.updatedDescription()) {
+                        return self.updatedDescription();
+                    }
+                    var config = self.case_transaction.caseConfig;
+                    var type = config.descriptionDict[self.caseType()];
+                    if (type) {
+                        return type[self.key()] || '';
+                    }
+                },
+                write: function (value) {
+                    self.updatedDescription(value);
+                    $('.read-only').data('bs.popover').options.content = value;
                 }
             });
             return self;

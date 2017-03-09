@@ -73,7 +73,7 @@
              <i class="fa fa-plus"></i>
              {% trans "Load properties" %}
          </a>
-@@ -122,54 +130,56 @@
+@@ -122,65 +130,68 @@
  </script>
  
  <script type="text/html" id="case-config:case-transaction:case-properties">
@@ -110,16 +110,33 @@
 -                    <div data-bind="template: {
 -                        name: 'case-config:case-properties:property',
 -                        data: {property: $data, suggestedProperties: case_transaction.suggestedSaveProperties},
--                        afterRender: $root.makePopover
 -                    }"></div>
 -                    <p class="help-block" data-bind="html: validate, visible: validate"></p>
--                    <div class="property-description"
+-                    <!-- ko if: $data.description -->
+-                    <inline-edit params="
+-                        value: $data && $data.description,
+-                        rows: 3,
+-                        cols: 30,
+-                        placeholder: '{% trans "Click here to add a description" %}',
+-                        url: '{% url "update_property_description" domain %}',
+-                        saveParams: {'caseType': $data && $data.caseType, 'name':  $data && $data.key},
+-                        saveValueName: 'description',
+-                        errorMessage: '{% trans "Error updating description. Please try again." %}',
+-                        readOnlyClass: 'property-description',
+-                        readOnlyAttrs: {'data-content': $data && $data.description},
+-                        afterRenderFunc: $root.makePopover,
+-                    "></inline-edit>
+-                    <!-- /ko -->
+-                </td>
+-            </tr>
+-        </tbody>
+-    </table>
 +    <div class="panel-heading">
 +      <h4 class="panel-title panel-title-nolink">
 +        <i class="fa fa-save"></i> {% trans "Save Question Answers to Case Properties" %}
 +      </h4>
 +    </div>
-+    <div class="panel-body">
+     <div class="panel-body">
 +        <table class="table table-savecaseprops" data-bind="visible: case_properties().length">
 +            <thead>
 +                <tr>
@@ -153,15 +170,21 @@
 +                            afterRender: $root.makePopover
 +                        }"></div>
 +                        <p class="help-block" data-bind="html: validate, visible: validate"></p>
-+                        <div class="property-description"
-                           data-bind="text: $data.description, attr: {'data-content': $data.description}">
--                    </div>
--                </td>
--            </tr>
--        </tbody>
--    </table>
--    <div class="panel-body">
-+                        </div>
++                        <!-- ko if: $data.description -->
++                        <inline-edit params="
++                            value: $data && $data.description,
++                            rows: 3,
++                            cols: 30,
++                            placeholder: '{% trans "Click here to add a description" %}',
++                            url: '{% url "update_property_description" domain %}',
++                            saveParams: {'caseType': $data && $data.caseType, 'name':  $data && $data.key},
++                            saveValueName: 'description',
++                            errorMessage: '{% trans "Error updating description. Please try again." %}',
++                            readOnlyClass: 'property-description',
++                            readOnlyAttrs: {'data-content': $data && $data.description},
++                            afterRenderFunc: $root.makePopover,
++                        "></inline-edit>
++                        <!-- /ko -->
 +                    </td>
 +                </tr>
 +            </tbody>
@@ -175,7 +198,7 @@
              <i class="fa fa-plus"></i>
              {% trans "Save properties" %}
          </a>
-@@ -177,12 +187,14 @@
+@@ -188,12 +199,14 @@
  </script>
  
  <script type="text/html" id="case-config:refresh-form-questions">
