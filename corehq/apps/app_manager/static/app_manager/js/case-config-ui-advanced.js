@@ -1131,11 +1131,21 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             self.caseType = ko.computed(function () {
                 return self.action.case_type();
             });
-            self.description = ko.computed(function () {
-                var config = self.action.config;
-                var type = config.descriptionDict[self.caseType()];
-                if (type) {
-                    return type[self.key()] || '';
+            self.updatedDescription = ko.observable('');
+            self.description = ko.computed({
+                read: function () {
+                    if (self.updatedDescription()) {
+                        return self.updatedDescription();
+                    }
+                    var config = self.action.caseConfig;
+                    var type = config.descriptionDict[self.caseType()];
+                    if (type) {
+                        return type[self.key()] || '';
+                    }
+                },
+                write: function (value) {
+                    self.updatedDescription(value);
+                    $('.read-only').data('bs.popover').options.content = value;
                 }
             });
             return self;
