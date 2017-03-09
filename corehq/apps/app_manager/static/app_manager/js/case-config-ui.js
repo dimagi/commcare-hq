@@ -667,7 +667,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
                 write: function (value) {
                     self.updatedDescription(value);
                     $('.read-only').data('bs.popover').options.content = value;
-                }
+                },
             });
             return self;
         }
