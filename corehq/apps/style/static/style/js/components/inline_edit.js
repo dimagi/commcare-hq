@@ -45,6 +45,7 @@ hqDefine('style/js/components/inline_edit.js', function() {
             self.rows = params.rows || 2;
             self.cols = params.cols || "";
             self.readOnlyClass = params.readOnlyClass || '';
+            self.readOnlyHolderClass = params.readOnlyHolderClass || '';
             self.readOnlyAttrs = params.readOnlyAttrs || {};
 
             // Interaction: determine whether widget is in read or write mode
@@ -126,7 +127,7 @@ hqDefine('style/js/components/inline_edit.js', function() {
             };
         },
         template: '<div class="ko-inline-edit inline" data-bind="css: {\'has-error\': hasError()}">\
-            <div class="read-only" data-bind="visible: !isEditing(), click: edit, , attr: readOnlyAttrs">\
+            <div class="read-only" data-bind="visible: !isEditing(), click: edit, css: readOnlyHolderClass, attr: readOnlyAttrs">\
                 <span data-bind="visible: isSaving()" class="pull-right">\
                     <img src="/static/hqstyle/images/loading.gif"/>\
                 </span>\

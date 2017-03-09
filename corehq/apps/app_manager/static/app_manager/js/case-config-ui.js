@@ -10,9 +10,8 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
     var CaseConfig = function (params) {
         var self = this;
         var i;
-        self.help_name = gettext('Case Property Description');
         self.makePopover = function () {
-            $('.read-only').popover({
+            $('.property-description').popover({
                 'trigger': 'hover',
                 'placement': 'auto right',
             });
@@ -666,7 +665,6 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
                 },
                 write: function (value) {
                     self.updatedDescription(value);
-                    $('.read-only').data('bs.popover').options.content = value;
                 },
             });
             return self;

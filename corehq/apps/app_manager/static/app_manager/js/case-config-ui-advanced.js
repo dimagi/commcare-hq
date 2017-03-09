@@ -13,9 +13,8 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
 
     var CaseConfig = function (params) {
         var self = this;
-        self.help_name = gettext('Case Property Description');
         self.makePopover = function () {
-            $('.read-only').popover({
+            $('.property-description').popover({
                 'trigger': 'hover',
                 'placement': 'bottom',
             });

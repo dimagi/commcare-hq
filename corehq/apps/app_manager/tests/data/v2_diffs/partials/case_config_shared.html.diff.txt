@@ -114,16 +114,16 @@
 -                    <p class="help-block" data-bind="html: validate, visible: validate"></p>
 -                    <!-- ko if: $data.description -->
 -                    <inline-edit params="
--                        value: $data && $data.description,
+-                        value: $data.description,
 -                        rows: 3,
 -                        cols: 30,
 -                        placeholder: '{% trans "Click here to add a description" %}',
 -                        url: '{% url "update_property_description" domain %}',
--                        saveParams: {'caseType': $data && $data.caseType, 'name':  $data && $data.key},
+-                        saveParams: {'caseType': $data.caseType, 'name':  $data.key},
 -                        saveValueName: 'description',
 -                        errorMessage: '{% trans "Error updating description. Please try again." %}',
--                        readOnlyClass: 'property-description',
--                        readOnlyAttrs: {'data-content': $data && $data.description},
+-                        readOnlyHolderClass: 'property-description',
+-                        readOnlyAttrs: {'data-content': $data.description},
 -                        afterRenderFunc: $root.makePopover,
 -                    "></inline-edit>
 -                    <!-- /ko -->
@@ -172,16 +172,16 @@
 +                        <p class="help-block" data-bind="html: validate, visible: validate"></p>
 +                        <!-- ko if: $data.description -->
 +                        <inline-edit params="
-+                            value: $data && $data.description,
++                            value: $data.description,
 +                            rows: 3,
 +                            cols: 30,
 +                            placeholder: '{% trans "Click here to add a description" %}',
 +                            url: '{% url "update_property_description" domain %}',
-+                            saveParams: {'caseType': $data && $data.caseType, 'name':  $data && $data.key},
++                            saveParams: {'caseType': $data.caseType, 'name':  $data.key},
 +                            saveValueName: 'description',
 +                            errorMessage: '{% trans "Error updating description. Please try again." %}',
 +                            readOnlyClass: 'property-description',
-+                            readOnlyAttrs: {'data-content': $data && $data.description},
++                            readOnlyAttrs: {'data-content': $data.description},
 +                            afterRenderFunc: $root.makePopover,
 +                        "></inline-edit>
 +                        <!-- /ko -->
