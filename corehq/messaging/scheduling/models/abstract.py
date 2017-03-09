@@ -75,11 +75,16 @@ class ScheduleORMForeignKeyMixin(ScheduleForeignKeyMixin):
 
 class Schedule(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
+    active = models.BooleanField(default=True)
 
     # Only matters when the recipient of a ScheduleInstance is a Location
     # If False, only include users at that location as recipients
     # If True, include all users at that location or at any descendant locations as recipients
     include_descendant_locations = models.BooleanField(default=False)
+
+    # If None, the list of languages defined in the project for messaging will be
+    # inspected and the default language there will be used.
+    default_language_code = models.CharField(max_length=126, null=True)
 
     class Meta:
         abstract = True
@@ -178,5 +183,6 @@ class Content(models.Model):
 
 class Broadcast(ScheduleORMForeignKeyMixin):
     domain = models.CharField(max_length=126, db_index=True)
+    name = models.CharField(max_length=1000)
     start_date = models.DateField(null=True)
     last_sent_timestamp = models.DateTimeField(null=True)

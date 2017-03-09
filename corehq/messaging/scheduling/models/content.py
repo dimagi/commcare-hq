@@ -28,6 +28,9 @@ class EmailContent(Content):
 class SMSSurveyContent(Content):
     form_unique_id = models.CharField(max_length=126)
 
+    # The number of minutes after which the survey expires
+    expire_after = models.IntegerField()
+
     def send(self, recipient):
         print '*******************************'
         print 'To:', recipient

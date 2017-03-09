@@ -43,3 +43,18 @@ def refresh_schedule_instances(schedule, start_date, recipients):
             delete_schedule_instance(schedule_instance)
         else:
             schedule_instance.recalculate_schedule(schedule)
+
+
+@task(ignore_result=True)
+def deactivate_schedule_instances(schedule):
+    pass
+
+
+@task(ignore_result=True)
+def reactivate_schedule_instances(schedule):
+    pass
+
+
+@task(ignore_result=True)
+def delete_broadcast(broadcast):
+    pass

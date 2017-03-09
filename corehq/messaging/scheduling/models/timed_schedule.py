@@ -7,6 +7,7 @@ from django.db import models
 
 class TimedSchedule(Schedule):
     REPEAT_INDEFINITELY = -1
+    MONTHLY = -1
 
     schedule_length = models.IntegerField()
     total_iterations = models.IntegerField()
