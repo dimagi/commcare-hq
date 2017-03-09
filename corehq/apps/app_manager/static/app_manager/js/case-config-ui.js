@@ -11,7 +11,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         var self = this;
         var i;
         self.makePopover = function () {
-            $('.property-description').popover({
+            $('.property-description').closest('.read-only').popover({
                 'trigger': 'hover',
                 'placement': 'auto right',
             });
