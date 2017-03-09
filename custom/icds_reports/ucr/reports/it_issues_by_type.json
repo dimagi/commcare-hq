@@ -25,16 +25,11 @@
       },
       {
         "compare_as_string": false,
-        "show_all": true,
         "datatype": "string",
-        "type": "dynamic_choice_list",
+        "type": "location_drilldown",
         "required": false,
         "slug": "block_id",
         "field": "block_id",
-        "choice_provider": {
-          "include_descendants": true,
-          "type": "location"
-        },
         "display": "Filter by Area"
       },
       {
