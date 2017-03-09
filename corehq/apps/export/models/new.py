@@ -2420,7 +2420,7 @@ class DailySavedExportNotification(models.Model):
 
     @classmethod
     def user_added_before_feature_release(cls, user_added_on):
-        return user_added_on < datetime(2016, 2, 1)
+        return user_added_on < datetime(2017, 1, 25)
 
     @classmethod
     def user_to_be_notified(cls, domain, user):
