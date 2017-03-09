@@ -3,8 +3,7 @@
 FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Backbone, Marionette, $) {
     Views.MenuView = Marionette.ItemView.extend({
         tagName: function() {
-            var app = FormplayerFrontend.request('getCurrentApp');
-            if (app.get('use_grid_menus')) {
+            if (this.model.collection.layoutStyle === 'grid') {
                 return 'div';
             } else {
                 return 'tr';
@@ -18,8 +17,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
 
         getTemplate: function () {
-            var app = FormplayerFrontend.request('getCurrentApp');
-            if (app.get('use_grid_menus')) {
+            if (this.model.collection.layoutStyle === FormplayerFrontend.Constants.LayoutStyles.GRID) {
                 return "#menu-view-grid-item-template";
             } else {
                 if (this.model.get('audioUri')) {
@@ -80,8 +78,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
     Views.MenuListView = Marionette.CompositeView.extend({
         tagName: "div",
         getTemplate: function () {
-            var app = FormplayerFrontend.request('getCurrentApp');
-            if (app.get('use_grid_menus')) {
+            if (this.collection.layoutStyle === FormplayerFrontend.Constants.LayoutStyles.GRID) {
                 return "#menu-view-grid-template";
             } else {
                 return "#menu-view-list-template";
