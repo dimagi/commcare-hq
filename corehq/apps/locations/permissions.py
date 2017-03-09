@@ -88,6 +88,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
 from corehq.apps.reports.generic import GenericReportView
+from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser
 from .models import SQLLocation
 
@@ -103,11 +104,16 @@ LOCATION_SAFE_HQ_REPORTS = set()
 
 
 def locations_access_required(view_fn):
-    """
-    Decorator controlling domain-level access to locations.
-    """
-    return login_and_domain_required(
+    """Decorator controlling domain-level access to locations features."""
+    return (login_and_domain_required(
         requires_privilege_raise404(privileges.LOCATIONS)(view_fn)
+    ))
+
+
+def require_can_edit_locations(view_fn):
+    """Decorator verifying that the user has permission to edit individual locations."""
+    return locations_access_required(
+        require_permission('edit_locations')(view_fn)
     )
 
 
@@ -131,7 +137,7 @@ def can_edit_any_location(view_fn):
         if user_can_edit_any_location(request.couch_user, request.project):
             return view_fn(request, domain, *args, **kwargs)
         raise Http404()
-    return locations_access_required(_inner)
+    return require_can_edit_locations(_inner)
 
 
 def get_user_location(user, domain):
@@ -351,4 +357,4 @@ def can_edit_location(view_fn):
             return view_fn(request, domain, loc_id, *args, **kwargs)
         return location_restricted_response(request)
 
-    return locations_access_required(_inner)
+    return require_can_edit_locations(_inner)

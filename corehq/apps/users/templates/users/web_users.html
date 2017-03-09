@@ -421,6 +421,12 @@
                                 data-content="{% trans "Manage account settings for mobile workers; create accounts for mobile workers; archive and/or delete mobile users." %}"></span>
                         </th>
                         <th>
+                          {% trans "Edit Locations" %}
+                          <span class="hq-help-template"
+                                data-title="Edit Locations"
+                                data-content="{% trans "Create, update, and delete Locations in the Organization Hierarchy." %}"></span>
+                        </th>
+                        <th>
                           {% trans "Edit Data" %}
                           <span class="hq-help-template"
                                 data-title="Edit Data"
@@ -455,6 +461,7 @@
                         </th>
                         <td><i data-bind="staticChecked: permissions.edit_web_users"></i></td>
                         <td><i data-bind="staticChecked: permissions.edit_commcare_users"></i></td>
+                        <td><i data-bind="staticChecked: permissions.edit_locations"></i></td>
                         <td><i data-bind="staticChecked: permissions.edit_data"></i></td>
                         <td><i data-bind="staticChecked: permissions.edit_apps"></i></td>
                         <td>
@@ -565,6 +572,20 @@
                                                     <input type="checkbox"
                                                            data-bind="checked: permissions.edit_commcare_users" />
                                                     {% trans "Allow role to edit Mobile Workers." %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
+                                            {% trans "Edit Locations" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: permissions.edit_locations" />
+                                                    {% trans "Allow role to edit Locations." %}
                                                 </label>
                                             </div>
                                         </div>
