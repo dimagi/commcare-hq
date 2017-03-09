@@ -382,7 +382,7 @@ class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 
     @run_with_all_backends
     def test_payload(self):
-        _, form, _ = self.post_xml(self.xform_xml, self.domain_name)
+        form = self.post_xml(self.xform_xml, self.domain_name).xform
         payload = self.repeat_records(self.domain_name).all()[0].get_payload()
         cases = cases_referenced_by_xform(form)
         self.assertEqual(json.loads(payload), {
