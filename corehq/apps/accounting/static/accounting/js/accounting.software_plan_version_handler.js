@@ -218,7 +218,6 @@ var ExistingRoleManager = function (existingRoles, currentRoleSlug) {
 };
 
 
-// jls: this is ~duplicated elsewhere
 var BaseSelect2Handler = function (options, currentSelectionObj) {
     'use strict';
     var self = this;

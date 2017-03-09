@@ -1,3 +1,4 @@
+/* globals hqDefine */
 hqDefine("static/dashboard/js/dashboard_new_user.js", function() {
     $(function() {
         analytics.workflow('Visited new user dashboard');

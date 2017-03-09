@@ -1,3 +1,4 @@
+/* globals hqDefine */
 hqDefine('app_manager/js/source_files.js', function() {
     $(function(){
         $('.toggle-next').click(function(e){
