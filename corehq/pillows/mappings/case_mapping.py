@@ -40,7 +40,7 @@ CASE_MAPPING = {
                         'xform_name': {'type': 'string'},
                         'xform_xmlns': {'type': 'string'}
                     },
-                    'type': 'object'},
+                    'type': 'nested'},
         'closed': {'type': 'boolean'},
         'closed_by': {'type': 'string'},
         'closed_on': {'format': DATE_FORMATS_STRING,
