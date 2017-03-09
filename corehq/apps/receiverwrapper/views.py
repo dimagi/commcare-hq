@@ -95,10 +95,12 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
     response = result.response
 
-    backend_tag = ('backend:sql' if should_use_sql_backend(domain) else
-                   'backend:couch')
     counter_name = 'commcare.xform_submissions.{}'.format(response.status_code)
-    datadog.statsd.increment(counter_name, tags=[backend_tag])
+    tags = [
+        'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
+        'domain:{}'.format(domain)
+    ]
+    datadog.statsd.increment(counter_name, tags=tags)
 
     if response.status_code == 400:
         logging.error(
@@ -108,11 +110,11 @@ def _process_form(request, domain, app_id, user_id, authenticated,
     elif response.status_code == 201:
 
         datadog.statsd.gauge(
-            'commcare.xform_submissions.timings', timer.duration, tags=[backend_tag])
+            'commcare.xform_submissions.timings', timer.duration, tags=tags)
         # normalize over number of items (form or case) saved
         datadog.statsd.gauge(
             'commcare.xform_submissions.normalized_timings',
-            timer.duration/(1 + len(result.cases)), tags=[backend_tag])
+            timer.duration/(1 + len(result.cases)), tags=tags)
 
     return response
 
