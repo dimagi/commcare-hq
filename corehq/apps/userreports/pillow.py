@@ -52,18 +52,28 @@ class ConfigurableReportTableManagerMixin(object):
         if configs is None:
             configs = self.get_all_configs()
 
-        self.table_adapters = [get_indicator_adapter(config, can_handle_laboratory=True) for config in configs]
+        self.table_adapters_by_domain = defaultdict(list)
+        for config in configs:
+            self.table_adapters_by_domain[config.domain].append(
+                get_indicator_adapter(config, can_handle_laboratory=True)
+            )
         self.rebuild_tables_if_necessary()
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
 
+    def _tables_by_engine_id(self, engine_ids):
+        return [
+            adapter
+            for adapter_list in self.table_adapters_by_domain.values()
+            for adapter in adapter_list
+            if get_backend_id(adapter.config) in engine_ids
+        ]
+
     def rebuild_tables_if_necessary(self):
         sql_supported_backends = [UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND]
         es_supported_backends = [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND]
-        self._rebuild_sql_tables(
-            [a for a in self.table_adapters if get_backend_id(a.config) in sql_supported_backends])
-        self._rebuild_es_tables(
-            [a for a in self.table_adapters if get_backend_id(a.config) in es_supported_backends])
+        self._rebuild_sql_tables(self._tables_by_engine_id(sql_supported_backends))
+        self._rebuild_es_tables(self._tables_by_engine_id(es_supported_backends))
 
     def _rebuild_sql_tables(self, adapters):
         # todo move this code to sql adapter rebuild_if_necessary
@@ -72,8 +82,8 @@ class ConfigurableReportTableManagerMixin(object):
             sql_adapter = get_indicator_adapter(adapter.config)
             tables_by_engine[sql_adapter.engine_id][sql_adapter.get_table().name] = sql_adapter
 
-        _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
-        _notify_cory = lambda msg, obj: _assert(False, msg, obj)
+        _assert = soft_assert(notify_admins=True)
+        _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
 
         for engine_id, table_map in tables_by_engine.items():
             engine = connection_manager.get_engine(engine_id)
@@ -87,10 +97,9 @@ class ConfigurableReportTableManagerMixin(object):
                 sql_adapter = table_map[table_name]
                 if not sql_adapter.config.is_static:
                     try:
-                        rev_before_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
                         self.rebuild_table(sql_adapter)
                     except TableRebuildError as e:
-                        _notify_cory(six.text_type(e), sql_adapter.config.to_json())
+                        _notify_rebuild(six.text_type(e), sql_adapter.config.to_json())
                 else:
                     self.rebuild_table(sql_adapter)
 
@@ -124,17 +133,15 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             # if no domain we won't save to any UCR table
             return
 
-        for table in self.table_adapters:
-            if table.config.domain == domain:
-                # only bother getting the document if we have a domain match from the metadata
-                doc = change.get_document()
-                ensure_document_exists(change)
-                ensure_matched_revisions(change)
-                if table.config.filter(doc):
-                    # best effort will swallow errors in the table
-                    table.best_effort_save(doc)
-                elif table.config.deleted_filter(doc):
-                    table.delete(doc)
+        for table in self.table_adapters_by_domain[domain]:
+            doc = change.get_document()
+            ensure_document_exists(change)
+            ensure_matched_revisions(change)
+            if table.config.filter(doc):
+                # best effort will swallow errors in the table
+                table.best_effort_save(doc)
+            elif table.config.deleted_filter(doc):
+                table.delete(doc)
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):

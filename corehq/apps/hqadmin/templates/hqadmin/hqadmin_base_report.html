@@ -11,19 +11,7 @@
     {% if request.use_jquery_ui %}
         <script src="{% static 'reports/js/datepicker.js' %}"></script>
     {% endif %}
-{% endblock %}
-
-{% block js-inline %} {{ block.super }}
-    <script>
-        {% if aoColumns %}
-        $(function() {
-                var reportTables = new HQReportDataTables({
-                    {% if aoColumns %}aoColumns: {{ aoColumns|JSON }}{% endif %},
-                });
-                reportTables.render();
-        });
-        {% endif %}
-    </script>
+    <script src="{% static 'hqadmin/js/hqadmin_base_report.js' %}"></script>
 {% endblock %}
 
 {% block page_breadcrumbs %}
@@ -60,6 +48,7 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'aoColumns' aoColumns %}
     {% if not hide_filters %}
         {% include "hqadmin/hqadmin_base_filters.html" %}
     {% endif %}

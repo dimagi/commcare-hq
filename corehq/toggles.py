@@ -917,7 +917,7 @@ EDIT_FORMPLAYER = PredictablyRandomToggle(
     'Edit forms on Formplayer',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.0,
+    randomness=0.5,
 )
 
 PREVIEW_APP = PredictablyRandomToggle(
@@ -940,6 +940,13 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     'Uses latest build for cloudcare instead of latest starred',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+VELLUM_BETA = StaticToggle(
+    'vellum_beta',
+    'Use Vellum beta version',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_USER]
 )
 
 APP_MANAGER_V2 = StaticToggle(
@@ -1015,6 +1022,13 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'Configure a custom xpath calculation for Sort Property in Case Lists',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
+)
+
+ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
+    'anonymous_web_apps_usage',
+    'Allow anonymous users to access web apps applications',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(

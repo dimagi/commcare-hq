@@ -7,19 +7,18 @@ from urllib import urlencode
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import F, Q, Sum
+from django.db.models import Q, Sum
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
-from couchdbkit import ResourceNotFound
 
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.django.email import send_HTML_email
+from corehq.util.log import send_HTML_email
 
 from corehq.apps.accounting.exceptions import (
     CreditLineError,
@@ -28,9 +27,11 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
+    CONSISTENT_DATES_CHECK,
     Currency,
     DefaultProductPlan,
     EntryPoint,
+    Invoice,
     SoftwarePlanEdition,
     StripePaymentMethod,
     Subscription,
@@ -40,7 +41,7 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
-    Invoice)
+)
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
@@ -62,8 +63,6 @@ _invoicing_complete_soft_assert = soft_assert(
     to='{}@{}'.format('npellegrino', 'dimagi.com'),
     exponential_backoff=False,
 )
-
-CONSISTENT_DATES_CHECK = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
 
 
 @transaction.atomic
@@ -389,12 +388,11 @@ def send_purchase_receipt(payment_record, domain,
                           template_html, template_plaintext,
                           additional_context):
     username = payment_record.payment_method.web_user
-
-    try:
-        web_user = WebUser.get_by_username(username)
+    web_user = WebUser.get_by_username(username)
+    if web_user:
         email = web_user.get_email()
         name = web_user.first_name
-    except ResourceNotFound:
+    else:
         log_accounting_error(
             "Strange. A payment attempt was made by a user that "
             "we can't seem to find! %s" % username,
@@ -427,9 +425,10 @@ def send_autopay_failed(invoice, payment_method):
     auto_payer = subscription.account.auto_pay_user
     payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
     autopay_card = payment_method.get_autopay_card(subscription.account)
-    try:
-        recipient = WebUser.get_by_username(auto_payer).get_email()
-    except ResourceNotFound:
+    web_user = WebUser.get_by_username(auto_payer)
+    if web_user:
+        recipient = web_user.get_email()
+    else:
         recipient = auto_payer
     domain = invoice.get_domain()
 

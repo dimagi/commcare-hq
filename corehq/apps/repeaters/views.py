@@ -64,7 +64,6 @@ class RepeatRecordView(View):
         # Retriggers a repeat record
         record = RepeatRecord.get(request.POST.get('record_id'))
         record.fire(max_tries=1, force_send=True)
-        record.save()
         return json_response({
             'success': record.succeeded,
             'failure_reason': record.failure_reason,

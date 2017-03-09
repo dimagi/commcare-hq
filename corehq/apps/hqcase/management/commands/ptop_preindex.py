@@ -1,5 +1,5 @@
 from __future__ import print_function
-from optparse import make_option
+
 from gevent import monkey; monkey.patch_all()
 from corehq.pillows.utils import get_all_expected_es_indices
 

@@ -1,3 +1,4 @@
+import datetime
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.util.couch_helpers import paginate_view
@@ -48,6 +49,18 @@ def get_repeat_record_count(domain, repeater_id=None, state=None):
     ).one()
 
     return result['value'] if result else 0
+
+
+def get_overdue_repeat_record_count(overdue_threshold=datetime.timedelta(minutes=10)):
+    from .models import RepeatRecord
+    overdue_datetime = datetime.datetime.utcnow() - overdue_threshold
+    results = RepeatRecord.view(
+        "receiverwrapper/repeat_records_by_next_check",
+        startkey=[None],
+        endkey=[None, json_format_datetime(overdue_datetime)],
+        reduce=True,
+    ).one()
+    return results['value'] if results else 0
 
 
 def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):

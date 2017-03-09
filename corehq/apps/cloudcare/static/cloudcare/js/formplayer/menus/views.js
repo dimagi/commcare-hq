@@ -391,6 +391,14 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         tagName: "tr",
         className: "",
         template: "#detail-view-item-template",
+        templateHelpers: function () {
+            var appId = Util.currentUrlToObject().appId;
+            return {
+                resolveUri: function (uri) {
+                    return FormplayerFrontend.request('resourceMap', uri, appId);
+                },
+            };
+        },
     });
 
     Views.DetailListView = Marionette.CompositeView.extend({

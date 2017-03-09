@@ -49,6 +49,7 @@
         var uses_sql_backend = {{ use_sqlite_backend|JSON }};
         var username = "{{ username }}";
         var edit_formplayer = {{ edit_formplayer|JSON }};
+        var restoreAs = edit_context.sessionData.username;
         $('#edit-container').inlineTouchform({
             formUrl: edit_context.formUrl,
             submitUrl: edit_context.submitUrl,
@@ -57,6 +58,7 @@
             formplayerEnabled: edit_formplayer,
             domain: edit_context.domain,
             username: username,
+            restoreAs: restoreAs,
             onsubmit: function () {
                 window.location.href = edit_context.returnUrl;
             },

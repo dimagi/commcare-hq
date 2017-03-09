@@ -28,7 +28,7 @@ def generate_for_all_outcomes(title, slug, data):
 
 class AllTBPatientsReport(EnikshayReport):
 
-    name = ugettext_lazy('BLOCK - A: All TB patients registered in the quarter')
+    name = ugettext_lazy('BLOCK - A: All TB patients registered in the date range')
     slug = 'all_tb_patients'
 
     @property
@@ -151,7 +151,7 @@ class CPTAndARTReport(EnikshayReport):
 @location_safe
 class TreatmentOutcomeReport(EnikshayMultiReport):
 
-    name = ugettext_lazy('Treatment Outcome')
+    name = ugettext_lazy('Summary of Treatment Outcome')
     slug = 'treatment_outcome'
     report_template_path = 'enikshay/treatment_outcome.html'
 
