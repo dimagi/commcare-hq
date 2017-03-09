@@ -10,10 +10,12 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('logfile')
+        parser.add_argument('--dry-run', action='store_true')
 
     def handle(self, logfile, **options):
+        import ipdb; ipdb.set_trace()
         with open(logfile, "w") as f:
-            register_patient_records = get_paged_repeat_records("enikshay-test", None, None, repeater_id="dc73c3da43d42acd964d80b287926833")
+            register_patient_records = get_paged_repeat_records("enikshay", None, None, repeater_id="dc73c3da43d42acd964d80b287926833")
             already_exists_records = [
                 x for x in register_patient_records if
                 x.state == "CANCELLED" and 'beneficiary_id already exists' in (x.failure_reason or "")
@@ -21,7 +23,7 @@ class Command(BaseCommand):
             print "{} 'already exists' repeat records".format(len(already_exists_records))
 
             for record in already_exists_records:
-                case = CaseAccessors("enikshay-test").get_case(record.payload_id)
+                case = CaseAccessors("enikshay").get_case(record.payload_id)
                 try:
                     payload = json.loads(record.get_payload())
                 except Exception as e:
@@ -36,11 +38,14 @@ class Command(BaseCommand):
                 if case.get_dynamic_case_properties().get("dots_99_registered", False) == "true":
                     logline += "case says dots_99_registered already"
                 else:
-                    # record.fire()
-                    if record.succeeded:
-                        logline += "SUCCESS"
+                    if not options.dry_run:
+                        record.fire()
+                        if record.succeeded:
+                            logline += "SUCCESS"
+                        else:
+                            logline += record.failure_reason
                     else:
-                        logline += record.failure_reason
+                        logline += "DRY RUN"
 
                 print logline
                 f.write(logline + "\n")
