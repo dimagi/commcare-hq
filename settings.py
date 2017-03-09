@@ -1602,12 +1602,7 @@ PILLOWTOPS = {
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
-        'custom.m4change.models.AncHmisCaseFluffPillow',
-        'custom.m4change.models.LdHmisCaseFluffPillow',
-        'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
-        'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
-        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow',
-        'custom.m4change.models.AllHmisCaseFluffPillow',
+        'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.IntraHealthFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',

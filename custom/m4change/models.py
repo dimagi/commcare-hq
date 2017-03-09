@@ -90,9 +90,6 @@ class AncHmisCaseFluff(BaseM4ChangeCaseFluff):
         app_label = 'm4change'
 
 
-AncHmisCaseFluffPillow = AncHmisCaseFluff.pillow()
-
-
 class LdHmisCaseFluff(BaseM4ChangeCaseFluff):
     group_by = ("domain",)
 
@@ -272,8 +269,6 @@ class LdHmisCaseFluff(BaseM4ChangeCaseFluff):
     class Meta:
         app_label = 'm4change'
 
-LdHmisCaseFluffPillow = LdHmisCaseFluff.pillow()
-
 
 class ImmunizationHmisCaseFluff(BaseM4ChangeCaseFluff):
     group_by = ("domain",)
@@ -304,8 +299,6 @@ class ImmunizationHmisCaseFluff(BaseM4ChangeCaseFluff):
 
     class Meta:
         app_label = 'm4change'
-
-ImmunizationHmisCaseFluffPillow = ImmunizationHmisCaseFluff.pillow()
 
 
 def _get_form_mother_id(form):
@@ -342,8 +335,6 @@ class ProjectIndicatorsCaseFluff(BaseM4ChangeCaseFluff):
 
     class Meta:
         app_label = 'm4change'
-
-ProjectIndicatorsCaseFluffPillow = ProjectIndicatorsCaseFluff.pillow()
 
 
 class McctStatus(models.Model):
@@ -392,8 +383,6 @@ class McctMonthlyAggregateFormFluff(BaseM4ChangeCaseFluff):
 
     class Meta:
         app_label = 'm4change'
-
-McctMonthlyAggregateFormFluffPillow = McctMonthlyAggregateFormFluff.pillow()
 
 
 class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
@@ -502,7 +491,21 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
     class Meta:
         app_label = 'm4change'
 
-AllHmisCaseFluffPillow = AllHmisCaseFluff.pillow()
+
+def M4ChangeFormFluffPillow(delete_filtered=False):
+    return get_multi_fluff_pillow(
+        indicator_classes=[
+            AncHmisCaseFluff,
+            LdHmisCaseFluff,
+            ImmunizationHmisCaseFluff,
+            ProjectIndicatorsCaseFluff,
+            McctMonthlyAggregateFormFluff,
+            AllHmisCaseFluff,
+        ],
+        name='M4ChangeFormFluffPillow',
+        kafka_topic=get_topic(get_doc_meta_object_from_document(CommCareCase().to_json())),
+        delete_filtered=delete_filtered
+    )
 
 
 class FixtureReportResult(Document, QueryMixin):
