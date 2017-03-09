@@ -823,9 +823,8 @@ UCR_DATABASE_URL = None
 # Override this in localsettings to specify custom reporting databases
 CUSTOM_DATABASES = {}
 ENABLE_PASSWORD_HASHING = False
-PASSWORD_HASHING_REGEX = None
-PASSWORD_SALT1 = None
-PASSWORD_SALT2 = None
+PASSWORD_SALT1_GENERATOR = None
+PASSWORD_SALT2_GENERATOR = None
 PASSWORD_DECODER = None
 
 PL_PROXY_CLUSTER_NAME = 'commcarehq'
