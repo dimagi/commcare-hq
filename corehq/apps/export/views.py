@@ -978,12 +978,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
 
         self.request = request
 
-        if use_new_daily_saved_exports_ui(self.domain) and \
-            not DailySavedExportNotification.notified(self.request.couch_user.user_id, self.domain) and \
-                (
-                    domain_has_daily_saved_export_access(self.domain) or
-                    domain_has_excel_dashboard_access(self.domain)
-                ):
+        if DailySavedExportNotification.user_to_be_notified(self.domain, self.request.couch_user):
             self.set_notify_new_daily_saved_export()
 
         return super(BaseExportListView, self).dispatch(self.request, *args, **kwargs)

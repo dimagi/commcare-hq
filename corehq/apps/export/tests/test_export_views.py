@@ -145,16 +145,23 @@ class ExportViewTest(TestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-    @patch('corehq.apps.export.views.domain_has_daily_saved_export_access', lambda x: True)
+    @patch('corehq.apps.export.models.new.domain_has_daily_saved_export_access', lambda x: True)
+    @patch.object(DailySavedExportNotification, 'user_added_before_feature_release')
     @patch('corehq.apps.export.views.domain_has_privilege', lambda x, y: True)
-    def test_view_daily_saved_export_notification(self):
+    def test_view_daily_saved_export_notification(self, user_created_mock):
         self.assertFalse(DailySavedExportNotification.notified(self.user.user_id, self.domain))
+
+        user_created_mock.return_value = False
+        self.client.get(reverse(DailySavedExportListView.urlname, args=[self.domain.name]))
+        self.assertFalse(DailySavedExportNotification.notified(self.user.user_id, self.domain))
+
+        user_created_mock.return_value = True
         self.client.get(reverse(DailySavedExportListView.urlname, args=[self.domain.name]))
         self.assertTrue(DailySavedExportNotification.notified(self.user.user_id, self.domain))
 
         with patch.object(DailySavedExportNotification, 'mark_notified') as notification:
             self.client.get(reverse(DailySavedExportListView.urlname, args=[self.domain.name]))
-
+            self.assertTrue(DailySavedExportNotification.notified(self.user.user_id, self.domain))
             assert not notification.called
 
     @patch('corehq.apps.export.views.domain_has_privilege', lambda x, y: True)
