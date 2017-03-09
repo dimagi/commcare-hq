@@ -50,7 +50,6 @@ class RegisterWebUserForm(forms.Form):
                data-target='#eulaModal'
                href='#eulaModal'>
                CommCare HQ End User License Agreement</a>.""")))
-    xform = forms.CharField(required=False, widget=forms.HiddenInput())
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
@@ -114,7 +113,6 @@ class RegisterWebUserForm(forms.Form):
                     ),
                     hqcrispy.ValidationMessage('passwordDelayed'),
                     crispy.Div(*phone_number_fields),
-                    hqcrispy.InlineField('xform'),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
                         ugettext("Next"),

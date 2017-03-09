@@ -55,7 +55,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqusers",
-        "index": "test_hqusers_2016-09-29",
+        "index": "test_hqusers_2017-02-03",
         "type": "user"
     },
     {

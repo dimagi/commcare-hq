@@ -1,7 +1,7 @@
 from celery.task import task
 from django.conf import settings
 from django.core.mail import send_mail, mail_admins
-from dimagi.utils.django.email import send_HTML_email
+from corehq.util.log import send_HTML_email
 from dimagi.utils.logging import notify_exception
 
 

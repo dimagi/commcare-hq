@@ -7,7 +7,6 @@ from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
 from django.core.management.base import BaseCommand
 from corehq.apps.hqadmin.models import HqDeploy
 from datetime import datetime
-from optparse import make_option
 from django.conf import settings
 from pillow_retry.models import PillowError
 

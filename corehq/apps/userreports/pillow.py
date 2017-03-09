@@ -52,18 +52,28 @@ class ConfigurableReportTableManagerMixin(object):
         if configs is None:
             configs = self.get_all_configs()
 
-        self.table_adapters = [get_indicator_adapter(config, can_handle_laboratory=True) for config in configs]
+        self.table_adapters_by_domain = defaultdict(list)
+        for config in configs:
+            self.table_adapters_by_domain[config.domain].append(
+                get_indicator_adapter(config, can_handle_laboratory=True)
+            )
         self.rebuild_tables_if_necessary()
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
 
+    def _tables_by_engine_id(self, engine_ids):
+        return [
+            adapter
+            for adapter_list in self.table_adapters_by_domain.values()
+            for adapter in adapter_list
+            if get_backend_id(adapter.config) in engine_ids
+        ]
+
     def rebuild_tables_if_necessary(self):
         sql_supported_backends = [UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND]
         es_supported_backends = [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND]
-        self._rebuild_sql_tables(
-            [a for a in self.table_adapters if get_backend_id(a.config) in sql_supported_backends])
-        self._rebuild_es_tables(
-            [a for a in self.table_adapters if get_backend_id(a.config) in es_supported_backends])
+        self._rebuild_sql_tables(self._tables_by_engine_id(sql_supported_backends))
+        self._rebuild_es_tables(self._tables_by_engine_id(es_supported_backends))
 
     def _rebuild_sql_tables(self, adapters):
         # todo move this code to sql adapter rebuild_if_necessary
@@ -123,17 +133,15 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             # if no domain we won't save to any UCR table
             return
 
-        for table in self.table_adapters:
-            if table.config.domain == domain:
-                # only bother getting the document if we have a domain match from the metadata
-                doc = change.get_document()
-                ensure_document_exists(change)
-                ensure_matched_revisions(change)
-                if table.config.filter(doc):
-                    # best effort will swallow errors in the table
-                    table.best_effort_save(doc)
-                elif table.config.deleted_filter(doc):
-                    table.delete(doc)
+        for table in self.table_adapters_by_domain[domain]:
+            doc = change.get_document()
+            ensure_document_exists(change)
+            ensure_matched_revisions(change)
+            if table.config.filter(doc):
+                # best effort will swallow errors in the table
+                table.best_effort_save(doc)
+            elif table.config.deleted_filter(doc):
+                table.delete(doc)
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):

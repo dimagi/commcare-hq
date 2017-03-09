@@ -27,10 +27,10 @@ def get_val(form, path, default=0):
         return default
 
 
-def get_yes_no(yes, no):
-    if yes:
+def get_yes_no(val):
+    if val == 1:
         return 'Yes'
-    elif no:
+    elif val == 0:
         return 'No'
     else:
         return 'N/A'
@@ -39,8 +39,6 @@ def get_yes_no(yes, no):
 class EQAExpressionSpec(JsonObject):
     type = TypeProperty('eqa_expression')
     question_id = StringProperty()
-    tally_yes_id = StringProperty()
-    tally_no_id = StringProperty()
     display_text = StringProperty()
     xmlns = StringProperty()
 
@@ -61,21 +59,15 @@ class EQAExpressionSpec(JsonObject):
             prev_form = None
 
         path_question = 'form/%s' % self.question_id
-        path_yes = 'form/%s' % self.tally_yes_id
-        path_no = 'form/%s' % self.tally_no_id
 
         curr_ques = get_val(curr_form, path_question, 99)
-        curr_sub_yes = get_val(curr_form, path_yes)
-        curr_sub_no = get_val(curr_form, path_no)
         prev_ques = get_val(prev_form, path_question, 99)
-        prev_sub_yes = get_val(prev_form, path_yes)
-        prev_sub_no = get_val(prev_form, path_no)
 
         return {
             'question_id': self.question_id,
             'display_text': self.display_text,
-            'current_submission': get_yes_no(curr_sub_yes, curr_sub_no),
-            'previous_submission': get_yes_no(prev_sub_yes, prev_sub_no),
+            'current_submission': get_yes_no(curr_ques),
+            'previous_submission': get_yes_no(prev_ques),
             'status': STATUSES.get((curr_ques, prev_ques))
         }
 
