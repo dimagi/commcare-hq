@@ -57,8 +57,8 @@ def simple_post(data, url, content_type="text/xml", timeout=60, headers=None):
     return requests.post(url, data, headers=default_headers, timeout=timeout)
 
 
-def post_data(data, url, curl_command="curl", use_curl=False, 
-              content_type="text/xml", path=None, use_chunked=False, 
+def post_data(data, url, curl_command="curl", use_curl=False,
+              content_type="text/xml", path=None, use_chunked=False,
               is_odk=False, attachments=None):
     """
     Do a POST of data with some options.  Returns a tuple of the response
