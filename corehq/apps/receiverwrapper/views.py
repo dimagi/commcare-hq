@@ -91,7 +91,9 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         openrosa_headers=couchforms.get_openrosa_headers(request),
     )
     with TimingContext() as timer:
-        response, instance, cases = submission_post.run()
+        result = submission_post.run()
+
+    response = result.response
 
     backend_tag = ('backend:sql' if should_use_sql_backend(domain) else
                    'backend:couch')
@@ -110,7 +112,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         # normalize over number of items (form or case) saved
         datadog.statsd.gauge(
             'commcare.xform_submissions.normalized_timings',
-            timer.duration/(1 + len(cases)), tags=[backend_tag])
+            timer.duration/(1 + len(result.cases)), tags=[backend_tag])
 
     return response
 

@@ -41,6 +41,8 @@ CaseStockProcessingResult = namedtuple(
     'case_result, case_models, stock_result'
 )
 
+FormProcessingResult = namedtuple('FormProcessingResult', 'response xform cases ledgers')
+
 
 class SubmissionPost(object):
 
@@ -141,6 +143,7 @@ class SubmissionPost(object):
             return response, None, []
 
         cases = []
+        ledgers = []
         with result.get_locked_forms() as xforms:
             from casexml.apps.case.xform import get_and_check_xform_domain
             domain = get_and_check_xform_domain(xforms[0])
@@ -183,10 +186,11 @@ class SubmissionPost(object):
                         self.save_processed_models(xforms, case_stock_result)
                         case_stock_result.case_result.close_extensions(case_db)
                         cases = case_stock_result.case_models
+                        ledgers = case_stock_result.stock_result.models_to_save
 
             errors = self.process_signals(instance)
             response = self._get_open_rosa_response(instance, errors)
-            return response, instance, cases
+            return FormProcessingResult(response, instance, cases, ledgers)
 
     @property
     def _cache(self):
@@ -251,8 +255,7 @@ class SubmissionPost(object):
         )
 
     def get_response(self):
-        response, _, _ = self.run()
-        return response
+        return self.run().response
 
     def process_signals(self, instance):
         feedback = successful_form_received.send_robust(None, xform=instance)
