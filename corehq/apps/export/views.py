@@ -12,7 +12,7 @@ from django.views.decorators.http import require_GET
 
 from corehq.toggles import MESSAGE_LOG_METADATA
 from corehq.apps.export.export import get_export_download, get_export_size
-from corehq.apps.export.models.new import DatePeriod
+from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -978,17 +978,19 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
 
         self.request = request
 
-        if domain_has_daily_saved_export_access(self.domain) or domain_has_excel_dashboard_access(self.domain):
+        if (use_new_daily_saved_exports_ui(self.domain) and
+                not DailySavedExportNotification.notified(self.request.couch_user.user_id, self.domain) and
+                (
+                    domain_has_daily_saved_export_access(self.domain) or
+                    domain_has_excel_dashboard_access(self.domain)
+                )):
             self.set_notify_new_daily_saved_export()
 
         return super(BaseExportListView, self).dispatch(self.request, *args, **kwargs)
 
     def set_notify_new_daily_saved_export(self):
-        self.request.notify_new_daily_saved_export = False
-
-        if self.request.session.get('notify_new_daily_saved_export', True):
-            self.request.notify_new_daily_saved_export = True
-            self.request.session['notify_new_daily_saved_export'] = False
+        self.request.notify_new_daily_saved_export = True
+        DailySavedExportNotification.mark_notified(self.request.couch_user.user_id, self.domain)
 
     @property
     def page_context(self):

@@ -9,7 +9,7 @@ from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
-
+from django.db import models
 from corehq.apps.reports.models import HQUserType
 from soil.progress import set_task_progress
 
@@ -2344,6 +2344,18 @@ class ExportMigrationMeta(Document):
             args=[self.domain, self.saved_export_id],
         ))
 
+
+class DailySavedExportNotification(models.Model):
+    user_id = models.CharField(max_length=255, db_index=True)
+    domain = models.CharField(max_length=255, db_index=True)
+
+    @classmethod
+    def notified(cls, user_id, domain):
+        return bool(cls.objects.filter(user_id=user_id, domain=domain).count())
+
+    @classmethod
+    def mark_notified(cls, user_id, domain):
+        cls.objects.get_or_create(user_id=user_id, domain=domain)
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []
