@@ -89,6 +89,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         templateHelpers: function () {
             return {
                 title: this.options.title,
+                environment: FormplayerFrontend.request('currentUser').environment,
             };
         },
         childViewOptions: function () {
