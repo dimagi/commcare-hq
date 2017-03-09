@@ -956,13 +956,6 @@ APP_MANAGER_V2 = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SHOW_PREVIEW_APP_SETTINGS = StaticToggle(
-    'preview_app_settings',
-    'Show preview app settings button',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 USER_TESTING_SIMPLIFY = StaticToggle(
     'user_testing_simplify',
     'Simplify the UI for user testing experiments',
