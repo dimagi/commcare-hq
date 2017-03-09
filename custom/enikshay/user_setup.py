@@ -2,6 +2,9 @@ from collections import namedtuple
 from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.users.signals import clean_commcare_user
+from corehq.apps.locations.signals import clean_location
+
+TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
 
 
 def user_save_callback(sender, domain, user, forms, **kwargs):
@@ -95,7 +98,55 @@ def validate_location(domain, user_form):
     user_form.add_error('location_id', _("You must select a location."))
 
 
+def location_save_callback(sender, domain, location, forms, **kwargs):
+    if not toggles.ENIKSHAY.enabled(domain):
+        return
+
+    is_new_location = sender == 'NewLocationView'
+    location_form = forms.get('LocationForm')
+
+    if is_new_location:
+        validate_nikshay_code(domain, location_form)
+    else:
+        validate_nikshay_code_unchanged(location, location_form)
+
+
+def get_site_code(domain, location):
+    """Autogenerate site_code based on custom location data nikshay code and
+    the codes of the ancestor locations."""
+
+
+def validate_nikshay_code(domain, location_form):
+    """When locations are created, enforce that a custom location data field
+    (Nikshay code) is unique amongst sibling locations"""
+    from corehq.apps.locations.models import SQLLocation
+    nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code', None)
+    loctype = location_form.cleaned_data['loctype']
+    if loctype not in TYPES_WITH_REQUIRED_NIKSHAY_CODES:
+        return
+    if not nikshay_code:
+        location_form.add_error(None, "You cannot create a location without providing a nikshay_code.")
+    parent = location_form.cleaned_data['parent']
+    sibling_codes = [
+        loc.metadata.get('nikshay_code', None)
+        for loc in SQLLocation.objects.filter(domain=domain, parent=parent)
+    ]
+    if nikshay_code in sibling_codes:
+        msg = "Nikshay Code '{}' is already in use.".format(nikshay_code)
+        location_form.custom_data.form.add_error('nikshay_code', msg)
+
+
+def validate_nikshay_code_unchanged(location, location_form):
+    """Block edit of custom location data nikshay code after creation"""
+    specified_nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code', None)
+    existing_nikshay_code = location.metadata.get('nikshay_code', None)
+    if existing_nikshay_code and specified_nikshay_code != existing_nikshay_code:
+        msg = "You cannot modify the Nikshay Code of an existing location."
+        location_form.custom_data.form.add_error('nikshay_code', msg)
+
+
 def connect_signals():
+    clean_location.connect(location_save_callback, dispatch_uid="location_save_callback")
     clean_commcare_user.connect(user_save_callback, dispatch_uid="user_save_callback")
 
 
@@ -125,24 +176,3 @@ USER_TYPES = [
     # UserType('mo-drtb', 'TBD', 'N/A'),
     # UserType('sa', 'TBD', 'N/A'),
 ]
-
-
-def get_site_code(domain, location):
-    """Autogenerate site_code based on custom location data nikshay code and
-    the codes of the ancestor locations."""
-
-
-def validate_nikshay_code(domain, location):
-    """When locations are created, enforce that a custom location data field
-    (Nikshay code) is unique amongst sibling locations"""
-    if 'nikshay_code' not in location.metadata:
-        return False
-    sibling_codes = [
-        loc.metadata.get('nikshay_code', None)
-        for loc in location.get_siblings(include_self=False)
-    ]
-    return location.metadata['nikshay_code'] not in sibling_codes
-
-
-def validate_nikshay_code_unchanged(domain, location):
-    """Block edit of custom location data nikshay code after creation"""
