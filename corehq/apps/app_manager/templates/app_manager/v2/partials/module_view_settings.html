@@ -119,6 +119,17 @@
             </div>
           </div>
 
+           {% if app.advanced_app_builder %}
+           <div class="panel panel-appmanager">
+            <div class="panel-heading">
+              <h4 class="panel-title panel-title-nolink">{% trans "Advanced Settings" %}</h4>
+            </div>
+            <div class="panel-body">
+              {% include 'app_manager/v2/partials/case_list_form_setting.html' %}
+            </div>
+          </div>
+          {% endif %}
+
         {% endblock %}
     </fieldset>
 </form>

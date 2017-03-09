@@ -189,7 +189,10 @@ class SohPercentageTableData(ILSData):
         )
         stockouts_map = defaultdict(lambda: 0)
         for transaction in transactions:
-            stockouts_map[location_parent_dict[transaction.case_id]] += 1
+            parent_id = location_parent_dict.get(transaction.case_id)
+            if not parent_id:
+                continue
+            stockouts_map[parent_id] += 1
         return stockouts_map
 
     @property

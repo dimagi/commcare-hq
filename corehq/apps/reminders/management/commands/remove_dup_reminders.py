@@ -4,7 +4,6 @@ from corehq.apps.reminders.models import (CaseReminder, CaseReminderHandler,
     CASE_CRITERIA)
 from corehq.apps.reminders.signals import case_changed_receiver
 from casexml.apps.case.models import CommCareCase
-from optparse import make_option
 
 
 class Command(BaseCommand):
@@ -15,17 +14,19 @@ class Command(BaseCommand):
         python manage.py remove_dup_reminders --fix
             - displays and removes all duplicate reminders
     """
-    args = ""
+
     help = ("A command which removes duplicate reminder instances created due "
         "to race conditions")
-    option_list = (
-        make_option("--fix",
-                    action="store_true",
-                    dest="fix",
-                    default=False,
-                    help="Include this option to automatically fix any "
-                    "duplicates where possible."),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--fix",
+            action="store_true",
+            dest="fix",
+            default=False,
+            help="Include this option to automatically fix any "
+                 "duplicates where possible.",
+        )
 
     def reminder_to_json(self, r):
         j = r.to_json()
@@ -40,7 +41,7 @@ class Command(BaseCommand):
         json2 = self.reminder_to_json(r2)
         return json1 == json2
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         num_dups = 0
         make_fixes = options["fix"]
         ids = {}

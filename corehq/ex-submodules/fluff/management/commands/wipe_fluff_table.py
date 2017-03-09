@@ -1,5 +1,4 @@
 from __future__ import print_function
-from optparse import make_option
 
 from django.core.management.base import BaseCommand
 
@@ -9,16 +8,20 @@ from pillowtop.utils import get_pillow_by_name
 
 class Command(BaseCommand):
 
-    option_list = (
-        make_option('--noinput',
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'pillow_name',
+        )
+        parser.add_argument(
+            '--noinput',
             action='store_true',
             dest='noinput',
             default=False,
-            help='Skip important confirmation warnings.'),
-    )
+            help='Skip important confirmation warnings.',
+        )
 
-    def handle(self, *args, **options):
-        pillow = get_pillow_by_name(args[0])
+    def handle(self, pillow_name, **options):
+        pillow = get_pillow_by_name(pillow_name)
         if not options['noinput']:
             confirm = raw_input(
                 """

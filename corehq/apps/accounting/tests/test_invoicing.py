@@ -41,8 +41,8 @@ class BaseInvoiceTestCase(BaseAccountingTest):
     @classmethod
     def setUpClass(cls):
         super(BaseInvoiceTestCase, cls).setUpClass()
-        cls.billing_contact = generator.arbitrary_web_user()
-        cls.dimagi_user = generator.arbitrary_web_user(is_dimagi=True)
+        cls.billing_contact = generator.create_arbitrary_web_user_name()
+        cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
         cls.currency = generator.init_default_currency()
         cls.account = generator.billing_account(
             cls.dimagi_user, cls.billing_contact)
@@ -65,8 +65,6 @@ class BaseInvoiceTestCase(BaseAccountingTest):
 
     @classmethod
     def tearDownClass(cls):
-        cls.billing_contact.delete()
-        cls.dimagi_user.delete()
         cls.domain.delete()
 
         super(BaseInvoiceTestCase, cls).tearDownClass()
@@ -209,7 +207,7 @@ class TestInvoice(BaseInvoiceTestCase):
             plan_version=plan_version
         )
 
-        autopay_subscription.account.update_autopay_user(self.billing_contact.username, self.domain)
+        autopay_subscription.account.update_autopay_user(self.billing_contact, self.domain)
         invoice_date_autopay = utils.months_from_date(autopay_subscription.date_start, 1)
         tasks.generate_invoices(invoice_date_autopay)
 

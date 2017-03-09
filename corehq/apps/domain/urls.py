@@ -36,7 +36,10 @@ from corehq.apps.domain.views import (
     calculated_properties, requeue_repeat_record,
     toggle_diff,
     select,
-    CalendarFixtureConfigView, LocationFixtureConfigView)
+    CalendarFixtureConfigView,
+    LocationFixtureConfigView,
+    Dhis2ConnectionView,
+)
 from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 
@@ -85,7 +88,7 @@ def extend(d1, d2):
 
 urlpatterns =[
     url(r'^domain/select/$', select, name='domain_select'),
-    url(r'^domain/autocomplete/(?P<field>\w+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
+    url(r'^domain/autocomplete/(?P<field>[\w-]+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
     url(r'^domain/transfer/(?P<guid>\w+)/activate$',
         ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
     url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
@@ -175,6 +178,7 @@ domain_settings = [
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
     url(r'^forwarding/test/$', test_repeater, name='test_repeater'),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', drop_repeater, name='drop_repeater'),
+    url(r'^dhis2/conn/$', Dhis2ConnectionView.as_view(), name=Dhis2ConnectionView.urlname),
     url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', set_published_snapshot, name='domain_set_published'),
     url(r'^snapshots/set_published/$', set_published_snapshot, name='domain_clear_published'),
     url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),

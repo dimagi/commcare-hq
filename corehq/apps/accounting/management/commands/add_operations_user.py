@@ -1,7 +1,6 @@
 # Use modern Python
 from __future__ import unicode_literals, absolute_import, print_function
 
-from optparse import make_option
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand
 from corehq import privileges

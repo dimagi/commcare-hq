@@ -43,6 +43,8 @@ from corehq.apps.case_search.models import (
     enable_case_search,
     disable_case_search,
 )
+from corehq.apps.dhis2.dbaccessors import get_dhis2_connection
+from corehq.apps.dhis2.forms import Dhis2ConnectionForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
@@ -3079,6 +3081,31 @@ class DeactivateTransferDomainView(View):
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(DeactivateTransferDomainView, self).dispatch(*args, **kwargs)
+
+
+class Dhis2ConnectionView(BaseAdminProjectSettingsView):
+    urlname = 'dhis2_connection_view'
+    page_title = ugettext_lazy("DHIS2 Connection Settings")
+    template_name = 'domain/admin/dhis2/connection_settings.html'
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
+            raise Http404()
+        return super(Dhis2ConnectionView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def dhis2_connection_form(self):
+        dhis2_conn = get_dhis2_connection(self.request.domain)
+        initial = dict(dhis2_conn) if dhis2_conn else {}
+        if self.request.method == 'POST':
+            return Dhis2ConnectionForm(self.request.POST, initial=initial)
+        return Dhis2ConnectionForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {'dhis2_connection_form': self.dhis2_connection_form}
 
 
 from corehq.apps.smsbillables.forms import PublicSMSRateCalculatorForm
