@@ -129,10 +129,10 @@ def _get_indicator_doc_from_class_and_id(indicator_class, doc_id):
 
 
 class FluffPillow(ConstructedPillow):
-    def __init__(self, indicator_name, kafka_topic, processor):
+    def __init__(self, indicator_name, kafka_topic, processor, domains=None, doc_type=None):
         self.kafka_topic = kafka_topic
-        self.domains = processor.domains
-        self.doc_type = processor.doc_type
+        self.domains = domains or processor.domains
+        self.doc_type = doc_type or processor.doc_type
 
         name = '{}Pillow'.format(indicator_name)
         checkpoint = PillowCheckpoint('fluff.{}.{}'.format(name, get_machine_id()))
