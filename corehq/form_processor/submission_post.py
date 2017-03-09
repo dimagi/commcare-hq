@@ -41,7 +41,12 @@ CaseStockProcessingResult = namedtuple(
     'case_result, case_models, stock_result'
 )
 
-FormProcessingResult = namedtuple('FormProcessingResult', 'response xform cases ledgers')
+
+class FormProcessingResult(namedtuple('FormProcessingResult', 'response xform cases ledgers')):
+    @property
+    def case(self):
+        assert len(self.cases) == 1
+        return self.cases[0]
 
 
 class SubmissionPost(object):
