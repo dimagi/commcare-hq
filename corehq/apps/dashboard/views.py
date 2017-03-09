@@ -250,7 +250,7 @@ def _get_default_tile_configurations():
         ),
         TileConfiguration(
             title=_('Organization'),
-            slug='users',
+            slug='locations',
             icon='fcc fcc-users',
             context_processor_class=IconContext,
             urlname='default_locations_view',

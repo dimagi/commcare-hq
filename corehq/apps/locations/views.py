@@ -62,6 +62,7 @@ from .util import load_locs_json, location_hierarchy_config, dump_locations
 logger = logging.getLogger(__name__)
 
 
+@location_safe
 @locations_access_required
 def default(request, domain):
     if request.couch_user.can_edit_locations():

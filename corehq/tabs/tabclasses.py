@@ -1248,6 +1248,7 @@ class ProjectUsersTab(UITab):
             ]))
 
         if has_privilege(self._request, privileges.LOCATIONS):
+            locations_config = []
             if self.couch_user.can_edit_locations():
                 from corehq.apps.locations.views import (
                     LocationsListView,
@@ -1258,7 +1259,7 @@ class ProjectUsersTab(UITab):
                     LocationFieldsView,
                 )
 
-                locations_config = [{
+                locations_config.append({
                     'title': LocationsListView.page_title,
                     'url': reverse(LocationsListView.urlname, args=[self.domain]),
                     'show_in_dropdown': True,
@@ -1284,7 +1285,7 @@ class ProjectUsersTab(UITab):
                             'urlname': LocationFieldsView.urlname,
                         },
                     ]
-                }]
+                })
 
             from corehq.apps.locations.permissions import user_can_edit_location_types
             if user_can_edit_location_types(self.couch_user, self.project):
@@ -1294,7 +1295,8 @@ class ProjectUsersTab(UITab):
                     'url': reverse(LocationTypesView.urlname, args=[self.domain]),
                     'show_in_dropdown': True,
                 })
-            items.append((_('Organization'), locations_config))
+            if locations_config:
+                items.append((_('Organization'), locations_config))
 
         elif users_have_locations(self.domain):  # This domain was downgraded
             items.append((_('Organization'), [{
