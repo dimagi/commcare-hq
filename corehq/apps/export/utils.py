@@ -661,4 +661,4 @@ def domain_has_excel_dashboard_access(domain):
 
 
 def domain_has_daily_saved_export_access(domain):
-    domain_has_privilege(domain, DAILY_SAVED_EXPORT)
+    return domain_has_privilege(domain, DAILY_SAVED_EXPORT)
