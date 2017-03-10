@@ -40,7 +40,12 @@ TAG_PREVIEW = Tag(
     css_class='default',
     description="",  # I'm not sure...
 )
-ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW]
+TAG_DEV_TOOLS = Tag(
+    name='Dev Tools',
+    css_class='default',
+    description="These features are UI enhancements intended for use by developers only.",
+)
+ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW, TAG_DEV_TOOLS]
 
 
 class StaticToggle(object):
