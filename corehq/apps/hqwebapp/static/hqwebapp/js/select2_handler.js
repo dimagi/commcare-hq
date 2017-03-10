@@ -3,7 +3,6 @@ var BaseSelect2Handler = function (options) {
     // todo: documentation (biyeun)
     'use strict';
     var self = this;
-    self.currentValue = options.currentValue;
     self.fieldName = options.fieldName;
     self.value = ko.observable();
 
