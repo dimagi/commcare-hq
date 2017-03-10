@@ -15,7 +15,7 @@ class Command(BaseCommand):
         Determine how many apps have changed their profile properties from the default values.
     '''
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         domains = [row['key'] for row in Domain.get_all(include_docs=False)]
         settings = {s['id']: s['default'] for s in get_custom_commcare_settings() if 'default' in s}
         deviant_counts = {id: 0 for id in settings.keys()}

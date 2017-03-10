@@ -35,8 +35,6 @@ def bootstrap_icds_gateway(apps=None):
 
 class Command(BaseCommand):
     help = "bootstrap ICDS backend gateway fees"
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         bootstrap_icds_gateway()
