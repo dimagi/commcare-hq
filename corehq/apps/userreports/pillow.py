@@ -8,7 +8,7 @@ from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_L
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.sql import metadata
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators, save_document
 from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
@@ -138,8 +138,11 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             ensure_document_exists(change)
             ensure_matched_revisions(change)
             if table.config.filter(doc):
-                # best effort will swallow errors in the table
-                table.best_effort_save(doc)
+                if table.is_expensive:
+                    save_document.delay(table.config._id, doc)
+                else:
+                    # best effort will swallow errors in the table
+                    table.best_effort_save(doc)
             elif table.config.deleted_filter(doc):
                 table.delete(doc)
 

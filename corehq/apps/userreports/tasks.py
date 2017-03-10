@@ -171,3 +171,10 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
 
     objects = experiment.run()
     return objects
+
+
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
+def save_document(indicator_config_id, document):
+    config = _get_config_by_id(indicator_config_id)
+    adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+    adapter.best_effort_save(document)

@@ -57,3 +57,10 @@ class IndicatorAdapter(object):
 
     def delete(self, doc):
         raise NotImplementedError
+
+    @property
+    def is_expensive(self):
+        for indicator in self.config.configured_indicators:
+            if indicator.type == 'expression':
+                if indicator.expression['type'] == 'related_doc':
+                    return True
