@@ -1049,3 +1049,11 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
         'ews-ghana', 'ils-gateway', 'ils-gateway-train'
     }
 )
+
+SHOW_DEV_TOGGLE_INFO = StaticToggle(
+    'highlight_feature_flags',
+    'Highlight / Mark Feature Flags in the UI',
+    TAG_DEV_TOOLS,
+    [NAMESPACE_USER]
+)
+
