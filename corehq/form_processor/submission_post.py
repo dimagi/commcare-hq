@@ -51,8 +51,6 @@ class FormProcessingResult(namedtuple('FormProcessingResult', 'response xform ca
 
 class SubmissionPost(object):
 
-    failed_auth_response = HttpResponseForbidden('Bad auth')
-
     def __init__(self, instance=None, attachments=None, auth_context=None,
                  domain=None, app_id=None, build_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
@@ -121,7 +119,7 @@ class SubmissionPost(object):
             return HttpResponse(status=503)
 
         if not self.auth_context.is_valid():
-            return self.failed_auth_response
+            return HttpResponseForbidden('Bad auth')
 
         if isinstance(self.instance, BadRequest):
             return HttpResponseBadRequest(self.instance.message)
@@ -277,10 +275,6 @@ class SubmissionPost(object):
             self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
             self.formdb.update_form_problem_and_state(instance)
         return errors
-
-    @staticmethod
-    def get_failed_auth_response():
-        return HttpResponseForbidden('Bad auth')
 
     def _get_open_rosa_response(self, instance, errors):
         if instance.is_normal:
