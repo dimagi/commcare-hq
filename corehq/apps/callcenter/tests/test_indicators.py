@@ -5,7 +5,6 @@ from django.conf import settings
 from django.test.utils import override_settings
 from mock import patch
 
-from casexml.apps.case.mock import CaseBlock
 from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0, MONTH1
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
     cache_key, CachedIndicators
@@ -14,8 +13,6 @@ from corehq.apps.callcenter.utils import sync_call_center_user_case, CallCenterC
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 

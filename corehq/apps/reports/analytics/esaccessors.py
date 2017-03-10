@@ -595,6 +595,6 @@ def _get_attachment_dicts_from_form(form):
 def get_case_types_for_domain_es(domain):
     query = (
         CaseES().domain(domain).size(0)
-            .terms_aggregation("type", "case_types")
+        .terms_aggregation("type", "case_types")
     )
     return set(query.run().aggregations.case_types.keys)
