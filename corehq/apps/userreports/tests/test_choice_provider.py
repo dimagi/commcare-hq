@@ -144,9 +144,8 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain_obj.delete()
-        delete_all_locations()
         delete_all_users()
+        super(LocationChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
         # Searching for something common to all locations gets you all locations
@@ -348,8 +347,7 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
     def tearDownClass(cls):
         UserESFake.reset_docs()
         GroupESFake.reset_docs()
-        cls.domain_obj.delete()
-        delete_all_locations()
+        super(OwnerChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
         self._test_query(self.choice_query_context('o', limit=10, offset=0))
