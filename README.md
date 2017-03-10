@@ -613,7 +613,7 @@ that you have a 32bit version of Python installed.
 + On Mac OS X, if Pillow complains that it can't find freetype, make sure freetype is installed with `brew install freetype`. Then create a symlink with: `ln -s /usr/local/include/freetype2 /usr/local/include/freetype`.
 
 + If you have an authentication error running `./manage.py migrate` the first
-  time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
+  time, open `pg_hba.conf` (`/etc/postgresql/9.4/main/pg_hba.conf` on Ubuntu)
   and change the line "local all all peer" to "local all all md5".
 
 + On Windows, to get python-magic to work you will need to install the following dependencies.
