@@ -122,7 +122,8 @@ BEGIN
 		'counsel_manage_breast_problems, ' ||
 		'counsel_skin_to_skin, ' ||
 		'counsel_immediate_breastfeeding, ' ||
-		'weight_recorded_in_month FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'weight_recorded_in_month, ' ||
+		'height_recorded_in_month FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
 
