@@ -1136,7 +1136,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     if (self.updatedDescription()) {
                         return self.updatedDescription();
                     }
-                    var config = self.action.caseConfig;
+                    var config = self.action.config;
                     var type = config.descriptionDict[self.caseType()];
                     if (type) {
                         return type[self.key()] || '';
