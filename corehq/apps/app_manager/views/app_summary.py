@@ -308,13 +308,13 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     def get(self, request, domain, app_id):
         language = request.GET.get('lang', 'en')
         modules = list(self.app.get_modules())
-        headers = [('All Forms', ('module_name', 'form_name', 'comment'))]
+        headers = [(_('All Forms'), ('module_name', 'form_name', 'comment'))]
         headers += [
             (self._get_form_sheet_name(module, form, language), tuple(FORM_SUMMARY_EXPORT_HEADER_NAMES))
             for module in modules for form in module.get_forms()
         ]
         data = list((
-            'All Forms',
+            _('All Forms'),
             self.get_all_forms_row(module, form, language)
         ) for module in modules for form in module.get_forms())
         data += list(
@@ -396,14 +396,14 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         case_metadata = self.app.get_case_metadata()
         language = request.GET.get('lang', 'en')
 
-        headers = [('All Case Properties', ('case_type', 'case_property', 'description'))]
+        headers = [(_('All Case Properties'), ('case_type', 'case_property', 'description'))]
         headers += list((
             case_type.name,
             tuple(CASE_SUMMARY_EXPORT_HEADER_NAMES)
         )for case_type in case_metadata.case_types)
 
         data = list((
-            'All Case Properties',
+            _('All Case Properties'),
             self.get_case_property_rows(case_type)
         ) for case_type in case_metadata.case_types)
         data += list((
