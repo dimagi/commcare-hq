@@ -110,6 +110,7 @@ class FormEditRestrictionsMixin(object):
         delete_all_users()
         delete_all_locations()
         delete_all_xforms()
+        super(FormEditRestrictionsMixin, cls).tearDownClass()
 
     def assertCanEdit(self, user, form):
         msg = "This user CANNOT edit this form!"
@@ -186,10 +187,10 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(TestAccessRestrictions, cls).tearDownClass()
         UserESFake.reset_docs()
         cls.suffolk_user.delete()
         delete_all_users()
+        super(TestAccessRestrictions, cls).tearDownClass()
 
     def test_can_access_location_list(self):
         self.client.login(username=self.suffolk_user.username, password="password")
