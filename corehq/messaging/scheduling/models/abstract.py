@@ -3,8 +3,6 @@ from datetime import datetime
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models
 from corehq.messaging.scheduling.exceptions import (
-    NoAvailableSchedule,
-    UnknownScheduleType,
     NoAvailableContent,
     UnknownContentType,
 )

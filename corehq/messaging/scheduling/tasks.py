@@ -1,5 +1,4 @@
 from celery.task import task
-from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
     TimedScheduleInstance,

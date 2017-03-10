@@ -21,14 +21,22 @@ def get_alert_schedule_instance(schedule_instance_id):
     from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
 
     _validate_uuid(schedule_instance_id)
-    return get_object_from_partitioned_database(AlertScheduleInstance, schedule_instance_id, 'schedule_instance_id')
+    return get_object_from_partitioned_database(
+        AlertScheduleInstance,
+        schedule_instance_id,
+        'schedule_instance_id'
+    )
 
 
 def get_timed_schedule_instance(schedule_instance_id):
     from corehq.messaging.scheduling.scheduling_partitioned.models import TimedScheduleInstance
 
     _validate_uuid(schedule_instance_id)
-    return get_object_from_partitioned_database(TimedScheduleInstance, schedule_instance_id, 'schedule_instance_id')
+    return get_object_from_partitioned_database(
+        TimedScheduleInstance,
+        schedule_instance_id,
+        'schedule_instance_id'
+    )
 
 
 def save_alert_schedule_instance(instance):
