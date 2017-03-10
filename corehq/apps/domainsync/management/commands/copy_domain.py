@@ -215,7 +215,7 @@ class Command(BaseCommand):
                                                                 endkey=endkey, reduce=False)]
         total = len(doc_ids)
         count = 0
-        msg = "Found %s matching documents in domain: %s" % (total, domain)
+        msg = u"Found %s matching documents in domain: %s" % (total, domain)
         msg += " of type: %s" % (doc_type) if doc_type else ""
         msg += " since: %s" % (since) if since else ""
         print(msg)
