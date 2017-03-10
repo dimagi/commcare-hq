@@ -167,7 +167,7 @@
 
         self.refreshGraph = function () {
             djangoRMI.update_tile({
-                slug: $scope.slug
+                slug: $scope.slug,
             }).success(self.updateGraph).error(self.retry);
         };
 
@@ -301,7 +301,7 @@
             restrict: 'EA',
             templateUrl: utils.getTemplate(dashboardConfig, 'datadog_tile.html'),
             controller: dashboardControllers.DatadogTileController,
-            link: link
+            link: link,
         };
     };
 

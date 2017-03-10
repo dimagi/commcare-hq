@@ -1,5 +1,4 @@
 import json
-from urllib import urlencode
 
 import requests
 
@@ -211,10 +210,10 @@ class DatadogContext(BaseTileContextProcessor):
                 'metric_query': "sum:commcare.xform_submissions.201{environment:production}.as_rate()",
                 'graph_def': json.dumps({
                     "requests": [{
-                      "q": "sum:commcare.xform_submissions.201{environment:production}.as_count()",
-                      "type": "bars",
-                      "conditional_formats": [],
-                      "aggregator": "avg"
+                        "q": "sum:commcare.xform_submissions.201{environment:production}.as_count()",
+                        "type": "bars",
+                        "conditional_formats": [],
+                        "aggregator": "avg"
                     }],
                     "viz": "timeseries",
                     "autoscale": True
