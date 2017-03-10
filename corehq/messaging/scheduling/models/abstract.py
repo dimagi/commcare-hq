@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models
@@ -9,59 +10,8 @@ from corehq.messaging.scheduling.exceptions import (
 )
 
 
-class ScheduleForeignKeyMixin(models.Model):
-
-    class Meta:
-        abstract = True
-
-    @property
-    def schedule(self):
-        from corehq.messaging.scheduling.models import TimedSchedule, AlertSchedule
-
-        if self.timed_schedule_id:
-            return TimedSchedule.objects.get(pk=self.timed_schedule_id)
-        elif self.alert_schedule_id:
-            return AlertSchedule.objects.get(pk=self.alert_schedule_id)
-
-        raise NoAvailableSchedule()
-
-    @property
-    @memoized
-    def memoized_schedule(self):
-        """
-        This is named with a memoized_ prefix to be clear that it should only be used
-        when the schedule is not changing.
-        """
-        return self.schedule
-
-    @schedule.setter
-    def schedule(self, value):
-        from corehq.messaging.scheduling.models import TimedSchedule, AlertSchedule
-
-        self.timed_schedule_id = None
-        self.alert_schedule_id = None
-
-        if isinstance(value, TimedSchedule):
-            self.timed_schedule_id = value.pk
-        elif isinstance(value, AlertSchedule):
-            self.alert_schedule_id = value.pk
-        else:
-            raise UnknownScheduleType()
-
-
-class SchedulePartitionedForeignKeyMixin(ScheduleForeignKeyMixin):
-    """
-    This version of the ScheduleForeignKeyMixin should be used with partitioned models.
-    Django ForeignKey fields cannot be used.
-    """
-    timed_schedule_id = models.IntegerField(null=True, db_index=True)
-    alert_schedule_id = models.IntegerField(null=True, db_index=True)
-
-    class Meta:
-        abstract = True
-
-
 class Schedule(models.Model):
+    schedule_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     domain = models.CharField(max_length=126, db_index=True)
     active = models.BooleanField(default=True)
 

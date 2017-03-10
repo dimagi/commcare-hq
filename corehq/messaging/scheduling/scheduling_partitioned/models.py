@@ -7,8 +7,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.scheduling.exceptions import UnknownRecipientType
-from corehq.messaging.scheduling.models import SchedulePartitionedForeignKeyMixin, TimedSchedule
-from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import save_schedule_instance
+from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from datetime import tzinfo
 from dimagi.utils.decorators.memoized import memoized
@@ -16,20 +15,18 @@ from django.db import models
 from django.core.exceptions import ValidationError
 
 
-class ScheduleInstance(SchedulePartitionedForeignKeyMixin):
+class ScheduleInstance(models.Model):
     schedule_instance_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     domain = models.CharField(max_length=126)
     recipient_type = models.CharField(max_length=126)
     recipient_id = models.CharField(max_length=126)
-    start_date = models.DateField(null=True)
     current_event_num = models.IntegerField()
     schedule_iteration_num = models.IntegerField()
     next_event_due = models.DateTimeField()
     active = models.BooleanField()
 
     class Meta:
-        app_label = 'scheduling_partitioned'
-        db_table = 'scheduling_scheduleinstance'
+        abstract = True
         index_together = (
             # index for equality comparisons on the leading columns
             ('active', 'next_event_due'),
@@ -98,7 +95,6 @@ class ScheduleInstance(SchedulePartitionedForeignKeyMixin):
         if move_to_next_event_not_in_the_past:
             schedule.move_to_next_event_not_in_the_past(obj)
 
-        save_schedule_instance(obj)
         return obj
 
     def expand_recipients(self):
@@ -132,15 +128,6 @@ class ScheduleInstance(SchedulePartitionedForeignKeyMixin):
         else:
             raise UnknownRecipientType(self.recipient_type)
 
-    def recalculate_schedule(self, schedule):
-        if isinstance(schedule, TimedSchedule):
-            self.current_event_num = 0
-            self.schedule_iteration_num = 1
-            self.active = True
-            schedule.set_first_event_due_timestamp(self, self.start_date)
-            schedule.move_to_next_event_not_in_the_past(self)
-            save_schedule_instance(self)
-
     def handle_current_event(self):
         content = self.memoized_schedule.get_current_event_content(self)
         for recipient in self.expand_recipients():
@@ -149,4 +136,65 @@ class ScheduleInstance(SchedulePartitionedForeignKeyMixin):
         # event to prevent ever getting stuck on the current event.
         self.memoized_schedule.move_to_next_event(self)
         self.memoized_schedule.move_to_next_event_not_in_the_past(self)
-        save_schedule_instance(self)
+
+    @property
+    def schedule(self):
+        raise NotImplementedError()
+
+    @schedule.setter
+    def schedule(self, value):
+        raise NotImplementedError()
+
+    @property
+    @memoized
+    def memoized_schedule(self):
+        """
+        This is named with a memoized_ prefix to be clear that it should only be used
+        when the schedule is not changing.
+        """
+        return self.schedule
+
+
+class AlertScheduleInstance(ScheduleInstance):
+    alert_schedule_id = models.UUIDField()
+
+    class Meta(ScheduleInstance.Meta):
+        db_table = 'scheduling_alertscheduleinstance'
+
+    @property
+    def schedule(self):
+        return AlertSchedule.objects.get(schedule_id=self.alert_schedule_id)
+
+    @schedule.setter
+    def schedule(self, value):
+        if not isinstance(value, AlertSchedule):
+            raise ValueError("Expected an instance of AlertSchedule")
+
+        self.alert_schedule_id = value.schedule_id
+
+
+class TimedScheduleInstance(ScheduleInstance):
+    timed_schedule_id = models.UUIDField()
+    start_date = models.DateField()
+
+    class Meta(ScheduleInstance.Meta):
+        db_table = 'scheduling_timedscheduleinstance'
+
+    @property
+    def schedule(self):
+        return TimedSchedule.objects.get(schedule_id=self.timed_schedule_id)
+
+    @schedule.setter
+    def schedule(self, value):
+        if not isinstance(value, TimedSchedule):
+            raise ValueError("Expected an instance of TimedSchedule")
+
+        self.timed_schedule_id = value.schedule_id
+
+    def recalculate_schedule(self, schedule=None):
+        schedule = schedule or self.memoized_schedule
+        self.current_event_num = 0
+        self.schedule_iteration_num = 1
+        self.active = True
+        schedule.set_first_event_due_timestamp(self, self.start_date)
+        schedule.move_to_next_event_not_in_the_past(self)
