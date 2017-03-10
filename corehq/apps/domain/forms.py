@@ -82,16 +82,12 @@ from corehq.privileges import (
     REPORT_BUILDER_TRIAL,
 )
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
-
-
-_soft_assert_username_unique = soft_assert('@'.join(('nhooper', 'dimagi.com')))
 
 
 def tf_choices(true_txt, false_txt):
