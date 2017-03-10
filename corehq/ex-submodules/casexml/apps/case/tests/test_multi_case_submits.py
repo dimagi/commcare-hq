@@ -22,7 +22,7 @@ class MultiCaseTest(TestCase):
 
         result = submit_form_locally(xml_data, domain=self.domain)
         self.assertEqual(4, len(result.cases))
-        self._check_ids(result.form, result.cases)
+        self._check_ids(result.xform, result.cases)
 
     def testMixed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "mixed_cases.xml")
@@ -30,7 +30,7 @@ class MultiCaseTest(TestCase):
             xml_data = f.read()
         result = submit_form_locally(xml_data, domain=self.domain)
         self.assertEqual(4, len(result.cases))
-        self._check_ids(result.form, result.cases)
+        self._check_ids(result.xform, result.cases)
 
     def testCasesInRepeats(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "case_in_repeats.xml")
@@ -38,7 +38,7 @@ class MultiCaseTest(TestCase):
             xml_data = f.read()
         result = submit_form_locally(xml_data, domain=self.domain)
         self.assertEqual(3, len(result.cases))
-        self._check_ids(result.form, result.cases)
+        self._check_ids(result.xform, result.cases)
 
     def _check_ids(self, form, cases):
         for case in cases:
