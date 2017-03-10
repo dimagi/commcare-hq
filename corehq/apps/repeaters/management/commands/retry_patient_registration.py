@@ -13,7 +13,6 @@ class Command(BaseCommand):
         parser.add_argument('--dry-run', action='store_true')
 
     def handle(self, logfile, **options):
-        import ipdb; ipdb.set_trace()
         with open(logfile, "w") as f:
             register_patient_records = get_paged_repeat_records("enikshay", None, None, repeater_id="dc73c3da43d42acd964d80b287926833")
             already_exists_records = [
@@ -35,15 +34,17 @@ class Command(BaseCommand):
                     case.case_id
                 )
 
-                if case.get_dynamic_case_properties().get("dots_99_registered", False) == "true":
+                if case.dynamic_case_properties().get("dots_99_registered", False) == "true":
                     logline += "case says dots_99_registered already"
                 else:
-                    if not options.dry_run:
-                        record.fire()
+                    if not options.get('dry_run', False):
+                        request_info = {}
+                        record.fire(force_send=True, request_info=request_info)
                         if record.succeeded:
                             logline += "SUCCESS"
                         else:
                             logline += record.failure_reason
+                        logline += u"\t{}".format(unicode(request_info))
                     else:
                         logline += "DRY RUN"
 

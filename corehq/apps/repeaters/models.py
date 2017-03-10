@@ -551,16 +551,16 @@ class RepeatRecord(Document):
         if reraise:
             raise
 
-    def fire(self, max_tries=3, force_send=False):
+    def fire(self, max_tries=3, force_send=False, request_info=None):
         headers = self.repeater.get_headers(self)
         if self.try_now() or force_send:
             self.overall_tries += 1
             tries = 0
             post_info = PostInfo(self.get_payload(), headers, force_send, max_tries)
-            self.post(post_info, tries=tries)
+            self.post(post_info, tries=tries, request_info=request_info)
             self.save()
 
-    def post(self, post_info, tries=0):
+    def post(self, post_info, tries=0, request_info=None):
         tries += 1
         try:
             response = simple_post_with_cached_timeout(
@@ -570,7 +570,15 @@ class RepeatRecord(Document):
                 force_send=post_info.force_send,
                 timeout=POST_TIMEOUT,
             )
+            try:
+                if request_info:
+                    request_info['status_code'] = response.status_code
+                    request_info['json'] = response.json()
+            except:
+                pass
         except Exception as e:
+            if request_info:
+                request_info['exception'] = unicode(e)
             self.handle_exception(e)
         else:
             return self.handle_response(response, post_info, tries)
