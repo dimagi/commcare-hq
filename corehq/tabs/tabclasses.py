@@ -1139,6 +1139,7 @@ class ProjectUsersTab(UITab):
     @property
     def _is_viewable(self):
         return self.domain and (self.couch_user.can_edit_commcare_users() or
+                                self.couch_user.can_edit_locations() or
                                 self.couch_user.can_edit_web_users())
 
     @property
@@ -1247,54 +1248,55 @@ class ProjectUsersTab(UITab):
             ]))
 
         if has_privilege(self._request, privileges.LOCATIONS):
-            from corehq.apps.locations.views import (
-                LocationsListView,
-                NewLocationView,
-                EditLocationView,
-                LocationImportView,
-                LocationImportStatusView,
-                LocationFieldsView,
-                LocationTypesView,
-            )
-            from corehq.apps.locations.permissions import (
-                user_can_edit_location_types
-            )
+            locations_config = []
+            if self.couch_user.can_edit_locations():
+                from corehq.apps.locations.views import (
+                    LocationsListView,
+                    NewLocationView,
+                    EditLocationView,
+                    LocationImportView,
+                    LocationImportStatusView,
+                    LocationFieldsView,
+                )
 
-            locations_config = [{
-                'title': LocationsListView.page_title,
-                'url': reverse(LocationsListView.urlname, args=[self.domain]),
-                'show_in_dropdown': True,
-                'subpages': [
-                    {
-                        'title': NewLocationView.page_title,
-                        'urlname': NewLocationView.urlname,
-                    },
-                    {
-                        'title': EditLocationView.page_title,
-                        'urlname': EditLocationView.urlname,
-                    },
-                    {
-                        'title': LocationImportView.page_title,
-                        'urlname': LocationImportView.urlname,
-                    },
-                    {
-                        'title': LocationImportStatusView.page_title,
-                        'urlname': LocationImportStatusView.urlname,
-                    },
-                    {
-                        'title': LocationFieldsView.page_name(),
-                        'urlname': LocationFieldsView.urlname,
-                    },
-                ]
-            }]
+                locations_config.append({
+                    'title': LocationsListView.page_title,
+                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
+                    'show_in_dropdown': True,
+                    'subpages': [
+                        {
+                            'title': NewLocationView.page_title,
+                            'urlname': NewLocationView.urlname,
+                        },
+                        {
+                            'title': EditLocationView.page_title,
+                            'urlname': EditLocationView.urlname,
+                        },
+                        {
+                            'title': LocationImportView.page_title,
+                            'urlname': LocationImportView.urlname,
+                        },
+                        {
+                            'title': LocationImportStatusView.page_title,
+                            'urlname': LocationImportStatusView.urlname,
+                        },
+                        {
+                            'title': LocationFieldsView.page_name(),
+                            'urlname': LocationFieldsView.urlname,
+                        },
+                    ]
+                })
 
+            from corehq.apps.locations.permissions import user_can_edit_location_types
             if user_can_edit_location_types(self.couch_user, self.project):
+                from corehq.apps.locations.views import LocationTypesView
                 locations_config.append({
                     'title': LocationTypesView.page_title,
                     'url': reverse(LocationTypesView.urlname, args=[self.domain]),
                     'show_in_dropdown': True,
                 })
-            items.append((_('Organization'), locations_config))
+            if locations_config:
+                items.append((_('Organization'), locations_config))
 
         elif users_have_locations(self.domain):  # This domain was downgraded
             items.append((_('Organization'), [{

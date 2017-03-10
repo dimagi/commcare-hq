@@ -232,6 +232,12 @@ FormplayerFrontend.on("start", function (options) {
     }
 });
 
+FormplayerFrontend.reqres.setHandler('getCurrentApp', function() {
+    var appId = FormplayerFrontend.request('getCurrentAppId');
+    var currentApp = FormplayerFrontend.request("appselect:getApp", appId);
+    return currentApp;
+});
+
 FormplayerFrontend.reqres.setHandler('getCurrentAppId', function() {
     // First attempt to grab app id from URL
     var urlObject = Util.currentUrlToObject(),

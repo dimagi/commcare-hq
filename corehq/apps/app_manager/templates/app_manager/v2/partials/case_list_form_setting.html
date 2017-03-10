@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% if not module.is_surveys and form.get_action_type == 'open' and app.advanced_app_builder %}
+{% if not module.is_surveys and app.advanced_app_builder %}
 
   <script>
       // show extra fields if user wants reg form in both case list and menu
@@ -40,7 +40,7 @@
       </div>
       <div class="form-group">
           <label class="col-sm-2 control-label">
-              Registration Form Accessible from Case List
+              {% trans "Registration Form Accessible from Case List" %}
               <span class="hq-help-template"
                     data-title="{% trans "Registration Form Accessible from Case List" %}"
                     data-content="{% blocktrans %}Include a registration form in the application's menu of forms.{% endblocktrans %}"

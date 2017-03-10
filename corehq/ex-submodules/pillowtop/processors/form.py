@@ -64,7 +64,7 @@ def mark_has_submission(domain, build_id):
 def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata, received_on):
     user = CouchUser.get_by_user_id(user_id, domain)
 
-    if not user:
+    if not user or user.is_deleted():
         return
 
     try:
