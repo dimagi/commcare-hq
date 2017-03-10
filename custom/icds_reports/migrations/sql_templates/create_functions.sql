@@ -295,7 +295,8 @@ BEGIN
 		'sum(counsel_comp_feeding_vid), ' ||
 		'sum(fully_immunized_eligible), ' ||
 		'sum(fully_immunized_on_time), ' ||
-		'sum(fully_immunized_late) ' ||
+		'sum(fully_immunized_late), ' ||
+		'sum(has_aadhar_id) ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
@@ -344,7 +345,8 @@ BEGIN
 		'sum(counsel_play_cf_video), ' ||
 		'sum(fully_immunized_eligible), ' ||
 		'sum(fully_immunized_on_time), ' ||
-		'sum(fully_immunized_late) ';
+		'sum(fully_immunized_late), ' ||
+		'sum(has_aadhar_id) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -487,7 +489,8 @@ BEGIN
 		'sum(counsel_immediate_bf), ' ||
 		'sum(counsel_fp_vid), ' ||
 		'sum(counsel_immediate_conception), ' ||
-		'sum(counsel_accessible_postpartum_fp) ' ||
+		'sum(counsel_accessible_postpartum_fp), ' ||
+		'sum(has_aadhar_id) ' ||
 		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
@@ -538,7 +541,8 @@ BEGIN
 		'sum(counsel_immediate_bf), ' ||
 		'sum(counsel_fp_vid), ' ||
 		'sum(counsel_immediate_conception), ' ||
-		'sum(counsel_accessible_postpartum_fp) ';
+		'sum(counsel_accessible_postpartum_fp), ' ||
+		'sum(has_aadhar_id) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
