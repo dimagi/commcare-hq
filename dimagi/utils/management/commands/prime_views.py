@@ -54,7 +54,7 @@ def do_prime(app_label, design_doc_name, view_name, verbose=False):
 class Command(BaseCommand):
     help = 'Sync live design docs with gevent'
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         pool = Pool(POOL_SIZE)
 
         while True:
