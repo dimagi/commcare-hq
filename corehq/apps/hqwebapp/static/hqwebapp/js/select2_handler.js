@@ -46,7 +46,7 @@ hqDefine("hqwebapp/js/select2_handler.js", function() {
         self.utils = {
             getField: function () {
                 return $('[name="' + self.fieldName + '"]');
-            }
+            },
         };
     
         self.init = function () {
@@ -71,7 +71,7 @@ hqDefine("hqwebapp/js/select2_handler.js", function() {
                         self.error(
                             gettext("There was an issue communicating with the server. Please try back later.")
                         );
-                    }
+                    },
                 },
                 createSearchChoice: self.createNewChoice,
                 formatResult: self.formatResult,

@@ -20,8 +20,8 @@ hqDefine("smsbillables/js/smsbillables.rate_calc.js", function() {
             self.select2CountryCode.getExtraData = function (term) {
                 return {
                     'gateway': self.gateway(),
-                    'direction': self.direction()
-                }
+                    'direction': self.direction(),
+                };
             };
             self.select2CountryCode.init();
         };
@@ -43,7 +43,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc.js", function() {
                         direction: self.direction(),
                         country_code: self.select2CountryCode.value(),
                         handler: 'sms_get_rate',
-                        action: 'get_rate'
+                        action: 'get_rate',
                     },
                     success: function (response) {
                         self.calculatingRate(false);
@@ -58,7 +58,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc.js", function() {
                     error: function () {
                         self.calculatingRate(false);
                         self.rate(gettext("There was an error fetching the SMS rate."));
-                    }
+                    },
                 });
             }
         };
@@ -85,28 +85,28 @@ hqDefine("smsbillables/js/smsbillables.rate_calc.js", function() {
         });
     
         var updateRate = function () {
-                self.calculatingRate(true);
-                $.ajax({
-                    url: '',
-                    dataType: 'json',
-                    type: 'POST',
-                    data: {
-                        country_code: self.country_code,
-                        handler: 'public_sms_rate_calc',
-                        action: 'public_rate'
-                    },
-                    success: function (response) {
-                        self.calculatingRate(false);
-                        self.rate_table(response.data);
-                        self.hasError(false);
-                        self.rateErrorText(false);
-                    },
-                    error: function () {
-                        self.calculatingRate(false);
-                        self.hasError(true);
-                        self.rateErrorText(gettext("There was an error fetching the SMS rate."));
-                    }
-                });
+            self.calculatingRate(true);
+            $.ajax({
+                url: '',
+                dataType: 'json',
+                type: 'POST',
+                data: {
+                    country_code: self.country_code,
+                    handler: 'public_sms_rate_calc',
+                    action: 'public_rate',
+                },
+                success: function (response) {
+                    self.calculatingRate(false);
+                    self.rate_table(response.data);
+                    self.hasError(false);
+                    self.rateErrorText(false);
+                },
+                error: function () {
+                    self.calculatingRate(false);
+                    self.hasError(true);
+                    self.rateErrorText(gettext("There was an error fetching the SMS rate."));
+                }
+            });
         };
         self.country_code.subscribe(updateRate);
     };

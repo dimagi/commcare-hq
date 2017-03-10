@@ -67,13 +67,13 @@ hqDefine("accounting/js/accounting.software_plan_version_handler.js", function()
         self.createNew = function () {
             self.utils.sendToAsyncHandler('create', {
                 name: self.select2.value(),
-                rate_type: self.rateType()
+                rate_type: self.rateType(),
             }, self.addRate);
         };
     
         self.apply = function () {
             self.utils.sendToAsyncHandler('apply', {
-                rate_id: self.select2.value()
+                rate_id: self.select2.value(),
             }, self.addRate);
         };
     
@@ -104,11 +104,11 @@ hqDefine("accounting/js/accounting.software_plan_version_handler.js", function()
                     statusCode: {
                         500: function () {
                             self.error("Server encountered a problem. Please notify a dev.");
-                        }
-                    }
+                        },
+                    },
                 });
-            }
-        }
+            },
+        };
     };
     
     var PermissionsManager = function (options) {
@@ -118,10 +118,10 @@ hqDefine("accounting/js/accounting.software_plan_version_handler.js", function()
         self.existingRoles = ko.observableArray();
         self.roleType = ko.observable(options.roleType);
         self.isRoleTypeNew = ko.computed(function () {
-            return self.roleType() == 'new';
+            return self.roleType() === 'new';
         });
         self.isRoleTypeExisting = ko.computed(function () {
-            return self.roleType() == 'existing';
+            return self.roleType() === 'existing';
         });
     
         self.new = new NewRoleManager(self.existingRoles, options.newPrivileges);
@@ -148,12 +148,12 @@ hqDefine("accounting/js/accounting.software_plan_version_handler.js", function()
                 }
             });
             $('#id_role_slug').select2();
-            $('#roles form').submit(function (e) {
+            $('#roles form').submit(function () {
                 if (self.new.hasMatchingRole() && self.isRoleTypeNew()) {
                     self.existing.roleSlug(self.new.matchingRole().slug());
                     $('#id_role_slug').select2('val', self.new.matchingRole().slug());
                 }
-            })
+            });
         };
     };
     
@@ -215,7 +215,7 @@ hqDefine("accounting/js/accounting.software_plan_version_handler.js", function()
             return [];
         });
         self.hasNoPrivileges = ko.computed(function () {
-            return _.isEmpty(self.selectedPrivileges())
+            return _.isEmpty(self.selectedPrivileges());
         });
     };
     
@@ -234,10 +234,10 @@ hqDefine("accounting/js/accounting.software_plan_version_handler.js", function()
             return 'select2_rate';
         };
     
-        self.getExtraData = function (term) {
+        self.getExtraData = function () {
             return {
-                existing: self.currentValue()
-            }
+                existing: self.currentValue(),
+            };
         };
     
         self.createNewChoice = function (term, selectedData) {
@@ -247,7 +247,11 @@ hqDefine("accounting/js/accounting.software_plan_version_handler.js", function()
                 return item.text;
             });
             if (matching.indexOf(term) === -1 && term) {
-                return {id: term, text: term, isNew: true}
+                return {
+                    id: term,
+                    text: term,
+                    isNew: true,
+                };
             }
         };
     
@@ -268,8 +272,8 @@ hqDefine("accounting/js/accounting.software_plan_version_handler.js", function()
             return {id: element.val(), text: element.val()};
         };
     
-        self.onSelect2Change = function (event) {
-            if ($(this).val() == '') {
+        self.onSelect2Change = function () {
+            if (!$(this).val()) {
                 self.isNew(false);
                 self.isExisting(false);
             }
