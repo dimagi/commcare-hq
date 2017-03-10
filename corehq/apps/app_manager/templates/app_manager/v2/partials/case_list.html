@@ -47,6 +47,7 @@
   </div>
   <div class="panel-body">
     <div data-bind="with: shortScreen">
+        {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
         {% if request|toggle_enabled:'CASE_LIST_TILE' %}
         <div class="row">
             <div class="col-sm-6">
@@ -57,6 +58,7 @@
             </div>
         </div>
         {% endif %}
+        {{ request|toggle_tag_info:"SHOW_PERSIST_CASE_CONTEXT_SETTING" }}
         {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
         <div data-bind="visible: useCaseTiles() == 'no'">
             <div class="checkbox">
@@ -130,6 +132,8 @@
                             <th>{% trans "Direction" %}</th>
                             {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
                             <th>{% trans "Sort Calculation" %}</th>
+                            {% elif request|toggle_enabmed:'SHOW_DEV_TOGGLE_INFO' %}
+                              <th>{{ request|toggle_tag_info:"SORT_CALCULATION_IN_CASE_LIST" }}</th>
                             {% endif %}
                             <th>{% trans "Format" %}</th>
                             <th>
@@ -180,6 +184,8 @@
                             <td>
                                 <input class="form-control" type='text' data-bind='value: sortCalculation'/>
                             </td>
+                            {% elif request|toggle_enabmed:'SHOW_DEV_TOGGLE_INFO' %}
+                              <td></td>
                             {% endif %}
 
 
@@ -200,6 +206,7 @@
                                     <option value="distance">
                                         {% trans "Distance from current location" %}
                                     </option>
+                                    {{ request|toggle_tag_info:"CACHE_AND_INDEX" }}
                                     {% if request|toggle_enabled:'CACHE_AND_INDEX' %}
                                         <option value="index">
                                             {% trans "Cache and Index" %}
@@ -233,10 +240,12 @@
 </div>
 {% endif %}
 
+{{ request|toggle_tag_info:"CASE_LIST_LOOKUP" }}
 {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
     {% include "app_manager/v2/partials/case_list_lookup.html" %}
 {% endif %}
 
+{{ request|toggle_tag_info:"FIXTURE_CASE_SELECTION" }}
 {% if detail.fixture_select and request|toggle_enabled:"FIXTURE_CASE_SELECTION" %}
     {% include "app_manager/v2/partials/fixture_case_selection.html" %}
 {% endif %}
