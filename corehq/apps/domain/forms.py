@@ -19,7 +19,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm, PasswordResetForm
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
-from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse
@@ -82,16 +81,12 @@ from corehq.privileges import (
     REPORT_BUILDER_TRIAL,
 )
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
-
-
-_soft_assert_username_unique = soft_assert('@'.join(('nhooper', 'dimagi.com')))
 
 
 def tf_choices(true_txt, false_txt):
