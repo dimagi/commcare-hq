@@ -220,6 +220,7 @@ hqDefine("accounting/js/accounting.software_plan_version_handler.js", function()
     };
     
     
+    var BaseSelect2Handler = hqImport("hqwebapp/js/select2_handler.js").BaseSelect2Handler;
     var Select2RateHandler = function (options, currentValue) {
         'use strict';
         BaseSelect2Handler.call(this, options);
