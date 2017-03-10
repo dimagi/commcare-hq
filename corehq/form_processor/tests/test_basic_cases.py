@@ -3,6 +3,8 @@ from datetime import datetime
 import uuid
 from django.conf import settings
 from django.test import TestCase
+from django.test.utils import override_settings
+
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.util import post_case_blocks
@@ -315,6 +317,46 @@ class FundamentalCaseTests(TestCase):
         case_id = uuid.uuid4().hex
         with self.assertRaisesMessage(AssertionError, 'Case created without create block'):
             _submit_case_block(False, case_id, user_id='user2', update={})
+
+    def test_globally_unique_form_id(self):
+        form_id = uuid.uuid4().hex
+
+        form = """
+            <data xmlns="http://openrosa.org/formdesigner/blah">
+                <meta>
+                    <userID>123</userID>
+                    <instanceID>{form_id}</instanceID>
+                </meta>
+            </data>
+        """
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False):
+            _, xform, _ = submit_form_locally(form.format(form_id=form_id), 'domain1')
+            self.assertEqual(form_id, xform.form_id)
+
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
+            # form with duplicate ID submitted to different domain gets a new ID
+            _, xform, _ = submit_form_locally(form.format(form_id=form_id), 'domain2')
+            self.assertNotEqual(form_id, xform.form_id)
+
+    def test_globally_unique_case_id(self):
+        case_id = uuid.uuid4().hex
+        case = CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id='user1',
+            owner_id='user1',
+            case_type='demo',
+            case_name='create_case'
+        )
+
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False):
+            post_case_blocks([case.as_xml()], domain='domain1')
+
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
+            xform, cases = post_case_blocks([case.as_xml()], domain='domain2')
+            self.assertEqual(0, len(cases))
+            self.assertTrue(xform.is_error)
+            self.assertIn('IllegalCaseId', xform.problem)
 
 
 @use_sql_backend
