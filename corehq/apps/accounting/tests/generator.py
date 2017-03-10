@@ -90,7 +90,7 @@ def billing_account(web_user_creator, web_user_contact, currency=None, save=True
     currency = currency or Currency.objects.get(code=settings.DEFAULT_CURRENCY)
     billing_account = BillingAccount(
         name=account_name,
-        created_by=web_user_creator.username if isinstance(web_user_creator, WebUser) else web_user_creator,
+        created_by=web_user_creator,
         currency=currency,
     )
     if save:
@@ -106,7 +106,7 @@ def arbitrary_contact_info(account, web_user_creator):
         account=account,
         first_name=data_gen.arbitrary_firstname(),
         last_name=data_gen.arbitrary_lastname(),
-        email_list=[web_user_creator.username if isinstance(web_user_creator, WebUser) else web_user_creator],
+        email_list=[web_user_creator],
         phone_number="+15555555",
         company_name="Company Name",
         first_line="585 Mass Ave",

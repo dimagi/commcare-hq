@@ -74,18 +74,16 @@
    {% endif %}
  
  {% endblock %}
-@@ -64,37 +81,23 @@
+@@ -64,38 +81,19 @@
      <script src="{% static 'style/js/ui-element.js' %}"></script>
      <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
++
+     <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
 -    {% if show_live_preview %}
-+
-+
-     <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
+-    <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
 -    {% endif %}
-     <script src="{% static 'app_manager/js/apps_base.js' %}"></script>
-+
-+
+-    <script src="{% static 'app_manager/js/apps_base.js' %}"></script>
  {% endblock %}
  
 -{% block page_breadcrumbs %}
@@ -120,7 +118,7 @@
       id="js-appmanager-body">
      {% if app %}
          {% if error %}
-@@ -119,7 +122,7 @@
+@@ -120,7 +118,7 @@
                  {% endblocktrans %}
              </p>
              <br>
@@ -129,7 +127,7 @@
          </div>
      {% endif %}
  </div>
-@@ -153,3 +156,5 @@
+@@ -154,3 +152,5 @@
      </div>
      {% endif %}
  {% endblock modals %}

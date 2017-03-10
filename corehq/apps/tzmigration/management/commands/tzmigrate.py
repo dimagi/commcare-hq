@@ -1,6 +1,7 @@
 from __future__ import print_function
-from optparse import make_option
+
 from django.core.management.base import BaseCommand, CommandError
+
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.tzmigration.api import set_tz_migration_started, \
     set_tz_migration_complete, set_tz_migration_not_started, get_tz_migration_status, \
@@ -13,17 +14,18 @@ from couchforms.dbaccessors import get_form_ids_by_type
 
 
 class Command(BaseCommand):
-    option_list = (
-        make_option('--BEGIN', action='store_true', default=False),
-        make_option('--COMMIT', action='store_true', default=False),
-        make_option('--ABORT', action='store_true', default=False),
-        make_option('--prepare', action='store_true', default=False),
-        make_option('--prepare-case-json', action='store_true', default=False),
-        make_option('--blow-away', action='store_true', default=False),
-        make_option('--stats', action='store_true', default=False),
-        make_option('--show-diffs', action='store_true', default=False),
-        make_option('--play', action='store_true', default=False),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument('domain')
+        parser.add_argument('--BEGIN', action='store_true', default=False)
+        parser.add_argument('--COMMIT', action='store_true', default=False)
+        parser.add_argument('--ABORT', action='store_true', default=False)
+        parser.add_argument('--prepare', action='store_true', default=False)
+        parser.add_argument('--prepare-case-json', action='store_true', default=False)
+        parser.add_argument('--blow-away', action='store_true', default=False)
+        parser.add_argument('--stats', action='store_true', default=False)
+        parser.add_argument('--show-diffs', action='store_true', default=False)
+        parser.add_argument('--play', action='store_true', default=False)
 
     @staticmethod
     def require_only_option(sole_option, options):

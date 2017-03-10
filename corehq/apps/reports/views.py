@@ -792,7 +792,8 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
         send_html_email_async.delay(
             subject, email, body,
-            email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+            email_from=settings.DEFAULT_FROM_EMAIL,
+            ga_track=True,
             ga_tracking_info={
                 'cd4': request.domain,
                 'cd10': report_slug
@@ -803,7 +804,8 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
             body = render_full_report_notification(request, content).content
             send_html_email_async.delay(
                 subject, recipient, body,
-                email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+                email_from=settings.DEFAULT_FROM_EMAIL,
+                ga_track=True,
                 ga_tracking_info={
                     'cd4': request.domain,
                     'cd10': report_slug
@@ -1780,7 +1782,7 @@ class EditFormInstance(View):
                         case_url=reverse('case_details', args=[domain, case.case_id]),
                         case_name=case.name,
                     ))
-                elif case.deleted:
+                elif case.is_deleted:
                     return _error(_(u'Case <a href="{}" is deleted. Cannot edit this form.').format(case.case_id))
 
         edit_session_data['is_editing'] = True

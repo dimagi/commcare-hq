@@ -1,5 +1,4 @@
 from __future__ import print_function
-from optparse import make_option
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -13,24 +12,23 @@ class Command(BaseCommand):
     """
     help = "Migrate the esupgrade checkpoints"
 
-    option_list = (
-        make_option(
+    def add_arguments(self, parser):
+        parser.add_argument(
             '--check',
             action='store_true',
             dest='check',
             default=False,
             help="Just print the changes",
-        ),
-        make_option(
+        )
+        parser.add_argument(
             '--undo',
             action='store_true',
             dest='undo',
             default=False,
             help="Undo the changes",
-        ),
-    )
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         check = options['check']
         undo = options['undo']
 

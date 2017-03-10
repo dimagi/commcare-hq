@@ -48,6 +48,7 @@
         },
         "is_nullable": false,
         "is_primary_key": false,
+        "create_index": true,
         "transform": {},
         "type": "expression"
       },

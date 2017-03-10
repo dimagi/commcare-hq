@@ -29,10 +29,6 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
-        cls.loc.delete()
-        for l in cls.loc_types.values():
-            l.delete()
         cls.domain_obj.delete()
         super(TestAWWSubmissionPerformanceIndicator, cls).tearDownClass()
 

@@ -121,7 +121,7 @@ class WriterTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'Q3', u'Q1'],
@@ -163,7 +163,7 @@ class WriterTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'MC | one', u'MC | two', 'MC | extra'],
@@ -260,7 +260,7 @@ class WriterTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'StockItem @type', u'StockItem @quantity'],
@@ -302,7 +302,7 @@ class WriterTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'Date'],
@@ -344,7 +344,7 @@ class WriterTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'MC'],
@@ -393,7 +393,7 @@ class WriterTest(SimpleTestCase):
             _write_export_instance(writer, export_instance, self.docs)
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'Q3'],
@@ -440,7 +440,7 @@ class WriterTest(SimpleTestCase):
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, docs)
         with ExportFile(writer.path, writer.format) as export:
-            exported_tables = [table for table in re.findall('<h2>(.*)</h2>', export)]
+            exported_tables = [table for table in re.findall('<h2>(.*)</h2>', export.read())]
 
         expected_tables = [t.label for t in tables]
         self.assertEqual(expected_tables, exported_tables)
@@ -499,7 +499,7 @@ class WriterTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'Export1-My table': {
                         u'headers': [u'Q3'],
@@ -540,7 +540,7 @@ class WriterTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'Sheet1': {
                         u'headers': [u'Q1'],
@@ -615,7 +615,7 @@ class ExportTest(SimpleTestCase):
         )
         with export_file as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [
@@ -672,7 +672,7 @@ class ExportTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'case_name'],
@@ -710,7 +710,7 @@ class ExportTest(SimpleTestCase):
             []  # No filters
         )
         with export_file as export:
-            export_dict = json.loads(export)
+            export_dict = json.loads(export.read())
             export_dict['My table']['rows'].sort()
             self.assertEqual(
                 export_dict,
@@ -746,7 +746,7 @@ class ExportTest(SimpleTestCase):
             []  # No filters
         )
         with export_file as export:
-            self.assertEqual(json.loads(export), {})
+            self.assertEqual(json.loads(export.read()), {})
 
     def test_simple_bulk_export(self):
 
@@ -810,7 +810,7 @@ class ExportTest(SimpleTestCase):
         }
 
         with export_file as export:
-            wb = load_workbook(StringIO(export))
+            wb = load_workbook(export)
             self.assertEqual(wb.get_sheet_names(), ["Export1-My table", "Export2-My table"])
 
             for sheet in expected.keys():

@@ -12,8 +12,9 @@ from couchexport.models import SavedExportSchema
 from corehq import privileges
 from corehq.apps.accounting.utils import (
     get_active_reminders_by_domain_name,
-    log_accounting_error,
     get_privileges,
+    log_accounting_error,
+    log_accounting_info,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.app_manager.models import Application
@@ -38,14 +39,19 @@ class BaseModifySubscriptionHandler(object):
         self.privileges = [x for x in changed_privs if x in self.supported_privileges()]
 
     def get_response(self):
+        log_accounting_info('get_response for %s' % str(self))
         responses = []
         for privilege in self.privileges:
+            log_accounting_info('handling privilege=%s' % str(privilege))
             try:
                 response = self.privilege_to_response_function()[privilege](self.domain, self.new_plan_version)
+                log_accounting_info('completed handling privilege=%s' % str(privilege))
             except ResourceConflict:
+                log_accounting_info('ResourceConflict handling privilege=%s' % str(privilege))
                 # Something else updated the domain. Reload and try again.
                 self.domain = Domain.get_by_name(self.domain.name)
                 response = self.privilege_to_response_function()[privilege](self.domain, self.new_plan_version)
+                log_accounting_info('completed handling privilege=%s after ResourceConflict' % str(privilege))
             if response is not None:
                 responses.append(response)
         return responses

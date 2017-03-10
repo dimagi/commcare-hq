@@ -19,5 +19,4 @@ class Command(BaseCommand):
         records = RepeatRecord.all(domain=domain, due_before=next_year)
         for record in records:
             record.fire(post_fn=simple_post)
-            record.save()
             print('{} {}'.format(record._id, 'successful' if record.succeeded else 'failed'))

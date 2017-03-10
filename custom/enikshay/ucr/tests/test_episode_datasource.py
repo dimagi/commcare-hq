@@ -2,14 +2,14 @@ import os
 import mock
 from datetime import datetime
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
+from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 
@@ -44,16 +44,16 @@ class BaseEnikshayDatasourceTest(TestCase, TestFileMixin):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
 
-    def _rebuild_table_get_query_object(self):
-        rebuild_indicators(self.datasource._id)
+    def _get_query_object(self):
         adapter = get_indicator_adapter(self.datasource)
-        adapter.refresh_table()
         return adapter.get_query_object()
 
 
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
     datasource_filename = 'episode'
 
+    @classmethod
     def _create_case_structure(self, lab_result="TB detected", disease_classification="pulmonary"):
         person = CaseStructure(
             case_id='person',
@@ -173,38 +173,49 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         )
         self.factory.create_or_update_cases([episode, test, end_of_ip_test, second_test])
 
-    @run_with_all_ucr_backends
+    @classmethod
+    def setUpClass(cls):
+        super(TestEpisodeDatasource, cls).setUpClass()
+        cls._create_case_structure()
+        rebuild_indicators(cls.datasource._id)
+        adapter = get_indicator_adapter(cls.datasource)
+        adapter.refresh_table()
+
+    @classmethod
+    def tearDownClass(cls):
+        adapter = get_indicator_adapter(cls.datasource)
+        adapter.drop_table()
+        super(TestEpisodeDatasource, cls).tearDownClass()
+
     def test_hiv_status(self):
-        self._create_case_structure()
-        query = self._rebuild_table_get_query_object()
+        query = self._get_query_object()
         self.assertEqual(query.count(), 1)
         row = query[0]
 
         self.assertEqual(row.hiv_status, 'reactive')
 
-    @run_with_all_ucr_backends
     def test_new_sputum_positive_patient_2months_ip(self):
-        self._create_case_structure()
-        query = self._rebuild_table_get_query_object()
+        query = self._get_query_object()
         self.assertEqual(query.count(), 1)
         row = query[0]
 
         self.assertEqual(row.new_sputum_positive_patient_2months_ip, 1)
 
-    @run_with_all_ucr_backends
     def test_diagnostic_test_after_end_of_ip(self):
-        self._create_case_structure()
-        query = self._rebuild_table_get_query_object()
+        query = self._get_query_object()
         self.assertEqual(query.count(), 1)
         row = query[0]
 
         self.assertEqual(row.diagnostic_test_after_end_of_ip, 1)
 
-    @run_with_all_ucr_backends
     def test_positive_diagnostic_test_after_end_of_ip(self):
-        self._create_case_structure()
-        query = self._rebuild_table_get_query_object()
+        query = self._get_query_object()
         self.assertEqual(query.count(), 1)
         row = query[0]
 
         self.assertEqual(row.positive_diagnostic_test_after_end_of_ip, 1)
+
+
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
+class TestEpisodeDatasourceES(TestEpisodeDatasource):
+    pass

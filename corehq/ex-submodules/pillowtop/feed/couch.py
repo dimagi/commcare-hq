@@ -36,6 +36,10 @@ class CouchChangeFeed(ChangeFeed):
     def get_checkpoint_value(self):
         return str(self.get_latest_change_id())
 
+    @property
+    def couch_db(self):
+        return self._couch_db
+
 
 def change_from_couch_row(couch_change, document_store=None):
     return Change(

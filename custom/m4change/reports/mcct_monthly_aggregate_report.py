@@ -5,8 +5,8 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, N
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from custom.common.filters import RestrictedAsyncLocationFilter
 from custom.m4change.constants import FOLLOW_UP_FORMS
-from custom.m4change.filters import M4ChangeAsyncLocationFilter
 from custom.m4change.models import McctStatus
 from custom.m4change.reports import validate_report_parameters, get_location_hierarchy_by_id
 from custom.m4change.reports.reports import M4ChangeReport
@@ -81,7 +81,7 @@ class McctMonthlyAggregateReport(MonthYearMixin, CaseListReport, M4ChangeReport)
     report_template_path = "m4change/report_content.html"
 
     fields = [
-        M4ChangeAsyncLocationFilter,
+        RestrictedAsyncLocationFilter,
         MonthFilter,
         YearFilter
     ]

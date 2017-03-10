@@ -83,7 +83,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-02-28 20:34+0000\n"
+"POT-Creation-Date: 2017-03-07 19:42+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -147,18 +147,22 @@ msgstr ""
 msgid "Two properties load to the same question"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:153
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:154
 #, javascript-format
 msgid "Upgrade to CommCare %s for this option!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:155
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:156
 #, javascript-format
 msgid "Upgrade to CommCare %s!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:166
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:167
 msgid "Auto-set by "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:414
+msgid "Copied!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:610
@@ -413,50 +417,57 @@ msgid "This conflicts with a current language"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/global-deps.js:3
+#: corehq/apps/app_manager/static/app_manager/js/vellum_beta/src/global-deps.js:3
 msgid "show"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/global-deps.js:3
+#: corehq/apps/app_manager/static/app_manager/js/vellum_beta/src/global-deps.js:3
 msgid "hide"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/global-deps.js:3
+#: corehq/apps/app_manager/static/app_manager/js/vellum_beta/src/global-deps.js:3
 msgid "toggle"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:170
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:171
 msgid "Password"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:174
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:175
 msgid "Barcode"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:176
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:177
 msgid "Free response"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:353
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:454
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:345
+msgid "Type to filter answers"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:355
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:463
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:532
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:541
 #: corehq/apps/export/static/export/js/models.js:199
 #: corehq/apps/style/static/style/js/main.js:243
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:141
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:142
 msgid "Form successfully saved"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:317
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:322
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:24
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:345
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:350
 msgid "Please wait..."
 msgstr ""
 
@@ -692,6 +703,12 @@ msgstr ""
 msgid "Add Key, Value Mapping"
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/rollout_modal.js:21
+msgid ""
+"We could not turn on the new feature. You will have the opportunity to turn "
+"it on the next time you visit this page."
+msgstr ""
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js:72
 msgid ""
 "There was an issue communicating with the server. Please try back later."
@@ -774,20 +791,20 @@ msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/export.manager.js:83
+#: corehq/apps/reports/static/reports/js/export.manager.js:84
 msgid ""
 "Oh no! Your download was unable to be completed. We have been notified and "
 "are already hard at work solving this issue."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/export.manager.js:193
-#: corehq/apps/reports/static/reports/js/export.manager.js:216
+#: corehq/apps/reports/static/reports/js/export.manager.js:194
+#: corehq/apps/reports/static/reports/js/export.manager.js:217
 msgid ""
 "Sorry, something unexpected went wrong and your download could not be "
 "completed. Please try again and report an issue if the problem persists."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/export.manager.js:324
+#: corehq/apps/reports/static/reports/js/export.manager.js:325
 msgid ""
 "No valid sheets were available for Custom Bulk Export. Please check for "
 "duplicate sheet names."
@@ -1025,7 +1042,7 @@ msgid "Password was not changed "
 msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:49
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:365
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:388
 msgid ""
 "Password Requirements: 1 special character, 1 number, 1 capital letter, "
 "minimum length of 8 characters."
@@ -1053,12 +1070,12 @@ msgid ""
 "It will not be shown again."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:244
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:267
 msgid "Username is available."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:272
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:315
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:295
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:338
 msgid "Sorry, there was an issue communicating with the server."
 msgstr ""
 
