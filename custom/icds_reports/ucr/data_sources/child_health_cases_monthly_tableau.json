@@ -487,7 +487,7 @@
         "column_id": "has_aadhar_id",
         "type": "boolean",
         "filter": {
-          "type":" boolean_expression",
+          "type":"boolean_expression",
           "operator": "eq",
           "property_value": "yes",
           "expression": {
