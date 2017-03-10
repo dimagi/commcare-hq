@@ -16,7 +16,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print('Generating data dictionary for domains')
         failed_domains = []
-        for domain in with_progress_bar(Domain.get_all(include_docs=False)):
+        for domain_dict in with_progress_bar(Domain.get_all(include_docs=False)):
+            domain = domain_dict['key']
             try:
                 generate_data_dictionary(domain)
             except OldExportsEnabledException:
