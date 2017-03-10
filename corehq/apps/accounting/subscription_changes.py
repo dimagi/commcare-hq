@@ -200,8 +200,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             return True
         except Exception:
             log_accounting_error(
-                "Failed to remove all commcare logos for domain %s."
-                % domain.name
+                "Failed to remove all commcare logos for domain %s." % domain.name,
+                show_stack_trace=True,
             )
             return False
 
