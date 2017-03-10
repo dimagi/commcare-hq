@@ -112,14 +112,20 @@ legend .subtext {
 }
 
 #case-config-ko, #usercase-config-ko {
-    .case-config-select2s(100%);
+    @select2Width: 210px;
+
+    .case-config-select2s(@select2Width);
+
+    .wide-select2s {
+      .case-config-select2s(@select2Width * 1.5);
+    }
 
     .property-description {
-        width: 210px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: inline-block;
+      width: @select2Width;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
     }
 }
 
@@ -250,13 +256,4 @@ textarea.vertical-resize {
 
 table .ko-inline-edit .read-only:hover {
     background-color: @cc-neutral-hi;
-}
-
-table .select2-container .select2-choice {
-  white-space: normal;
-}
-
-table .select2-container .select2-choice > .select2-chosen {
-  white-space: normal;
-  margin-right: 0;
 }

@@ -9,6 +9,7 @@ from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
+from django.db import models
 from django.http import Http404
 
 from corehq.apps.reports.models import HQUserType
@@ -82,8 +83,11 @@ from corehq.apps.export.dbaccessors import (
     get_case_inferred_schema,
     get_form_inferred_schema,
 )
-from corehq.apps.export.utils import is_occurrence_deleted
-
+from corehq.apps.export.utils import (
+    is_occurrence_deleted,
+    domain_has_daily_saved_export_access,
+    domain_has_excel_dashboard_access,
+)
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -2401,6 +2405,36 @@ class ExportMigrationMeta(Document):
             args=[self.domain, self.saved_export_id],
         ))
 
+
+class DailySavedExportNotification(models.Model):
+    user_id = models.CharField(max_length=255, db_index=True)
+    domain = models.CharField(max_length=255, db_index=True)
+
+    @classmethod
+    def notified(cls, user_id, domain):
+        return bool(cls.objects.filter(user_id=user_id, domain=domain).count())
+
+    @classmethod
+    def mark_notified(cls, user_id, domain):
+        cls.objects.get_or_create(user_id=user_id, domain=domain)
+
+    @classmethod
+    def user_added_before_feature_release(cls, user_added_on):
+        return user_added_on < datetime(2017, 1, 25)
+
+    @classmethod
+    def user_to_be_notified(cls, domain, user):
+        from corehq.apps.export.views import use_new_daily_saved_exports_ui
+
+        return (
+            use_new_daily_saved_exports_ui(domain) and
+            cls.user_added_before_feature_release(user.created_on) and
+            not DailySavedExportNotification.notified(user.user_id, domain) and
+            (
+                domain_has_daily_saved_export_access(domain) or
+                domain_has_excel_dashboard_access(domain)
+            )
+        )
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []

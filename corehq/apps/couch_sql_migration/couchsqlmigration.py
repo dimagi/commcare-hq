@@ -25,6 +25,7 @@ from corehq.form_processor.utils import adjust_datetimes
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
     clear_local_domain_sql_backend_override
+from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST
 from corehq.util.log import with_progress_bar
 from corehq.util.pagination import PaginationEventHandler
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
@@ -46,6 +47,7 @@ class CouchSqlDomainMigrator(object):
     def __init__(self, domain, with_progress=True, debug=False):
         from corehq.apps.tzmigration.planning import DiffDB
         assert should_use_sql_backend(domain)
+        assert not COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain)
 
         self.with_progress = with_progress
         self.debug = debug

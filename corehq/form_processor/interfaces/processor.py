@@ -4,6 +4,7 @@ import logging
 from couchdbkit.exceptions import BulkSaveError
 from redis.exceptions import RedisError
 
+from casexml.apps.case.exceptions import IllegalCaseId
 from dimagi.utils.decorators.memoized import memoized
 
 from ..utils import should_use_sql_backend
@@ -107,7 +108,12 @@ class FormProcessorInterface(object):
         Check if there is already a form with the given ID. If domain is specified only check for
         duplicates within that domain.
         """
-        return self.processor.is_duplicate(xform_id, domain=domain)
+        if domain:
+            return self.processor.is_duplicate(xform_id, domain=domain)
+        else:
+            # check across Couch & SQL to ensure global uniqueness
+            # check this domains DB first to support existing bad data
+            return self.processor.is_duplicate(xform_id) or self.other_db_processor().is_duplicate(xform_id)
 
     def new_xform(self, form_json):
         return self.processor.new_xform(form_json)
@@ -165,6 +171,44 @@ class FormProcessorInterface(object):
 
     def submission_error_form_instance(self, instance, message):
         return self.processor.submission_error_form_instance(self.domain, instance, message)
+
+    def get_case_with_lock(self, case_id, lock=False, strip_history=False, wrap=False):
+        """
+        Get a case with option lock. If case not found in domains DB also check other DB
+        and raise IllegalCaseId if found.
+
+        :param case_id: ID of case to fetch
+        :param lock: Get a Redis lock for the case. Returns None if False or case not found.
+        :param strip_history: If False, don't include case actions. (Couch only)
+        :param wrap: Return wrapped case if True. (Couch only)
+        :return: tuple(case, lock). Either could be None
+        :raises: IllegalCaseId
+        """
+        # check across Couch & SQL to ensure global uniqueness
+        # check this domains DB first to support existing bad data
+        from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
+
+        case, lock = self.processor.get_case_with_lock(case_id, lock, strip_history, wrap)
+        if case:
+            return case, lock
+
+        if not couch_sql_migration_in_progress(self.domain):
+            # during migration we're copying from one DB to the other so this check will always fail
+            case, _ = self.other_db_processor().get_case_with_lock(
+                case_id, lock=False, strip_history=True, wrap=False
+            )
+            if case:
+                # case exists in other database
+                raise IllegalCaseId("Bad case id")
+
+        return case, lock
+
+    def other_db_processor(self):
+        """Get the processor for the database not used by this domain."""
+        from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+        from corehq.form_processor.backends.couch.processor import FormProcessorCouch
+        (other_processor,) = {FormProcessorSQL, FormProcessorCouch} - {self.processor}
+        return other_processor
 
 
 def _list_to_processed_forms_tuple(forms):

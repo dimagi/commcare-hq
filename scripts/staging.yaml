@@ -49,9 +49,7 @@ branches:
   - nh/new_rb  # Norman 11/22
   - np/django1.10 # NP 2/12
   - nc/adherence-mockup  # Noah 3/2
-  - np/debug  # NP 3/2
   - sr-drilldown-loc-ucr # 6/3
-  - np/billing/show-logo-stacktrace # NP 6/7
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
