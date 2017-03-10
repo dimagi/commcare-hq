@@ -4,7 +4,7 @@ from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadca
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from datetime import timedelta, datetime, date
 from dimagi.utils.decorators.memoized import memoized
-from django.db import models
+from django.db import models, transaction
 
 
 class TimedSchedule(Schedule):
@@ -122,29 +122,68 @@ class TimedSchedule(Schedule):
             instance.active = False
 
     @classmethod
-    def create_daily_schedule(cls, domain, schedule_length=1, total_iterations=REPEAT_INDEFINITELY):
-        return cls.objects.create(
-            domain=domain,
-            schedule_length=schedule_length,
-            total_iterations=total_iterations
-        )
+    def create_simple_daily_schedule(cls, domain, time, content, total_iterations=REPEAT_INDEFINITELY):
+        schedule = cls(domain=domain)
+        schedule.set_simple_daily_schedule(time, content, total_iterations=total_iterations)
+        return schedule
 
-    def add_event(self, day, time, content, order=None):
-        if order is None:
-            order = self.timedevent_set.count() + 1
+    def set_simple_daily_schedule(self, time, content, total_iterations=REPEAT_INDEFINITELY):
+        with transaction.atomic():
+            self.schedule_length = 1
+            self.total_iterations = total_iterations
+            self.save()
 
-        if content.pk is None:
-            content.save()
+            for event in self.timedevent_set.all():
+                event.content.delete()
+                event.delete()
 
-        event = TimedEvent(
-            schedule=self,
-            order=order,
-            day=day,
-            time=time
-        )
-        event.content = content
-        event.save()
-        return self
+            if content.pk is None:
+                content.save()
+
+            event = TimedEvent(
+                schedule=self,
+                order=1,
+                day=0,
+                time=time
+            )
+            event.content = content
+            event.save()
+
+    @classmethod
+    def create_simple_monthly_schedule(cls, domain, time, days, content, total_iterations=REPEAT_INDEFINITELY):
+        schedule = cls(domain=domain)
+        schedule.set_simple_monthly_schedule(time, days, content, total_iterations=total_iterations)
+        return schedule
+
+    def set_simple_monthly_schedule(self, time, days, content, total_iterations=REPEAT_INDEFINITELY):
+        with transaction.atomic():
+            self.schedule_length = self.MONTHLY
+            self.total_iterations = total_iterations
+            self.save()
+
+            for event in self.timedevent_set.all():
+                event.content.delete()
+                event.delete()
+
+            if content.pk is None:
+                content.save()
+
+            order = 1
+            for day in days:
+                event = TimedEvent(
+                    schedule=self,
+                    order=order,
+                    day=day,
+                    time=time
+                )
+
+                if order > 1:
+                    content.pk = None
+                    content.save()
+
+                event.content = content
+                event.save()
+                order += 1
 
 
 class TimedEvent(Event):

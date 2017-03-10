@@ -93,6 +93,9 @@ class ContentForeignKeyMixin(models.Model):
 
 
 class Event(ContentForeignKeyMixin):
+    # Order is only used for sorting the events in a schedule. Convention
+    # dictates that it should start with 1 and be sequential, but technically
+    # it doesn't matter as long as it sorts the events properly.
     order = models.IntegerField()
 
     class Meta:
