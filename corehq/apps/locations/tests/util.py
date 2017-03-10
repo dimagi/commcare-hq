@@ -151,8 +151,8 @@ class LocationHierarchyTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain_obj.delete()
         delete_all_locations()
+        cls.domain_obj.delete()
         super(LocationHierarchyTestCase, cls).tearDownClass()
 
     @classmethod

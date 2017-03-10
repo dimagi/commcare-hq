@@ -89,9 +89,7 @@ class FormEditRestrictionsMixin(object):
         return get_simple_wrapped_form(uuid.uuid4().hex, metadata=metadata)
 
     @classmethod
-    def setUpClass(cls):
-        super(FormEditRestrictionsMixin, cls).setUpClass()
-
+    def extra_setup(cls):
         cls.middlesex_web_user = cls.make_web_user('Middlesex')
         cls.massachusetts_web_user = cls.make_web_user('Massachusetts')
 
@@ -105,12 +103,10 @@ class FormEditRestrictionsMixin(object):
         cls.project_admin = WebUser.create(cls.domain, 'kennedy', 'password')
 
     @classmethod
-    def tearDownClass(cls):
-        cls.domain_obj.delete()
+    def extra_teardown(cls):
         delete_all_users()
         delete_all_locations()
         delete_all_xforms()
-        super(FormEditRestrictionsMixin, cls).tearDownClass()
 
     def assertCanEdit(self, user, form):
         msg = "This user CANNOT edit this form!"
@@ -119,7 +115,6 @@ class FormEditRestrictionsMixin(object):
     def assertCannotEdit(self, user, form):
         msg = "This user CAN edit this form!"
         self.assertFalse(can_edit_form_location(self.domain, user, form), msg=msg)
-
 
 class TestDeprecatedFormEditRestrictions(FormEditRestrictionsMixin, LocationHierarchyTestCase):
     """This class mostly just tests the RESTRICT_FORM_EDIT_BY_LOCATION feature flag"""
@@ -133,6 +128,12 @@ class TestDeprecatedFormEditRestrictions(FormEditRestrictionsMixin, LocationHier
         # check checkbox
         cls.domain_obj.location_restriction_for_users = True
         cls.domain_obj.save()
+        cls.extra_setup()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.extra_teardown()
+        super(TestDeprecatedFormEditRestrictions, cls).tearDownClass()
 
 
 class TestNewFormEditRestrictions(FormEditRestrictionsMixin, LocationHierarchyTestCase):
@@ -146,6 +147,12 @@ class TestNewFormEditRestrictions(FormEditRestrictionsMixin, LocationHierarchyTe
         cls.restrict_user_to_assigned_locations(cls.middlesex_web_user)
         cls.restrict_user_to_assigned_locations(cls.massachusetts_web_user)
         cls.restrict_user_to_assigned_locations(cls.locationless_web_user)
+        cls.extra_setup()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.extra_teardown()
+        super(TestNewFormEditRestrictions, cls).tearDownClass()
 
     # TODO add more tests, maybe with cls.project_admin?
 
