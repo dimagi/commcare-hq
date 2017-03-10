@@ -451,7 +451,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 self.load_update_cases.remove(action);
 
                 // remove references to deleted action in other load actions
-                var loadUpdateCases = self.config.caseConfigViewModel.load_update_cases();
+                var loadUpdateCases = self.caseConfig.caseConfigViewModel.load_update_cases();
                 for (var i = index; i < loadUpdateCases.length; i++) {
                     potential_child = loadUpdateCases[i];
                     for (var j = 0; j < potential_child.parents.length; j++) {
