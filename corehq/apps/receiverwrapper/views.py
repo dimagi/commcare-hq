@@ -94,12 +94,11 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
     response = result.response
 
-    counter_name = 'commcare.xform_submissions.{}'.format(response.status_code)
     tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
-        'domain:{}'.format(domain)
+        u'domain:{}'.format(domain)
     ]
-    datadog_counter(counter_name, tags=tags)
+    datadog_counter('commcare.xform_submissions.count', tags=tags + ['status_code:{}'.format(response.status_code)])
 
     if response.status_code == 400:
         logging.error(
