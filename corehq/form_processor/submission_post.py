@@ -118,13 +118,13 @@ class SubmissionPost(object):
         if any_migrations_in_progress(self.domain):
             # keep submissions on the phone
             # until ready to start accepting again
-            return HttpResponse(status=503), None, []
+            return HttpResponse(status=503)
 
         if not self.auth_context.is_valid():
-            return self.failed_auth_response, None, []
+            return self.failed_auth_response
 
         if isinstance(self.instance, BadRequest):
-            return HttpResponseBadRequest(self.instance.message), None, []
+            return HttpResponseBadRequest(self.instance.message)
 
     def _post_process_form(self, xform):
         self._set_submission_properties(xform)
@@ -132,9 +132,9 @@ class SubmissionPost(object):
         legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
     def run(self):
-        failure_result = self._handle_basic_failure_modes()
-        if failure_result:
-            return failure_result
+        failure_response = self._handle_basic_failure_modes()
+        if failure_response:
+            return FormProcessingResult(failure_response, None, [], [])
 
         result = process_xform_xml(self.domain, self.instance, self.attachments)
         submitted_form = result.submitted_form
@@ -145,7 +145,7 @@ class SubmissionPost(object):
         if submitted_form.is_submission_error_log:
             self.formdb.save_new_form(submitted_form)
             response = self.get_exception_response_and_log(submitted_form, self.path)
-            return response, None, []
+            return FormProcessingResult(response, None, [], [])
 
         cases = []
         ledgers = []
