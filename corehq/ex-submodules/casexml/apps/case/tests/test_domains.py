@@ -79,7 +79,6 @@ class DomainTest(TestCase):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         super(DomainTest, self).tearDown()
 
-    @run_with_all_backends
     def test_cant_own_case(self):
         response, _, [case] = submit_form_locally(ALICE_XML, ALICE_DOMAIN)
         response, form, cases = submit_form_locally(EVE_XML, EVE_DOMAIN)
