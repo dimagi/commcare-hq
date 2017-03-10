@@ -1,14 +1,12 @@
 from __future__ import print_function
 import getpass
 import urllib2
-from django.core.management.base import NoArgsCommand
+from django.core.management.base import BaseCommand
 from pact.management.commands.constants import RETRY_LIMIT
 
 
-class PactMigrateCommand(NoArgsCommand):
+class PactMigrateCommand(BaseCommand):
     help = "OTA restore from pact server"
-    option_list = NoArgsCommand.option_list + (
-    )
 
     def get_credentials(self):
         self.username = raw_input("""\tEnter pact username: """)

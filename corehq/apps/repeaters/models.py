@@ -558,6 +558,7 @@ class RepeatRecord(Document):
             tries = 0
             post_info = PostInfo(self.get_payload(), headers, force_send, max_tries)
             self.post(post_info, tries=tries)
+            self.save()
 
     def post(self, post_info, tries=0):
         tries += 1
@@ -607,6 +608,7 @@ class RepeatRecord(Document):
         if self.repeater.allow_retries(response) and self.overall_tries < self.max_possible_tries:
             self.set_next_try()
         else:
+            self.last_checked = datetime.utcnow()
             self.cancel()
         self.failure_reason = reason
         log_counter(REPEATER_ERROR_COUNT, {

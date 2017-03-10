@@ -13,6 +13,7 @@ var ExportManager = function (o) {
     self.bulkDownloadUrl = o.bulkDownloadUrl;
     self.exportFilters = o.exportFilters;
     self.jsonExportFilters = o.jsonExportFilters;
+    self.copyUrl = o.copyUrl;
 
     self.exportModal = o.modal || "#export-download-status";
     self.$modal = $(self.exportModal);

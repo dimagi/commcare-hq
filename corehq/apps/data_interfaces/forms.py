@@ -323,6 +323,19 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
 
         return value
 
+    def _clean_case_property_name(self, value):
+        if not isinstance(value, basestring):
+            raise ValidationError(_("Please specify a case property name."))
+
+        value = value.strip()
+        if not value:
+            raise ValidationError(_("Please specify a case property name."))
+
+        if value.startswith('/'):
+            raise ValidationError(_("Case property names cannot start with a '/'"))
+
+        return value
+
     def clean_conditions(self):
         result = []
         value = self.cleaned_data.get('conditions')
@@ -334,13 +347,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         valid_match_types = [choice[0] for choice in AutomaticUpdateRuleCriteria.MATCH_TYPE_CHOICES]
 
         for obj in value:
-            property_name = obj.get('property_name')
-            if not isinstance(property_name, basestring):
-                raise ValidationError(_("Please specify a property name."))
-
-            property_name = property_name.strip()
-            if not property_name:
-                raise ValidationError(_("Please specify a property name."))
+            property_name = self._clean_case_property_name(obj.get('property_name'))
 
             property_match_type = obj.get('property_match_type')
             if property_match_type not in valid_match_types:
@@ -386,12 +393,10 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         ]
 
     def clean_update_property_name(self):
-        value = None
         if self._updates_case():
-            value = self.cleaned_data.get('update_property_name')
-            if not value:
-                raise ValidationError(_("This field is required"))
-        return value
+            return self._clean_case_property_name(self.cleaned_data.get('update_property_name'))
+
+        return None
 
     def clean_update_property_value(self):
         value = None

@@ -3,7 +3,7 @@ from sqlagg.filters import EQ
 
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import get_INFilter_element_bindparam
-from corehq.apps.users.models import CommCareUser
+from corehq.util.quickcache import quickcache
 
 
 def update_config(config):
@@ -16,17 +16,15 @@ def update_config(config):
     config.update(dict({get_INFilter_element_bindparam('owner_id', idx): val for idx, val in enumerate(users, 0)}))
 
 
+@quickcache([], timeout=3600)
 def users_locations():
     try:
         group = Group.get('daa2641cf722f8397207c9041bfe5cb3')
-        users = group.users
     except ResourceNotFound:
-        users = []
-    location_ids = []
-    for user in users:
-        u = CommCareUser.get(user)
-        location_ids.append(u.location_id)
-    location_ids = set(location_ids)
+        return set()
+    location_ids = set()
+    for user in group.get_users():
+        location_ids.add(user.location_id)
     return location_ids
 
 
