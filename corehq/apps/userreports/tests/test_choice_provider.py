@@ -233,6 +233,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(UserChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
 
         cls.web_user = cls.make_web_user('candice@example.com')
@@ -258,6 +259,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
+        super(UserChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
         self._test_query(ChoiceQueryContext(query='ni', limit=10, page=0))
@@ -282,6 +284,7 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(GroupChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
 
         cls.groups = [
@@ -302,6 +305,7 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     @classmethod
     def tearDownClass(cls):
         GroupESFake.reset_docs()
+        super(GroupChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
         self._test_query(ChoiceQueryContext('yes', limit=10, page=0))
