@@ -123,12 +123,12 @@ class TestDeprecatedFormEditRestrictions(FormEditRestrictionsMixin, LocationHier
     @classmethod
     def setUpClass(cls):
         super(TestDeprecatedFormEditRestrictions, cls).setUpClass()
+        cls.extra_setup()
         # enable flag
         RESTRICT_FORM_EDIT_BY_LOCATION.set(cls.domain, True, NAMESPACE_DOMAIN)
         # check checkbox
         cls.domain_obj.location_restriction_for_users = True
         cls.domain_obj.save()
-        cls.extra_setup()
 
     @classmethod
     def tearDownClass(cls):
@@ -144,10 +144,10 @@ class TestNewFormEditRestrictions(FormEditRestrictionsMixin, LocationHierarchyTe
     @classmethod
     def setUpClass(cls):
         super(TestNewFormEditRestrictions, cls).setUpClass()
+        cls.extra_setup()
         cls.restrict_user_to_assigned_locations(cls.middlesex_web_user)
         cls.restrict_user_to_assigned_locations(cls.massachusetts_web_user)
         cls.restrict_user_to_assigned_locations(cls.locationless_web_user)
-        cls.extra_setup()
 
     @classmethod
     def tearDownClass(cls):
