@@ -1,6 +1,8 @@
+import calendar
+from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
 from corehq.util.timezones.conversions import ServerTime, UserTime
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models
 
@@ -34,22 +36,69 @@ class TimedSchedule(Schedule):
 
         self.set_next_event_due_timestamp(instance)
 
-        if not start_date and instance.next_event_due < datetime.utcnow():
+        if (
+            not self.schedule_length == self.MONTHLY and
+            not start_date and
+            instance.next_event_due < datetime.utcnow()
+        ):
             instance.start_date += timedelta(days=1)
             instance.next_event_due += timedelta(days=1)
 
-    def set_next_event_due_timestamp(self, instance):
+    def get_local_next_event_due_timestamp(self, instance):
         current_event = self.memoized_events[instance.current_event_num]
+
         days_since_start_date = (
             ((instance.schedule_iteration_num - 1) * self.schedule_length) + current_event.day
         )
 
-        timestamp = datetime.combine(
+        return datetime.combine(
             instance.start_date + timedelta(days=days_since_start_date),
             current_event.time
         )
+
+    def get_local_next_event_due_timestamp_for_monthly_schedule(self, instance):
+        target_date = None
+
+        while target_date is None:
+            current_event = self.memoized_events[instance.current_event_num]
+
+            if current_event.day < -28 or current_event.day == 0 or current_event.day > 31:
+                # Negative days are days from the end of the month, with -1
+                # being the last day of the month. We don't allow this going
+                # past -28 since it's not very useful to do so, and imposing
+                # this restriction lets us make the assumption that we can
+                # always schedule a negative day.
+                raise InvalidMonthlyScheduleConfiguration("Day must be between -28 and 31, and not be 0")
+
+            year_offset = (instance.schedule_iteration_num - 1) / 12
+            month_offset = (instance.schedule_iteration_num - 1) % 12
+
+            year = instance.start_date.year + year_offset
+            month = instance.start_date.month + month_offset
+
+            days_in_month = calendar.monthrange(year, month)[1]
+            if current_event.day > 0:
+                if current_event.day > days_in_month:
+                    # If the day refers to a date that is not possible to schedule
+                    # (for example, February 30th), just move to the next month.
+                    instance.schedule_iteration_num += 1
+                    instance.current_event_num = 0
+                    continue
+
+                target_date = date(year, month, current_event.day)
+            else:
+                target_date = date(year, month, days_in_month + current_event.day + 1)
+
+        return datetime.combine(target_date, current_event.time)
+
+    def set_next_event_due_timestamp(self, instance):
+        if self.schedule_length == self.MONTHLY:
+            user_timestamp = self.get_local_next_event_due_timestamp_for_monthly_schedule(instance)
+        else:
+            user_timestamp = self.get_local_next_event_due_timestamp(instance)
+
         instance.next_event_due = (
-            UserTime(timestamp, instance.timezone)
+            UserTime(user_timestamp, instance.timezone)
             .server_time()
             .done()
             .replace(tzinfo=None)

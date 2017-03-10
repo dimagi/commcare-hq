@@ -10,3 +10,7 @@ class UnknownContentType(Exception):
 
 class UnknownRecipientType(Exception):
     pass
+
+
+class InvalidMonthlyScheduleConfiguration(Exception):
+    pass
