@@ -1,21 +1,21 @@
-from django.core.management.base import NoArgsCommand
+from __future__ import print_function
+
+from django.core.management.base import BaseCommand
 
 from corehq.apps.api.es import ReportXFormES
 from pact.enums import PACT_DOMAIN
 from pact.utils import REPORT_XFORM_MISSING_DOTS_QUERY
 
 
-CHUNK_SIZE=100
+CHUNK_SIZE = 100
 
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     help = "Helper command to compute DOT computed_ fields - to exteranlly operate that operation that should happen on signal firing on submission"
-    option_list = NoArgsCommand.option_list + (
-    )
 
     seen_doc_ids = {}
 
-    def handle_noargs(self, **options):
+    def handle(self, **options):
         xform_es = ReportXFormES(PACT_DOMAIN)
         offset = 0
 
@@ -25,8 +25,8 @@ class Command(NoArgsCommand):
         while True:
 #            q['from'] = offset
             res = xform_es.run_query(q)
-            print "####### Query block total: %s" % res['hits']['total']
-            print res['hits']['hits']
+            print("####### Query block total: %s" % res['hits']['total'])
+            print(res['hits']['hits'])
             if len(res['hits'].get('hits', [])) == 0:
                 break
             else:

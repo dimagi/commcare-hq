@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -8,86 +8,114 @@
+@@ -8,89 +8,128 @@
      <div class="save-button-holder clearfix"></div>
      <fieldset>
          {% block settings_fields %}
@@ -98,6 +98,9 @@
 +              <div class="form-group" id="display_style_container">
 +                  <label class="col-sm-2 control-label">
 +                      {% trans "Display Style" %}
++                      <span class="hq-help-template"
++                            data-title="{% trans "Display Style" %}"
++                            data-content="{% blocktrans %}Display this module's forms as a list or a grid. Read more on the <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Grid+View+for+Form+and+Module+Screens'>Help Site</a>.{% endblocktrans %}"></span>
 +                  </label>
 +                  <div class="col-sm-4">
 +                      <select type="text" name="display_style" class="form-control">
@@ -157,6 +160,9 @@
 -        <div class="form-group" id="display_style_container">
 -            <label class="col-sm-2 control-label">
 -                {% trans "Display Style" %}
+-                <span class="hq-help-template"
+-                      data-title="{% trans "Display Style" %}"
+-                      data-content="{% blocktrans %}Display this module's forms as a list or a grid. Read more on the <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Grid+View+for+Form+and+Module+Screens'>Help Site</a>.{% endblocktrans %}"></span>
 -            </label>
 -            <div class="col-sm-4">
 -                <select type="text" name="display_style" class="form-control">
@@ -165,7 +171,11 @@
 -                        {% trans "Grid" %}
 -                    </option>
 -                </select>
--            </div>
++           {% if app.advanced_app_builder %}
++           <div class="panel panel-appmanager">
++            <div class="panel-heading">
++              <h4 class="panel-title panel-title-nolink">{% trans "Advanced Settings" %}</h4>
+             </div>
 -        </div>
 -        {% endif %}
 -        {% include "app_manager/v1/partials/module_filter.html" with value=module.module_filter %}
@@ -184,9 +194,14 @@
 -                        </option>
 -                    {% endfor %}
 -                </select>
--            </div>
++            <div class="panel-body">
++              {% include 'app_manager/v2/partials/case_list_form_setting.html' %}
+             </div>
 -        </div>
 -        {% endif %}
++          </div>
++          {% endif %}
++
          {% endblock %}
      </fieldset>
  </form>

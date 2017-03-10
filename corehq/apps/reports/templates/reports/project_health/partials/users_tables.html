@@ -6,7 +6,6 @@
     <p class="lead">
         {% blocktrans %}
             These are people who used CommCare last month but didn't submit {{ threshold }} forms.
-            They could use a boost!
         {% endblocktrans %}
     </p>
     {% with last_month.get_unhealthy_users as user_list %}
@@ -16,7 +15,7 @@
 <div class="col-md-4">
     <h2>{% trans "New Inactive Users" %}</h2>
     <p class="lead">
-        {% trans "These are people who stopped using CommCare last month. They could use a follow up!" %}
+        {% trans "These are workers who stopped using CommCare last month." %}
     </p>
     {% with last_month.get_dropouts as user_list %}
         {% include "reports/project_health/partials/user_list.html" %}
@@ -26,8 +25,7 @@
     <h2>{% trans "New High Performing Users" %}</h2>
     <p class="lead">
         {% blocktrans %}
-            These are people who submitted at least {{ threshold }} forms this month and didn't last month.
-            Give them a high five!
+            These are workers who submitted {{ threshold }} forms this month and didn't last month.
         {% endblocktrans %}
     </p>
     {% with last_month.get_newly_performing as user_list %}

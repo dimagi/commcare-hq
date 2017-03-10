@@ -1,16 +1,17 @@
 from collections import defaultdict
-from corehq.apps.commtrack.models import StockState
 from corehq.apps.userreports.util import truncate_value
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from fluff import TYPE_INTEGER
 
 
 class Column(object):
 
-    def __init__(self, id, datatype, is_nullable=True, is_primary_key=False):
+    def __init__(self, id, datatype, is_nullable=True, is_primary_key=False, create_index=False):
         self.id = id
         self.datatype = datatype
         self.is_nullable = is_nullable
         self.is_primary_key = is_primary_key
+        self.create_index = create_index
 
     @property
     def database_column_name(self):
@@ -116,20 +117,22 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
         return Column(column_id, TYPE_INTEGER)
 
     @staticmethod
-    def _get_values_by_product(ledger_section, case_id, product_codes):
+    def _get_values_by_product(ledger_section, case_id, product_codes, domain):
         """returns a defaultdict mapping product codes to their values"""
-        values_by_product = StockState.objects.filter(
-            section_id=ledger_section,
-            case_id=case_id,
-            sql_product__code__in=product_codes,
-        ).values_list('sql_product__code', 'stock_on_hand')
-        return defaultdict(lambda: 0, values_by_product)
+        ret = defaultdict(lambda: 0)
+        ledgers = LedgerAccessors(domain).get_ledger_values_for_case(case_id)
+        for ledger in ledgers:
+            if ledger.section_id == ledger_section and ledger.entry_id in product_codes:
+                ret[ledger.entry_id] = ledger.stock_on_hand
+
+        return ret
 
     def get_columns(self):
         return map(self._make_column, self.product_codes)
 
     def get_values(self, item, context=None):
         case_id = self.case_id_expression(item)
-        values = self._get_values_by_product(self.ledger_section, case_id, self.product_codes)
+        domain = context.root_doc['domain']
+        values = self._get_values_by_product(self.ledger_section, case_id, self.product_codes, domain)
         return [ColumnValue(self._make_column(product_code), values[product_code])
                 for product_code in self.product_codes]

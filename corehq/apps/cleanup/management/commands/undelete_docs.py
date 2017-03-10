@@ -1,3 +1,4 @@
+from __future__ import print_function
 from datetime import datetime
 from collections import namedtuple
 from couchdbkit import ResourceNotFound
@@ -51,7 +52,7 @@ class Command(BaseCommand):
         try:
             database, ids_file = args
         except ValueError:
-            print "Usage: './manage.py undelete_docs [database] [ids_file]'"
+            print("Usage: './manage.py undelete_docs [database] [ids_file]'")
             return
 
         # figure out db to use
@@ -68,7 +69,7 @@ class Command(BaseCommand):
             with open(ids_file) as f:
                 doc_ids = [doc_id.strip() for doc_id in f.readlines()]
         except IOError:
-            print "Couldn't find a file called '{}'".format(ids_file)
+            print("Couldn't find a file called '{}'".format(ids_file))
             return
 
         # confirm
@@ -81,14 +82,14 @@ class Command(BaseCommand):
         results, iter_db = undelete_docs(db, doc_ids)
 
         # Now, what happened?
-        print "Restored {} docs".format(len(results.restored))
-        print "Didn't find {} ids".format(len(results.not_found))
-        print "{} docs weren't deleted".format(len(results.not_deleted))
+        print("Restored {} docs".format(len(results.restored)))
+        print("Didn't find {} ids".format(len(results.not_found)))
+        print("{} docs weren't deleted".format(len(results.not_deleted)))
 
         outfile = "delete_from_{}_{}.txt".format(iter_db.db.dbname, datetime.now())
         with open(outfile, 'w') as f:
             f.write('\n'.join(get_output_file(results, iter_db)))
-        print "Full results can be found in {}".format(outfile)
+        print("Full results can be found in {}".format(outfile))
 
 
 def get_output_file(results, iter_db):

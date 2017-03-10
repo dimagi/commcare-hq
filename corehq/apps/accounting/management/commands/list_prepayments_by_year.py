@@ -1,3 +1,4 @@
+from __future__ import print_function
 from datetime import date
 from django.core.management import BaseCommand
 
@@ -32,7 +33,7 @@ class Command(BaseCommand):
         parser.add_argument('year', type=int)
 
     def handle(self, year, **options):
-        print 'Note,Project Space,Web User,Date Created,Amount,Subscription Type,ID in database'
+        print('Note,Project Space,Web User,Date Created,Amount,Subscription Type,ID in database')
 
         start = date(year, 1, 1)
         end = date(year, 12, 31)
@@ -47,7 +48,7 @@ class Command(BaseCommand):
             web_user=''
         ):
             related_subscription = _get_subscription_from_credit_adj(credit_adj)
-            print u','.join(map(
+            print(u','.join(map(
                 _make_value_safe_for_csv,
                 [
                     credit_adj.note,
@@ -58,4 +59,4 @@ class Command(BaseCommand):
                     related_subscription.service_type if related_subscription else 'account-level_adjustment',
                     credit_adj.id,
                 ]
-            ))
+            )))

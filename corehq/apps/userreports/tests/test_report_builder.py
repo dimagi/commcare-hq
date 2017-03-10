@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 import os
+import six
 from django.test import TestCase, SimpleTestCase
 from mock import patch
 
@@ -35,10 +37,10 @@ class ConfigureReportFormsTest(SimpleTestCase):
         """
 
         def get_count_column_columns(configuration_form):
-            return len(filter(
-                lambda x: isinstance(x, CountColumn),
-                configuration_form.report_column_options.values()
-            ))
+            return len([
+                x for x in six.itervalues(configuration_form.report_column_options)
+                if isinstance(x, CountColumn)
+            ])
 
         list_report_form = ConfigureListReportForm(
             "my report",

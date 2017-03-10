@@ -9,13 +9,23 @@ describe('Debugger', function() {
                 result;
 
             result = evalXPath.matcher('', '');
-            assert.equal(result, '');
+            assert.equal(result, null);
 
+            // Should match /
             result = evalXPath.matcher('', '/data');
             assert.equal(result, '/data');
 
+            // Should not match parens
             result = evalXPath.matcher('', 'concat(');
-            assert.equal(result, '');
+            assert.equal(result, null);
+
+            // Should not match queries less than 1
+            result = evalXPath.matcher('', 'c');
+            assert.equal(result, null);
+
+            // Should match queries greater than 1
+            result = evalXPath.matcher('', 'co');
+            assert.equal(result, 'co');
         });
     });
 

@@ -14,7 +14,7 @@ from corehq.apps.export.dbaccessors import (
     get_latest_form_export_schema,
     get_form_export_instances,
     get_case_export_instances,
-    get_all_daily_saved_export_instances,
+    get_all_daily_saved_export_instance_ids,
     get_properly_wrapped_export_instance,
     get_case_inferred_schema,
     get_form_inferred_schema,
@@ -161,8 +161,11 @@ class TestExportInstanceDBAccessors(TestCase):
         self.assertEqual(len(instances), 0)
 
     def test_get_daily_saved_exports(self):
-        instances = get_all_daily_saved_export_instances()
-        self.assertEqual(len(instances), 2)
+        instance_ids = get_all_daily_saved_export_instance_ids()
+        self.assertEqual(
+            set(instance_ids),
+            {self.form_instance_daily_saved._id, self.case_instance_daily_saved._id}
+        )
 
     def test_get_properly_wrapped_export_instance(self):
         instance = get_properly_wrapped_export_instance(self.form_instance_daily_saved._id)

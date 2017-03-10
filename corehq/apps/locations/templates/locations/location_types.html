@@ -7,46 +7,9 @@
     <script src="{% static 'locations/js/location_types.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %} {{ block.super }}
-    <script>
-        $(function() {
-            var loc_types = {{ location_types|JSON }};
-            var commtrack_enabled = {{ commtrack_enabled|JSON }};
-
-            var locationSettingsModel = hqImport('locations/js/location_types.js').LocationSettingsViewModel
-            var model = new locationSettingsModel(loc_types, commtrack_enabled);
-
-            var $settings = $('#settings');
-
-            var warnBeforeUnload = function() {
-                return "{% trans "You have unsaved changes." %}";
-            };
-
-            $settings.submit(function() {
-                var valid = model.presubmit();
-                if (valid) {
-                    // Don't warn if they're leaving the page due to form submission
-                    window.onbeforeunload = undefined;
-                }
-                return valid;
-            });
-
-            $settings.koApplyBindings(model);
-
-            $("form#settings").on("change input", function() {
-                $(this).find(":submit").addClass("btn-success").enable();
-                window.onbeforeunload = warnBeforeUnload;
-            });
-
-            $("form#settings button").on("click", function() {
-                $("form#settings").find(":submit").addClass("btn-success").enable();
-                window.onbeforeunload = warnBeforeUnload;
-            });
-        });
-    </script>
-{% endblock %}
-
 {% block page_content %}
+    {% initial_page_data 'location_types' location_types %}
+    {% initial_page_data 'commtrack_enabled' commtrack_enabled %}
     <div class="row">
         <div class="col-sm-8">
             <h2>{% trans "Organization Levels" %}</h2>

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 from datadog import api as datadog_api
 import requests
@@ -6,7 +7,6 @@ from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
 from django.core.management.base import BaseCommand
 from corehq.apps.hqadmin.models import HqDeploy
 from datetime import datetime
-from optparse import make_option
 from django.conf import settings
 from pillow_retry.models import PillowError
 
@@ -36,22 +36,20 @@ def make_link(style, label, url):
 
 class Command(BaseCommand):
     help = "Creates an HqDeploy document to record a successful deployment."
-    args = "[user]"
 
-    option_list = (
-        make_option('--user', help='User', default=False),
-        make_option('--environment', help='Environment {production|staging etc...}', default=settings.SERVER_ENVIRONMENT),
-        make_option('--mail_admins', help='Mail Admins', default=False, action='store_true'),
-        make_option('--url', help='A link to a URL for the deploy', default=False),
-        make_option(
+    def add_arguments(self, parser):
+        parser.add_argument('--user', help='User', default=False)
+        parser.add_argument('--environment', help='Environment {production|staging etc...}', default=settings.SERVER_ENVIRONMENT)
+        parser.add_argument('--mail_admins', help='Mail Admins', default=False, action='store_true')
+        parser.add_argument('--url', help='A link to a URL for the deploy', default=False)
+        parser.add_argument(
             '--minutes',
             help='The number of minutes it took to deploy',
-            type='int',
+            type=int,
             default=None,
-        ),
-    )
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         compare_url = options.get('url', None)
         minutes = options.get('minutes', None)
 
@@ -66,8 +64,8 @@ class Command(BaseCommand):
         #  reset PillowTop errors in the hope that a fix has been deployed
         rows_updated = PillowError.bulk_reset_attempts(datetime.utcnow())
         if rows_updated:
-            print "\n---------------- Pillow Errors Reset ----------------\n" \
-                  "{} pillow errors queued for retry\n".format(rows_updated)
+            print("\n---------------- Pillow Errors Reset ----------------\n" \
+                  "{} pillow errors queued for retry\n".format(rows_updated))
 
         deploy_notification_text = (
             "CommCareHQ has been successfully deployed to *{}* by *{}* in *{}* minutes. ".format(
@@ -119,15 +117,36 @@ class Command(BaseCommand):
                 alert_type="success"
             )
 
-            print "\n=============================================================\n" \
+            print("\n=============================================================\n" \
                   "Congratulations! Deploy Complete.\n\n" \
                   "Don't forget to keep an eye on the deploy dashboard to " \
                   "make sure everything is running smoothly.\n\n" \
                   "https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef" \
-                  "\n=============================================================\n"
+                  "\n=============================================================\n")
 
         if options['mail_admins']:
             message_body = get_deploy_email_message_body(
                 environment=options['environment'], user=options['user'],
                 compare_url=compare_url)
             call_command('mail_admins', message_body, **{'subject': 'Deploy successful', 'html': True})
+
+        if settings.SENTRY_CONFIGURED and settings.SENTRY_API_KEY:
+            create_update_sentry_release()
+
+
+def create_update_sentry_release():
+    from settingshelper import get_release_name
+    from raven import fetch_git_sha
+    release = get_release_name(settings.BASE_DIR, settings.SERVER_ENVIRONMENT)
+    headers = {'Authorization': 'Bearer {}'.format(settings.SENTRY_API_KEY), }
+    payload = {
+        'version': release,
+        'ref': fetch_git_sha(settings.BASE_DIR),
+        'url': 'https://github.com/dimagi/commcare-hq/releases/tag/{}'.format(release)
+    }
+    releases_url = 'https://sentry.io/api/0/projects/dimagi/commcarehq/releases/'
+    response = requests.post(releases_url, headers=headers, json=payload)
+    if response.status_code == 208:
+        # already created so update
+        payload.pop('version')
+        requests.put('{}{}/'.format(releases_url, release), headers=headers, json=payload)

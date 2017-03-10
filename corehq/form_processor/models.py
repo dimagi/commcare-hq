@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import logging
 import mimetypes
@@ -673,7 +674,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         return json.dumps(self.to_json(), indent=indent)
 
     def pprint(self):
-        print self.dumps(pretty=True)
+        print(self.dumps(pretty=True))
 
     @property
     @memoized

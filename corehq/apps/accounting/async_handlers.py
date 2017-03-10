@@ -162,28 +162,30 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         from django_countries.data import COUNTRIES
         countries = sorted(list(COUNTRIES.items()), key=lambda x: x[1].encode('utf-8'))
         if self.search_string:
-            return [x for x in countries if x[1].lower().startswith(self.search_string.lower())]
+            search_string = self.search_string.lower()
+            return [x for x in countries if x[1].lower().startswith(search_string)]
         return countries
 
     @property
     def active_accounts_response(self):
         accounts = BillingAccount.objects.filter(is_active=True)
         if self.search_string:
-            accounts = accounts.filter(name__contains=self.search_string)
+            accounts = accounts.filter(name__icontains=self.search_string)
         return [(a.id, a.name) for a in accounts]
 
     @property
     def domain_response(self):
         domain_names = [domain['key'] for domain in Domain.get_all(include_docs=False)]
         if self.search_string:
-            domain_names = [x for x in domain_names if x.lower().startswith(self.search_string.lower())]
+            search_string = self.search_string.lower()
+            domain_names = [x for x in domain_names if x.lower().startswith(search_string)]
         return [(name, name) for name in domain_names]
 
     @property
     def account_response(self):
         accounts = BillingAccount.objects
         if self.search_string:
-            accounts = accounts.filter(name__contains=self.search_string)
+            accounts = accounts.filter(name__icontains=self.search_string)
         return [(a.id, a.name) for a in accounts.order_by('name')]
 
     @property
@@ -195,7 +197,7 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         ).filter(product_rate__product__product_type=product)
         if self.search_string:
             plan_versions = plan_versions.filter(
-                plan__name__contains=self.search_string)
+                plan__name__icontains=self.search_string)
         return [(p.id, p.__str__()) for p in plan_versions.order_by('plan__name')]
 
     @property
@@ -215,7 +217,8 @@ class Select2InvoiceTriggerHandler(BaseSelect2AsyncHandler):
     def domain_response(self):
         domain_names = [domain['key'] for domain in Domain.get_all(include_docs=False)]
         if self.search_string:
-            domain_names = [x for x in domain_names if x.lower().startswith(self.search_string.lower())]
+            search_string = self.search_string.lower()
+            domain_names = [x for x in domain_names if x.lower().startswith(search_string)]
         return [(d, d) for d in domain_names]
 
 

@@ -1,7 +1,17 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
-from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, PreloadAction, \
-    WORKFLOW_MODULE, AdvancedModule, AdvancedOpenCaseAction, LoadUpdateAction, AutoSelectCase
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    AdvancedOpenCaseAction,
+    Application,
+    AutoSelectCase,
+    DetailColumn,
+    LoadUpdateAction,
+    Module,
+    OpenCaseAction,
+    PreloadAction,
+    WORKFLOW_MODULE,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from mock import patch
@@ -153,6 +163,14 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         )
 
         factory.form_requires_case(update_person_form, parent_case_type='house')
+        register_person_module.case_details.short.columns.append(
+            DetailColumn(
+                header={'en': 'a'},
+                model='case',
+                field='parent/case_name',  # Include a parent case property in the case list
+                format='plain',
+            )
+        )
 
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-basic'), factory.app.create_suite())
 

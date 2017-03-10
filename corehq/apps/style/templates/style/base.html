@@ -315,6 +315,7 @@
             {% endblock messages %}
             {% block content %}{% endblock content %}
         </div>
+        {% if not enterprise_mode %}
         {% block footer %}
         <footer>
             <nav id="hq-footer"
@@ -355,6 +356,7 @@
             </nav>
         </footer>
         {% endblock %}
+        {% endif %}
         {# modals #}
         {% block modals %}{% endblock modals %}
 
@@ -376,6 +378,8 @@
         <script src="{% static 'style/js/hq.helpers.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
         <script src="{% static 'style/js/main.js' %}"></script>
         {% endcompress %}
 
@@ -478,6 +482,18 @@
         {% compress js %}
         <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
         {% endcompress %}
+        {% endif %}
+
+        {% if request.use_select2 or request.use_select2_v4 %}
+        {% addtoblock js-inline %}
+        <script>
+            $(function() {
+                _.each($(".ko-select2"), function(element) {
+                    $(element).select2();
+                });
+            });
+        </script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_nvd3 %}
@@ -602,8 +618,15 @@
         {# Report Issue #}
         {% include 'style/includes/modal_report_issue.html' %}
 
+        {# Remote modals (EULA and CDA) #}
+        {% compress js %}
+            <script src="{% static 'style/js/remote-modals.js' %}"></script>
+        {% endcompress %}
+
         {# EULA #}
-        {% include 'style/includes/modal_eula.html' %}
+        {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
+            {% include 'style/includes/modal_eula.html' with needs_agreement=True %}
+        {% endif %}
 
         {# 30 Day Trial #}
         {% include 'style/includes/modal_30_day_trial.html' %}

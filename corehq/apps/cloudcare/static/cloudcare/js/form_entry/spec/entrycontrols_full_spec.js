@@ -104,9 +104,11 @@ describe('Entries', function() {
         questionJSON.datatype = Formplayer.Const.SELECT;
         questionJSON.style = { raw: Formplayer.Const.COMBOBOX };
         questionJSON.choices = ['a', 'b'];
+        questionJSON.answer = 2;
 
         entry = (new Question(questionJSON)).entry;
         assert.isTrue(entry instanceof ComboboxEntry);
+        assert.equal(entry.rawAnswer(), 'b');
 
         entry.rawAnswer('a');
         assert.equal(entry.answer(), 1);
@@ -160,7 +162,7 @@ describe('Entries', function() {
         assert.isFalse(
             ComboboxEntry.filter('one tt', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
         );
-        assert.isFalse(
+        assert.isTrue(
             ComboboxEntry.filter('o', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(

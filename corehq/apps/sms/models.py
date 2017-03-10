@@ -47,6 +47,15 @@ WORKFLOW_FORWARD = "FORWARD"
 WORKFLOW_BROADCAST = "BROADCAST"
 WORKFLOW_PERFORMANCE = "PERFORMANCE"
 WORKFLOW_DEFAULT = 'default'
+WORKFLOWS_FOR_REPORTS = [
+    WORKFLOW_BROADCAST,
+    WORKFLOW_CALLBACK,
+    WORKFLOW_DEFAULT,
+    WORKFLOW_FORWARD,
+    WORKFLOW_KEYWORD,
+    WORKFLOW_PERFORMANCE,
+    WORKFLOW_REMINDER,
+]
 
 DIRECTION_CHOICES = (
     (INCOMING, "Incoming"),
@@ -2134,6 +2143,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
 
     def delete(self, *args, **kwargs):
         self.__clear_caches()
+        self.__clear_shared_domain_cache([])
         return super(SQLMobileBackend, self).delete(*args, **kwargs)
 
 

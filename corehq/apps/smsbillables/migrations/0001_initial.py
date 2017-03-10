@@ -9,7 +9,7 @@ from decimal import Decimal
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0001_initial'),
+        ('accounting', '0001_squashed_0052_ensure_report_builder_plans'),
         ('sms', '0010_update_sqlmobilebackend_couch_id'),
     ]
 

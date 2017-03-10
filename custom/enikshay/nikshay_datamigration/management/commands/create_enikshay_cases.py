@@ -1,6 +1,7 @@
 import logging
 
 from django.core.management import BaseCommand
+from django.db.models import Q
 import mock
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_domain
@@ -50,17 +51,39 @@ class Command(BaseCommand):
             type=str,
         )
         parser.add_argument(
-            '--startswith',
-            dest='startswith',
-            default='',
+            '--location-codes',
+            dest='location_codes',
+            default=None,
+            nargs='*',
             type=str,
+        )
+        parser.add_argument(
+            '--nikshay_id',
+            dest='nikshay_id',
+            default=None,
         )
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
-        base_query = PatientDetail.objects.filter(
-            PregId__startswith=options['startswith'],
-        ).order_by('PregId')
+        base_query = PatientDetail.objects.order_by('scode', 'Dtocode', 'Tbunitcode', 'PHI')
+
+        if options['location_codes']:
+            location_filter = Q()
+            for location_code in options['location_codes']:
+                codes = location_code.split('-')
+                assert 1 <= len(codes) <= 4
+                q = Q(scode=codes[0])
+                if len(codes) > 1:
+                    q = q & Q(Dtocode=codes[1])
+                if len(codes) > 2:
+                    q = q & Q(Tbunitcode=int(codes[2]))
+                if len(codes) > 3:
+                    q = q & Q(PHI=int(codes[3]))
+                location_filter = location_filter | q
+            base_query = base_query.filter(location_filter)
+
+        if options['nikshay_id']:
+            base_query = base_query.filter(PregId=options['nikshay_id'])
 
         start = options['start']
         limit = options['limit']
@@ -123,5 +146,5 @@ class Command(BaseCommand):
 
         # since we circumvented cleanliness checks just call this at the end
         logger.info('Setting cleanliness flags')
-        set_cleanliness_flags_for_domain(domain, force_full=True)
+        set_cleanliness_flags_for_domain(domain, force_full=True, raise_soft_assertions=False)
         logger.info('Done!')

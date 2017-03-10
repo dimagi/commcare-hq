@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 
 from sqlagg import SumWhen
@@ -23,6 +24,7 @@ from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
+from six.moves import range
 
 
 class TestFieldColumn(SimpleTestCase):
@@ -85,7 +87,11 @@ class ChoiceListColumnDbTest(TestCase):
             "display_name": "practicing_lessons",
             "property_name": "long_column",
             "choices": [
-                "duplicate_choice_1",
+                # test for regression:
+                # with sqlalchemy paramstyle='pyformat' (default)
+                # some queries that included columns with ')' in the column name
+                # would fail with a very cryptic message
+                "duplicate_choice_1(s)",
                 "duplicate_choice_2",
             ],
             "select_style": "multiple",
@@ -107,7 +113,7 @@ class ChoiceListColumnDbTest(TestCase):
             '_id': uuid.uuid4().hex,
             'domain': 'test',
             'doc_type': 'CommCareCase',
-            'long_column': 'duplicate_choice_1',
+            'long_column': 'duplicate_choice_1(s)',
         })
         adapter.refresh_table()
         # and query it back

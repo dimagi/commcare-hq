@@ -159,6 +159,7 @@ class LocationHierarchyTestCase(TestCase):
             domain=cls.domain,
             name='Regional Supervisor',
             permissions=Permissions(edit_commcare_users=True,
+                                    edit_locations=True,
                                     access_all_locations=False),
         )
         role.save()

@@ -51,6 +51,7 @@ from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
+from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
@@ -69,6 +70,7 @@ from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import get_url_base
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -89,6 +91,7 @@ from dimagi.utils.web import get_url_base, parse_int
 import commcare_translations
 from corehq.util import bitly
 from corehq.util import view_utils
+from corehq.util.string_utils import random_string
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -999,7 +1002,8 @@ class FormBase(DocumentSchema):
         }
 
         xml_valid = False
-        if self.source == '':
+        if (self.source == '' or
+                len(self.get_questions(self.get_app().langs, include_triggers=True)) == 0):
             errors.append(dict(type="blank form", **meta))
         else:
             try:
@@ -1032,6 +1036,9 @@ class FormBase(DocumentSchema):
                     self.get_app().get_form(form_link.form_id)
                 except FormNotFoundException:
                     errors.append(dict(type='bad form link', **meta))
+        elif self.post_form_workflow == WORKFLOW_PARENT_MODULE:
+            if not module.root_module:
+                errors.append(dict(type='form link to missing root', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self, 'form_filter') and self.form_filter:
@@ -2103,6 +2110,7 @@ class CaseSearch(DocumentSchema):
     command_label = DictProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
     relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
+    search_button_display_condition = StringProperty()
     include_closed = BooleanProperty(default=False)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
 
@@ -2273,7 +2281,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                               'see: https://confluence.dimagi.com/pages/viewpage.action?pageId=38276915'))
                     hierarchy = hierarchy or parent_child(domain)
                     LocationXpath('').validate(column.field_property, hierarchy)
-                except LocationXpathValidationError, e:
+                except LocationXpathValidationError as e:
                     yield {
                         'type': 'invalid location xpath',
                         'details': unicode(e),
@@ -2426,7 +2434,8 @@ class ModuleDetailsMixin():
                 })
         if self.case_list_filter:
             try:
-                case_list_filter = interpolate_xpath(self.case_list_filter)
+                # test filter is valid, while allowing for advanced user hacks like "foo = 1][bar = 2"
+                case_list_filter = interpolate_xpath('dummy[' + self.case_list_filter + ']')
                 etree.XPath(case_list_filter)
             except (etree.XPathSyntaxError, CaseXPathValidationError):
                 errors.append({
@@ -2527,12 +2536,17 @@ class Module(ModuleBase, ModuleDetailsMixin):
         module.get_or_create_unique_id()
         return module
 
-    def new_form(self, name, lang, attachment=''):
+    def new_form(self, name, lang, attachment=Ellipsis):
+        from corehq.apps.app_manager.views.utils import get_blank_form_xml
+        lang = lang if lang else "en"
+        name = name if name else _("Untitled Form")
         form = Form(
-            name={lang if lang else "en": name if name else _("Untitled Form")},
+            name={lang: name},
         )
         self.forms.append(form)
         form = self.get_form(-1)
+        if attachment == Ellipsis:
+            attachment = get_blank_form_xml(name)
         form.source = attachment
         return form
 
@@ -3071,14 +3085,19 @@ class AdvancedModule(ModuleBase):
         module.get_or_create_unique_id()
         return module
 
-    def new_form(self, name, lang, attachment=''):
+    def new_form(self, name, lang, attachment=Ellipsis):
+        from corehq.apps.app_manager.views.utils import get_blank_form_xml
+        lang = lang if lang else "en"
+        name = name if name else _("Untitled Form")
         form = AdvancedForm(
-            name={lang if lang else "en": name if name else _("Untitled Form")},
+            name={lang: name},
         )
         form.schedule = FormSchedule(enabled=False)
 
         self.forms.append(form)
         form = self.get_form(-1)
+        if attachment == Ellipsis:
+            attachment = get_blank_form_xml(name)
         form.source = attachment
         return form
 
@@ -4106,6 +4125,11 @@ class ReportModule(ModuleBase):
                 'type': 'report config ref invalid',
                 'module': self.get_module_info()
             })
+        if not self.reports:
+            errors.append({
+                'type': 'no reports',
+                'module': self.get_module_info(),
+            })
         return errors
 
 
@@ -4611,6 +4635,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
     vellum_case_management = BooleanProperty(default=False)
+
+    # legacy property; kept around to be able to identify (deprecated) v1 apps
+    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
+
+    def assert_app_v2(self):
+        assert self.application_version == APP_V2
 
     build_profiles = SchemaDictProperty(BuildProfile)
 
@@ -5214,6 +5244,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
+
+    anonymous_cloudcare_enabled = BooleanProperty(default=False)
+    anonymous_cloudcare_hash = StringProperty(default=random_string)
+
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
@@ -5224,11 +5258,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
 
-    # legacy property; kept around to be able to identify (deprecated) v1 apps
-    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
+    def has_modules(self):
+        return len(self.modules) > 0 and not self.is_remote_app()
 
-    def assert_app_v2(self):
-        assert self.application_version == APP_V2
+    @property
+    def anonymous_cloudcare_url(self):
+        from corehq.apps.cloudcare.views import SingleAppLandingPageView
+
+        return view_utils.absolute_reverse(SingleAppLandingPageView.urlname, args=[
+            self.domain,
+            self.anonymous_cloudcare_hash
+        ])
 
     @property
     @memoized
@@ -5349,10 +5389,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         my_hash = _hash(self.fetch_xform(form=form))
                         if previous_hash == my_hash:
                             form_version = previous_form_version
-                    if form_version is None:
-                        form.version = None
-                    else:
-                        form.version = form_version
+
+                    form.version = form_version
                 else:
                     form.version = None
 
@@ -5903,6 +5941,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         builder = ParentCasePropertyBuilder(self)
         case_relationships = builder.get_parent_type_map(self.get_case_types())
         meta = AppCaseMetadata()
+        descriptions_dict = get_case_property_description_dict(self.domain)
 
         for case_type, relationships in case_relationships.items():
             type_meta = meta.get_type(case_type)
@@ -5929,6 +5968,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if type_.name not in seen_types:
                 meta.type_hierarchy[type_.name] = {}
                 type_.error = _("Error in case type hierarchy")
+            for prop in type_.properties:
+                prop.description = descriptions_dict.get(type_.name, {}).get(prop.name, '')
 
         return meta
 
@@ -5942,14 +5983,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @memoized
     def grid_display_for_some_modules(self):
-        return self.grid_menu_toggle_enabled() and self.grid_form_menus == 'some'
+        return self.grid_form_menus == 'some'
 
     @memoized
     def grid_display_for_all_modules(self):
-        return self.grid_menu_toggle_enabled() and self.grid_form_menus == 'all'
-
-    def grid_menu_toggle_enabled(self):
-        return toggles.GRID_MENUS.enabled(self.domain)
+        return self.grid_form_menus == 'all'
 
 
 class RemoteApp(ApplicationBase):

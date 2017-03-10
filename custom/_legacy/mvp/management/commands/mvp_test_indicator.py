@@ -1,3 +1,4 @@
+from __future__ import print_function
 import dateutil
 from django.core.management.base import BaseCommand
 from corehq.apps.indicators.models import DynamicIndicatorDefinition
@@ -22,4 +23,4 @@ class Command(BaseCommand):
         indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, indicator_slug,
                     wrap_correctly=True)
         result = indicator.get_value(self.user_ids, datespan=self.datespan)
-        print result
+        print(result)

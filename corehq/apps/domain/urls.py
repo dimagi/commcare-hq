@@ -24,7 +24,7 @@ from corehq.apps.domain.views import (
     BillingStatementPdfView,
     FeaturePreviewsView, ConfirmSubscriptionRenewalView,
     InvoiceStripePaymentView, CreditsStripePaymentView, SMSRatesView,
-    AddFormRepeaterView,
+    AddFormRepeaterView, DomainForwardingRepeatRecords,
     FeatureFlagsView, TransferDomainView,
     ActivateTransferDomainView, DeactivateTransferDomainView,
     BulkStripePaymentView, InternalSubscriptionManagementView,
@@ -32,11 +32,14 @@ from corehq.apps.domain.views import (
     CardsView, CardView, PasswordResetView,
     CaseSearchConfigView,
     EditOpenClinicaSettingsView,
-    autocomplete_fields, test_repeater, drop_repeater, set_published_snapshot,
-    calculated_properties,
+    autocomplete_fields, test_repeater, drop_repeater, set_published_snapshot, cancel_repeat_record,
+    calculated_properties, requeue_repeat_record,
     toggle_diff,
     select,
-    CalendarFixtureConfigView, LocationFixtureConfigView)
+    CalendarFixtureConfigView,
+    LocationFixtureConfigView,
+    Dhis2ConnectionView,
+)
 from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 
@@ -85,7 +88,7 @@ def extend(d1, d2):
 
 urlpatterns =[
     url(r'^domain/select/$', select, name='domain_select'),
-    url(r'^domain/autocomplete/(?P<field>\w+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
+    url(r'^domain/autocomplete/(?P<field>[\w-]+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
     url(r'^domain/transfer/(?P<guid>\w+)/activate$',
         ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
     url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
@@ -165,6 +168,8 @@ domain_settings = [
     url(r'^billing_information/$', EditExistingBillingAccountView.as_view(),
         name=EditExistingBillingAccountView.urlname),
     url(r'^repeat_record/', RepeatRecordView.as_view(), name=RepeatRecordView.urlname),
+    url(r'^repeat_record_report/cancel/', cancel_repeat_record, name='cancel_repeat_record'),
+    url(r'^repeat_record_report/requeue/', requeue_repeat_record, name='requeue_repeat_record'),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(), {'repeater_type': 'FormRepeater'},
         name=AddFormRepeaterView.urlname),
@@ -173,6 +178,7 @@ domain_settings = [
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
     url(r'^forwarding/test/$', test_repeater, name='test_repeater'),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', drop_repeater, name='drop_repeater'),
+    url(r'^dhis2/conn/$', Dhis2ConnectionView.as_view(), name=Dhis2ConnectionView.urlname),
     url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', set_published_snapshot, name='domain_set_published'),
     url(r'^snapshots/set_published/$', set_published_snapshot, name='domain_clear_published'),
     url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),

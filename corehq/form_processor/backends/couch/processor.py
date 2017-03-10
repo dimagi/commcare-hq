@@ -134,7 +134,7 @@ class FormProcessorCouch(object):
         return touched_cases
 
     @staticmethod
-    def hard_rebuild_case(domain, case_id, detail):
+    def hard_rebuild_case(domain, case_id, detail, save=True):
         try:
             case = CommCareCase.get(case_id)
             assert case.domain == domain
@@ -164,7 +164,8 @@ class FormProcessorCouch(object):
 
         # add a "rebuild" action
         case.actions.append(_rebuild_action())
-        case.save()
+        if save:
+            case.save()
         return case
 
     @staticmethod

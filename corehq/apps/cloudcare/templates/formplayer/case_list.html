@@ -47,11 +47,13 @@
       <% } %>
 
       <% if (actions) { %>
+        <div class="caselist-actions">
         <% _.each(actions, function(action, index) { %>
-            <div class="caselist-action-button">
+            <div class="caselist-action-button btn-group">
               <button type="button" class="btn btn-success btn-lg" id="double-management" data-index="<%= index %>"><%= action.text %></button>
             </div>
         <% }) %>
+        </div>
       <% } %>
 
       <% if (pageCount) { %>
@@ -102,8 +104,9 @@
 <script type="text/template" id="case-view-item-template">
     <% _.each(data, function(datum, index) { %>
       <% if (styles[index].displayFormat === 'Image') { %>
-    <!-- todo icon -->
         <td class="module-caselist-column"><img class="module-icon" src="<%= resolveUri(datum) %>"/></td>
+      <% } else if (styles[index].displayFormat === 'Graph') { %>
+        <td class="module-caselist-column"><iframe srcdoc="<%= datum %>" height="300" width="300"></iframe></td>
       <% } else { %>
         <td class="module-caselist-column"><%= datum %></td>
       <% } %>
@@ -111,9 +114,9 @@
 </script>
 
 <script type="text/template" id="case-tile-view-item-template">
-    <div class="grid-wrapper">
+    <div class="<%= prefix %>-cell-grid-style">
     <% _.each(data, function(datum, index) { %>
-    <div class="grid-style-<%= index %> box">
+    <div class="<%= prefix %>-grid-style-<%= index %> box">
         <% if (styles[index].displayFormat === 'Image') {
         if(resolveUri(datum)) { %>
         <img class="module-icon" style="max-width:25%; height: auto;" src="<%= resolveUri(datum) %>"/>
@@ -126,7 +129,7 @@
     </div>
 </script>
 
-<script type="text/template" id="case-tile-style-template">
+<script type="text/template" id="cell-layout-style-template">
     <% _.each(models, function(model){ %>
         .<%= model.id %> {
             grid-area: <%= model.gridStyle %>;
@@ -135,8 +138,8 @@
     <% }); %>
 </script>
 
-<script type="text/template" id="case-grid-style-template">
-    .case-tile-grid-item {
+<script type="text/template" id="cell-container-style-template">
+    .list-cell-container-style {
         width: <%= model.widthPercentage %>%;
         height: 0;
         padding-bottom: <%= model.heightPercentage %>%;
@@ -146,8 +149,8 @@
     }
 </script>
 
-<script type="text/template" id="grid-inner-style-template">
-    .grid-wrapper {
+<script type="text/template" id="cell-grid-style-template">
+    .<%= model.prefix %>-cell-grid-style {
         display: grid;
         grid-template-columns: repeat(<%= model.numColumns %>, <%= model.widthPixels %>px) min-content 5px;
         grid-template-rows: repeat(<%= model.numRows %>, <%= model.heightPixels %>px) min-content 5px;
