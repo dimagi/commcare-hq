@@ -254,7 +254,6 @@
 
 {{ request|toggle_tag_info:"FIXTURE_CASE_SELECTION" }}
 {% if detail.fixture_select and request|toggle_enabled:"FIXTURE_CASE_SELECTION" %}
-    {{ request|toggle_tag_info:"FIXTURE_CASE_SELECTION" }}
     {% include "app_manager/v1/partials/fixture_case_selection.html" %}
 {% endif %}
 
