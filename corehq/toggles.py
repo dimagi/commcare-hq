@@ -40,12 +40,7 @@ TAG_PREVIEW = Tag(
     css_class='default',
     description="",  # I'm not sure...
 )
-TAG_DEV_TOOLS = Tag(
-    name='Dev Tools',
-    css_class='default',
-    description="These features are UI enhancements intended for use by developers only.",
-)
-ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW, TAG_DEV_TOOLS]
+ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW]
 
 
 class StaticToggle(object):
@@ -1053,7 +1048,7 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
     'highlight_feature_flags',
     'Highlight / Mark Feature Flags in the UI',
-    TAG_DEV_TOOLS,
+    TAG_ONE_OFF,
     [NAMESPACE_USER]
 )
 
