@@ -19,18 +19,26 @@
     {% include 'app_manager/v1/partials/case_list_properties.html' %}
 </div>
 
-<button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
-    <i class="fa fa-plus"></i>
-    {% trans "Add tab" %}
-</button>
+<div class="btn-group">
+
+    <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
+        <i class="fa fa-plus"></i>
+        {% trans "Add tab" %}
+    </button>
+ 
+    {% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
+        <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+            <li data-bind="click: function() { longScreen.addTab(false); }"><a>{% trans "Add tab" %}</a></li>
+            <li data-bind="click: function() { longScreen.addTab(true); }"><a>{% trans "Add data tab" %}</a></li>
+        </ul>
+    {% endif %}
+
+</div>
+
 <span class="hq-help-template"
       data-title="{% trans "Case Detail Tabs" %}"
-      data-content="{% blocktrans %}Do you have a lot of case properties? Try splitting them into tabs, which will appear as separate screens that mobile users can swipe through. Read more on the <a href='https://help.commcarehq.org/display/commcarepublic/Tabs+on+Case+Detail+Screen' target='_blank'>Help Site</a>.{% endblocktrans %}"
+      data-content="{% blocktrans %}Do you have a lot of case properties? Try splitting them into tabs, which will appear as separate screens that mobile users can swipe through. Read more on the <a href='https://help.commcarehq.org/display/commcarepublic/Tabs+on+Case+Detail+Screen' target='_blank'>Help Site</a>.{% endblocktrans %}">
 </span>
-
-{% if request|toggle_enabled:"DETAIL_LIST_TAB_NODESETS" %}
-    <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(true); }">
-        <i class="fa fa-plus"></i>
-        {% trans "Add data tab" %}
-    </button>
-{% endif %}

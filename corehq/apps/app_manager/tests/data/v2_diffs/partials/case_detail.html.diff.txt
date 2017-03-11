@@ -36,4 +36,4 @@
 +    </div>
  </div>
  
- <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
+ <div class="btn-group">
