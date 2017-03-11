@@ -76,7 +76,7 @@
                  <th>Errors</th>
 -            {% elif request|toggle_enabled:"SHOW_DEV_TOGGLE_INFO" %}
 -                <th>{{ request|toggle_tag_info:"APPLICATION_ERROR_REPORT" }}</th>
-+            {% elif request|toggle_enabmed:'SHOW_DEV_TOGGLE_INFO' %}
++            {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
 +              <th>{{ request|toggle_tag_info:"APPLICATION_ERROR_REPORT" }}</th>
              {% endif %}
              <th>
@@ -104,7 +104,7 @@
                  </td>
 -                {% elif request|toggle_enabled:"SHOW_DEV_TOGGLE_INFO" %}
 -                <td>{{ request|toggle_tag_info:"APPLICATION_ERROR_REPORT" }}</td>
-+                {% elif request|toggle_enabmed:'SHOW_DEV_TOGGLE_INFO' %}
++                {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
 +                  <td></td>
                  {% endif %}
                  <td class="build-is-released">
