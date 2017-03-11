@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,263 +1,255 @@
+@@ -1,262 +1,255 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  
@@ -481,7 +481,6 @@
  
  {{ request|toggle_tag_info:"FIXTURE_CASE_SELECTION" }}
  {% if detail.fixture_select and request|toggle_enabled:"FIXTURE_CASE_SELECTION" %}
--    {{ request|toggle_tag_info:"FIXTURE_CASE_SELECTION" }}
 -    {% include "app_manager/v1/partials/fixture_case_selection.html" %}
 +    {% include "app_manager/v2/partials/fixture_case_selection.html" %}
  {% endif %}
