@@ -211,9 +211,9 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
         if interval_id is None:
             raise RequiredValueMissing("Value missing for intervalID, purpose_of_testing: {testing_purpose}, "
                                        "follow_up_test_reason: {follow_up_test_reason}".format(
-                                        testing_purpose=testing_purpose,
-                                        follow_up_test_reason=follow_up_test_reason
-                                       ))
+                                            testing_purpose=testing_purpose,
+                                            follow_up_test_reason=follow_up_test_reason)
+                                       )
         return interval_id
 
     def _get_dmc_code(self):
