@@ -9,6 +9,24 @@ STATE_DISTRICT_MAPPING = {
     ]
 }
 
+RCH_PRIORITY_FILEDS = {
+    'mother': [
+        'Registration_no',
+
+    ],
+    'child': [
+
+    ]
+},
+
+RCH_CAS_FIELD_MAPPING = {
+    'mother': {
+        'Registration_no': {
+            'person': 'rch_id'
+        },
+    },
+}
+
 
 class RCHRecord(models.Model):
     RCH_Primary_Key = None
@@ -37,6 +55,8 @@ class RCHRecord(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    icds_case_id = models.CharField(null=True, max_length=255)
 
     class Meta:
         abstract = True
@@ -441,3 +461,68 @@ class AreaMapping(models.Model):
     @classmethod
     def fetch_village_ids_for_awcid(cls, awcid):
         return list(cls.objects.filter(awcid=awcid).values_list('villcode', flat=True).distinct().all())
+
+
+class CasCaseType(object):
+    TASKS = 'tasks'
+    HOUSEHOLD = 'household'
+    PERSON = 'person'
+    CHILD_HEALTH = 'child_health'
+    CSS_RECORD = 'css_record'
+    MEASUREMENT = 'measurement'
+
+    choices = [
+        (TASKS, 'tasks'),
+        (HOUSEHOLD, 'household'),
+        (PERSON, 'person'),
+        (CHILD_HEALTH, 'child health'),
+        (CSS_RECORD, 'css record'),
+        (MEASUREMENT, 'measurement'),
+    ]
+
+    max_length = max(len(choice) for choice, _ in choices)
+
+
+class RCHMotherFieldChoices(object):
+    @classmethod
+    def choices(cls):
+        return RCHMother._meta.get_all_field_names()
+
+    @classmethod
+    def max_length(cls):
+        return max(len(choice) for choice, _ in cls.choices())
+
+
+class RCHChildFieldChoices(object):
+
+    @classmethod
+    def choices(cls):
+        return RCHChild._meta.get_all_field_names()
+
+    @classmethod
+    def max_length(cls):
+        return max(len(choice) for choice, _ in cls.choices())
+
+
+class MotherFieldMapping(models.Model):
+    rch_field = models.CharField(
+        # choices=RCHMotherFieldChoices.choices(),
+        #                          max_length=RCHMotherFieldChoices.max_length(),
+        max_length=255,
+                                 null=False)
+    cas_case_type = models.CharField(choices=CasCaseType.choices,
+                                     max_length=CasCaseType.max_length,
+                                     null=False)
+    cas_case_field = models.CharField(null=False, max_length=255)
+
+
+class ChildFieldMapping(models.Model):
+    rch_field = models.CharField(
+        # choices=RCHChildFieldChoices.choices(),
+        #                          max_length=RCHChildFieldChoices.max_length(),
+        max_length=255,
+                                 null=False)
+    cas_case_type = models.CharField(choices=CasCaseType.choices,
+                                     max_length=CasCaseType.max_length,
+                                     null=False)
+    cas_case_field = models.CharField(null=False, max_length=255)

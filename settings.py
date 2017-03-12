@@ -12,7 +12,7 @@ import settingshelper as helper
 import djcelery
 
 djcelery.setup_loader()
-
+RCH_CREDENTIALS = {}
 DEBUG = True
 LESS_DEBUG = DEBUG
 # Enable LESS_WATCH if you want less.js to constantly recompile.
@@ -1924,7 +1924,6 @@ else:
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
 }
-RCH_CREDENTIALS = {}
 RCH_PERMITTED_FIELDS = {
     'mother': (json.load(open(os.path.join('custom', 'rch', 'all_fields', 'mother.json')))['fields']),
     'child': (json.load(open(os.path.join('custom', 'rch', 'all_fields', 'child.json')))['fields']),

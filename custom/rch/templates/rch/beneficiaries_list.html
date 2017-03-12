@@ -17,11 +17,23 @@
     {% if mother_beneficiaries %}
         <strong>{{ mother_beneficiaries.count }} / {{ mother_beneficiaries_total }}</strong>
         <table class="table table-striped table-bordered">
+            <colgroup>
+                <col style="width:25%">
+                <col style="width:10%">
+                <col style="width:10%">
+                <col style="width:15%">
+                <col style="width:10%">
+                <col style="width:15%">
+                <col style="width:15%">
+            </colgroup>
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Husband</th>
-                    <th>Village</th>
+                    <th>Aadhar Number</th>
+                    <th>RCH ID</th>
+                    <th>MDDS Village Code(name)</th>
+                    <th>AWC</th>
+                    <th>DOB</th>
                     <th>District</th>
                 </tr>
             </thead>
@@ -33,8 +45,11 @@
                                 {{mother.Name_wife}}
                             </a>
                         </td>
-                        <td>{{ mother.Name_husband }}</td>
-                        <td>{{ mother.Village_Name }}</td>
+                        <td>{{ mother.PW_Aadhar_No }}</td>
+                        <td>{{ mother.Registration_no }}</td>
+                        <td>{{ mother.MDDS_VillageID }}<br/>({{ mother.Village_Name }})</td>
+                        <td>{{ 'N/A' }}</td>
+                        <td>{{ mother.Mother_BirthDate }}</td>
                         <td>{{ mother.District_Name }}</td>
                     </tr>
                 {% endfor %}
@@ -52,11 +67,23 @@
     {% if child_beneficiaries %}
         <strong>{{ child_beneficiaries.count }} / {{ child_beneficiaries_total }}</strong>
         <table class="table table-striped table-bordered">
+            <colgroup>
+                <col style="width:25%">
+                <col style="width:10%">
+                <col style="width:10%">
+                <col style="width:15%">
+                <col style="width:10%">
+                <col style="width:15%">
+                <col style="width:15%">
+            </colgroup>
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Mother</th>
-                    <th>Village</th>
+                    <th>Child Name</th>
+                    <th>Aadhar Number</th>
+                    <th>RCH ID</th>
+                    <th>MDDS Village Code(Name)</th>
+                    <th>AWC</th>
+                    <th>DOB</th>
                     <th>District</th>
                 </tr>
             </thead>
@@ -65,11 +92,14 @@
                     <tr>
                         <td>
                             <a href='{% url "child_beneficiary_view" request.domain child.id %}'>
-                                {{ child.Name_Child }}
+                                {{ child.Name_Child }}<br/>(mother: {{ child.Name_Mother }})
                             </a>
                         </td>
-                        <td>{{ child.Name_Mother }}</td>
-                        <td>{{ child.VILLAGE_Name }}</td>
+                        <td>{{ child.Child_Aadhaar_No }}</td>
+                        <td>{{ child.Child_RCH_ID_No }}</td>
+                        <td>{{ child.MDDS_VillageID }}<br/>({{ child.Village_Name }})</td>
+                        <td>{{ 'N/A' }}</td>
+                        <td>{{ child.Birth_Date }}</td>
                         <td>{{ child.District_Name }}</td>
                     </tr>
                 {% endfor %}

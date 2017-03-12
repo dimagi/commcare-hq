@@ -1,0 +1,59 @@
+{% load hq_shared_tags %}{% load compress %}
+{% load crispy_forms_tags %}
+<div class="row">
+  <div class="col-md-12">
+    <h3>{{ field_mapping_form.form_name }}</h3>
+
+    {% crispy field_mapping_form %}
+  </div>
+</div>
+{% compress css %}
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
+{% endcompress %}
+
+<div class="row">
+  <div class="col-md-12">
+    <strong>{{ beneficiary_type }} Field Mappings:</strong>
+    {% if field_mappings %}
+        <table class="table table-striped table-bordered">
+            <colgroup>
+                <col style="width:10%">
+                <col style="width:25%">
+                <col style="width:25%">
+                <col style="width:25%">
+                <col style="width:15">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>S.No.</th>
+                    <th>RCH Field</th>
+                    <th>CAS Case Type</th>
+                    <th>CAS Case Field</th>
+                    <th>Edit/Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for field_mapping in field_mappings %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ field_mapping.rch_field }}</td>
+                        <td>{{ field_mapping.cas_case_type }}</td>
+                        <td>{{ field_mapping.cas_case_field }}</td>
+                        <td>
+                            <a class="btn btn-link" href="{% url update_url domain field_mapping.id %}"
+                            style="float:left">Edit
+                            </a>
+                            <form action="{% url delete_url domain field_mapping.id %}" method="post">
+                                {% csrf_token %}
+                                <input class="btn btn-link" type="submit" value="Delete">
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No {{ beneficiary_type }} Field Mapppings</p>
+    {% endif %}
+  </div>
+</div>

@@ -1,0 +1,12 @@
+{% load hq_shared_tags %}{% load compress %}
+{% load crispy_forms_tags %}
+<div class="row">
+  <div class="col-md-12">
+    <h3>{{ beneficiary_type }} {{ field_mapping_form.form_name }}</h3>
+
+    {% crispy field_mapping_form %}
+  </div>
+</div>
+{% compress css %}
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
+{% endcompress %}
