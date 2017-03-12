@@ -3,7 +3,7 @@ import re
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
-
+from corehq.apps.hqwebapp.utils import decode_password
 
 J2ME = 'j2me'
 ANDROID = 'android'
@@ -65,6 +65,8 @@ def get_username_and_password_from_request(request):
         if len(auth) == 2:
             if auth[0].lower() == BASIC:
                 username, password = base64.b64decode(auth[1]).split(':', 1)
+                password = decode_password(password)
+
     return username, password
 
 
