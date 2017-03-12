@@ -53,6 +53,7 @@
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "awc_id",
+        "create_index": true,
         "type": "expression"
       },
       {

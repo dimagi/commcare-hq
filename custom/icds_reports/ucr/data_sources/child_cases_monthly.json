@@ -175,7 +175,8 @@
             "property_name": "owner_id"
           }
         },
-        "column_id": "awc_id"
+        "column_id": "awc_id",
+        "create_index": true
       },
       {
         "display_name": null,

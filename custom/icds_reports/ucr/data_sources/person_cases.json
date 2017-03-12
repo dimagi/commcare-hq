@@ -47,6 +47,7 @@
         "is_nullable": false,
         "is_primary_key": false,
         "column_id": "awc_id",
+        "create_index": true,
         "type": "expression"
       },
       {
@@ -183,6 +184,7 @@
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "age_at_reg",
+        "create_index": true,
         "is_nullable": true,
         "type": "raw",
         "property_name": "age_at_reg"
@@ -1331,6 +1333,7 @@
         "datatype": "date",
         "is_primary_key": false,
         "column_id": "last_referral_date",
+        "create_index": true,
         "is_nullable": true,
         "type": "raw",
         "property_name": "last_referral_date"

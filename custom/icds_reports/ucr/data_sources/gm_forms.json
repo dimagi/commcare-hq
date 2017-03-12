@@ -53,7 +53,8 @@
         "transform": {},
         "is_nullable": true,
         "type": "expression",
-        "column_id": "awc_id"
+        "column_id": "awc_id",
+        "create_index": true
       },
       {
         "display_name": "Supervisor ID",

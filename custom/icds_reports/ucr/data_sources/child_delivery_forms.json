@@ -37,6 +37,7 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "awc_id",
+        "create_index": true,
         "expression": {
           "value_expression": {
             "datatype": null,

@@ -40,6 +40,7 @@
         "is_primary_key": false,
         "is_nullable": false,
         "column_id": "awc_id",
+        "create_index": true,
         "expression": {
           "type": "root_doc",
           "expression": {
