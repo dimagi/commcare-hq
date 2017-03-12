@@ -8,6 +8,6 @@ class RegisterNikshayPatientRepeaterView(AddCaseRepeaterView):
 
 
 class NikshayHIVTestRepeaterView(AddCaseRepeaterView):
-     urlname = 'nikshay_patient_hiv_test'
-     page_title = "Nikshay Patients HIV Test"
-     page_name = "Nikshay Patients HIV Test"
+    urlname = 'nikshay_patient_hiv_test'
+    page_title = "Nikshay Patients HIV Test"
+    page_name = "Nikshay Patients HIV Test"
