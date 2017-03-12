@@ -9,8 +9,8 @@ from django.http import QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
-from django.conf import settings
 
+from corehq.apps.hqwebapp.utils import decode_password
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
 
@@ -32,14 +32,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
 
     def clean_password(self):
         password = self.cleaned_data['password']
-        if (settings.ENABLE_PASSWORD_HASHING and settings.PASSWORD_SALT1_GENERATOR and
-                settings.PASSWORD_SALT2_GENERATOR and settings.PASSWORD_DECODER):
-            return self.decode_password(password)
-        else:
-            return password
-
-    def decode_password(self, password):
-        return settings.PASSWORD_DECODER(password)
+        return decode_password(password)
 
     def clean(self):
         lockout_message = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password.'))

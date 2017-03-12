@@ -81,3 +81,11 @@ def aliased_language_name(lang_code):
             if code == lang_code:
                 return name
         raise KeyError('Unknown language code %s' % lang_code)
+
+
+def decode_password(password):
+    if (settings.ENABLE_PASSWORD_HASHING and settings.PASSWORD_SALT1_GENERATOR and
+            settings.PASSWORD_SALT2_GENERATOR and settings.PASSWORD_DECODER):
+        return settings.PASSWORD_DECODER(password)
+    else:
+        return password
