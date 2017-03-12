@@ -6,10 +6,8 @@ from django.conf import settings
 
 class Command(BaseCommand):
     help = "flush all caches"
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         print("Clearing caches...")
         for k in settings.CACHES:
             cache_backend = cache.caches[k]
