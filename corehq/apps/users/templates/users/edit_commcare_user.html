@@ -98,9 +98,13 @@
                 <p>
                     <i class="fa fa-info-circle"></i>
                     {% if couch_user.is_demo_user %}
-                        {% trans "Turn off demo mode to allow this mobile worker to start sending data to {{ commcare_hq_names.COMMCARE_HQ_NAME }} again." %}
+                        {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+                            Turn off demo mode to allow this mobile worker to start sending data to {{ hq_name }} again.
+                        {% endblocktrans %}
                     {% else %}
-                        {% trans "This will mark the mobile worker as a demo user and {{ commcare_hq_names.COMMCARE_HQ_NAME }} will ignore future form submissions from the user." %}
+                        {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+                            This will mark the mobile worker as a demo user and {{ hq_name }} will ignore future form submissions from the user.
+                        {% endblocktrans %}
                     {% endif %}
                 </p>
                 <p>
