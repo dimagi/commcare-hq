@@ -100,14 +100,3 @@ smear_result_grade = {
     '2+': 12,
     '3+': 13,
 }
-
-hiv_status = {
-    'reactive': 'Pos',
-    'non_reactive': 'Neg',
-    'unknown': 'Unknown',
-}
-
-art_initiated = {
-    'no': 0,
-    'yes': 1,
-}

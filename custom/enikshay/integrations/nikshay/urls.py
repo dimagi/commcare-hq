@@ -3,7 +3,6 @@ from django.conf.urls import url
 from custom.enikshay.integrations.nikshay.views import (
     RegisterNikshayPatientRepeaterView,
     NikshayPatientFollowupRepeaterView,
-    NikshayHIVTestRepeaterView,
 )
 
 urlpatterns = [
@@ -18,11 +17,5 @@ urlpatterns = [
         NikshayPatientFollowupRepeaterView.as_view(),
         {'repeater_type': 'NikshayFollowupRepeater'},
         name=NikshayPatientFollowupRepeaterView.urlname
-    ),
-    url(
-        r'^patient_hiv_test_repeater$',
-        NikshayHIVTestRepeaterView.as_view(),
-        {'repeater_type': 'NikshayHIVTestRepeater'},
-        name=NikshayHIVTestRepeaterView.urlname
     ),
 ]

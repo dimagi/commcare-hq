@@ -16,7 +16,6 @@ from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_person_locations,
     get_open_episode_case_from_occurrence,
-    get_open_episode_case_from_person,
     get_lab_referral_from_test,
     get_occurrence_case_from_test,
     get_person_case_from_occurrence
@@ -38,8 +37,6 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     dcpulmonory,
     purpose_of_testing,
     smear_result_grade,
-    hiv_status,
-    art_initiated,
 )
 from custom.enikshay.case_utils import update_case
 
@@ -248,74 +245,6 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
         _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
 
 
-class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
-    @property
-    def content_type(self):
-        return 'application/json'
-
-    def get_payload(self, repeat_record, person_case):
-        """
-        "PatientID": "Nikshay-ID",
-        "HIVStatus": "Pos/Neg/Unknown",
-        "HIVTestDate": "dd/mm/yyyy",
-        "CPTDeliverDate": "dd/mm/yyyy",
-        "ARTCentreDate": "dd/mm/yyyy",
-        "InitiatedOnART": 1/0, (Passing this 0 and not passing ARTCentreDate and InitiatedDate does not work)
-        "InitiatedDate": "dd/mm/yyyy",
-        "Source": "nikshay-id",
-        "regby": "nikshay-user",
-        "MORemark": "This is dev test", (Optional)
-        "IP_FROM": "Servers IP address or Mobile device MAC Address",
-        """
-        episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
-        episode_case_properties = episode_case.dynamic_case_properties()
-        person_case_properties = person_case.dynamic_case_properties()
-        properties_dict = {
-            "PatientID": episode_case_properties.get('nikshay_id'),
-            "HIVStatus": hiv_status.get(person_case_properties.get('hiv_status')),
-            "HIVTestDate": datetime.datetime.strptime(person_case_properties.get('hiv_test_date'),
-                                                      '%Y-%m-%d').strftime('%d/%m/%Y'),
-            # might not be available if cpt_initiated is no
-            "CPTDeliverDate": datetime.datetime.strptime(
-                person_case_properties.get('cpt_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
-            ).strftime('%d/%m/%Y'),
-            "ARTCentreDate": datetime.datetime.strptime(
-                person_case_properties.get('art_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
-            ).strftime('%d/%m/%Y'),
-            "InitiatedOnART": art_initiated.get(person_case_properties.get('art_initiated', 'no')),
-            # might not be available if art_initiated is no
-            "InitiatedDate": datetime.datetime.strptime(
-                person_case_properties.get('art_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
-            ).strftime('%d/%m/%Y'),
-            "Source": ENIKSHAY_ID,
-            "regby": repeat_record.repeater.username,
-            "password": repeat_record.repeater.password,
-            "IP_FROM": "127.0.0.1",
-        }
-
-        return json.dumps(properties_dict)
-
-    def handle_success(self, response, payload_doc, repeat_record):
-        # Simple success message that has {"Nikshay_Message": "Success"...}
-        update_case(
-            payload_doc.domain,
-            payload_doc.case_id,
-            {
-                "hiv_test_nikshay_registered": "true",
-                "nikshay_error": "",
-            },
-        )
-
-    def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
-                            "hiv_nikshay_registered", "hiv_nikshay_error")
-
-    def handle_exception(self, exception, repeat_record):
-        if isinstance(exception, RequestConnectionError):
-            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
-                                "hiv_nikshay_registered", "hiv_nikshay_error")
-
-
 def _get_nikshay_id_from_response(response):
     try:
         response_json = response.json()
@@ -420,12 +349,12 @@ def _get_episode_case_properties(episode_case_properties):
     return episode_properties
 
 
-def _save_error_message(domain, case_id, error, reg_field="nikshay_registered", error_field="nikshay_error"):
+def _save_error_message(domain, case_id, error):
     update_case(
         domain,
         case_id,
         {
-            reg_field: "false",
-            error_field: error,
+            "nikshay_registered": "false",
+            "nikshay_error": error,
         },
     )
