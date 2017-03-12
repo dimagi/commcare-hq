@@ -77,7 +77,7 @@ class NikshayHIVTestRepeater(CaseRepeater):
             episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
             episode_case_properties = episode_case.dynamic_case_properties()
 
-            return allowed_case_types_and_users and (
+            return (
                 episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 episode_case_properties.get('nikshay_id') and
                 not test_submission(person_case) and
