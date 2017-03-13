@@ -18,6 +18,7 @@ CASE_TYPE_ADHERENCE = "adherence"
 CASE_TYPE_OCCURRENCE = "occurrence"
 CASE_TYPE_EPISODE = "episode"
 CASE_TYPE_PERSON = "person"
+CASE_TYPE_LAB_REFERRAL = "lab_referral"
 CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 
 
@@ -35,12 +36,11 @@ def get_parent_of_case(domain, case_id, parent_case_type):
 
     parent_case_ids = [
         indexed_case.referenced_id for indexed_case in child_case.indices
-        if indexed_case.referenced_type == parent_case_type
     ]
     parent_cases = case_accessor.get_cases(parent_case_ids)
     open_parent_cases = [
         parent_case for parent_case in parent_cases
-        if not parent_case.closed
+        if not parent_case.closed and parent_case.type == parent_case_type
     ]
 
     if not open_parent_cases:
@@ -63,6 +63,13 @@ def get_person_case_from_occurrence(domain, occurrence_case_id):
     Gets the first open person case for an occurrence
     """
     return get_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
+
+
+def get_occurrence_case_from_test(domain, test_case_id):
+    """
+        Gets the first open occurrence case for a test
+        """
+    return get_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
 
 
 def get_person_case_from_episode(domain, episode_case_id):
@@ -109,6 +116,25 @@ def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
     else:
         raise ENikshayCaseNotFound(
             "Occurrence with id: {} exists but has no open episode cases".format(occurrence_case_id)
+        )
+
+
+def get_lab_referral_from_test(domain, test_case_id):
+    """
+    Gets the first 'lab_referral' case for the test
+
+    Assumes the following case structure:
+    LabReferral <--ext-- test
+
+    """
+    case_accessor = CaseAccessors(domain)
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([test_case_id])
+    lab_referral_cases = [case for case in reverse_indexed_cases if case.type == CASE_TYPE_LAB_REFERRAL]
+    if lab_referral_cases:
+        return lab_referral_cases[0]
+    else:
+        raise ENikshayCaseNotFound(
+            "test with id: {} exists but has no lab referral cases".format(test_case_id)
         )
 
 

@@ -41,6 +41,8 @@ class ENikshayCaseStructureMixin(object):
         self.person_id = u"person"
         self.occurrence_id = u"occurrence"
         self.episode_id = u"episode"
+        self.test_id = u"test"
+        self.lab_referral_id = u"lab_referral"
         self.primary_phone_number = "0123456789"
         self.secondary_phone_number = "0999999999"
         self.treatment_supporter_phone = "066000666"
@@ -116,6 +118,7 @@ class ENikshayCaseStructureMixin(object):
                     'person_name': 'Peregrine Took',
                     'site_choice': 'pleural_effusion',
                     'treatment_supporter_designation': 'ngo_volunteer',
+                    'weight': '40',
                     TREATMENT_START_DATE: "2015-03-03",
                     TREATMENT_SUPPORTER_FIRST_NAME: "Gandalf",
                     TREATMENT_SUPPORTER_LAST_NAME: "The Grey",
@@ -128,6 +131,47 @@ class ENikshayCaseStructureMixin(object):
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
                 related_type=self.occurrence.attrs['case_type'],
+            )],
+        )
+
+    @property
+    def test(self):
+        return CaseStructure(
+            case_id=self.test_id,
+            attrs={
+                'create': True,
+                'case_type': 'test',
+                "update": dict(
+                    date_tested=datetime(2016, 8, 6).date(),
+                    lab_serial_number=19,
+                    test_type_value="microscopy-zn",
+                    purpose_of_testing="diagnostic",
+                    result_grade="1+"
+                )
+            },
+            indices=[CaseIndex(
+                self.occurrence,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=self.occurrence.attrs['case_type'],
+            )],
+        )
+
+    @property
+    def lab_referral(self):
+        return CaseStructure(
+            case_id=self.lab_referral_id,
+            attrs={
+                'create': True,
+                'case_type': 'lab_referral',
+                'owner_id': self.dmc_location.get_id,
+                "update": {}
+            },
+            indices=[CaseIndex(
+                self.test,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=self.test.attrs['case_type'],
             )],
         )
 
