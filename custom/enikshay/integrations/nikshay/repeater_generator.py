@@ -57,9 +57,11 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
         username, password = self._get_credentials(repeat_record)
         return {
             "regBy": username,
+            "regby": username,
             "password": password,
             "Source": ENIKSHAY_ID,
             "IP_From": "127.0.0.1",
+            "IP_FROM": "127.0.0.1",
         }
 
     def handle_exception(self, exception, repeat_record):
