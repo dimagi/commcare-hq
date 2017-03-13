@@ -5,7 +5,9 @@ from celery.task import task
 from couchdbkit import ResourceConflict
 from django.utils.translation import ugettext as _
 from corehq import toggles
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE
+from corehq.apps.userreports.const import (
+    UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE
+)
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.models import (
@@ -173,7 +175,7 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
     return objects
 
 
-@task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
+@task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True, retry=True)
 def save_document(indicator_config_id, document):
     config = _get_config_by_id(indicator_config_id)
     adapter = get_indicator_adapter(config, can_handle_laboratory=True)
