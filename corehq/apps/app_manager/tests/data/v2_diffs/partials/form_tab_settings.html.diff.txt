@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,90 +1,115 @@
+@@ -1,92 +1,116 @@
  {% load i18n %}
  {% load xforms_extras %}
  {% load hq_shared_tags %}
@@ -87,6 +87,7 @@
 +                </div>
              </div>
  
+-            {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
 -            {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
 -                {% include "app_manager/v1/partials/custom_instances.html" %}
 -            {% endif %}
@@ -107,6 +108,7 @@
 +                        visible: visible,
 +                        css: {error: hasError()}">
  
+-            {{ request|toggle_tag_info:"NO_VELLUM" }}
 -            {% if request|toggle_enabled:'NO_VELLUM' %}
 -            <div class="form-group">
 -                <label class="control-label col-sm-2">
@@ -162,6 +164,7 @@
 +
 +                    </div>
 +
++                    {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
 +                    {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
 +                        {% include "app_manager/v2/partials/custom_instances.html" %}
 +                    {% endif %}
