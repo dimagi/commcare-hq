@@ -74,7 +74,7 @@ def run_case_update_rules(now=None):
 
 @serial_task(
     '{domain}',
-    timeout=24 * 60 * 60,
+    timeout=36 * 60 * 60,
     max_retries=0,
     queue='background_queue',
 )
