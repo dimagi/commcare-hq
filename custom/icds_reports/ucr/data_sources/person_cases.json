@@ -58,6 +58,7 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "supervisor_id",
+        "create_index": true,
         "expression": {
           "location_id_expression": {
             "expression": {
@@ -155,6 +156,7 @@
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "opened_on",
+        "create_index": true,
         "type": "raw",
         "property_name": "opened_on"
       },

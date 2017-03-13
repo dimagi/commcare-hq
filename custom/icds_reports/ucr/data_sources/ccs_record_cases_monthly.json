@@ -50,7 +50,8 @@
         "transform": {},
         "is_nullable": false,
         "type": "expression",
-        "column_id": "month"
+        "column_id": "month",
+        "create_index": true
       },
       {
         "display_name": null,
@@ -257,7 +258,8 @@
         "transform": {},
         "is_nullable": true,
         "type": "expression",
-        "column_id": "supervisor_id"
+        "column_id": "supervisor_id",
+        "create_index": true
       },
       {
         "display_name": null,
