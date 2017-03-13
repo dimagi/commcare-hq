@@ -16,7 +16,10 @@ from custom.enikshay.case_utils import (
     get_person_locations,
     get_open_episode_case_from_person,
 )
-from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
+from custom.enikshay.integrations.nikshay.repeaters import (
+    NikshayRegisterPatientRepeater,
+    NikshayHIVTestRepeater,
+)
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.exceptions import NikshayLocationNotFound
 from custom.enikshay.integrations.nikshay.field_mappings import (
@@ -111,6 +114,7 @@ class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
             _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception))
 
 
+@RegisterGenerator(NikshayHIVTestRepeater, 'case_json', 'JSON', is_default=True)
 class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
     @property
     def content_type(self):
