@@ -46,7 +46,7 @@ xlutils==1.4.1
 Unidecode==0.04.18
 xlrd==0.7.3
 simplejson==2.6.1
-sh==1.09
+sh==1.12.9
 gevent==1.0.2
 greenlet==0.4.9
 numpy==1.7.1
