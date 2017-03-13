@@ -204,13 +204,17 @@ class DatadogContext(BaseTileContextProcessor):
     @quickcache(['self.tile_config.slug'], timeout=3600)
     def get_graph(self):
         start, end = self.times
+        tags = ','.join([
+            u'environment:{}'.format(settings.SERVER_ENVIRONMENT),
+            u'domain:{}'.format(self.request.domain)
+        ])
         response = requests.get(
             'https://app.datadoghq.com/api/v1/graph/snapshot',
             params={
                 'metric_query': "sum:commcare.xform_submissions.201{environment:production}.as_rate()",
                 'graph_def': json.dumps({
                     "requests": [{
-                        "q": "sum:commcare.xform_submissions.201{environment:production}.as_count()",
+                        "q": "sum:commcare.xform_submissions.201{{{}}}.as_count()".format(tags),
                         "type": "bars",
                         "conditional_formats": [],
                         "aggregator": "avg"
