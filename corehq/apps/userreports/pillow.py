@@ -1,7 +1,12 @@
 from __future__ import absolute_import
 from collections import defaultdict
-from alembic.autogenerate.api import compare_metadata
 from datetime import datetime, timedelta
+from functools import partial
+import hashlib
+
+from alembic.autogenerate.api import compare_metadata
+import six
+
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
@@ -17,7 +22,6 @@ from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
-import six
 
 
 REBUILD_CHECK_INTERVAL = 10 * 60  # in seconds
@@ -27,11 +31,14 @@ UCR_STATIC_CHECKPOINT_ID = 'pillow-checkpoint-ucr-static'
 
 class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, data_source_provider, auto_repopulate_tables=False, *args, **kwargs):
+    def __init__(self, data_source_provider, auto_repopulate_tables=False,
+                 ucr_division='0f', *args, **kwargs):
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
         self.data_source_provider = data_source_provider
         self.auto_repopulate_tables = auto_repopulate_tables
+        self.ucr_start = ucr_division[0]
+        self.ucr_end = ucr_division[-1]
         super(ConfigurableReportTableManagerMixin, self).__init__(*args, **kwargs)
 
     def get_all_configs(self):
@@ -54,9 +61,11 @@ class ConfigurableReportTableManagerMixin(object):
 
         self.table_adapters_by_domain = defaultdict(list)
         for config in configs:
-            self.table_adapters_by_domain[config.domain].append(
-                get_indicator_adapter(config, can_handle_laboratory=True)
-            )
+            table_hash = hashlib.md5(config.table_id).hexdigest()[0]
+            if self.ucr_start <= table_hash <= self.ucr_end:
+                self.table_adapters_by_domain[config.domain].append(
+                    get_indicator_adapter(config, can_handle_laboratory=True)
+                )
         self.rebuild_tables_if_necessary()
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
@@ -180,14 +189,19 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self._processor.rebuild_table(sql_adapter)
 
 
-def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main'):
+def get_kafka_ucr_pillow(ucr_division='0f', pillow_id='kafka-ucr-main'):
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
             auto_repopulate_tables=False,
+            ucr_division=ucr_division
         ),
         pillow_name=pillow_id,
     )
+
+
+get_kafka_ucr_pillow_08 = partial(get_kafka_ucr_pillow, '08')
+get_kafka_ucr_pillow_9f = partial(get_kafka_ucr_pillow, '9f')
 
 
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static'):

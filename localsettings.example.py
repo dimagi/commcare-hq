@@ -207,6 +207,16 @@ LOCAL_MIDDLEWARE_CLASSES = [
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
+LOCAL_PILLOWTOPS = {
+    'core_ext': [
+        {
+            'name': 'kafka-ucr-main',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+        },
+    ]
+}
+
 # list of domains to enable ADM reporting on
 ADM_ENABLED_PROJECTS = []
 
