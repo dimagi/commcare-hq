@@ -30,10 +30,15 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'maxHeight',
         ],
 
+        commandProperties: [
+            'layoutStyle',
+        ],
+
         parse: function (response, request) {
             _.extend(this, _.pick(response, this.commonProperties));
 
             if (response.commands) {
+                _.extend(this, _.pick(response, this.commandProperties));
                 return response.commands;
             } else if (response.entities) {
                 _.extend(this, _.pick(response, this.entityProperties));

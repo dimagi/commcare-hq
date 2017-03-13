@@ -57,6 +57,11 @@ class Command(BaseCommand):
             nargs='*',
             type=str,
         )
+        parser.add_argument(
+            '--nikshay_id',
+            dest='nikshay_id',
+            default=None,
+        )
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
@@ -76,6 +81,9 @@ class Command(BaseCommand):
                     q = q & Q(PHI=int(codes[3]))
                 location_filter = location_filter | q
             base_query = base_query.filter(location_filter)
+
+        if options['nikshay_id']:
+            base_query = base_query.filter(PregId=options['nikshay_id'])
 
         start = options['start']
         limit = options['limit']

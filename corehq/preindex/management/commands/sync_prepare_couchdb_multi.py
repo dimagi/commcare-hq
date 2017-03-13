@@ -1,5 +1,5 @@
 from __future__ import print_function
-from optparse import make_option
+
 from traceback import print_stack
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail

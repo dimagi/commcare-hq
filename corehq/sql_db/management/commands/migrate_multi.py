@@ -1,6 +1,5 @@
 from __future__ import print_function
 from copy import copy
-from optparse import make_option
 
 from django.conf import settings
 from django.core.management import call_command

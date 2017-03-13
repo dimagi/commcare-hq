@@ -13,6 +13,12 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
 
     var CaseConfig = function (params) {
         var self = this;
+        self.makePopover = function () {
+            $('.property-description').closest('.read-only').popover({
+                'trigger': 'hover',
+                'placement': 'bottom',
+            });
+        };
 
         self.home = params.home;
         self.questions = ko.observable(params.questions);
@@ -30,6 +36,8 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
              self.propertiesMap = ko.mapping.fromJS(propertiesMap);
         };
         self.setPropertiesMap(params.propertiesMap);
+
+        self.descriptionDict = params.propertyDescriptions;
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",
@@ -1118,6 +1126,26 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             self.action = action;
             self.isBlank = ko.computed(function () {
                 return !self.key() && !self.path();
+            });
+            self.caseType = ko.computed(function () {
+                return self.action.case_type();
+            });
+            self.updatedDescription = ko.observable('');
+            self.description = ko.computed({
+                read: function () {
+                    if (self.updatedDescription()) {
+                        return self.updatedDescription();
+                    }
+                    var config = self.action.config;
+                    var type = config.descriptionDict[self.caseType()];
+                    if (type) {
+                        return type[self.key()] || '';
+                    }
+                },
+                write: function (value) {
+                    self.updatedDescription(value);
+                    $('.read-only').data('bs.popover').options.content = value;
+                },
             });
             return self;
         }

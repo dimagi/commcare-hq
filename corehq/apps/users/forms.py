@@ -320,12 +320,12 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             result.remove('email_opt_out')
         return result
 
-    def update_user(self, existing_user, save=True, **kwargs):
+    def update_user(self, save=True, **kwargs):
         if save:
             analytics_enabled = self.cleaned_data['analytics_enabled']
-            if existing_user.analytics_enabled != analytics_enabled:
-                set_analytics_opt_out(existing_user, analytics_enabled)
-        return super(UpdateMyAccountInfoForm, self).update_user(existing_user, save=save, **kwargs)
+            if self.user.analytics_enabled != analytics_enabled:
+                set_analytics_opt_out(self.user, analytics_enabled)
+        return super(UpdateMyAccountInfoForm, self).update_user(save=save, **kwargs)
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):

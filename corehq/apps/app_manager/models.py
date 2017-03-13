@@ -1002,7 +1002,8 @@ class FormBase(DocumentSchema):
         }
 
         xml_valid = False
-        if self.source == '':
+        if (self.source == '' or
+                len(self.get_questions(self.get_app().langs, include_triggers=True)) == 0):
             errors.append(dict(type="blank form", **meta))
         else:
             try:
@@ -4123,6 +4124,11 @@ class ReportModule(ModuleBase):
             errors.append({
                 'type': 'report config ref invalid',
                 'module': self.get_module_info()
+            })
+        if not self.reports:
+            errors.append({
+                'type': 'no reports',
+                'module': self.get_module_info(),
             })
         return errors
 

@@ -6,7 +6,7 @@ from corehq.preindex import get_preindex_plugins
 class Command(BaseCommand):
     help = 'Copy temporary design docs over existing ones'
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         for preindex_plugin in get_preindex_plugins():
             plugin_class_name = preindex_plugin.__class__.__name__
             if plugin_class_name == 'DefaultPreindexPlugin':
