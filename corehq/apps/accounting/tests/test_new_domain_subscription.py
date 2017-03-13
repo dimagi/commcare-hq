@@ -35,6 +35,11 @@ class TestNewDomainSubscription(BaseAccountingTest):
         self.standard_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.STANDARD)
         self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
 
+    def tearDown(self):
+        self.domain.delete()
+        self.domain2.delete()
+        super(TestNewDomainSubscription, self).tearDown()
+
     def test_new_susbscription_in_future(self):
         """
         Test covers issue that came up with commcare-hq/PR#3725.
