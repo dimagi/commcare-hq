@@ -137,3 +137,15 @@ $.fn.koApplyBindings = function (context) {
     ko.applyBindings(context, this.get(0));
     this.removeClass('ko-template');
 };
+
+var myobj = {
+    'test': 3,
+    'foo': 'bar'
+};
+
+var myobj2 = {
+    'test': 3,
+    'foo': 'bar',
+};
+
+var myobj3 = {'test': 3, 'foo': 'bar',};
