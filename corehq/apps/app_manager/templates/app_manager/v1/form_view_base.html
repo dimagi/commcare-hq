@@ -283,6 +283,11 @@
             setupValidation('{% url "validate_form_for_build" domain app.id form.unique_id %}');
         });
     </script>
+    <script>
+        $(function (){
+            $('.property-description').popover();
+        });
+    </script>
 {% endblock %}
 
 {% block form-view %}

@@ -20,7 +20,7 @@ class Command(BaseCommand):
                                 ])
                                 return
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         with open('domain_results.csv', 'wb+') as csvfile:
             csv_writer = csv.writer(
                 csvfile,

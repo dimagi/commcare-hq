@@ -6,11 +6,10 @@ from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
-    args = ""
     help = ("Clears commcare_location_id and commtrack-supply-point on any "
             "users without location_id set")
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         clean_users()
 
 

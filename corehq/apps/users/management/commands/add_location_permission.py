@@ -8,7 +8,6 @@ from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
-    args = ""
     help = "Migrate UserRoles, using whatever edit_commcare_users is set to for edit_locations"
 
     def add_arguments(self, parser):
@@ -18,7 +17,7 @@ class Command(BaseCommand):
             default=False,
         )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         if not options['noinput']:
             num_roles = len(get_all_role_ids())
             confirm = raw_input("Found {} roles, update? (Y/n)\n".format(num_roles))
