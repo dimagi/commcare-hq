@@ -3,8 +3,8 @@ from collections import namedtuple
 
 from django.conf import settings
 from django.test.utils import override_settings
+from mock import patch
 
-from casexml.apps.case.mock import CaseBlock
 from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0, MONTH1
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
     cache_key, CachedIndicators
@@ -13,7 +13,6 @@ from corehq.apps.callcenter.utils import sync_call_center_user_case, CallCenterC
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 
@@ -43,17 +42,6 @@ def create_domain_and_user(domain_name, username):
 
     sync_call_center_user_case(user)
     return domain, user
-
-
-def create_cases_for_types(domain, case_types):
-    for i, case_type in enumerate(case_types):
-        submit_case_blocks(
-            CaseBlock(
-                create=True,
-                case_id=uuid.uuid4().hex,
-                case_type=case_type,
-                user_id=uuid.uuid4().hex,
-            ).as_string(), domain)
 
 
 def get_indicators(prefix, values, case_type=None, is_legacy=False, limit_ranges=None):
@@ -130,10 +118,8 @@ class BaseCCTests(TestCase):
     def setUp(self):
         super(BaseCCTests, self).setUp()
         locmem_cache.clear()
-        CaseAccessors.get_case_types.clear(CaseAccessors(self.domain_name))
 
     def tearDown(self):
-        CaseAccessors.get_case_types.clear(CaseAccessors(self.domain_name))
         super(BaseCCTests, self).tearDown()
 
     def _test_indicators(self, user, data_set, expected):
@@ -156,6 +142,8 @@ class BaseCCTests(TestCase):
             self.fail('Additional indicators:\n{}'.format('\t\n'.join(user_data.keys())))
 
 
+@patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
+       return_value={'person', 'dog', CASE_TYPE})
 class CallCenterTests(BaseCCTests):
     domain_name = 'callcentertest'
 
@@ -169,12 +157,8 @@ class CallCenterTests(BaseCCTests):
         cls.aarohi_domain, cls.aarohi_user = create_domain_and_user('aarohi', 'user2')
         load_custom_data(cls.aarohi_domain.name, cls.aarohi_user.user_id, xmlns=AAROHI_MOTHER_FORM)
 
-        # create one case of each type so that we get the indicators where there is no data for the period
-        create_cases_for_types(cls.cc_domain.name, ['person', 'dog'])
-
     @classmethod
     def tearDownClass(cls):
-        CaseAccessors.get_case_types.clear(CaseAccessors(cls.aarohi_domain.name))
         clear_data(cls.aarohi_domain.name)
         clear_data(cls.cc_domain.name)
         cls.cc_user.delete()
@@ -189,7 +173,7 @@ class CallCenterTests(BaseCCTests):
         expected_no_data = expected_standard_indicators(no_data=True)
         self._test_indicators(self.cc_user_no_data, data_set, expected_no_data)
 
-    def test_standard_indicators(self):
+    def test_standard_indicators(self, mock):
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
             self.cc_domain.default_timezone,
@@ -201,11 +185,15 @@ class CallCenterTests(BaseCCTests):
             set(indicator_set.user_to_case_map.keys()),
             set([self.cc_user.get_id, self.cc_user_no_data.get_id])
         )
-        self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
-        self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
+        self.assertEqual(
+            indicator_set.users_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id])
+        )
+        self.assertEqual(
+            indicator_set.owners_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id])
+        )
         self.check_cc_indicators(indicator_set.get_data(), expected_standard_indicators())
 
-    def test_standard_indicators_no_legacy(self):
+    def test_standard_indicators_no_legacy(self, mock):
         config = CallCenterIndicatorConfig.default_config(include_legacy=False)
 
         indicator_set = CallCenterIndicators(
@@ -221,7 +209,7 @@ class CallCenterTests(BaseCCTests):
             indicator_set.get_data(),
             expected_standard_indicators(include_legacy=False))
 
-    def test_standard_indicators_case_totals_only(self):
+    def test_standard_indicators_case_totals_only(self, mock):
         config = CallCenterIndicatorConfig.default_config(include_legacy=False)
         config.cases_total.all_types = False
         config.cases_opened.all_types = False
@@ -245,7 +233,7 @@ class CallCenterTests(BaseCCTests):
                 case_types=[])
         )
 
-    def test_standard_indicators_case_dog_only(self):
+    def test_standard_indicators_case_dog_only(self, mock):
         config = CallCenterIndicatorConfig.default_config(include_legacy=False)
         config.forms_submitted.enabled = False
 
@@ -277,7 +265,7 @@ class CallCenterTests(BaseCCTests):
                 limit_ranges=[WEEK0, MONTH0])
         )
 
-    def test_standard_indicators_case_week1_only(self):
+    def test_standard_indicators_case_week1_only(self, mock):
         config = CallCenterIndicatorConfig.default_config(include_legacy=False)
         config.forms_submitted.date_ranges = {WEEK1}
         config.cases_total.totals.date_ranges = {WEEK1}
@@ -302,8 +290,11 @@ class CallCenterTests(BaseCCTests):
                 limit_ranges=[WEEK1])
         )
 
-    def test_sync_log(self):
-        user_case = CaseAccessors(self.cc_domain.name).get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
+    def test_sync_log(self, mock):
+        user_case = (
+            CaseAccessors(self.cc_domain.name)
+            .get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
+        )
 
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
@@ -318,7 +309,8 @@ class CallCenterTests(BaseCCTests):
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id]))
         self._test_indicators(self.cc_user, indicator_set.get_data(), expected_standard_indicators())
 
-    def test_custom_indicators(self):
+    def test_custom_indicators(self, mock):
+        mock.return_value = set()
         expected = {'totalCases': 0L}
         expected.update(get_indicators('formsSubmitted', [3L, 3L, 9L, 0L], is_legacy=True))
         expected.update(get_indicators('forms_submitted', [3L, 3L, 9L, 0L]))
@@ -346,7 +338,7 @@ class CallCenterTests(BaseCCTests):
             expected
         )
 
-    def test_custom_indicators_limited(self):
+    def test_custom_indicators_limited(self, mock):
         expected = {}
 
         # custom
@@ -381,8 +373,11 @@ class CallCenterTests(BaseCCTests):
             expected
         )
 
-    def test_caching(self):
-        user_case = CaseAccessors(self.cc_domain.name).get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
+    def test_caching(self, mock):
+        user_case = (
+            CaseAccessors(self.cc_domain.name)
+            .get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
+        )
         expected_indicators = {'a': 1, 'b': 2}
         cached_data = CachedIndicators(
             user_id=self.cc_user.get_id,
@@ -408,7 +403,7 @@ class CallCenterTests(BaseCCTests):
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user_no_data.get_id]))
         self.check_cc_indicators(indicator_set.get_data(), expected_indicators)
 
-    def test_no_cases_owned_by_user(self):
+    def test_no_cases_owned_by_user(self, mock):
         """
         Test to verify that only data belonging to users managed by the supervisor is returned.
         """
@@ -459,20 +454,17 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
 
         load_data(self.domain_name, self.user.user_id)
 
-        # create one case of each type so that we get the indicators where there is no data for the period
-        create_cases_for_types(self.domain_name, ['person', 'dog'])
-
     def tearDown(self):
         clear_data(self.domain.name)
         self.domain.delete()
         super(CallCenterSupervisorGroupTest, self).tearDown()
 
     @run_with_all_backends
-    def test_users_assigned_via_group(self):
-        """
-        Ensure that users who are assigned to the supervisor via a group are also included
-        in final data set.
-        """
+    @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
+           return_value={'person', 'dog', CASE_TYPE})
+    def test_users_assigned_via_group(self, mock):
+        # Ensure that users who are assigned to the supervisor via a group are also included
+        # in final data set.
         indicator_set = CallCenterIndicators(
             self.domain.name,
             self.domain.default_timezone,
@@ -518,19 +510,16 @@ class CallCenterCaseSharingTest(BaseCCTests):
             case_opened_by=self.user.user_id,
             case_closed_by=self.user.user_id)
 
-        # create one case of each type so that we get the indicators where there is no data for the period
-        create_cases_for_types(self.domain_name, ['person', 'dog'])
-
     def tearDown(self):
         super(CallCenterCaseSharingTest, self).tearDown()
         clear_data(self.domain.name)
         self.domain.delete()
 
     @run_with_all_backends
-    def test_cases_owned_by_group(self):
-        """
-        Ensure that indicators include cases owned by a case sharing group the user is part of.
-        """
+    @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
+           return_value={'person', 'dog', CASE_TYPE})
+    def test_cases_owned_by_group(self, mock):
+        # Ensure that indicators include cases owned by a case sharing group the user is part of.
         indicator_set = CallCenterIndicators(
             self.domain.name,
             self.domain.default_timezone,
@@ -564,16 +553,15 @@ class CallCenterTestOpenedClosed(BaseCCTests):
 
         load_data(self.domain_name, self.user.user_id, case_opened_by='not me', case_closed_by='not me')
 
-        # create one case of each type so that we get the indicators where there is no data for the period
-        create_cases_for_types(self.domain_name, ['person', 'dog'])
-
     def tearDown(self):
         super(CallCenterTestOpenedClosed, self).tearDown()
         clear_data(self.domain.name)
         self.domain.delete()
 
     @run_with_all_backends
-    def test_opened_closed(self):
+    @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
+           return_value={'person', 'dog', CASE_TYPE})
+    def test_opened_closed(self, mock):
         """
         Test that cases_closed and cases_opened indicators count based on the user that
         opened / closed the case and not the case owner.
@@ -600,7 +588,6 @@ class TestSavingToUCRDatabase(BaseCCTests):
     def setUp(self):
         super(TestSavingToUCRDatabase, self).setUp()
         self.cc_domain, self.cc_user = create_domain_and_user(self.domain_name, 'user_ucr')
-        create_cases_for_types(self.cc_domain.name, ['person', 'dog'])
 
         self.ucr_db_name = 'cchq_ucr_tests'
         db_conn_parts = settings.SQL_REPORTING_DATABASE_URL.split('/')
@@ -620,7 +607,9 @@ class TestSavingToUCRDatabase(BaseCCTests):
         self.db_context.__exit__(None, None, None)
 
     @run_with_all_backends
-    def test_standard_indicators(self):
+    @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
+           return_value={'person', 'dog', CASE_TYPE})
+    def test_standard_indicators(self, mock):
         with override_settings(UCR_DATABASE_URL=self.ucr_db_url):
             load_data(self.cc_domain.name, self.cc_user.user_id)
 
