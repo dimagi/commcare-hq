@@ -142,7 +142,7 @@ class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
             ),
             "MORemark": "None Collected in eNikshay",
         })
-        return base_properties
+        return json.dumps(base_properties)
 
     def handle_success(self, response, payload_doc, repeat_record):
         update_case(payload_doc.domain, payload_doc.case_id, {
