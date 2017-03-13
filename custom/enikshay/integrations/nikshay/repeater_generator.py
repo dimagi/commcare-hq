@@ -11,8 +11,15 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_PHONE,
     TREATMENT_START_DATE,
 )
-from custom.enikshay.case_utils import get_person_case_from_episode, get_person_locations
-from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
+from custom.enikshay.case_utils import (
+    get_person_case_from_episode,
+    get_person_locations,
+    get_open_episode_case_from_person,
+)
+from custom.enikshay.integrations.nikshay.repeaters import (
+    NikshayRegisterPatientRepeater,
+    NikshayHIVTestRepeater,
+)
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.exceptions import NikshayLocationNotFound
 from custom.enikshay.integrations.nikshay.field_mappings import (
@@ -24,10 +31,13 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     disease_classification,
     dcexpulmonory,
     dcpulmonory,
+    hiv_status,
+    art_initiated,
 )
 from custom.enikshay.case_utils import update_case
 
 ENIKSHAY_ID = 8
+NIKSHAY_NULL_DATE = '1900-01-01'
 
 
 @RegisterGenerator(NikshayRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
@@ -102,6 +112,63 @@ class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
             _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception))
+
+
+@RegisterGenerator(NikshayHIVTestRepeater, 'case_json', 'JSON', is_default=True)
+class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
+    @property
+    def content_type(self):
+        return 'application/json'
+
+    def get_payload(self, repeat_record, person_case):
+        """
+        https://docs.google.com/document/d/1yUWf3ynHRODyVVmMrhv5fDhaK_ufZSY7y0h9ke5rBxU/edit#heading=h.hxfnqahoeag
+        """
+        episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
+        episode_case_properties = episode_case.dynamic_case_properties()
+        person_case_properties = person_case.dynamic_case_properties()
+        properties_dict = {
+            "PatientID": episode_case_properties.get('nikshay_id'),
+            "HIVStatus": hiv_status.get(person_case_properties.get('hiv_status')),
+            "HIVTestDate": datetime.datetime.strptime(person_case_properties.get('hiv_test_date'),
+                                                      '%Y-%m-%d').strftime('%d/%m/%Y'),
+            "CPTDeliverDate": datetime.datetime.strptime(
+                person_case_properties.get('cpt_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
+            ).strftime('%d/%m/%Y'),
+            "ARTCentreDate": datetime.datetime.strptime(
+                person_case_properties.get('art_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
+            ).strftime('%d/%m/%Y'),
+            "InitiatedOnART": art_initiated.get(person_case_properties.get('art_initiated', 'no')),
+            "InitiatedDate": datetime.datetime.strptime(
+                person_case_properties.get('art_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
+            ).strftime('%d/%m/%Y'),
+            "Source": ENIKSHAY_ID,
+            "regby": repeat_record.repeater.username,
+            "password": repeat_record.repeater.password,
+            "IP_FROM": "127.0.0.1",
+        }
+
+        return json.dumps(properties_dict)
+
+    def handle_success(self, response, payload_doc, repeat_record):
+        # Simple success message that has {"Nikshay_Message": "Success"...}
+        update_case(
+            payload_doc.domain,
+            payload_doc.case_id,
+            {
+                "hiv_test_nikshay_registered": "true",
+                "hiv_test_nikshay_error": "",
+            },
+        )
+
+    def handle_failure(self, response, payload_doc, repeat_record):
+        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
+                            "hiv_test_nikshay_registered", "hiv_test_nikshay_error")
+
+    def handle_exception(self, exception, repeat_record):
+        if isinstance(exception, RequestConnectionError):
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
+                                "hiv_test_nikshay_registered", "hiv_test_nikshay_error")
 
 
 def _get_nikshay_id_from_response(response):
@@ -208,12 +275,12 @@ def _get_episode_case_properties(episode_case_properties):
     return episode_properties
 
 
-def _save_error_message(domain, case_id, error):
+def _save_error_message(domain, case_id, error, reg_field="nikshay_registered", error_field="nikshay_error"):
     update_case(
         domain,
         case_id,
         {
-            "nikshay_registered": "false",
-            "nikshay_error": error,
+            reg_field: "false",
+            error_field: error,
         },
     )
