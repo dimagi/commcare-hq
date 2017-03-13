@@ -506,7 +506,7 @@ def M4ChangeFormFluffPillow(delete_filtered=False):
             AllHmisCaseFluff,
         ],
         name='M4ChangeFormFluff',
-        kafka_topic=get_topic(get_doc_meta_object_from_document(CommCareCase().to_json())),
+        kafka_topic=get_topic(get_doc_meta_object_from_document(XFormInstance().to_json())),
         delete_filtered=delete_filtered
     )
 
