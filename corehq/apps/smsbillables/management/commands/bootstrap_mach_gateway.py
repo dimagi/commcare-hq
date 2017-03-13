@@ -69,8 +69,6 @@ def bootstrap_mach_gateway(apps):
 
 class Command(BaseCommand):
     help = "bootstrap MACH/Syniverse gateway fees"
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         bootstrap_mach_gateway(None)

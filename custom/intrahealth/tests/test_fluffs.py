@@ -32,14 +32,14 @@ class TestFluffs(IntraHealthTestCase):
                 xml, TEST_DOMAIN, auth_context=AuthContext(
                     user_id=cls.mobile_worker.get_id, domain=TEST_DOMAIN, authenticated=True
                 )
-            )[1]
+            ).xform
         with open(os.path.join(DATAPATH, 'operateur.xml')) as f:
             xml = f.read()
             cls.couverture_form = submit_form_locally(
                 xml, TEST_DOMAIN, auth_context=AuthContext(
                     user_id=cls.mobile_worker.get_id, domain=TEST_DOMAIN, authenticated=True
                 )
-            )[1]
+            ).xform
 
     @classmethod
     def tearDownClass(cls):

@@ -140,6 +140,8 @@
             <th>{% trans "Comments" %}</th>
             {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
                 <th>Errors</th>
+            {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
+              <th>{{ request|toggle_tag_info:"APPLICATION_ERROR_REPORT" }}</th>
             {% endif %}
             <th>
                 {% trans "Released" %}
@@ -240,6 +242,8 @@
                     <a data-bind="text: num_errors,
                                   attr: {href: $root.url('application_errors', version())}" />
                 </td>
+                {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
+                  <td></td>
                 {% endif %}
                 <td class="build-is-released">
                     <div data-bind="starred: is_released, click: $root.toggleRelease"></div>

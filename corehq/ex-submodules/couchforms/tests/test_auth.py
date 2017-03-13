@@ -15,8 +15,8 @@ class AuthTest(TestCase, TestFileMixin):
     def test_auth_context(self):
         xml_data = self.get_xml('meta')
 
-        _, xform, _ = submit_form_locally(xml_data, 'test-domain', auth_context=DefaultAuthContext())
-        self.assertEqual(xform.auth_context, {'doc_type': 'DefaultAuthContext'})
+        result = submit_form_locally(xml_data, 'test-domain', auth_context=DefaultAuthContext())
+        self.assertEqual(result.xform.auth_context, {'doc_type': 'DefaultAuthContext'})
 
 
 @use_sql_backend

@@ -87,6 +87,7 @@ FormplayerFrontend.on('clearForm', function () {
     $('#webforms-nav').html("");
     $('#cloudcare-debugger').html("");
     $('.atwho-container').remove();
+    $('#case-detail-modal').modal('hide');
 });
 
 FormplayerFrontend.reqres.setHandler('clearMenu', function () {
@@ -230,6 +231,12 @@ FormplayerFrontend.on("start", function (options) {
             false
         );
     }
+});
+
+FormplayerFrontend.reqres.setHandler('getCurrentApp', function() {
+    var appId = FormplayerFrontend.request('getCurrentAppId');
+    var currentApp = FormplayerFrontend.request("appselect:getApp", appId);
+    return currentApp;
 });
 
 FormplayerFrontend.reqres.setHandler('getCurrentAppId', function() {

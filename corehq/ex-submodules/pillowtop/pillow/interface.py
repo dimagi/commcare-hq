@@ -189,11 +189,11 @@ class PillowBase(object):
     def __record_change_metric_in_datadog(self, metric, change, timer=None):
         if change.metadata is not None:
             tags = [
-                'datasource:{}'.format(change.metadata.data_source_name),
-                'document_type:{}'.format(change.metadata.document_type),
-                'domain:{}'.format(change.metadata.domain),
-                'is_deletion:{}'.format(change.metadata.is_deletion),
-                'pillow_name:{}'.format(self.get_name())
+                u'datasource:{}'.format(change.metadata.data_source_name),
+                u'document_type:{}'.format(change.metadata.document_type),
+                u'domain:{}'.format(change.metadata.domain),
+                u'is_deletion:{}'.format(change.metadata.is_deletion),
+                u'pillow_name:{}'.format(self.get_name())
             ]
             datadog_counter(metric, tags=tags)
 
@@ -223,7 +223,11 @@ class ConstructedPillow(PillowBase):
         self._name = name
         self._checkpoint = checkpoint
         self._change_feed = change_feed
-        self._processor = processor
+        if isinstance(processor, list):
+            self._processors = processor
+        else:
+            self._processors = [processor]
+
         self._change_processed_event_handler = change_processed_event_handler
 
     @property
@@ -244,7 +248,8 @@ class ConstructedPillow(PillowBase):
         return self._change_feed
 
     def process_change(self, change):
-        self._processor.process_change(self, change)
+        for processor in self._processors:
+            processor.process_change(self, change)
 
     def fire_change_processed_event(self, change, context):
         if self._change_processed_event_handler is not None:

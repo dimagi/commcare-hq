@@ -6,11 +6,23 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -25,10 +25,10 @@
+@@ -17,10 +17,6 @@
+                 {% trans "Visit Scheduler" %}
+             </a>
+         </li>
+-    {% elif request|toggle_enabled:"SHOW_DEV_TOGGLE_INFO" %}
+-      <li>
+-          {{ request|toggle_tag_info:"VISIT_SCHEDULER" }}
+-      </li>
+     {% endif %}
+ {% endblock %}
+ 
+@@ -29,11 +25,10 @@
          {% initial_page_data 'schedule_phases' schedule_phases %}
          {% registerurl 'edit_schedule_phases' app.domain app.id module.id %}
          <div class="tab-pane" id="visit-scheduler-module-config-tab">
--            {% include "app_manager/v1/partials/enable_schedule.html" %}
+-          {{ request|toggle_tag_info:"VISIT_SCHEDULER" }}
+-          {% include "app_manager/v1/partials/enable_schedule.html" %}
 +            {% include "app_manager/v2/partials/enable_schedule.html" %}
          </div>
      {% endif %}

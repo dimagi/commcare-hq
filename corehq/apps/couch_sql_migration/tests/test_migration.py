@@ -457,8 +457,8 @@ class MigrationTestCase(BaseMigrationTestCase):
             form_id=form_id,
             case_id=case_id
         )
-        _, _, cases = submit_form_locally(xml, self.domain_name)
-        case = [case for case in cases if case.case_id == case_id][0]
+        result = submit_form_locally(xml, self.domain_name)
+        case = [case for case in result.cases if case.case_id == case_id][0]
         case.xform_ids.remove(form_id)  # legacy bug that didn't include these form IDs in the case
         case.save()
 

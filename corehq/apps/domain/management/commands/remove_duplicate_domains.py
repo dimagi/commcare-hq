@@ -5,7 +5,7 @@ from corehq.apps.domain.models import Domain
 class Command(BaseCommand):
     help = "Detects and removes duplicate domains"
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         domains = Domain.get_all()
         seen = set([])
         dups = set([])
