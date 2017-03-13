@@ -20,6 +20,7 @@ from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
 from corehq.apps.style.decorators import use_angular_js
+from corehq.toggles import DASHBOARD_GRAPHS
 from django_prbac.utils import has_privilege
 
 
@@ -215,6 +216,7 @@ def _get_default_tile_configurations():
             slug='graph',
             icon='fcc fcc-reports',
             context_processor_class=DatadogContext,
+            visibility_check=DASHBOARD_GRAPHS.enabled_for_request,
             help_text=_("Form submissions for this domain over the last 7 days"),
         ),
         TileConfiguration(
