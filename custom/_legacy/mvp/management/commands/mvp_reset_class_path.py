@@ -11,9 +11,8 @@ from mvp.models import (
 
 class Command(BaseCommand):
     help = "Resets the class path for the MVP indicator type specified"
-    args = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         indicator_types = [
             MVPDaysSinceLastTransmission,
             MVPActiveCasesIndicatorDefinition,

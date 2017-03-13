@@ -8,9 +8,8 @@ import django
 
 class Command(BaseCommand):
     help = "Update django locales for three-digit codes"
-    args = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         # if we were feeling ambitious we could get this from something more
         # formal/standard, but this seems totally workable for our needs
         HQ_TO_DJANGO_MAP = {

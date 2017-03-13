@@ -42,9 +42,14 @@ CaseStockProcessingResult = namedtuple(
 )
 
 
-class SubmissionPost(object):
+class FormProcessingResult(namedtuple('FormProcessingResult', 'response xform cases ledgers')):
+    @property
+    def case(self):
+        assert len(self.cases) == 1
+        return self.cases[0]
 
-    failed_auth_response = HttpResponseForbidden('Bad auth')
+
+class SubmissionPost(object):
 
     def __init__(self, instance=None, attachments=None, auth_context=None,
                  domain=None, app_id=None, build_id=None, path=None,
@@ -111,13 +116,13 @@ class SubmissionPost(object):
         if any_migrations_in_progress(self.domain):
             # keep submissions on the phone
             # until ready to start accepting again
-            return HttpResponse(status=503), None, []
+            return HttpResponse(status=503)
 
         if not self.auth_context.is_valid():
-            return self.failed_auth_response, None, []
+            return HttpResponseForbidden('Bad auth')
 
         if isinstance(self.instance, BadRequest):
-            return HttpResponseBadRequest(self.instance.message), None, []
+            return HttpResponseBadRequest(self.instance.message)
 
     def _post_process_form(self, xform):
         self._set_submission_properties(xform)
@@ -125,9 +130,9 @@ class SubmissionPost(object):
         legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
     def run(self):
-        failure_result = self._handle_basic_failure_modes()
-        if failure_result:
-            return failure_result
+        failure_response = self._handle_basic_failure_modes()
+        if failure_response:
+            return FormProcessingResult(failure_response, None, [], [])
 
         result = process_xform_xml(self.domain, self.instance, self.attachments)
         submitted_form = result.submitted_form
@@ -138,9 +143,10 @@ class SubmissionPost(object):
         if submitted_form.is_submission_error_log:
             self.formdb.save_new_form(submitted_form)
             response = self.get_exception_response_and_log(submitted_form, self.path)
-            return response, None, []
+            return FormProcessingResult(response, None, [], [])
 
         cases = []
+        ledgers = []
         with result.get_locked_forms() as xforms:
             from casexml.apps.case.xform import get_and_check_xform_domain
             domain = get_and_check_xform_domain(xforms[0])
@@ -183,10 +189,11 @@ class SubmissionPost(object):
                         self.save_processed_models(xforms, case_stock_result)
                         case_stock_result.case_result.close_extensions(case_db)
                         cases = case_stock_result.case_models
+                        ledgers = case_stock_result.stock_result.models_to_save
 
             errors = self.process_signals(instance)
             response = self._get_open_rosa_response(instance, errors)
-            return response, instance, cases
+            return FormProcessingResult(response, instance, cases, ledgers)
 
     @property
     def _cache(self):
@@ -251,8 +258,7 @@ class SubmissionPost(object):
         )
 
     def get_response(self):
-        response, _, _ = self.run()
-        return response
+        return self.run().response
 
     def process_signals(self, instance):
         feedback = successful_form_received.send_robust(None, xform=instance)
@@ -269,10 +275,6 @@ class SubmissionPost(object):
             self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
             self.formdb.update_form_problem_and_state(instance)
         return errors
-
-    @staticmethod
-    def get_failed_auth_response():
-        return HttpResponseForbidden('Bad auth')
 
     def _get_open_rosa_response(self, instance, errors):
         if instance.is_normal:

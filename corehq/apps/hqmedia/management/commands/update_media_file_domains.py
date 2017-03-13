@@ -5,7 +5,7 @@ from corehq.apps.domain.models import Domain
 class Command(BaseCommand):
     help = 'Make sure valid_domains is a superset of owners for all media'
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         def settify(entity):
             entity = [entity] if not isinstance(entity, list) else entity
             return set(filter(None, entity))

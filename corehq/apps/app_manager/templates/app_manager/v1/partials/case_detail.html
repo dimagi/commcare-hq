@@ -19,6 +19,7 @@
     {% include 'app_manager/v1/partials/case_list_properties.html' %}
 </div>
 
+{{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
 <div class="btn-group">
 
     <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
