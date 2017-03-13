@@ -83,4 +83,6 @@ treatment_outcome = {
     'treatment_complete': '2',
     'died': '3',
     'failure': '4',
+    'regimen_changed': '7',
+
 }
