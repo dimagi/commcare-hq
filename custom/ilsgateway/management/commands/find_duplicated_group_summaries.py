@@ -22,7 +22,7 @@ class Command(BaseCommand):
             cursor.execute(query)
             return cursor.fetchall()
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         for location_id, title, date, ids in self.get_duplicated_rows():
             ids = ids.split(',')
             sql_location = SQLLocation.objects.get(location_id=location_id)

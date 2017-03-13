@@ -41,13 +41,11 @@ class GenericEnqueuingOperation(BaseCommand):
     """
     Implements a generic enqueuing operation.
     """
-    args = ""
-    help = ""
 
     def get_fetching_interval(self):
         return 15
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         if self.use_queue():
             self.validate_args(**options)
             self.keep_fetching_items()
