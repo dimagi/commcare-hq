@@ -30,20 +30,12 @@ from custom.enikshay.case_utils import update_case
 ENIKSHAY_ID = 8
 
 
-@RegisterGenerator(NikshayRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
-class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
+class BaseNikshayPayloadGenerator(BasePayloadGenerator):
     @property
     def content_type(self):
         return 'application/json'
 
-    def get_payload(self, repeat_record, episode_case):
-        """
-        https://docs.google.com/document/d/1yUWf3ynHRODyVVmMrhv5fDhaK_ufZSY7y0h9ke5rBxU/edit#heading=h.a9uhx3ql595c
-        """
-        person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
-        episode_case_properties = episode_case.dynamic_case_properties()
-        person_case_properties = person_case.dynamic_case_properties()
-
+    def _get_credentials(self, repeat_record):
         try:
             username = repeat_record.repeater.username
         except AttributeError:
@@ -53,14 +45,38 @@ class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
         except AttributeError:
             password = ""
 
-        properties_dict = {
+        return username, password
+
+    def _base_properties(self, repeat_record, person_case):
+        username, password = self._get_credentials(repeat_record)
+        return {
             "regBy": username,
             "password": password,
-            "Local_ID": person_case.get_id,
             "Source": ENIKSHAY_ID,
-            "dotcenter": "NA",
             "IP_From": "127.0.0.1",
         }
+
+    def handle_exception(self, exception, repeat_record):
+        if isinstance(exception, RequestConnectionError):
+            update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": unicode(exception)})
+
+
+@RegisterGenerator(NikshayRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
+class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
+    def get_payload(self, repeat_record, episode_case):
+        """
+        https://docs.google.com/document/d/1yUWf3ynHRODyVVmMrhv5fDhaK_ufZSY7y0h9ke5rBxU/edit#heading=h.a9uhx3ql595c
+        """
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+        episode_case_properties = episode_case.dynamic_case_properties()
+        person_case_properties = person_case.dynamic_case_properties()
+
+        properties_dict = self._base_properties(repeat_record, person_case)
+        properties_dict.update({
+            "dotcenter": "NA",
+            "Local_ID": person_case.get_id,
+        })
+
         try:
             properties_dict.update(_get_person_case_properties(person_case, person_case_properties))
         except NikshayLocationNotFound as e:
@@ -84,7 +100,7 @@ class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
                 external_id=nikshay_id,
             )
         except NikshayResponseException as e:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, e.message)
+            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(e.message))
 
     def handle_failure(self, response, payload_doc, repeat_record):
         if response.status_code == 409:  # Conflict
@@ -98,10 +114,6 @@ class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
             )
         else:
             _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
-
-    def handle_exception(self, exception, repeat_record):
-        if isinstance(exception, RequestConnectionError):
-            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception))
 
 
 def _get_nikshay_id_from_response(response):
