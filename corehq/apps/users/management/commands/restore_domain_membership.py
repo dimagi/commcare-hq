@@ -35,7 +35,7 @@ class Command(BaseCommand):
                             help='Find the offset to start from')
 
     @change_log_level('kafka', 'ERROR')
-    def handle(self, *args, **options):
+    def handle(self, **options):
         if options['print_kafka_offsets']:
             start, end = self.get_min_max_offsets()
             print("\n\nKakfa topic offset range: {} - {}".format(start, end))

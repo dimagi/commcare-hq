@@ -1036,8 +1036,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 }
             except BillingRecord.DoesNotExist:
                 log_accounting_error(
-                    "An invoice was generated for %(invoice_id)d "
-                    "(domain: %(domain)s), but no billing record!" % {
+                    u"An invoice was generated for %(invoice_id)d "
+                    u"(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
                     }

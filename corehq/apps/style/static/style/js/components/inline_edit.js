@@ -45,11 +45,13 @@ hqDefine('style/js/components/inline_edit.js', function() {
             self.rows = params.rows || 2;
             self.cols = params.cols || "";
             self.readOnlyClass = params.readOnlyClass || '';
+            self.readOnlyAttrs = params.readOnlyAttrs || {};
 
             // Interaction: determine whether widget is in read or write mode
             self.isEditing = ko.observable(false);
             self.saveHasFocus = ko.observable(false);
             self.cancelHasFocus = ko.observable(false);
+            self.afterRenderFunc = params.afterRenderFunc;
 
             // Save to server
             self.url = params.url;
@@ -124,7 +126,7 @@ hqDefine('style/js/components/inline_edit.js', function() {
             };
         },
         template: '<div class="ko-inline-edit inline" data-bind="css: {\'has-error\': hasError()}">\
-            <div class="read-only" data-bind="visible: !isEditing(), click: edit">\
+            <div class="read-only" data-bind="visible: !isEditing(), click: edit, attr: readOnlyAttrs">\
                 <span data-bind="visible: isSaving()" class="pull-right">\
                     <img src="/static/hqstyle/images/loading.gif"/>\
                 </span>\
@@ -168,7 +170,7 @@ hqDefine('style/js/components/inline_edit.js', function() {
                     </button>\
                 </div>\
             </div>\
-        </div>',
+        </div><span data-bind="template: {afterRender: afterRenderFunc}"></span>',
     };
 });
 
