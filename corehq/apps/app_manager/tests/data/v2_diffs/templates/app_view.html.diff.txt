@@ -354,7 +354,7 @@
 +
 +  <div class="appmanager-edit-title">
 +    <inline-edit-v2 params="
-+        value: '{{ app.name|escapejs }}',
++        value: '{{ app.name|html_name|escapejs }}',
 +        containerClass: 'h3 app-title',
 +        url: '{% url "edit_app_attr" domain app.id 'name' %}',
 +        placeholder: '{% trans "Untitled App"|escapejs %}',
@@ -367,7 +367,7 @@
 +
 +  <div class="appmanager-edit-description">
 +    <inline-edit-v2 params="
-+        value: '{{ app.short_comment|escapejs }}',
++        value: '{{ app.short_comment|html_name|escapejs }}',
 +        url: '{% url "edit_app_attr" domain app.id 'comment' %}',
 +        placeholder: '{% trans "Enter app description here"|escapejs %}',
 +        saveValueName: 'comment',
