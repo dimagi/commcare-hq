@@ -59,7 +59,7 @@ def catch_signal(sender, **kwargs):
     table_pillow_map = {}
     for config in get_fluff_pillow_configs():
         pillow = config.get_instance()
-        for processor in pillow._processors:
+        for processor in pillow.processors:
             doc = processor.indicator_class()
             if doc.save_direct_to_sql:
                 table_pillow_map[doc._table.name] = {
