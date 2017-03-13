@@ -953,6 +953,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 });
                 this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
                 this.persistentCaseContextXML = ko.observable(spec[this.columnKey].persistent_case_context_xml|| 'case_name');
+                this.printTemplate = ko.observable(spec[this.columnKey].print_template);
                 this.customVariablesViewModel = {
                     enabled: COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
                     xml: ko.observable(spec[this.columnKey].custom_variables || ""),
@@ -1048,6 +1049,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     that.saveButton.fire('change');
                 });
                 this.enableTilePullDown.subscribe(function(){
+                    that.saveButton.fire('change');
+                });
+                this.printTemplate.subscribe(function(){
                     that.saveButton.fire('change');
                 });
                 this.columns.subscribe(function () {
@@ -1147,6 +1151,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     data.persistentCaseContextXML = this.persistentCaseContextXML();
                     data.persistTileOnForms = this.persistTileOnForms();
                     data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
+                    data.printTemplate = this.printTemplate();
 
                     if (this.containsParentConfiguration) {
                         var parentSelect;

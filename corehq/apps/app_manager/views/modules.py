@@ -743,6 +743,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     pull_down_tile = params.get("enableTilePullDown", None)
+    print_template = params.get('printTemplate', None)
     case_list_lookup = params.get("case_list_lookup", None)
     search_properties = params.get("search_properties")
     custom_variables = {
@@ -784,6 +785,8 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         detail.long.columns = map(DetailColumn.from_json, long)
         if tabs is not None:
             detail.long.tabs = map(DetailTab.wrap, tabs)
+        if print_template is not None:
+            detail.long.print_template = print_template
     if filter != ():
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
