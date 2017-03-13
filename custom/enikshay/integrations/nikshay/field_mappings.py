@@ -77,3 +77,10 @@ dcexpulmonory = {
     'pulmonary': 'N',
     'extra_pulmonary': 'Y',
 }
+
+treatment_outcome = {
+    'cured': '1',
+    'treatment_complete': '2',
+    'died': '3',
+    'failure': '4',
+}
