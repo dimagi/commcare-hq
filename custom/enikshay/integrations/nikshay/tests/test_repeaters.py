@@ -413,9 +413,9 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload["HIVStatus"], "Unknown")
         self.assertEqual(payload["HIVTestDate"], "01/01/2016")
 
-        self.assertEqual(payload["CPTDeliverDate"], "01/01/1990")
-        self.assertEqual(payload["InitiatedDate"], "01/01/1990")
-        self.assertEqual(payload["ARTCentreDate"], "01/01/1990")
+        self.assertEqual(payload["CPTDeliverDate"], "01/01/1900")
+        self.assertEqual(payload["InitiatedDate"], "01/01/1900")
+        self.assertEqual(payload["ARTCentreDate"], "01/01/1900")
 
         update_case(
             self.domain, self.person_id,
@@ -430,8 +430,8 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         )
 
         self.assertEqual(payload["CPTDeliverDate"], "02/01/2016")
-        self.assertEqual(payload["InitiatedDate"], "01/01/1990")
-        self.assertEqual(payload["ARTCentreDate"], "01/01/1990")
+        self.assertEqual(payload["InitiatedDate"], "01/01/1900")
+        self.assertEqual(payload["ARTCentreDate"], "01/01/1900")
 
         update_case(
             self.domain, self.person_id,

@@ -37,7 +37,7 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
 from custom.enikshay.case_utils import update_case
 
 ENIKSHAY_ID = 8
-NIKSHAY_NULL_DATE = '1990-01-01'
+NIKSHAY_NULL_DATE = '1900-01-01'
 
 
 @RegisterGenerator(NikshayRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
