@@ -375,7 +375,7 @@ class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, Nikshay
             self.domain,
             self.episode_id,
             {
-                TREATMENT_OUTCOME: "treatment_complee",
+                TREATMENT_OUTCOME: "treatment_complete",
                 TREATMENT_OUTCOME_DATE: "1990-01-01",
                 'nikshay_id': self.person_id,
             }
@@ -391,3 +391,18 @@ class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload['OutcomeDate'], "1990-01-01")
         self.assertEqual(payload['MO'], "Gandalf The Grey")
         self.assertEqual(payload['MORemark'], 'None Collected in eNikshay')
+        self.assertEqual(payload['Outcome'], '2')
+
+        update_case(
+            self.domain,
+            self.episode_id,
+            {
+                TREATMENT_OUTCOME: "regimen_changed",
+
+            }
+        )
+        episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        payload = (json.loads(
+            NikshayTreatmentOutcomePayload(None).get_payload(None, episode_case))
+        )
+        self.assertEqual(payload['Outcome'], '7')

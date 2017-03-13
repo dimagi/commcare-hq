@@ -137,8 +137,8 @@ class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
         base_properties.update({
             "PatientID": episode_case_properties.get("nikshay_id"),
             "OutcomeDate": episode_case_properties.get(TREATMENT_OUTCOME_DATE),
-            "Outcome": treatment_outcome.get(TREATMENT_OUTCOME, '0'),
-            "MO": "{} {}".format(
+            "Outcome": treatment_outcome.get(episode_case_properties.get(TREATMENT_OUTCOME)),
+            "MO": u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME),
                 episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME),
             ),
