@@ -10,9 +10,14 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_LAST_NAME,
     TREATMENT_SUPPORTER_PHONE,
     TREATMENT_START_DATE,
+    TREATMENT_OUTCOME,
+    TREATMENT_OUTCOME_DATE,
 )
 from custom.enikshay.case_utils import get_person_case_from_episode, get_person_locations
-from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
+from custom.enikshay.integrations.nikshay.repeaters import (
+    NikshayRegisterPatientRepeater,
+    NikshayTreatmentOutcomeRepeater,
+)
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.exceptions import NikshayLocationNotFound
 from custom.enikshay.integrations.nikshay.field_mappings import (
@@ -24,6 +29,7 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     disease_classification,
     dcexpulmonory,
     dcpulmonory,
+    treatment_outcome,
 )
 from custom.enikshay.case_utils import update_case
 
@@ -114,6 +120,39 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
             )
         else:
             _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
+
+
+@RegisterGenerator(NikshayTreatmentOutcomeRepeater, 'case_json', 'JSON', is_default=True)
+class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
+
+    def get_payload(self, repeat_record, episode_case):
+        """
+        https://docs.google.com/document/d/1yUWf3ynHRODyVVmMrhv5fDhaK_ufZSY7y0h9ke5rBxU/edit#heading=h.6zwqb0ms7iz9
+        """
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+        episode_case_properties = episode_case.dynamic_case_properties()
+        base_properties = self._base_properties(repeat_record, person_case)
+        base_properties.update({
+            "PatientID": episode_case_properties.get("nikshay_id"),
+            "OutcomeDate": episode_case_properties.get(TREATMENT_OUTCOME_DATE),
+            "Outcome": treatment_outcome.get(TREATMENT_OUTCOME, '0'),
+            "MO": "{} {}".format(
+                episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME),
+                episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME),
+            ),
+            "MORemark": "None Collected in eNikshay",
+        })
+        return base_properties
+
+    def handle_success(self, response, payload_doc, repeat_record):
+        update_case(payload_doc.domain, payload_doc.case_id, {
+            "treatment_outcome_nikshay_registered": "true",
+            "treatment_outcome_nikshay_error": "",
+        })
+
+    def handle_failure(self, response, payload_doc, repeat_record):
+        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
+                            "treatment_outcome_nikshay_registered", "treatment_outcome_nikshay_error")
 
 
 def _get_nikshay_id_from_response(response):
