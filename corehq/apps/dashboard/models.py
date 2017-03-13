@@ -214,7 +214,7 @@ class DatadogContext(BaseTileContextProcessor):
                 'metric_query': "sum:commcare.xform_submissions.201{environment:production}.as_rate()",
                 'graph_def': json.dumps({
                     "requests": [{
-                        "q": "sum:commcare.xform_submissions.201{{{}}}.as_count()".format(tags),
+                        "q": "sum:commcare.xform_submissions.count{{{}}}.as_count()".format(tags),
                         "type": "bars",
                         "conditional_formats": [],
                         "aggregator": "avg"
