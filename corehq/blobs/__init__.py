@@ -6,15 +6,17 @@ DEFAULT_BUCKET = "_default"
 _db = []  # singleton/global, stack for tests to push temporary dbs
 
 
-def get_blob_db():
+def get_blob_db(django_settings=None):
     if not _db:
-        from django.conf import settings
-        db = _get_s3_db(settings)
+        if not django_settings:
+            from django.conf import settings
+            django_settings = settings
+        db = _get_s3_db(django_settings)
         if db is None:
-            db = _get_fs_db(settings)
-        elif getattr(settings, "BLOB_DB_MIGRATING_FROM_FS_TO_S3", False):
+            db = _get_fs_db(django_settings)
+        elif getattr(django_settings, "BLOB_DB_MIGRATING_FROM_FS_TO_S3", False):
             from .migratingdb import MigratingBlobDB
-            db = MigratingBlobDB(db, _get_fs_db(settings))
+            db = MigratingBlobDB(db, _get_fs_db(django_settings))
         _db.append(db)
     return _db[-1]
 
