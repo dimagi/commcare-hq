@@ -211,6 +211,13 @@ def _get_default_tile_configurations():
             help_text=_('Build, update, and deploy applications'),
         ),
         TileConfiguration(
+            title=_('Form Submissions'),
+            slug='graph',
+            icon='fcc fcc-reports',
+            context_processor_class=DatadogContext,
+            help_text=_("Form submissions for this domain over the last 7 days"),
+        ),
+        TileConfiguration(
             title=_('Reports'),
             slug='reports',
             icon='fcc fcc-reports',
@@ -293,12 +300,5 @@ def _get_default_tile_configurations():
             context_processor_class=IconContext,
             url='http://help.commcarehq.org/',
             help_text=_("Visit CommCare's knowledge base"),
-        ),
-        TileConfiguration(
-            title=_('Form Submissions'),
-            slug='graph',
-            icon='fcc fcc-reports',
-            context_processor_class=DatadogContext,
-            help_text=_("Form submissions for this domain over the last 7 days"),
         ),
     ]
