@@ -36,6 +36,12 @@ class TestReports(IntraHealthTestCase):
                 'IntraHealthFormFluffPillow'
             )
 
+    @classmethod
+    def tearDownClass(cls):
+        with cls.engine.begin() as connection:
+            cls.taux_table.drop(connection, checkfirst=True)
+        super(TestReports, cls).tearDownClass()
+
     def test_disp_des_products_report(self):
         disp_des = DispDesProducts(config=dict(
             domain=TEST_DOMAIN,
