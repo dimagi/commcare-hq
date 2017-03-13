@@ -489,6 +489,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ShouldSyncLocationFixturesTest, cls).setUpClass()
         delete_all_users()
         cls.domain = "Erebor"
         cls.domain_obj = create_domain(cls.domain)
@@ -506,6 +507,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
+        super(ShouldSyncLocationFixturesTest, cls).tearDownClass()
 
     def test_should_sync_locations_change_location_type(self):
         """

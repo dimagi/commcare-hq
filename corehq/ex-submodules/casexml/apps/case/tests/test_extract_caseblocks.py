@@ -116,12 +116,12 @@ class TestParsingExtractCaseBlock(TestCase, TestFileMixin):
         """
         xml_data = self.get_xml('create')
         final_xml = self._formatXForm(CREATE_XFORM_ID, xml_data, {})
-        response, form, cases = submit_form_locally(
+        result = submit_form_locally(
             final_xml,
             TEST_DOMAIN_NAME,
             attachments={},
             last_sync_token=None,
             received_on=None
         )
-        xform = FormAccessors(TEST_DOMAIN_NAME).get_form(form.get_id)
+        xform = FormAccessors(TEST_DOMAIN_NAME).get_form(result.xform.get_id)
         extract_case_blocks(xform.form_data)

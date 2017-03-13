@@ -333,6 +333,7 @@
                         <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
                             {% crispy copy_app_form %}
                         </form>
+                        {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
                         {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
                             <h3>Export compressed application</h3>
                             <form action="{% url "gzip_app" domain app.id %}" method="POST">

@@ -882,16 +882,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return None
 
     @staticmethod
-    def get_case_types_for_domain(domain):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_type FROM get_case_types_for_domain(%s)',
-                [domain]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return {result.case_type for result in results}
-
-    @staticmethod
     def soft_undelete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
 

@@ -263,6 +263,7 @@
                 </div>
             </fieldset>
         </div>
+        {{ request|toggle_tag_info:"CUSTOM_PROPERTIES" }}
         {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
         <fieldset>
             <legend>
