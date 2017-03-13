@@ -52,7 +52,7 @@ class TestFluffs(IntraHealthTestCase):
         with real_pillow_settings():
             management.call_command(
                 'ptop_reindexer_fluff',
-                'IntraHealthFormFluffPillow',
+                'TauxDeSatisfactionFluffPillow',
             )
 
         query = sqlalchemy.select(
@@ -99,7 +99,7 @@ class TestFluffs(IntraHealthTestCase):
         with real_pillow_settings():
             management.call_command(
                 'ptop_reindexer_fluff',
-                'IntraHealthFormFluffPillow',
+                'CouvertureFluffPillow',
             )
 
         query = sqlalchemy.select(

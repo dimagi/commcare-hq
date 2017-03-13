@@ -55,6 +55,13 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "CaseSearchToElasticsearchPillow"
     },
+    "CouvertureFluffPillow": {
+        "advertised_name": "CouvertureFluffPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "fluff.CouvertureFluffPillow.testhq",
+        "full_class_name": "custom.intrahealth.models.CouvertureFluffPillow",
+        "name": "CouvertureFluffPillow"
+    },
     "DefaultChangeFeedPillow": {
         "advertised_name": "DefaultChangeFeedPillow",
         "change_feed_type": "CouchChangeFeed",
@@ -97,12 +104,12 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "GroupToUserPillow"
     },
-    "IntraHealthFormFluffPillow": {
-        "advertised_name": "IntraHealthFormFluffPillow",
+    "IntraHealthFluffPillow": {
+        "advertised_name": "IntraHealthFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.IntraHealthFormFluffPillow.testhq",
-        "full_class_name": "custom.intrahealth.models.IntraHealthFormFluffPillow",
-        "name": "IntraHealthFormFluffPillow"
+        "checkpoint_id": "fluff.IntraHealthFluffPillow.testhq",
+        "full_class_name": "custom.intrahealth.models.IntraHealthFluffPillow",
+        "name": "IntraHealthFluffPillow"
     },
     "KafkaDomainPillow": {
         "advertised_name": "KafkaDomainPillow",
@@ -117,6 +124,13 @@
         "checkpoint_id": "LedgerToElasticsearchPillow-test_ledgers_2016-03-15",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "LedgerToElasticsearchPillow"
+    },
+    "LivraisonFluffPillow": {
+        "advertised_name": "LivraisonFluffPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "fluff.LivraisonFluffPillow.testhq",
+        "full_class_name": "custom.intrahealth.models.LivraisonFluffPillow",
+        "name": "LivraisonFluffPillow"
     },
     "M4ChangeFormFluffPillow": {
         "advertised_name": "M4ChangeFormFluffPillow",
@@ -146,6 +160,13 @@
         "full_class_name": "custom.opm.models.OpmUserFluffPillow",
         "name": "OpmUserFluffPillow"
     },
+    "RecapPassageFluffPillow": {
+        "advertised_name": "RecapPassageFluffPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "fluff.RecapPassageFluffPillow.testhq",
+        "full_class_name": "custom.intrahealth.models.RecapPassageFluffPillow",
+        "name": "RecapPassageFluffPillow"
+    },
     "RecouvrementFluffPillow": {
         "advertised_name": "RecouvrementFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
@@ -173,6 +194,20 @@
         "checkpoint_id": "SqlSMSPillow-test_smslogs_2017-02-09",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "SqlSMSPillow"
+    },
+    "TauxDeRuptureFluffPillow": {
+        "advertised_name": "TauxDeRuptureFluffPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "fluff.TauxDeRuptureFluffPillow.testhq",
+        "full_class_name": "custom.intrahealth.models.TauxDeRuptureFluffPillow",
+        "name": "TauxDeRuptureFluffPillow"
+    },
+    "TauxDeSatisfactionFluffPillow": {
+        "advertised_name": "TauxDeSatisfactionFluffPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "fluff.TauxDeSatisfactionFluffPillow.testhq",
+        "full_class_name": "custom.intrahealth.models.TauxDeSatisfactionFluffPillow",
+        "name": "TauxDeSatisfactionFluffPillow"
     },
     "UCLAPatientFluffPillow": {
         "advertised_name": "UCLAPatientFluffPillow",
