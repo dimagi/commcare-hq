@@ -28,7 +28,7 @@ class TestReports(IntraHealthTestCase):
                 xml, TEST_DOMAIN, auth_context=AuthContext(
                     user_id=cls.mobile_worker.get_id, domain=TEST_DOMAIN, authenticated=True
                 )
-            )[1]
+            ).xform
 
         with real_pillow_settings():
             management.call_command(

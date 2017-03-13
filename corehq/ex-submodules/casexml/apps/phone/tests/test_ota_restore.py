@@ -141,7 +141,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
 
         # implicit length assertion
-        _, _, [newcase] = submit_form_locally(xml_data, domain=self.project.name)
+        result = submit_form_locally(xml_data, domain=self.project.name)
 
         expected_case_block = """
         <case>
@@ -161,7 +161,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             self,
             expected_case_block,
             xml.get_case_xml(
-                newcase,
+                result.case,
                 [case_const.CASE_ACTION_CREATE, case_const.CASE_ACTION_UPDATE]
             )
         )
@@ -183,7 +183,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             self,
             expected_v2_case_block,
             xml.get_case_xml(
-                newcase,
+                result.case,
                 [case_const.CASE_ACTION_CREATE, case_const.CASE_ACTION_UPDATE],
                 version="2.0",
             ),
@@ -292,7 +292,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
     def testRestoreAttributes(self):
         xml_data = self.get_xml('attributes')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
-        _, _, [newcase] = submit_form_locally(xml_data, domain=self.project.name)
+        newcase = submit_form_locally(xml_data, domain=self.project.name).case
 
         self.assertTrue(isinstance(newcase.adate, dict))
         self.assertEqual(date(2012, 02, 01), newcase.adate["#text"])

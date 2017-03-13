@@ -55,7 +55,7 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=
     )
 
     domain = domain or 'test-domain'
-    _, xform, [case] = submit_form_locally(updated_xml, domain=domain)
+    _, xform, [case], _ = submit_form_locally(updated_xml, domain=domain)
     test_class.assertLessEqual(starttime, case.server_modified_on)
     test_class.assertGreaterEqual(datetime.utcnow(), case.server_modified_on)
     test_class.assertEqual(case_id, case.case_id)
