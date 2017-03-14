@@ -179,22 +179,21 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
 
 
 @task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
-def save_document(indicator_config_id, document, from_pillow):
-    error_id = None
-    ten_minutes_from_now = datetime.utcnow() + timedelta(minutes=10)
-    error = PillowError.get_or_create(document, from_pillow, date_next=ten_minutes_from_now)
+def save_document(indicator_config_ids, doc, from_pillow_id):
+    error = PillowError.objects.get(doc_id=doc['_id'], pillow=from_pillow_id)
     try:
-        config = _get_config_by_id(indicator_config_id)
-        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-        adapter.best_effort_save(document)
+        for config_id in indicator_config_ids:
+            config = _get_config_by_id(config_id)
+            adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+            adapter.best_effort_save(doc)
     except Exception as exception:
         error.add_attempt(exception, sys.exc_info()[2])
         error.save()
         error_id = error.id
         pillow_logging.exception(
             "[%s] Error on change: %s, %s. Logged as: %s" % (
-                from_pillow.get_name(),
-                document['id'],
+                from_pillow_id,
+                doc['_id'],
                 exception,
                 error_id
             )
