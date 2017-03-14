@@ -317,22 +317,24 @@ def copy_app(request, domain):
                 for slug in data['toggles'].split(","):
                     set_toggle(slug, domain, True, namespace=toggles.NAMESPACE_DOMAIN)
             extra_properties = {'name': data['name']}
-            if data.get('linked'):
+            linked = data.get('linked')
+            if linked:
                 extra_properties['master'] = app_id
                 extra_properties['doc_type'] = 'LinkedApplication'
                 if domain not in app.linked_whitelist:
                     app.linked_whitelist.append(domain)
                     app.save()
             app_copy = import_app_util(app_id_or_source, domain, extra_properties)
-            mobile_ucrs = False
-            for module in app_copy.modules:
-                if isinstance(module, ReportModule):
-                    mobile_ucrs = True
-                    break
-            if mobile_ucrs:
-                messages.error(request, _('This linked application uses mobile UCRs '
-                                          'which are currently not supported. For this application '
-                                          'to function correctly, you will need to remove those modules.'))
+            if linked:
+                mobile_ucrs = False
+                for module in app_copy.modules:
+                    if isinstance(module, ReportModule):
+                        mobile_ucrs = True
+                        break
+                if mobile_ucrs:
+                    messages.error(request, _('This linked application uses mobile UCRs '
+                                              'which are currently not supported. For this application '
+                                              'to function correctly, you will need to remove those modules.'))
             return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
         return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
