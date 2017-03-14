@@ -772,7 +772,14 @@ class ConfigureNewReportBase(forms.Form):
             ))
         )
 
+    def _validate_source(self):
+        if self.source_type == "form":
+            return self.source_form.validate_form()
+
     def _build_data_source(self):
+        try:
+            self._validate_source()
+        except
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             # The uuid gets truncated, so it's not really universally unique.
