@@ -319,18 +319,22 @@ class LSAggregatePerformanceIndicator(LSIndicator):
         )
 
     @property
+    @memoized
     def visits_fixture(self):
         return self.get_report_fixture(HOME_VISIT_REPORT_ID)
 
     @property
+    @memoized
     def thr_fixture(self):
         return self.get_report_fixture(THR_REPORT_ID)
 
     @property
+    @memoized
     def weighed_fixture(self):
         return self.get_report_fixture(CHILDREN_WEIGHED_REPORT_ID)
 
     @property
+    @memoized
     def days_open_fixture(self):
         return self.get_report_fixture(DAYS_AWC_OPEN_REPORT_ID)
 
