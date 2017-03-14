@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-import datetime
+from datetime import datetime, timedelta
+import sys
 
 from celery.task import task
 from couchdbkit import ResourceConflict
@@ -19,7 +20,8 @@ from corehq.util.context_managers import notify_someone
 from corehq.util.couch import get_document_or_not_found
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
-from pillowtop.pillow.interface import handle_pillow_error
+from pillowtop.logger import pillow_logging
+from pillow_retry.models import PillowError
 
 
 def _get_config_by_id(indicator_config_id):
@@ -54,7 +56,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None):
         if not id_is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.
-            config.meta.build.initiated = datetime.datetime.utcnow()
+            config.meta.build.initiated = datetime.utcnow()
             config.meta.build.finished = False
             config.save()
 
@@ -71,7 +73,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         adapter = get_indicator_adapter(config, can_handle_laboratory=True)
         if not id_is_static(indicator_config_id):
-            config.meta.build.initiated_in_place = datetime.datetime.utcnow()
+            config.meta.build.initiated_in_place = datetime.utcnow()
             config.meta.build.finished_in_place = False
             config.save()
 
@@ -176,11 +178,26 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
     return objects
 
 
-@task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True, retry=True)
+@task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def save_document(indicator_config_id, document, from_pillow):
+    error_id = None
+    ten_minutes_from_now = datetime.utcnow() + timedelta(minutes=10)
+    error = PillowError.get_or_create(document, from_pillow, date_next=ten_minutes_from_now)
     try:
         config = _get_config_by_id(indicator_config_id)
         adapter = get_indicator_adapter(config, can_handle_laboratory=True)
         adapter.best_effort_save(document)
-    except Exception as e:
-        handle_pillow_error(from_pillow, document, e)
+    except Exception as exception:
+        error.add_attempt(exception, sys.exc_info()[2])
+        error.save()
+        error_id = error.id
+        pillow_logging.exception(
+            "[%s] Error on change: %s, %s. Logged as: %s" % (
+                from_pillow.get_name(),
+                document['id'],
+                exception,
+                error_id
+            )
+        )
+    else:
+        error.delete()
