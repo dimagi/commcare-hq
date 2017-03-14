@@ -14,7 +14,7 @@ def timeit(method):
         seconds = (te - ts).total_seconds()
         if seconds > 0.1:
             indicator = args[0]
-            print('{} {} ({}, {}) {:.2} sec'.format(indicator.column.id, method.__name__, args, kw, seconds))
+            print('{} {} {:.2} sec'.format(indicator.column.id, method.__name__, seconds))
         return result
     return timed
 
