@@ -865,7 +865,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 [domain, case_ids]
             )
             results = fetchall_as_namedtuple(cursor)
-            return dict((result.case_id, result.server_modified_on) for result in results)
+            return {result.case_id: result.server_modified_on for result in results}
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
