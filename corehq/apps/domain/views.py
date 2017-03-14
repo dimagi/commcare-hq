@@ -45,7 +45,7 @@ from corehq.apps.case_search.models import (
     enable_case_search,
     disable_case_search,
 )
-from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
+from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps, get_dhis2_logs
 from corehq.apps.dhis2.forms import (
     Dhis2ConnectionForm,
     DataSetMapForm,
@@ -3179,6 +3179,27 @@ class DataSetMapView(BaseAdminProjectSettingsView):
             'dataset_map_form': self.dataset_map_form,
             'datavalue_map_formset': self.datavalue_map_formset,
             'datavalue_map_formset_helper': DataValueMapFormSetHelper(),
+        }
+
+
+class Dhis2LogsView(BaseAdminProjectSettingsView):
+    urlname = 'dhis2_log_view'
+    page_title = ugettext_lazy("DHIS2 Logs")
+    template_name = 'domain/admin/dhis2/logs.html'
+
+    # TODO: pagination.
+    # TODO: list page & detail page.
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
+            raise Http404()
+        return super(Dhis2LogsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'logs': get_dhis2_logs(self.request.domain)
         }
 
 

@@ -25,3 +25,16 @@ def get_dataset_maps(domain_name):
         reduce=False,
     ).all()
     return [DataSetMap.wrap(result['doc']) for result in results]
+
+
+@quickcache(['domain_name'])
+def get_dhis2_logs(domain_name):
+    from corehq.apps.dhis2.models import Dhis2Log
+
+    results = Dhis2Log.get_db().view(
+        'by_domain_doc_type_date/view',
+        key=[domain_name, 'Dhis2Log', None],
+        include_docs=True,
+        reduce=False,
+    ).all()
+    return [Dhis2Log.wrap(result['doc']) for result in results]

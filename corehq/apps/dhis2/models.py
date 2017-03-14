@@ -7,7 +7,14 @@ import requests
 
 from corehq.apps.dhis2.utils import get_ucr_data
 from corehq.util.quickcache import quickcache
-from dimagi.ext.couchdbkit import Document, StringProperty, DocumentSchema, SchemaListProperty, IntegerProperty
+from dimagi.ext.couchdbkit import (
+    DateTimeProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    SchemaListProperty,
+    StringProperty,
+)
 
 
 class Dhis2Connection(Document):
@@ -109,6 +116,18 @@ class DataSetMap(Document):
         if self.complete_date:
             dataset['completeDate'] = self.complete_date
         return dataset
+
+
+class Dhis2Log(Document):
+    """
+    Store requests and responses to analyse errors and keep an audit trail
+    """
+    domain = StringProperty()
+    timestamp = DateTimeProperty()
+    request_url = StringProperty()
+    request_body = StringProperty()
+    response_status = IntegerProperty()
+    response_body = StringProperty()
 
 
 class JsonApiError(Exception):

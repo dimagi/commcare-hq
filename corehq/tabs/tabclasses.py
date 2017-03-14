@@ -1458,6 +1458,7 @@ def _get_administration_section(domain):
         TransferDomainView,
         Dhis2ConnectionView,
         DataSetMapView,
+        Dhis2LogsView,
     )
 
     administration = []
@@ -1518,6 +1519,9 @@ def _get_administration_section(domain):
         }, {
             'title': _(DataSetMapView.page_title),
             'url': reverse(DataSetMapView.urlname, args=[domain])
+        }, {
+            'title': _(Dhis2LogsView.page_title),
+            'url': reverse(Dhis2LogsView.urlname, args=[domain])
         }])
 
     return administration
