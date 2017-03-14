@@ -156,7 +156,7 @@
                     return $('#hq-navigation').outerHeight();
                 }
             },
-            csrftoken: $.cookie('csrftoken')
+            csrftoken: $("#csrfTokenContainer").val();
         };
 
         var CKEDITOR_BASEPATH = "{% static vellum_ckeditor_path %}";
