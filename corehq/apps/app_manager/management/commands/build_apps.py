@@ -38,7 +38,6 @@ def record_performance_stats(filepath, slug):
 
 
 class Command(BaseCommand):
-    args = '<path_to_dir> <build-slug>'
     help = """
         Pass in a path to a directory (dir, below) with the following layout:
         dir/
@@ -48,9 +47,11 @@ class Command(BaseCommand):
                 ...
     """
 
-    def handle(self, *args, **options):
-        path, build_slug = args
+    def add_arguments(self, parser):
+        parser.add_argument('path')
+        parser.add_argument('build_slug')
 
+    def handle(self, path, build_slug, **options):
         app_slugs = []
         perfpath = os.path.join(path, '{}-performance.txt'.format(build_slug))
         if os.path.exists(perfpath):

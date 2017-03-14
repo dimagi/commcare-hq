@@ -13,14 +13,21 @@ class Command(BaseCommand):
     help = ("Restores full ES cluster or specific index from snapshot. "
             "Index arguments are optional and it will default to a full "
             "cluster restore if none are specified")
-    args = "days_ago <index_1> <index_2> ..."
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'days_ago',
+        )
+        parser.add_argument(
+            'indices',
+            metavar='index',
+            nargs='*',
+        )
+
+    def handle(self, days_ago, indices, **options):
         print("Restoring ES indices from snapshot")
-        if len(args) < 1:
-            raise CommandError('Usage is restore_es_snapshot %s' % self.args)
-        date = self.get_date(args)
-        indices = self.get_indices(args)
+        date = self.get_date(days_ago)
+        indices = self.get_indices(indices)
         confirm = raw_input("This command will close the following es indices to reads and writes "
                             "for its duration: {}. Are you sure "
                             "you wish to continue? (y/n)".format(indices))
@@ -38,18 +45,17 @@ class Command(BaseCommand):
         self.rewind_pillows(date)
 
     @staticmethod
-    def get_date(args):
-        days_ago = int(args[0])
+    def get_date(days_ago):
+        days_ago = int(days_ago)
         restore_date = (date.today() - timedelta(days=days_ago))
         return restore_date
 
     @staticmethod
-    def get_indices(args):
-        if len(args) > 1:
-            indices = ','.join(args[1:])
+    def get_indices(indices):
+        if indices:
+            return ','.join(indices)
         else:
-            indices = '_all'
-        return indices
+            return '_all'
 
     @staticmethod
     def get_client_and_close_indices(es, indices):
