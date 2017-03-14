@@ -890,6 +890,8 @@ def get_form_data(domain, app):
             'id': module.unique_id,
             'name': module.name,
             'short_comment': module.short_comment,
+            'module_type': module.module_type,
+            'is_surveys': module.is_surveys,
         }
 
         for form in module.get_forms():
@@ -897,6 +899,7 @@ def get_form_data(domain, app):
                 'id': form.unique_id,
                 'name': form.name,
                 'short_comment': form.short_comment,
+                'action_type': form.get_action_type(),
             }
             try:
                 questions = form.get_questions(
