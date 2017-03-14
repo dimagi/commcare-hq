@@ -148,7 +148,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
-    # the only reason this is a class is to avoid exposing _processor
+    # the only reason this is a class is to avoid exposing processors
     # for tests to be able to call bootstrap on it.
     # we could easily remove the class and push all the stuff in __init__ to
     # get_kafka_ucr_pillow below if we wanted.
@@ -171,9 +171,9 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
             change_processed_event_handler=event_handler
         )
         # set by the superclass constructor
-        assert self._processors is not None
-        assert len(self._processors) == 1
-        self._processor = self._processors[0]
+        assert self.processors is not None
+        assert len(self.processors) == 1
+        self._processor = self.processors[0]
         assert self._processor.bootstrapped is not None
 
     def bootstrap(self, configs=None):
