@@ -18,10 +18,6 @@ class TestReports(IntraHealthTestCase):
     @classmethod
     def setUpClass(cls):
         super(TestReports, cls).setUpClass()
-        cls.taux_table = TauxDeSatisfactionFluff._table
-        with cls.engine.begin() as connection:
-            cls.taux_table.create(connection, checkfirst=True)
-
         with open(os.path.join(DATAPATH, 'taux.xml')) as f:
             xml = f.read()
             cls.taux = submit_form_locally(
@@ -35,12 +31,6 @@ class TestReports(IntraHealthTestCase):
                 'ptop_reindexer_fluff',
                 'IntraHealthFormFluffPillow'
             )
-
-    @classmethod
-    def tearDownClass(cls):
-        with cls.engine.begin() as connection:
-            cls.taux_table.drop(connection, checkfirst=True)
-        super(TestReports, cls).tearDownClass()
 
     def test_disp_des_products_report(self):
         disp_des = DispDesProducts(config=dict(
