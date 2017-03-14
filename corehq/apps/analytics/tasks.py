@@ -6,7 +6,6 @@ import tinys3
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
-from corehq.apps.users.models import WebUser
 from corehq.util.dates import unix_time
 from corehq.apps.analytics.utils import get_instance_string
 from datetime import datetime, date, timedelta
