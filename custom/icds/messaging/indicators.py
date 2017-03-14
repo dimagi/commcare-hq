@@ -24,6 +24,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_last_submission_time_for_users,
     get_last_form_submissions_by_user,
 )
+from corehq.util.quickcache import quickcache
 from custom.icds.const import (
     CHILDREN_WEIGHED_REPORT_ID,
     DAYS_AWC_OPEN_REPORT_ID,
@@ -34,6 +35,36 @@ from custom.icds.const import (
 )
 
 DEFAULT_LANGUAGE = 'hin'
+
+REPORT_IDS = [
+    HOME_VISIT_REPORT_ID,
+    THR_REPORT_ID,
+    CHILDREN_WEIGHED_REPORT_ID,
+    DAYS_AWC_OPEN_REPORT_ID,
+]
+
+
+@quickcache(['domain'], timeout=4 * 60 * 60, memoize_timeout=4 * 60 * 60)
+def get_report_configs(domain):
+    app = get_app(domain, SUPERVISOR_APP_ID)
+    return {
+        report_config.report_id: report_config
+        for module in app.modules if isinstance(module, ReportModule)
+        for report_config in module.report_configs
+        if report_config.report_id in REPORT_IDS
+    }
+
+
+@quickcache(['domain', 'report_id', 'ota_user.user_id'], timeout=12 * 60 * 60)
+def get_report_fixture_for_user(domain, report_id, ota_user):
+    """
+    :param domain: the domain
+    :param report_id: the index to the result from get_report_configs()
+    :param ota_user: the OTARestoreCommCareUser for which to get the report fixture
+    """
+    return ReportFixturesProvider.report_config_to_fixture(
+        get_report_configs(domain)[report_id], ota_user
+    )
 
 
 class IndicatorError(Exception):
@@ -134,6 +165,11 @@ class LSIndicator(SMSIndicator):
 class AWWAggregatePerformanceIndicator(AWWIndicator):
     template = 'aww_aggregate_performance.txt'
 
+    @property
+    @memoized
+    def ls_agg_perf(self):
+        return LSAggregatePerformanceIndicator(self.domain, self.supervisor)
+
     def get_value_from_fixture(self, fixture, attribute):
         xpath = './rows/row[@is_total_row="False"]'
         rows = fixture.findall(xpath)
@@ -151,7 +187,7 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
         raise IndicatorError("AWC {} not found in the restore".format(location_name))
 
     def get_messages(self, language_code=None):
-        agg_perf = LSAggregatePerformanceIndicator(self.domain, self.supervisor)
+        agg_perf = self.ls_agg_perf
 
         visits = self.get_value_from_fixture(agg_perf.visits_fixture, 'count')
         thr_gte_21 = self.get_value_from_fixture(agg_perf.thr_fixture, 'open_ccs_thr_gte_21')
@@ -296,27 +332,13 @@ class LSAggregatePerformanceIndicator(LSIndicator):
     def restore_user(self):
         return OTARestoreCommCareUser(self.domain, self.user)
 
-    @property
-    @memoized
-    def report_configs(self):
-        report_ids = [
-            HOME_VISIT_REPORT_ID,
-            THR_REPORT_ID,
-            CHILDREN_WEIGHED_REPORT_ID,
-            DAYS_AWC_OPEN_REPORT_ID,
-        ]
-        app = get_app(self.domain, SUPERVISOR_APP_ID)
-        return {
-            report_config.report_id: report_config
-            for module in app.modules if isinstance(module, ReportModule)
-            for report_config in module.report_configs
-            if report_config.report_id in report_ids
-        }
-
     def get_report_fixture(self, report_id):
-        return ReportFixturesProvider.report_config_to_fixture(
-            self.report_configs[report_id], self.restore_user
-        )
+        return get_report_fixture_for_user(self.domain, report_id, self.restore_user)
+
+    def clear_caches(self):
+        get_report_configs.clear(self.domain)
+        for report_id in REPORT_IDS:
+            get_report_fixture_for_user.clear(self.domain, report_id, self.restore_user)
 
     @property
     @memoized

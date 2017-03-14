@@ -37,6 +37,7 @@ class TestLSAggregatePerformanceIndicator(SimpleTestCase, TestXmlMixin):
         thr.return_value = ET.fromstring(self.get_xml('thr_fixture'))
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
         indicator = LSAggregatePerformanceIndicator('domain', 'user')
+        self.addCleanup(indicator.clear_caches)
         message = indicator.get_messages()[0]
         self.assertIn('Timely Home Visits - 22 / 269', message)
         self.assertIn('Received adequate THR / Due for THR - 19 / 34', message)
@@ -91,6 +92,7 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         thr.return_value = ET.fromstring(self.get_xml('thr_fixture'))
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
         indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
+        self.addCleanup(indicator.ls_agg_perf.clear_caches)
         message = indicator.get_messages()[0]
         self.assertIn('Home Visits - 6 / 65', message)
         self.assertIn('Received adequate THR / Due for THR - 1 / 2', message)
@@ -109,6 +111,7 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         thr.return_value = ET.fromstring(self.get_xml('thr_fixture'))
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
         indicator = AWWAggregatePerformanceIndicator(self.domain, aww3)
+        self.addCleanup(indicator.ls_agg_perf.clear_caches)
         with self.assertRaises(Exception) as e:
             indicator.get_messages()
         self.assertIn('AWC AWC3 not found in the restore', e.exception.message)
@@ -123,6 +126,7 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         thr.return_value = ET.fromstring(self.get_xml('thr_fixture'))
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
         indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
+        self.addCleanup(indicator.ls_agg_perf.clear_caches)
         with self.assertRaises(Exception) as e:
             indicator.get_messages()
         self.assertIn('Attribute awc_opened_count not found in restore for AWC AWC1', e.exception.message)
