@@ -93,7 +93,7 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
 {% endblock %}
 
 {% block page_content %}
-<div class="appmanager-content appmanager-content-animate-preview{% if not formdesigner %} appmanager-content-not-formdesigner{% endif %}"
+<div class="appmanager-content appmanager-content-transition-all{% if not formdesigner %} appmanager-settings-content {% endif %}"
      id="js-appmanager-body">
     {% if app %}
         {% if error %}

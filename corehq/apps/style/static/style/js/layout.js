@@ -4,7 +4,7 @@ var hqLayout = {};
 hqLayout.selector = {
     navigation: '#hq-navigation',
     content: '#hq-content',
-    appmanager: '#js-appmanager-body.appmanager-content-not-formdesigner',
+    appmanager: '#js-appmanager-body.appmanager-settings-content',
     footer: '#hq-footer',
     sidebar: '#hq-sidebar',
     breadcrumbs: '#hq-breadcrumbs',
