@@ -44,7 +44,6 @@ class Command(BaseCommand):
             help="Comment (used for if you deploy the application)",
         )
 
-
     def handle(self, path, app_id, **options):
         if options['deploy'] and not options['user']:
             raise CommandError('Deploy argument requires a user')

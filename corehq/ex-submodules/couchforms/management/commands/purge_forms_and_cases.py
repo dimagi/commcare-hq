@@ -159,6 +159,8 @@ def _print_final_debug_info(xform_ids, filtered_xform_ids, case_ids):
 
 
 def _notify_parsed_args(domain_name, app_id, version_number, test_run):
-    print('Received request for domain : %s with app_id : %s to soft delete data before version number %d' % \
-          (domain_name, app_id, version_number))
+    print(
+        'Received request for domain : %s with app_id : %s to soft delete data before version number %d'
+        % (domain_name, app_id, version_number)
+    )
     print('Test run : %s' % test_run)
