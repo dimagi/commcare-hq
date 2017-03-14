@@ -224,3 +224,8 @@ def IntraHealthFormFluffPillow(delete_filtered=False):
         kafka_topic=get_topic(get_doc_meta_object_from_document(XFormInstance().to_json())),
         delete_filtered=delete_filtered
     )
+
+
+# Remove these once they are out of the pillow retry queue
+CouvertureFluffPillow = CouvertureFluff.pillow()
+IntraHealthFluffPillow = IntraHealthFluff.pillow()
