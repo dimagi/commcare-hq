@@ -46,7 +46,7 @@ REPORT_IDS = [
 
 @quickcache(['domain'], timeout=4 * 60 * 60, memoize_timeout=4 * 60 * 60)
 def get_report_configs(domain):
-    app = get_app(domain, SUPERVISOR_APP_ID)
+    app = get_app(domain, SUPERVISOR_APP_ID, latest=True)
     return {
         report_config.report_id: report_config
         for module in app.modules if isinstance(module, ReportModule)
