@@ -1,4 +1,4 @@
-{% extends "style/base_section.html" %}
+{% extends 'style/base.html' %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
@@ -6,28 +6,68 @@
 {% load compress %}
 {% load djangular_tags %}
 
-{% block stylesheets %}
-{% if less_debug %}
-<link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'app_manager/less/summary.debug.less' %}" />
-{% else %}
-{% compress css %}
+{% block title %}{% trans "App Summary" %}{% endblock %}
+
+{% block page_breadcrumbs %}{% endblock %}
+
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+  {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
+  <link type="text/css" rel="stylesheet" media="screen" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
+  <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2.css' %}" />
+  <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
+  {% endcompress %}
+
+  {% if less_debug %}
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'app_manager/less/summary.less' %}" />
-{% endcompress %}
-{% endif %}
+          href="{% static 'app_manager/less/font-workflow.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/new_appmanager.debug.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/summary.debug.less' %}" />
+    {% else %}
+    {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/font-workflow.less' %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/new_appmanager.less' %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/preview_app.less' %}"/>
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/summary.less' %}" />
+    {% endcompress %}
+  {% endif %}
+
 {% endblock stylesheets %}
 
-{% block js %}
+{% block js %}{{ block.super }}
     <script src="{% static 'app_manager/js/app_summary.ng.js' %}"></script>
 {% endblock js %}
 
 {% block js-inline %} {{ block.super }}
     <script>
+        $(function () {
+          hqLayout.utils.setIsAppbuilderResizing(true);
+        });
         (function (angular, undefined) {
             'use strict';
 
@@ -49,16 +89,19 @@
                 caseDownloadURL: '{% url 'download_case_summary' domain app_id %}',
                 formDownloadURL: '{% url 'download_form_summary' domain app_id %}',
                 appDownloadURL: '{% url 'download_app_summary' domain app_id %}',
+                appSettingsURL: '{% url "app_settings" domain app_id %}',
+                appHomeURL: '{% url "view_app" domain app_id %}',
+                appName: '{{ app_name }}',
             });
 
             summaryApp.config(['$routeProvider', function($routeProvider) {
                 $routeProvider.
                     when('/forms', {
-                        templateUrl: '{% url 'ng_template' domain 'form_summary_view' %}',
+                        templateUrl: '{% url 'ng_template' domain 'form_summary_view_v2' %}',
                         controller: 'FormController'
                     }).
                     when('/cases', {
-                        templateUrl: '{% url 'ng_template' domain 'case_summary_view' %}',
+                        templateUrl: '{% url 'ng_template' domain 'case_summary_view_v2' %}',
                         controller: 'CaseController'
                     }).
                     otherwise({
@@ -70,16 +113,7 @@
 {% endblock %}
 
 {% block content %}
-<ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
-    <li><a href="{{ section.url }}"><strong>{{ section.page_name }}</strong></a></li>
-    {% for parent in current_page.parents %}
-        <li><a href="{{ parent.url }}">{{ parent.title }}</a></li>
-    {% endfor %}
-    <li class="active">{{ current_page.page_name }}</li>
-</ol>
-<div class="container-fluid" ng-app="summaryApp">
-    <div class="row">
-        <ng-view></ng-view>
+    <div ng-app="summaryApp">
+          <ng-view></ng-view>
     </div>
-</div>
 {% endblock content %}
