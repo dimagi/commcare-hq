@@ -9,7 +9,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from django.views.generic import View
 
 from corehq.apps.app_manager.exceptions import XFormException
-from corehq.apps.app_manager.util import get_app_manager_template
+from corehq.apps.app_manager.util import get_app_manager_template, get_form_data
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule, WORKFLOW_FORM
 from corehq.apps.app_manager.xform import VELLUM_TYPES
@@ -82,42 +82,7 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
 
     @allow_remote_invocation
     def get_form_data(self, in_data):
-        modules = []
-        errors = []
-        for module in self.app.get_modules():
-            forms = []
-            module_meta = {
-                'id': module.unique_id,
-                'name': module.name,
-                'short_comment': module.short_comment,
-            }
-
-            for form in module.get_forms():
-                form_meta = {
-                    'id': form.unique_id,
-                    'name': form.name,
-                    'short_comment': form.short_comment,
-                }
-                try:
-                    questions = form.get_questions(
-                        self.app.langs,
-                        include_triggers=True,
-                        include_groups=True,
-                        include_translations=True
-                    )
-                    form_meta['questions'] = [FormQuestionResponse(q).to_json() for q in questions]
-                except XFormException as e:
-                    form_meta['error'] = {
-                        'details': unicode(e),
-                        'edit_url': reverse('form_source', args=[self.domain, self.app_id, module.id, form.id])
-                    }
-                    form_meta['module'] = copy(module_meta)
-                    errors.append(form_meta)
-                else:
-                    forms.append(form_meta)
-
-            module_meta['forms'] = forms
-            modules.append(module_meta)
+        modules, errors = get_form_data(self.domain, self.app)
         return {
             'response': modules,
             'errors': errors,
