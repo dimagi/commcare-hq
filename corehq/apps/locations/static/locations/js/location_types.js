@@ -297,9 +297,17 @@ hqDefine('locations/js/location_types.js', function(){
 
         self.include_without_expanding_options = function(){
             if (self.expand_from() !== ROOT_LOCATION_ID){
-                var options = self.parents().reverse();
-                options.push(self);
-                return options;
+                var types_same_levels = self.view.types_by_index(self.view.loc_types()),
+                    levels_to_return = [];
+                for (var level in types_same_levels){
+                    // Only display a single child at each level
+                    var level_to_add = types_same_levels[level][0];
+                    levels_to_return.push(new LocationTypeModel({
+                        name: level_to_add.compiled_name(),
+                        pk: level_to_add.pk,
+                    }, false, self.view));
+                }
+                return levels_to_return;
             } else {
                 return [];
             }
