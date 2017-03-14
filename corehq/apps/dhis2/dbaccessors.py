@@ -20,7 +20,7 @@ def get_dataset_maps(domain_name):
 
     results = DataSetMap.get_db().view(
         'by_domain_doc_type_date/view',
-        key=[domain_name, 'DataValueMap', None],
+        key=[domain_name, 'DataSetMap', None],
         include_docs=True,
         reduce=False,
     ).all()
