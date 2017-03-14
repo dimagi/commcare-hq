@@ -165,11 +165,6 @@ class LSIndicator(SMSIndicator):
 class AWWAggregatePerformanceIndicator(AWWIndicator):
     template = 'aww_aggregate_performance.txt'
 
-    @property
-    @memoized
-    def ls_agg_perf(self):
-        return LSAggregatePerformanceIndicator(self.domain, self.supervisor)
-
     def get_value_from_fixture(self, fixture, attribute):
         xpath = './rows/row[@is_total_row="False"]'
         rows = fixture.findall(xpath)
@@ -187,7 +182,7 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
         raise IndicatorError("AWC {} not found in the restore".format(location_name))
 
     def get_messages(self, language_code=None):
-        agg_perf = self.ls_agg_perf
+        agg_perf = LSAggregatePerformanceIndicator(self.domain, self.supervisor)
 
         visits = self.get_value_from_fixture(agg_perf.visits_fixture, 'count')
         thr_gte_21 = self.get_value_from_fixture(agg_perf.thr_fixture, 'open_ccs_thr_gte_21')
