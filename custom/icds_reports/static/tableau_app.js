@@ -1,3 +1,5 @@
+/*global _ tableau */
+
 var viz = {},
     workbook = {},
     LOCATIONS_MAP = {
@@ -11,11 +13,140 @@ var viz = {},
 
 var tableauOptions = {};
 
-var initialLocationParams = [];
+function findLocationTypeCode(level) {
+    for (var key in LOCATIONS_MAP) {
+        if (LOCATIONS_MAP.hasOwnProperty(key)) {
+            var value = LOCATIONS_MAP[key];
+            if (value === level) {
+                return key;
+            }
+        }
+    }
+}
+
+function getLocationData() {
+    var locationKOContext = ko.dataFor($('#group_location_async')[0]);
+    return {
+        locations: locationKOContext.root().toPlainJS().children,
+        selected: locationKOContext.selected_locid(),
+    };
+}
+
+function resetFilters() {
+    var today = new Date();
+    var twoDigitMonth = ("0" + (today.getMonth() + 1)).slice(-2);
+
+    $('#report_filter_month').select2('val', twoDigitMonth);
+    $('#report_filter_year').select2('val', today.getFullYear());
+    $("#report_filter_caste").select2('val', 'All');
+    $("#report_filter_child_age_tranche").select2('val', 'All');
+    $("#report_filter_minority").select2('val', 'All');
+    $("#report_filter_disabled").select2('val', 'All');
+    $("#report_filter_resident").select2('val', 'All');
+    $("#report_filter_ccs_status").select2('val', 'All');
+    $("#report_filter_thr_beneficiary_type").select2('val', 'All');
+
+    var locationKOContext = ko.dataFor($('#group_location_async')[0]);
+    locationKOContext.reset();
+}
+
+function getFiltersValues() {
+    var month = $('#report_filter_month').val();
+    var year = $('#report_filter_year').val();
+    var dateStr = year + '-' + month + '-01';
+
+    var caste = $('#report_filter_caste').val();
+
+    var childAge = $('#report_filter_child_age_tranche').val();
+
+    var minority = $('#report_filter_minority').val();
+
+    var disabled = $('#report_filter_disabled').val();
+
+    var resident = $('#report_filter_resident').val();
+
+    var maternalStatus = $('#report_filter_ccs_status').val();
+
+    var beneficiaryType = $('#report_filter_thr_beneficiary_type').val();
+
+    var locationKOContext = ko.dataFor($('#group_location_async')[0]);
+
+    var selectedUUIDs = [];
+
+    var locationLevel = 1;
+
+    locationKOContext.selected_path().forEach(function(loc) {
+        var uuid = loc.uuid();
+        if (uuid) {
+            selectedUUIDs.push(uuid);
+            locationLevel++;
+        }
+    });
+
+    if (locationKOContext.selected_location() && locationKOContext.selected_location().type() === 'awc') {
+        selectedUUIDs[locationLevel - 1] = locationKOContext.selected_locid();
+        locationLevel++;
+    }
+
+    var state = selectedUUIDs[0];
+    var district = selectedUUIDs[1];
+    var block = selectedUUIDs[2];
+    var supervisor = selectedUUIDs[3];
+    var awc = selectedUUIDs[4];
+
+    var locationTypeCode = findLocationTypeCode(locationLevel);
+
+    var filters = {
+        Month: dateStr,
+        Caste: caste,
+        child_age_tranche: childAge,
+        Minority: minority,
+        Disabled: disabled,
+        Resident: resident,
+        ccs_status: maternalStatus,
+        thr_beneficiary_type: beneficiaryType,
+        state: state || 'All',
+        district: district || 'All',
+        block: block || 'All',
+        supervisor: supervisor || 'All',
+        awc: awc || 'All',
+        view_by: locationLevel,
+        user_awc: '',
+        user_supervisor: '',
+        user_state: '',
+        user_district: '',
+        user_block: '',
+        user_national: '',
+    };
+
+    filters['user_' + locationTypeCode] = awc || supervisor || block || district || state || 'All';
+    return filters;
+}
+
+function setFiltersValues(params, locationData) {
+    if (locationData) {
+        var locationKOContext = ko.dataFor($('#group_location_async')[0]);
+        locationKOContext.selected_path([]);
+        locationKOContext.load(locationData.locations, locationData.selected);
+    }
+
+    var date = new Date(params.Month);
+    var twoDigitMonth = ("0" + (date.getMonth() + 1)).slice(-2);
+
+    $('#report_filter_month').select2('val', twoDigitMonth);
+    $('#report_filter_year').select2('val', date.getFullYear());
+
+    $("#report_filter_caste").select2('val', params.Caste);
+    $("#report_filter_minority").select2('val', params.Minority);
+    $("#report_filter_disabled").select2('val', params.Disabled);
+    $("#report_filter_resident").select2('val', params.Resident);
+    $("#report_filter_ccs_status").select2('val', params.ccs_status);
+    $("#report_filter_child_age_tranche").select2('val', params.child_age_tranche);
+    $("#report_filter_thr_beneficiary_type").select2('val', params.thr_beneficiary_type);
+}
 
 function initializeViz(o) {
     tableauOptions = o;
-
     var placeholderDiv = document.getElementById("tableauPlaceholder");
     var url = tableauOptions.tableauUrl;
     var options = {
@@ -33,7 +164,20 @@ function initializeViz(o) {
 
     $("#resetFilters").click(function () {
         var currentSheet = history.state.sheetName;
-        switchVisualization(currentSheet, workbook, initialLocationParams);
+        resetFilters();
+        switchVisualization(currentSheet, workbook, getFiltersValues());
+    });
+
+    $("#applyFilters").click(function() {
+        var currentSheet = history.state.sheetName;
+        switchVisualization(currentSheet, workbook, getFiltersValues());
+    });
+
+    $(window).on('popstate', function(event) {
+        var state = event.originalEvent.state;
+        if (state) {
+            setFiltersValues(state.params, state.locationData);
+        }
     });
 }
 
@@ -42,23 +186,21 @@ function setUpWorkbook(viz) {
 }
 
 function setUpInitialTableauParams() {
-    var locationKey = 'user_' + tableauOptions.userLocationLevel;
-    var params = {
-        'view_by': LOCATIONS_MAP[tableauOptions.userLocationLevel],
-        'state': tableauOptions.stateCode,
-        'district': tableauOptions.districtCode,
-        'block': tableauOptions.blockCode,
-    };
-    params[locationKey] = tableauOptions.userLocation;
-    initialLocationParams = _.clone(params);
-    var today = new Date();
-    var lastMonth = new Date(today.getFullYear(), today.getMonth() - 1 , 1);
-    params['Month'] = lastMonth.getFullYear() + "-" + (lastMonth.getMonth() + 1) + "-01";
-    applyParams(workbook, params);
+    var params = getFiltersValues();
+
+    var sheetName = tableauOptions.currentSheet;
+
+    if (sheetName === 'Dashboard' && params.awc && params.awc !== 'All') {
+        sheetName = 'AWC-Info';
+        switchVisualization(sheetName, workbook, params);
+    } else {
+        applyParams(workbook, params);
+    }
 
     var historyObject = {
-        'sheetName': tableauOptions.currentSheet,
-        'params': params,
+        sheetName: sheetName,
+        params: params,
+        locationData: getLocationData(),
     };
     history.pushState(historyObject, '', tableauOptions.currentSheet);
 }
@@ -110,7 +252,7 @@ function updateViz(marks) {
     var debugHtml = ["<ul>"],
         // default the sheet to navigate to to the current one
         currentSheet = history.state.sheetName,
-        newSheet = currentSheet;
+        newSheet = currentSheet,
         newParams = {};
 
     function buildParams(currentParams) {
@@ -159,7 +301,6 @@ ICDS workbook will have following paramter convention
     e.g. js_sheet_Nutrition: '{"is_drilldown": "True"}'
 */
 function navigateToSheet(sheetName, workbook, params){
-
     workbook.getParametersAsync()
         .then(changeViz)
         .otherwise(function(err) {
@@ -189,6 +330,13 @@ function extractSheetName(pair, sheetName) {
 function switchVisualization(sheetName, workbook, params) {
     // TODO: Handle the case where we are in the same sheet, might just need to apply filters then?
     var worksheets;
+
+    if (sheetName === 'Dashboard' && params.awc && params.awc !== 'All') {
+        sheetName = 'AWC-Info';
+    } else if (sheetName === 'AWC-Info' && (!params.awc || params.awc === 'All')) {
+        sheetName = 'Dashboard';
+    }
+
     workbook.activateSheetAsync(sheetName)
             .then(function(dashboard) {
                 worksheets = dashboard.getWorksheets();
@@ -198,8 +346,9 @@ function switchVisualization(sheetName, workbook, params) {
 
                 // TODO: historyObject should be an actual object
                 var historyObject = {
-                    'sheetName': sheetName,
-                    'params': params,
+                    sheetName: sheetName,
+                    params: params,
+                    locationData: getLocationData(),
                 };
                 history.pushState(historyObject, sheetName, sheetName);
                 return lastWorksheet;
@@ -238,7 +387,7 @@ window.onpopstate = function (event) {
             alert(err);
         });
     }
-}
+};
 
 /*
 Given an attribute pair and existingParams, extracts and returns new paramter specified by
@@ -287,7 +436,6 @@ function extractHardcodedSheetParams(params, sheetName){
             return JSON.parse(sheetParam.formattedValue);
         }
         catch(e) {
-            console.log(e);
             return {};
         }
     }
