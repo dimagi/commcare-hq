@@ -180,7 +180,6 @@ class ToggleEditView(ToggleBaseView):
 
 def enable_vellum_beta(request):
     slug = "vellum_beta"
-    toggle = None
     try:
         toggle = Toggle.get(slug)
     except ResourceNotFound:
