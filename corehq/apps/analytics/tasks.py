@@ -301,7 +301,7 @@ def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
 
 
 @analytics_task()
-def job_candidate_hubspot_update(user_email):
+def track_job_candidate_on_hubspot(user_email):
     properties = {
         'job_candidate': True
     }

@@ -1,9 +1,13 @@
+import hashlib
+import hmac
 import json
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
-from corehq.apps.analytics.tasks import track_clicked_deploy_on_hubspot, job_candidate_hubspot_update
+
+import settings
+from corehq.apps.analytics.tasks import track_clicked_deploy_on_hubspot, track_job_candidate_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 
 
@@ -24,13 +28,17 @@ class GreenHouseCandidate(View):
         super(GreenHouseCandidate, self).dispatch(request=request, args=args, kwargs=kwargs)
 
     def post(self, request, *args, **kwargs):
-        body_unicode = request.body.decode('utf-8')
-        data = json.loads(body_unicode)
-        try:
-            user_emails = data["payload"]["application"]["candidate"]["email_addresses"]
-            for user_email in user_emails:
-                job_candidate_hubspot_update.delay(user_email["value"])
-        except KeyError:
-            pass
+        digester = hmac.new(settings.GREENHOUSE_API_KEY, request.body, hashlib.sha256)
+        calculated_signature = digester.hexdigest()
+
+        if hmac.compare_digest(calculated_signature, request.headers.get('HTTP_SIGNATURE', '')):
+            body_unicode = request.body.decode('utf-8')
+            data = json.loads(body_unicode)
+            try:
+                user_emails = data["payload"]["application"]["candidate"]["email_addresses"]
+                for user_email in user_emails:
+                    track_job_candidate_on_hubspot.delay(user_email["value"])
+            except KeyError:
+                pass
 
         return HttpResponse()
