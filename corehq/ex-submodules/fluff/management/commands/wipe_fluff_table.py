@@ -35,7 +35,7 @@ class Command(BaseCommand):
                 print("\tWipe cancelled.")
                 return
 
-        for processor in pillow._processors:
+        for processor in pillow.processors:
             engine = processor.get_sql_engine()
             table = processor.indicator_class().table
             engine.execute(table.delete())

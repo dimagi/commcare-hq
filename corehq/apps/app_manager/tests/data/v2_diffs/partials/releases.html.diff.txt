@@ -70,7 +70,18 @@
          <tr>
              <th colspan="2">{% trans "Version" %}</th>
              <th colspan="2">{% trans "Date &amp; Time" %}</th>
-@@ -197,7 +225,7 @@
+@@ -112,8 +140,8 @@
+             <th>{% trans "Comments" %}</th>
+             {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
+                 <th>Errors</th>
+-            {% elif request|toggle_enabled:"SHOW_DEV_TOGGLE_INFO" %}
+-                <th>{{ request|toggle_tag_info:"APPLICATION_ERROR_REPORT" }}</th>
++            {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
++              <th>{{ request|toggle_tag_info:"APPLICATION_ERROR_REPORT" }}</th>
+             {% endif %}
+             <th>
+                 {% trans "Released" %}
+@@ -199,7 +227,7 @@
                  </td>
                  <td>
                      <b data-bind="text: comment_user_name"></b>
@@ -79,7 +90,7 @@
                          value: build_comment,
                          rows: 1,
                          placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
-@@ -205,7 +233,7 @@
+@@ -207,15 +235,15 @@
                          saveParams: {'build_id': id},
                          saveValueName: 'comment',
                          errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
@@ -88,7 +99,17 @@
                  </td>
                  {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
                  <td>
-@@ -290,17 +318,18 @@
+                     <a data-bind="text: num_errors,
+                                   attr: {href: $root.url('application_errors', version())}" />
+                 </td>
+-                {% elif request|toggle_enabled:"SHOW_DEV_TOGGLE_INFO" %}
+-                <td>{{ request|toggle_tag_info:"APPLICATION_ERROR_REPORT" }}</td>
++                {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
++                  <td></td>
+                 {% endif %}
+                 <td class="build-is-released">
+                     <div data-bind="starred: is_released, click: $root.toggleRelease"></div>
+@@ -294,17 +322,18 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">

@@ -77,7 +77,7 @@ django-formtools==2.0
 # https://github.com/Bouke/django-two-factor-auth/commit/4b3dddeae8c3d479152976fa6e7bdd8d1ed24e69
 # django-two-factor-auth==1.6.0
 git+git://github.com/Bouke/django-two-factor-auth.git@4b3dddeae8c3d479152976fa6e7bdd8d1ed24e69
-datadog==0.10.0
+datadog==0.15.0
 django-websocket-redis==0.4.6
 django-redis-sessions==0.5.0
 SQLAlchemy==1.0.17

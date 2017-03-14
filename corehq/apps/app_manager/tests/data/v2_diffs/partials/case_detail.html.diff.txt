@@ -36,4 +36,4 @@
 +    </div>
  </div>
  
- <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
+ {{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}

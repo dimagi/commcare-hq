@@ -296,7 +296,7 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.messaging.smsbackends.unicel',
     'corehq.messaging.smsbackends.icds_nic',
-    'corehq.apps.reports',
+    'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
     'corehq.apps.data_interfaces',
@@ -1665,7 +1665,8 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsTreatmentOutcomeRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater'
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS

@@ -1045,6 +1045,13 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     }
 )
 
+SHOW_DEV_TOGGLE_INFO = StaticToggle(
+    'highlight_feature_flags',
+    'Highlight / Mark Feature Flags in the UI',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER]
+)
+
 DASHBOARD_GRAPHS = StaticToggle(
     'dashboard_graphs',
     'Show submission graph on dashboard',
