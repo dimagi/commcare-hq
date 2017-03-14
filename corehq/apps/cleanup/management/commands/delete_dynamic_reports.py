@@ -1,17 +1,15 @@
 from __future__ import print_function
 from django.core.management.base import BaseCommand
-import sys
+
 from corehq.apps.domain.models import Domain
 
 
 class Command(BaseCommand):
 
-    def handle(self, *args, **options):
-        if len(args) != 1:
-            print('usage is ./manage.py delete_dynamic_reports report_type')
-            sys.exit(1)
+    def add_arguments(self, parser):
+        parser.add_argument('report_type')
 
-        report_type = args[0]
+    def handle(self, report_type, **options):
         if raw_input(
                 'Really delete all reports of type {}? (y/n)\n'.format(report_type)).lower() == 'y':
             for domain in Domain.get_all():
