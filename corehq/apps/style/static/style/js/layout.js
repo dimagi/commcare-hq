@@ -1,3 +1,4 @@
+/* globals COMMCAREHQ */
 var hqLayout = {};
 
 hqLayout.selector = {
