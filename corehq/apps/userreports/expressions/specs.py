@@ -296,8 +296,11 @@ class FormsExpressionSpec(JsonObject):
 
         cache_key = (self.__class__.__name__, case_id)
         if context.get_cache_value(cache_key) is not None:
+            print "Cache hit"
             return context.get_cache_value(cache_key)
-
+        print "Cache miss"
+        print "Getting forms for case: {}".format(case_id)
+        print context
         xforms = FormProcessorInterface(domain).get_case_forms(case_id)
         xforms = [f.to_json() for f in xforms if f.domain == domain]
 
