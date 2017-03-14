@@ -181,8 +181,9 @@ class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
         properties_dict = {
             "PatientID": episode_case_properties.get('nikshay_id'),
             "HIVStatus": hiv_status.get(person_case_properties.get('hiv_status')),
-            "HIVTestDate": datetime.datetime.strptime(person_case_properties.get('hiv_test_date'),
-                                                      '%Y-%m-%d').strftime('%d/%m/%Y'),
+            "HIVTestDate": datetime.datetime.strptime(
+                person_case_properties.get('hiv_test_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
+            ).strftime('%d/%m/%Y'),
             "CPTDeliverDate": datetime.datetime.strptime(
                 person_case_properties.get('cpt_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
             ).strftime('%d/%m/%Y'),
