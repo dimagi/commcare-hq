@@ -64,3 +64,5 @@ class IndicatorAdapter(object):
             if indicator['type'] == 'expression':
                 if indicator['expression']['type'] == 'related_doc':
                     return True
+
+        return False
