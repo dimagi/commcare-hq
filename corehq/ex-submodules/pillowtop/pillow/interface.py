@@ -223,7 +223,11 @@ class ConstructedPillow(PillowBase):
         self._name = name
         self._checkpoint = checkpoint
         self._change_feed = change_feed
-        self._processor = processor
+        if isinstance(processor, list):
+            self.processors = processor
+        else:
+            self.processors = [processor]
+
         self._change_processed_event_handler = change_processed_event_handler
 
     @property
@@ -244,7 +248,8 @@ class ConstructedPillow(PillowBase):
         return self._change_feed
 
     def process_change(self, change):
-        self._processor.process_change(self, change)
+        for processor in self.processors:
+            processor.process_change(self, change)
 
     def fire_change_processed_event(self, change, context):
         if self._change_processed_event_handler is not None:

@@ -13,7 +13,7 @@ class Command(BaseCommand):
     """
     help = 'Generates data dictionary for all domains'
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         print('Generating data dictionary for domains')
         failed_domains = []
         for domain_dict in with_progress_bar(Domain.get_all(include_docs=False)):

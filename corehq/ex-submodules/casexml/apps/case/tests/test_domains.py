@@ -80,14 +80,14 @@ class DomainTest(TestCase):
         super(DomainTest, self).tearDown()
 
     def test_cant_own_case(self):
-        response, _, [case] = submit_form_locally(ALICE_XML, ALICE_DOMAIN)
-        response, form, cases = submit_form_locally(EVE_XML, EVE_DOMAIN)
+        result_alice = submit_form_locally(ALICE_XML, ALICE_DOMAIN)
+        result_eve = submit_form_locally(EVE_XML, EVE_DOMAIN)
 
-        self.assertIn('IllegalCaseId', response.content)
-        self.assertNotIn('plan_to_buy_gun', case.dynamic_case_properties())
+        self.assertIn('IllegalCaseId', result_eve.response.content)
+        self.assertNotIn('plan_to_buy_gun', result_alice.case.dynamic_case_properties())
 
-        _, _, [case] = submit_form_locally(ALICE_UPDATE_XML, ALICE_DOMAIN)
-        self.assertEqual(case.dynamic_case_properties()['plan_to_buy_gun'], 'no')
+        result_alice_update = submit_form_locally(ALICE_UPDATE_XML, ALICE_DOMAIN)
+        self.assertEqual(result_alice_update.case.dynamic_case_properties()['plan_to_buy_gun'], 'no')
 
 
 @use_sql_backend

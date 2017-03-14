@@ -13,7 +13,7 @@ class Command(BaseCommand):
         Migrate any non-migrated apps
     '''
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         app_query = AppES().is_build(False).term('vellum_case_management', False) \
                            .term('doc_type', 'Application').size(500).source(['domain', '_id'])
 

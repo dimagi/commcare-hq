@@ -4,10 +4,9 @@ from corehq.apps.users.models import UserRole, UserRolePresets
 
 
 class Command(BaseCommand):
-    args = ""
     help = ("Adds the billing admin preset role to all existing domains")
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         for domain in Domain.get_all():
             UserRole.get_or_create_with_permissions(
                 domain.name,

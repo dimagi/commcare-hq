@@ -40,6 +40,11 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             is_active=True,
         )
         self.domain.save()
+        self.other_domain = Domain(
+            name="other-domain",
+            is_active=True,
+        )
+        self.other_domain.save()
         UserRole.init_domain_with_presets(self.domain.name)
         self.user_roles = UserRole.by_domain(self.domain.name)
         self.custom_role = UserRole.get_or_create_with_permissions(
@@ -55,7 +60,10 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.web_users = []
         self.commcare_users = []
         for role in [self.custom_role] + self.user_roles:
-            web_user = generator.arbitrary_web_user()
+            web_user = WebUser.create(
+                self.other_domain.name, generator.create_arbitrary_web_user_name(), 'test123'
+            )
+            web_user.is_active = True
             web_user.add_domain_membership(self.domain.name, role_id=role.get_id)
             web_user.save()
             self.web_users.append(web_user)
@@ -158,6 +166,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
     def tearDown(self):
         self.domain.delete()
+        self.other_domain.delete()
         super(TestUserRoleSubscriptionChanges, self).tearDown()
 
 
@@ -171,6 +180,10 @@ class TestSubscriptionChangeResourceConflict(BaseAccountingTest):
             description='spam',
         )
         self.domain.save()
+
+    def tearDown(self):
+        self.domain.delete()
+        super(TestSubscriptionChangeResourceConflict, self).tearDown()
 
     def test_domain_changes(self):
         role = Mock()

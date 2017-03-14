@@ -21,13 +21,13 @@
     <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
 
     {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
-        {% for detail in details %}
-            {% if detail.type == 'case' %}
-                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
-            {% else %}
-                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
-            {% endif %}
-        {% endfor %}
+      {% for detail in details %}
+          {% if detail.type == 'case' %}
+              {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+          {% else %}
+              {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+          {% endif %}
+      {% endfor %}
     {% endif %}
 
     {% if case_list_form_options %}

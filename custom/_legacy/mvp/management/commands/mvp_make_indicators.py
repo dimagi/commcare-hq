@@ -11,10 +11,8 @@ from mvp.static_definitions.question_id_mapping import (CHILD_CLOSE_FORM_QUESTIO
 
 class Command(BaseCommand):
     help = "Create the indicator definitions necessary to compute MVP Indicators."
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         for domain in MVP.DOMAINS:
             shared_args=(
                 MVP.NAMESPACE,
