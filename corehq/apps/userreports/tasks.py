@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from datetime import datetime, timedelta
+from datetime import datetime
 import sys
 
 from celery.task import task
