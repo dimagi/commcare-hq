@@ -130,7 +130,30 @@ describe('Location Types', function() {
                 assert.equal(this.state_model.level(), 0);
                 assert.equal(this.city_model.level(), 2);
             });
+
+            it('shows correct levels when expand_from is above current fork', function(){
+                this.city_model.expand_from(this.state_model.pk);
+                var returned_loc_types = this.city_model.expand_to_options(),
+                    desired_children_returned = ["state", "county | region"],
+                    desired_leaf_returned = "city | town";
+                assert.sameMembers(desired_children_returned, _.map(
+                    returned_loc_types.children, extract_name
+                ));
+                assert.equal(desired_leaf_returned, returned_loc_types.leaf.name());
+            });
+
+            it('shows all levels when expand_from is root', function(){
+                this.city_model.expand_from(-1);
+                var returned_loc_types = this.city_model.expand_to_options(),
+                    desired_children_returned = ['state', 'county | region'],
+                    desired_leaf_returned = "city | town";
+                assert.sameMembers(desired_children_returned, _.map(
+                    returned_loc_types.children, extract_name
+                ));
+                assert.equal(desired_leaf_returned, returned_loc_types.leaf.name());
+            });
         });
+
         describe('include_without_expanding_options', function(){
             it('Provides all levels', function(){
                 var returned_loc_types = _.map(
