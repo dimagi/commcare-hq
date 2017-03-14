@@ -139,7 +139,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             ensure_matched_revisions(change)
             if table.config.filter(doc):
                 if table.is_expensive:
-                    save_document.delay(table.config._id, doc)
+                    save_document.delay(table.config._id, doc, pillow_instance)
                 else:
                     # best effort will swallow errors in the table
                     table.best_effort_save(doc)

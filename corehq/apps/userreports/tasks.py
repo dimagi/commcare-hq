@@ -19,6 +19,7 @@ from corehq.util.context_managers import notify_someone
 from corehq.util.couch import get_document_or_not_found
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
+from pillowtop.pillow.interface import handle_pillow_error
 
 
 def _get_config_by_id(indicator_config_id):
@@ -176,7 +177,10 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
 
 
 @task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True, retry=True)
-def save_document(indicator_config_id, document):
-    config = _get_config_by_id(indicator_config_id)
-    adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-    adapter.best_effort_save(document)
+def save_document(indicator_config_id, document, from_pillow):
+    try:
+        config = _get_config_by_id(indicator_config_id)
+        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+        adapter.best_effort_save(document)
+    except Exception as e:
+        handle_pillow_error(from_pillow, document, e)
