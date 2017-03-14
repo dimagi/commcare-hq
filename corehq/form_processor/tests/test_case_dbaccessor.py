@@ -56,13 +56,6 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(case1.case_id, cases[0].case_id)
         self.assertEqual(case2.case_id, cases[1].case_id)
 
-    def test_case_modified_since(self):
-        case = _create_case()
-
-        self.assertFalse(CaseAccessorSQL.case_modified_since(case.case_id, case.server_modified_on))
-
-        self.assertTrue(CaseAccessorSQL.case_modified_since(case.case_id, datetime.utcnow()))
-
     def test_get_case_xform_ids(self):
         form_id1 = uuid.uuid4().hex
         case = _create_case(form_id=form_id1)

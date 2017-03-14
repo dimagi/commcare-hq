@@ -586,17 +586,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return cases
 
     @staticmethod
-    def case_modified_since(case_id, server_modified_on):
-        """
-        Return True if a case has been modified since the given modification date.
-        Assumes that the case exists in the DB.
-        """
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_modified FROM case_modified_since(%s, %s)', [case_id, server_modified_on])
-            result = fetchone_as_namedtuple(cursor)
-            return result.case_modified
-
-    @staticmethod
     def get_case_xform_ids(case_id):
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
