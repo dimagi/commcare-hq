@@ -9,6 +9,15 @@ from corehq.apps.locations.models import LocationType, Location
 from corehq.apps.products.models import Product
 from corehq.apps.sms.tests.update_location_keyword_test import create_mobile_worker
 from corehq.sql_db.connections import connection_manager
+from custom.intrahealth.models import (
+    RecapPassageFluff,
+    IntraHealthFluff,
+    TauxDeRuptureFluff,
+    LivraisonFluff,
+    TauxDeSatisfactionFluff,
+    CouvertureFluff,
+)
+
 
 TEST_DOMAIN = 'testing-ipm-senegal'
 
@@ -49,8 +58,30 @@ class IntraHealthTestCase(TestCase):
         cls.product.save()
         cls.product2.save()
 
+        cls.recap_table = RecapPassageFluff._table
+        cls.intra_table = IntraHealthFluff._table
+        cls.taux_rupt_table = TauxDeRuptureFluff._table
+        cls.livraison_table = LivraisonFluff._table
+        cls.taux_sat_table = TauxDeSatisfactionFluff._table
+        cls.couverture_table = CouvertureFluff._table
+        with cls.engine.begin() as connection:
+            cls.recap_table.create(connection, checkfirst=True)
+            cls.intra_table.create(connection, checkfirst=True)
+            cls.taux_rupt_table.create(connection, checkfirst=True)
+            cls.livraison_table.create(connection, checkfirst=True)
+            cls.taux_sat_table.create(connection, checkfirst=True)
+            cls.couverture_table.create(connection, checkfirst=True)
+
     @classmethod
     def tearDownClass(cls):
+        with cls.engine.begin() as connection:
+            cls.recap_table.drop(connection, checkfirst=True)
+            cls.intra_table.drop(connection, checkfirst=True)
+            cls.taux_rupt_table.drop(connection, checkfirst=True)
+            cls.livraison_table.drop(connection, checkfirst=True)
+            cls.taux_sat_table.drop(connection, checkfirst=True)
+            cls.couverture_table.drop(connection, checkfirst=True)
+
         cls.engine.dispose()
         cls.region.delete()
         cls.district.delete()

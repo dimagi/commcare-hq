@@ -12,8 +12,14 @@ from corehq.apps.domain.models import Domain
 class Command(BaseCommand):
     help = 'Print out a CSV containing a table of what features are in use by project space.'
 
-    def handle(self, *args, **kwargs):
-        domain_names = args
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'domain_names',
+            metavar='domain',
+            nargs='+',
+        )
+
+    def handle(self, domain_names, **kwargs):
         privileges = sorted(_privilege_to_response_function().keys())
         print(','.join(['Project Space'] + privileges + ['Lowest Plan']))
         for domain in filter(lambda domain: domain, map(Domain.get_by_name, domain_names)):

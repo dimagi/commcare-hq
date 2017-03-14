@@ -1052,3 +1052,9 @@ SHOW_DEV_TOGGLE_INFO = StaticToggle(
     [NAMESPACE_USER]
 )
 
+DASHBOARD_GRAPHS = StaticToggle(
+    'dashboard_graphs',
+    'Show submission graph on dashboard',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)

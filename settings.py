@@ -1603,12 +1603,7 @@ PILLOWTOPS = {
         'custom.bihar.models.CareBiharFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
         'custom.m4change.models.M4ChangeFormFluffPillow',
-        'custom.intrahealth.models.CouvertureFluffPillow',
-        'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
-        'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassageFluffPillow',
-        'custom.intrahealth.models.TauxDeRuptureFluffPillow',
-        'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.intrahealth.models.IntraHealthFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
@@ -1666,6 +1661,7 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
 )
 

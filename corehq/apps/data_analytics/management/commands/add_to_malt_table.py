@@ -11,10 +11,16 @@ class Command(BaseCommand):
         e.g. ./manage.py add_to_malt_table example.csv
     """
     help = 'Adds data to MALT table from given files'
-    args = '<file_path> <file_path> ...'
 
-    def handle(self, *args, **options):
-        for arg in args:
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'file_paths',
+            metavar='file_path',
+            nargs='+',
+        )
+
+    def handle(self, file_paths, **options):
+        for arg in file_paths:
             with open(arg, 'r') as file:
                 rows = []
                 reader = csv.reader(file)
