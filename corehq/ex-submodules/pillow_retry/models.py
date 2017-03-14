@@ -80,13 +80,13 @@ class PillowError(models.Model):
         )
 
     @classmethod
-    def get_or_create(cls, change, pillow):
+    def get_or_create(cls, change, pillow, date_next=None):
         change.document = None
         doc_id = change.id
         try:
             error = cls.objects.get(doc_id=doc_id, pillow=pillow.pillow_id)
         except cls.DoesNotExist:
-            now = datetime.utcnow()
+            now = date_next or datetime.utcnow()
             error = PillowError(
                 doc_id=doc_id,
                 pillow=pillow.pillow_id,
