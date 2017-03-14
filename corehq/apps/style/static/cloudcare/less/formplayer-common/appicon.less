@@ -89,6 +89,21 @@
   }
 }
 
+.gridicon {
+  background-color: transparent;
+  background-size: contain;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: 50%;
+  // For icons with their own image, don't make assumptions about the shadowing
+  .box-shadow(0 0 0 0 rgba(0, 0, 0, 0));
+}
+
+.gridicon.gridicon-circle {
+  background-color: @cc-neutral-mid;
+  .box-shadow(0 0 5px 0 rgba(0, 0, 0, 0.45));
+}
+
 .make-appicon-size(170px, 115px, 35px, 16px);
 .make-gridicon-size(70px);
 
