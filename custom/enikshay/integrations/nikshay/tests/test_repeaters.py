@@ -457,6 +457,7 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload["InitiatedDate"], "03/04/2016")
         self.assertEqual(payload["ARTCentreDate"], "03/04/2016")
 
+
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
 
