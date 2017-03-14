@@ -180,7 +180,11 @@ class ToggleEditView(ToggleBaseView):
 
 def enable_vellum_beta(request):
     slug = "vellum_beta"
-    toggle = Toggle.get(slug)
+    toggle = None
+    try:
+        toggle = Toggle.get(slug)
+    except ResourceNotFound:
+        toggle = Toggle(slug=slug)
 
     changed_entries = []
     if request.user.username not in toggle.enabled_users:
