@@ -14,7 +14,7 @@ from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_open_episode_case_from_person,
 )
-from custom.enikshay.exceptions import NikshayLocationNotFound
+from custom.enikshay.exceptions import NikshayLocationNotFound, ENikshayCaseNotFound
 from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
 from custom.enikshay.integrations.ninetyninedots.repeaters import case_properties_changed
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
@@ -78,7 +78,10 @@ class NikshayHIVTestRepeater(CaseRepeater):
         # InitiatedDate/Art Initiated date changes
         allowed_case_types_and_users = self._allowed_case_type(person_case) and self._allowed_user(person_case)
         if allowed_case_types_and_users:
-            episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
+            try:
+                episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
+            except ENikshayCaseNotFound:
+                return False
             episode_case_properties = episode_case.dynamic_case_properties()
 
             return (
