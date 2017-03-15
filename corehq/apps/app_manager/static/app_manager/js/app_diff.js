@@ -303,7 +303,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
             return (
                 '<' + el + ' class="' + className + '">' +
                 iconEl +
-                '<span class="' + HtmlUtils.REPLACE + '" >' + line + '</span>' +
+                '<span class="' + HtmlUtils.REPLACE + '">' + line + '</span>' +
                 closeEl
             );
         },
@@ -330,5 +330,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
 
     return {
         init: init,
+        HtmlUtils: HtmlUtils,
+        ModuleDatum: ModuleDatum,
     };
 });
