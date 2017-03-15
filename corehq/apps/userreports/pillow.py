@@ -233,6 +233,10 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             return
 
         eval_context = EvaluationContext(doc)
+
+        def exist_in_database(document):
+            return table.get_query_object().filter_by(doc_id=document['_id']).count() > 0
+
         for table in self.table_adapters_by_domain[domain]:
             if table.config.filter(doc):
                 if table.run_asynchronous:
@@ -240,7 +244,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
                 else:
                     self._save_doc_to_table(table, doc, eval_context)
                     eval_context.reset_iteration()
-            elif table.config.deleted_filter(doc):
+            elif table.config.deleted_filter(doc) or exist_in_database(doc):
                 table.delete(doc)
 
         if async_tables:
