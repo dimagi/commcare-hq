@@ -90,10 +90,10 @@ hqDefine('app_manager/js/app_diff.js', function () {
             fullHtml += HtmlUtils.closeEl('ul');
 
             header = HtmlUtils.makeSpan(
-                totalChanges.added + ' lines added', 'diff-changes-count diff-changes-added'
+                totalChanges.added + ' changes added', 'diff-changes-count diff-changes-added'
             );
             header += HtmlUtils.makeSpan(
-                totalChanges.removed + ' lines removed', 'diff-changes-count diff-changes-removed'
+                totalChanges.removed + ' changes removed', 'diff-changes-count diff-changes-removed'
             );
 
             return header + fullHtml;
