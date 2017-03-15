@@ -49,8 +49,8 @@
                 caseDownloadURL: '{% url 'download_case_summary' domain app_id %}',
                 formDownloadURL: '{% url 'download_form_summary' domain app_id %}',
                 appDownloadURL: '{% url 'download_app_summary' domain app_id %}',
-                appSettingsURL: '{% url "view_app" domain app.id %}',
-                appHomeURL: '{% url "view_app" domain app.id %}',
+                appSettingsURL: '{% url "release_manager" domain app_id %}',
+                appHomeURL: '{% url "view_app" domain app_id %}',
                 appName: '{{ app_name }}',
             });
 
