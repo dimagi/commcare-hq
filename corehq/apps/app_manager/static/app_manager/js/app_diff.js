@@ -203,7 +203,6 @@ hqDefine('app_manager/js/app_diff.js', function () {
      * Represents the question data structure and renders it to an HTML string
      */
     var QuestionDatum = function(json) {
-        console.log(json);
         var self = this;
         this.comment = json.comment || '';
         this.group = json.group;
