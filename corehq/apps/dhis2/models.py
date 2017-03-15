@@ -3,6 +3,8 @@ import json
 import logging
 from itertools import chain
 
+import jsonfield
+from django.db import models
 import requests
 
 from corehq.apps.dhis2.utils import get_ucr_data
@@ -118,16 +120,20 @@ class DataSetMap(Document):
         return dataset
 
 
-class Dhis2Log(Document):
+class JsonApiLog(models.Model):
     """
-    Store requests and responses to analyse errors and keep an audit trail
+    Store API requests and responses to analyse errors and keep an audit trail
     """
-    domain = StringProperty()
-    timestamp = DateTimeProperty()
-    request_url = StringProperty()
-    request_body = StringProperty()
-    response_status = IntegerProperty()
-    response_body = StringProperty()
+    domain = models.CharField(max_length=126)  # 126 seems to be a popular length
+    timestamp = models.DateTimeField()
+    request_method = models.CharField(max_length=12)
+    request_url = models.CharField(max_length=255)
+    request_headers = jsonfield.JSONField(blank=True)
+    request_params = jsonfield.JSONField(blank=True)
+    request_body = jsonfield.JSONField(blank=True)
+    request_error = models.TextField(blank=True)
+    response_status = models.IntegerField()
+    response_body = models.TextField(blank=True)
 
 
 class JsonApiError(Exception):
