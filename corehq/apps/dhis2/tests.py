@@ -1,7 +1,7 @@
 import json
 from django.test import SimpleTestCase
 from mock import patch, Mock
-from corehq.apps.dhis2.models import JsonApiRequest
+from corehq.apps.dhis2.api import JsonApiRequest
 
 
 TEST_API_URL = 'http://localhost:9080/api/'
