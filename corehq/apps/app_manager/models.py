@@ -5634,7 +5634,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         record.save()
         return record
 
-    def new_form(self, module_id, name, lang, attachment=""):
+    def new_form(self, module_id, name, lang, attachment=Ellipsis):
         module = self.get_module(module_id)
         return module.new_form(name, lang, attachment)
 
