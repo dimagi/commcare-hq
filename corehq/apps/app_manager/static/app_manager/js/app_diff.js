@@ -1,6 +1,7 @@
-/* globals JsDiff */
+/* globals JsDiff, DOMPurify */
 hqDefine('app_manager/js/app_diff.js', function () {
     var reverse = hqImport('hqwebapp/js/urllib.js').reverse;
+    var sanitize = DOMPurify.sanitize;
 
     var init = function(selector, appIdOne, appIdTwo) {
         var $el = $(selector);
@@ -82,7 +83,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
 
         this.toString = function() {
             var lines = [
-                HtmlUtils.makeLi(self.name.en, 'diff-module', 'folder-open'),
+                HtmlUtils.makeLi(sanitize(self.name.en), 'diff-module', 'folder-open'),
                 HtmlUtils.makeUl('diff-forms fa-ul'),
                 _.map(self.forms, function(f) { return f.toString(); }).join('\n'),
                 HtmlUtils.closeEl('ul'),
@@ -101,7 +102,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
 
         this.toString = function() {
             var lines = [
-                HtmlUtils.makeLi(self.name.en, 'diff-form', 'file-o'),
+                HtmlUtils.makeLi(sanitize(self.name.en), 'diff-form', 'file-o'),
                 HtmlUtils.makeUl('diff-questions fa-ul'),
                 _.map(self.questions, function(q) { return q.toString(); }).join('\n'),
                 HtmlUtils.closeEl('ul'),
@@ -129,12 +130,12 @@ hqDefine('app_manager/js/app_diff.js', function () {
 
         this.toString = function() {
             var lines =[
-                HtmlUtils.makeLi(self.label || '[unknown]', 'diff-question'),
+                HtmlUtils.makeLi(sanitize(self.label) || '[unknown]', 'diff-question'),
                 HtmlUtils.makeUl('diff-question-metadata fa-ul'),
 
-                HtmlUtils.makeLi(self.hashtagValue, '', '', true),
-                (self.calculate ? HtmlUtils.makeLi(self.calculate, '', 'calculator', true) : ''),
-                (self.relevant ? HtmlUtils.makeLi(self.relevant, '', 'code-fork', true) : ''),
+                HtmlUtils.makeLi(sanitize(self.hashtagValue), '', '', true),
+                (self.calculate ? HtmlUtils.makeLi(sanitize(self.calculate), '', 'calculator', true) : ''),
+                (self.relevant ? HtmlUtils.makeLi(sanitize(self.relevant), '', 'code-fork', true) : ''),
 
                 HtmlUtils.closeEl('ul'),
                 HtmlUtils.closeEl('li'),
