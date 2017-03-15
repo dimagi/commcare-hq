@@ -148,12 +148,18 @@
                     </td>
 
                     <td>
-                        <select class="form-control" data-bind="value: direction">
-                            <option value="ascending"
-                                    data-bind="text: ascendText">
+                        <select class="form-control" data-bind="value: compoundDirection">
+                            <option value="ascending-blanks-last"
+                                    data-bind="text: ascendTextBlanksLast">
                             </option>
-                            <option value="descending"
-                                    data-bind="text: descendText">
+                            <option value="ascending-blanks-first"
+                                    data-bind="text: ascendTextBlanksFirst">
+                            </option>
+                            <option value="descending-blanks-last"
+                                    data-bind="text: descendTextBlanksLast">
+                            </option>
+                            <option value="descending-blanks-first"
+                                    data-bind="text: descendTextBlanksFirst">
                             </option>
                         </select>
                     </td>
@@ -206,7 +212,7 @@
 
     <div class="form-group">
         <button class="btn btn-default btn-sm" data-bind="
-            click: function(data){data.addSortRow('', '', '', '', true, '');}"
+            click: function(data){data.addSortRow('', '', '', '', '', true, '');}"
         >
             <i class="fa fa-plus"></i>
             {% trans "Add sort property" %}

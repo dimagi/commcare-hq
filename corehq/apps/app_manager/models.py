@@ -1988,6 +1988,7 @@ class SortElement(IndexedSchema):
     field = StringProperty()
     type = StringProperty()
     direction = StringProperty()
+    blanks = StringProperty()
     display = DictProperty()
     sort_calculation = StringProperty(default="")
 

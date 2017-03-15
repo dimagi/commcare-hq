@@ -117,9 +117,17 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.type.subscribe(function () {
             self.notifyButton();
         });
-        self.direction = ko.observable(typeof params.direction !== 'undefined' ? params.direction : "");
-        self.direction.subscribe(function () {
+        self.compoundDirection = ko.observable(
+            (params.direction || "ascending") + "-blanks-" + (params.blanks || (params.direction === "descending" ? "last" : "first"))
+        );
+        self.compoundDirection.subscribe(function () {
             self.notifyButton();
+        });
+        self.direction = ko.computed(function() {
+            self.compoundDirection().split("-")[0];
+        });
+        self.blanks = ko.computed(function() {
+            self.compoundDirection().split("-")[2];
         });
         self.sortCalculation.subscribe(function () {
             self.notifyButton();
@@ -143,6 +151,14 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             }
         });
 
+        self.ascendTextBlanksFirst = ko.computed(function () {
+            return self.ascendText() + ", blanks at top";
+        });
+
+        self.ascendTextBlanksLast = ko.computed(function () {
+            return self.ascendText() + ", blanks at bottom";
+        });
+
         self.descendText = ko.computed(function () {
             var type = self.type();
             if (type === 'plain' || type === 'index') {
@@ -154,6 +170,14 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             } else if (type === 'double' || type === 'distance') {
                 return 'Decreasing (1.3, 1.2, 1.1)';
             }
+        });
+
+        self.descendTextBlanksFirst = ko.computed(function () {
+            return self.descendText() + ", blanks at top";
+        });
+
+        self.descendTextBlanksLast = ko.computed(function () {
+            return self.descendText() + ", blanks at bottom";
         });
     };
 
@@ -168,11 +192,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         var self = this;
         self.sortRows = ko.observableArray([]);
 
-        self.addSortRow = function (field, type, direction, display, notify, sortCalculation) {
+        self.addSortRow = function (field, type, direction, blanks, display, notify, sortCalculation) {
             self.sortRows.push(new SortRow({
                 field: field,
                 type: type,
                 direction: direction,
+                blanks: blanks,
                 display: display,
                 saveButton: saveButton,
                 properties: properties,
@@ -1178,7 +1203,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                             return {
                                 field: row.textField.val(),
                                 type: row.type(),
-                                direction: row.direction(),
+                                direction: row.compoundDirection().split("-")[0],
+                                blanks: row.compoundDirection().split("-")[2],
                                 display: row.display(),
                                 sort_calculation: row.sortCalculation(),
                             };
@@ -1317,6 +1343,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 spec.sortRows[j].field,
                                 spec.sortRows[j].type,
                                 spec.sortRows[j].direction,
+                                spec.sortRows[j].blanks,
                                 spec.sortRows[j].display[this.lang],
                                 false,
                                 spec.sortRows[j].sort_calculation
