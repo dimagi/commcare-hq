@@ -12,6 +12,10 @@
        });
     });
     $(function () {
+        hqImport('hqwebapp/js/urllib.js').registerUrl(
+            'form_data',
+            '/a/' + '{{ domain }}' + '/apps/view/---/form_data/'
+        )
         var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
         var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
         // init releases
