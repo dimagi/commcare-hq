@@ -14,7 +14,7 @@
     "report_id": "case_finding_mobile",
     "config": {
         "description": "",
-        "title": "Case Finding - Mobile Report",
+        "title": "Summary of Case Finding - Mobile",
         "sort_expression": [],
         "visible": false,
         "configured_charts": [],
