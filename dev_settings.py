@@ -13,6 +13,16 @@ LOCAL_APPS = (
     'kombu.transport.django',
 )
 
+LOCAL_PILLOWTOPS = {
+    'core_ext': [
+        {
+            'name': 'kafka-ucr-main',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+        },
+    ]
+}
+
 # TEST_RUNNER is overridden in testsettings, which is the default settings
 # module for the test command (see manage.py); this has no effect by default.
 # Use ./manage.py test --settings=settings to use this setting.
