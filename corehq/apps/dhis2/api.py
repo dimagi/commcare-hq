@@ -88,7 +88,7 @@ class JsonApiRequest(object):
             response = requests.get(self.server_url + path, headers=self.headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
             raise JsonApiError(str(err))
-        return JsonApiRequest.json_or_error(response)
+        return self.json_or_error(response)
 
     @log_request
     def delete(self, path, **kwargs):
@@ -96,7 +96,7 @@ class JsonApiRequest(object):
             response = requests.delete(self.server_url + path, headers=self.headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
             raise JsonApiError(str(err))
-        return JsonApiRequest.json_or_error(response)
+        return self.json_or_error(response)
 
     @log_request
     def post(self, path, data, **kwargs):
@@ -107,7 +107,7 @@ class JsonApiRequest(object):
             response = requests.post(self.server_url + path, json_data, headers=headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
             raise JsonApiError(str(err))
-        return JsonApiRequest.json_or_error(response)
+        return self.json_or_error(response)
 
     @log_request
     def put(self, path, data, **kwargs):
@@ -117,4 +117,4 @@ class JsonApiRequest(object):
             response = requests.put(self.server_url + path, json_data, headers=headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
             raise JsonApiError(str(err))
-        return JsonApiRequest.json_or_error(response)
+        return self.json_or_error(response)
