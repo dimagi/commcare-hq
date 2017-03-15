@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from django.utils.translation import ugettext_lazy as _
+from corehq.apps.change_feed.topics import CASE, CASE_SQL, FORM, FORM_SQL, LOCATION
 
 REPORT_BUILDER_EVENTS_KEY = 'REPORT_BUILDER_EVENTS_KEY'
 
@@ -19,3 +20,11 @@ UCR_BACKENDS = [UCR_SQL_BACKEND, UCR_ES_BACKEND]
 DEFAULT_MAXIMUM_EXPANSION = 10
 
 UCR_CELERY_QUEUE = 'ucr_queue'
+
+KAFKA_TOPICS = (
+    CASE,
+    CASE_SQL,
+    FORM,
+    FORM_SQL,
+    LOCATION,
+)

@@ -2,9 +2,10 @@ from __future__ import absolute_import
 from collections import defaultdict
 from alembic.autogenerate.api import compare_metadata
 from datetime import datetime, timedelta
-from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
+from corehq.apps.userreports.const import (
+    KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
+)
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.sql import metadata
@@ -155,7 +156,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     retry_errors = False
 
     def __init__(self, processor, pillow_name):
-        change_feed = KafkaChangeFeed(topics.ALL, group_id=pillow_name)
+        change_feed = KafkaChangeFeed(KAFKA_TOPICS, group_id=pillow_name)
         checkpoint = PillowCheckpoint(pillow_name)
         event_handler = MultiTopicCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
