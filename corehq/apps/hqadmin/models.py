@@ -5,7 +5,7 @@ from django.db import models
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.utils import get_pillow_by_name, get_all_pillow_instances
+from pillowtop.utils import get_pillow_by_name, get_all_pillow_instances, force_seq_int
 from pillowtop.exceptions import PillowNotFoundError
 
 
@@ -44,13 +44,27 @@ class HqDeploy(Document):
         ).all()
 
 
-class PillowCheckpointSeqStore(models.Model):
+class ESRestorePillowCheckpoints(models.Model):
     seq = models.TextField()
+    seq_int = models.IntegerField()
     checkpoint_id = models.CharField(max_length=255, db_index=True)
-    date_updated = models.DateTimeField(auto_now=True)
+    date_updated = models.DateField()
 
     @classmethod
-    def get_by_pillow_name(cls, pillow_name):
+    def create_pillow_checkpoint_snapshots(cls):
+        for pillow in get_all_pillow_instances():
+            cls.create_checkpoint_snapshot(pillow.checkpoint)
+
+    @classmethod
+    def create_checkpoint_snapshot(cls, checkpoint):
+        db_seq = checkpoint.get_current_sequence_id()
+        cls.objects.create(seq=db_seq,
+                           seq_int=force_seq_int(db_seq) or 0,
+                           checkpoint_id=checkpoint.checkpoint_id,
+                           date_updated=date.today())
+
+    @classmethod
+    def get_latest_for_pillow(cls, pillow_name):
         try:
             pillow = get_pillow_by_name(pillow_name)
         except PillowNotFoundError:
@@ -60,24 +74,21 @@ class PillowCheckpointSeqStore(models.Model):
         if not pillow:
             return None
 
-        try:
-            store = cls.objects.get(checkpoint_id=pillow.checkpoint.checkpoint_id)
-        except cls.DoesNotExist:
-            return None
-
-        return store
-
-
-class ESRestorePillowCheckpoints(models.Model):
-    seq = models.TextField()
-    checkpoint_id = models.CharField(max_length=255, db_index=True)
-    date_updated = models.DateField()
+        return cls.get_latest(pillow.checkpoint.checkpoint_id)
 
     @classmethod
-    def create_pillow_checkpoint_snapshots(cls):
-        for pillow in get_all_pillow_instances():
-            checkpoint = pillow.checkpoint
-            db_seq = checkpoint.get_current_sequence_id()
-            cls.objects.create(seq=db_seq,
-                               checkpoint_id=checkpoint.checkpoint_id,
-                               date_updated=date.today())
+    def get_latest(cls, checkpoint_id):
+        try:
+            return cls.objects.filter(checkpoint_id=checkpoint_id)[0]
+        except IndexError:
+            return None
+
+    @classmethod
+    def get_historical_max(cls, checkpoint_id):
+        try:
+            return cls.objects.filter(checkpoint_id=checkpoint_id).order_by('-seq_int')[0]
+        except IndexError:
+            return None
+
+    class Meta:
+        ordering = ['-date_updated']

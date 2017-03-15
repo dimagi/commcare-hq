@@ -2,16 +2,6 @@ from django.contrib import admin
 from .models import *
 
 
-class PillowCheckpointSeqStoreAdmin(admin.ModelAdmin):
-
-    model = PillowCheckpointSeqStore
-    list_display = [
-        'checkpoint_id',
-        'date_updated',
-        'seq',
-    ]
-
-
 class ESRestorePillowCheckpointsAdmin(admin.ModelAdmin):
 
     model = ESRestorePillowCheckpoints
@@ -19,8 +9,8 @@ class ESRestorePillowCheckpointsAdmin(admin.ModelAdmin):
         'checkpoint_id',
         'date_updated',
         'seq',
+        'seq_int',
     ]
 
 
-admin.site.register(PillowCheckpointSeqStore, PillowCheckpointSeqStoreAdmin)
 admin.site.register(ESRestorePillowCheckpoints, ESRestorePillowCheckpointsAdmin)
