@@ -50,7 +50,7 @@ class FirstCaseFormWithXmlns(JsonObject):
 def first_case_form_with_xmlns_expression(spec, context):
     wrapped = FirstCaseFormWithXmlns.wrap(spec)
     wrapped.configure(
-        ExpressionFactory.from_spec(wrapped.case_id_expression)
+        ExpressionFactory.from_spec(wrapped.case_id_expression, context)
     )
     return wrapped
 
@@ -88,7 +88,7 @@ class CountCaseFormsWithXmlns(JsonObject):
 def count_case_forms_with_xmlns_expression(spec, context):
     wrapped = CountCaseFormsWithXmlns.wrap(spec)
     wrapped.configure(
-        ExpressionFactory.from_spec(wrapped.case_id_expression)
+        ExpressionFactory.from_spec(wrapped.case_id_expression, context)
     )
     return wrapped
 
