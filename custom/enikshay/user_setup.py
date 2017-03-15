@@ -5,6 +5,15 @@ from corehq.apps.users.signals import clean_commcare_user
 from corehq.apps.locations.signals import clean_location
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
+LOC_TYPES_TO_USER_TYPES = {
+    'phi': ['to', 'tbhv', 'mo-phi'],
+    'tu': ['sts', 'stls'],
+    'dmc': ['lt-dmc'],
+    'cdst': ['lt-cdst'],
+    'dto': ['dto', 'deo'],
+    'cto': ['cto'],
+    'sto': ['sto'],
+}
 
 
 def clean_user_callback(sender, domain, user, forms, **kwargs):
@@ -19,35 +28,32 @@ def clean_user_callback(sender, domain, user, forms, **kwargs):
     if update_user_form or new_user_form:
         if not custom_data:
             raise AssertionError("Expected user form and custom data form to be submitted together")
+
+        location = (validate_location(domain, new_user_form)
+                    if new_user_form else user.get_sql_location(domain))
+        if not location:
+            return
+
         usertype = custom_data.form.cleaned_data['usertype']
+        validate_usertype(domain, location, usertype, custom_data)
         if new_user_form:
-            location = validate_location(domain, new_user_form)
-            # set_user_role(domain, user, usertype, update_user_form)
+            set_user_role(domain, user, usertype, new_user_form)
         else:
-            location = user.get_sql_location(domain)
-            validate_usertype(domain, location, usertype, custom_data)
             validate_role_unchanged(domain, user, update_user_form)
 
     if location_form:
         location_form.add_error('assigned_locations', _("You cannot edit the location of existing users."))
 
 
-def get_allowable_usertypes(domain, location):
-    """Restrict choices for custom user data role field based on the chosen
-    location's type"""
-    if not location:
-        return []
-    loc_type = location.location_type.code
-    return [
-        ut.user_type for ut in USER_TYPES
-        if ut.location_type == loc_type
-    ]
-
-
 def validate_usertype(domain, location, usertype, custom_data):
     """Restrict choices for custom user data role field based on the chosen
     location's type"""
-    allowable_usertypes = get_allowable_usertypes(domain, location)
+    # TODO handle multiple locations.  How are they created?
+    # maybe set secondary loc to 'drtb-hiv' if usertype == 'drtb-hiv'?
+    location_codes = []
+    if location.location_type.code == 'dto' and 'drtb-hiv' in location_codes:
+        return
+    allowable_usertypes = LOC_TYPES_TO_USER_TYPES[location.location_type.code]
     if usertype not in allowable_usertypes:
         msg = _("'User Type' must be one of the following: {}").format(', '.join(allowable_usertypes))
         custom_data.form.add_error('usertype', msg)
@@ -78,6 +84,8 @@ def get_user_data_code(domain, user):
 def validate_role_unchanged(domain, user, user_form):
     """Web user role is not editable"""
     existing_role = user.get_domain_membership(domain).role
+    if not existing_role:
+        return
     existing_role_id = existing_role.get_qualified_id()
     specified_role_id = user_form.cleaned_data['role']
     if existing_role_id != specified_role_id:
@@ -98,15 +106,13 @@ def validate_location(domain, user_form):
     user_form.add_error('location_id', _("You must select a location."))
 
 
-
 def clean_location_callback(sender, domain, location, forms, **kwargs):
     if not toggles.ENIKSHAY.enabled(domain):
         return
 
-    is_new_location = sender == 'NewLocationView'
     location_form = forms.get('LocationForm')
 
-    if is_new_location:
+    if location_form.is_new_location:
         validate_nikshay_code(domain, location_form)
     else:
         validate_nikshay_code_unchanged(location, location_form)
@@ -119,9 +125,11 @@ def set_site_code(location_form):
     """Autogenerate site_code based on custom location data nikshay code and
     the codes of the ancestor locations."""
     # TODO How is this supposed to work if 'nikshay_code' isn't always required?
+    # maybe use site_code?
     nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code') or ''
-    ancestor_codes = [l.metadata.get('nikshay_code') or ''
-                      for l in location_form['parent'].get_ancestors(include_self=True)]
+    parent = location_form.cleaned_data['parent']
+    ancestors = parent.get_ancestors(include_self=True) if parent else []
+    ancestor_codes = [l.metadata.get('nikshay_code') or '' for l in ancestors]
     ancestor_codes.append(nikshay_code)
     location_form.cleaned_data['site_code'] = '-'.join(ancestor_codes)
 
@@ -131,11 +139,11 @@ def validate_nikshay_code(domain, location_form):
     (Nikshay code) is unique amongst sibling locations"""
     from corehq.apps.locations.models import SQLLocation
     nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code', None)
-    loctype = location_form.cleaned_data['loctype']
+    loctype = location_form.cleaned_data['location_type']
     if loctype not in TYPES_WITH_REQUIRED_NIKSHAY_CODES:
         return
     if not nikshay_code:
-        location_form.add_error(None, "You cannot create a location without providing a nikshay_code.")
+        location_form.add_error(None, "You cannot create this location without providing a nikshay_code.")
     parent = location_form.cleaned_data['parent']
     sibling_codes = [
         loc.metadata.get('nikshay_code', None)
@@ -156,7 +164,7 @@ def validate_nikshay_code_unchanged(location, location_form):
 
 
 def set_available_tests(location, location_form):
-    if location_form.cleaned_data['loctype'] == 'cdst':
+    if location_form.cleaned_data['location_type'] == 'cdst':
         # TODO find the real field name
         location.metadata['list of available tests'] = 'cbnaat'
 
@@ -164,31 +172,3 @@ def set_available_tests(location, location_form):
 def connect_signals():
     clean_location.connect(clean_location_callback, dispatch_uid="clean_location_callback")
     clean_commcare_user.connect(clean_user_callback, dispatch_uid="clean_user_callback")
-
-
-reports = "View All Phase 1 Reports"
-mgmt_reports = "Edit Mobile Workers, View All Phase 1 Reports"
-
-UserType = namedtuple("UserType", "user_type location_type role")
-
-USER_TYPES = [
-    UserType('to', 'phi', reports),
-    UserType('tbhv', 'phi', reports),
-    UserType('sts', 'tu', mgmt_reports),
-    UserType('stls', 'tu', reports),
-    UserType('lt-dmc', 'dmc', reports),
-    UserType('lt-cdst', 'cdst', reports),
-    UserType('dto', 'dto', mgmt_reports),
-    UserType('deo', 'dto', mgmt_reports),
-    UserType('cto', 'cto', reports),
-    UserType('sto', 'sto', mgmt_reports),
-    # TODO this one has loc type listed as "dto + drtb-hiv"
-    # User must be assigned to both loc types, with dto as primary"
-    UserType('drtb-hiv', 'drtb-hiv', reports),
-
-    # The following user types are not in 1.0
-    # UserType('mo-phi', 'phi', 'N/A'),
-    # UserType('microbiologist', 'TBD', 'N/A'),
-    # UserType('mo-drtb', 'TBD', 'N/A'),
-    # UserType('sa', 'TBD', 'N/A'),
-]
