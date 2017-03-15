@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from collections import defaultdict
 from datetime import datetime, timedelta
-from functools import partial
 import hashlib
 
 from alembic.autogenerate.api import compare_metadata
