@@ -16,7 +16,7 @@
           <xpath function="case_name"/>
         </text>
       </template>
-      <sort direction="descending" order="-2" type="string">
+      <sort direction="descending" blanks="first" order="-2" type="string">
         <text>
           <xpath function="case_name"/>
         </text>
