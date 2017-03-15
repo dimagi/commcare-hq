@@ -2,7 +2,8 @@
 
 /**
  * Diff generation is very fragile. Since the diff generated takes in a body of text
- * and returns "diff" object back, it's very difficult to create an HTML structure to
+ * and returns Change objects back (https://github.com/kpdecker/jsdiff#change-objects).
+ * It's very difficult to create an HTML structure to
  * layout the app in a logical way. To hack around this, we diff by line and include
  * the html in the diff algorithm in a specific manner. For example, consider these two
  * pieces of text:
@@ -25,27 +26,23 @@
  *   </li>
  * </ul>
  *
- * Which is clearly invalid HTML. To get around this, all HTML elements are given their own line
- * with a closing and ending block:
+ * Which is looks to be invalid HTML. However, the browser interprets different element errors
+ * in different ways. In this scenario the browser will smartly close the tag around the li.
+ * This is not the case for other elements:
  *
- * <ul>
- *   <li>Form One </li>
- * </ul>
+ * > d.innerHTML = '<li>one<li>two'
+ * > "<li>one<li>two"
+ * > d.innerHTML
+ * > "<li>one</li><li>two</li>"
  *
- * <ul>
- *   <li>Form Two </li>
- * </ul>
+ * > d.innerHTML = '<div>one<div>two'
+ * > "<div>one<div>two"
+ * > d.innerHTML
+ * > "<div>one<div>two</div></div>"
  *
- * This way when the browser does a diff the compiled result is
- *
- * <ul>
- *   <li>Form One </li>
- *   <li>Form Two </li>
- * </ul>
- *
- * To handle closing tags, we always give closing tags their own line. This way they either
- * always completely match or are completely removed/added so there isn't a double close tag
- */
+ * Notice how the browser autocorrects the end tag differently. This works out well for us
+ * and is taken advantage of in this code.
+ * */
 hqDefine('app_manager/js/app_diff.js', function () {
     var reverse = hqImport('hqwebapp/js/urllib.js').reverse;
     var sanitize = DOMPurify.sanitize;
