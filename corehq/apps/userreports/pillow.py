@@ -189,7 +189,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self._processor.rebuild_table(sql_adapter)
 
 
-def get_kafka_ucr_pillow(ucr_division='0f', pillow_id='kafka-ucr-main'):
+def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division='0f'):
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
@@ -200,15 +200,12 @@ def get_kafka_ucr_pillow(ucr_division='0f', pillow_id='kafka-ucr-main'):
     )
 
 
-get_kafka_ucr_pillow_08 = partial(get_kafka_ucr_pillow, '08')
-get_kafka_ucr_pillow_9f = partial(get_kafka_ucr_pillow, '9f')
-
-
-def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static'):
+def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division='0f'):
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),
             auto_repopulate_tables=True,
+            ucr_division=ucr_division
         ),
         pillow_name=pillow_id,
     )

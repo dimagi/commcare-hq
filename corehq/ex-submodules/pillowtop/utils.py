@@ -55,7 +55,7 @@ def get_pillow_configs_from_settings_dict(pillow_settings_dict):
             yield get_pillow_config_from_setting(section, pillow_config)
 
 
-class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 'instance_generator'])):
+class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 'instance_generator', 'params'])):
     """
     Helper object for getting pillow classes/instances from settings
     """
@@ -66,7 +66,7 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
     def get_instance(self):
         if self.instance_generator:
             instance_generator_fn = _import_class_or_function(self.instance_generator)
-            return instance_generator_fn(self.name)
+            return instance_generator_fn(self.name, **self.params)
         else:
             return _get_pillow_instance(self.class_name)
 
@@ -78,6 +78,7 @@ def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
             pillow_config_string_or_dict.rsplit('.', 1)[1],
             pillow_config_string_or_dict,
             None,
+            {}
         )
     else:
         assert 'class' in pillow_config_string_or_dict
@@ -87,10 +88,12 @@ def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
             pillow_config_string_or_dict.get('name', class_name),
             class_name,
             pillow_config_string_or_dict.get('instance', None),
+            pillow_config_string_or_dict.get('params', {}),
         )
 
 
-def get_pillow_by_name(pillow_class_name, instantiate=True):
+def get_pillow_by_name(pillow_class_name, instantiate=True, params=None):
+    params = params or {}
     config = get_pillow_config_by_name(pillow_class_name)
     return config.get_instance() if instantiate else config.get_class()
 
