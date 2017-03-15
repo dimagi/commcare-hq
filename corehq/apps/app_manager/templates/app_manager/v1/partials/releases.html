@@ -113,9 +113,11 @@
                     css: {disabled: !buildButtonEnabled()}
                 ">{% trans 'Make New Version' %}</button>
 
+                {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
                 <button class="btn btn-primary" data-toggle="modal" data-target="#app-diff-modal">
                     {% trans 'Show changes' %}
                 </button>
+                {% endif %}
 
     <div id="build-errors-wrapper"></div>
     <table class="table">
