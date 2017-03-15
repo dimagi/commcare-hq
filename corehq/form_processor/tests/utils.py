@@ -172,8 +172,12 @@ run_with_all_backends = functools.partial(
 )
 
 
+def partitioned(cls):
+    return attr(sql_backend=True)(cls)
+
+
 def use_sql_backend(cls):
-    return attr(sql_backend=True)(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
+    return partitioned(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
 
 
 @unit_testing_only
