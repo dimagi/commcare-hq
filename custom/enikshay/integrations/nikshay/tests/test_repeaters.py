@@ -501,6 +501,7 @@ class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, Niksha
     def test_trigger(self):
         # nikshay not enabled
         self.create_case(self.episode)
+        self.assign_person_to_location(self.phi.location_id)
         update_case(
             self.domain,
             self.episode_id,
@@ -543,6 +544,7 @@ class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, Niksha
 
     def test_trigger_with_person_nikshay_id(self):
         self.create_case(self.episode)
+        self.assign_person_to_location(self.phi.location_id)
         update_case(self.domain, self.person_id, {"nikshay_id": DUMMY_NIKSHAY_ID})
         self.assertEqual(0, len(self.repeat_records().all()))
 
@@ -555,6 +557,24 @@ class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, Niksha
             }
         )
         self.assertEqual(1, len(self.repeat_records().all()))
+
+    def test_trigger_with_test_submission(self):
+        self.create_case(self.episode)
+        self.phi.metadata['is_test'] = 'yes'
+        self.phi.save()
+        self.assign_person_to_location(self.phi.location_id)
+        update_case(self.domain, self.person_id, {"nikshay_id": DUMMY_NIKSHAY_ID})
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        # change triggered
+        update_case(
+            self.domain,
+            self.episode_id,
+            {
+                TREATMENT_OUTCOME: "cured",
+            }
+        )
+        self.assertEqual(0, len(self.repeat_records().all()))
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
