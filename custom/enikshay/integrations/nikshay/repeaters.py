@@ -84,7 +84,7 @@ class NikshayHIVTestRepeater(CaseRepeater):
                 return False
 
             return (
-                (person_nikshay_id_present(person_case) or person_registered_via_api(episode_case)) and
+                person_nikshay_id_present(person_case) and
                 not test_submission(person_case) and
                 (
                     related_dates_changed(person_case) or
@@ -116,7 +116,7 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
         if allowed_case_types_and_users:
             person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
             return (
-                (person_nikshay_id_present(person_case) or person_registered_via_api(episode_case)) and
+                person_nikshay_id_present(person_case) and
                 case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
                 episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys()
             )
@@ -171,14 +171,6 @@ def create_case_repeat_records(sender, case, **kwargs):
 
 def create_hiv_test_repeat_records(sender, case, **kwargs):
     create_repeat_records(NikshayHIVTestRepeater, case)
-
-
-def person_registered_via_api(episode_case):
-    episode_case_properties = episode_case.dynamic_case_properties()
-    return (
-        episode_case_properties.get('nikshay_registered', 'false') == 'true' and
-        episode_case_properties.get('nikshay_id')
-    )
 
 
 def person_nikshay_id_present(person_case):
