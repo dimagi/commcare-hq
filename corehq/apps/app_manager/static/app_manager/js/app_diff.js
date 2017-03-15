@@ -40,7 +40,9 @@ hqDefine('app_manager/js/app_diff.js', function () {
                 self.controller.getFormData(self.appIdTwo)
             ).done(function(formDataOneJson, formDataTwoJson) {
                 self.$el.html(self.generateHtmlDiff(formDataOneJson, formDataTwoJson));
-                self.$el.find('.diff-questions:not(:has(.diff-change))').html('<i>No changes detected</i>');
+                self.$el.find('.diff-questions:not(:has(.diff-change))').html(
+                    '<i>' + gettext('No changes detected') + '</i>'
+                );
             });
         };
 
@@ -163,7 +165,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
 
         this.toString = function() {
             var lines =[
-                HtmlUtils.makeLi(sanitize(self.label) || '[unknown]', 'diff-question'),
+                HtmlUtils.makeLi(sanitize(self.label) || gettext('[unknown]'), 'diff-question'),
                 HtmlUtils.makeUl('diff-question-metadata fa-ul'),
 
                 HtmlUtils.makeLi(sanitize(self.hashtagValue), '', '', true),
