@@ -17,7 +17,7 @@ class JsonApiRequestTests(SimpleTestCase):
         self.data_element_id = '123'
 
     def test_authentication(self):
-        with patch('corehq.apps.dhis2.models.requests') as requests_mock:
+        with patch('corehq.apps.dhis2.api.requests') as requests_mock:
             content = {'code': TEST_API_USERNAME}
             content_json = json.dumps(content)
             response_mock = Mock()
@@ -26,16 +26,17 @@ class JsonApiRequestTests(SimpleTestCase):
             response_mock.json.return_value = content
             requests_mock.get.return_value = response_mock
 
-            me = self.api.get('me')
+            status, me = self.api.get('me')
             requests_mock.get.assert_called_with(
                 TEST_API_URL + 'me',
                 headers={'Accept': 'application/json'},
                 auth=(TEST_API_USERNAME, TEST_API_PASSWORD)
             )
+            self.assertEqual(status, 200)
             self.assertEqual(me['code'], TEST_API_USERNAME)
 
     def test_send_data_value_set(self):
-        with patch('corehq.apps.dhis2.models.requests') as requests_mock:
+        with patch('corehq.apps.dhis2.api.requests') as requests_mock:
             payload = {'dataValues': [
                 {'dataElement': self.data_element_id, 'period': "201701",
                  'orgUnit': self.org_unit_id, 'value': "180"},
@@ -51,12 +52,13 @@ class JsonApiRequestTests(SimpleTestCase):
             response_mock.json.return_value = content
             requests_mock.post.return_value = response_mock
 
-            response = self.api.post('dataValueSets', payload)
+            status, response = self.api.post('dataValueSets', payload)
             requests_mock.post.assert_called_with(
                 'http://localhost:9080/api/dataValueSets',
                 payload_json,
                 headers={'Content-type': 'application/json', 'Accept': 'application/json'},
                 auth=(TEST_API_USERNAME, TEST_API_PASSWORD)
             )
+            self.assertEqual(status, 201)
             self.assertEqual(response['status'], 'SUCCESS')
             self.assertEqual(response['importCount']['imported'], 2)
