@@ -84,7 +84,7 @@ class NikshayHIVTestRepeater(CaseRepeater):
                 return False
 
             return (
-                (person_migrated_from_nikshay(person_case) or person_registered_via_api(episode_case)) and
+                (person_nikshay_id_present(person_case) or person_registered_via_api(episode_case)) and
                 not test_submission(person_case) and
                 (
                     related_dates_changed(person_case) or
@@ -116,7 +116,7 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
         if allowed_case_types_and_users:
             person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
             return (
-                (person_migrated_from_nikshay(person_case) or person_registered_via_api(episode_case)) and
+                (person_nikshay_id_present(person_case) or person_registered_via_api(episode_case)) and
                 case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
                 episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys()
             )
@@ -181,12 +181,10 @@ def person_registered_via_api(episode_case):
     )
 
 
-def person_migrated_from_nikshay(person_case):
+def person_nikshay_id_present(person_case):
     person_case_properties = person_case.dynamic_case_properties()
-    return (
-        person_case_properties.get('migration_created_case', None) == 'true' and
-        person_case_properties.get('nikshay_id')
-    )
+    return bool(person_case_properties.get('nikshay_id'))
+
 
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
 case_post_save.connect(create_hiv_test_repeat_records, CommCareCaseSQL)
