@@ -6,7 +6,6 @@ from django.db import models
 from corehq.apps.dhis2.utils import get_ucr_data
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
-    DateTimeProperty,
     Document,
     DocumentSchema,
     IntegerProperty,

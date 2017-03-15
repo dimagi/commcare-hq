@@ -15,27 +15,6 @@ class JsonApiError(Exception):
     pass
 
 
-class Dhis2ApiQueryError(JsonApiError):
-    """
-    Dhis2ApiQueryError is raised when the API returns an unexpected response.
-    """
-    pass
-
-
-class Dhis2ConfigurationError(Exception):
-    """
-    DHIS2 API Integration has not been configured correctly.
-    """
-    pass
-
-
-class Dhis2IntegrationError(Exception):
-    """
-    A failure has occurred in CommCareHQ related to but not caused by DHIS2.
-    """
-    pass
-
-
 def json_serializer(obj):
     """
     A JSON serializer that serializes dates and times
