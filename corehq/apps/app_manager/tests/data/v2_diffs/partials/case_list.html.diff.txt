@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,278 +1,270 @@
+@@ -1,274 +1,266 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  
@@ -176,24 +176,22 @@
 -                    <th></th>
 -                    <th>
 -                        {% trans "Sort Property" %}
--                        <span style="font-size: 13px">
--                            <span class="hq-help-template"
--                                  data-title="{% trans "Sort Properties" %}"
--                                  data-content=
--                                      "{% blocktrans %}
--                                          Properties in this list determine how
--                                          cases are ordered in your case list. This
--                                          is useful if for example you want higher
--                                          priority cases to appear closer to the
--                                          top of the list. The case list will sort
--                                          by the first property, then the second,
--                                          etc.
--                                      {% endblocktrans %}" >
--                            </span>
+-                        <span class="hq-help-template"
+-                              data-title="{% trans "Sort Properties" %}"
+-                              data-content=
+-                                  "{% blocktrans %}
+-                                      Properties in this list determine how
+-                                      cases are ordered in your case list. This
+-                                      is useful if for example you want higher
+-                                      priority cases to appear closer to the
+-                                      top of the list. The case list will sort
+-                                      by the first property, then the second,
+-                                      etc.
+-                                  {% endblocktrans %}" >
 -                        </span>
 -                    </th>
 -                    <th>{% trans "Direction" %}</th>
--                    <!-- ko if: hqImport('app_manager/js/app_manager.js').checkCommcareVersion("2.35") -->
+-                    <!-- ko if: hqImport('app_manager/js/app_manager.js').checkCommcareVersion("2.15") -->
 -                        <th>{% trans "Display Blanks" %}</th>
 -                    <!-- /ko -->
 -                    {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
@@ -204,18 +202,16 @@
 -                    <th>{% trans "Format" %}</th>
 -                    <th>
 -                        {% trans "Display Text" %}
--                        <span style="font-size: 13px">
--                            <span class="hq-help-template"
--                                  data-title="{% trans "Display Text" %}"
--                                  data-content=
--                                      "{% blocktrans %}
--                                          The 'Display Text' is used for properties that are only listed as
--                                          Sort Properties and not as Display Properties above. The text appears
--                                          in the 'Sort By' menu on the mobile to allow the user to change the
--                                          sort ordering. If the display text is left blank then the option
--                                          for that sort property will not appear in the 'Sort By' menu.
--                                      {% endblocktrans %}" >
--                            </span>
+-                        <span class="hq-help-template"
+-                              data-title="{% trans "Display Text" %}"
+-                              data-content=
+-                                  "{% blocktrans %}
+-                                      The 'Display Text' is used for properties that are only listed as
+-                                      Sort Properties and not as Display Properties above. The text appears
+-                                      in the 'Sort By' menu on the mobile to allow the user to change the
+-                                      sort ordering. If the display text is left blank then the option
+-                                      for that sort property will not appear in the 'Sort By' menu.
+-                                  {% endblocktrans %}" >
 -                        </span>
 -                    </th>
 -                    <th></th>
@@ -224,7 +220,7 @@
 -            <tbody data-bind="foreach: sortRows(), sortableList: sortRows">
 -                <tr>
 -                    <td>
--                        <i class="grip fa fa-arrows-v icon-blue" style="cursor: move"></i>
+-                        <i class="grip fa fa-arrows-v icon-blue"></i>
 -                    </td>
 -
 -                    <td class="form-group" data-bind="css: {'has-error': showWarning}">
@@ -247,7 +243,7 @@
 -                        </select>
 -                    </td>
 -
--                    <!-- ko if: hqImport('app_manager/js/app_manager.js').checkCommcareVersion("2.35") -->
+-                    <!-- ko if: hqImport('app_manager/js/app_manager.js').checkCommcareVersion("2.15") -->
 -                        <td>
 -                            <select class="form-control" data-bind="value: blanks">
 -                                <option value="last">
@@ -307,20 +303,18 @@
 +                            <th></th>
 +                            <th>
 +                                {% trans "Sort Property" %}
-+                                <span style="font-size: 13px">
-+                                    <span class="hq-help-template"
-+                                          data-title="{% trans "Sort Properties" %}"
-+                                          data-content=
-+                                              "{% blocktrans %}
-+                                                  Properties in this list determine how
-+                                                  cases are ordered in your case list. This
-+                                                  is useful if for example you want higher
-+                                                  priority cases to appear closer to the
-+                                                  top of the list. The case list will sort
-+                                                  by the first property, then the second,
-+                                                  etc.
-+                                              {% endblocktrans %}" >
-+                                    </span>
++                                <span class="hq-help-template"
++                                      data-title="{% trans "Sort Properties" %}"
++                                      data-content=
++                                          "{% blocktrans %}
++                                              Properties in this list determine how
++                                              cases are ordered in your case list. This
++                                              is useful if for example you want higher
++                                              priority cases to appear closer to the
++                                              top of the list. The case list will sort
++                                              by the first property, then the second,
++                                              etc.
++                                          {% endblocktrans %}" >
 +                                </span>
 +                            </th>
 +                            <th>{% trans "Direction" %}</th>
@@ -389,18 +383,16 @@
 +                            <th>{% trans "Format" %}</th>
 +                            <th>
 +                                {% trans "Display Text" %}
-+                                <span style="font-size: 13px">
-+                                    <span class="hq-help-template"
-+                                          data-title="{% trans "Display Text" %}"
-+                                          data-content=
-+                                              "{% blocktrans %}
-+                                                  The 'Display Text' is used for properties that are only listed as
-+                                                  Sort Properties and not as Display Properties above. The text appears
-+                                                  in the 'Sort By' menu on the mobile to allow the user to change the
-+                                                  sort ordering. If the display text is left blank then the option
-+                                                  for that sort property will not appear in the 'Sort By' menu.
-+                                              {% endblocktrans %}" >
-+                                    </span>
++                                <span class="hq-help-template"
++                                      data-title="{% trans "Display Text" %}"
++                                      data-content=
++                                          "{% blocktrans %}
++                                              The 'Display Text' is used for properties that are only listed as
++                                              Sort Properties and not as Display Properties above. The text appears
++                                              in the 'Sort By' menu on the mobile to allow the user to change the
++                                              sort ordering. If the display text is left blank then the option
++                                              for that sort property will not appear in the 'Sort By' menu.
++                                          {% endblocktrans %}" >
 +                                </span>
 +                            </th>
 +                            <th></th>
@@ -409,7 +401,7 @@
 +                    <tbody data-bind="foreach: sortRows(), sortableList: sortRows">
 +                        <tr>
 +                            <td>
-+                                <i class="grip fa fa-arrows-v icon-blue" style="cursor: move"></i>
++                                <i class="grip fa fa-arrows-v icon-blue"></i>
 +                            </td>
 +                            <td class="form-group" data-bind="css: {'has-error': showWarning}">
 +                                <div data-bind="jqueryElement: textField.ui"></div>
