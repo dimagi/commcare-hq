@@ -7,6 +7,7 @@ from django.http import Http404
 from django.utils.translation import ugettext_noop, ugettext_lazy as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from django.views.generic import View
+from dimagi.utils.web import json_response
 
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.util import get_app_manager_template, get_form_data
@@ -88,6 +89,19 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
             'errors': errors,
             'success': True,
         }
+
+
+class FormDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
+
+    urlname = 'form_data'
+
+    def get(self, request, *args, **kwargs):
+        modules, errors = get_form_data(self.domain, self.app)
+        return json_response({
+            'response': modules,
+            'errors': errors,
+            'success': True,
+        })
 
 
 def _get_name_map(app):

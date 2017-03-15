@@ -1,40 +1,61 @@
-/* globals JsDiff */
+/* globals JsDiff, RMI */
 hqDefine('app_manager/js/app_diff.js', function () {
-    var init = function(selector, formDataOneJson, formDataTwoJson) {
+    var reverse = hqImport('hqwebapp/js/urllib.js').reverse;
+
+    var init = function(selector, appIdOne, appIdTwo) {
         var $el = $(selector);
 
         if (!$el.length) {
             throw new Error(selector + ' does not resolve to an element');
         }
-        return new AppDiff($el, formDataOneJson, formDataTwoJson);
+        return new AppDiff($el, appIdOne, appIdTwo);
     };
 
-    var AppDiff = function($el, formDataOneJson, formDataTwoJson) {
+    var AppDiff = function($el, appIdOne, appIdTwo) {
         var self = this;
-        self.modulesOne = [];
-        self.modulesTwo = [];
+        self.appIdOne = appIdOne;
+        self.appIdTwo = appIdTwo;
         self.$el = $el;
+        self.controller = new Controller();
 
-        _.each(formDataOneJson, function(d) {
-            self.modulesOne.push(new ModuleDatum(d));
-        });
-        _.each(formDataTwoJson, function(d) {
-            self.modulesTwo.push(new ModuleDatum(d));
-        });
 
-        self.generateDiff = function() {
-            var textOne = _.map(self.modulesOne, function(m) { return m.toString(); }).join('\n');
-            var textTwo = _.map(self.modulesTwo, function(m) { return m.toString(); }).join('\n');
-            self.diffObjects = JsDiff.diffLines(textOne, textTwo);
+        self.renderDiff = function() {
+            $.when(
+                self.controller.getFormData(self.appIdOne),
+                self.controller.getFormData(self.appIdTwo)
+            ).done(function(formDataOneJson, formDataTwoJson) {
+                self.$el.html(self.generateHtmlDiff(formDataOneJson, formDataTwoJson));
+            });
 
-            var fullHtml = HtmlUtils.makeUl('diff-app fa-ul') + '\n';
-            self.$el.html('');
-            _.each(self.diffObjects, function(diff) {
+
+        };
+
+        self.generateHtmlDiff = function(formDataOneJson, formDataTwoJson) {
+            var modulesOne = [],
+                modulesTwo = [],
+                textOne,
+                textTwo,
+                diffObjects,
+                fullHtml;
+            _.each(formDataOneJson, function(d) {
+                modulesOne.push(new ModuleDatum(d));
+            });
+            _.each(formDataTwoJson, function(d) {
+                modulesTwo.push(new ModuleDatum(d));
+            });
+
+            textOne = _.map(modulesOne, function(m) { return m.toString(); }).join('\n');
+            textTwo = _.map(modulesTwo, function(m) { return m.toString(); }).join('\n');
+            diffObjects = JsDiff.diffLines(textTwo, textOne);
+
+            fullHtml = HtmlUtils.makeUl('diff-app fa-ul') + '\n';
+            _.each(diffObjects, function(diff) {
                 var color = diff.added ? 'green' : diff.removed ? 'red' : 'black';
                 fullHtml += HtmlUtils.replaceStyle(diff.value, 'color: ' + color);
             });
             fullHtml += HtmlUtils.closeEl('ul');
-            self.$el.html(fullHtml);
+
+            return fullHtml;
         };
     };
 
@@ -92,7 +113,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
 
         this.toString = function() {
             return (
-                HtmlUtils.makeLi(self.label || '[unknown]', 'diff-question') +
+                HtmlUtils.makeLi(self.label || '[unknown]', 'diff-question') + '\n' +
                 HtmlUtils.makeUl('diff-question-metadata fa-ul') + '\n' +
 
                 HtmlUtils.makeLi(self.hashtagValue, '', '', true) +
@@ -102,6 +123,27 @@ hqDefine('app_manager/js/app_diff.js', function () {
                 HtmlUtils.closeEl('ul') + '\n' +
                 HtmlUtils.closeEl('li') + '\n'
             );
+        };
+    };
+
+    var Controller = function() {
+        var cache = {};
+
+        this.getFormData = function(appId) {
+            var url = reverse('form_data', appId),
+                deferred = $.Deferred();
+
+            if (cache.hasOwnProperty(appId)) {
+                deferred.resolved(cache[appId]);
+            } else {
+                $.get(url).done(function(response) {
+                    cache[appId] = response.response;
+                    deferred.resolve(response.response);
+                }).fail(function(response) {
+                    deferred.resolve(response);
+                });
+            }
+            return deferred;
         };
     };
 
