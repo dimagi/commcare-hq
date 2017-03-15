@@ -105,8 +105,18 @@
                         </span>
                     </th>
                     <th>{% trans "Direction" %}</th>
-                    <!-- ko if: hqImport('app_manager/js/app_manager.js').checkCommcareVersion("2.15") -->
-                        <th>{% trans "Display Blanks" %}</th>
+                    <!-- ko if: hqImport('app_manager/js/app_manager.js').checkCommcareVersion("2.35") -->
+                        <th>
+                            {% trans "Display Blanks" %}
+                            <span class="hq-help-template"
+                                  data-title="{% trans "Display Blanks" %}"
+                                  data-content=
+                                      "{% blocktrans %}
+                                          Should cases that don't have a value for the sort property
+                                          appear at the top or the bottom of the case list?
+                                      {% endblocktrans %}" >
+                            </span>
+                        </th>
                     <!-- /ko -->
                     {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
                         <th>{% trans "Sort Calculation" %}{{ request|toggle_tag_info:"SORT_CALCULATION_IN_CASE_LIST" }}</th>
@@ -157,7 +167,7 @@
                         </select>
                     </td>
 
-                    <!-- ko if: hqImport('app_manager/js/app_manager.js').checkCommcareVersion("2.15") -->
+                    <!-- ko if: hqImport('app_manager/js/app_manager.js').checkCommcareVersion("2.35") -->
                         <td>
                             <select class="form-control" data-bind="value: blanks">
                                 <option value="last">
