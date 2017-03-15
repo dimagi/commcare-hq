@@ -37,6 +37,7 @@ def send_datavalues(domain_name):
         dhis2_conn.server_url,
         dhis2_conn.username,
         dhis2_conn.password,
+        domain_name=domain_name,
     )
     for dataset_map in dataset_maps:
         if dataset_map.day_to_send == datetime.today().day:

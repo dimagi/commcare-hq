@@ -43,7 +43,7 @@ def log_request(func):
             return status, response
         finally:
             log({
-                # 'domain': self.domain_name,  # TODO: Make this available
+                'domain': self.domain_name if self.domain_name is not None else '[N/A]',
                 'request_method': func.__name__.upper(),
                 'request_url': self.server_url + path,
                 'request_headers': json.dumps(self.headers),
@@ -63,10 +63,11 @@ class JsonApiRequest(object):
     Wrap requests with URL, header and authentication for DHIS2 API
     """
 
-    def __init__(self, server_url, username, password):
+    def __init__(self, server_url, username, password, domain_name=None):
         self.server_url = server_url  # e.g. "https://dhis2.example.com/api/26/"
         self.headers = {'Accept': 'application/json'}
         self.auth = (username, password)
+        self.domain_name = domain_name
 
     @staticmethod
     def json_or_error(response):
