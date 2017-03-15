@@ -154,12 +154,16 @@ hqDefine('app_manager/js/app_diff.js', function () {
         var self = this;
         this.id = json.id;
         this.name = json.name;
-        this.shortComment = json.short_comment;
+        this.shortComment = json.short_comment || '';
         this.forms = _.map(json.forms, function(form) { return new FormDatum(form); });
 
         this.toString = function() {
             var lines = [
-                HtmlUtils.makeLi(sanitize(self.name.en), 'diff-module', 'folder-open'),
+                // We want these to be considered one line
+                (
+                    HtmlUtils.makeLi(sanitize(self.name.en), 'diff-module', 'folder-open') +
+                    HtmlUtils.makeSpan(' ' + sanitize(self.shortComment), 'diff-comment', '', true)
+                ),
                 HtmlUtils.makeUl('diff-forms fa-ul'),
                 _.map(self.forms, function(f) { return f.toString(); }).join('\n'),
                 HtmlUtils.closeEl('ul'),
@@ -176,12 +180,16 @@ hqDefine('app_manager/js/app_diff.js', function () {
         var self = this;
         this.id = json.id;
         this.name = json.name;
-        this.shortComment = json.short_comment;
+        this.shortComment = json.short_comment || '';
         this.questions = _.map(json.questions, function(q) { return new QuestionDatum(q); });
 
         this.toString = function() {
             var lines = [
-                HtmlUtils.makeLi(sanitize(self.name.en), 'diff-form', 'file-o'),
+                // We want these to be considered one line
+                (
+                    HtmlUtils.makeLi(sanitize(self.name.en), 'diff-form', 'file-o') +
+                    HtmlUtils.makeSpan(sanitize(' ' + self.shortComment), 'diff-comment', '', true)
+                ),
                 HtmlUtils.makeUl('diff-questions fa-ul'),
                 _.map(self.questions, function(q) { return q.toString(); }).join('\n'),
                 HtmlUtils.closeEl('ul'),
@@ -197,7 +205,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
     var QuestionDatum = function(json) {
         console.log(json);
         var self = this;
-        this.comment = json.comment;
+        this.comment = json.comment || '';
         this.group = json.group;
         this.hashtagValue = json.hashtagValue;
         this.label = json.label;
@@ -213,7 +221,12 @@ hqDefine('app_manager/js/app_diff.js', function () {
 
         this.toString = function() {
             var lines =[
-                HtmlUtils.makeLi(sanitize(self.label) || gettext('[unknown]'), 'diff-question'),
+                // We want these to be considered one line
+                (
+                    HtmlUtils.makeLi(sanitize(self.label) || gettext('[unknown]'), 'diff-question') +
+                    HtmlUtils.makeSpan(sanitize(' ' + self.comment), 'diff-comment', '', true)
+                ),
+
                 HtmlUtils.makeUl('diff-question-metadata fa-ul'),
 
                 HtmlUtils.makeLi(sanitize(self.hashtagValue), '', '', true),
