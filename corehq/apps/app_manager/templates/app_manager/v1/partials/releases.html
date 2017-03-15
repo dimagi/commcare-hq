@@ -20,8 +20,8 @@
         var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
         var appDiff = hqImport('app_manager/js/app_diff.js').init(
             '#app-diff-modal .modal-body',
-            '{{ app.id }}',
-            '{{ latest_build_id }}'
+            {{ app.id|JSON }},
+            {{ latest_build_id|JSON }}
         )
         $('#app-diff-modal').on('show.bs.modal', function (e) {
             appDiff.renderDiff();
