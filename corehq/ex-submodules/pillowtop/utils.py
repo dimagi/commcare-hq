@@ -60,6 +60,9 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
     Helper object for getting pillow classes/instances from settings
     """
 
+    def __hash__(self):
+        return hash(self.name)
+
     def get_class(self):
         return _import_class_or_function(self.class_name)
 
