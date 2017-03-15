@@ -10,7 +10,6 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
-from corehq.apps.hqwebapp.utils import decode_password
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
 
@@ -31,6 +30,8 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         return username
 
     def clean_password(self):
+        from corehq.apps.hqwebapp.utils import decode_password
+
         password = self.cleaned_data['password']
         return decode_password(password)
 

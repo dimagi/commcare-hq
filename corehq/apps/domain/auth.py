@@ -3,7 +3,6 @@ import re
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
-from corehq.apps.hqwebapp.utils import decode_password
 
 J2ME = 'j2me'
 ANDROID = 'android'
@@ -59,6 +58,8 @@ def guess_phone_type_from_user_agent(user_agent):
 
 
 def get_username_and_password_from_request(request):
+    from corehq.apps.hqwebapp.utils import decode_password
+
     username, password = None, None
     if 'HTTP_AUTHORIZATION' in request.META:
         auth = request.META['HTTP_AUTHORIZATION'].split()
