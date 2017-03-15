@@ -44,7 +44,7 @@ class HqDeploy(Document):
         ).all()
 
 
-class ESRestorePillowCheckpoints(models.Model):
+class HistoricalPillowCheckpoint(models.Model):
     seq = models.TextField()
     seq_int = models.IntegerField()
     checkpoint_id = models.CharField(max_length=255, db_index=True)

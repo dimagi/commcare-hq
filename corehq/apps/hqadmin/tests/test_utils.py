@@ -3,7 +3,7 @@ from mock import patch
 
 from corehq.apps.hqadmin.utils import check_for_rewind
 from corehq.util.test_utils import generate_cases
-from ..models import ESRestorePillowCheckpoints
+from ..models import HistoricalPillowCheckpoint
 from ..utils import check_pillows_for_rewind, EPSILON, parse_celery_workers, parse_celery_pings
 
 
@@ -30,15 +30,15 @@ class TestPillowCheckpointSeqStore(TestCase):
     def test_basic_cloudant_seq(self):
         seq = '1-blahblah'
         self.pillow.set_checkpoint({'seq': seq})
-        ESRestorePillowCheckpoints.create_checkpoint_snapshot(self.pillow.checkpoint)
-        store = ESRestorePillowCheckpoints.get_latest(self.pillow.checkpoint.checkpoint_id)
+        HistoricalPillowCheckpoint.create_checkpoint_snapshot(self.pillow.checkpoint)
+        store = HistoricalPillowCheckpoint.get_latest(self.pillow.checkpoint.checkpoint_id)
         self.assertEquals(store.seq, seq)
 
     def test_basic_couchdb_seq(self):
         seq = 100
         self.pillow.set_checkpoint({'seq': seq})
-        ESRestorePillowCheckpoints.create_checkpoint_snapshot(self.pillow.checkpoint)
-        store = ESRestorePillowCheckpoints.get_latest(self.pillow.checkpoint.checkpoint_id)
+        HistoricalPillowCheckpoint.create_checkpoint_snapshot(self.pillow.checkpoint)
+        store = HistoricalPillowCheckpoint.get_latest(self.pillow.checkpoint.checkpoint_id)
         self.assertEquals(store.seq, str(seq))
 
     def test_small_rewind(self):
@@ -47,11 +47,11 @@ class TestPillowCheckpointSeqStore(TestCase):
         """
         seq = '10-blahblah'
         self.pillow.set_checkpoint({'seq': seq})
-        ESRestorePillowCheckpoints.create_checkpoint_snapshot(self.pillow.checkpoint)
+        HistoricalPillowCheckpoint.create_checkpoint_snapshot(self.pillow.checkpoint)
 
         seq_rewind = '9-blahblah'
         self.pillow.set_checkpoint({'seq': seq_rewind})
-        ESRestorePillowCheckpoints.create_checkpoint_snapshot(self.pillow.checkpoint)
+        HistoricalPillowCheckpoint.create_checkpoint_snapshot(self.pillow.checkpoint)
 
         has_rewound, historical_seq = check_for_rewind(self.pillow.checkpoint)
         self.assertFalse(has_rewound)
@@ -63,11 +63,11 @@ class TestPillowCheckpointSeqStore(TestCase):
         """
         seq = '{}-blahblah'.format(EPSILON + 10)
         self.pillow.set_checkpoint({'seq': seq})
-        ESRestorePillowCheckpoints.create_checkpoint_snapshot(self.pillow.checkpoint)
+        HistoricalPillowCheckpoint.create_checkpoint_snapshot(self.pillow.checkpoint)
 
         seq_rewind = '9-blahblah'
         self.pillow.set_checkpoint({'seq': seq_rewind})
-        ESRestorePillowCheckpoints.create_checkpoint_snapshot(self.pillow.checkpoint)
+        HistoricalPillowCheckpoint.create_checkpoint_snapshot(self.pillow.checkpoint)
 
         has_rewound, historical_seq = check_for_rewind(self.pillow.checkpoint)
         self.assertTrue(has_rewound)
@@ -76,32 +76,32 @@ class TestPillowCheckpointSeqStore(TestCase):
     def test_get_latest_for_pillow(self):
         seq = '10-blahblah'
         self.pillow.set_checkpoint({'seq': seq})
-        ESRestorePillowCheckpoints.create_checkpoint_snapshot(self.pillow.checkpoint)
+        HistoricalPillowCheckpoint.create_checkpoint_snapshot(self.pillow.checkpoint)
 
-        store = ESRestorePillowCheckpoints.get_latest_for_pillow('DummyPillow')
+        store = HistoricalPillowCheckpoint.get_latest_for_pillow('DummyPillow')
         self.assertIsNotNone(store)
 
-        store = ESRestorePillowCheckpoints.get_latest_for_pillow('DummyPillowThatDoesNotExist')
+        store = HistoricalPillowCheckpoint.get_latest_for_pillow('DummyPillowThatDoesNotExist')
         self.assertIsNone(store)
 
     def test_get_historical_max(self):
         seq0 = '12-blahblah'
         self.pillow.set_checkpoint({'seq': seq0})
-        ESRestorePillowCheckpoints.create_checkpoint_snapshot(self.pillow.checkpoint)
+        HistoricalPillowCheckpoint.create_checkpoint_snapshot(self.pillow.checkpoint)
 
         seq1 = '10-blahblah'
         self.pillow.set_checkpoint({'seq': seq1})
-        ESRestorePillowCheckpoints.create_checkpoint_snapshot(self.pillow.checkpoint)
+        HistoricalPillowCheckpoint.create_checkpoint_snapshot(self.pillow.checkpoint)
 
         seq2 = '2-blahblah'
         self.pillow.set_checkpoint({'seq': seq2})
-        ESRestorePillowCheckpoints.create_checkpoint_snapshot(self.pillow.checkpoint)
+        HistoricalPillowCheckpoint.create_checkpoint_snapshot(self.pillow.checkpoint)
 
-        store = ESRestorePillowCheckpoints.get_historical_max(self.pillow.checkpoint.checkpoint_id)
+        store = HistoricalPillowCheckpoint.get_historical_max(self.pillow.checkpoint.checkpoint_id)
         self.assertIsNotNone(store)
         self.assertEqual(store.seq, seq0)
 
-        store = ESRestorePillowCheckpoints.get_historical_max('CheckpointThatDoesNotExist')
+        store = HistoricalPillowCheckpoint.get_historical_max('CheckpointThatDoesNotExist')
         self.assertIsNone(store)
 
 

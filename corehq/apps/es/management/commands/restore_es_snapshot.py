@@ -5,7 +5,7 @@ from corehq.elastic import get_es_new
 from elasticsearch.client import SnapshotClient, IndicesClient
 from django.conf import settings
 from pillowtop.utils import get_all_pillow_instances
-from corehq.apps.hqadmin.models import ESRestorePillowCheckpoints
+from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from pillowtop.checkpoints.manager import DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 
 
@@ -78,10 +78,10 @@ class Command(BaseCommand):
         for pillow in get_all_pillow_instances():
             checkpoint = pillow.checkpoint
             try:
-                checkpoint = ESRestorePillowCheckpoints.objects.get(checkpoint_id=checkpoint.checkpoint_id,
+                checkpoint = HistoricalPillowCheckpoint.objects.get(checkpoint_id=checkpoint.checkpoint_id,
                                                                     date_updated=date)
                 seq = checkpoint.seq
-            except ESRestorePillowCheckpoints.DoesNotExist:
+            except HistoricalPillowCheckpoint.DoesNotExist:
                 seq = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 
             pillow.checkpoint.update_to(seq)

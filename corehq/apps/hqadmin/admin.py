@@ -4,7 +4,7 @@ from .models import *
 
 class ESRestorePillowCheckpointsAdmin(admin.ModelAdmin):
 
-    model = ESRestorePillowCheckpoints
+    model = HistoricalPillowCheckpoint
     list_display = [
         'checkpoint_id',
         'date_updated',
@@ -13,4 +13,4 @@ class ESRestorePillowCheckpointsAdmin(admin.ModelAdmin):
     ]
 
 
-admin.site.register(ESRestorePillowCheckpoints, ESRestorePillowCheckpointsAdmin)
+admin.site.register(HistoricalPillowCheckpoint, ESRestorePillowCheckpointsAdmin)

@@ -4,7 +4,7 @@ from itertools import groupby
 from django.conf import settings
 from django.utils.safestring import mark_safe
 
-from corehq.apps.hqadmin.models import ESRestorePillowCheckpoints
+from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from dimagi.utils.logging import notify_exception
 from pillowtop.utils import force_seq_int, get_couch_pillow_instances
 from restkit import Resource
@@ -29,7 +29,7 @@ def check_pillows_for_rewind():
 
 
 def check_for_rewind(checkpoint):
-    historical_checkpoint = ESRestorePillowCheckpoints.get_historical_max(checkpoint.checkpoint_id)
+    historical_checkpoint = HistoricalPillowCheckpoint.get_historical_max(checkpoint.checkpoint_id)
     if not historical_checkpoint:
         return False
     db_seq = checkpoint.get_current_sequence_id()

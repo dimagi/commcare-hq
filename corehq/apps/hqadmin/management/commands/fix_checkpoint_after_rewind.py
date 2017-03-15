@@ -1,6 +1,6 @@
 from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.hqadmin.models import ESRestorePillowCheckpoints
+from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from pillowtop.utils import get_pillow_by_name
 
 
@@ -26,7 +26,7 @@ class Command(BaseCommand):
             raise CommandError("No pillow found with name: {}".format(pillow_name))
 
         checkpoint = pillow.get_checkpoint()
-        store = ESRestorePillowCheckpoints.get_historical_max(checkpoint.checkpoint_id)
+        store = HistoricalPillowCheckpoint.get_historical_max(checkpoint.checkpoint_id)
 
         if not store:
             print("No new sequence exists for that pillow. You'll have to do it manually.")
