@@ -1,4 +1,51 @@
 /* globals JsDiff, DOMPurify */
+
+/**
+ * Diff generation is very fragile. Since the diff generated takes in a body of text
+ * and returns "diff" object back, it's very difficult to create an HTML structure to
+ * layout the app in a logical way. To hack around this, we diff by line and include
+ * the html in the diff algorithm in a specific manner. For example, consider these two
+ * pieces of text:
+ *
+ * <ul>
+ *   <li>Form One
+ *   </li>
+ * </ul>
+ *
+ * <ul>
+ *   <li>Form Two
+ *   </li>
+ * </ul>
+ *
+ * The diff generator will give us back objects that when compiled will look like:
+ *
+ * <ul>
+ *   <li>Form One
+ *   <li>Form Two
+ *   </li>
+ * </ul>
+ *
+ * Which is clearly invalid HTML. To get around this, all HTML elements are given their own line
+ * with a closing and ending block:
+ *
+ * <ul>
+ *   <li>Form One </li>
+ * </ul>
+ *
+ * <ul>
+ *   <li>Form Two </li>
+ * </ul>
+ *
+ * This way when the browser does a diff the compiled result is
+ *
+ * <ul>
+ *   <li>Form One </li>
+ *   <li>Form Two </li>
+ * </ul>
+ *
+ * To handle closing tags, we always give closing tags their own line. This way they either
+ * always completely match or are completely removed/added so there isn't a double close tag
+ */
 hqDefine('app_manager/js/app_diff.js', function () {
     var reverse = hqImport('hqwebapp/js/urllib.js').reverse;
     var sanitize = DOMPurify.sanitize;
@@ -148,6 +195,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
      * Represents the question data structure and renders it to an HTML string
      */
     var QuestionDatum = function(json) {
+        console.log(json);
         var self = this;
         this.comment = json.comment;
         this.group = json.group;
