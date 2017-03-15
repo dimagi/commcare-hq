@@ -117,17 +117,13 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.type.subscribe(function () {
             self.notifyButton();
         });
-        self.compoundDirection = ko.observable(
-            (params.direction || "ascending") + "-blanks-" + (params.blanks || (params.direction === "descending" ? "last" : "first"))
-        );
-        self.compoundDirection.subscribe(function () {
+        self.direction = ko.observable(params.direction || "ascending");
+        self.blanks = ko.observable(params.blanks || (params.direction === "descending" ? "last" : "first"));
+        self.direction.subscribe(function () {
             self.notifyButton();
         });
-        self.direction = ko.computed(function() {
-            self.compoundDirection().split("-")[0];
-        });
-        self.blanks = ko.computed(function() {
-            self.compoundDirection().split("-")[2];
+        self.blanks.subscribe(function () {
+            self.notifyButton();
         });
         self.sortCalculation.subscribe(function () {
             self.notifyButton();
@@ -1203,8 +1199,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                             return {
                                 field: row.textField.val(),
                                 type: row.type(),
-                                direction: row.compoundDirection().split("-")[0],
-                                blanks: row.compoundDirection().split("-")[2],
+                                direction: row.direction(),
+                                blanks: row.blanks(),
                                 display: row.display(),
                                 sort_calculation: row.sortCalculation(),
                             };

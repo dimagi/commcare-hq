@@ -107,6 +107,7 @@
                         </span>
                     </th>
                     <th>{% trans "Direction" %}</th>
+                    <th>{% trans "Blanks" %}</th>
                     {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
                         <th>{% trans "Sort Calculation" %}{{ request|toggle_tag_info:"SORT_CALCULATION_IN_CASE_LIST" }}</th>
                     {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
@@ -148,18 +149,23 @@
                     </td>
 
                     <td>
-                        <select class="form-control" data-bind="value: compoundDirection">
-                            <option value="ascending-blanks-last"
-                                    data-bind="text: ascendTextBlanksLast">
+                        <select class="form-control" data-bind="value: direction">
+                            <option value="ascending"
+                                    data-bind="text: ascendText">
                             </option>
-                            <option value="ascending-blanks-first"
-                                    data-bind="text: ascendTextBlanksFirst">
+                            <option value="descending"
+                                    data-bind="text: descendText">
                             </option>
-                            <option value="descending-blanks-last"
-                                    data-bind="text: descendTextBlanksLast">
+                        </select>
+                    </td>
+
+                    <td>
+                        <select class="form-control" data-bind="value: blanks">
+                            <option value="last">
+                                {% trans "Bottom of list" %}
                             </option>
-                            <option value="descending-blanks-first"
-                                    data-bind="text: descendTextBlanksFirst">
+                            <option value="first">
+                                {% trans "Top of list" %}
                             </option>
                         </select>
                     </td>
