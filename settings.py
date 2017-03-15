@@ -1847,8 +1847,8 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
     ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
     ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression'),
-    ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns'),
-    ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns'),
+    ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
+    ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
