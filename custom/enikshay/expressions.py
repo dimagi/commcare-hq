@@ -28,7 +28,7 @@ class FirstCaseFormWithXmlns(JsonObject):
     def _get_forms(self, case_id, context):
         domain = context.root_doc['domain']
 
-        cache_key = (self.__class__.__name__, case_id)
+        cache_key = (self.__class__.__name__, case_id, self.xmlns, self.reverse)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
@@ -70,12 +70,12 @@ class CountCaseFormsWithXmlns(JsonObject):
             return None
 
         assert context.root_doc['domain']
-        return self._get_forms(case_id, context)
+        return self._count_forms(case_id, context)
 
-    def _get_forms(self, case_id, context):
+    def _count_forms(self, case_id, context):
         domain = context.root_doc['domain']
 
-        cache_key = (self.__class__.__name__, case_id)
+        cache_key = (self.__class__.__name__, case_id, self.xmlns)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
