@@ -483,6 +483,14 @@ class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, Niksha
         # nikshay not enabled
         self.create_case(self.episode)
         self._create_nikshay_enabled_case()
+        update_case(
+            self.domain,
+            self.episode_id,
+            {
+                "nikshay_registered": 'true',
+                "nikshay_id": DUMMY_NIKSHAY_ID,
+            },
+        )
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # change triggered
