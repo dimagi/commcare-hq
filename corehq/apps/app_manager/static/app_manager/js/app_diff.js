@@ -25,9 +25,8 @@ hqDefine('app_manager/js/app_diff.js', function () {
                 self.controller.getFormData(self.appIdTwo)
             ).done(function(formDataOneJson, formDataTwoJson) {
                 self.$el.html(self.generateHtmlDiff(formDataOneJson, formDataTwoJson));
+                self.$el.find('.diff-questions:not(:has(.diff-change))').html('<i>No changes detected</i>');
             });
-
-
         };
 
         self.generateHtmlDiff = function(formDataOneJson, formDataTwoJson) {
@@ -43,15 +42,19 @@ hqDefine('app_manager/js/app_diff.js', function () {
             _.each(formDataTwoJson, function(d) {
                 modulesTwo.push(new ModuleDatum(d));
             });
-
             textOne = _.map(modulesOne, function(m) { return m.toString(); }).join('\n');
             textTwo = _.map(modulesTwo, function(m) { return m.toString(); }).join('\n');
             diffObjects = JsDiff.diffLines(textTwo, textOne);
 
             fullHtml = HtmlUtils.makeUl('diff-app fa-ul') + '\n';
             _.each(diffObjects, function(diff) {
-                var color = diff.added ? 'green' : diff.removed ? 'red' : 'black';
-                fullHtml += HtmlUtils.replaceStyle(diff.value, 'color: ' + color);
+                var className = 'diff-no-change';
+                if (diff.added) {
+                    className = 'diff-added diff-change';
+                } else if (diff.removed) {
+                    className = 'diff-removed diff-change';
+                }
+                fullHtml += HtmlUtils.replaceStub(diff.value, className);
             });
             fullHtml += HtmlUtils.closeEl('ul');
 
@@ -172,7 +175,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
             return (
                 '<' + el + ' class="' + className + '">' +
                 iconEl +
-                '<span style="' + HtmlUtils.REPLACE + '" >' + line + '</span>' +
+                '<span class="' + HtmlUtils.REPLACE + '" >' + line + '</span>' +
                 closeEl
             );
         },
@@ -191,8 +194,8 @@ hqDefine('app_manager/js/app_diff.js', function () {
         closeEl: function(el) {
             return '</' + el + '>';
         },
-        replaceStyle: function(line, style) {
-            return line.replace(new RegExp(HtmlUtils.REPLACE, 'g'), style);
+        replaceStub: function(line, replace) {
+            return line.replace(new RegExp(HtmlUtils.REPLACE, 'g'), replace);
         },
         REPLACE: '###',
     };
