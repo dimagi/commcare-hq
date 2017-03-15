@@ -134,7 +134,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
                 deferred = $.Deferred();
 
             if (cache.hasOwnProperty(appId)) {
-                deferred.resolved(cache[appId]);
+                deferred.resolve(cache[appId]);
             } else {
                 $.get(url).done(function(response) {
                     cache[appId] = response.response;

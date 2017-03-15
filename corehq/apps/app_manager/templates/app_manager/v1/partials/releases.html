@@ -18,6 +18,14 @@
         )
         var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
         var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
+        var appDiff = hqImport('app_manager/js/app_diff.js').init(
+            '#app-diff-modal .modal-body',
+            '{{ app.id }}',
+            '{{ latest_build_id }}'
+        )
+        $('#app-diff-modal').on('show.bs.modal', function (e) {
+            appDiff.renderDiff();
+        })
         // init releases
         {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
         var urls = {
@@ -104,6 +112,10 @@
                     attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
                     css: {disabled: !buildButtonEnabled()}
                 ">{% trans 'Make New Version' %}</button>
+
+                <button class="btn btn-primary" data-toggle="modal" data-target="#app-diff-modal">
+                    {% trans 'Show changes' %}
+                </button>
 
     <div id="build-errors-wrapper"></div>
     <table class="table">
@@ -310,5 +322,6 @@
 </div>
 {% endif %}
 
+{% include 'app_manager/v1/partials/app_diff_modal.html' with element_id='download-zip-modal' %}
 <!-- Async Download Modals -->
 {% include 'app_manager/v1/partials/download_async_modal.html' with element_id='download-zip-modal' %}
