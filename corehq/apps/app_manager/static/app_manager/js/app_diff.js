@@ -153,7 +153,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
         this.group = json.group;
         this.hashtagValue = json.hashtagValue;
         this.label = json.label;
-        this.options = json.options;
+        this.options = json.options || [];
         this.relevant = json.relevant;
         this.repeat = json.repeat;
         this.required = json.required;
@@ -171,10 +171,22 @@ hqDefine('app_manager/js/app_diff.js', function () {
                 HtmlUtils.makeLi(sanitize(self.hashtagValue), '', '', true),
                 (self.calculate ? HtmlUtils.makeLi(sanitize(self.calculate), '', 'calculator', true) : ''),
                 (self.relevant ? HtmlUtils.makeLi(sanitize(self.relevant), '', 'code-fork', true) : ''),
+            ];
+            if (self.options.length) {
+                lines = lines.concat([
+                    HtmlUtils.makeUl('diff-question-options fa-ul'),
+                    _.map(
+                        self.options,
+                        function(option) { return HtmlUtils.makeLi(sanitize(option.value), '', '', true); }
+                    ).join('\n'),
+                    HtmlUtils.closeEl('ul'),
+                ]);
+            }
 
+            lines = lines.concat([
                 HtmlUtils.closeEl('ul'),
                 HtmlUtils.closeEl('li'),
-            ];
+            ]);
             return lines.join('\n');
         };
     };
