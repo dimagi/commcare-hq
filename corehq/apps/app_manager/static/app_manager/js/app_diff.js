@@ -34,7 +34,9 @@ hqDefine('app_manager/js/app_diff.js', function () {
                 modulesTwo = [],
                 textOne,
                 textTwo,
+                header,
                 diffObjects,
+                totalChanges = { added: 0, removed: 0 },
                 fullHtml;
             _.each(formDataOneJson, function(d) {
                 modulesOne.push(new ModuleDatum(d));
@@ -50,15 +52,24 @@ hqDefine('app_manager/js/app_diff.js', function () {
             _.each(diffObjects, function(diff) {
                 var className = 'diff-no-change';
                 if (diff.added) {
+                    totalChanges.added += 1;
                     className = 'diff-added diff-change';
                 } else if (diff.removed) {
+                    totalChanges.removed += 1;
                     className = 'diff-removed diff-change';
                 }
                 fullHtml += HtmlUtils.replaceStub(diff.value, className);
             });
             fullHtml += HtmlUtils.closeEl('ul');
 
-            return fullHtml;
+            header = HtmlUtils.makeSpan(
+                totalChanges.added + ' lines added', 'diff-changes-count diff-changes-added'
+            );
+            header += HtmlUtils.makeSpan(
+                totalChanges.removed + ' lines removed', 'diff-changes-count diff-changes-removed'
+            );
+
+            return header + fullHtml;
         };
     };
 
@@ -164,7 +175,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
             return HtmlUtils.makeEl('li', line, className, icon, close);
         },
         makeSpan: function(line, className, icon) {
-            return HtmlUtils.makeEl('span', line, className, icon);
+            return HtmlUtils.makeEl('span', line, className, icon, true);
         },
         makeEl: function(el, line, className, icon, close) {
             var iconEl = HtmlUtils.makeIcon(icon);
