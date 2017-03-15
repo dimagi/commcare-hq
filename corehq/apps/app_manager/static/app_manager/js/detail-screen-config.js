@@ -137,43 +137,27 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             var type = self.type();
             // This is here for the CACHE_AND_INDEX feature
             if (type === 'plain' || type === 'index') {
-                return 'Increasing (a, b, c)';
+                return gettext('Increasing (a, b, c)');
             } else if (type === 'date') {
-                return 'Increasing (May 1st, May 2nd)';
+                return gettext('Increasing (May 1st, May 2nd)');
             } else if (type === 'int') {
-                return 'Increasing (1, 2, 3)';
+                return gettext('Increasing (1, 2, 3)');
             } else if (type === 'double' || type === 'distance') {
-                return 'Increasing (1.1, 1.2, 1.3)';
+                return gettext('Increasing (1.1, 1.2, 1.3)');
             }
-        });
-
-        self.ascendTextBlanksFirst = ko.computed(function () {
-            return self.ascendText() + ", blanks at top";
-        });
-
-        self.ascendTextBlanksLast = ko.computed(function () {
-            return self.ascendText() + ", blanks at bottom";
         });
 
         self.descendText = ko.computed(function () {
             var type = self.type();
             if (type === 'plain' || type === 'index') {
-                return 'Decreasing (c, b, a)';
+                return gettext('Decreasing (c, b, a)');
             } else if (type === 'date') {
-                return 'Decreasing (May 2nd, May 1st)'
+                return gettext('Decreasing (May 2nd, May 1st)');
             } else if (type === 'int') {
-                return 'Decreasing (3, 2, 1)';
+                return gettext('Decreasing (3, 2, 1)');
             } else if (type === 'double' || type === 'distance') {
-                return 'Decreasing (1.3, 1.2, 1.1)';
+                return gettext('Decreasing (1.3, 1.2, 1.1)');
             }
-        });
-
-        self.descendTextBlanksFirst = ko.computed(function () {
-            return self.descendText() + ", blanks at top";
-        });
-
-        self.descendTextBlanksLast = ko.computed(function () {
-            return self.descendText() + ", blanks at bottom";
         });
     };
 
