@@ -12,6 +12,16 @@ hqDefine('app_manager/js/app_diff.js', function () {
         return new AppDiff($el, appIdOne, appIdTwo);
     };
 
+    /**
+     * AppDiff
+     *
+     * This class takes in two app ids to compare and generate a diff. The first app id passed in
+     * is considered the newer version.
+     *
+     * $el {Object} - A jquery element that is the destination for the diff
+     * appIdOne {String} - An app id
+     * appIdTwo {String} - An app id
+     */
     var AppDiff = function($el, appIdOne, appIdTwo) {
         var self = this;
         self.appIdOne = appIdOne;
@@ -19,7 +29,11 @@ hqDefine('app_manager/js/app_diff.js', function () {
         self.$el = $el;
         self.controller = new Controller();
 
-
+        /**
+         * renderDiff
+         *
+         * When called renders a diff into the $el element
+         */
         self.renderDiff = function() {
             $.when(
                 self.controller.getFormData(self.appIdOne),
@@ -30,6 +44,16 @@ hqDefine('app_manager/js/app_diff.js', function () {
             });
         };
 
+        /**
+         * generateHtmlDiff
+         *
+         * Generates an html diff string.
+         *
+         * formDataOneJson {Object} - Json object representing the app
+         * formDataTwoJson {Object} - Json object representing the app
+         *
+         * returns {String} An html string representing the diff
+         */
         self.generateHtmlDiff = function(formDataOneJson, formDataTwoJson) {
             var modulesOne = [],
                 modulesTwo = [],
@@ -74,6 +98,9 @@ hqDefine('app_manager/js/app_diff.js', function () {
         };
     };
 
+    /**
+     * Represents the module data structure and renders it to an HTML string
+     */
     var ModuleDatum = function(json) {
         var self = this;
         this.id = json.id;
@@ -93,6 +120,9 @@ hqDefine('app_manager/js/app_diff.js', function () {
         };
     };
 
+    /**
+     * Represents the form data structure and renders it to an HTML string
+     */
     var FormDatum = function(json) {
         var self = this;
         this.id = json.id;
@@ -112,13 +142,16 @@ hqDefine('app_manager/js/app_diff.js', function () {
         };
     };
 
+    /**
+     * Represents the question data structure and renders it to an HTML string
+     */
     var QuestionDatum = function(json) {
         var self = this;
         this.comment = json.comment;
         this.group = json.group;
         this.hashtagValue = json.hashtagValue;
         this.label = json.label;
-        this.options = json.optinos;
+        this.options = json.options;
         this.relevant = json.relevant;
         this.repeat = json.repeat;
         this.required = json.required;
@@ -144,6 +177,9 @@ hqDefine('app_manager/js/app_diff.js', function () {
         };
     };
 
+    /**
+     * Controller used to formd data from the server
+     */
     var Controller = function() {
         var cache = {};
 
@@ -167,6 +203,9 @@ hqDefine('app_manager/js/app_diff.js', function () {
         };
     };
 
+    /**
+     * Utility functions for building up html elements
+     */
     var HtmlUtils = {
         makeOl: function(className, icon) {
             return HtmlUtils.makeEl('ol', '', className, icon);
