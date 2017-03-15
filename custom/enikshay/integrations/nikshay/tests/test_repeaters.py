@@ -230,11 +230,11 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
             self.cases[self.episode_id],
             None,
         )
-        updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
-        self._assert_case_property_equal(updated_episode_case, 'nikshay_registered', 'true')
-        self._assert_case_property_equal(updated_episode_case, 'nikshay_error', '')
-        self._assert_case_property_equal(updated_episode_case, 'nikshay_id', nikshay_id)
-        self.assertEqual(updated_episode_case.external_id, nikshay_id)
+        updated_person_case = CaseAccessors(self.domain).get_case(self.person_id)
+        self._assert_case_property_equal(updated_person_case, 'nikshay_registered', 'true')
+        self._assert_case_property_equal(updated_person_case, 'nikshay_error', '')
+        self._assert_case_property_equal(updated_person_case, 'nikshay_id', nikshay_id)
+        self.assertEqual(updated_person_case.external_id, nikshay_id)
 
     def test_handle_bad_nikshay_response(self):
         self._create_nikshay_enabled_case()
@@ -256,10 +256,10 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
             self.cases[self.episode_id],
             None,
         )
-        updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
-        self._assert_case_property_equal(updated_episode_case, 'nikshay_registered', 'false')
+        updated_person_case = CaseAccessors(self.domain).get_case(self.person_id)
+        self._assert_case_property_equal(updated_person_case, 'nikshay_registered', 'false')
         self._assert_case_property_equal(
-            updated_episode_case,
+            updated_person_case,
             'nikshay_error',
             'No Nikshay ID received: {}'.format(response)
         )
@@ -282,9 +282,9 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
             self.cases[self.episode_id],
             None,
         )
-        updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
-        self._assert_case_property_equal(updated_episode_case, 'nikshay_registered', 'true')
-        self._assert_case_property_equal(updated_episode_case, 'nikshay_error', 'duplicate')
+        updated_person_case = CaseAccessors(self.domain).get_case(self.person_id)
+        self._assert_case_property_equal(updated_person_case, 'nikshay_registered', 'true')
+        self._assert_case_property_equal(updated_person_case, 'nikshay_error', 'duplicate')
 
     def test_handle_failure(self):
         message = {
@@ -305,9 +305,9 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
             self.cases[self.episode_id],
             None,
         )
-        updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
-        self._assert_case_property_equal(updated_episode_case, 'nikshay_registered', 'false')
-        self._assert_case_property_equal(updated_episode_case, 'nikshay_error', unicode(message))
+        updated_person_case = CaseAccessors(self.domain).get_case(self.person_id)
+        self._assert_case_property_equal(updated_person_case, 'nikshay_registered', 'false')
+        self._assert_case_property_equal(updated_person_case, 'nikshay_error', unicode(message))
 
 
 class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
