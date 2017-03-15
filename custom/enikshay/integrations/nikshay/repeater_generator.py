@@ -142,8 +142,12 @@ class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
         person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
         episode_case_properties = episode_case.dynamic_case_properties()
         base_properties = self._base_properties(repeat_record, person_case)
+        nikshay_id = (
+            episode_case_properties.get("nikshay_id", None) or
+            person_case.dynamic_case_properties().get('nikshay_id')
+        )
         base_properties.update({
-            "PatientID": episode_case_properties.get("nikshay_id"),
+            "PatientID": nikshay_id,
             "OutcomeDate": episode_case_properties.get(TREATMENT_OUTCOME_DATE),
             "Outcome": treatment_outcome.get(episode_case_properties.get(TREATMENT_OUTCOME)),
             "MO": u"{} {}".format(
@@ -178,8 +182,12 @@ class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
         episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
+        nikshay_id = (
+            episode_case_properties.get("nikshay_id", None) or
+            person_case.dynamic_case_properties().get('nikshay_id')
+        )
         properties_dict = {
-            "PatientID": episode_case_properties.get('nikshay_id'),
+            "PatientID": nikshay_id,
             "HIVStatus": hiv_status.get(person_case_properties.get('hiv_status')),
             "HIVTestDate": datetime.datetime.strptime(
                 person_case_properties.get('hiv_test_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
