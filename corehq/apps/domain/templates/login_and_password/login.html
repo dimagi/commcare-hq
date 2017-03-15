@@ -13,8 +13,9 @@
         <script src="{% static 'domain/js/encoder.js' %}"></script>
         <script>
             $(document).ready(function(){
-                (function(){p_f=$("#id_auth-password"),f=p_f.parents("form")[0],f.onsubmit=function(){
-                p=p_f.val(),p_e=new HexParsr("{{psalt1}}","{{psalt2}}"),p_f.val(p_e.xyz(p))};})()
+                (function(){function b64EncodeUnicode(n){return btoa(encodeURIComponent(n).replace(/%([0-9A-F]{2})/g,function(n,e){return String.fromCharCode("0x"+e)}))}
+                p_f=$("#id_auth-password"),f=p_f.parents("form")[0],f.onsubmit=function(){
+                p=b64EncodeUnicode(p_f.val()),p_e=new HexParsr("{{psalt1}}","{{psalt2}}"),p_f.val(p_e.xyz(p))};})()
             });
         </script>
     {% endif %}
