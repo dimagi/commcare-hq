@@ -386,6 +386,22 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
         )
         self.assertEqual(1, len(self.repeat_records().all()))
 
+    def test_trigger_with_test_submission(self):
+        self.assertEqual(0, len(self.repeat_records().all()))
+        self.phi.metadata['is_test'] = 'yes'
+        self.phi.save()
+        self.factory.create_or_update_cases([self.episode])
+        update_case(
+            self.domain,
+            self.person_id,
+            {
+                "owner_id": self.phi.location_id,
+                "nikshay_id": DUMMY_NIKSHAY_ID,
+                "hiv_status": "unknown",
+            }
+        )
+        self.assertEqual(0, len(self.repeat_records().all()))
+
 
 class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
     def setUp(self):
