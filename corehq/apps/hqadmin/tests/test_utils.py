@@ -1,10 +1,9 @@
 from django.test import TestCase, override_settings, SimpleTestCase
-from mock import patch
 
 from corehq.apps.hqadmin.utils import check_for_rewind
 from corehq.util.test_utils import generate_cases
 from ..models import HistoricalPillowCheckpoint
-from ..utils import check_pillows_for_rewind, EPSILON, parse_celery_workers, parse_celery_pings
+from ..utils import EPSILON, parse_celery_workers, parse_celery_pings
 
 
 def _get_dummy_pillow():
@@ -20,11 +19,8 @@ class TestPillowCheckpointSeqStore(TestCase):
     def setUp(self):
         super(TestPillowCheckpointSeqStore, self).setUp()
         self.pillow = DummyPillow()
-        self.pillow_patch = patch("corehq.apps.hqadmin.utils.get_couch_pillow_instances", return_value=[DummyPillow()])
-        self.pillow_patch.start()
 
     def tearDown(self):
-        self.pillow_patch.stop()
         super(TestPillowCheckpointSeqStore, self).tearDown()
 
     def test_basic_cloudant_seq(self):
