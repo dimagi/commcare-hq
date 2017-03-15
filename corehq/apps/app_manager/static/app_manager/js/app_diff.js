@@ -1,4 +1,4 @@
-/* globals JsDiff, RMI */
+/* globals JsDiff */
 hqDefine('app_manager/js/app_diff.js', function () {
     var reverse = hqImport('hqwebapp/js/urllib.js').reverse;
 
@@ -67,13 +67,14 @@ hqDefine('app_manager/js/app_diff.js', function () {
         this.forms = _.map(json.forms, function(form) { return new FormDatum(form); });
 
         this.toString = function() {
-            return (
-                HtmlUtils.makeLi(self.name.en, 'diff-module', 'folder-open') + '\n' +
-                HtmlUtils.makeUl('diff-forms fa-ul') + '\n' +
-                _.map(self.forms, function(f) { return f.toString(); }).join('\n') + '\n' +
-                HtmlUtils.closeEl('ul') + '\n' +
-                HtmlUtils.closeEl('li') + '\n'
-            );
+            var lines = [
+                HtmlUtils.makeLi(self.name.en, 'diff-module', 'folder-open'),
+                HtmlUtils.makeUl('diff-forms fa-ul'),
+                _.map(self.forms, function(f) { return f.toString(); }).join('\n'),
+                HtmlUtils.closeEl('ul'),
+                HtmlUtils.closeEl('li'),
+            ];
+            return lines.join('\n');
         };
     };
 
@@ -85,13 +86,14 @@ hqDefine('app_manager/js/app_diff.js', function () {
         this.questions = _.map(json.questions, function(q) { return new QuestionDatum(q); });
 
         this.toString = function() {
-            return (
-                HtmlUtils.makeLi(self.name.en, 'diff-form', 'file-o') + '\n' +
-                HtmlUtils.makeUl('diff-questions fa-ul') + '\n' +
-                _.map(self.questions, function(q) { return q.toString(); }).join('\n') +
-                HtmlUtils.closeEl('ul') + '\n' +
-                HtmlUtils.closeEl('li') + '\n'
-            );
+            var lines = [
+                HtmlUtils.makeLi(self.name.en, 'diff-form', 'file-o'),
+                HtmlUtils.makeUl('diff-questions fa-ul'),
+                _.map(self.questions, function(q) { return q.toString(); }).join('\n'),
+                HtmlUtils.closeEl('ul'),
+                HtmlUtils.closeEl('li'),
+            ];
+            return lines.join('\n');
         };
     };
 
@@ -112,17 +114,18 @@ hqDefine('app_manager/js/app_diff.js', function () {
         this.value = json.value;
 
         this.toString = function() {
-            return (
-                HtmlUtils.makeLi(self.label || '[unknown]', 'diff-question') + '\n' +
-                HtmlUtils.makeUl('diff-question-metadata fa-ul') + '\n' +
+            var lines =[
+                HtmlUtils.makeLi(self.label || '[unknown]', 'diff-question'),
+                HtmlUtils.makeUl('diff-question-metadata fa-ul'),
 
-                HtmlUtils.makeLi(self.hashtagValue, '', '', true) +
-                (self.calculate ? HtmlUtils.makeLi(self.calculate, '', 'calculator', true) : '') + '\n' +
-                (self.relevant ? HtmlUtils.makeLi(self.relevant, '', 'code-fork', true) : '') + '\n' +
+                HtmlUtils.makeLi(self.hashtagValue, '', '', true),
+                (self.calculate ? HtmlUtils.makeLi(self.calculate, '', 'calculator', true) : ''),
+                (self.relevant ? HtmlUtils.makeLi(self.relevant, '', 'code-fork', true) : ''),
 
-                HtmlUtils.closeEl('ul') + '\n' +
-                HtmlUtils.closeEl('li') + '\n'
-            );
+                HtmlUtils.closeEl('ul'),
+                HtmlUtils.closeEl('li'),
+            ];
+            return lines.join('\n');
         };
     };
 
