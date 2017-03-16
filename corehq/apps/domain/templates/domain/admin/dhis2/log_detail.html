@@ -1,0 +1,46 @@
+{% extends "domain/admin/info_base.html" %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+{% block page_content %}
+<form>
+    <fieldset>
+        <legend>DHIS2 Logs</legend>
+        <div>
+            <div class="row">
+                <span>{{ log.timestamp }}</span>
+                <span>{{ log.request_method }}</span>
+                <span>{{ log.request_url }}</span>
+                <span>{% if log.response_status %}{{ log.response_status }}{% else %}[N/A]{% endif %}</span>
+            </div>
+            <div>
+                <span>request_headers:</span>
+                <span>{{ log.request_headers }}</span>
+            </div>
+            <div>
+                <span>request_params:</span>
+                <span>{{ log.request_params }}</span>
+            </div>
+            {% if log.request_body %}
+            <div>
+                <span>request_body:</span>
+                <span>{{ log.request_body }}</span>
+            </div>
+            {% endif %}
+            {% if log.request_error %}
+            <div>
+                <span>request_error:</span>
+                <span>{{ log.request_error }}</span>
+            </div>
+            {% endif %}
+            {% if log.response_body %}
+            <div>
+                <span>response_body:</span>
+                <span>{{ log.response_body }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </fieldset>
+</form>
+{% endblock %}

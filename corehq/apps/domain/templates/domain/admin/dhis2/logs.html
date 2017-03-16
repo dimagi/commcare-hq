@@ -7,13 +7,37 @@
 <form>
     <fieldset>
         <legend>DHIS2 Logs</legend>
-        {% for log in logs %}
+        {% if logs %}
         <div>
-            <span>{{ log.timestamp }}</span>
-            <span>{{ log.request_url }}</span>
-            <span>{{ log.response_status }}</span>
+            {% for log in logs %}
+            <div class="row">
+                <span>
+                    <a href="{% url 'dhis2_log_detail_view' domain log.id %}">{{ log.timestamp }}</a>
+                </span>
+                <span>{{ log.request_method }}</span>
+                <span>{{ log.request_url }}</span>
+                <span>{{ log.response_status }}</span>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
+            {% if is_paginated %}
+        <div>
+            <span>
+                {% if page_obj.has_previous %}
+                [<a href="?page={{ page_obj.previous_page_number }}">Previous</a>]
+                {% endif %}
+                <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                [<a href="?page={{ page_obj.next_page_number }}">Next</a>]
+                {% endif %}
+            </span>
+        </div>
+            {% endif %}
+        {% else %}
+        <div>
+            <p>No DHIS2 API requests have been logged.</p>
+        </div>
+        {% endif %}
     </fieldset>
 </form>
 {% endblock %}
