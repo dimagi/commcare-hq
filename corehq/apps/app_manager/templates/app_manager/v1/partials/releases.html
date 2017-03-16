@@ -23,7 +23,7 @@
             {{ app.id|JSON }},
             {{ latest_build_id|JSON }}
         )
-        $('#app-diff-modal').on('show.bs.modal', function (e) {
+        $('#recent-changes-btn').on('click', function (e) {
             appDiff.renderDiff();
         })
         // init releases
@@ -114,7 +114,7 @@
                 ">{% trans 'Make New Version' %}</button>
 
                 {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
-                <button class="btn btn-primary" data-toggle="modal" data-target="#app-diff-modal">
+                <button class="btn btn-primary" id="recent-changes-btn" data-toggle="modal" data-target="#app-diff-modal">
                     {% trans 'Show changes' %}
                 </button>
                 {% endif %}
@@ -208,6 +208,15 @@
                         </a>
                     </div>
                 </td>
+                {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+                <td>
+                    <button class="btn btn-default" data-toggle="modal" data-target="#app-diff-modal" data-bind="
+                        click: function() { $parent.onViewChanges($data.id(), $parent.previousReleaseId($index())) }
+                    ">
+                        {% trans "View Changes" %}
+                    </button>
+                </td>
+                {% endif %}
                 <td>
                     <button class="btn btn-default hide" data-bind="
                         openModal: 'revert-build-modal-template',
