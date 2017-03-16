@@ -33,7 +33,7 @@
                 <form class="form-inline" role="form">
                     <div class="form-group">
                       <label class="sr-only" for="property">{% trans "Filter properties" %}</label>
-                      <input type="text" class="form-control" id="property" placeholder="Filter properties" ng-model="propertySearch.name" />
+                      <input type="text" class="form-control" id="property" placeholder="{% trans 'Filter properties' %}" ng-model="propertySearch.name" />
                     </div>
                     <button class="btn btn-default" ng-click="propertySearch.name = ''" type="button"><i class="fa fa-times"></i></button>
                 </form>
