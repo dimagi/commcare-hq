@@ -47,13 +47,13 @@ hqDefine('app_manager/js/app_diff.js', function () {
     var reverse = hqImport('hqwebapp/js/urllib.js').reverse;
     var sanitize = DOMPurify.sanitize;
 
-    var init = function(selector, appIdOne, appIdTwo, options) {
+    var init = function(selector, options) {
         var $el = $(selector);
 
         if (!$el.length) {
             throw new Error(selector + ' does not resolve to an element');
         }
-        return new AppDiff($el, appIdOne, appIdTwo, options);
+        return new AppDiff($el, options);
     };
 
     /**
@@ -66,10 +66,8 @@ hqDefine('app_manager/js/app_diff.js', function () {
      * appIdOne {String} - An app id
      * appIdTwo {String} - An app id
      */
-    var AppDiff = function($el, appIdOne, appIdTwo, options) {
+    var AppDiff = function($el, options) {
         var self = this;
-        self.appIdOne = appIdOne;
-        self.appIdTwo = appIdTwo;
         self.$el = $el;
         self.controller = new Controller();
         self.options = options || {};
@@ -82,11 +80,11 @@ hqDefine('app_manager/js/app_diff.js', function () {
          *
          * When called renders a diff into the $el element
          */
-        self.renderDiff = function() {
+        self.renderDiff = function(appIdOne, appIdTwo) {
             self.$el.text(gettext('Crunching app diff...'));
             $.when(
-                self.controller.getFormData(self.appIdOne),
-                self.controller.getFormData(self.appIdTwo)
+                self.controller.getFormData(appIdOne),
+                self.controller.getFormData(appIdTwo)
             ).done(function(formDataOneJson, formDataTwoJson) {
                 try {
                     self.$el.html(self.generateHtmlDiff(formDataOneJson, formDataTwoJson));

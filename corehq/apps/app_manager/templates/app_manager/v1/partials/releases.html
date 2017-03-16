@@ -18,13 +18,9 @@
         )
         var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
         var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
-        var appDiff = hqImport('app_manager/js/app_diff.js').init(
-            '#app-diff-modal .modal-body',
-            {{ app.id|JSON }},
-            {{ latest_build_id|JSON }}
-        )
+        var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
         $('#recent-changes-btn').on('click', function (e) {
-            appDiff.renderDiff();
+            appDiff.renderDiff({{ app.id|JSON }}, {{ latest_build_id|JSON }});
         })
         // init releases
         {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
