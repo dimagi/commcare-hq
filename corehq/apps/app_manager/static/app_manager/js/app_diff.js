@@ -83,6 +83,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
          * When called renders a diff into the $el element
          */
         self.renderDiff = function() {
+            self.$el.text(gettext('Crunching app diff...'));
             $.when(
                 self.controller.getFormData(self.appIdOne),
                 self.controller.getFormData(self.appIdTwo)
