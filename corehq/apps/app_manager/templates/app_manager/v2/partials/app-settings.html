@@ -240,7 +240,7 @@
         <div class="tab-pane" id="actions">
             {% if app.get_doc_type != 'LinkedApplication' %}
                 {% if copy_app_form %}
-                    <div class="panel panel-appmanager panel-appmanager-form">
+                    <div class="panel panel-appmanager panel-appmanager-form" id="copy-app-form">
                         <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
                             {% crispy copy_app_form %}
                         </form>
