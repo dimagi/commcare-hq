@@ -714,7 +714,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
 
         table = instance.get_table([PathNode(name='form'), PathNode(name='custom_repeat', is_repeat=True)])
 
-        self.assertTrue(table.is_user_defined)
+        self.assertFalse(table.is_user_defined)
 
         index, column = table.get_column(
             [

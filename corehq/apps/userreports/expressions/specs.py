@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import json
 from simpleeval import InvalidExpression
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.document_stores import get_document_store
@@ -15,7 +14,6 @@ from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from .utils import eval_statements
-from corehq.util.quickcache import quickcache
 import six
 
 
@@ -49,11 +47,14 @@ class ConstantGetterSpec(JsonObject):
 
 class PropertyNameGetterSpec(JsonObject):
     type = TypeProperty('property_name')
-    property_name = StringProperty(required=True)
+    property_name = DefaultProperty(required=True)
     datatype = DataTypeProperty(required=False)
 
+    def configure(self, property_name_expression):
+        self._property_name_expression = property_name_expression
+
     def __call__(self, item, context=None):
-        raw_value = item.get(self.property_name, None) if isinstance(item, dict) else None
+        raw_value = item.get(self._property_name_expression(item, context)) if isinstance(item, dict) else None
         return transform_from_datatype(self.datatype)(raw_value)
 
 
@@ -400,3 +401,21 @@ class SplitStringExpressionSpec(JsonObject):
             return string_value.split(self.delimiter)[index_value]
         except IndexError:
             return None
+
+
+class CoalesceExpressionSpec(JsonObject):
+    type = TypeProperty('coalesce')
+    expression = DictProperty(required=True)
+    default_expression = DictProperty(required=True)
+
+    def configure(self, expression, default_expression):
+        self._expression = expression
+        self._default_expression = default_expression
+
+    def __call__(self, item, context=None):
+        expression_value = self._expression(item, context)
+        default_value = self._default_expression(item, context)
+        if expression_value is None or expression_value == '':
+            return default_value
+        else:
+            return expression_value

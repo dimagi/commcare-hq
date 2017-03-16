@@ -216,6 +216,10 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
                         }
                     )
 
+        # Clear indices and attachments
+        self.case.indices = []
+        self.case.case_attachments = {}
+
         # already deleted means it was explicitly set to "deleted",
         # as opposed to getting set to that because it has no actions
         already_deleted = self.case.doc_type == 'CommCareCase-Deleted' and primary_actions(self.case)
@@ -382,12 +386,20 @@ def _action_sort_key_function(case):
         else:
             form_ids = list(case.xform_ids)
 
+            if first_action.xform_id and first_action.xform_id == second_action.xform_id:
+                # short circuit if they are from the same form
+                return cmp(
+                    _type_sort(first_action.action_type),
+                    _type_sort(second_action.action_type)
+                )
+
             def _sortkey(action):
                 if not action.server_date or not action.date:
                     raise MissingServerDate()
 
-                form_cmp = lambda form_id: (form_ids.index(form_id)
-                                            if form_id in form_ids else sys.maxint, form_id)
+                def form_cmp(form_id):
+                    return form_ids.index(form_id) if form_id in form_ids else sys.maxint
+
                 # if the user is the same you should compare with the special logic below
                 # if the user is not the same you should compare just using received_on
                 return (

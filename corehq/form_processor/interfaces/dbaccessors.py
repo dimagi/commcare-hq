@@ -172,7 +172,7 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_case_xform_ids(case_ids):
+    def get_case_xform_ids(case_id):
         raise NotImplementedError
 
     @abstractmethod
@@ -232,10 +232,6 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_case_types_for_domain(domain):
-        raise NotImplementedError
-
-    @abstractmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
         raise NotImplementedError
 
@@ -282,8 +278,8 @@ class CaseAccessors(object):
             for case in self.get_cases(chunk):
                 yield case
 
-    def get_case_xform_ids(self, case_ids):
-        return self.db_accessor.get_case_xform_ids(case_ids)
+    def get_case_xform_ids(self, case_id):
+        return self.db_accessor.get_case_xform_ids(case_id)
 
     def get_case_ids_in_domain(self, type=None):
         return self.db_accessor.get_case_ids_in_domain(self.domain, type)
@@ -360,10 +356,6 @@ class CaseAccessors(object):
             )
             all_extension_ids = all_extension_ids | new_extensions
         return all_extension_ids
-
-    @quickcache(['self.domain'], timeout=30 * 60)
-    def get_case_types(self):
-        return self.db_accessor.get_case_types_for_domain(self.domain)
 
 
 def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):

@@ -38,43 +38,36 @@ from corehq.apps.smsbillables.tests.generator import arbitrary_sms_billables_for
 class BaseInvoiceTestCase(BaseAccountingTest):
     min_subscription_length = 3
 
-    def setUp(self):
-        super(BaseInvoiceTestCase, self).setUp()
-        self.billing_contact = generator.arbitrary_web_user()
-        self.dimagi_user = generator.arbitrary_web_user(is_dimagi=True)
-        self.currency = generator.init_default_currency()
-        self.account = generator.billing_account(
-            self.dimagi_user, self.billing_contact)
-        self.domain = generator.arbitrary_domain()
+    @classmethod
+    def setUpClass(cls):
+        super(BaseInvoiceTestCase, cls).setUpClass()
+        cls.billing_contact = generator.create_arbitrary_web_user_name()
+        cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
+        cls.currency = generator.init_default_currency()
+        cls.account = generator.billing_account(
+            cls.dimagi_user, cls.billing_contact)
+        cls.domain = generator.arbitrary_domain()
 
-        self.subscription_length = 15  # months
+        cls.subscription_length = 15  # months
         subscription_start_date = datetime.date(2016, 2, 23)
-        subscription_end_date = add_months_to_date(subscription_start_date, self.subscription_length)
-        self.subscription = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
+        subscription_end_date = add_months_to_date(subscription_start_date, cls.subscription_length)
+        cls.subscription = generator.generate_domain_subscription(
+            cls.account,
+            cls.domain,
             date_start=subscription_start_date,
             date_end=subscription_end_date,
         )
 
-        self.community_plan = DefaultProductPlan.get_default_plan_version()
-
     def tearDown(self):
-        CreditAdjustment.objects.all().delete()
-        CreditLine.objects.all().delete()
+        for user in self.domain.all_users():
+            user.delete()
+        super(BaseAccountingTest, self).tearDown()
 
-        BillingRecord.objects.all().delete()
-        LineItem.objects.all().delete()
-        SubscriptionAdjustment.objects.all().delete()
-        Invoice.objects.all().delete()
-        generator.delete_all_subscriptions()
-        generator.delete_all_accounts()
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
 
-        self.billing_contact.delete()
-        self.dimagi_user.delete()
-        self.domain.delete()
-
-        super(BaseInvoiceTestCase, self).tearDown()
+        super(BaseInvoiceTestCase, cls).tearDownClass()
 
 
 class TestInvoice(BaseInvoiceTestCase):
@@ -136,7 +129,6 @@ class TestInvoice(BaseInvoiceTestCase):
         account = BillingAccount.get_or_create_account_by_domain(
             domain, created_by=self.dimagi_user)[0]
         billing_contact = generator.arbitrary_contact_info(account, self.dimagi_user)
-        billing_contact.save()
         account.date_confirmed_extra_charges = datetime.date.today()
         account.save()
         tasks.generate_invoices()
@@ -154,71 +146,31 @@ class TestInvoice(BaseInvoiceTestCase):
 
     def test_date_due_not_set_small_invoice(self):
         """Date Due doesn't get set if the invoice is small"""
-        Subscription.objects.all().delete()
-        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
-
-        subscription_length = 5  # months
-        subscription_start_date = datetime.date(2016, 2, 23)
-        subscription_end_date = add_months_to_date(subscription_start_date, subscription_length)
-        subscription = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
-            date_start=subscription_start_date,
-            date_end=subscription_end_date,
-            plan_version=plan_version,
-        )
-
-        invoice_date_small = utils.months_from_date(subscription.date_start, 1)
+        invoice_date_small = utils.months_from_date(self.subscription.date_start, 1)
         tasks.generate_invoices(invoice_date_small)
-        small_invoice = subscription.invoice_set.first()
+        small_invoice = self.subscription.invoice_set.first()
 
         self.assertTrue(small_invoice.balance <= SMALL_INVOICE_THRESHOLD)
         self.assertIsNone(small_invoice.date_due)
 
     def test_date_due_set_large_invoice(self):
         """Date Due only gets set for a large invoice (> $100)"""
-        Subscription.objects.all().delete()
-        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ADVANCED)
-
-        subscription_length = 5  # months
-        subscription_start_date = datetime.date(2016, 2, 23)
-        subscription_end_date = add_months_to_date(subscription_start_date, subscription_length)
-        subscription = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
-            date_start=subscription_start_date,
-            date_end=subscription_end_date,
-            plan_version=plan_version
-        )
-
-        invoice_date_large = utils.months_from_date(subscription.date_start, 3)
+        self.subscription.plan_version = generator.subscribable_plan_version(SoftwarePlanEdition.ADVANCED)
+        self.subscription.save()
+        invoice_date_large = utils.months_from_date(self.subscription.date_start, 3)
         tasks.generate_invoices(invoice_date_large)
-        large_invoice = subscription.invoice_set.last()
+        large_invoice = self.subscription.invoice_set.last()
 
         self.assertTrue(large_invoice.balance > SMALL_INVOICE_THRESHOLD)
         self.assertIsNotNone(large_invoice.date_due)
 
     def test_date_due_gets_set_autopay(self):
         """Date due always gets set for autopay """
-        Subscription.objects.all().delete()
-        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
-
-        subscription_length = 4
-        subscription_start_date = datetime.date(2016, 2, 23)
-        subscription_end_date = add_months_to_date(subscription_start_date, subscription_length)
-        autopay_subscription = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
-            date_start=subscription_start_date,
-            date_end=subscription_end_date,
-            plan_version=plan_version
-        )
-
-        autopay_subscription.account.update_autopay_user(self.billing_contact.username, self.domain)
-        invoice_date_autopay = utils.months_from_date(autopay_subscription.date_start, 1)
+        self.subscription.account.update_autopay_user(self.billing_contact, self.domain)
+        invoice_date_autopay = utils.months_from_date(self.subscription.date_start, 1)
         tasks.generate_invoices(invoice_date_autopay)
 
-        autopay_invoice = autopay_subscription.invoice_set.last()
+        autopay_invoice = self.subscription.invoice_set.last()
         self.assertTrue(autopay_invoice.balance <= SMALL_INVOICE_THRESHOLD)
         self.assertIsNotNone(autopay_invoice.date_due)
 
@@ -227,18 +179,8 @@ class TestContractedInvoices(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestContractedInvoices, self).setUp()
-        generator.delete_all_subscriptions()
-
-        self.subscription_length = self.min_subscription_length
-        subscription_start_date = datetime.date(2016, 2, 23)
-        subscription_end_date = add_months_to_date(subscription_start_date, self.subscription_length)
-        self.subscription = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
-            date_start=subscription_start_date,
-            date_end=subscription_end_date,
-            service_type=SubscriptionType.IMPLEMENTATION,
-        )
+        self.subscription.service_type = SubscriptionType.IMPLEMENTATION
+        self.subscription.save()
 
         self.invoice_date = utils.months_from_date(
             self.subscription.date_start,
@@ -446,7 +388,6 @@ class TestUserLineItem(BaseInvoiceTestCase):
         account = BillingAccount.get_or_create_account_by_domain(
             domain, created_by=self.dimagi_user)[0]
         billing_contact = generator.arbitrary_contact_info(account, self.dimagi_user)
-        billing_contact.save()
         account.date_confirmed_extra_charges = datetime.date.today()
         account.save()
 
@@ -458,7 +399,8 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertIsNone(user_line_item.base_description)
         self.assertEqual(user_line_item.base_cost, Decimal('0.0000'))
 
-        num_to_charge = num_active - self.community_plan.user_limit
+        community_plan = DefaultProductPlan.get_default_plan_version()
+        num_to_charge = num_active - community_plan.user_limit
         self.assertIsNotNone(user_line_item.unit_description)
         self.assertEqual(user_line_item.quantity, num_to_charge)
         self.assertEqual(user_line_item.unit_cost, self.user_rate.per_excess_fee)
@@ -469,19 +411,21 @@ class TestUserLineItem(BaseInvoiceTestCase):
 
 class TestSmsLineItem(BaseInvoiceTestCase):
 
-    def setUp(self):
-        super(TestSmsLineItem, self).setUp()
-        self.sms_rate = self.subscription.plan_version.feature_rates.filter(
+    @classmethod
+    def setUpClass(cls):
+        super(TestSmsLineItem, cls).setUpClass()
+        cls.sms_rate = cls.subscription.plan_version.feature_rates.filter(
             feature__feature_type=FeatureType.SMS
         ).get()
-        self.invoice_date = utils.months_from_date(
-            self.subscription.date_start, random.randint(2, self.subscription_length)
+        cls.invoice_date = utils.months_from_date(
+            cls.subscription.date_start, random.randint(2, cls.subscription_length)
         )
-        self.sms_date = utils.months_from_date(self.invoice_date, -1)
+        cls.sms_date = utils.months_from_date(cls.invoice_date, -1)
 
-    def tearDown(self):
-        self._delete_sms_billables()
-        super(TestSmsLineItem, self).tearDown()
+    @classmethod
+    def tearDownClass(cls):
+        cls._delete_sms_billables()
+        super(TestSmsLineItem, cls).tearDownClass()
 
     def test_under_limit(self):
         """
@@ -617,7 +561,8 @@ class TestSmsLineItem(BaseInvoiceTestCase):
                 self.subscription.subscriber.domain, self.sms_date, 1, multipart_count=remaining_parts
             )
 
-    def _delete_sms_billables(self):
+    @classmethod
+    def _delete_sms_billables(cls):
         SmsBillable.objects.all().delete()
         SmsGatewayFee.objects.all().delete()
         SmsGatewayFeeCriteria.objects.all().delete()

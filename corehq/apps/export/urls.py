@@ -19,6 +19,7 @@ from corehq.apps.export.views import (
     DownloadNewFormExportView,
     BulkDownloadNewFormExportView,
     DownloadNewCaseExportView,
+    DownloadNewSmsExportView,
     GenerateSchemaFromAllBuildsView,
     download_daily_saved_export,
     DashboardFeedListView,
@@ -35,6 +36,7 @@ from corehq.apps.export.views import (
     DeIdDashboardFeedListView,
     DashboardFeedPaywall,
     DailySavedExportPaywall,
+    CopyExportView,
 )
 
 urlpatterns = [
@@ -109,6 +111,9 @@ urlpatterns = [
     url(r"^custom/dailysaved/download/(?P<export_instance_id>[\w\-]+)/$",
         download_daily_saved_export,
         name="download_daily_saved_export"),
+    url(r"^custom/new/sms/download/$",
+        DownloadNewSmsExportView.as_view(),
+        name=DownloadNewSmsExportView.urlname),
 
     # Edit export views
     url(r"^custom/new/form/edit/(?P<export_id>[\w\-]+)/$",
@@ -135,6 +140,9 @@ urlpatterns = [
     url(r"^custom/case/edit/(?P<export_id>[\w\-]+)/$",
         EditCustomCaseExportView.as_view(),
         name=EditCustomCaseExportView.urlname),
+    url(r"^custom/copy/(?P<export_id>[\w\-]+)/$",
+        CopyExportView.as_view(),
+        name=CopyExportView.urlname),
 
     # Delete export views
     url(r"^custom/delete/(?P<export_id>[\w\-]+)/$",

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import csv
 from django.core.management import BaseCommand, call_command
 from corehq.apps.receiverwrapper.util import get_app_version_info
@@ -18,7 +19,7 @@ class Command(BaseCommand):
         parser.add_argument('--debug', action='store_true', dest='debug', default=False)
         parser.add_argument('--cleanup', action='store_true', dest='cleanup', default=False)
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         domain = options['domain']
         debug = options['debug']
         cleanup = options['cleanup']
@@ -33,7 +34,7 @@ class Command(BaseCommand):
         invalid_referenced_ids = referenced_case_ids - valid_case_ids
 
         if len(invalid_referenced_ids) > ES_MAX_CLAUSE_COUNT:
-            print "there's a lot of invalid ids here. ES queries may not handle this well"
+            print("there's a lot of invalid ids here. ES queries may not handle this well")
 
         cases_with_invalid_references = (
             domain_query
@@ -109,7 +110,7 @@ class Command(BaseCommand):
                 resync_case_to_es(domain, case_to_resync)
 
             if exists:
-                print 'resynced {} cases that were actually not deleted'.format(len(exists))
+                print('resynced {} cases that were actually not deleted'.format(len(exists)))
 
             for case in deleted:
                 # delete the deleted case's entire network in one go

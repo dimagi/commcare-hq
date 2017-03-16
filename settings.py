@@ -4,7 +4,7 @@ import importlib
 from collections import defaultdict
 
 import os
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 from django.contrib import messages
 import settingshelper as helper
 
@@ -146,6 +146,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'corehq.middleware.SentryContextMiddleware',
     'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
@@ -185,6 +186,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'rest_framework.authtoken',
     'djcelery',
     'djtables',
     'django_prbac',
@@ -202,6 +204,7 @@ DEFAULT_APPS = (
     'two_factor',
     'ws4redis',
     'statici18n',
+    'raven.contrib.django.raven_compat',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -293,7 +296,7 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.messaging.smsbackends.unicel',
     'corehq.messaging.smsbackends.icds_nic',
-    'corehq.apps.reports',
+    'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
     'corehq.apps.data_interfaces',
@@ -323,6 +326,7 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
+    'corehq.apps.dhis2',
     'corehq.util',
     'dimagi.ext',
     'corehq.doctypemigrations',
@@ -861,11 +865,19 @@ ZIPLINE_API_URL = ''
 ZIPLINE_API_USER = ''
 ZIPLINE_API_PASSWORD = ''
 
+# Set to the list of domain names for which we will run the ICDS SMS indicators
+ICDS_SMS_INDICATOR_DOMAINS = []
+
 KAFKA_URL = 'localhost:9092'
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
 OVERRIDE_UCR_BACKEND = None
+
+# CommCare HQ - To indicate server
+COMMCARE_HQ_NAME = "CommCare HQ"
+# CommCare - To Indicate mobile
+COMMCARE_NAME = "CommCare"
 
 ENTERPRISE_MODE = False
 
@@ -876,6 +888,12 @@ TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
 ONBOARDING_DOMAIN_TEST_DATE = ()
 
 HQ_INSTANCE = 'development'
+
+SENTRY_PUBLIC_KEY = None
+SENTRY_PRIVATE_KEY = None
+SENTRY_PROJECT_ID = None
+SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
+SENTRY_API_KEY = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -911,10 +929,10 @@ TEMPLATES = [
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.core.context_processors.request',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
                 'django.template.context_processors.media',
+                'django.template.context_processors.request',
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
 
@@ -924,6 +942,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.websockets_override',
+                'corehq.util.context_processors.commcare_hq_names',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1064,6 +1083,10 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
+        'sentry': {
+            'level': 'ERROR',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
     },
     'loggers': {
         '': {
@@ -1076,8 +1099,8 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        'django.request': {
-            'handlers': ['mail_admins'],
+        'django': {
+            'handlers': ['mail_admins', 'sentry'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1086,7 +1109,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            'handlers': ['notify_exception'],
+            'handlers': ['notify_exception', 'sentry'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1155,6 +1178,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'sentry.errors.uncaught': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        }
     }
 }
 
@@ -1254,6 +1282,7 @@ COUCHDB_APPS = [
     'couchexport',
     'custom_data_fields',
     'hqadmin',
+    'dhis2',
     'ext',
     'facilities',
     'fluff_filter',
@@ -1449,7 +1478,11 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "FRI_SMS_CATCHUP_CONTENT": "custom.fri.api.catchup_custom_content_handler",
     "FRI_SMS_SHIFT": "custom.fri.api.shift_custom_content_handler",
     "FRI_SMS_OFF_DAY": "custom.fri.api.off_day_custom_content_handler",
-    "UCLA_MESSAGE_BANK": "custom.ucla.api.ucla_message_bank_content",
+    "UCLA_GENERAL_HEALTH": "custom.ucla.api.general_health_message_bank_content",
+    "UCLA_MENTAL_HEALTH": "custom.ucla.api.mental_health_message_bank_content",
+    "UCLA_SEXUAL_HEALTH": "custom.ucla.api.sexual_health_message_bank_content",
+    "UCLA_MED_ADHERENCE": "custom.ucla.api.med_adherence_message_bank_content",
+    "UCLA_SUBSTANCE_USE": "custom.ucla.api.substance_use_message_bank_content",
 }
 
 # These are custom templates which can wrap default the sms/chat.html template
@@ -1507,9 +1540,9 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.domain.get_domain_kafka_to_elasticsearch_pillow',
         },
         {
-            'name': 'AppFormSubmissionTrackerPillow',
+            'name': 'FormSubmissionMetadataTrackerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.app_submission_tracker.get_app_form_submission_tracker_pillow',
+            'instance': 'corehq.pillows.app_submission_tracker.get_form_submission_metadata_tracker_pillow',
         },
     ],
     'core_ext': [
@@ -1569,18 +1602,10 @@ PILLOWTOPS = {
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
-        'custom.m4change.models.AncHmisCaseFluffPillow',
-        'custom.m4change.models.LdHmisCaseFluffPillow',
-        'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
-        'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
-        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow',
-        'custom.m4change.models.AllHmisCaseFluffPillow',
+        'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.CouvertureFluffPillow',
-        'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassageFluffPillow',
-        'custom.intrahealth.models.TauxDeRuptureFluffPillow',
-        'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.intrahealth.models.IntraHealthFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
@@ -1637,7 +1662,9 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsTreatmentOutcomeRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater'
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
@@ -1713,11 +1740,11 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_monthly_summary.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary_dmc.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary_phi.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_patients.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'mdr_suspects.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patient_overview_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patients_due_to_follow_up.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'treatment_outcome_mobile.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_treatment_outcome_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json')
 ]
 
@@ -1822,7 +1849,9 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
     ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
-    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression')
+    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression'),
+    ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
+    ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -1935,5 +1964,17 @@ else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
 
 REST_FRAMEWORK = {
-    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
+    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
 }
+
+SENTRY_CONFIGURED = False
+_raven_config = helper.configure_sentry(
+    BASE_DIR,
+    SERVER_ENVIRONMENT,
+    SENTRY_PUBLIC_KEY,
+    SENTRY_PRIVATE_KEY,
+    SENTRY_PROJECT_ID
+)
+if _raven_config:
+    RAVEN_CONFIG = _raven_config
+    SENTRY_CONFIGURED = True

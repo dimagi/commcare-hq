@@ -156,8 +156,9 @@ class TBHIVCollaboration(EnikshayReport):
 @location_safe
 class CaseFindingReport(EnikshayMultiReport):
 
-    name = ugettext_lazy('Case Finding')
+    name = ugettext_lazy('Summary of Case Finding')
     slug = 'case_finding'
+    exportable = True
 
     @property
     def reports(self):

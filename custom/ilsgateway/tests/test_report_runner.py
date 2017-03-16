@@ -5,11 +5,12 @@ from django.test.testcases import TestCase
 
 from casexml.apps.stock.models import StockTransaction, StockReport
 
-from corehq.apps.accounting.tests import generator
 from corehq.apps.locations.forms import LocationForm
 
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues,\
-    OrganizationSummary, GroupSummary, PendingReportingDataRecalculation
+    OrganizationSummary, GroupSummary, PendingReportingDataRecalculation, ReportRun
+from custom.ilsgateway.tanzania.warehouse.updater import process_facility_warehouse_data, \
+    process_non_facility_warehouse_data
 from custom.ilsgateway.tasks import report_run
 from custom.ilsgateway.tests.handlers.utils import prepare_domain, create_products
 from custom.ilsgateway.utils import make_loc, create_stock_report
@@ -24,7 +25,6 @@ class TestReportRunner(TestCase):
         SupplyPointStatus.objects.all().delete()
         StockTransaction.objects.all().delete()
         StockReport.objects.all().delete()
-        generator.delete_all_subscriptions()
         cls.domain.delete()
         super(TestReportRunner, cls).tearDownClass()
 
@@ -97,6 +97,7 @@ class TestReportRunner(TestCase):
     def setUp(self):
         super(TestReportRunner, self).setUp()
         OrganizationSummary.objects.all().delete()
+        ReportRun.objects.all().delete()
 
     def test_report_runner(self):
         d = datetime(2015, 9, 1)
@@ -201,3 +202,22 @@ class TestReportRunner(TestCase):
                     title=SupplyPointStatusTypes.R_AND_R_FACILITY
                 ).first().total, 1
             )
+
+    def test_location_created_after_facility_processing(self):
+        start_date = datetime(2015, 9, 1)
+        end_date = datetime.utcnow()
+        with mock.patch('custom.ilsgateway.tanzania.warehouse.updater.default_start_date', return_value=start_date), \
+                mock.patch('custom.ilsgateway.tasks.default_start_date', return_value=start_date), \
+                mock.patch('custom.ilsgateway.tasks.get_start_date', return_value=start_date):
+            run = ReportRun.objects.create(start=start_date, end=end_date,
+                                           start_run=datetime.utcnow(), domain=self.domain.name)
+
+            process_facility_warehouse_data(self.facility1, start_date, end_date, run)
+
+            facility = make_loc(code='new_facility', name='New Facility', domain=self.domain.name,
+                                type='FACILITY', parent=self.district1, metadata={'group': 'A'})
+
+            process_non_facility_warehouse_data(self.district1, start_date, end_date, run)
+            self.assertEqual(OrganizationSummary.objects.filter(date__lte=datetime(2015, 9, 3)).count(), 2)
+
+            facility.delete()

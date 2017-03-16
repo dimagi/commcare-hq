@@ -140,6 +140,7 @@ class LocationHierarchyTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(LocationHierarchyTestCase, cls).setUpClass()
         cls.domain_obj = bootstrap_domain(cls.domain)
         cls.location_types, cls.locations = setup_locations_and_types(
             cls.domain,
@@ -150,8 +151,9 @@ class LocationHierarchyTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain_obj.delete()
         delete_all_locations()
+        cls.domain_obj.delete()
+        super(LocationHierarchyTestCase, cls).tearDownClass()
 
     @classmethod
     def restrict_user_to_assigned_locations(cls, user):
@@ -159,6 +161,7 @@ class LocationHierarchyTestCase(TestCase):
             domain=cls.domain,
             name='Regional Supervisor',
             permissions=Permissions(edit_commcare_users=True,
+                                    edit_locations=True,
                                     access_all_locations=False),
         )
         role.save()

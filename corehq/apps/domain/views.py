@@ -7,12 +7,14 @@ import logging
 import json
 import cStringIO
 import pytz
+import sys
 
 from couchdbkit import ResourceNotFound
 import dateutil
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
+from django.template import RequestContext
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET
 from django.views.generic import View
@@ -24,9 +26,9 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, render_to_response
 from django.contrib import messages
-from django.contrib.auth.views import password_reset_confirm
+from django.contrib.auth.views import password_reset_confirm, password_reset
 from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -43,6 +45,8 @@ from corehq.apps.case_search.models import (
     enable_case_search,
     disable_case_search,
 )
+from corehq.apps.dhis2.dbaccessors import get_dhis2_connection
+from corehq.apps.dhis2.forms import Dhis2ConnectionForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
@@ -61,6 +65,7 @@ from corehq.apps.style.decorators import (
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
+    SubscriptionAdjustmentError,
 )
 from corehq.apps.accounting.payment_handlers import (
     BulkStripePaymentHandler,
@@ -132,10 +137,11 @@ from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
 )
-from corehq.apps.repeaters.utils import get_all_repeater_types
+from corehq.apps.repeaters.utils import get_all_repeater_types, get_repeater_auth_header
 from corehq.apps.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
+    RECORD_CANCELLED_STATE,
     RECORD_SUCCESS_STATE,
 )
 from corehq.apps.reports.generic import GenericTabularReport
@@ -539,6 +545,34 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
 
 @require_POST
 @require_can_edit_web_users
+def cancel_repeat_record(request, domain):
+    try:
+        record = RepeatRecord.get(request.POST.get('record_id'))
+    except ResourceNotFound:
+        return HttpResponse(status=404)
+    record.cancel()
+    record.save()
+    if not record.cancelled:
+        return HttpResponse(status=400)
+    return HttpResponse('OK')
+
+
+@require_POST
+@require_can_edit_web_users
+def requeue_repeat_record(request, domain):
+    try:
+        record = RepeatRecord.get(request.POST.get('record_id'))
+    except ResourceNotFound:
+        return HttpResponse(status=404)
+    record.requeue()
+    record.save()
+    if record.cancelled:
+        return HttpResponse(status=400)
+    return HttpResponse('OK')
+
+
+@require_POST
+@require_can_edit_web_users
 def drop_repeater(request, domain, repeater_id):
     rep = Repeater.get(repeater_id)
     rep.retire()
@@ -553,6 +587,8 @@ def test_repeater(request, domain):
     repeater_type = request.POST['repeater_type']
     format = request.POST.get('format', None)
     repeater_class = get_all_repeater_types()[repeater_type]
+    use_basic_auth = request.POST.get('use_basic_auth')
+
     form = GenericRepeaterForm(
         {"url": url, "format": format},
         domain=domain,
@@ -566,6 +602,11 @@ def test_repeater(request, domain):
         fake_post = generator.get_test_payload(domain)
         headers = generator.get_headers()
 
+        if use_basic_auth == 'true':
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            headers.update(get_repeater_auth_header(headers, username, password))
+
         try:
             resp = simple_post(fake_post, url, headers=headers)
             if 200 <= resp.status_code < 300:
@@ -577,7 +618,7 @@ def test_repeater(request, domain):
                                                 "response": resp.content,
                                                 "status": resp.status_code}))
 
-        except Exception, e:
+        except Exception as e:
             errors = str(e)
         return HttpResponse(json.dumps({"success": False, "response": errors}))
     else:
@@ -665,6 +706,13 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
 
+        if subscription:
+            credit_lines = CreditLine.get_non_general_credits_by_subscription(subscription)
+            credit_lines = [cl for cl in credit_lines if cl.balance > 0]
+            has_credits_in_non_general_credit_line = len(credit_lines) > 0
+        else:
+            has_credits_in_non_general_credit_line = False
+
         info = {
             'products': [self.get_product_summary(plan_version, self.account, subscription)],
             'features': self.get_feature_summary(plan_version, self.account, subscription),
@@ -686,6 +734,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'date_end': date_end,
             'cards': cards,
             'next_subscription': next_subscription,
+            'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line
         }
         info['has_account_level_credit'] = (
             any(
@@ -735,14 +784,16 @@ class DomainSubscriptionView(DomainAccountingSettings):
             usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
             feature_type = feature_rate.feature.feature_type
             if feature_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
-                remaining = _('Unlimited')
+                remaining = limit = _('Unlimited')
             else:
-                remaining = feature_rate.monthly_limit - usage
+                limit = feature_rate.monthly_limit
+                remaining = limit - usage
                 if remaining < 0:
                     remaining = _("%d over limit") % (-1 * remaining)
             return {
                 'name': get_feature_name(feature_type, self.product),
                 'usage': usage,
+                'limit': limit,
                 'remaining': remaining,
                 'type': feature_type,
                 'recurring_interval': get_feature_recurring_interval(feature_type),
@@ -985,8 +1036,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 }
             except BillingRecord.DoesNotExist:
                 log_accounting_error(
-                    "An invoice was generated for %(invoice_id)d "
-                    "(domain: %(domain)s), but no billing record!" % {
+                    u"An invoice was generated for %(invoice_id)d "
+                    u"(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
                     }
@@ -1123,7 +1174,15 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
                     for pt in SoftwareProductType.CHOICES
                     if Decimal(request.POST.get(pt[0], 0)) > 0]
 
-        return products + features
+        items = products + features
+
+        if Decimal(request.POST.get('general_credit', 0)) > 0:
+            items.append({
+                'type': 'General Credits',
+                'amount': Decimal(request.POST.get('general_credit', 0))
+            })
+
+        return items
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
@@ -1181,7 +1240,7 @@ class WireInvoiceView(View):
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
             wire_invoice_factory.create_wire_invoice(balance)
-        except Exception, e:
+        except Exception as e:
             return json_response({'error': {'message', e}})
 
         return json_response({'success': True})
@@ -1258,8 +1317,15 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             try:
                 form.process_subscription_management()
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-            except NewSubscriptionError as e:
-                messages.error(self.request, e.message)
+            except (NewSubscriptionError, SubscriptionAdjustmentError) as e:
+                messages.error(self.request, mark_safe(
+                    'This request will require Ops assistance. '
+                    'Please explain to <a href="mailto:%(ops_email)s">%(ops_email)s</a>'
+                    ' what you\'re trying to do and report the following error: <strong>"%(error)s"</strong>' % {
+                        'error': e.message,
+                        'ops_email': settings.ACCOUNTS_EMAIL,
+                    }
+                ))
         return self.get(request, *args, **kwargs)
 
     @property
@@ -1770,10 +1836,14 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
+        app_forms = self.app_forms
+        fixture_forms = self.fixture_forms
         context = {
             'form': self.snapshot_settings_form,
-            'app_forms': self.app_forms,
-            'fixture_forms': self.fixture_forms,
+            'app_forms': app_forms,
+            'app_ids': [app.id for app, form in app_forms],
+            'fixture_forms': fixture_forms,
+            'fixture_ids': [data.id for data, form in fixture_forms],
             'can_publish_as_org': self.can_publish_as_org,
             'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'countries', 'region'),
         }
@@ -2210,6 +2280,26 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
     ]
 
+    def _make_cancel_payload_button(self, record_id):
+        return '''
+                <a
+                    class="btn btn-default cancel-record-payload"
+                    role="button"
+                    data-record-id={}>
+                    Cancel Payload
+                </a>
+                '''.format(record_id)
+
+    def _make_requeue_payload_button(self, record_id):
+        return '''
+                <a
+                    class="btn btn-default requeue-record-payload"
+                    role="button"
+                    data-record-id={}>
+                    Requeue Payload
+                </a>
+                '''.format(record_id)
+
     def _make_view_payload_button(self, record_id):
         return '''
         <a
@@ -2241,6 +2331,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         elif record.state == RECORD_PENDING_STATE:
             label_cls = 'warning'
             label_text = _('Pending')
+        elif record.state == RECORD_CANCELLED_STATE:
+            label_cls = 'danger'
+            label_text = _('Cancelled')
         elif record.state == RECORD_FAILURE_STATE:
             label_cls = 'danger'
             label_text = _('Failed')
@@ -2293,11 +2386,16 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             lambda record: [
                 self._make_state_label(record),
                 record.url if record.url else _(u'Unable to generate url for record'),
-                self._format_date(record.last_checked) if record.last_checked else None,
-                self._format_date(record.next_check) if record.next_check else None,
+                self._format_date(record.last_checked) if record.last_checked else '---',
+                self._format_date(record.next_check) if record.next_check else '---',
                 escape(record.failure_reason) if not record.succeeded else None,
+                record.overall_tries if record.overall_tries > 0 else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
+                self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
+                else self._make_cancel_payload_button(record.get_id) if not record.cancelled
+                and not record.succeeded
+                else None
             ],
             records
         )
@@ -2310,8 +2408,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('Last sent date')),
             DataTablesColumn(_('Retry Date')),
             DataTablesColumn(_('Failure Reason')),
+            DataTablesColumn(_('Failure Count')),
             DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
+            DataTablesColumn(_('Cancel or Requeue payload'))
         )
 
 
@@ -2985,6 +3085,31 @@ class DeactivateTransferDomainView(View):
         return super(DeactivateTransferDomainView, self).dispatch(*args, **kwargs)
 
 
+class Dhis2ConnectionView(BaseAdminProjectSettingsView):
+    urlname = 'dhis2_connection_view'
+    page_title = ugettext_lazy("DHIS2 Connection Settings")
+    template_name = 'domain/admin/dhis2/connection_settings.html'
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
+            raise Http404()
+        return super(Dhis2ConnectionView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def dhis2_connection_form(self):
+        dhis2_conn = get_dhis2_connection(self.request.domain)
+        initial = dict(dhis2_conn) if dhis2_conn else {}
+        if self.request.method == 'POST':
+            return Dhis2ConnectionForm(self.request.POST, initial=initial)
+        return Dhis2ConnectionForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {'dhis2_connection_form': self.dhis2_connection_form}
+
+
 from corehq.apps.smsbillables.forms import PublicSMSRateCalculatorForm
 from corehq.apps.smsbillables.async_handlers import PublicSMSRatesAsyncHandler
 
@@ -3134,3 +3259,25 @@ class PasswordResetView(View):
         couch_user = CouchUser.from_django_user(user)
         clear_login_attempts(couch_user)
         return response
+
+
+def exception_safe_password_reset(request, *args, **kwargs):
+    """
+    Django's password reset function raises SMTP errors if there's any
+    problem with the mailserver. Catch that more elegantly with a simple wrapper.
+    """
+    # Django docs on password reset are weak. See these links instead:
+    #
+    # http://streamhacker.com/2009/09/19/django-ia-auth-password-reset/
+    # http://www.rkblog.rk.edu.pl/w/p/password-reset-django-10/
+    # http://blog.montylounge.com/2009/jul/12/django-forgot-password/
+    try:
+        return password_reset(request, *args, **kwargs)
+    except None:
+        vals = {
+            'current_page': {'page_name': _('Oops!')},
+            'error_msg': 'There was a problem with your request',
+            'error_details': sys.exc_info(),
+            'show_homepage_link': 1,
+        }
+        return render_to_response('error.html', vals, context_instance=RequestContext(request))

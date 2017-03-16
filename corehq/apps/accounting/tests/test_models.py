@@ -34,8 +34,8 @@ class TestBillingAccount(BaseAccountingTest):
 
     def setUp(self):
         super(TestBillingAccount, self).setUp()
-        self.billing_contact = generator.arbitrary_web_user()
-        self.dimagi_user = generator.arbitrary_web_user(is_dimagi=True)
+        self.billing_contact = generator.create_arbitrary_web_user_name()
+        self.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
         self.currency = generator.init_default_currency()
         self.billing_account = generator.billing_account(self.dimagi_user, self.billing_contact)
 
@@ -49,21 +49,19 @@ class TestBillingAccount(BaseAccountingTest):
         self.assertFalse(self.billing_account.auto_pay_enabled)
 
         mail.outbox = []
-        autopay_user = generator.arbitrary_web_user()
-        self.billing_account.update_autopay_user(autopay_user.username, None)
+        autopay_user = generator.create_arbitrary_web_user_name()
+        self.billing_account.update_autopay_user(autopay_user, None)
         self.assertEqual(len(mail.outbox), 1)
         self.assertTrue(self.billing_account.auto_pay_enabled)
-        self.assertEqual(self.billing_account.auto_pay_user, autopay_user.username)
+        self.assertEqual(self.billing_account.auto_pay_user, autopay_user)
 
         mail.outbox = []
-        other_autopay_user = generator.arbitrary_web_user()
-        self.billing_account.update_autopay_user(other_autopay_user.username, None)
+        other_autopay_user = generator.create_arbitrary_web_user_name()
+        self.billing_account.update_autopay_user(other_autopay_user, None)
         self.assertEqual(len(mail.outbox), 2)
-        self.assertEqual(self.billing_account.auto_pay_user, other_autopay_user.username)
+        self.assertEqual(self.billing_account.auto_pay_user, other_autopay_user)
 
     def tearDown(self):
-        self.billing_contact.delete()
-        self.dimagi_user.delete()
         SmsBillable.objects.all().delete()
         SmsGatewayFee.objects.all().delete()
         SmsGatewayFeeCriteria.objects.all().delete()
@@ -78,8 +76,8 @@ class TestSubscription(BaseAccountingTest):
 
     def setUp(self):
         super(TestSubscription, self).setUp()
-        self.billing_contact = generator.arbitrary_web_user()
-        self.dimagi_user = generator.arbitrary_web_user(is_dimagi=True)
+        self.billing_contact = generator.create_arbitrary_web_user_name()
+        self.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
         self.domain = Domain(name='test')
         self.domain.save()
         self.currency = generator.init_default_currency()
@@ -150,12 +148,8 @@ class TestSubscription(BaseAccountingTest):
         self.assertEqual(self.subscription.next_subscription, next_future_subscription)
 
     def tearDown(self):
-        self.billing_contact.delete()
-        self.dimagi_user.delete()
         self.domain.delete()
 
-        generator.delete_all_subscriptions()
-        generator.delete_all_accounts()
         super(TestSubscription, self).tearDown()
 
 
@@ -163,8 +157,8 @@ class TestBillingRecord(BaseAccountingTest):
 
     def setUp(self):
         super(TestBillingRecord, self).setUp()
-        self.billing_contact = generator.arbitrary_web_user()
-        self.dimagi_user = generator.arbitrary_web_user(is_dimagi=True)
+        self.billing_contact = generator.create_arbitrary_web_user_name()
+        self.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
         self.domain = Domain(name='test')
         self.domain.save()
         self.invoice_start, self.invoice_end = get_previous_month_date_range()
@@ -187,6 +181,10 @@ class TestBillingRecord(BaseAccountingTest):
             is_hidden=False,
         )
         self.billing_record = BillingRecord(invoice=self.invoice)
+
+    def tearDown(self):
+        self.domain.delete()
+        super(TestBillingRecord, self).tearDown()
 
     def test_should_send_email(self):
         self.assertTrue(self.billing_record.should_send_email)
@@ -221,8 +219,8 @@ class TestStripePaymentMethod(BaseAccountingTest):
     def setUp(self):
         super(TestStripePaymentMethod, self).setUp()
 
-        self.web_user = generator.arbitrary_web_user()
-        self.dimagi_user = generator.arbitrary_web_user(is_dimagi=True)
+        self.web_user = generator.create_arbitrary_web_user_name()
+        self.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
 
         self.fake_card = FakeStripeCard()
         self.fake_stripe_customer = FakeStripeCustomer(cards=[self.fake_card])
@@ -231,7 +229,7 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.billing_account = generator.billing_account(self.dimagi_user, self.web_user)
         self.billing_account_2 = generator.billing_account(self.dimagi_user, self.web_user)
 
-        self.payment_method = StripePaymentMethod(web_user=self.web_user.username,
+        self.payment_method = StripePaymentMethod(web_user=self.web_user,
                                                   customer_id=self.fake_stripe_customer.id)
         self.payment_method.save()
 
@@ -242,19 +240,19 @@ class TestStripePaymentMethod(BaseAccountingTest):
 
         self.payment_method.set_autopay(self.fake_card, self.billing_account, None)
         self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
-        self.assertEqual(self.billing_account.auto_pay_user, self.web_user.username)
+        self.assertEqual(self.billing_account.auto_pay_user, self.web_user)
         self.assertTrue(self.billing_account.auto_pay_enabled)
 
         self.payment_method.set_autopay(self.fake_card, self.billing_account_2, None)
         self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True',
                                                    "auto_pay_{}".format(self.billing_account_2.id): 'True'})
 
-        other_web_user = generator.arbitrary_web_user()
-        other_payment_method = StripePaymentMethod(web_user=other_web_user.username)
+        other_web_user = generator.create_arbitrary_web_user_name()
+        other_payment_method = StripePaymentMethod(web_user=other_web_user)
         different_fake_card = FakeStripeCard()
 
         other_payment_method.set_autopay(different_fake_card, self.billing_account, None)
-        self.assertEqual(self.billing_account.auto_pay_user, other_web_user.username)
+        self.assertEqual(self.billing_account.auto_pay_user, other_web_user)
         self.assertTrue(different_fake_card.metadata["auto_pay_{}".format(self.billing_account.id)])
         self.assertFalse(self.fake_card.metadata["auto_pay_{}".format(self.billing_account.id)] == 'True')
 

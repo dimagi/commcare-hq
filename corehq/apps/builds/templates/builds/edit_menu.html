@@ -5,7 +5,6 @@
 
 {% block js %}{{ block.super }}
     {% compress js %}
-        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
         <script src="{% static 'builds/js/edit-builds.js' %}"></script>
     {% endcompress %}
 {% endblock %}

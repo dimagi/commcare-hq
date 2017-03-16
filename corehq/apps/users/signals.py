@@ -35,7 +35,8 @@ def update_user_in_es(sender, couch_user, **kwargs):
     """
     Automatically sync the user to elastic directly on save or delete
     """
-    send_to_elasticsearch("users", couch_user.to_json(),
+    from corehq.pillows.user import transform_user_for_elasticsearch
+    send_to_elasticsearch("users", transform_user_for_elasticsearch(couch_user.to_json()),
                           delete=couch_user.to_be_deleted())
 
 

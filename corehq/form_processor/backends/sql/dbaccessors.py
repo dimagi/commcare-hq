@@ -429,14 +429,12 @@ class FormAccessorSQL(AbstractFormAccessor):
         logging.debug('Saving new form: %s', form)
         unsaved_attachments = getattr(form, 'unsaved_attachments', [])
         if unsaved_attachments:
-            del form.unsaved_attachments
             for unsaved_attachment in unsaved_attachments:
                 unsaved_attachment.form = form
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
         for operation in operations:
             operation.form = form
-        form.clear_tracked_models()
 
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
@@ -445,6 +443,13 @@ class FormAccessorSQL(AbstractFormAccessor):
             )
             result = fetchone_as_namedtuple(cursor)
             form.id = result.form_pk
+
+        try:
+            del form.unsaved_attachments
+        except AttributeError:
+            pass
+
+        form.clear_tracked_models()
 
     @staticmethod
     @transaction.atomic
@@ -579,17 +584,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             cases = _order_list(case_ids, cases, 'case_id')
 
         return cases
-
-    @staticmethod
-    def case_modified_since(case_id, server_modified_on):
-        """
-        Return True if a case has been modified since the given modification date.
-        Assumes that the case exists in the DB.
-        """
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_modified FROM case_modified_since(%s, %s)', [case_id, server_modified_on])
-            result = fetchone_as_namedtuple(cursor)
-            return result.case_modified
 
     @staticmethod
     def get_case_xform_ids(case_id):
@@ -759,8 +753,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     def save_case(case):
         transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
 
-        indices_to_save_or_update = case.get_tracked_models_to_create(CommCareCaseIndexSQL)
-        indices_to_save_or_update.extend(case.get_tracked_models_to_update(CommCareCaseIndexSQL))
+        indices_to_save_or_update = case.get_live_tracked_models(CommCareCaseIndexSQL)
         index_ids_to_delete = [index.id for index in case.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
 
         attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
@@ -787,7 +780,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 ])
                 result = fetchone_as_namedtuple(cursor)
                 case.id = result.case_pk
-                case.clear_tracked_models()
             except InternalError as e:
                 if logging.root.isEnabledFor(logging.DEBUG):
                     msg = 'save_case_and_related_models called with args: \n{}, {}, {}, {} ,{} ,{}'.format(
@@ -801,6 +793,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     logging.debug(msg)
                 raise CaseSaveError(e)
             else:
+                case.clear_tracked_models()
                 for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
                     attachment.delete_content()
 
@@ -861,7 +854,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 [domain, case_ids]
             )
             results = fetchall_as_namedtuple(cursor)
-            return dict((result.case_id, result.server_modified_on) for result in results)
+            return {result.case_id: result.server_modified_on for result in results}
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
@@ -876,16 +869,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return CaseAccessorSQL.get_cases_by_external_id(domain, user_id, case_type)[0]
         except IndexError:
             return None
-
-    @staticmethod
-    def get_case_types_for_domain(domain):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_type FROM get_case_types_for_domain(%s)',
-                [domain]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return {result.case_type for result in results}
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):

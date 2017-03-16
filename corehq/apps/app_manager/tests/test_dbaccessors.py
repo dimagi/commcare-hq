@@ -79,8 +79,19 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assertEqual(len(apps), 2)
         normal_app, remote_app = sorted(apps, key=lambda app: app.is_remote_app())
         expected_normal_app, expected_remote_app = sorted(self.apps, key=lambda app: app.is_remote_app())
-        self.assert_docs_equal(remote_app, self._make_app_brief(expected_remote_app))
-        self.assert_docs_equal(normal_app, self._make_app_brief(expected_normal_app))
+
+        # Since brief apps removes anonymous_cloudcare_hash, a new one gets generated and thus causes
+        # a mismatch. Setting it none so we can ignore the difference
+        brief_remote = self._make_app_brief(expected_remote_app)
+        brief_remote.anonymous_cloudcare_hash = None
+        remote_app.anonymous_cloudcare_hash = None
+
+        brief_normal_app = self._make_app_brief(expected_normal_app)
+        brief_normal_app.anonymous_cloudcare_hash = None
+        normal_app.anonymous_cloudcare_hash = None
+
+        self.assert_docs_equal(remote_app, brief_remote)
+        self.assert_docs_equal(normal_app, brief_normal_app)
 
     def test_get_apps_in_domain(self):
         apps = get_apps_in_domain(self.domain)
@@ -95,7 +106,12 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assertEqual(len(apps), 1)
         normal_app, = apps
         expected_normal_app, _ = sorted(self.apps, key=lambda app: app.is_remote_app())
-        self.assert_docs_equal(normal_app, self._make_app_brief(expected_normal_app))
+        # Since brief apps removes anonymous_cloudcare_hash, a new one gets generated and thus causes
+        # a mismatch. Setting it none so we can ignore the difference
+        brief_app = self._make_app_brief(expected_normal_app)
+        brief_app.anonymous_cloudcare_hash = None
+        normal_app.anonymous_cloudcare_hash = None
+        self.assert_docs_equal(normal_app, brief_app)
 
     def test_get_apps_in_domain_exclude_remote(self):
         apps = get_apps_in_domain(self.domain, include_remote=False)

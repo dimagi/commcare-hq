@@ -19,6 +19,7 @@ class CustomDataFieldsForm(forms.Form):
     The main form for editing a custom data definition
     """
     data_fields = forms.CharField(widget=forms.HiddenInput)
+    purge_existing = forms.BooleanField(widget=forms.HiddenInput, required=False, initial=False)
 
     def verify_no_duplicates(self, data_fields):
         errors = set()
@@ -96,6 +97,7 @@ class CustomDataModelMixin(object):
     urlname = None
     template_name = "custom_data_fields/custom_data_fields.html"
     field_type = None
+    show_purge_existing = False
     entity_string = None  # User, Group, Location, Product...
 
     @use_jquery_ui
@@ -147,6 +149,7 @@ class CustomDataModelMixin(object):
         return {
             "custom_fields": json.loads(self.form.data['data_fields']),
             "custom_fields_form": self.form,
+            "show_purge_existing": self.show_purge_existing,
         }
 
     @property
@@ -162,6 +165,8 @@ class CustomDataModelMixin(object):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             self.save_custom_fields()
+            if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
+                self.update_existing_models()
             msg = _(u"{} fields saved successfully").format(
                 unicode(self.entity_string)
             )
@@ -169,3 +174,9 @@ class CustomDataModelMixin(object):
             return self.get(request, success=True, *args, **kwargs)
         else:
             return self.get(request, *args, **kwargs)
+
+    def update_existing_models(self):
+        """
+        Subclasses with show_purge_exiting set to True should override this to update existing models
+        """
+        raise NotImplementedError()

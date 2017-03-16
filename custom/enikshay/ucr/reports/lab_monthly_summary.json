@@ -14,7 +14,7 @@
     "report_id": "lab_monthly_summary",
     "config": {
         "description": "",
-        "title": "Lab Monthly Summary",
+        "title": "Lab Summary",
         "sort_expression": [],
         "visible": true,
         "configured_charts": [],

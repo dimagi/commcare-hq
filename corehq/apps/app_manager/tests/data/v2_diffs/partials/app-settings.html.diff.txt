@@ -12,7 +12,7 @@
          <span data-bind="if: valueIsLegal()">
              <select class="col-sm-3 form-control" data-bind="
                  options: options,
-@@ -25,42 +26,42 @@
+@@ -25,7 +26,7 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.bool">
@@ -21,6 +21,7 @@
          <input type="checkbox"
                 data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
      </span>
+@@ -59,35 +60,35 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.customProperty">
@@ -78,7 +79,7 @@
          attr: {
              'data-hqmediapath': path,
              href: href
-@@ -70,27 +71,27 @@
+@@ -97,27 +98,27 @@
              mediaUploadComplete: uploadComplete
          }
      ">
@@ -115,7 +116,7 @@
          <input type="text" class="col-sm-6 form-control" data-bind="
              value: visibleValue,
              valueUpdate: 'textchange',
-@@ -100,7 +101,7 @@
+@@ -127,7 +128,7 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.number">
@@ -124,7 +125,7 @@
          <input type="number" class="col-sm-3 form-control" data-bind="
              value: visibleValue,
              valueUpdate: 'textchange',
-@@ -110,165 +111,175 @@
+@@ -137,166 +138,176 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.textarea">
@@ -306,7 +307,7 @@
 +        <div class="tab-pane" id="actions">
 +            {% if app.get_doc_type != 'LinkedApplication' %}
 +                {% if copy_app_form %}
-+                    <div class="panel panel-appmanager panel-appmanager-form">
++                    <div class="panel panel-appmanager panel-appmanager-form" id="copy-app-form">
 +                        <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
 +                            {% crispy copy_app_form %}
 +                        </form>
@@ -358,6 +359,7 @@
 +                    </div>
 +                    </div>
 +                {% endif %}
++                {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
 +                {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
 +                    <legend>Export compressed application</legend>
 +                    <form action="{% url "gzip_app" domain app.id %}" method="POST">
@@ -398,6 +400,7 @@
 -                </div>
 -            </fieldset>
 -        </div>
+-        {{ request|toggle_tag_info:"CUSTOM_PROPERTIES" }}
 -        {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
 -        <fieldset>
 -            <legend>

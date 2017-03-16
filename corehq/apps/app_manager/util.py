@@ -14,6 +14,8 @@ from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.data_dictionary.models import CaseProperty
+from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from couchdbkit.exceptions import DocTypeError
@@ -150,6 +152,19 @@ def save_xform(app, form, xml):
 
     form.source = xml
 
+    # For registration forms, assume that the first question is the case name
+    # unless something else has been specified
+    if toggles.APP_MANAGER_V2.enabled(app.domain):
+        if form.is_registration_form():
+            questions = form.get_questions([app.default_language])
+            path = form.actions.open_case.name_path
+            if path:
+                name_questions = [q for q in questions if q['value'] == path]
+                if not len(name_questions):
+                    path = None
+            if not path and len(questions):
+                form.actions.open_case.name_path = questions[0]['value']
+
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
@@ -261,6 +276,11 @@ class ParentCasePropertyBuilder(object):
                 # reference, then I think it will not appear in the schema.
                 case_properties.update(p for p in updates if "/" not in p)
             case_properties.update(self.get_save_to_case_updates(form, case_type))
+
+        if toggles.DATA_DICTIONARY.enabled(self.app.domain):
+            data_dict_props = CaseProperty.objects.filter(case_type__domain=self.app.domain,
+                                                          case_type__name=case_type, deprecated=False)
+            case_properties |= {prop.name for prop in data_dict_props}
 
         parent_types, contributed_properties = self.get_parent_types_and_contributed_properties(
             case_type, include_shared_properties=include_shared_properties
@@ -395,6 +415,7 @@ def get_casedb_schema(form):
     builder = ParentCasePropertyBuilder(app, ['case_name'], per_type_defaults)
     related = builder.get_parent_type_map(case_types, allow_multiple_parents=True)
     map = builder.get_case_property_map(case_types, include_parent_properties=False)
+    descriptions_dict = get_case_property_description_dict(app.domain)
 
     if base_case_type:
         # Generate hierarchy of case types, represented as a list of lists of strings:
@@ -419,7 +440,9 @@ def get_casedb_schema(form):
     subsets = [{
         "id": generation_names[i],
         "name": "{} ({})".format(generation_names[i], " or ".join(ctypes)) if i > 0 else base_case_type,
-        "structure": {p: {} for type in [map[t] for t in ctypes] for p in type},
+        "structure": {
+            p: {"description": descriptions_dict.get(t, {}).get(p, '')}
+            for t in ctypes for p in map[t]},
         "related": {"parent": {
             "hashtag": "#case/" + generation_names[i + 1],
             "subset": generation_names[i + 1],

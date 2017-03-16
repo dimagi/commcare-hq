@@ -23,14 +23,23 @@ from six.moves import range
 class TestCreditLines(BaseInvoiceTestCase):
     min_subscription_length = 5
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestCreditLines, cls).setUpClass()
+        cls.product_rate = cls.subscription.plan_version.product_rate
+        cls.user_rate = cls.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
+
     def setUp(self):
         super(TestCreditLines, self).setUp()
-        self.product_rate = self.subscription.plan_version.product_rate
-        self.user_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
         num_active = random.randint(self.user_rate.monthly_limit + 1, self.user_rate.monthly_limit + 2)
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
         num_excess = num_active - self.user_rate.monthly_limit
         self.monthly_user_fee = num_excess * self.user_rate.per_excess_fee
+
+    def tearDown(self):
+        for user in self.domain.all_users():
+            user.delete()
+        super(TestCreditLines, self).tearDown()
 
     def test_product_line_item_credits(self):
         """
@@ -158,7 +167,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         )
 
         # other account credit that shouldn't count toward this invoice
-        other_account = generator.billing_account(self.dimagi_user, generator.arbitrary_web_user())
+        other_account = generator.billing_account(self.dimagi_user, generator.create_arbitrary_web_user_name())
 
         self._generate_subscription_and_account_invoice_credits(
             invoice_monthly_total, other_subscription, other_account
@@ -168,6 +177,7 @@ class TestCreditLines(BaseInvoiceTestCase):
 
         self._test_credit_use(subscription_credit)
         self._test_credit_use(account_credit)
+        other_domain.delete()
 
     def test_combined_credits(self):
         """
@@ -268,25 +278,23 @@ class TestCreditLines(BaseInvoiceTestCase):
 
 class TestCreditTransfers(BaseAccountingTest):
 
-    def setUp(self):
-        super(TestCreditTransfers, self).setUp()
-        self.product_credit_amt = Decimal('500.00')
-        self.feature_credit_amt = Decimal('200.00')
-        self.subscription_credit_amt = Decimal('600.00')
-        self.domain = generator.arbitrary_domain()
-        self.account = BillingAccount.get_or_create_account_by_domain(
-            self.domain, created_by="biyeun@dimagi.com",
+    @classmethod
+    def setUpClass(cls):
+        super(TestCreditTransfers, cls).setUpClass()
+        cls.product_credit_amt = Decimal('500.00')
+        cls.feature_credit_amt = Decimal('200.00')
+        cls.subscription_credit_amt = Decimal('600.00')
+        cls.domain = generator.arbitrary_domain()
+        cls.account = BillingAccount.get_or_create_account_by_domain(
+            cls.domain, created_by="biyeun@dimagi.com",
         )[0]
-        self.web_user = generator.arbitrary_web_user()
-        # TODO - refactor interface to generator.billing_account so web user object is not required
-        self.other_account = generator.billing_account(self.web_user, self.web_user)
+        cls.web_user_name = generator.create_arbitrary_web_user_name()
+        cls.other_account = generator.billing_account(cls.web_user_name, cls.web_user_name)
 
-    def tearDown(self):
-        CreditAdjustment.objects.all().delete()
-        CreditLine.objects.all().delete()
-        generator.delete_all_subscriptions()
-        self.web_user.delete()
-        super(TestCreditTransfers, self).tearDown()
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        super(TestCreditTransfers, cls).tearDownClass()
 
     def _ensure_transfer(self, original_credits):
         transferred_credits = []

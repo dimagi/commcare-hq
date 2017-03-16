@@ -121,9 +121,13 @@ BEGIN
 		'counsel_increase_food_bf, ' ||
 		'counsel_manage_breast_problems, ' ||
 		'counsel_skin_to_skin, ' ||
-		'counsel_immediate_breastfeeding FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'counsel_immediate_breastfeeding, ' ||
+		'weight_recorded_in_month, ' ||
+		'height_recorded_in_month FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
-		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
+    EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
+
+    -- There may be better indexes to put here. Should investigate what tableau queries
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -185,6 +189,7 @@ BEGIN
 		'postnatal FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
 		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
+        -- There may be better indexes to put here. Should investigate what tableau queries
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -219,6 +224,7 @@ BEGIN
 		'FROM ' || quote_ident(_daily_attendance_tablename) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
+        -- There may be better indexes to put here. Should investigate what tableau queries
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -235,6 +241,7 @@ DECLARE
 	_null_value text;
 	_blank_value text;
 	_no_text text;
+	_rollup_text text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_tablename := 'agg_child_health' || '_' || _start_date;
@@ -288,7 +295,8 @@ BEGIN
 		'sum(counsel_comp_feeding_vid), ' ||
 		'sum(fully_immunized_eligible), ' ||
 		'sum(fully_immunized_on_time), ' ||
-		'sum(fully_immunized_late) ' ||
+		'sum(fully_immunized_late), ' ||
+		'sum(has_aadhar_id) ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
@@ -300,23 +308,14 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(disabled)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(minority)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(resident)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx9') || ' ON ' || quote_ident(_tablename) || '(awc_id)'; -- for second query
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx10') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)'; -- for third query
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx11') || ' ON ' || quote_ident(_tablename) || '(block_id)'; -- for fourth query
 
+    -- may want a double index on month and caste for aggregate location query
 
 	--Roll up by location
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
-		'state_id, ' ||
-		'district_id, ' ||
-		'block_id, ' ||
-		'supervisor_id, ' ||
-		quote_literal(_all_text) || ', ' ||
-		'month, ' ||
-		'gender, ' ||
-		'age_tranche, ' ||
-		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
-		'sum(valid_in_month), ' ||
+	_rollup_text = 'sum(valid_in_month), ' ||
 		'sum(nutrition_status_weighed), ' ||
 		'sum(nutrition_status_unweighed), ' ||
 		'sum(nutrition_status_normal), ' ||
@@ -346,7 +345,23 @@ BEGIN
 		'sum(counsel_play_cf_video), ' ||
 		'sum(fully_immunized_eligible), ' ||
 		'sum(fully_immunized_on_time), ' ||
-		'sum(fully_immunized_late) ' ||
+		'sum(fully_immunized_late), ' ||
+		'sum(has_aadhar_id) ';
+
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+		'state_id, ' ||
+		'district_id, ' ||
+		'block_id, ' ||
+		'supervisor_id, ' ||
+		quote_literal(_all_text) || ', ' ||
+		'month, ' ||
+		'gender, ' ||
+		'age_tranche, ' ||
+		'caste, ' ||
+		'disabled, ' ||
+		'minority, ' ||
+		'resident, ' ||
+		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, month, gender, age_tranche, caste, disabled, minority, resident)';
 
@@ -363,37 +378,7 @@ BEGIN
 		'disabled, ' ||
 		'minority, ' ||
 		'resident, ' ||
-		'sum(valid_in_month), ' ||
-		'sum(nutrition_status_weighed), ' ||
-		'sum(nutrition_status_unweighed), ' ||
-		'sum(nutrition_status_normal), ' ||
-		'sum(nutrition_status_moderately_underweight), ' ||
-		'sum(nutrition_status_severely_underweight), ' ||
-		'sum(wer_eligible), ' ||
-		'sum(thr_eligible), ' ||
-		'sum(rations_21_plus_distributed), ' ||
-		'sum(pse_eligible), ' ||
-		'sum(pse_attended_16_days), ' ||
-		'sum(born_in_month), ' ||
-		'sum(low_birth_weight_in_month), ' ||
-		'sum(bf_at_birth), ' ||
-		'sum(ebf_eligible), ' ||
-		'sum(ebf_in_month), ' ||
-		'sum(cf_eligible), ' ||
-		'sum(cf_in_month), ' ||
-		'sum(cf_diet_diversity), ' ||
-		'sum(cf_diet_quantity), ' ||
-		'sum(cf_demo), ' ||
-		'sum(cf_handwashing), ' ||
-		'sum(counsel_increase_food_bf), ' ||
-		'sum(counsel_manage_breast_problems), ' ||
-		'sum(counsel_ebf), ' ||
-		'sum(counsel_adequate_bf), ' ||
-		'sum(counsel_pediatric_ifa), ' ||
-		'sum(counsel_play_cf_video), ' ||
-		'sum(fully_immunized_eligible), ' ||
-		'sum(fully_immunized_on_time), ' ||
-		'sum(fully_immunized_late) ' ||
+		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, month, gender, age_tranche, caste, disabled, minority, resident)';
@@ -411,37 +396,7 @@ BEGIN
 		'disabled, ' ||
 		'minority, ' ||
 		'resident, ' ||
-		'sum(valid_in_month), ' ||
-		'sum(nutrition_status_weighed), ' ||
-		'sum(nutrition_status_unweighed), ' ||
-		'sum(nutrition_status_normal), ' ||
-		'sum(nutrition_status_moderately_underweight), ' ||
-		'sum(nutrition_status_severely_underweight), ' ||
-		'sum(wer_eligible), ' ||
-		'sum(thr_eligible), ' ||
-		'sum(rations_21_plus_distributed), ' ||
-		'sum(pse_eligible), ' ||
-		'sum(pse_attended_16_days), ' ||
-		'sum(born_in_month), ' ||
-		'sum(low_birth_weight_in_month), ' ||
-		'sum(bf_at_birth), ' ||
-		'sum(ebf_eligible), ' ||
-		'sum(ebf_in_month), ' ||
-		'sum(cf_eligible), ' ||
-		'sum(cf_in_month), ' ||
-		'sum(cf_diet_diversity), ' ||
-		'sum(cf_diet_quantity), ' ||
-		'sum(cf_demo), ' ||
-		'sum(cf_handwashing), ' ||
-		'sum(counsel_increase_food_bf), ' ||
-		'sum(counsel_manage_breast_problems), ' ||
-		'sum(counsel_ebf), ' ||
-		'sum(counsel_adequate_bf), ' ||
-		'sum(counsel_pediatric_ifa), ' ||
-		'sum(counsel_play_cf_video), ' ||
-		'sum(fully_immunized_eligible), ' ||
-		'sum(fully_immunized_on_time), ' ||
-		'sum(fully_immunized_late) ' ||
+		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, month, gender, age_tranche, caste, disabled, minority, resident)';
@@ -459,37 +414,7 @@ BEGIN
 		'disabled, ' ||
 		'minority, ' ||
 		'resident, ' ||
-		'sum(valid_in_month), ' ||
-		'sum(nutrition_status_weighed), ' ||
-		'sum(nutrition_status_unweighed), ' ||
-		'sum(nutrition_status_normal), ' ||
-		'sum(nutrition_status_moderately_underweight), ' ||
-		'sum(nutrition_status_severely_underweight), ' ||
-		'sum(wer_eligible), ' ||
-		'sum(thr_eligible), ' ||
-		'sum(rations_21_plus_distributed), ' ||
-		'sum(pse_eligible), ' ||
-		'sum(pse_attended_16_days), ' ||
-		'sum(born_in_month), ' ||
-		'sum(low_birth_weight_in_month), ' ||
-		'sum(bf_at_birth), ' ||
-		'sum(ebf_eligible), ' ||
-		'sum(ebf_in_month), ' ||
-		'sum(cf_eligible), ' ||
-		'sum(cf_in_month), ' ||
-		'sum(cf_diet_diversity), ' ||
-		'sum(cf_diet_quantity), ' ||
-		'sum(cf_demo), ' ||
-		'sum(cf_handwashing), ' ||
-		'sum(counsel_increase_food_bf), ' ||
-		'sum(counsel_manage_breast_problems), ' ||
-		'sum(counsel_ebf), ' ||
-		'sum(counsel_adequate_bf), ' ||
-		'sum(counsel_pediatric_ifa), ' ||
-		'sum(counsel_play_cf_video), ' ||
-		'sum(fully_immunized_eligible), ' ||
-		'sum(fully_immunized_on_time), ' ||
-		'sum(fully_immunized_late) ' ||
+		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, month, gender, age_tranche, caste, disabled, minority, resident)';
@@ -508,6 +433,7 @@ DECLARE
 	_null_value text;
 	_blank_value text;
 	_no_text text;
+	_rollup_text text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_tablename := 'agg_ccs_record' || '_' || _start_date;
@@ -563,7 +489,8 @@ BEGIN
 		'sum(counsel_immediate_bf), ' ||
 		'sum(counsel_fp_vid), ' ||
 		'sum(counsel_immediate_conception), ' ||
-		'sum(counsel_accessible_postpartum_fp) ' ||
+		'sum(counsel_accessible_postpartum_fp), ' ||
+		'sum(has_aadhar_id) ' ||
 		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
@@ -575,22 +502,14 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(disabled)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(minority)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(resident)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx9') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx10') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx11') || ' ON ' || quote_ident(_tablename) || '(block_id)';
+
+    -- may want a double index on month and caste for aggregate  location query
 
 	--Roll up by location
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
-		'state_id, ' ||
-		'district_id, ' ||
-		'block_id, ' ||
-		'supervisor_id, ' ||
-		quote_literal(_all_text) || ', ' ||
-		'month, ' ||
-		'ccs_status, ' ||
-		'trimester, ' ||
-		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
-		'sum(valid_in_month), ' ||
+	_rollup_text = 'sum(valid_in_month), ' ||
 		'sum(lactating), ' ||
 		'sum(pregnant), ' ||
 		'sum(thr_eligible), ' ||
@@ -622,7 +541,23 @@ BEGIN
 		'sum(counsel_immediate_bf), ' ||
 		'sum(counsel_fp_vid), ' ||
 		'sum(counsel_immediate_conception), ' ||
-		'sum(counsel_accessible_postpartum_fp) ' ||
+		'sum(counsel_accessible_postpartum_fp), ' ||
+		'sum(has_aadhar_id) ';
+
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+		'state_id, ' ||
+		'district_id, ' ||
+		'block_id, ' ||
+		'supervisor_id, ' ||
+		quote_literal(_all_text) || ', ' ||
+		'month, ' ||
+		'ccs_status, ' ||
+		'trimester, ' ||
+		'caste, ' ||
+		'disabled, ' ||
+		'minority, ' ||
+		'resident, ' ||
+		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
@@ -639,39 +574,7 @@ BEGIN
 		'disabled, ' ||
 		'minority, ' ||
 		'resident, ' ||
-		'sum(valid_in_month), ' ||
-		'sum(lactating), ' ||
-		'sum(pregnant), ' ||
-		'sum(thr_eligible), ' ||
-		'sum(rations_21_plus_distributed), ' ||
-		'sum(tetanus_complete), ' ||
-		'sum(delivered_in_month), ' ||
-		'sum(anc1_received_at_delivery), ' ||
-		'sum(anc2_received_at_delivery), ' ||
-		'sum(anc3_received_at_delivery), ' ||
-		'sum(anc4_received_at_delivery), ' ||
-		'avg(registration_trimester_at_delivery), ' ||
-		'sum(using_ifa), ' ||
-		'sum(ifa_consumed_last_seven_days), ' ||
-		'sum(anemic_normal), ' ||
-		'sum(anemic_moderate), ' ||
-		'sum(anemic_severe), ' ||
-		'sum(anemic_unknown), ' ||
-		'sum(extra_meal), ' ||
-		'sum(resting_during_pregnancy), ' ||
-		'sum(bp1_complete), ' ||
-		'sum(bp2_complete), ' ||
-		'sum(bp3_complete), ' ||
-		'sum(pnc_complete), ' ||
-		'sum(trimester_2), ' ||
-		'sum(trimester_3), ' ||
-		'sum(postnatal), ' ||
-		'sum(counsel_bp_vid), ' ||
-		'sum(counsel_preparation), ' ||
-		'sum(counsel_immediate_bf), ' ||
-		'sum(counsel_fp_vid), ' ||
-		'sum(counsel_immediate_conception), ' ||
-		'sum(counsel_accessible_postpartum_fp) ' ||
+		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
@@ -689,39 +592,7 @@ BEGIN
 		'disabled, ' ||
 		'minority, ' ||
 		'resident, ' ||
-		'sum(valid_in_month), ' ||
-		'sum(lactating), ' ||
-		'sum(pregnant), ' ||
-		'sum(thr_eligible), ' ||
-		'sum(rations_21_plus_distributed), ' ||
-		'sum(tetanus_complete), ' ||
-		'sum(delivered_in_month), ' ||
-		'sum(anc1_received_at_delivery), ' ||
-		'sum(anc2_received_at_delivery), ' ||
-		'sum(anc3_received_at_delivery), ' ||
-		'sum(anc4_received_at_delivery), ' ||
-		'avg(registration_trimester_at_delivery), ' ||
-		'sum(using_ifa), ' ||
-		'sum(ifa_consumed_last_seven_days), ' ||
-		'sum(anemic_normal), ' ||
-		'sum(anemic_moderate), ' ||
-		'sum(anemic_severe), ' ||
-		'sum(anemic_unknown), ' ||
-		'sum(extra_meal), ' ||
-		'sum(resting_during_pregnancy), ' ||
-		'sum(bp1_complete), ' ||
-		'sum(bp2_complete), ' ||
-		'sum(bp3_complete), ' ||
-		'sum(pnc_complete), ' ||
-		'sum(trimester_2), ' ||
-		'sum(trimester_3), ' ||
-		'sum(postnatal), ' ||
-		'sum(counsel_bp_vid), ' ||
-		'sum(counsel_preparation), ' ||
-		'sum(counsel_immediate_bf), ' ||
-		'sum(counsel_fp_vid), ' ||
-		'sum(counsel_immediate_conception), ' ||
-		'sum(counsel_accessible_postpartum_fp) ' ||
+		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
@@ -739,39 +610,7 @@ BEGIN
 		'disabled, ' ||
 		'minority, ' ||
 		'resident, ' ||
-		'sum(valid_in_month), ' ||
-		'sum(lactating), ' ||
-		'sum(pregnant), ' ||
-		'sum(thr_eligible), ' ||
-		'sum(rations_21_plus_distributed), ' ||
-		'sum(tetanus_complete), ' ||
-		'sum(delivered_in_month), ' ||
-		'sum(anc1_received_at_delivery), ' ||
-		'sum(anc2_received_at_delivery), ' ||
-		'sum(anc3_received_at_delivery), ' ||
-		'sum(anc4_received_at_delivery), ' ||
-		'avg(registration_trimester_at_delivery), ' ||
-		'sum(using_ifa), ' ||
-		'sum(ifa_consumed_last_seven_days), ' ||
-		'sum(anemic_normal), ' ||
-		'sum(anemic_moderate), ' ||
-		'sum(anemic_severe), ' ||
-		'sum(anemic_unknown), ' ||
-		'sum(extra_meal), ' ||
-		'sum(resting_during_pregnancy), ' ||
-		'sum(bp1_complete), ' ||
-		'sum(bp2_complete), ' ||
-		'sum(bp3_complete), ' ||
-		'sum(pnc_complete), ' ||
-		'sum(trimester_2), ' ||
-		'sum(trimester_3), ' ||
-		'sum(postnatal), ' ||
-		'sum(counsel_bp_vid), ' ||
-		'sum(counsel_preparation), ' ||
-		'sum(counsel_immediate_bf), ' ||
-		'sum(counsel_fp_vid), ' ||
-		'sum(counsel_immediate_conception), ' ||
-		'sum(counsel_accessible_postpartum_fp) ' ||
+		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
@@ -851,6 +690,7 @@ $BODY$
 DECLARE
 	_start_date date;
 	_end_date date;
+	_previous_month_date date;
 	_tablename text;
 	_child_health_tablename text;
 	_ccs_record_tablename text;
@@ -863,11 +703,17 @@ DECLARE
 	_infra_tablename text;
 	_all_text text;
 	_null_value text;
+	_rollup_text text;
+	_yes_text text;
+	_no_text text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 day')::DATE;
+	_previous_month_date = (date_trunc('MONTH', _start_date) + INTERVAL '- 1 MONTH')::DATE;
 	_all_text = 'All';
 	_null_value = NULL;
+	_yes_text = 'yes';
+	_no_text = 'no';
 	_tablename := 'agg_awc' || '_' || _start_date;
 	_child_health_tablename := 'agg_child_health' || '_' || _start_date;
 	_ccs_record_tablename := 'agg_ccs_record' || '_' || _start_date;
@@ -883,7 +729,7 @@ BEGIN
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
 		' (state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, thr_score, thr_eligible_ccs, ' ||
-		'thr_eligible_child, thr_rations_21_plus_distributed_ccs, thr_rations_21_plus_distributed_child, wer_score, pse_score) ' ||
+		'thr_eligible_child, thr_rations_21_plus_distributed_ccs, thr_rations_21_plus_distributed_child, wer_score, pse_score, awc_not_open_no_data, is_launched) ' ||
 		'(SELECT ' ||
 			'state_id, ' ||
 			'district_id, ' ||
@@ -898,11 +744,19 @@ BEGIN
 			'0, ' ||
 			'0, ' ||
 			'0, ' ||
-			'0 ' ||
+			'0, ' ||
+			'25, ' ||
+			quote_literal(_no_text) || ' ' ||
 		'FROM ' || quote_ident(_awc_location_tablename) ||')';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(month)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx3') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx4') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx5') || ' ON ' || quote_ident(_tablename) || '(block_id)';
+
+    -- maybe have a double index on month and awc_id ? for next query
+    -- maybe add a multi column index on month, is_launched and awc_id for query line ~930
 
 	-- Aggregate daily attendance table.  Not using monthly table as it doesn't have all indicators
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
@@ -1021,6 +875,7 @@ BEGIN
 		'usage_num_gmp = ut.usage_num_gmp, ' ||
 		'usage_num_thr = ut.usage_num_thr, ' ||
 		'usage_num_hh_reg = ut.usage_num_hh_reg, ' ||
+		'is_launched = ut.is_launched, ' ||
 		'usage_num_add_person = ut.usage_num_add_person, ' ||
 		'usage_num_add_pregnancy = ut.usage_num_add_pregnancy, ' ||
 		'usage_num_home_visit = ut.usage_num_home_visit, ' ||
@@ -1049,6 +904,7 @@ BEGIN
 		'sum(gmp) AS usage_num_gmp, ' ||
 		'sum(thr) AS usage_num_thr, ' ||
 		'sum(add_household) AS usage_num_hh_reg, ' ||
+		'CASE WHEN sum(add_household) > 0 THEN ' || quote_literal(_yes_text) || ' ELSE ' || quote_literal(_no_text) || ' END as is_launched, '
 		'sum(add_person) AS usage_num_add_person, ' ||
 		'sum(add_pregnancy) AS usage_num_add_pregnancy, ' ||
 		'sum(home_visit) AS usage_num_home_visit, ' ||
@@ -1073,6 +929,14 @@ BEGIN
 		'FROM ' || quote_ident(_usage_tablename) || ' ' ||
 		'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
+
+	-- Update num launched AWCs based on previous month as well
+	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+	   'is_launched = ut.is_launched ' ||
+    'FROM (SELECT is_launched, awc_id ' ||
+       'FROM agg_awc ' ||
+	'WHERE month = ' || quote_literal(_previous_month_date) || ' AND is_launched = ' || quote_literal(_yes_text) || ' AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
+	'WHERE ut.awc_id = agg_awc.awc_id';
 
 	-- Aggregate data from VHND table
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
@@ -1167,9 +1031,105 @@ BEGIN
 		'FROM ' || quote_ident(_infra_tablename) || ' ' ||
 		'WHERE month <= ' || quote_literal(_end_date) || ' ORDER BY awc_id, submitted_on DESC) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
+    -- could possibly add multicol indexes to make order by faster?
 
 
 	-- Roll Up by Location
+	_rollup_text = 	'sum(num_awcs), ' ||
+		'sum(awc_days_open), ' ||
+		'sum(total_eligible_children), ' ||
+		'sum(total_attended_children), ' ||
+		'avg(pse_avg_attendance_percent), ' ||
+		'sum(pse_full), ' ||
+		'sum(pse_partial), ' ||
+		'sum(pse_non), ' ||
+		'avg(pse_score), ' ||
+		'sum(awc_days_provided_breakfast), ' ||
+		'avg(awc_days_provided_hotmeal), ' ||
+		'sum(awc_days_provided_thr), ' ||
+		'sum(awc_days_provided_pse), ' ||
+		'sum(awc_not_open_holiday), ' ||
+		'sum(awc_not_open_festival), ' ||
+		'sum(awc_not_open_no_help), ' ||
+		'sum(awc_not_open_department_work), ' ||
+		'sum(awc_not_open_other), ' ||
+		'sum(awc_num_open), ' ||
+		'sum(awc_not_open_no_data), ' ||
+		'sum(wer_weighed), ' ||
+		'sum(wer_eligible), ' ||
+		'avg(wer_score), ' ||
+		'sum(thr_eligible_child), ' ||
+		'sum(thr_rations_21_plus_distributed_child), ' ||
+		'sum(thr_eligible_ccs), ' ||
+		'sum(thr_rations_21_plus_distributed_ccs), ' ||
+		'avg(thr_score), ' ||
+		'avg(awc_score), ' ||
+		'sum(num_awc_rank_functional), ' ||
+		'sum(num_awc_rank_semi), ' ||
+		'sum(num_awc_rank_non), ' ||
+		'sum(cases_ccs_pregnant), ' ||
+		'sum(cases_ccs_lactating), ' ||
+		'sum(cases_child_health), ' ||
+		'sum(usage_num_pse), ' ||
+		'sum(usage_num_gmp), ' ||
+		'sum(usage_num_thr), ' ||
+		'sum(usage_num_home_visit), ' ||
+		'sum(usage_num_bp_tri1), ' ||
+		'sum(usage_num_bp_tri2), ' ||
+		'sum(usage_num_bp_tri3), ' ||
+		'sum(usage_num_pnc), ' ||
+		'sum(usage_num_ebf), ' ||
+		'sum(usage_num_cf), ' ||
+		'sum(usage_num_delivery), ' ||
+		'sum(usage_num_due_list_ccs), ' ||
+		'sum(usage_num_due_list_child_health), ' ||
+		'sum(usage_awc_num_active), ' ||
+		'avg(usage_time_pse), ' ||
+		'avg(usage_time_gmp), ' ||
+		'avg(usage_time_bp), ' ||
+		'avg(usage_time_pnc), ' ||
+		'avg(usage_time_ebf), ' ||
+		'avg(usage_time_cf), ' ||
+		'avg(usage_time_of_day_pse), ' ||
+		'avg(usage_time_of_day_home_visit), ' ||
+		'sum(vhnd_immunization), ' ||
+		'sum(vhnd_anc), ' ||
+		'sum(vhnd_gmp), ' ||
+		'sum(vhnd_num_pregnancy), ' ||
+		'sum(vhnd_num_lactating), ' ||
+		'sum(vhnd_num_mothers_6_12), ' ||
+		'sum(vhnd_num_mothers_12), ' ||
+		'sum(vhnd_num_fathers), ' ||
+		'sum(ls_supervision_visit), ' ||
+		'sum(ls_num_supervised), ' ||
+		'avg(ls_awc_location_long), ' ||
+		'avg(ls_awc_location_lat), ' ||
+		'sum(ls_awc_present), ' ||
+		'sum(ls_awc_open), ' ||
+		'sum(ls_awc_not_open_aww_not_available), ' ||
+		'sum(ls_awc_not_open_closed_early), ' ||
+		'sum(ls_awc_not_open_holiday), ' ||
+		'sum(ls_awc_not_open_unknown), ' ||
+		'sum(ls_awc_not_open_other), ' ||
+		quote_nullable(_null_value) || ', ' ||
+		quote_nullable(_null_value) || ', ' ||
+		'sum(infra_type_of_building_pucca), ' ||
+		'sum(infra_type_of_building_semi_pucca), ' ||
+		'sum(infra_type_of_building_kuccha), ' ||
+		'sum(infra_type_of_building_partial_covered_space), ' ||
+		'sum(infra_clean_water), ' ||
+		'sum(infra_functional_toilet), ' ||
+		'sum(infra_baby_weighing_scale), ' ||
+		'sum(infra_flat_weighing_scale), ' ||
+		'sum(infra_adult_weighing_scale), ' ||
+		'sum(infra_cooking_utensils), ' ||
+		'sum(infra_medicine_kits), ' ||
+		'sum(infra_adequate_space_pse), ' ||
+		'sum(usage_num_hh_reg), ' ||
+		'sum(usage_num_add_person), ' ||
+		'sum(usage_num_add_pregnancy), ' ||
+		'is_launched ';
+
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
@@ -1177,100 +1137,9 @@ BEGIN
 		'supervisor_id, ' ||
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
-		'sum(num_awcs), ' ||
-		'sum(awc_days_open), ' ||
-		'sum(total_eligible_children), ' ||
-		'sum(total_attended_children), ' ||
-		'avg(pse_avg_attendance_percent), ' ||
-		'sum(pse_full), ' ||
-		'sum(pse_partial), ' ||
-		'sum(pse_non), ' ||
-		'avg(pse_score), ' ||
-		'sum(awc_days_provided_breakfast), ' ||
-		'avg(awc_days_provided_hotmeal), ' ||
-		'sum(awc_days_provided_thr), ' ||
-		'sum(awc_days_provided_pse), ' ||
-		'sum(awc_not_open_holiday), ' ||
-		'sum(awc_not_open_festival), ' ||
-		'sum(awc_not_open_no_help), ' ||
-		'sum(awc_not_open_department_work), ' ||
-		'sum(awc_not_open_other), ' ||
-		'sum(awc_num_open), ' ||
-		'sum(COALESCE(awc_not_open_no_data, 25)), ' ||
-		'sum(wer_weighed), ' ||
-		'sum(wer_eligible), ' ||
-		'avg(wer_score), ' ||
-		'sum(thr_eligible_child), ' ||
-		'sum(thr_rations_21_plus_distributed_child), ' ||
-		'sum(thr_eligible_ccs), ' ||
-		'sum(thr_rations_21_plus_distributed_ccs), ' ||
-		'avg(thr_score), ' ||
-		'avg(awc_score), ' ||
-		'sum(num_awc_rank_functional), ' ||
-		'sum(num_awc_rank_semi), ' ||
-		'sum(num_awc_rank_non), ' ||
-		'sum(cases_ccs_pregnant), ' ||
-		'sum(cases_ccs_lactating), ' ||
-		'sum(cases_child_health), ' ||
-		'sum(usage_num_pse), ' ||
-		'sum(usage_num_gmp), ' ||
-		'sum(usage_num_thr), ' ||
-		'sum(usage_num_home_visit), ' ||
-		'sum(usage_num_bp_tri1), ' ||
-		'sum(usage_num_bp_tri2), ' ||
-		'sum(usage_num_bp_tri3), ' ||
-		'sum(usage_num_pnc), ' ||
-		'sum(usage_num_ebf), ' ||
-		'sum(usage_num_cf), ' ||
-		'sum(usage_num_delivery), ' ||
-		'sum(usage_num_due_list_ccs), ' ||
-		'sum(usage_num_due_list_child_health), ' ||
-		'sum(usage_awc_num_active), ' ||
-		'avg(usage_time_pse), ' ||
-		'avg(usage_time_gmp), ' ||
-		'avg(usage_time_bp), ' ||
-		'avg(usage_time_pnc), ' ||
-		'avg(usage_time_ebf), ' ||
-		'avg(usage_time_cf), ' ||
-		'avg(usage_time_of_day_pse), ' ||
-		'avg(usage_time_of_day_home_visit), ' ||
-		'sum(vhnd_immunization), ' ||
-		'sum(vhnd_anc), ' ||
-		'sum(vhnd_gmp), ' ||
-		'sum(vhnd_num_pregnancy), ' ||
-		'sum(vhnd_num_lactating), ' ||
-		'sum(vhnd_num_mothers_6_12), ' ||
-		'sum(vhnd_num_mothers_12), ' ||
-		'sum(vhnd_num_fathers), ' ||
-		'sum(ls_supervision_visit), ' ||
-		'sum(ls_num_supervised), ' ||
-		'avg(ls_awc_location_long), ' ||
-		'avg(ls_awc_location_lat), ' ||
-		'sum(ls_awc_present), ' ||
-		'sum(ls_awc_open), ' ||
-		'sum(ls_awc_not_open_aww_not_available), ' ||
-		'sum(ls_awc_not_open_closed_early), ' ||
-		'sum(ls_awc_not_open_holiday), ' ||
-		'sum(ls_awc_not_open_unknown), ' ||
-		'sum(ls_awc_not_open_other), ' ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'sum(infra_type_of_building_pucca), ' ||
-		'sum(infra_type_of_building_semi_pucca), ' ||
-		'sum(infra_type_of_building_kuccha), ' ||
-		'sum(infra_type_of_building_partial_covered_space), ' ||
-		'sum(infra_clean_water), ' ||
-		'sum(infra_functional_toilet), ' ||
-		'sum(infra_baby_weighing_scale), ' ||
-		'sum(infra_flat_weighing_scale), ' ||
-		'sum(infra_cooking_utensils), ' ||
-		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse), ' ||
-		'sum(usage_num_add_person), ' ||
-		'sum(usage_num_add_pregnancy), ' ||
-		'sum(usage_num_home_visit) ' ||
+		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, month)';
+		'GROUP BY state_id, district_id, block_id, supervisor_id, month, is_launched)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1279,101 +1148,10 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
-		'sum(num_awcs), ' ||
-		'sum(awc_days_open), ' ||
-		'sum(total_eligible_children), ' ||
-		'sum(total_attended_children), ' ||
-		'avg(pse_avg_attendance_percent), ' ||
-		'sum(pse_full), ' ||
-		'sum(pse_partial), ' ||
-		'sum(pse_non), ' ||
-		'avg(pse_score), ' ||
-		'sum(awc_days_provided_breakfast), ' ||
-		'avg(awc_days_provided_hotmeal), ' ||
-		'sum(awc_days_provided_thr), ' ||
-		'sum(awc_days_provided_pse), ' ||
-		'sum(awc_not_open_holiday), ' ||
-		'sum(awc_not_open_festival), ' ||
-		'sum(awc_not_open_no_help), ' ||
-		'sum(awc_not_open_department_work), ' ||
-		'sum(awc_not_open_other), ' ||
-		'sum(awc_num_open), ' ||
-		'sum(awc_not_open_no_data), ' ||
-		'sum(wer_weighed), ' ||
-		'sum(wer_eligible), ' ||
-		'avg(wer_score), ' ||
-		'sum(thr_eligible_child), ' ||
-		'sum(thr_rations_21_plus_distributed_child), ' ||
-		'sum(thr_eligible_ccs), ' ||
-		'sum(thr_rations_21_plus_distributed_ccs), ' ||
-		'avg(thr_score), ' ||
-		'avg(awc_score), ' ||
-		'sum(num_awc_rank_functional), ' ||
-		'sum(num_awc_rank_semi), ' ||
-		'sum(num_awc_rank_non), ' ||
-		'sum(cases_ccs_pregnant), ' ||
-		'sum(cases_ccs_lactating), ' ||
-		'sum(cases_child_health), ' ||
-		'sum(usage_num_pse), ' ||
-		'sum(usage_num_gmp), ' ||
-		'sum(usage_num_thr), ' ||
-		'sum(usage_num_home_visit), ' ||
-		'sum(usage_num_bp_tri1), ' ||
-		'sum(usage_num_bp_tri2), ' ||
-		'sum(usage_num_bp_tri3), ' ||
-		'sum(usage_num_pnc), ' ||
-		'sum(usage_num_ebf), ' ||
-		'sum(usage_num_cf), ' ||
-		'sum(usage_num_delivery), ' ||
-		'sum(usage_num_due_list_ccs), ' ||
-		'sum(usage_num_due_list_child_health), ' ||
-		'sum(usage_awc_num_active), ' ||
-		'avg(usage_time_pse), ' ||
-		'avg(usage_time_gmp), ' ||
-		'avg(usage_time_bp), ' ||
-		'avg(usage_time_pnc), ' ||
-		'avg(usage_time_ebf), ' ||
-		'avg(usage_time_cf), ' ||
-		'avg(usage_time_of_day_pse), ' ||
-		'avg(usage_time_of_day_home_visit), ' ||
-		'sum(vhnd_immunization), ' ||
-		'sum(vhnd_anc), ' ||
-		'sum(vhnd_gmp), ' ||
-		'sum(vhnd_num_pregnancy), ' ||
-		'sum(vhnd_num_lactating), ' ||
-		'sum(vhnd_num_mothers_6_12), ' ||
-		'sum(vhnd_num_mothers_12), ' ||
-		'sum(vhnd_num_fathers), ' ||
-		'sum(ls_supervision_visit), ' ||
-		'sum(ls_num_supervised), ' ||
-		'avg(ls_awc_location_long), ' ||
-		'avg(ls_awc_location_lat), ' ||
-		'sum(ls_awc_present), ' ||
-		'sum(ls_awc_open), ' ||
-		'sum(ls_awc_not_open_aww_not_available), ' ||
-		'sum(ls_awc_not_open_closed_early), ' ||
-		'sum(ls_awc_not_open_holiday), ' ||
-		'sum(ls_awc_not_open_unknown), ' ||
-		'sum(ls_awc_not_open_other), ' ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'sum(infra_type_of_building_pucca), ' ||
-		'sum(infra_type_of_building_semi_pucca), ' ||
-		'sum(infra_type_of_building_kuccha), ' ||
-		'sum(infra_type_of_building_partial_covered_space), ' ||
-		'sum(infra_clean_water), ' ||
-		'sum(infra_functional_toilet), ' ||
-		'sum(infra_baby_weighing_scale), ' ||
-		'sum(infra_flat_weighing_scale), ' ||
-		'sum(infra_cooking_utensils), ' ||
-		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse), ' ||
-		'sum(usage_num_add_person), ' ||
-		'sum(usage_num_add_pregnancy), ' ||
-		'sum(usage_num_home_visit) ' ||
+		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, month)';
+		'GROUP BY state_id, district_id, block_id, month, is_launched)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1382,101 +1160,10 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
-		'sum(num_awcs), ' ||
-		'sum(awc_days_open), ' ||
-		'sum(total_eligible_children), ' ||
-		'sum(total_attended_children), ' ||
-		'avg(pse_avg_attendance_percent), ' ||
-		'sum(pse_full), ' ||
-		'sum(pse_partial), ' ||
-		'sum(pse_non), ' ||
-		'avg(pse_score), ' ||
-		'sum(awc_days_provided_breakfast), ' ||
-		'avg(awc_days_provided_hotmeal), ' ||
-		'sum(awc_days_provided_thr), ' ||
-		'sum(awc_days_provided_pse), ' ||
-		'sum(awc_not_open_holiday), ' ||
-		'sum(awc_not_open_festival), ' ||
-		'sum(awc_not_open_no_help), ' ||
-		'sum(awc_not_open_department_work), ' ||
-		'sum(awc_not_open_other), ' ||
-		'sum(awc_num_open), ' ||
-		'sum(awc_not_open_no_data), ' ||
-		'sum(wer_weighed), ' ||
-		'sum(wer_eligible), ' ||
-		'avg(wer_score), ' ||
-		'sum(thr_eligible_child), ' ||
-		'sum(thr_rations_21_plus_distributed_child), ' ||
-		'sum(thr_eligible_ccs), ' ||
-		'sum(thr_rations_21_plus_distributed_ccs), ' ||
-		'avg(thr_score), ' ||
-		'avg(awc_score), ' ||
-		'sum(num_awc_rank_functional), ' ||
-		'sum(num_awc_rank_semi), ' ||
-		'sum(num_awc_rank_non), ' ||
-		'sum(cases_ccs_pregnant), ' ||
-		'sum(cases_ccs_lactating), ' ||
-		'sum(cases_child_health), ' ||
-		'sum(usage_num_pse), ' ||
-		'sum(usage_num_gmp), ' ||
-		'sum(usage_num_thr), ' ||
-		'sum(usage_num_home_visit), ' ||
-		'sum(usage_num_bp_tri1), ' ||
-		'sum(usage_num_bp_tri2), ' ||
-		'sum(usage_num_bp_tri3), ' ||
-		'sum(usage_num_pnc), ' ||
-		'sum(usage_num_ebf), ' ||
-		'sum(usage_num_cf), ' ||
-		'sum(usage_num_delivery), ' ||
-		'sum(usage_num_due_list_ccs), ' ||
-		'sum(usage_num_due_list_child_health), ' ||
-		'sum(usage_awc_num_active), ' ||
-		'avg(usage_time_pse), ' ||
-		'avg(usage_time_gmp), ' ||
-		'avg(usage_time_bp), ' ||
-		'avg(usage_time_pnc), ' ||
-		'avg(usage_time_ebf), ' ||
-		'avg(usage_time_cf), ' ||
-		'avg(usage_time_of_day_pse), ' ||
-		'avg(usage_time_of_day_home_visit), ' ||
-		'sum(vhnd_immunization), ' ||
-		'sum(vhnd_anc), ' ||
-		'sum(vhnd_gmp), ' ||
-		'sum(vhnd_num_pregnancy), ' ||
-		'sum(vhnd_num_lactating), ' ||
-		'sum(vhnd_num_mothers_6_12), ' ||
-		'sum(vhnd_num_mothers_12), ' ||
-		'sum(vhnd_num_fathers), ' ||
-		'sum(ls_supervision_visit), ' ||
-		'sum(ls_num_supervised), ' ||
-		'avg(ls_awc_location_long), ' ||
-		'avg(ls_awc_location_lat), ' ||
-		'sum(ls_awc_present), ' ||
-		'sum(ls_awc_open), ' ||
-		'sum(ls_awc_not_open_aww_not_available), ' ||
-		'sum(ls_awc_not_open_closed_early), ' ||
-		'sum(ls_awc_not_open_holiday), ' ||
-		'sum(ls_awc_not_open_unknown), ' ||
-		'sum(ls_awc_not_open_other), ' ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'sum(infra_type_of_building_pucca), ' ||
-		'sum(infra_type_of_building_semi_pucca), ' ||
-		'sum(infra_type_of_building_kuccha), ' ||
-		'sum(infra_type_of_building_partial_covered_space), ' ||
-		'sum(infra_clean_water), ' ||
-		'sum(infra_functional_toilet), ' ||
-		'sum(infra_baby_weighing_scale), ' ||
-		'sum(infra_flat_weighing_scale), ' ||
-		'sum(infra_cooking_utensils), ' ||
-		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse), ' ||
-		'sum(usage_num_add_person), ' ||
-		'sum(usage_num_add_pregnancy), ' ||
-		'sum(usage_num_home_visit) ' ||
+		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, district_id, month)';
+		'GROUP BY state_id, district_id, month, is_launched)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1485,101 +1172,10 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
-		'sum(num_awcs), ' ||
-		'sum(awc_days_open), ' ||
-		'sum(total_eligible_children), ' ||
-		'sum(total_attended_children), ' ||
-		'avg(pse_avg_attendance_percent), ' ||
-		'sum(pse_full), ' ||
-		'sum(pse_partial), ' ||
-		'sum(pse_non), ' ||
-		'avg(pse_score), ' ||
-		'sum(awc_days_provided_breakfast), ' ||
-		'avg(awc_days_provided_hotmeal), ' ||
-		'sum(awc_days_provided_thr), ' ||
-		'sum(awc_days_provided_pse), ' ||
-		'sum(awc_not_open_holiday), ' ||
-		'sum(awc_not_open_festival), ' ||
-		'sum(awc_not_open_no_help), ' ||
-		'sum(awc_not_open_department_work), ' ||
-		'sum(awc_not_open_other), ' ||
-		'sum(awc_num_open), ' ||
-		'sum(awc_not_open_no_data), ' ||
-		'sum(wer_weighed), ' ||
-		'sum(wer_eligible), ' ||
-		'avg(wer_score), ' ||
-		'sum(thr_eligible_child), ' ||
-		'sum(thr_rations_21_plus_distributed_child), ' ||
-		'sum(thr_eligible_ccs), ' ||
-		'sum(thr_rations_21_plus_distributed_ccs), ' ||
-		'avg(thr_score), ' ||
-		'avg(awc_score), ' ||
-		'sum(num_awc_rank_functional), ' ||
-		'sum(num_awc_rank_semi), ' ||
-		'sum(num_awc_rank_non), ' ||
-		'sum(cases_ccs_pregnant), ' ||
-		'sum(cases_ccs_lactating), ' ||
-		'sum(cases_child_health), ' ||
-		'sum(usage_num_pse), ' ||
-		'sum(usage_num_gmp), ' ||
-		'sum(usage_num_thr), ' ||
-		'sum(usage_num_home_visit), ' ||
-		'sum(usage_num_bp_tri1), ' ||
-		'sum(usage_num_bp_tri2), ' ||
-		'sum(usage_num_bp_tri3), ' ||
-		'sum(usage_num_pnc), ' ||
-		'sum(usage_num_ebf), ' ||
-		'sum(usage_num_cf), ' ||
-		'sum(usage_num_delivery), ' ||
-		'sum(usage_num_due_list_ccs), ' ||
-		'sum(usage_num_due_list_child_health), ' ||
-		'sum(usage_awc_num_active), ' ||
-		'avg(usage_time_pse), ' ||
-		'avg(usage_time_gmp), ' ||
-		'avg(usage_time_bp), ' ||
-		'avg(usage_time_pnc), ' ||
-		'avg(usage_time_ebf), ' ||
-		'avg(usage_time_cf), ' ||
-		'avg(usage_time_of_day_pse), ' ||
-		'avg(usage_time_of_day_home_visit), ' ||
-		'sum(vhnd_immunization), ' ||
-		'sum(vhnd_anc), ' ||
-		'sum(vhnd_gmp), ' ||
-		'sum(vhnd_num_pregnancy), ' ||
-		'sum(vhnd_num_lactating), ' ||
-		'sum(vhnd_num_mothers_6_12), ' ||
-		'sum(vhnd_num_mothers_12), ' ||
-		'sum(vhnd_num_fathers), ' ||
-		'sum(ls_supervision_visit), ' ||
-		'sum(ls_num_supervised), ' ||
-		'avg(ls_awc_location_long), ' ||
-		'avg(ls_awc_location_lat), ' ||
-		'sum(ls_awc_present), ' ||
-		'sum(ls_awc_open), ' ||
-		'sum(ls_awc_not_open_aww_not_available), ' ||
-		'sum(ls_awc_not_open_closed_early), ' ||
-		'sum(ls_awc_not_open_holiday), ' ||
-		'sum(ls_awc_not_open_unknown), ' ||
-		'sum(ls_awc_not_open_other), ' ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'sum(infra_type_of_building_pucca), ' ||
-		'sum(infra_type_of_building_semi_pucca), ' ||
-		'sum(infra_type_of_building_kuccha), ' ||
-		'sum(infra_type_of_building_partial_covered_space), ' ||
-		'sum(infra_clean_water), ' ||
-		'sum(infra_functional_toilet), ' ||
-		'sum(infra_baby_weighing_scale), ' ||
-		'sum(infra_flat_weighing_scale), ' ||
-		'sum(infra_cooking_utensils), ' ||
-		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse), ' ||
-		'sum(usage_num_add_person), ' ||
-		'sum(usage_num_add_pregnancy), ' ||
-		'sum(usage_num_home_visit) ' ||
+		_rollup_text ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, month)';
+		'GROUP BY state_id, month, is_launched)';
 
 END;
 $BODY$

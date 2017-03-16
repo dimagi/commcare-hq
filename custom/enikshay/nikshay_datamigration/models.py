@@ -2,12 +2,14 @@ from datetime import date, datetime
 
 from django.db import models
 
+import dateutil.parser
+
 
 def _parse_datetime_or_null_to_date(datetime_str):
     if datetime_str == 'NULL':
         return ''
     else:
-        return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S.%f').date()
+        return dateutil.parser.parse(datetime_str).date()
 
 
 class PatientDetail(models.Model):
@@ -27,7 +29,7 @@ class PatientDetail(models.Model):
     page = models.IntegerField()
     poccupation = models.CharField(max_length=255)
     paadharno = models.BigIntegerField(null=True)
-    paddress = models.CharField(max_length=255)
+    paddress = models.CharField(max_length=255, null=True)
     pmob = models.CharField(max_length=255, null=True)  # validate numerical in factory
     plandline = models.CharField(max_length=255, null=True)
     ptbyr = models.CharField(max_length=255, null=True)  # dates, but not clean
@@ -55,7 +57,7 @@ class PatientDetail(models.Model):
     dotcenter = models.CharField(max_length=255, null=True)
     PHI = models.IntegerField()
     dotmoname = models.CharField(max_length=255, null=True)
-    dotmosdone = models.CharField(max_length=255)
+    dotmosdone = models.CharField(max_length=255, null=True)
     atbtreatment = models.CharField(
         max_length=255,
         choices=(
@@ -239,7 +241,7 @@ class PatientDetail(models.Model):
 
 
 class Outcome(models.Model):
-    PatientId = models.OneToOneField(PatientDetail, primary_key=True)
+    PatientId = models.OneToOneField(PatientDetail, primary_key=True, on_delete=models.CASCADE)
     Outcome = models.CharField(
         max_length=255,
         choices=(
@@ -285,8 +287,8 @@ class Outcome(models.Model):
     )
     InitiatedDate = models.CharField(max_length=255, null=True)  # dates, None, and NULL
     userName = models.CharField(max_length=255)
-    loginDate = models.DateTimeField()
-    OutcomeDate1 = models.CharField(max_length=255)  # datetimes and NULL
+    # loginDate = models.DateTimeField()
+    # OutcomeDate1 = models.CharField(max_length=255)  # datetimes and NULL
 
     @property
     def hiv_status(self):
@@ -331,7 +333,12 @@ class Outcome(models.Model):
             if '-' in self.OutcomeDate:
                 return datetime.strptime(self.OutcomeDate, '%d-%m-%Y').date()
             else:
-                return datetime.strptime(self.OutcomeDate, '%d/%m/%Y').date()
+                format = '%d/%m/%Y'
+                try:
+                    return datetime.strptime(self.OutcomeDate, format).date()
+                except ValueError:
+                    date_string = self.OutcomeDate[:-2] + '20' + self.OutcomeDate[-2:]
+                    return datetime.strptime(date_string, format).date()
 
 
 # class Household(models.Model):

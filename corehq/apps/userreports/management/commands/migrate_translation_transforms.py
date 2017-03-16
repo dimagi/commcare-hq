@@ -1,4 +1,5 @@
-from optparse import make_option
+from __future__ import print_function
+
 from django.core.management.base import BaseCommand
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
@@ -21,18 +22,18 @@ def reformat_translations(old_translations):
 class Command(BaseCommand):
     help = ("Migrate existing translation transforms to flag as mobile-only "
             "and update mapping format")
-    option_list = (
-        make_option(
+
+    def add_arguments(self, parser):
+        parser.add_argument(
             '--dry-run',
             action='store_true',
             dest='dry_run',
             default=False,
             help=("Don't actually perform the update, just list the reports "
                   "that would be affected"),
-        ),
-    )
+        )
 
-    def handle(self, dry_run=False, *args, **options):
+    def handle(self, dry_run=False, **options):
         self.dry_run = dry_run
         self.reports_using_transform = set()
         report_ids = get_doc_ids_by_class(ReportConfiguration)
@@ -42,10 +43,10 @@ class Command(BaseCommand):
             ids=with_progress_bar(report_ids),
             verbose=True,
         )
-        print "Found {} reports using the transform:".format(len(self.reports_using_transform))
-        print "\n".join(self.reports_using_transform)
-        print "Updated the following reports:"
-        print "\n".join(res.updated_ids)
+        print("Found {} reports using the transform:".format(len(self.reports_using_transform)))
+        print("\n".join(self.reports_using_transform))
+        print("Updated the following reports:")
+        print("\n".join(res.updated_ids))
 
     def migrate_report(self, report_config):
         rc = ReportConfiguration.wrap(report_config)

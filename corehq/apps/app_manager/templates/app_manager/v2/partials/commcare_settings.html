@@ -61,7 +61,8 @@
       </div>
     </div>
   </div>
-  {% if False and request|toggle_enabled:"CUSTOM_PROPERTIES" %}
+  {{ request|toggle_tag_info:"CUSTOM_PROPERTIES" }}
+  {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
     <fieldset>
       <legend>
         <a

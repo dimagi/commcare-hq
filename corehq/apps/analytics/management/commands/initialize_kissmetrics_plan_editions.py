@@ -6,6 +6,6 @@ from corehq.apps.domain.models import Domain
 class Command(BaseCommand):
     help = ("Send KISSmetrics data on subscriptions for all domains")
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         for domain in Domain.get_all():
             subscription_upgrade_or_downgrade.send_robust(None, domain=domain)

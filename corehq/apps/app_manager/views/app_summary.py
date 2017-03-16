@@ -128,11 +128,22 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
 def _get_name_map(app):
     name_map = {}
     for module in app.get_modules():
-        name_map[module.unique_id] = module.name
+        keywords = {'domain': app.domain, 'app_id': app.id, 'module_id': module.id}
+        module_url = reverse('view_module', kwargs=keywords)
+        name_map[module.unique_id] = {
+            'module_name': module.name,
+            'module_url': module_url
+        }
         for form in module.get_forms():
+            keywords = {'domain': app.domain, 'app_id': app.id, 'module_id': module.id}
+            module_url = reverse('view_module', kwargs=keywords)
+            keywords['form_id'] = form.id
+            form_url = reverse('view_form', kwargs=keywords)
             name_map[form.unique_id] = {
                 'form_name': form.name,
                 'module_name': module.name,
+                'module_url': module_url,
+                'form_url': form_url
             }
     return name_map
 
@@ -152,7 +163,7 @@ def _get_translated_form_name(app, form_id, language):
 
 
 def _get_translated_module_name(app, module_id, language):
-    return _translate_name(_get_name_map(app)[module_id], language)
+    return _translate_name(_get_name_map(app)[module_id]['module_name'], language)
 
 
 APP_SUMMARY_EXPORT_HEADER_NAMES = [
@@ -297,13 +308,13 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     def get(self, request, domain, app_id):
         language = request.GET.get('lang', 'en')
         modules = list(self.app.get_modules())
-        headers = [('All Forms', ('module_name', 'form_name', 'comment'))]
+        headers = [(_('All Forms'), ('module_name', 'form_name', 'comment'))]
         headers += [
             (self._get_form_sheet_name(module, form, language), tuple(FORM_SUMMARY_EXPORT_HEADER_NAMES))
             for module in modules for form in module.get_forms()
         ]
         data = list((
-            'All Forms',
+            _('All Forms'),
             self.get_all_forms_row(module, form, language)
         ) for module in modules for form in module.get_forms())
         data += list(
@@ -385,14 +396,14 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         case_metadata = self.app.get_case_metadata()
         language = request.GET.get('lang', 'en')
 
-        headers = [('All Case Properties', ('case_type', 'case_property'))]
+        headers = [(_('All Case Properties'), ('case_type', 'case_property', 'description'))]
         headers += list((
             case_type.name,
             tuple(CASE_SUMMARY_EXPORT_HEADER_NAMES)
         )for case_type in case_metadata.case_types)
 
         data = list((
-            'All Case Properties',
+            _('All Case Properties'),
             self.get_case_property_rows(case_type)
         ) for case_type in case_metadata.case_types)
         data += list((
@@ -413,7 +424,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         )
 
     def get_case_property_rows(self, case_type):
-        return tuple((case_type.name, prop.name) for prop in case_type.properties)
+        return tuple((case_type.name, prop.name, prop.description) for prop in case_type.properties)
 
     def get_case_questions_rows(self, case_type, language):
         rows = []

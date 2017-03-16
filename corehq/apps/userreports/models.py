@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from copy import copy, deepcopy
 import json
@@ -398,7 +399,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
                     'XFormInstance': _('Forms'),
                     'CommCareCase': _('Cases')
                 }.get(self.config.referenced_doc_type, "Layer"),
-                'columns': filter(None, [map_col(col) for col in self.columns])
+                'columns': [x for x in (map_col(col) for col in self.columns) if x]
             }
 
     @property

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 
 from celery.task import task
@@ -55,7 +56,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None):
             config.save()
 
         adapter.rebuild_table()
-        _iteratively_build_table(config)
+        iteratively_build_table(config)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
@@ -72,7 +73,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
             config.save()
 
         adapter.build_table()
-        _iteratively_build_table(config, in_place=True)
+        iteratively_build_table(config, in_place=True)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
@@ -89,10 +90,10 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
             _build_indicators(config, get_document_store(config.domain, config.referenced_doc_type), relevant_ids,
                               resume_helper)
             last_id = relevant_ids[-1]
-            _iteratively_build_table(config, last_id, resume_helper)
+            iteratively_build_table(config, last_id, resume_helper)
 
 
-def _iteratively_build_table(config, last_id=None, resume_helper=None, in_place=False):
+def iteratively_build_table(config, last_id=None, resume_helper=None, in_place=False):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
 

@@ -1,8 +1,8 @@
-from itertools import izip_longest
-from optparse import make_option
+from __future__ import print_function
+from itertools import izip_longest, groupby
 
 from django.conf import settings
-from django.core.management.base import CommandError, LabelCommand
+from django.core.management.base import BaseCommand, CommandError
 from sqlalchemy.exc import OperationalError
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
@@ -20,18 +20,18 @@ from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
 
 
-class Command(LabelCommand):
-    args = "<domain>"
-    option_list = LabelCommand.option_list + (
-        make_option('--MIGRATE', action='store_true', default=False),
-        make_option('--COMMIT', action='store_true', default=False),
-        make_option('--blow-away', action='store_true', default=False),
-        make_option('--stats-short', action='store_true', default=False),
-        make_option('--stats-long', action='store_true', default=False),
-        make_option('--show-diffs', action='store_true', default=False),
-        make_option('--no-input', action='store_true', default=False),
-        make_option('--debug', action='store_true', default=False),
-    )
+class Command(BaseCommand):
+
+    def add_arguments(self, parser):
+        parser.add_argument('domain')
+        parser.add_argument('--MIGRATE', action='store_true', default=False)
+        parser.add_argument('--COMMIT', action='store_true', default=False)
+        parser.add_argument('--blow-away', action='store_true', default=False)
+        parser.add_argument('--stats-short', action='store_true', default=False)
+        parser.add_argument('--stats-long', action='store_true', default=False)
+        parser.add_argument('--show-diffs', action='store_true', default=False)
+        parser.add_argument('--no-input', action='store_true', default=False)
+        parser.add_argument('--debug', action='store_true', default=False)
 
     @staticmethod
     def require_only_option(sole_option, options):
@@ -39,7 +39,7 @@ class Command(LabelCommand):
         assert all(not value for key, value in options.items()
                    if key in this_command_opts and key != sole_option)
 
-    def handle_label(self, domain, **options):
+    def handle(self, domain, **options):
         if should_use_sql_backend(domain):
             raise CommandError(u'It looks like {} has already been migrated.'.format(domain))
 
@@ -54,7 +54,7 @@ class Command(LabelCommand):
             do_couch_to_sql_migration(domain, with_progress=not self.no_input, debug=self.debug)
             has_diffs = self.print_stats(domain, short=True, diffs_only=True)
             if has_diffs:
-                print "\nUse '--stats-short', '--stats-long', '--show-diffs' to see more info.\n"
+                print("\nUse '--stats-short', '--stats-long', '--show-diffs' to see more info.\n")
         if options['blow_away']:
             self.require_only_option('blow_away', options)
             if not self.no_input:
@@ -81,8 +81,11 @@ class Command(LabelCommand):
 
     def show_diffs(self, domain):
         db = get_diff_db(domain)
-        for diff in db.get_diffs():
-            print '[{}({})] {}'.format(diff.kind, diff.doc_id, diff.json_diff)
+        diffs = sorted(db.get_diffs(), key=lambda d: d.kind)
+        for doc_type, diffs in groupby(diffs, key=lambda d: d.kind):
+            print('-' * 50, "Diffs for {}".format(doc_type), '-' * 50)
+            for diff in diffs:
+                print('[{}({})] {}'.format(doc_type, diff.doc_id, diff.json_diff))
 
     def print_stats(self, domain, short=True, diffs_only=False):
         db = get_diff_db(domain)
@@ -95,47 +98,50 @@ class Command(LabelCommand):
         for doc_type in doc_types():
             form_ids_in_couch = set(get_form_ids_by_type(domain, doc_type))
             form_ids_in_sql = set(FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type))
-            diff_count = diff_stats.pop(doc_type, 0)
+            diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
             has_diffs |= self._print_status(
-                doc_type, form_ids_in_couch, form_ids_in_sql, diff_count, short, diffs_only
+                doc_type, form_ids_in_couch, form_ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only
             )
 
         form_ids_in_couch = set(get_doc_ids_in_domain_by_type(
             domain, "XFormInstance-Deleted", XFormInstance.get_db())
         )
         form_ids_in_sql = set(FormAccessorSQL.get_deleted_form_ids_in_domain(domain))
-        diff_count = diff_stats.pop("XFormInstance-Deleted", 0)
+        diff_count, num_docs_with_diffs = diff_stats.pop("XFormInstance-Deleted", (0, 0))
         has_diffs |= self._print_status(
-            "XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql, diff_count, short, diffs_only
+            "XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql,
+            diff_count, num_docs_with_diffs, short, diffs_only
         )
 
         case_ids_in_couch = set(get_case_ids_in_domain(domain))
         case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(domain))
-        diff_count = diff_stats.pop("CommCareCase", 0)
+        diff_count, num_docs_with_diffs = diff_stats.pop("CommCareCase", (0, 0))
         has_diffs |= self._print_status(
-            'CommCareCase', case_ids_in_couch, case_ids_in_sql, diff_count, short, diffs_only
+            'CommCareCase', case_ids_in_couch, case_ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only
         )
 
         case_ids_in_couch = set(get_doc_ids_in_domain_by_type(
             domain, "CommCareCase-Deleted", XFormInstance.get_db())
         )
         case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain))
-        diff_count = diff_stats.pop("CommCareCase-Deleted", 0)
+        diff_count, num_docs_with_diffs = diff_stats.pop("CommCareCase-Deleted", (0, 0))
         has_diffs |= self._print_status(
-            'CommCareCase-Deleted', case_ids_in_couch, case_ids_in_sql, diff_count, short, diffs_only
+            'CommCareCase-Deleted', case_ids_in_couch, case_ids_in_sql,
+            diff_count, num_docs_with_diffs, short, diffs_only
         )
 
         if diff_stats:
-            for key, count in diff_stats.items():
+            for key, counts in diff_stats.items():
+                diff_count, num_docs_with_diffs = counts
                 has_diffs |= self._print_status(
-                    key, set(), set(), count, short, diffs_only
+                    key, set(), set(), diff_count, num_docs_with_diffs, short, diffs_only
                 )
 
         if diffs_only and not has_diffs:
-            print shell_green("No differences found between old and new docs!")
+            print(shell_green("No differences found between old and new docs!"))
         return has_diffs
 
-    def _print_status(self, name, ids_in_couch, ids_in_sql, diff_count, short, diffs_only):
+    def _print_status(self, name, ids_in_couch, ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only):
         n_couch = len(ids_in_couch)
         n_sql = len(ids_in_sql)
         has_diff = n_couch != n_sql or diff_count
@@ -150,18 +156,18 @@ class Command(LabelCommand):
         doc_count_row = row.format(n_couch, n_sql)
         header = ((82 - len(name)) / 2) * '_'
 
-        print '\n{} {} {}'.format(header, name, header)
-        print row.format('Couch', 'SQL')
-        print _highlight(doc_count_row)
+        print('\n{} {} {}'.format(header, name, header))
+        print(row.format('Couch', 'SQL'))
+        print(_highlight(doc_count_row))
         if diff_count:
-            print _highlight("{:^83}".format('{} diffs'.format(diff_count)))
+            print(_highlight("{:^83}".format('{} diffs ({} docs)'.format(diff_count, num_docs_with_diffs))))
 
         if not short:
             if ids_in_couch ^ ids_in_sql:
                 couch_only = list(ids_in_couch - ids_in_sql)
                 sql_only = list(ids_in_sql - ids_in_couch)
                 for couch, sql in izip_longest(couch_only, sql_only):
-                    print row.format(couch or '', sql or '')
+                    print(row.format(couch or '', sql or ''))
 
         return True
 

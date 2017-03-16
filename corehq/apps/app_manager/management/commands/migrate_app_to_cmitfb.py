@@ -32,7 +32,7 @@ class Command(BaseCommand):
         parser.add_argument('--force', action='store_true',
             help='Migrate even if app.vellum_case_management is already true.')
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         domains = []
         app_ids = []
         self.force = options["force"]

@@ -18,6 +18,7 @@ CASE_TYPE_ADHERENCE = "adherence"
 CASE_TYPE_OCCURRENCE = "occurrence"
 CASE_TYPE_EPISODE = "episode"
 CASE_TYPE_PERSON = "person"
+CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 
 
 def get_parent_of_case(domain, case_id, parent_case_type):
@@ -34,12 +35,11 @@ def get_parent_of_case(domain, case_id, parent_case_type):
 
     parent_case_ids = [
         indexed_case.referenced_id for indexed_case in child_case.indices
-        if indexed_case.referenced_type == parent_case_type
     ]
     parent_cases = case_accessor.get_cases(parent_case_ids)
     open_parent_cases = [
         parent_case for parent_case in parent_cases
-        if not parent_case.closed
+        if not parent_case.closed and parent_case.type == parent_case_type
     ]
 
     if not open_parent_cases:
@@ -108,6 +108,26 @@ def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
     else:
         raise ENikshayCaseNotFound(
             "Occurrence with id: {} exists but has no open episode cases".format(occurrence_case_id)
+        )
+
+
+def get_open_drtb_hiv_case_from_episode(domain, episode_case_id):
+    """
+    Gets the first open 'drtb-hiv-referral' case for the episode
+
+    Assumes the following case structure:
+    episode <--ext-- drtb-hiv-referral
+    """
+    case_accessor = CaseAccessors(domain)
+    open_drtb_cases = [
+        case for case in case_accessor.get_reverse_indexed_cases([episode_case_id])
+        if not case.closed and case.type == CASE_TYPE_DRTB_HIV_REFERRAL
+    ]
+    if open_drtb_cases:
+        return open_drtb_cases[0]
+    else:
+        raise ENikshayCaseNotFound(
+            "Occurrence with id: {} exists but has no open episode cases".format(episode_case_id)
         )
 
 

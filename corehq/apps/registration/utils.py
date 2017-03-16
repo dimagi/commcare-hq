@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, date, timedelta
 from django.template.loader import render_to_string
 from corehq.apps.accounting.models import (
-    SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
+    SoftwarePlanEdition, DefaultProductPlan, BillingAccount, BillingContactInfo,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
     SubscriptionType, PreOrPostPay,
     DEFAULT_ACCOUNT_FORMAT,
@@ -23,8 +23,6 @@ from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.analytics.tasks import track_created_new_project_space_on_hubspot
 from corehq.apps.analytics.utils import get_meta
-from corehq import toggles
-from toggle.shortcuts import set_toggle
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -103,6 +101,12 @@ def request_new_domain(request, form, is_new_user=True):
         ensure_explicit_community_subscription(new_domain.name, date.today())
 
     UserRole.init_domain_with_presets(new_domain.name)
+
+    # add user's email as contact email for billing account for the domain
+    account = BillingAccount.get_account_by_domain(new_domain.name)
+    billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account)
+    billing_contact.email_list = [current_user.email]
+    billing_contact.save()
 
     dom_req.domain = new_domain.name
 
@@ -196,7 +200,8 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
     try:
         send_html_email_async.delay(subject, recipient, message_html,
                                     text_content=message_plaintext,
-                                    email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True)
+                                    email_from=settings.DEFAULT_FROM_EMAIL,
+                                    ga_track=True)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 

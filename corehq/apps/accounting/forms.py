@@ -70,6 +70,7 @@ from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.accounting.utils import (
     get_money_str,
     has_subscription_already_ended,
+    log_accounting_info,
     make_anchor_tag,
 )
 from corehq.apps.domain.models import Domain
@@ -165,7 +166,7 @@ class BillingAccountBasicForm(forms.Form):
                 additional_fields.append(crispy.Div(
                     crispy.Field(
                         'active_accounts',
-                        css_class="input-xxlarge",
+                        css_class="input-xxlarge ko-async-select2",
                         placeholder="Select Active Account",
                     ),
                     data_bind="visible: showActiveAccounts"
@@ -174,7 +175,7 @@ class BillingAccountBasicForm(forms.Form):
             crispy.Fieldset(
                 'Basic Information',
                 'name',
-                crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
                 crispy.Div(
                     crispy.Div(
                         css_class='col-sm-3 col-md-2'
@@ -348,7 +349,7 @@ class BillingAccountContactForm(forms.ModelForm):
                 'postal_code',
                 crispy.Field(
                     'country',
-                    css_class="input-xlarge",
+                    css_class="input-xlarge ko-country-select2",
                     data_countryname=COUNTRIES.get(
                         args[0].get('country') if len(args) > 0
                         else account.billingcontactinfo.country,
@@ -560,7 +561,7 @@ class SubscriptionForm(forms.Form):
             transfer_fields.extend([
                 crispy.Field(
                     'active_accounts',
-                    css_class='input-xxlarge',
+                    css_class='input-xxlarge ko-async-select2',
                     placeholder="Select Active Account",
                 ),
             ])
@@ -796,8 +797,9 @@ class ChangeSubscriptionForm(forms.Form):
 
     @transaction.atomic
     def change_subscription(self):
+        log_accounting_info("Entering change_subscription with subscription id=%d" % self.subscription.id)
         new_plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['new_plan_version'])
-        return self.subscription.change_plan(
+        new_subscription = self.subscription.change_plan(
             new_plan_version,
             date_end=self.cleaned_data['new_date_end'],
             web_user=self.web_user,
@@ -805,6 +807,8 @@ class ChangeSubscriptionForm(forms.Form):
             pro_bono_status=self.cleaned_data['pro_bono_status'],
             internal_change=True,
         )
+        log_accounting_info("Exiting change_subscription with subscription id=%d" % self.subscription.id)
+        return new_subscription
 
 
 class CreditForm(forms.Form):
@@ -1436,7 +1440,7 @@ class SoftwarePlanVersionForm(forms.Form):
         if errors:
             self._errors.setdefault('feature_rates', errors)
 
-        required_types = list(dict(FeatureType.CHOICES).keys())
+        required_types = list(dict(FeatureType.CHOICES))
         feature_types = [r.feature.feature_type for r in rate_instances]
         if any([feature_types.count(t) != 1 for t in required_types]):
             raise ValidationError(_(
@@ -1749,7 +1753,7 @@ class TriggerInvoiceForm(forms.Form):
                 'Trigger Invoice Details',
                 crispy.Field('month', css_class="input-large"),
                 crispy.Field('year', css_class="input-large"),
-                crispy.Field('domain', css_class="input-xxlarge",
+                crispy.Field('domain', css_class="input-xxlarge ko-async-select2",
                              placeholder="Search for Project")
             ),
             hqcrispy.FormActions(
@@ -1828,7 +1832,7 @@ class TriggerBookkeeperEmailForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Trigger Bookkeeper Email Details',
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('emails', css_class='input-xxlarge ko-email-select2'),
                 crispy.Field('month', css_class="input-large"),
                 crispy.Field('year', css_class="input-large"),
             ),
@@ -1957,8 +1961,7 @@ class AdjustBalanceForm(forms.Form):
                 crispy.Field('note'),
                 crispy.Field('invoice_id'),
                 'adjust',
-                css_class='modal-body',
-                css_id="adjust-balance-form-%d" % invoice.id
+                css_class='modal-body ko-adjust-balance-form',
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(

@@ -14,6 +14,7 @@ from corehq.apps.app_manager.views.forms import \
     get_form_view_context_and_template
 from corehq.apps.app_manager.views.releases import get_releases_context
 from corehq.apps.app_manager.views.utils import bail, encode_if_unicode
+from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
     MultimediaAudioUploadController,
@@ -91,10 +92,20 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 'domain': domain,
                 'app': app,
             })
-        if not app.vellum_case_management:
+        if not app.vellum_case_management and not app.is_remote_app():
             # Soft assert but then continue rendering; template will contain a user-facing warning
             _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
             _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
+        if (form is not None and toggles.USER_PROPERTY_EASY_REFS.enabled(domain)
+                and "usercase_preload" in form.actions
+                and form.actions.usercase_preload.preload):
+            _assert = soft_assert(['dmiller' + '@' + 'dimagi.com'])
+            _assert(False, 'User property easy refs + old-style config = bad', {
+                'domain': domain,
+                'app_id': app_id,
+                'module_id': module_id,
+                'form_id': form_id,
+            })
 
     context = get_apps_base_context(request, domain, app)
     if app and app.copy_of:
@@ -128,6 +139,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         context.update({
             'case_properties': get_all_case_properties(app),
             'usercase_properties': get_usercase_properties(app),
+            'property_descriptions': get_case_property_description_dict(domain)
         })
 
         context.update(form_context)
@@ -240,7 +252,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     domain_names.sort()
     if app and copy_app_form is None:
         toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
-        copy_app_form = CopyApplicationForm(domain, app_id, export_zipped_apps_enabled=toggle_enabled)
+        copy_app_form = CopyApplicationForm(domain, app, export_zipped_apps_enabled=toggle_enabled)
         context.update({
             'domain_names': domain_names,
         })
@@ -282,14 +294,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             },
         })
 
-    live_preview_ab = ab_tests.ABTest(ab_tests.LIVE_PREVIEW, request)
     domain_obj = Domain.get_by_name(domain)
     context.update({
-        'live_preview_ab': live_preview_ab.context,
-        'is_onboarding_domain': domain_obj.is_onboarding_domain,
-        'show_live_preview': should_show_preview_app(
+        'show_live_preview': app and should_show_preview_app(
             request,
-            domain_obj,
+            app,
             request.couch_user.username
         ),
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
@@ -297,6 +306,5 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     response = render(request, template, context)
 
-    live_preview_ab.update_response(response)
     response.set_cookie('lang', encode_if_unicode(lang))
     return response

@@ -40,7 +40,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
-from corehq.apps.app_manager.exceptions import ModuleIdMissingException
+from corehq.apps.app_manager.exceptions import ModuleIdMissingException, ModuleNotFoundException
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.download import source_files
@@ -113,8 +113,6 @@ def get_releases_context(request, domain, app_id):
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
 
     context.update({
-        'intro_only': len(
-            app.modules) == 0 and toggles.APP_MANAGER_V2.enabled(domain),
         'release_manager': True,
         'can_send_sms': can_send_sms,
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
@@ -127,6 +125,8 @@ def get_releases_context(request, domain, app_id):
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
     })
     if not app.is_remote_app():
+        if toggles.APP_MANAGER_V2.enabled(domain) and len(app.modules) == 0:
+            context.update({'intro_only': True})
         # Multimedia is not supported for remote applications at this time.
         try:
             multimedia_state = app.check_media_state()

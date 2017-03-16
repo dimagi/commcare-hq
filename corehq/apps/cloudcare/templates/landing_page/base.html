@@ -1,0 +1,78 @@
+{% extends "formplayer-common/base.html" %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load statici18n %}
+
+{% block css %}
+
+{% if less_debug %}
+<link type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'cloudcare/less/formplayer-webapp.debug.less' %}"/>
+
+{% else %}
+{% compress css %}
+<link type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
+{% endcompress %}
+{% endif %}
+
+{% endblock %}
+
+{% block body %}
+
+<div id="cloudcare-main" class="cloudcare-home-content">
+    <section id="case-crumbs" style="width: 800px"></section>
+    <section id="cases"></section>
+    <div id="menu-container">
+	<section id="formplayer-progress-container"></section>
+	<div id="restore-as-region"></div>
+	<div id="breadcrumb-region"></div>
+	<section id="cloudcare-notifications" class="container notifications-container"></section>
+	<div id="persistent-case-tile" class="container"></div>
+	<div id="menu-region" class="container"></div>
+	<section id="webforms" data-bind="
+	    template: {
+		name: 'form-fullform-ko-template',
+		afterRender: afterRender
+	    }">
+	</section>
+    </div>
+    <small id="version-info"></small>
+    {% if request.couch_user.can_edit_data %}
+    <section id="cloudcare-debugger" data-bind="
+      template: {
+	  name: 'instance-viewer-ko-template',
+	  afterRender: adjustWidth
+      }
+    "></section>
+    {% endif %}
+</div>
+{% endblock %}
+
+
+{% block js-inline %}
+<script>
+    window.GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
+    var options = {
+        apps: [{{ app|JSON }}],
+        language: "{{ request.couch_user.language|default:'en' }}",
+        username: "{{ request.couch_user.username  }}",
+        domain: "{{ request.domain }}",
+        formplayer_url: "{{ formplayer_url }}",
+        landingPageAppMode: true,
+        singleAppMode: false,
+        phoneMode: false,
+        oneQuestionPerScreen: false,
+        allowedHost: "{{ request.get_host }}",
+        environment: {{ environment|JSON }},
+        {% if request.couch_user.can_edit_data %}
+        debuggerEnabled: true,
+        {% endif %}
+    };
+    FormplayerFrontend.start(options);
+</script>
+{% endblock %}

@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,393 +1,118 @@
+@@ -1,398 +1,114 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -17,6 +17,7 @@
 -    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 -    <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
 -    <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+-    <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
 -
 -    {# these scripts are for releases.html, but including them there causes hard-to-reproduce problems #}
 -    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
@@ -182,6 +183,9 @@
 -                }
 -            );
 -        }
+-        function anonymousAppUrl() {
+-            return '{{ app.anonymous_cloudcare_url }}';
+-        }
 -    </script>
 -    <script>
 -        $(function () {
@@ -197,7 +201,7 @@
 -        });
 -    </script>
 -    <script>
--        $("#copy form button").click(function() {
+-        $("#copy-app-form form button").click(function() {
 -            var $submit = $(this),
 -                $form = $submit.closest("form"),
 -                domain = $form.find("#id_domain").val(),
@@ -336,14 +340,10 @@
 +  {% endif %}
 +{% endblock %}
 +
-+{% block pre_page_content %}
-+
++{% block pre_form_content %}
 +  <div class="appmanager-page-actions">
 +      {% if can_preview_form %}
-+      <a class="btn btn-purple js-preview-toggle" style="display: none;" href="#">
-+        <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
-+        <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
-+      </a>
++        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
 +      {% endif %}
 +      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
 +          <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
@@ -413,7 +413,7 @@
 -            </div>
 -
 -        {% endif %}
--        <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy">
+-        <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy-app-form">
 -            {% if linked_apps_enabled %}
 -            <div class="tabbable">
 -                <ul class="nav nav-tabs">
@@ -427,6 +427,7 @@
 -                        <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
 -                            {% crispy copy_app_form %}
 -                        </form>
+-                        {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
 -                        {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
 -                            <h3>Export compressed application</h3>
 -                            <form action="{% url "gzip_app" domain app.id %}" method="POST">

@@ -26,16 +26,19 @@ class TestNewDomainSubscription(BaseAccountingTest):
         )
         self.domain2.save()
 
-        self.admin_user = generator.arbitrary_web_user()
-        self.admin_user.add_domain_membership(self.domain.name, is_admin=True)
-        self.admin_user.save()
+        self.admin_user_name = generator.create_arbitrary_web_user_name()
 
         self.account = BillingAccount.get_or_create_account_by_domain(
-            self.domain.name, created_by=self.admin_user.username)[0]
+            self.domain.name, created_by=self.admin_user_name)[0]
         self.account2 = BillingAccount.get_or_create_account_by_domain(
-            self.domain2.name, created_by=self.admin_user.username)[0]
+            self.domain2.name, created_by=self.admin_user_name)[0]
         self.standard_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.STANDARD)
         self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+
+    def tearDown(self):
+        self.domain.delete()
+        self.domain2.delete()
+        super(TestNewDomainSubscription, self).tearDown()
 
     def test_new_susbscription_in_future(self):
         """
@@ -58,7 +61,7 @@ class TestNewDomainSubscription(BaseAccountingTest):
 
         subscription = Subscription.new_domain_subscription(
             self.account2, self.domain.name, self.standard_plan,
-            web_user=self.admin_user.username,
+            web_user=self.admin_user_name,
             date_start=week_after_30, date_end=next_year,
         )
 
@@ -115,14 +118,14 @@ class TestNewDomainSubscription(BaseAccountingTest):
     def test_update_billing_account_entry_point_self_serve(self):
         self_serve_subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.advanced_plan,
-            web_user=self.admin_user.username, service_type=SubscriptionType.PRODUCT
+            web_user=self.admin_user_name, service_type=SubscriptionType.PRODUCT
         )
         self.assertEqual(self_serve_subscription.account.entry_point, EntryPoint.SELF_STARTED)
 
     def test_update_billing_account_entry_point_contracted(self):
         contracted_subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.advanced_plan,
-            web_user=self.admin_user.username, service_type=SubscriptionType.IMPLEMENTATION
+            web_user=self.admin_user_name, service_type=SubscriptionType.IMPLEMENTATION
         )
 
         self.assertNotEqual(contracted_subscription.account.entry_point, EntryPoint.SELF_STARTED)
@@ -133,7 +136,7 @@ class TestNewDomainSubscription(BaseAccountingTest):
 
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.advanced_plan,
-            web_user=self.admin_user.username, service_type=SubscriptionType.IMPLEMENTATION
+            web_user=self.admin_user_name, service_type=SubscriptionType.IMPLEMENTATION
         )
 
         self.assertEqual(subscription.account.entry_point, EntryPoint.CONTRACTED)

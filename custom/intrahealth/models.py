@@ -1,8 +1,11 @@
 from corehq.fluff.calculators.case import CasePropertyFilter
 import fluff
+from fluff.pillow import get_multi_fluff_pillow
 from couchforms.models import XFormInstance
 from fluff.filters import ORFilter, ANDFilter, CustomFilter
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
+from corehq.apps.change_feed.topics import get_topic
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import (
     COMMANDE_XMLNSES,
@@ -204,10 +207,25 @@ class RecouvrementFluff(fluff.IndicatorDocument):
     payments = report_calcs.Recouvrement()
 
 
-CouvertureFluffPillow = CouvertureFluff.pillow()
-RecapPassageFluffPillow = RecapPassageFluff.pillow()
-IntraHealthFluffPillow = IntraHealthFluff.pillow()
-TauxDeSatisfactionFluffPillow = TauxDeSatisfactionFluff.pillow()
-TauxDeRuptureFluffPillow = TauxDeRuptureFluff.pillow()
-LivraisonFluffPillow = LivraisonFluff.pillow()
 RecouvrementFluffPillow = RecouvrementFluff.pillow()
+
+
+def IntraHealthFormFluffPillow(delete_filtered=False):
+    return get_multi_fluff_pillow(
+        indicator_classes=[
+            TauxDeSatisfactionFluff,
+            CouvertureFluff,
+            RecapPassageFluff,
+            IntraHealthFluff,
+            TauxDeRuptureFluff,
+            LivraisonFluff,
+        ],
+        name='IntraHealthFormFluff',
+        kafka_topic=get_topic(get_doc_meta_object_from_document(XFormInstance().to_json())),
+        delete_filtered=delete_filtered
+    )
+
+
+# Remove these once they are out of the pillow retry queue
+CouvertureFluffPillow = CouvertureFluff.pillow()
+IntraHealthFluffPillow = IntraHealthFluff.pillow()
