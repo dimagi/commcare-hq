@@ -22,7 +22,6 @@ from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 from pillow_retry.models import PillowError
-import six
 
 
 REBUILD_CHECK_INTERVAL = 10 * 60  # in seconds
