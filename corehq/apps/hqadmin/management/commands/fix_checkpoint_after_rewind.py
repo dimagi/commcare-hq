@@ -1,6 +1,6 @@
 from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
+from corehq.apps.hqadmin.models import PillowCheckpointSeqStore
 from pillowtop.utils import get_pillow_by_name
 
 
@@ -26,16 +26,14 @@ class Command(BaseCommand):
             raise CommandError("No pillow found with name: {}".format(pillow_name))
 
         checkpoint = pillow.get_checkpoint()
-        store = HistoricalPillowCheckpoint.get_historical_max(checkpoint.checkpoint_id)
-
-        if not store:
+        try:
+            seq = PillowCheckpointSeqStore.objects.get(checkpoint_id=checkpoint.checkpoint_id)
+        except PillowCheckpointSeqStore.DoesNotExist:
             print("No new sequence exists for that pillow. You'll have to do it manually.")
             exit()
 
         old_seq = checkpoint.sequence
-        new_seq = store.seq
-        confirm("\nReset checkpoint for '{}' pillow from:\n\n{}\n\nto\n\n{}\n\n".format(
-            pillow_name, old_seq, new_seq
-        ))
+        new_seq = seq.seq
+        confirm("\nReset checkpoint for '{}' pillow from:\n\n{}\n\nto\n\n{}\n\n".format(pillow_name, old_seq, new_seq))
         pillow.checkpoint.update_to(new_seq)
         print("Checkpoint updated")
