@@ -717,13 +717,6 @@ BASIC_CHILD_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-HSPH_HACK = StaticToggle(
-    'hsph_hack',
-    'Optmization hack for HSPH',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-)
-
 USE_OLD_CLOUDCARE = StaticToggle(
     'use_old_cloudcare',
     'Use Old CloudCare',
