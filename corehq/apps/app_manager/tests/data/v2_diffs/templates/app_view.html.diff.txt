@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,400 +1,114 @@
+@@ -1,400 +1,115 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -294,7 +294,8 @@
 +  <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
 +  <script src="{% static 'app_manager/js/releases.js' %}"></script>
 +  <script src="{% static 'app_manager/js/language-profiles.js' %}"></script>
-+
++  <script src="{% static "jsdiff/diff.js" %}"></script>
++  <script src="{% static 'app_manager/js/app_diff.js' %}"></script>
 +  <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
 +  <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 +  <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
