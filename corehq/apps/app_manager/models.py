@@ -1002,8 +1002,7 @@ class FormBase(DocumentSchema):
         }
 
         xml_valid = False
-        if (self.source == '' or
-                len(self.get_questions(self.get_app().langs, include_triggers=True)) == 0):
+        if self.source == '':
             errors.append(dict(type="blank form", **meta))
         else:
             try:
@@ -1018,6 +1017,10 @@ class FormBase(DocumentSchema):
             except ValueError:
                 logging.error("Failed: _parse_xml(string=%r)" % self.source)
                 raise
+
+        if not errors:
+            if len(self.get_questions(self.get_app().langs, include_triggers=True)) == 0:
+                errors.append(dict(type="blank form", **meta))
             else:
                 try:
                     self.validate_form()
