@@ -86,7 +86,7 @@ describe('AppDiff', function() {
         };
 
         it('should generate a toString', function() {
-            var html = (new ModuleDatum(datum)).toString();
+            var html = (new ModuleDatum(datum, { lang: 'en' })).toString();
             assert.isTrue(checkHTML(html));
         });
 
