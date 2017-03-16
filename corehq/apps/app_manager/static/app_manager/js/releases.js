@@ -258,13 +258,9 @@ hqDefine('app_manager/js/releases.js', function () {
             }
         });
 
-        self.previousReleaseId = function(index) {
-            var savedApp;
-            for (var i = index + 1; i < self.savedApps().length; i++) {
-                savedApp = self.savedApps()[i];
-                if (savedApp.is_released()) {
-                    return savedApp.id();
-                }
+        self.previousBuildId = function(index) {
+            if (self.savedApps()[index + 1]) {
+                return self.savedApps()[index + 1].id();
             }
             return null;
         };
