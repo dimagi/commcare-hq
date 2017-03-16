@@ -25,7 +25,7 @@ class Command(BaseCommand):
     def handle(self, log_file, **options):
         to_archive = []
         episode_case_ids = CaseAccessors(domain).get_case_ids_in_domain("episode")
-        for episode_case_id in with_progress_bar(episode_case_ids[:100]):
+        for episode_case_id in with_progress_bar(episode_case_ids):
             nikshay_to_archive = []
             dots_99_to_archvie = []
             case_forms = FormProcessorInterface(domain).get_case_forms(episode_case_id)
