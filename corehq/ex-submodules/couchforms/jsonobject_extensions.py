@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from jsonobject.base_properties import JsonProperty
 from jsonobject.exceptions import BadValueError
 import re
@@ -12,7 +12,10 @@ def _canonical_decimal(n):
     example: '00.1' or '.1' whose canonical form is '0.1'
 
     """
-    decimal = Decimal(n)
+    try:
+        decimal = Decimal(n)
+    except InvalidOperation:
+        raise ValueError(u"'{}' cannot be converted to a decimal".format(n))
     if unicode(decimal) != n:
         raise ValueError('{!r} is not a canonically formatted decimal'
                          .format(n))
