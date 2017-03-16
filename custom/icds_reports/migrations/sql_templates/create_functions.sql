@@ -865,7 +865,7 @@ BEGIN
 	'(' ||
 		'pse_score + thr_score + wer_score, ' ||
 		'CASE WHEN (pse_score + thr_score + wer_score) >= 60 THEN 1 ELSE 0 END, ' ||
-		'CASE WHEN ((pse_score + thr_score + wer_score) >= 40 AND (pse_score + thr_score + wer_score) < 40) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN ((pse_score + thr_score + wer_score) >= 40 AND (pse_score + thr_score + wer_score) < 60) THEN 1 ELSE 0 END, ' ||
 		'CASE WHEN (pse_score + thr_score + wer_score) < 40 THEN 1 ELSE 0 END' ||
 	')';
 
