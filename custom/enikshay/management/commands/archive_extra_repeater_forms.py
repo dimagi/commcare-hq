@@ -25,10 +25,10 @@ class Command(BaseCommand):
     def handle(self, log_file, **options):
         to_archive = []
         episode_case_ids = CaseAccessors(domain).get_case_ids_in_domain("episode")
-        for episode_case_id in with_progress_bar(episode_case_ids):
+        for episode_case_id in with_progress_bar(episode_case_ids[:100]):
             nikshay_to_archive = []
             dots_99_to_archvie = []
-            case_forms = FormProcessorInterface(domain).get_case_forms(episode_case_id[:100])
+            case_forms = FormProcessorInterface(domain).get_case_forms(episode_case_id)
             _system_forms_count = 0
             for form in case_forms:
                 if form.user_id in ("system", "", None) and form.metadata.username == "system":
