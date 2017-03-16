@@ -54,7 +54,7 @@ class Command(BaseCommand):
 
         print "Will archive {} forms".format(len(to_archive))
 
-        with open(log_file, "r") as f:
+        with open(log_file, "w") as f:
             for form in to_archive:
                 f.write(form.form_id + "\n")
                 if options['commit']:
