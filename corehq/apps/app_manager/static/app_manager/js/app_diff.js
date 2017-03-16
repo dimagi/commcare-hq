@@ -47,13 +47,13 @@ hqDefine('app_manager/js/app_diff.js', function () {
     var reverse = hqImport('hqwebapp/js/urllib.js').reverse;
     var sanitize = DOMPurify.sanitize;
 
-    var init = function(selector, appIdOne, appIdTwo) {
+    var init = function(selector, appIdOne, appIdTwo, options) {
         var $el = $(selector);
 
         if (!$el.length) {
             throw new Error(selector + ' does not resolve to an element');
         }
-        return new AppDiff($el, appIdOne, appIdTwo);
+        return new AppDiff($el, appIdOne, appIdTwo, options);
     };
 
     /**
@@ -66,12 +66,16 @@ hqDefine('app_manager/js/app_diff.js', function () {
      * appIdOne {String} - An app id
      * appIdTwo {String} - An app id
      */
-    var AppDiff = function($el, appIdOne, appIdTwo) {
+    var AppDiff = function($el, appIdOne, appIdTwo, options) {
         var self = this;
         self.appIdOne = appIdOne;
         self.appIdTwo = appIdTwo;
         self.$el = $el;
         self.controller = new Controller();
+        self.options = options || {};
+        _.defaults(self.options, {
+            lang: 'en',
+        });
 
         /**
          * renderDiff
@@ -83,11 +87,22 @@ hqDefine('app_manager/js/app_diff.js', function () {
                 self.controller.getFormData(self.appIdOne),
                 self.controller.getFormData(self.appIdTwo)
             ).done(function(formDataOneJson, formDataTwoJson) {
-                self.$el.html(self.generateHtmlDiff(formDataOneJson, formDataTwoJson));
-                self.$el.find('.diff-questions:not(:has(.diff-change))').html(
-                    '<i>' + gettext('No changes detected') + '</i>'
-                );
+                try {
+                    self.$el.html(self.generateHtmlDiff(formDataOneJson, formDataTwoJson));
+                    self.$el.find('.diff-questions:not(:has(.diff-change))').html(
+                        '<i>' + gettext('No changes detected') + '</i>'
+                    );
+                } catch (e) {
+                    self.showError();
+                    throw e;
+                }
+            }).fail(function() {
+                self.showError();
             });
+        };
+
+        self.showError = function() {
+            self.$el.text(gettext('Error generating the application diff. Please report an issue.'));
         };
 
         /**
@@ -110,10 +125,10 @@ hqDefine('app_manager/js/app_diff.js', function () {
                 totalChanges = { added: 0, removed: 0 },
                 fullHtml;
             _.each(formDataOneJson, function(d) {
-                modulesOne.push(new ModuleDatum(d));
+                modulesOne.push(new ModuleDatum(d, self.options));
             });
             _.each(formDataTwoJson, function(d) {
-                modulesTwo.push(new ModuleDatum(d));
+                modulesTwo.push(new ModuleDatum(d, self.options));
             });
             textOne = _.map(modulesOne, function(m) { return m.toString(); }).join('\n');
             textTwo = _.map(modulesTwo, function(m) { return m.toString(); }).join('\n');
@@ -147,18 +162,19 @@ hqDefine('app_manager/js/app_diff.js', function () {
     /**
      * Represents the module data structure and renders it to an HTML string
      */
-    var ModuleDatum = function(json) {
+    var ModuleDatum = function(json, options) {
         var self = this;
         this.id = json.id;
         this.name = json.name;
+        this.options = options;
         this.shortComment = json.short_comment || '';
-        this.forms = _.map(json.forms, function(form) { return new FormDatum(form); });
+        this.forms = _.map(json.forms, function(form) { return new FormDatum(form, self.options); });
 
         this.toString = function() {
             var lines = [
                 // We want these to be considered one line
                 (
-                    HtmlUtils.makeLi(sanitize(self.name.en), 'diff-module', 'folder-open') +
+                    HtmlUtils.makeLi(sanitize(self.name[self.options.lang]), 'diff-module', 'folder-open') +
                     HtmlUtils.makeSpan(' ' + sanitize(self.shortComment), 'diff-comment', '', true)
                 ),
                 HtmlUtils.makeUl('diff-forms fa-ul'),
@@ -173,18 +189,19 @@ hqDefine('app_manager/js/app_diff.js', function () {
     /**
      * Represents the form data structure and renders it to an HTML string
      */
-    var FormDatum = function(json) {
+    var FormDatum = function(json, options) {
         var self = this;
         this.id = json.id;
         this.name = json.name;
+        this.options = options;
         this.shortComment = json.short_comment || '';
-        this.questions = _.map(json.questions, function(q) { return new QuestionDatum(q); });
+        this.questions = _.map(json.questions, function(q) { return new QuestionDatum(q, self.options); });
 
         this.toString = function() {
             var lines = [
                 // We want these to be considered one line
                 (
-                    HtmlUtils.makeLi(sanitize(self.name.en), 'diff-form', 'file-o') +
+                    HtmlUtils.makeLi(sanitize(self.name[self.options.lang]), 'diff-form', 'file-o') +
                     HtmlUtils.makeSpan(sanitize(' ' + self.shortComment), 'diff-comment', '', true)
                 ),
                 HtmlUtils.makeUl('diff-questions fa-ul'),
@@ -199,7 +216,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
     /**
      * Represents the question data structure and renders it to an HTML string
      */
-    var QuestionDatum = function(json) {
+    var QuestionDatum = function(json, options) {
         var self = this;
         this.comment = json.comment || '';
         this.group = json.group;
@@ -214,6 +231,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
         this.translations = json.translations;
         this.type = json.type;
         this.value = json.value;
+        this.options = options;
 
         this.toString = function() {
             var lines =[
