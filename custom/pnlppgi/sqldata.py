@@ -1,4 +1,4 @@
-from sqlagg.columns import SimpleColumn
+from sqlagg.columns import MaxColumn
 from sqlagg.filters import EQ
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
@@ -17,7 +17,7 @@ class LastDataForYear(SqlData):
 
     @property
     def group_by(self):
-        return ['week']
+        return ['year']
 
     @property
     def filters(self):
@@ -28,5 +28,5 @@ class LastDataForYear(SqlData):
     @property
     def columns(self):
         return [
-            DatabaseColumn('week', SimpleColumn('week'))
+            DatabaseColumn('week', MaxColumn('week'))
         ]

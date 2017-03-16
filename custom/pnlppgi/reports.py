@@ -362,8 +362,10 @@ class CumulativeMalaria(MalariaReport):
         year = self.request.GET.get('year', False)
         if year:
             data = LastDataForYear(config=self.config).get_data()
-            last_week = max([x['week'] for x in data])
-            return self.name + (' [Week %s/%s]' % (0 if not last_week else last_week, year))
+            return self.name + (' [Week %s/%s]' % (
+                0 if not data else data[0]['week']['sort_key'],
+                year
+            ))
         return self.name
 
     @property
