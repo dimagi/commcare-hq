@@ -4163,8 +4163,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def source_module(self):
         if self.source_module_id:
             try:
-                return self._parent.get_module_by_unique_id(self.source_module_id,
-                       error=_("Could not find source module for '{}'.").format(self.default_name()))
+                return self._parent.get_module_by_unique_id(self.source_module_id)
             except ModuleNotFoundException:
                 pass
         return None
