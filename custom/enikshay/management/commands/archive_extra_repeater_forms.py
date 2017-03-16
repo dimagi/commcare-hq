@@ -32,14 +32,16 @@ class Command(BaseCommand):
             for form in case_forms:
                 if form.user_id in ("system", "", None) and form.metadata.username == "system":
                     updates = get_case_updates(form)
-                    update_actions = [update.get_update_action() for update in updates if update.id == episode_case_id]
+                    update_actions = [
+                        update.get_update_action() for update in updates
+                        if update.id == episode_case_id
+                    ]
                     for action in update_actions:
                         if isinstance(action, CaseUpdateAction):
                             if set(action.dynamic_properties.keys()) == {"nikshay_registered", "nikshay_error"}:
                                 nikshay_to_archive.append(form)
                             elif set(action.dynamic_properties.keys()) == {"dots_99_registered", "dots_99_error"}:
                                 dots_99_to_archvie.append(form)
-
 
             nikshay_to_archive = nikshay_to_archive[:-1]
             dots_99_to_archvie = dots_99_to_archvie[:-1]
