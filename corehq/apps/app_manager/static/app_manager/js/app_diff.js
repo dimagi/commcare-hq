@@ -51,7 +51,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
         var $el = $(selector);
 
         if (!$el.length) {
-            throw new Error(selector + ' does not resolve to an element');
+            window.console.warn(selector + ' does not resolve to an element');
         }
         return new AppDiff($el, options);
     };
