@@ -11,13 +11,24 @@ domain = "enikshay"
 
 class Command(BaseCommand):
 
-    def handle(self, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('log_file')
+
+        parser.add_argument(
+            '--commit',
+            action='store_true',
+            dest='commit',
+            default=False,
+            help="Don't do a dry run, but actually archive the forms",
+        )
+
+    def handle(self, log_file, **options):
         to_archive = []
         episode_case_ids = CaseAccessors(domain).get_case_ids_in_domain("episode")
         for episode_case_id in with_progress_bar(episode_case_ids):
             nikshay_to_archive = []
             dots_99_to_archvie = []
-            case_forms = FormProcessorInterface(domain).get_case_forms(episode_case_id)
+            case_forms = FormProcessorInterface(domain).get_case_forms(episode_case_id[:100])
             _system_forms_count = 0
             for form in case_forms:
                 if form.user_id in ("system", "", None) and form.metadata.username == "system":
@@ -42,3 +53,10 @@ class Command(BaseCommand):
             to_archive.extend(dots_99_to_archvie)
 
         print "Will archive {} forms".format(len(to_archive))
+
+        with open(log_file, "r") as f:
+            for form in to_archive:
+                f.write(form.form_id + "\n")
+                if options['commit']:
+                    print "archiving!"
+                    #form.archive(user_id="remove_duplicate_forms_script")
