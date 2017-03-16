@@ -82,10 +82,11 @@ def _set_logging_levels(levels):
 _set_logging_levels({
     # Quiet down a few really noisy ones.
     # (removing these can be handy to debug couchdb access for failing tests)
-    'boto3': 'INFO',
+    'boto3': 'WARNING',
     'botocore': 'INFO',
     'couchdbkit.request': 'INFO',
     'restkit.client': 'INFO',
+    's3transfer': 'INFO',
 })
 
 # use empty LOGGING dict with --debug=nose,nose.plugins to debug test discovery

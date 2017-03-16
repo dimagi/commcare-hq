@@ -139,6 +139,18 @@ class ShardAccessor(object):
 
 
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
+    startkey_min_value = datetime.min
+
+    @classmethod
+    def is_sharded(cls):
+        """
+        :return: True the django model is sharded, otherwise false.
+        """
+        # TODO check for subclass of PartitionedModel when PR merged:
+        # https://github.com/dimagi/commcare-hq/pull/14852
+        from corehq.form_processor.models import RestrictedManager
+        return isinstance(cls.model_class.objects, RestrictedManager)
+
     @abstractproperty
     def model_class(self):
         """
