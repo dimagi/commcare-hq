@@ -1002,8 +1002,7 @@ class FormBase(DocumentSchema):
         }
 
         xml_valid = False
-        if (self.source == '' or
-                len(self.get_questions(self.get_app().langs, include_triggers=True)) == 0):
+        if self.source == '':
             errors.append(dict(type="blank form", **meta))
         else:
             try:
@@ -1018,6 +1017,10 @@ class FormBase(DocumentSchema):
             except ValueError:
                 logging.error("Failed: _parse_xml(string=%r)" % self.source)
                 raise
+
+        if not errors:
+            if len(self.get_questions(self.get_app().langs, include_triggers=True)) == 0:
+                errors.append(dict(type="blank form", **meta))
             else:
                 try:
                     self.validate_form()
@@ -1096,12 +1099,15 @@ class FormBase(DocumentSchema):
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False):
-        return XForm(self.source).get_questions(
-            langs=langs,
-            include_triggers=include_triggers,
-            include_groups=include_groups,
-            include_translations=include_translations,
-        )
+        try:
+            return XForm(self.source).get_questions(
+                langs=langs,
+                include_triggers=include_triggers,
+                include_groups=include_groups,
+                include_translations=include_translations,
+            )
+        except XFormException as e:
+            raise XFormException("Error in form {}".format(self.full_path_name), e)
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -4163,8 +4169,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def source_module(self):
         if self.source_module_id:
             try:
-                return self._parent.get_module_by_unique_id(self.source_module_id,
-                       error=_("Could not find source module for '{}'.").format(self.default_name()))
+                return self._parent.get_module_by_unique_id(self.source_module_id)
             except ModuleNotFoundException:
                 pass
         return None
@@ -5578,7 +5583,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if matches(obj):
                 return obj
         if not error:
-            error = _("Could not find '{unique_id}' in app '{app_id}'.").format(
+            error = _("Could not find module with ID='{unique_id}' in app '{app_id}'.").format(
                 app_id=self.id, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
@@ -5843,7 +5848,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not self.modules:
             errors.append({'type': "no modules"})
         for module in self.get_modules():
-            errors.extend(module.validate_for_build())
+            try:
+                errors.extend(module.validate_for_build())
+            except ModuleNotFoundException as ex:
+                errors.append({
+                    "type": "missing module",
+                    "message": ex.message
+                })
 
         for form in self.get_forms():
             errors.extend(form.validate_for_build(validate_module=False))

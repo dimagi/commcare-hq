@@ -275,6 +275,7 @@
                         "property_path": [
                             "form",
                             "rpt_referral_details",
+                            "ql_referral_details",
                             "lab_referral_owner_id"
                         ]
                     }
