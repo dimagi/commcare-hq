@@ -5577,7 +5577,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if matches(obj):
                 return obj
         if not error:
-            error = _("Could not find '{unique_id}' in app '{app_id}'.").format(
+            error = _("Could not find module with ID='{unique_id}' in app '{app_id}'.").format(
                 app_id=self.id, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
