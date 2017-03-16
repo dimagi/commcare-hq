@@ -24,6 +24,7 @@ from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
 
+from corehq import toggles
 from corehq.middleware import always_allow_browser_caching
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.decorators import safe_download
@@ -401,6 +402,32 @@ class ProcessTextFileUploadView(BaseProcessFileUploadView):
     @classmethod
     def valid_base_types(cls):
         return ['text']
+
+
+class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
+    name = "hqmedia_uploader_detail_print_template"
+
+    @method_decorator(toggles.CASE_DETAIL_PRINT.required_decorator())
+    def post(self, request, *args, **kwargs):
+        return super(ProcessDetailPrintTemplateUploadView, self).post(request, *args, **kwargs)
+
+    @property
+    def form_path(self):
+        # TODO
+        return ("jr://file/commcare/print/data/m1_case_long%s"
+                % (self.file_ext))
+
+    def validate_file(self, replace_diff_ext=True):
+        return super(ProcessDetailPrintTemplateUploadView, self).validate_file(replace_diff_ext)
+
+    def process_upload(self):
+        ref = super(
+            ProcessDetailPrintTemplateUploadView, self
+        ).process_upload()
+        self.app.modules[1].case_details.long.print_template = ref['ref']['path']  # TODO
+        self.app.save()
+        return ref
+
 
 
 class RemoveLogoView(BaseMultimediaView):

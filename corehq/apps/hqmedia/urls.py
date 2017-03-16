@@ -11,6 +11,7 @@ from corehq.apps.hqmedia.views import (
     ProcessVideoFileUploadView,
     ProcessLogoFileUploadView,
     ProcessTextFileUploadView,
+    ProcessDetailPrintTemplateUploadView,
     RemoveLogoView,
 )
 
@@ -30,6 +31,8 @@ application_urls = [
     url(r'^uploaded/video/$', ProcessVideoFileUploadView.as_view(), name=ProcessVideoFileUploadView.name),
     url(r'^uploaded/text/$', ProcessTextFileUploadView.as_view(),
         name=ProcessTextFileUploadView.name),
+    url(r'^uploaded/html/$', ProcessDetailPrintTemplateUploadView.as_view(),
+        name=ProcessDetailPrintTemplateUploadView.name),
     url(r'^remove_logo/$', RemoveLogoView.as_view(), name=RemoveLogoView.name),
     url(r'^map/$', MultimediaReferencesView.as_view(), name=MultimediaReferencesView.name),
 ]

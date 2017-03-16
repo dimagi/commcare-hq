@@ -52,7 +52,16 @@
             {% trans "Document Template" %}
         </label>
         <div class="col-sm-4">
-            <input type='text' data-bind="value: longScreen.printTemplate" class="form-control"/>
+            <!--input type='text' data-bind="value: longScreen.printTemplate" class="form-control"/-->
+            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#m1_case_long"
+                    data-bind="
+                        attr: { 'data-hqmediapath': 'jr://file/commcare/print/data/m1_case_detail.html' },
+                    ">
+                        <!-- TODO: this might be good for something -->
+                        <!--event: { mediaUploadComplete: uploadComplete },-->
+                <i class="fa fa-cloud-upload"></i>
+                Upload
+            </button>
         </div>
     </div>
 {% endif %}

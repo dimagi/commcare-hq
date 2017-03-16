@@ -110,3 +110,25 @@ class MultimediaVideoUploadController(BaseMultimediaFileUploadController):
                 'extensions': '*.3gp',
             },
         ]
+
+
+class MultimediaHTMLUploadController(BaseMultimediaFileUploadController):
+    media_type = ugettext_noop("html")
+
+    existing_file_template = "hqmedia/uploader/preview_html_single.html"
+
+    @property
+    def upload_params(self):
+        return {
+            'path': 'jr://file/commcare/print/data/m1_case_detail.html',    # TODO
+            'replace_attachment': True,
+        }
+
+    @property
+    def supported_files(self):
+        return [
+            {
+                'description': 'HTML',
+                'extensions': '*.htm;*.html',
+            },
+        ]

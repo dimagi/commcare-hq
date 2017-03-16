@@ -37,6 +37,8 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     module_case_hierarchy_has_circular_reference, get_app_manager_template)
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
+from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration
 from dimagi.utils.web import json_response, json_request
@@ -137,7 +139,7 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
     Get context items that are used by both basic and advanced modules.
     '''
     case_type = module.case_type
-    return {
+    context = {
         'details': _get_module_details_context(app, module, case_property_builder, case_type),
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
         'valid_parent_modules': _get_valid_parent_modules(app, module),
@@ -151,6 +153,18 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
         }
     }
+    if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
+        slug = 'm1_case_long'   # TODO
+        context.update({
+            'print_uploader': MultimediaHTMLUploadController(
+                slug,
+                reverse(
+                    ProcessDetailPrintTemplateUploadView.name,
+                    args=[app.domain, app.id],
+                )
+            ),
+        })
+    return context
 
 
 def _get_careplan_module_view_context(app, module, case_property_builder):
