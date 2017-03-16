@@ -1,4 +1,3 @@
-import re
 import uuid
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.tests.utils import partitioned

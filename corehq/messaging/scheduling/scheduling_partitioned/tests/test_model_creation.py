@@ -15,7 +15,7 @@ class PartitionedModelsTest(TestCase):
                 # We have to let Django rollback this nested transaction if an Exception
                 # is raised otherwise we won't be able to run any more queries.
                 model_class.objects.using(db).count()
-        except ProgrammingError as e:
+        except ProgrammingError:
             self.assertTrue(False)
 
     def assertModelDoesNotExist(self, model_class, db):
