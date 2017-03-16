@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,398 +1,114 @@
+@@ -1,400 +1,114 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -18,11 +18,13 @@
 -    <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
 -    <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 -    <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
+-    <script src="{% static "jsdiff/diff.js" %}"></script>
 -
 -    {# these scripts are for releases.html, but including them there causes hard-to-reproduce problems #}
 -    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
 -    <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
 -    <script src="{% static 'app_manager/js/releases.js' %}"></script>
+-    <script src="{% static 'app_manager/js/app_diff.js' %}"></script>
 -    <script src="{% static 'app_manager/js/language-profiles.js' %}"></script>
 -{% endblock %}
 -{% block js-inline %}

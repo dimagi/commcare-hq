@@ -1027,6 +1027,13 @@ INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VIEW_APP_CHANGES = StaticToggle(
+    'app-changes-with-improved-diff',
+    'Improved app changes view',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
 COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     'couch_sql_migration_blacklist',
     "Domains to exclude from migrating to SQL backend. Includes the folling"
