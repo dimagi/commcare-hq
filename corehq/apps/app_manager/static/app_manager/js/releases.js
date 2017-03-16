@@ -193,7 +193,7 @@ hqDefine('app_manager/js/releases.js', function () {
     function ReleasesMain(o) {
         /* {fetchUrl, deleteUrl} */
         var AsyncDownloader = hqImport('app_manager/js/download_async_modal.js').AsyncDownloader;
-        var AppDiff = hqImport('app_manager/js/app_diff.js')
+        var AppDiff = hqImport('app_manager/js/app_diff.js');
         var self = this;
         self.options = o;
         self.recipients = self.options.recipient_contacts;
