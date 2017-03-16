@@ -1169,6 +1169,12 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         self.assertEqual({'t4'}, get_case_types_for_domain_es('other'))
         self.assertEqual(set(), get_case_types_for_domain_es('none'))
 
+    def test_get_case_types_case_sensitive(self):
+        self._send_case_to_es(case_type='child')
+        self._send_case_to_es(case_type='Child')
+        case_types = get_case_types_for_domain_es(self.domain)
+        self.assertEqual(case_types, {'child', 'Child'})
+
     def test_get_case_types_caching(self):
         self._send_case_to_es(case_type='t1')
 

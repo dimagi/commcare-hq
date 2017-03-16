@@ -42,7 +42,10 @@ class NikshayRegisterPatientRepeater(CaseRepeater):
         allowed_case_types_and_users = self._allowed_case_type(episode_case) and self._allowed_user(episode_case)
         if allowed_case_types_and_users:
             episode_case_properties = episode_case.dynamic_case_properties()
-            person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+            try:
+                person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+            except ENikshayCaseNotFound:
+                return False
 
             return (
                 not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
@@ -116,8 +119,8 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
         allowed_case_types_and_users = self._allowed_case_type(episode_case) and self._allowed_user(episode_case)
         episode_case_properties = episode_case.dynamic_case_properties()
         return allowed_case_types_and_users and (
-            not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
-            not episode_case_properties.get('nikshay_id', False) and
+            episode_case_properties.get('nikshay_registered', 'false') == 'true' and
+            episode_case_properties.get('nikshay_id', False) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
             episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys()
         )

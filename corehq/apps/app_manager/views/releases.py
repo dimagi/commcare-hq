@@ -190,10 +190,6 @@ def save_copy(request, domain, app_id):
         # For apps (mainly Exchange apps) that lost unique_id attributes on Module
         app.ensure_module_unique_ids(should_save=True)
         errors = app.validate_app()
-    except ModuleNotFoundException:
-        errors = [{
-            "type": "missing module",
-        }]
 
     if not errors:
         try:

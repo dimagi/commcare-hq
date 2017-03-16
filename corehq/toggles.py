@@ -639,13 +639,6 @@ CUSTOM_INSTANCES = StaticToggle(
     namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
-CLOUDCARE_CACHE = StaticToggle(
-    'cloudcare_cache',
-    'Aggresively cache case list, can result in stale data',
-    TAG_EXPERIMENTAL,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',

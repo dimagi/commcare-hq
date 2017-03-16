@@ -55,6 +55,13 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "CaseSearchToElasticsearchPillow"
     },
+    "CouvertureFluffPillow": {
+        "advertised_name": "CouvertureFluffPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "fluff.CouvertureFluffPillow.testhq",
+        "full_class_name": "custom.intrahealth.models.CouvertureFluffPillow",
+        "name": "CouvertureFluffPillow"
+    },
     "DefaultChangeFeedPillow": {
         "advertised_name": "DefaultChangeFeedPillow",
         "change_feed_type": "CouchChangeFeed",
@@ -96,6 +103,13 @@
         "checkpoint_id": "GroupToUserPillow-test_hqusers_2017-02-03",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "GroupToUserPillow"
+    },
+    "IntraHealthFluffPillow": {
+        "advertised_name": "IntraHealthFluffPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "fluff.IntraHealthFluffPillow.testhq",
+        "full_class_name": "custom.intrahealth.models.IntraHealthFluffPillow",
+        "name": "IntraHealthFluffPillow"
     },
     "IntraHealthFormFluffPillow": {
         "advertised_name": "IntraHealthFormFluffPillow",
@@ -250,6 +264,20 @@
         "checkpoint_id": "kafka-ucr-main",
         "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
         "name": "kafka-ucr-main"
+    },
+    "kafka-ucr-main-08": {
+        "advertised_name": "kafka-ucr-main-08",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "kafka-ucr-main-08",
+        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
+        "name": "kafka-ucr-main-08"
+    },
+    "kafka-ucr-main-9f": {
+        "advertised_name": "kafka-ucr-main-9f",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "kafka-ucr-main-9f",
+        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
+        "name": "kafka-ucr-main-9f"
     },
     "kafka-ucr-static": {
         "advertised_name": "kafka-ucr-static",

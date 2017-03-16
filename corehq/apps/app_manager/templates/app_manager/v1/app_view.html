@@ -197,7 +197,7 @@
         });
     </script>
     <script>
-        $("#copy form button").click(function() {
+        $("#copy-app-form form button").click(function() {
             var $submit = $(this),
                 $form = $submit.closest("form"),
                 domain = $form.find("#id_domain").val(),
@@ -319,7 +319,7 @@
             </div>
 
         {% endif %}
-        <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy">
+        <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy-app-form">
             {% if linked_apps_enabled %}
             <div class="tabbable">
                 <ul class="nav nav-tabs">
