@@ -1,3 +1,4 @@
+/* globals COMMCAREHQ */
 var hqLayout = {};
 
 hqLayout.selector = {
@@ -99,6 +100,11 @@ hqLayout.actions = {
                 if ($sidebar.outerHeight() >  $content.outerHeight()) {
                     $content.css('min-height', $sidebar.outerHeight() + 'px');
                 }
+            }
+
+            if ($content.find("#formdesigner").length && !COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+                $content.css("padding-left", 0);
+                $content.css("padding-right", 0);
             }
         }
     },

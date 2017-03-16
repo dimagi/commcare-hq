@@ -30,12 +30,14 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
     def get_cases_for_saving(self, now):
         cases = self.get_changed()
 
+        saved_case_ids = [case.case_id for case in cases if case.is_saved()]
+        cases_modified_on = CaseAccessorSQL.get_last_modified_dates(self.domain, saved_case_ids)
         for case in cases:
             if case.is_saved():
-                modified = CaseAccessorSQL.case_modified_since(case.case_id, case.server_modified_on)
-                assert not modified, (
-                    "Aborting because the case has been modified"
-                    " by another process. {}".format(case.case_id)
+                modified_on = cases_modified_on.get(case.case_id, None)
+                assert case.server_modified_on == modified_on, (
+                    "Aborting because the case has been modified by another process: "
+                    "case={}, {} != {}".format(case.case_id, case.server_modified_on, modified_on)
                 )
             case.server_modified_on = now
         return cases

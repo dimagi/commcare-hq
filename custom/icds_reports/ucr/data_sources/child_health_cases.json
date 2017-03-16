@@ -157,7 +157,8 @@
         "transform": {},
         "is_nullable": false,
         "type": "expression",
-        "column_id": "awc_id"
+        "column_id": "awc_id",
+        "create_index": true
       },
       {
         "display_name": null,
@@ -177,7 +178,8 @@
           },
           "type": "location_parent_id"
         },
-        "column_id": "supervisor_id"
+        "column_id": "supervisor_id",
+        "create_index": true
       },
       {
         "display_name": null,
