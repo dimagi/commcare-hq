@@ -82,6 +82,8 @@ def _set_logging_levels(levels):
 _set_logging_levels({
     # Quiet down a few really noisy ones.
     # (removing these can be handy to debug couchdb access for failing tests)
+    'boto3': 'INFO',
+    'botocore': 'INFO',
     'couchdbkit.request': 'INFO',
     'restkit.client': 'INFO',
 })
