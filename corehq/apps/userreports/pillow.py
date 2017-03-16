@@ -141,26 +141,26 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             # if no domain we won't save to any UCR table
             return
 
-        expensive_tables = []
+        async_tables = []
 
         for table in self.table_adapters_by_domain[domain]:
             doc = change.get_document()
             ensure_document_exists(change)
             ensure_matched_revisions(change)
             if table.config.filter(doc):
-                if table.is_expensive:
-                    expensive_tables.append(table.config._id)
+                if table.run_asynchronous:
+                    async_tables.append(table.config._id)
                 else:
                     # best effort will swallow errors in the table
                     table.best_effort_save(doc)
             elif table.config.deleted_filter(doc):
                 table.delete(doc)
 
-        if expensive_tables:
+        if async_tables:
             future_time = datetime.utcnow() + timedelta(hours=1)
             error = PillowError.get_or_create(change, pillow_instance, date_next=future_time)
             error.save()
-            save_document.delay(expensive_tables, doc, pillow_instance.pillow_id)
+            save_document.delay(async_tables, doc, pillow_instance.pillow_id)
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
