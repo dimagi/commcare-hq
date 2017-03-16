@@ -14,7 +14,7 @@
     "report_id": "summary_of_treatment_outcome",
     "config": {
         "description": "",
-        "title": "Summary of Treatment Outcome",
+        "title": "Summary of Treatment Outcome - Mobile",
         "sort_expression": [],
         "visible": false,
         "configured_charts": [],

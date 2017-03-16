@@ -252,6 +252,20 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
             ['Massachusetts', 'New York', 'Middlesex', 'Suffolk', 'New York City', 'Boston', 'Revere']
         )  # (New York City is of type "county")
 
+    def test_include_without_expanding_lower_level(self):
+        # I want all all the cities, but am at the state level
+        self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
+        location_type = self.locations['Massachusetts'].location_type
+
+        # Get all the cities
+        location_type.include_without_expanding = self.locations['Revere'].location_type
+        location_type.save()
+        self._assert_fixture_has_locations(
+            'expand_from_root',  # This is the same as expanding from root / getting all locations
+            ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
+             'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
+        )
+
     @flag_enabled('FLAT_LOCATION_FIXTURE')
     def test_index_location_fixtures(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'])

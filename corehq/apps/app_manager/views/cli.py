@@ -93,7 +93,11 @@ def direct_ccz(request, domain):
     except (ResourceNotFound, DocTypeError):
         return error("Application not found", code=404)
 
-    errors = app.validate_app()
+    if not app.copy_of:
+        errors = app.validate_app()
+    else:
+        errors = None
+
     if errors:
         lang, langs = get_langs(request, app)
         template = get_app_manager_template(
@@ -125,7 +129,7 @@ def direct_ccz(request, domain):
         filename='{}.ccz'.format(slugify(app.name)),
     )
 
-    if errors['errors']:
+    if errors is not None and errors['errors']:
         return json_response(
             errors,
             status_code=400,

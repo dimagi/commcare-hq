@@ -1604,11 +1604,8 @@ PILLOWTOPS = {
         'custom.opm.models.OpmUserFluffPillow',
         'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.CouvertureFluffPillow',
-        'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassageFluffPillow',
-        'custom.intrahealth.models.TauxDeRuptureFluffPillow',
-        'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.intrahealth.models.IntraHealthFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
@@ -1666,6 +1663,7 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
 )
 
@@ -1851,7 +1849,9 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
     ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
-    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression')
+    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression'),
+    ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
+    ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [

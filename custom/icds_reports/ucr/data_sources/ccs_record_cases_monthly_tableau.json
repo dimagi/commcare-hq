@@ -196,6 +196,7 @@
       },
       {
         "column_id": "awc_id",
+        "create_index": true,
         "datatype": "string",
         "display_name": null,
         "expression": {

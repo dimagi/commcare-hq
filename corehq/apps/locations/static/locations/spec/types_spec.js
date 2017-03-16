@@ -77,12 +77,12 @@ describe('Location Types', function() {
         });
 
         describe('include_without_expanding_options', function(){
-            it('Provides all levels above itself', function(){
+            it('Provides all levels', function(){
                 var returned_loc_types = _.map(
                     this.block_model.include_without_expanding_options(),
                     extract_name
                 ),
-                    desired_loc_types_returned = _.map([this.state_model, this.district_model, this.block_model], extract_name);
+                    desired_loc_types_returned = _.map([this.state_model, this.district_model, this.block_model, this.supervisor_model], extract_name);
                 assert.sameMembers(desired_loc_types_returned, returned_loc_types);
             });
 
@@ -129,6 +129,16 @@ describe('Location Types', function() {
                 assert.equal(this.town_model.level(), 2);
                 assert.equal(this.state_model.level(), 0);
                 assert.equal(this.city_model.level(), 2);
+            });
+        });
+        describe('include_without_expanding_options', function(){
+            it('Provides all levels', function(){
+                var returned_loc_types = _.map(
+                    this.region_model.include_without_expanding_options(),
+                    extract_name
+                ),
+                    desired_loc_types_returned = ['state', 'county | region', 'city | town'];
+                assert.sameMembers(desired_loc_types_returned, returned_loc_types);
             });
         });
     });
