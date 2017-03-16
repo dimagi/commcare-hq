@@ -105,7 +105,7 @@
                         </span>
                     </th>
                     <th>{% trans "Direction" %}</th>
-                    <!-- ko if: hqImport('app_manager/js/app_manager.js').checkCommcareVersion("2.35") -->
+                    {% if app.enable_case_list_sort_blanks %}
                         <th>
                             {% trans "Display Blanks" %}
                             <span class="hq-help-template"
@@ -117,7 +117,7 @@
                                       {% endblocktrans %}" >
                             </span>
                         </th>
-                    <!-- /ko -->
+                    {% endif %}
                     {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
                         <th>{% trans "Sort Calculation" %}{{ request|toggle_tag_info:"SORT_CALCULATION_IN_CASE_LIST" }}</th>
                     {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
@@ -167,7 +167,7 @@
                         </select>
                     </td>
 
-                    <!-- ko if: hqImport('app_manager/js/app_manager.js').checkCommcareVersion("2.35") -->
+                    {% if app.enable_case_list_sort_blanks %}
                         <td>
                             <select class="form-control" data-bind="value: blanks">
                                 <option value="last">
@@ -178,7 +178,7 @@
                                 </option>
                             </select>
                         </td>
-                    <!-- /ko -->
+                    {% endif %}
 
                     {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
                       <td>
