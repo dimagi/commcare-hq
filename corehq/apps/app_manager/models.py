@@ -1099,12 +1099,15 @@ class FormBase(DocumentSchema):
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False):
-        return XForm(self.source).get_questions(
-            langs=langs,
-            include_triggers=include_triggers,
-            include_groups=include_groups,
-            include_translations=include_translations,
-        )
+        try:
+            return XForm(self.source).get_questions(
+                langs=langs,
+                include_triggers=include_triggers,
+                include_groups=include_groups,
+                include_translations=include_translations,
+            )
+        except XFormException as e:
+            raise XFormException("Error in form {}".format(self.full_path_name), e)
 
     @memoized
     def get_case_property_name_formatter(self):
