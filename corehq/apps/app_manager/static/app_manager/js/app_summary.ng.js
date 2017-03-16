@@ -198,7 +198,7 @@
                 formIcon = 'fcc fcc-app-completeform appnav-primary-icon appnav-primary-icon-lg';
             } else if (form_module.action_type === 'update') {
                 formIcon = 'fcc fcc-app-updateform appnav-primary-icon appnav-primary-icon-lg';
-            };
+            }
             return formIcon;
         }
 
@@ -214,7 +214,7 @@
                 moduleIcon = 'fa fa-bars';
             }
             return moduleIcon;
-        }
+        };
 
         self.init();
     };
