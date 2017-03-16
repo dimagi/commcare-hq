@@ -24,11 +24,11 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "display": "Case Open Date",
-                "field": "opened_on",
+                "display": "Date of Treatment Initiation",
+                "field": "treatment_initiation_date",
                 "type": "date",
                 "show_all": true,
-                "slug": "patient_registration_date"
+                "slug": "treatment_initiation_date"
             },
             {
                 "compare_as_string": false,
