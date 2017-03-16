@@ -1,6 +1,27 @@
 --- 
 +++ 
-@@ -44,9 +44,11 @@
+@@ -12,20 +12,8 @@
+        });
+     });
+     $(function () {
+-        hqImport('hqwebapp/js/urllib.js').registerUrl(
+-            'form_data',
+-            '/a/' + '{{ domain }}' + '/apps/view/---/form_data/'
+-        )
+         var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
+         var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
+-        var appDiff = hqImport('app_manager/js/app_diff.js').init(
+-            '#app-diff-modal .modal-body',
+-            {{ app.id|JSON }},
+-            {{ latest_build_id|JSON }}
+-        )
+-        $('#recent-changes-btn').on('click', function (e) {
+-            appDiff.renderDiff();
+-        })
+         // init releases
+         {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
+         var urls = {
+@@ -56,9 +44,11 @@
              fetchLimit: {{ fetchLimit }},
          };
          var el = $('#releases-table');
@@ -15,7 +36,7 @@
  
          var app_langs = {{ app.langs|JSON }};
          var app_profiles = {{ app.build_profiles|JSON }}
-@@ -56,8 +58,14 @@
+@@ -68,8 +58,14 @@
          $('#profiles-tab').koApplyBindings(profileManager);
          {% endif %}
      });
@@ -32,7 +53,7 @@
  </script>
  <script>
      $(function () {
-@@ -65,7 +73,27 @@
+@@ -77,7 +73,27 @@
      });
  </script>
  
@@ -61,16 +82,23 @@
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -102,7 +130,7 @@
+@@ -113,14 +129,8 @@
+                     css: {disabled: !buildButtonEnabled()}
                  ">{% trans 'Make New Version' %}</button>
  
+-                {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+-                <button class="btn btn-primary" id="recent-changes-btn" data-toggle="modal" data-target="#app-diff-modal">
+-                    {% trans 'View changes' %}
+-                </button>
+-                {% endif %}
+-
      <div id="build-errors-wrapper"></div>
 -    <table class="table">
 +    <table class="table table-releases">
          <tr>
              <th colspan="2">{% trans "Version" %}</th>
              <th colspan="2">{% trans "Date &amp; Time" %}</th>
-@@ -112,8 +140,8 @@
+@@ -130,8 +140,8 @@
              <th>{% trans "Comments" %}</th>
              {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
                  <th>Errors</th>
@@ -81,7 +109,23 @@
              {% endif %}
              <th>
                  {% trans "Released" %}
-@@ -199,7 +227,7 @@
+@@ -208,15 +218,6 @@
+                         </a>
+                     </div>
+                 </td>
+-                {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+-                <td>
+-                    <button class="btn btn-default" data-toggle="modal" data-target="#app-diff-modal" data-bind="
+-                        click: function() { $parent.onViewChanges($data.id(), $parent.previousReleaseId($index())) }
+-                    ">
+-                        {% trans "View Changes" %}
+-                    </button>
+-                </td>
+-                {% endif %}
+                 <td>
+                     <button class="btn btn-default hide" data-bind="
+                         openModal: 'revert-build-modal-template',
+@@ -226,7 +227,7 @@
                  </td>
                  <td>
                      <b data-bind="text: comment_user_name"></b>
@@ -90,7 +134,7 @@
                          value: build_comment,
                          rows: 1,
                          placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
-@@ -207,15 +235,15 @@
+@@ -234,15 +235,15 @@
                          saveParams: {'build_id': id},
                          saveValueName: 'comment',
                          errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
@@ -109,7 +153,7 @@
                  {% endif %}
                  <td class="build-is-released">
                      <div data-bind="starred: is_released, click: $root.toggleRelease"></div>
-@@ -294,17 +322,18 @@
+@@ -321,18 +322,18 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">
@@ -126,8 +170,10 @@
       </div>
  </div>
  {% endif %}
+-
+-{% include 'app_manager/v1/partials/app_diff_modal.html' %}
 +{% endif %}
- 
++
  <!-- Async Download Modals -->
 -{% include 'app_manager/v1/partials/download_async_modal.html' with element_id='download-zip-modal' %}
 +{% include 'app_manager/v2/partials/download_async_modal.html' with element_id='download-zip-modal' %}
