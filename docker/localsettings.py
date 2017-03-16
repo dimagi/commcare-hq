@@ -195,16 +195,6 @@ ELASTICSEARCH_VERSION = 1.7
 
 CACHE_REPORTS = True
 
-LOCAL_PILLOWTOPS = {
-    'core_ext': [
-        {
-            'name': 'kafka-ucr-main',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
-        },
-    ]
-}
-
 if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     UNIT_TESTING = False
     ADMINS = (('Admin', 'admin@example.com'),)

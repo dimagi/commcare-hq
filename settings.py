@@ -1562,6 +1562,30 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
         },
         {
+            'name': 'kafka-ucr-main',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+            'params': {
+                'ucr_division': '08'
+            }
+        },
+        {
+            'name': 'kafka-ucr-main-08',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+            'params': {
+                'ucr_division': '08'
+            }
+        },
+        {
+            'name': 'kafka-ucr-main-9f',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+            'params': {
+                'ucr_division': '9f'
+            }
+        },
+        {
             'name': 'kafka-ucr-static',
             'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
