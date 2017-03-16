@@ -1566,7 +1566,7 @@ PILLOWTOPS = {
             'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
             'params': {
-                'ucr_division': '08'
+                'ucr_division': '0f'
             }
         },
         {
