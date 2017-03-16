@@ -29,10 +29,8 @@ class Command(BaseCommand):
             nikshay_to_archive = []
             dots_99_to_archvie = []
             case_forms = FormProcessorInterface(domain).get_case_forms(episode_case_id)
-            _system_forms_count = 0
             for form in case_forms:
                 if form.user_id in ("system", "", None) and form.metadata.username == "system":
-                    _system_forms_count += 1
                     updates = get_case_updates(form)
                     update_actions = [update.get_update_action() for update in updates if update.id == episode_case_id]
                     for action in update_actions:
@@ -46,9 +44,6 @@ class Command(BaseCommand):
             nikshay_to_archive = nikshay_to_archive[:-1]
             dots_99_to_archvie = dots_99_to_archvie[:-1]
 
-            # print "Found {} system forms for case {}".format(_system_forms_count, episode_case_id)
-            # print "Can archive {}".format(len(nikshay_to_archive) + len(dots_99_to_archvie))
-
             to_archive.extend(nikshay_to_archive)
             to_archive.extend(dots_99_to_archvie)
 
@@ -58,5 +53,4 @@ class Command(BaseCommand):
             for form in to_archive:
                 f.write(form.form_id + "\n")
                 if options['commit']:
-                    print "archiving!"
-                    #form.archive(user_id="remove_duplicate_forms_script")
+                    form.archive(user_id="remove_duplicate_forms_script")
