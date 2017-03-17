@@ -6,6 +6,7 @@ from django.test import override_settings
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element
 
 XMNLS_BP_FORM = 'http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB'
@@ -25,6 +26,7 @@ NUTRITION_STATUS_SEVERE = "red"
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class TestChildHealthDataSource(BaseICDSDatasourceTest):
     datasource_filename = 'child_health_cases_monthly_tableau'
 

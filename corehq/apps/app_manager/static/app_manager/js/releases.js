@@ -193,6 +193,7 @@ hqDefine('app_manager/js/releases.js', function () {
     function ReleasesMain(o) {
         /* {fetchUrl, deleteUrl} */
         var AsyncDownloader = hqImport('app_manager/js/download_async_modal.js').AsyncDownloader;
+        var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body');
         var self = this;
         self.options = o;
         self.recipients = self.options.recipient_contacts;
@@ -256,6 +257,17 @@ hqDefine('app_manager/js/releases.js', function () {
                 }
             }
         });
+
+        self.previousBuildId = function(index) {
+            if (self.savedApps()[index + 1]) {
+                return self.savedApps()[index + 1].id();
+            }
+            return null;
+        };
+
+        self.onViewChanges = function(appIdOne, appIdTwo) {
+            appDiff.renderDiff(appIdOne, appIdTwo);
+        };
 
         self.addSavedApp = function (savedApp, toBeginning) {
             if (toBeginning) {

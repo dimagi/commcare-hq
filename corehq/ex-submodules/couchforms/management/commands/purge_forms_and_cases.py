@@ -28,6 +28,12 @@ test_run should be yes(case-sensitive) for a test_run and anything otherwise
 though deletion would be re-confirmed so dont panic
 """
 
+    def add_arguments(self, parser):
+        parser.add_argument('domain')
+        parser.add_argument('app_id')
+        parser.add_argument('version_number', type=int)
+        parser.add_argument('test_run')
+
     def __init__(self):
         super(Command, self).__init__()
         self.case_ids = set()
@@ -45,21 +51,19 @@ though deletion would be re-confirmed so dont panic
         self.forms_accessor = FormAccessors(self.domain)
         self.case_accessors = CaseAccessors(self.domain)
 
-    def ensure_prerequisites(self, args):
-        if len(args) != 4:
-            raise CommandError('Arguments number mismatch')
-        self.domain = args[0]
-        self.app_id = args[1]
-        self.version_number = int(args[2])
-        self.test_run = True if args[3] == 'yes' else False
-        _notify_parsed_args(*args)
+    def ensure_prerequisites(self, domain, app_id, version_number, test_run):
+        self.domain = domain
+        self.app_id = app_id
+        self.version_number = version_number
+        self.test_run = test_run == 'yes'
+        _notify_parsed_args(domain, app_id, version_number, test_run)
         app = Application.get(self.app_id)
         if app.domain != self.domain:
             raise CommandError('Domain not same as from app id')
         self.setup()
 
-    def handle(self, *args, **options):
-        self.ensure_prerequisites(args)
+    def handle(self, domain, app_id, version_number, test_run, **options):
+        self.ensure_prerequisites(domain, app_id, version_number, test_run)
         self.xform_ids = self.forms_accessor.get_all_form_ids_in_domain()
         self.iterate_forms_and_collect_case_ids()
         _print_final_debug_info(self.xform_ids, self.filtered_xform_ids, self.case_ids)
@@ -155,6 +159,8 @@ def _print_final_debug_info(xform_ids, filtered_xform_ids, case_ids):
 
 
 def _notify_parsed_args(domain_name, app_id, version_number, test_run):
-    print('Received request for domain : %s with app_id : %s to soft delete data before version number %s' % \
-          (domain_name, app_id, version_number))
+    print(
+        'Received request for domain : %s with app_id : %s to soft delete data before version number %d'
+        % (domain_name, app_id, version_number)
+    )
     print('Test run : %s' % test_run)

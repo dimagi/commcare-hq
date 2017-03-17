@@ -1,14 +1,19 @@
 from __future__ import absolute_import
 from collections import defaultdict
-from alembic.autogenerate.api import compare_metadata
 from datetime import datetime, timedelta
-from corehq.apps.change_feed import topics
+import hashlib
+
+from alembic.autogenerate.api import compare_metadata
+import six
+
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
+from corehq.apps.userreports.const import (
+    KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
+)
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.sql import metadata
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators, save_document
 from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
@@ -17,21 +22,21 @@ from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
-import six
+from pillow_retry.models import PillowError
 
-
-REBUILD_CHECK_INTERVAL = 10 * 60  # in seconds
-UCR_CHECKPOINT_ID = 'pillow-checkpoint-ucr-main'
-UCR_STATIC_CHECKPOINT_ID = 'pillow-checkpoint-ucr-static'
+REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 
 
 class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, data_source_provider, auto_repopulate_tables=False, *args, **kwargs):
+    def __init__(self, data_source_provider, auto_repopulate_tables=False,
+                 ucr_division='0f', *args, **kwargs):
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
         self.data_source_provider = data_source_provider
         self.auto_repopulate_tables = auto_repopulate_tables
+        self.ucr_start = ucr_division[0]
+        self.ucr_end = ucr_division[-1]
         super(ConfigurableReportTableManagerMixin, self).__init__(*args, **kwargs)
 
     def get_all_configs(self):
@@ -54,9 +59,11 @@ class ConfigurableReportTableManagerMixin(object):
 
         self.table_adapters_by_domain = defaultdict(list)
         for config in configs:
-            self.table_adapters_by_domain[config.domain].append(
-                get_indicator_adapter(config, can_handle_laboratory=True)
-            )
+            table_hash = hashlib.md5(config.table_id).hexdigest()[0]
+            if self.ucr_start <= table_hash <= self.ucr_end:
+                self.table_adapters_by_domain[config.domain].append(
+                    get_indicator_adapter(config, can_handle_laboratory=True)
+                )
         self.rebuild_tables_if_necessary()
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
@@ -66,7 +73,7 @@ class ConfigurableReportTableManagerMixin(object):
             adapter
             for adapter_list in self.table_adapters_by_domain.values()
             for adapter in adapter_list
-            if get_backend_id(adapter.config) in engine_ids
+            if get_backend_id(adapter.config, can_handle_laboratory=True) in engine_ids
         ]
 
     def rebuild_tables_if_necessary(self):
@@ -104,6 +111,7 @@ class ConfigurableReportTableManagerMixin(object):
                     self.rebuild_table(sql_adapter)
 
     def _rebuild_es_tables(self, adapters):
+        # note unlike sql rebuilds this doesn't rebuild the indicators
         for adapter in adapters:
             adapter.rebuild_table_if_necessary()
 
@@ -133,19 +141,31 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             # if no domain we won't save to any UCR table
             return
 
+        async_tables = []
+
         for table in self.table_adapters_by_domain[domain]:
             doc = change.get_document()
             ensure_document_exists(change)
             ensure_matched_revisions(change)
             if table.config.filter(doc):
-                # best effort will swallow errors in the table
-                table.best_effort_save(doc)
+                if table.run_asynchronous:
+                    async_tables.append(table.config._id)
+                else:
+                    # best effort will swallow errors in the table
+                    table.best_effort_save(doc)
             elif table.config.deleted_filter(doc):
                 table.delete(doc)
 
+        if async_tables:
+            future_time = datetime.utcnow() + timedelta(days=1)
+            error = PillowError.get_or_create(change, pillow_instance)
+            error.date_next_attempt = future_time
+            error.save()
+            save_document.delay(async_tables, doc, pillow_instance.pillow_id)
+
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
-    # the only reason this is a class is to avoid exposing _processor
+    # the only reason this is a class is to avoid exposing processors
     # for tests to be able to call bootstrap on it.
     # we could easily remove the class and push all the stuff in __init__ to
     # get_kafka_ucr_pillow below if we wanted.
@@ -155,7 +175,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     retry_errors = False
 
     def __init__(self, processor, pillow_name):
-        change_feed = KafkaChangeFeed(topics.ALL, group_id=pillow_name)
+        change_feed = KafkaChangeFeed(KAFKA_TOPICS, group_id=pillow_name)
         checkpoint = PillowCheckpoint(pillow_name)
         event_handler = MultiTopicCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
@@ -168,9 +188,9 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
             change_processed_event_handler=event_handler
         )
         # set by the superclass constructor
-        assert self._processors is not None
-        assert len(self._processors) == 1
-        self._processor = self._processors[0]
+        assert self.processors is not None
+        assert len(self.processors) == 1
+        self._processor = self.processors[0]
         assert self._processor.bootstrapped is not None
 
     def bootstrap(self, configs=None):
@@ -180,21 +200,23 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self._processor.rebuild_table(sql_adapter)
 
 
-def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main'):
+def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division='0f'):
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
             auto_repopulate_tables=False,
+            ucr_division=ucr_division
         ),
         pillow_name=pillow_id,
     )
 
 
-def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static'):
+def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division='0f'):
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),
             auto_repopulate_tables=True,
+            ucr_division=ucr_division
         ),
         pillow_name=pillow_id,
     )

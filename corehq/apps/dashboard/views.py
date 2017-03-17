@@ -10,7 +10,7 @@ from corehq.apps.dashboard.models import (
     TileConfiguration,
     AppsPaginatedContext,
     IconContext,
-    ReportsPaginatedContext, Tile, DataPaginatedContext)
+    ReportsPaginatedContext, Tile, DataPaginatedContext, DatadogContext)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
     DefaultProjectSettingsView
@@ -20,6 +20,7 @@ from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
 from corehq.apps.style.decorators import use_angular_js
+from corehq.toggles import DASHBOARD_GRAPHS
 from django_prbac.utils import has_privilege
 
 
@@ -211,6 +212,14 @@ def _get_default_tile_configurations():
             help_text=_('Build, update, and deploy applications'),
         ),
         TileConfiguration(
+            title=_('Form Submissions'),
+            slug='graph',
+            icon='fcc fcc-reports',
+            context_processor_class=DatadogContext,
+            visibility_check=DASHBOARD_GRAPHS.enabled_for_request,
+            help_text=_("Form submissions for this domain over the last 7 days"),
+        ),
+        TileConfiguration(
             title=_('Reports'),
             slug='reports',
             icon='fcc fcc-reports',
@@ -221,13 +230,13 @@ def _get_default_tile_configurations():
                         'project data'),
         ),
         TileConfiguration(
-            title=_('CommCare Supply Setup'),
+            title=_('{cc_name} Supply Setup').format(cc_name=settings.COMMCARE_NAME),
             slug='commtrack_setup',
             icon='fcc fcc-commtrack',
             context_processor_class=IconContext,
             urlname='default_commtrack_setup',
             visibility_check=can_view_commtrack_setup,
-            help_text=_("Update CommCare Supply Settings"),
+            help_text=_("Update {cc_name} Supply Settings").format(cc_name=settings.COMMCARE_NAME),
         ),
         TileConfiguration(
             title=_('Data'),

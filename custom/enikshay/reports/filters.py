@@ -3,6 +3,7 @@ from datetime import datetime
 from django.core.urlresolvers import reverse
 
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseReportFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import QuarterFilter as UCRQuarterFilter
 from corehq.apps.userreports.reports.filters.choice_providers import LocationChoiceProvider
@@ -133,3 +134,11 @@ class QuarterFilter(BaseReportFilter):
             )
         except FilterValueException:
             return cls.quarter_filter().default_value()
+
+
+class DateOfDiagnosisFilter(DatespanFilter):
+    label = _('Date of Diagnosis')
+
+
+class TreatmentInitiationDateFilter(DatespanFilter):
+    label = _('Date of Treatment Initiation')

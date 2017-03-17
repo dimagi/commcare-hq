@@ -104,9 +104,9 @@ class DataSourceConfigurationDbTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(DataSourceConfigurationDbTest, cls).setUpClass()
-        DataSourceConfiguration(domain='foo', table_id='foo1', referenced_doc_type='doc1').save()
-        DataSourceConfiguration(domain='foo', table_id='foo2', referenced_doc_type='doc2').save()
-        DataSourceConfiguration(domain='bar', table_id='bar1', referenced_doc_type='doc3').save()
+        DataSourceConfiguration(domain='foo', table_id='foo1', referenced_doc_type='XFormInstance').save()
+        DataSourceConfiguration(domain='foo', table_id='foo2', referenced_doc_type='XFormInstance').save()
+        DataSourceConfiguration(domain='bar', table_id='bar1', referenced_doc_type='XFormInstance').save()
 
     @classmethod
     def tearDownClass(cls):
@@ -127,7 +127,7 @@ class DataSourceConfigurationDbTest(TestCase):
         start = datetime.datetime.utcnow()
         time.sleep(.01)
         data_source = DataSourceConfiguration(
-            domain='mod-test', table_id='mod-test', referenced_doc_type='mod-test'
+            domain='mod-test', table_id='mod-test', referenced_doc_type='XFormInstance'
         )
         data_source.save()
         self.assertTrue(start < data_source.last_modified)
@@ -146,12 +146,12 @@ class DataSourceConfigurationDbTest(TestCase):
     def test_domain_is_required(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(table_id='table',
-                                    referenced_doc_type='doc').save()
+                                    referenced_doc_type='XFormInstance').save()
 
     def test_table_id_is_required(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(domain='domain',
-                                    referenced_doc_type='doc').save()
+                                    referenced_doc_type='XFormInstance').save()
 
     def test_doc_type_is_required(self):
         with self.assertRaises(BadValueError):

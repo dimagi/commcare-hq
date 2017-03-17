@@ -62,8 +62,14 @@
                             <i class="fa fa-plus"></i> <strong>Add...</strong> to create
                             some menus.
                         {% case "missing module" %}
-                            This application is missing a menu. If you have deleted any menu recently, make sure that
+                            {% blocktrans %}
+                            This application is missing a module. If you have deleted any modules recently, make sure that
                             you have removed all references to them. If you continue to experience problems, please report an issue.
+                            {% endblocktrans %}
+                            {% if error.message %}
+                            <br/>{% trans "Details:" %}<br/>
+                            {{ error.message }}
+                            {% endif %}
                         {% case "no forms" %}
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             has no forms.

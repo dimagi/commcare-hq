@@ -530,6 +530,7 @@ class Sort(AbstractTemplate):
     type = StringField('@type')
     order = StringField('@order')
     direction = StringField('@direction')
+    blanks = StringField('@blanks')
 
 
 class Style(XmlObject):

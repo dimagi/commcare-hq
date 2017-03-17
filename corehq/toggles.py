@@ -646,13 +646,6 @@ CUSTOM_INSTANCES = StaticToggle(
     namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
-CLOUDCARE_CACHE = StaticToggle(
-    'cloudcare_cache',
-    'Aggresively cache case list, can result in stale data',
-    TAG_EXPERIMENTAL,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',
@@ -1041,6 +1034,13 @@ INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VIEW_APP_CHANGES = StaticToggle(
+    'app-changes-with-improved-diff',
+    'Improved app changes view',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
 COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     'couch_sql_migration_blacklist',
     "Domains to exclude from migrating to SQL backend. Includes the folling"
@@ -1059,3 +1059,9 @@ SHOW_DEV_TOGGLE_INFO = StaticToggle(
     [NAMESPACE_USER]
 )
 
+DASHBOARD_GRAPHS = StaticToggle(
+    'dashboard_graphs',
+    'Show submission graph on dashboard',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
