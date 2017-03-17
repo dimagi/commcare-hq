@@ -13,9 +13,6 @@ from corehq.messaging.scheduling.models import (
 from corehq.messaging.scheduling.tasks import (
     refresh_timed_schedule_instances,
 )
-from corehq.messaging.scheduling.scheduling_partitioned.models import (
-    TimedScheduleInstance,
-)
 from datetime import datetime, date, time
 from django.test import TestCase
 from mock import patch
@@ -165,7 +162,6 @@ class DailyScheduleTest(TestCase):
             self.user2)
 
         self.assertEqual(send_patch.call_count, 0)
-
 
 
 @partitioned

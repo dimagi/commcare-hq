@@ -1,6 +1,6 @@
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
 from corehq.messaging.scheduling import util
-from datetime import timedelta, datetime
+from datetime import timedelta
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models
 
