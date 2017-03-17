@@ -414,7 +414,7 @@ class SqlBlobHelper(object):
         self.obj = obj
         self.blobs = {"name-ignored": BlobMeta(id=blob_id)}
         self.external_blobs = self.blobs
-        self._blobdb_bucket = lambda:bucket
+        self._blobdb_bucket = lambda: bucket
 
     @property
     def _id(self):
@@ -526,7 +526,7 @@ class SqlMigrator(Migrator):
 
     def __init__(self, slug, reindexer, doc_migrator_class):
         types = [reindexer.model_class]
-        assert not hasattr(types[0], "get_db"), types[0] # not a couch model
+        assert not hasattr(types[0], "get_db"), types[0]  # not a couch model
         doc_migrator = partial(doc_migrator_class, blob_helper=reindexer.blob_helper)
         super(SqlMigrator, self).__init__(slug, types, doc_migrator)
         self.reindexer = reindexer
@@ -544,12 +544,15 @@ class MultiDbMigrator(object):
     def __init__(self, slug, couch_types, sql_reindexers, doc_migrator_class):
         self.slug = slug
         self.migrators = migrators = []
+
         def db_key(doc_type):
             if isinstance(doc_type, tuple):
                 doc_type = doc_type[1]
             return doc_type.get_db().dbname
+
         for key, types in groupby(sorted(couch_types, key=db_key), key=db_key):
             migrators.append(Migrator(slug, list(types), doc_migrator_class))
+
         for rex in sql_reindexers:
             migrators.append(SqlMigrator(slug, rex(), doc_migrator_class))
 

@@ -507,7 +507,7 @@ class TestMigrateBackend(TestCase):
         with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
             config = settings.S3_BLOB_DB_SETTINGS
 
-        lost_db = TemporaryFilesystemBlobDB() # must be created before S3 dbs
+        lost_db = TemporaryFilesystemBlobDB()  # must be created before S3 dbs
         db1 = TemporaryS3BlobDB(config)
         assert get_blob_db() is db1, (get_blob_db(), db1)
         missing = "found.not"
