@@ -93,8 +93,8 @@ class KafkaChangeFeed(ChangeFeed):
 
         try:
             for message in consumer:
-                self._processed_topic_offsets[message.topic] = message.offset
                 yield change_from_kafka_message(message)
+                self._processed_topic_offsets[message.topic] = message.offset
         except ConsumerTimeout:
             assert not forever, 'Kafka pillow should not timeout when waiting forever!'
             # no need to do anything since this is just telling us we've reached the end of the feed
