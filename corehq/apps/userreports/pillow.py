@@ -235,7 +235,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
         eval_context = EvaluationContext(doc)
 
         def exist_in_database(document):
-            return table.get_query_object().filter_by(doc_id=document['_id']).count() > 0
+            return table.get_query_object().filter_by(doc_id=document['_id']).exists()
 
         for table in self.table_adapters_by_domain[domain]:
             if table.config.filter(doc):
