@@ -43,7 +43,7 @@ from corehq.apps.commtrack.tests.data.balances import (
 from corehq.apps.groups.models import Group
 from corehq.apps.products.models import Product
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from testapps.test_pillowtop.utils import process_kafka_changes
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 
 class XMLTest(TestCase):
@@ -217,7 +217,7 @@ class CommTrackSubmissionTest(XMLTest):
         self.sp2 = loc2.linked_supply_point()
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-    @process_kafka_changes('LedgerToElasticsearchPillow')
+    @process_pillow_changes('LedgerToElasticsearchPillow')
     def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime, **submit_extras):
         instance_id = uuid.uuid4().hex
         instance = submission_wrap(
@@ -640,7 +640,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
         # archive and confirm commtrack data is deleted
         form = FormAccessors(self.domain.name).get_form(second_form_id)
-        with process_kafka_changes('LedgerToElasticsearchPillow'):
+        with process_pillow_changes('LedgerToElasticsearchPillow'):
             form.archive()
 
         if should_use_sql_backend(self.domain):
@@ -658,7 +658,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
             self.assertIsNone(state.daily_consumption)
 
         # unarchive and confirm commtrack data is restored
-        with process_kafka_changes('LedgerToElasticsearchPillow'):
+        with process_pillow_changes('LedgerToElasticsearchPillow'):
             form.unarchive()
         _assert_initial_state()
 
