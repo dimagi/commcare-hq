@@ -113,6 +113,7 @@ class ConfigurableReportTableManagerMixin(object):
                     self.rebuild_table(sql_adapter)
 
     def _rebuild_es_tables(self, adapters):
+        # note unlike sql rebuilds this doesn't rebuild the indicators
         for adapter in adapters:
             adapter.rebuild_table_if_necessary()
 
