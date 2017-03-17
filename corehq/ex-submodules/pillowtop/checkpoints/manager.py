@@ -119,6 +119,9 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
     def fire_change_processed(self, change, context):
         if self.should_update_checkpoint(context):
             self.update_checkpoint(change['seq'])
+            return True
+
+        return False
 
 
 def get_default_django_checkpoint_for_legacy_pillow_class(pillow_class):

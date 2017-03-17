@@ -104,7 +104,9 @@ class PillowBase(object):
                         self._record_change_exception_in_datadog(change)
                         raise
                     else:
-                        self.fire_change_processed_event(change, context)
+                        updated = self.fire_change_processed_event(change, context)
+                        if updated:
+                            self._record_checkpoint_in_datadog()
                         self._record_change_success_in_datadog(change)
                     self._record_change_in_datadog(change, timer)
                 else:
@@ -126,6 +128,9 @@ class PillowBase(object):
 
     @abstractmethod
     def fire_change_processed_event(self, change, context):
+        """
+        :return: True if checkpoint was updated otherwise False
+        """
         pass
 
     def _normalize_checkpoint_sequence(self):
@@ -217,6 +222,9 @@ class ChangeEventHandler(object):
 
     @abstractmethod
     def fire_change_processed(self, change, context):
+        """
+        :return: True if checkpoint was updated otherwise False
+        """
         pass
 
 
@@ -261,7 +269,8 @@ class ConstructedPillow(PillowBase):
 
     def fire_change_processed_event(self, change, context):
         if self._change_processed_event_handler is not None:
-            self._change_processed_event_handler.fire_change_processed(change, context)
+            return self._change_processed_event_handler.fire_change_processed(change, context)
+        return False
 
 
 def handle_pillow_error(pillow, change, exception):
