@@ -50,7 +50,6 @@ branches:
   - np/django1.10 # NP 2/12
   - nc/adherence-mockup  # Noah 3/2
   - sr-drilldown-loc-ucr # 6/3
-  - fix-deploy-urls # Jenny 3/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
