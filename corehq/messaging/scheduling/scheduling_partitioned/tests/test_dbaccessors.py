@@ -1,6 +1,6 @@
 import uuid
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
-from corehq.form_processor.tests.utils import partitioned
+from corehq.form_processor.tests.utils import only_run_with_partitioned_database
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_alert_schedule_instance,
     get_timed_schedule_instance,
@@ -28,6 +28,7 @@ from django.conf import settings
 from django.test import TestCase
 
 
+@only_run_with_partitioned_database
 class BaseSchedulingPartitionedDBAccessorsTest(TestCase):
 
     @classmethod
@@ -67,7 +68,6 @@ class BaseSchedulingPartitionedDBAccessorsTest(TestCase):
         )
 
 
-@partitioned
 class TestSchedulingPartitionedDBAccessorsGetAndSave(BaseSchedulingPartitionedDBAccessorsTest):
 
     @classmethod
@@ -178,7 +178,6 @@ class TestSchedulingPartitionedDBAccessorsGetAndSave(BaseSchedulingPartitionedDB
             AlertScheduleInstance.objects.get_or_create(schedule_instance_id=None)
 
 
-@partitioned
 class TestSchedulingPartitionedDBAccessorsDeleteAndFilter(BaseSchedulingPartitionedDBAccessorsTest):
 
     @classmethod

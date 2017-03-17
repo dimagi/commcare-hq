@@ -1,12 +1,12 @@
 import re
-from corehq.form_processor.tests.utils import partitioned
+from corehq.form_processor.tests.utils import only_run_with_partitioned_database
 from corehq.sql_db.config import partition_config
 from django.apps import apps
 from django.db import ProgrammingError, transaction
 from django.test import TestCase
 
 
-@partitioned
+@only_run_with_partitioned_database
 class PartitionedModelsTest(TestCase):
 
     def assertModelExists(self, model_class, db):
