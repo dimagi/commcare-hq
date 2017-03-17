@@ -54,6 +54,10 @@ class Command(BaseCommand):
                             elif set(action.dynamic_properties.keys()) == {"dots_99_registered", "dots_99_error"}:
                                 dots_99_to_archvie.append(form)
 
+            # get_case_updates() returns the forms in the correct order, but sorting is probably a good idea in case
+            # get_case_updates ever changes.
+            nikshay_to_archive.sort(key=lambda f: f.received_on)
+            dots_99_to_archvie.sort(key=lambda f: f.received_on)
             nikshay_to_archive = nikshay_to_archive[:-1]
             dots_99_to_archvie = dots_99_to_archvie[:-1]
 
