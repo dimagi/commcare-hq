@@ -209,18 +209,22 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     @memoized
-    def filter_values(self):
+    def request_user(self):
         try:
-            user = self.request.couch_user
+            return self.request.couch_user
         except AttributeError:
-            user = None
-        return get_filter_values(self.filters, self.request_dict, user=user)
+            return None
+
+    @property
+    @memoized
+    def filter_values(self):
+        return get_filter_values(self.filters, self.request_dict, user=self.request_user)
 
     @property
     @memoized
     def filter_context(self):
         return {
-            filter.css_id: filter.context(self.filter_values[filter.css_id], self.lang)
+            filter.css_id: filter.context(self.request_dict, self.request_user, self.lang)
             for filter in self.filters
         }
 
