@@ -26,7 +26,7 @@ def json_serializer(obj):
 def log_request(func):
 
     def request_wrapper(self, path, data=None, **kwargs):
-        log = logger.debug
+        log = logger.info
         request_error = ''
         response_status = None
         response_body = ''
