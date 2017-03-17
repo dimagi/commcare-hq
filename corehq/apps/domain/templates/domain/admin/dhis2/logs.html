@@ -6,21 +6,33 @@
 {% block page_content %}
 <form>
     <fieldset>
-        <legend>DHIS2 Logs</legend>
-        {% if logs %}
-        <div>
-            {% for log in logs %}
-            <div class="row">
-                <span>
-                    <a href="{% url 'dhis2_log_detail_view' domain log.id %}">{{ log.timestamp }}</a>
-                </span>
-                <span>{{ log.request_method }}</span>
-                <span>{{ log.request_url }}</span>
-                <span>{{ log.response_status }}</span>
-            </div>
-            {% endfor %}
-        </div>
-            {% if is_paginated %}
+        <legend>{% trans "DHIS2 Logs" %}</legend>
+    {% if logs %}
+        <tbody class="col-sm-10">
+            <table class="table table-striped">
+                <thead>
+                    <th>{% trans "Timestamp" %}</th>
+                    <th>{% trans "Request" %}</th>
+                    <th>{% trans "Status" %}</th>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td><a href="{% url 'dhis2_log_detail_view' domain log.id %}" style="display: block;">
+                            {{ log.timestamp }}
+                        </a></td>
+                        <td><a href="{% url 'dhis2_log_detail_view' domain log.id %}" style="display: block;">
+                            {{ log.request_method }} {{ log.request_url }}
+                        </a></td>
+                        <td><a href="{% url 'dhis2_log_detail_view' domain log.id %}" style="display: block;">
+                            {{ log.response_status }}
+                        </a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        <div class="col-sm-10">
+        {% if is_paginated %}
         <div>
             <span>
                 {% if page_obj.has_previous %}
@@ -32,12 +44,12 @@
                 {% endif %}
             </span>
         </div>
-            {% endif %}
-        {% else %}
+        {% endif %}
+    {% else %}
         <div>
             <p>No DHIS2 API requests have been logged.</p>
         </div>
-        {% endif %}
+    {% endif %}
     </fieldset>
 </form>
 {% endblock %}
