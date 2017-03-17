@@ -22,7 +22,7 @@ from corehq.apps.app_manager.views.download import (
     DownloadCCZ,
 )
 from corehq.apps.app_manager.views.app_summary import (
-    FormDataView,
+    AppDataView,
     AppSummaryView,
     DownloadCaseSummaryView,
     DownloadFormSummaryView,
