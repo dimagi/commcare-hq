@@ -154,7 +154,7 @@ def test_checkpoint_creation(self, reindex_id, pillow_name):
         pillow = get_pillow_by_name(pillow_name)
         self.assertNotEqual(random_seq, pillow.checkpoint.get_current_sequence_id())
         self.assertEqual(
-            str(pillow.get_change_feed().get_checkpoint_value()),
+            pillow.get_change_feed().get_checkpoint_value(),
             pillow.checkpoint.get_current_sequence_id(),
         )
 

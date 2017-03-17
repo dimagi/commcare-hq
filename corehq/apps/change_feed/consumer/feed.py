@@ -115,7 +115,7 @@ class KafkaChangeFeed(ChangeFeed):
     def get_checkpoint_value(self):
         try:
             topic = self._get_single_topic_or_fail()
-            return get_topic_offset(topic)
+            return str(get_topic_offset(topic))
         except ValueError:
             return json.dumps(self.get_current_offsets())
 
