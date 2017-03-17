@@ -83,11 +83,11 @@ hqDefine('app_manager/js/app_diff.js', function () {
         self.renderDiff = function(appIdOne, appIdTwo) {
             self.$el.text(gettext('Crunching app diff...'));
             $.when(
-                self.controller.getFormData(appIdOne),
-                self.controller.getFormData(appIdTwo)
-            ).done(function(formDataOneJson, formDataTwoJson) {
+                self.controller.getAppData(appIdOne),
+                self.controller.getAppData(appIdTwo)
+            ).done(function(appDataOneJson, appDataTwoJson) {
                 try {
-                    self.$el.html(self.generateHtmlDiff(formDataOneJson, formDataTwoJson));
+                    self.$el.html(self.generateHtmlDiff(appDataOneJson, appDataTwoJson));
                     self.$el.find('.diff-questions:not(:has(.diff-change))').html(
                         '<i>' + gettext('No changes detected') + '</i>'
                     );
@@ -114,23 +114,33 @@ hqDefine('app_manager/js/app_diff.js', function () {
          *
          * returns {String} An html string representing the diff
          */
-        self.generateHtmlDiff = function(formDataOneJson, formDataTwoJson) {
-            var modulesOne = [],
-                modulesTwo = [],
+        self.generateHtmlDiff = function(appDataOneJson, appDataTwoJson) {
+            var elementsOne = [],
+                elementsTwo = [],
+                optionsOne = { formNameMap: appDataOneJson.form_name_map },
+                optionsTwo = { formNameMap: appDataTwoJson.form_name_map },
                 textOne,
                 textTwo,
                 header,
                 diffObjects,
                 totalChanges = { added: 0, removed: 0 },
                 fullHtml;
-            _.each(formDataOneJson, function(d) {
-                modulesOne.push(new ModuleDatum(d, self.options));
+            _.each(appDataOneJson.case_data.case_types, function(d) {
+                elementsOne.push(new CaseTypeDatum(d, $.extend(true, {}, optionsOne, self.options)));
             });
-            _.each(formDataTwoJson, function(d) {
-                modulesTwo.push(new ModuleDatum(d, self.options));
+            _.each(appDataTwoJson.case_data.case_types, function(d) {
+                elementsTwo.push(new CaseTypeDatum(d, $.extend(true, {}, optionsTwo, self.options)));
             });
-            textOne = _.map(modulesOne, function(m) { return m.toString(); }).join('\n');
-            textTwo = _.map(modulesTwo, function(m) { return m.toString(); }).join('\n');
+            _.each(appDataOneJson.form_data.modules, function(d) {
+                elementsOne.push(new ModuleDatum(d, self.options));
+            });
+            _.each(appDataTwoJson.form_data.modules, function(d) {
+                elementsTwo.push(new ModuleDatum(d, self.options));
+            });
+
+
+            textOne = _.map(elementsOne, function(m) { return m.toString(); }).join('\n');
+            textTwo = _.map(elementsTwo, function(m) { return m.toString(); }).join('\n');
             diffObjects = JsDiff.diffLines(textTwo, textOne);
 
             fullHtml = HtmlUtils.makeUl('diff-app fa-ul') + '\n';
@@ -155,6 +165,91 @@ hqDefine('app_manager/js/app_diff.js', function () {
             );
 
             return header + fullHtml;
+        };
+    };
+
+    var CaseTypeDatum = function(json, options) {
+        var self = this;
+        this.options = options;
+        this.name = json.name;
+        this.properties = _.map(json.properties, function(p) { return new CasePropertyDatum(p, self.options); });
+
+        this.toString = function() {
+            var lines = [
+                HtmlUtils.makeLi(sanitize(self.name), 'diff-case-type', 'envelope'),
+                HtmlUtils.makeUl('diff-properties fa-ul'),
+                _.map(self.properties, function(p) { return p.toString(); }).join('\n'),
+                HtmlUtils.closeUl(),
+                HtmlUtils.closeLi(),
+            ];
+            return lines.join('\n');
+        };
+    };
+
+    var CasePropertyDatum = function(json, options) {
+        var self = this;
+        this.options = options;
+        this.name = json.name;
+        this.forms = _.map(json.forms, function(form) { return new ShortFormDatum(form, self.options); });
+
+        this.toString = function() {
+            var lines = [
+                HtmlUtils.makeLi(sanitize(self.name), 'diff-case-property', ''),
+                HtmlUtils.makeUl('diff-properties fa-ul'),
+                _.map(self.forms, function(f) { return f.toString(); }).join('\n'),
+                HtmlUtils.closeUl(),
+                HtmlUtils.closeLi(),
+            ];
+            return lines.join('\n');
+        };
+    };
+
+    var ShortFormDatum = function(json, options) {
+        var self = this;
+        this.id = json.form_id;
+        this.options = options;
+        this.saveQuestions = _.map(
+            json.save_questions,
+            function(q) { return new CaseUpdateQuestion(q, self.options); }
+        );
+        this.loadQuestions = _.map(
+            json.load_questions,
+            function(q) { return new CaseUpdateQuestion(q, self.options); }
+        );
+
+        this.toString = function() {
+            var formName = (
+                self.options.formNameMap[self.id].module_name[self.options.lang] + ' > ' +
+                self.options.formNameMap[self.id].form_name[self.options.lang]
+            );
+            var lines = [
+                HtmlUtils.makeLi(sanitize(formName), 'diff-form', 'file-o'),
+                HtmlUtils.makeLi(gettext('Save Questions'), 'diff-underline fa-ul', '', true),
+                HtmlUtils.makeUl('diff-questions diff-save-questions fa-ul'),
+                _.map(self.saveQuestions, function(q) { return q.toString(); }).join('\n'),
+                HtmlUtils.closeUl(),
+                HtmlUtils.makeLi(gettext('Load Questions'), 'diff-underline fa-ul', '', true),
+                HtmlUtils.makeUl('diff-questions diff-load-questions fa-ul'),
+                _.map(self.loadQuestions, function(q) { return q.toString(); }).join('\n'),
+                HtmlUtils.closeUl(),
+                HtmlUtils.closeLi(),
+            ];
+            return lines.join('\n');
+        };
+    };
+
+    var CaseUpdateQuestion = function(json, options) {
+        var self = this;
+        this.options = options;
+        this.condition = json.condition;
+        this.hashtagValue = json.question.hashtagValue;
+
+        this.toString = function() {
+            var lines = [
+                HtmlUtils.makeLi(self.hashtagValue, 'diff-question-id', '', true),
+                (self.condition ? HtmlUtils.makeLi(sanitize(self.condition), '', 'calculator', true) : ''),
+            ];
+            return lines.join('\n');
         };
     };
 
@@ -271,8 +366,8 @@ hqDefine('app_manager/js/app_diff.js', function () {
     var Controller = function() {
         var cache = {};
 
-        this.getFormData = function(appId) {
-            var url = reverse('form_data', appId),
+        this.getAppData = function(appId) {
+            var url = reverse('app_data', appId),
                 deferred = $.Deferred();
 
             if (cache.hasOwnProperty(appId)) {
@@ -331,6 +426,9 @@ hqDefine('app_manager/js/app_diff.js', function () {
         },
         closeUl: function() {
             return HtmlUtils.closeEl('ul');
+        },
+        closeLi: function() {
+            return HtmlUtils.closeEl('li');
         },
         closeEl: function(el) {
             return '</' + el + '>';
