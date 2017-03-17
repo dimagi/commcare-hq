@@ -1845,6 +1845,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
+    ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
     ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
     ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression')
