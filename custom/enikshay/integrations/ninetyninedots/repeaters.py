@@ -111,7 +111,15 @@ class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
         except ENikshayCaseNotFound:
             return False
 
-        return registered_episode and props_changed and not is_submission_from_test_location(person_case)
+        return (
+            registered_episode
+            and props_changed
+            and (
+                case.type == CASE_TYPE_PERSON and not is_submission_from_test_location(person_case)
+                or case.type == CASE_TYPE_EPISODE and not is_submission_from_test_location(
+                        get_person_case_from_episode(episode_case.domain, episode_case))
+            )
+        )
 
 
 class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
