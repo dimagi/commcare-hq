@@ -117,12 +117,16 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
 
     def allowed_to_forward(self, episode_case):
         allowed_case_types_and_users = self._allowed_case_type(episode_case) and self._allowed_user(episode_case)
+        if not allowed_case_types_and_users:
+            return False
+
         episode_case_properties = episode_case.dynamic_case_properties()
-        return allowed_case_types_and_users and (
+        return (
             episode_case_properties.get('nikshay_registered', 'false') == 'true' and
             episode_case_properties.get('nikshay_id', False) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
-            episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys()
+            episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys() and
+            not is_submission_from_test_location(get_person_case_from_episode(episode_case.domain, episode_case))
         )
 
 
