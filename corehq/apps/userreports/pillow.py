@@ -73,7 +73,7 @@ class ConfigurableReportTableManagerMixin(object):
             adapter
             for adapter_list in self.table_adapters_by_domain.values()
             for adapter in adapter_list
-            if get_backend_id(adapter.config) in engine_ids
+            if get_backend_id(adapter.config, can_handle_laboratory=True) in engine_ids
         ]
 
     def rebuild_tables_if_necessary(self):
@@ -111,6 +111,7 @@ class ConfigurableReportTableManagerMixin(object):
                     self.rebuild_table(sql_adapter)
 
     def _rebuild_es_tables(self, adapters):
+        # note unlike sql rebuilds this doesn't rebuild the indicators
         for adapter in adapters:
             adapter.rebuild_table_if_necessary()
 
