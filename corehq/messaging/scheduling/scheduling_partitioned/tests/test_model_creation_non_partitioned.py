@@ -14,7 +14,7 @@ class NonPartitionedModelsTest(TestCase):
                 # is raised otherwise we won't be able to run any more queries.
                 model_class.objects.using(db).count()
         except ProgrammingError:
-            self.assertTrue(False)
+            self.fail()
 
     def get_scheduling_models(self):
         return apps.get_app_config('scheduling').get_models()
