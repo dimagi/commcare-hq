@@ -251,36 +251,36 @@ class ProcessRelatedDocTypePillowTest(TestCase):
             errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
             self.assertEqual(errors.count(), 0)
 
-    @patch('corehq.apps.userreports.tasks._get_config_by_id')
-    def test_async_save_fails(self, config):
-        config.return_value = None
-        since = self.pillow.get_change_feed().get_current_offsets()
-        for i in range(3):
-            form, cases = post_case_blocks(
-                [
-                    CaseBlock(
-                        create=i == 0,
-                        case_id='parent-id',
-                        case_name='parent-name',
-                        case_type='bug',
-                        update={'update-prop-parent': i},
-                    ).as_xml(),
-                    CaseBlock(
-                        create=i == 0,
-                        case_id='child-id',
-                        case_name='child-name',
-                        case_type='bug-child',
-                        index={'parent': ('bug', 'parent-id')},
-                        update={'update-prop-child': i}
-                    ).as_xml()
-                ], domain=self.domain
-            )
-        self.pillow.process_changes(since=since, forever=False)
-        rows = self.adapter.get_query_object()
-        self.assertEqual(rows.count(), 0)
-        errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
-        self.assertEqual(errors.count(), 1)
-        errors.delete()
+    # @patch('corehq.apps.userreports.tasks._get_config_by_id')
+    # def test_async_save_fails(self, config):
+    #     config.return_value = None
+    #     since = self.pillow.get_change_feed().get_current_offsets()
+    #     for i in range(3):
+    #         form, cases = post_case_blocks(
+    #             [
+    #                 CaseBlock(
+    #                     create=i == 0,
+    #                     case_id='parent-id',
+    #                     case_name='parent-name',
+    #                     case_type='bug',
+    #                     update={'update-prop-parent': i},
+    #                 ).as_xml(),
+    #                 CaseBlock(
+    #                     create=i == 0,
+    #                     case_id='child-id',
+    #                     case_name='child-name',
+    #                     case_type='bug-child',
+    #                     index={'parent': ('bug', 'parent-id')},
+    #                     update={'update-prop-child': i}
+    #                 ).as_xml()
+    #             ], domain=self.domain
+    #         )
+    #     self.pillow.process_changes(since=since, forever=False)
+    #     rows = self.adapter.get_query_object()
+    #     self.assertEqual(rows.count(), 0)
+    #     errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+    #     self.assertEqual(errors.count(), 1)
+    #     errors.delete()
 
 
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
