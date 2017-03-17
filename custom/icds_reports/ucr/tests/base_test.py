@@ -6,7 +6,7 @@ from xml.etree import ElementTree
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory
 from corehq.util.test_utils import TestFileMixin
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import iteratively_build_table
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -50,27 +50,25 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
             cls.domain,
         )
         cls.casefactory = CaseFactory(domain=cls.domain)
-        adapter = IndicatorSqlAdapter(cls.datasource)
-        adapter.build_table()
+        cls.adapter = get_indicator_adapter(cls.datasource, can_handle_laboratory=True)
+        cls.adapter.rebuild_table()
 
     @classmethod
     def tearDownClass(cls):
         cls._call_center_domain_mock.stop()
-        adapter = IndicatorSqlAdapter(cls.datasource)
-        adapter.drop_table()
+        cls.adapter.drop_table()
         super(BaseICDSDatasourceTest, cls).tearDownClass()
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
-        adapter = IndicatorSqlAdapter(self.datasource)
-        adapter.clear_table()
+        self.adapter.clear_table()
 
     def _get_query_object(self):
-        adapter = IndicatorSqlAdapter(self.datasource)
-        return adapter.get_query_object()
+        return self.adapter.get_query_object()
 
     def _run_iterative_monthly_test(self, case_id, cases, start_date=date(2015, 12, 1)):
         iteratively_build_table(self.datasource)
+        # TODO(Sheel/J$) filter_by does not work on ES
         query = self._get_query_object().filter_by(doc_id=case_id)
         self.assertEqual(query.count(), 7)
 
