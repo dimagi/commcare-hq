@@ -192,10 +192,12 @@ class TimedScheduleInstance(ScheduleInstance):
 
         self.timed_schedule_id = value.schedule_id
 
-    def recalculate_schedule(self, schedule=None):
+    def recalculate_schedule(self, schedule=None, new_start_date=None):
         schedule = schedule or self.memoized_schedule
         self.current_event_num = 0
         self.schedule_iteration_num = 1
         self.active = True
+        if new_start_date:
+            self.start_date = new_start_date
         schedule.set_first_event_due_timestamp(self, self.start_date)
         schedule.move_to_next_event_not_in_the_past(self)

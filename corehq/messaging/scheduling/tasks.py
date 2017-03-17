@@ -41,7 +41,7 @@ def refresh_alert_schedule_instances(schedule, recipients):
 
 
 @task(ignore_result=True)
-def refresh_timed_schedule_instances(schedule, start_date, recipients):
+def refresh_timed_schedule_instances(schedule, recipients, start_date=None):
     """
     :param schedule: the TimedSchedule
     :param start_date: the date to start the TimedSchedule
@@ -71,7 +71,7 @@ def refresh_timed_schedule_instances(schedule, start_date, recipients):
         if key not in new_recipients:
             delete_timed_schedule_instance(schedule_instance)
         else:
-            schedule_instance.recalculate_schedule(schedule)
+            schedule_instance.recalculate_schedule(schedule, new_start_date=start_date)
             save_timed_schedule_instance(schedule_instance)
 
 
