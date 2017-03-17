@@ -157,6 +157,12 @@ class PillowBase(object):
         datadog_counter('commcare.change_feed.change_feed.checkpoint', tags=[
             'pillow_name:{}'.format(self.get_name()),
         ])
+        checkpoint_sequence = self._normalize_checkpoint_sequence()
+        for topic, value in checkpoint_sequence.iteritems():
+            datadog_gauge('commcare.change_feed.checkpoint_offsets', value, tags=[
+                'pillow_name:{}'.format(self.get_name()),
+                'topic:{}'.format(topic),
+            ])
 
     def _record_change_in_datadog(self, change, timer):
         change_feed = self.get_change_feed()
