@@ -4131,7 +4131,7 @@ class ReportModule(ModuleBase):
                 'type': 'report config ref invalid',
                 'module': self.get_module_info()
             })
-        if not self.reports:
+        elif not self.reports:
             errors.append({
                 'type': 'no reports',
                 'module': self.get_module_info(),
