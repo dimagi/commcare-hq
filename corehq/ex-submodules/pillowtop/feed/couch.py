@@ -12,10 +12,12 @@ class CouchChangeFeed(ChangeFeed):
         self._couch_filter = couch_filter
         self._include_docs = include_docs
         self._extra_couch_view_params = extra_couch_view_params or {}
+        self._last_processed_seq = None
 
     def iter_changes(self, since, forever):
         extra_args = {'feed': 'continuous'} if forever else {}
         extra_args.update(self._extra_couch_view_params)
+        self._last_processed_seq = since
         changes_stream = ChangesStream(
             db=self._couch_db,
             heartbeat=True,
@@ -26,9 +28,13 @@ class CouchChangeFeed(ChangeFeed):
         )
         for couch_change in changes_stream:
             yield change_from_couch_row(couch_change, document_store=self._document_store)
+            self._last_processed_seq = couch_change.get('seq', None)
 
     def get_latest_change_id(self):
         return get_current_seq(self._couch_db)
+
+    def get_processed_offsets(self):
+        return {self._couch_db.dbname: force_seq_int(self._last_processed_seq)}
 
     def get_current_offsets(self):
         return {self._couch_db.dbname: force_seq_int(self.get_latest_change_id())}

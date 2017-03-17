@@ -125,7 +125,15 @@ class ChangeFeed(object):
     @abstractmethod
     def get_current_offsets(self):
         """
-        :return: A dictionary of ``(topic/db_name, offset integer)`` pairs
+        :return: A dictionary of ``(topic/db_name, offset integer)`` pairs representing
+                 the max sequence ID that is available for each topic.
+        """
+
+    @abstractmethod
+    def get_processed_offsets(self):
+        """
+        :return: A dictionary of ``topic/dbname, offset integer`` pairs representing
+                 the last sequence ID that was processed for each topic.
         """
 
     @abstractmethod
