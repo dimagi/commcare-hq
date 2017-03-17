@@ -13,7 +13,7 @@ from corehq.apps.userreports.const import (
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.sql import metadata
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators, save_document
 from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
@@ -22,11 +22,9 @@ from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
-
+from pillow_retry.models import PillowError
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
-UCR_CHECKPOINT_ID = 'pillow-checkpoint-ucr-main'
-UCR_STATIC_CHECKPOINT_ID = 'pillow-checkpoint-ucr-static'
 
 
 class ConfigurableReportTableManagerMixin(object):
@@ -142,15 +140,27 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             # if no domain we won't save to any UCR table
             return
 
+        async_tables = []
+
         for table in self.table_adapters_by_domain[domain]:
             doc = change.get_document()
             ensure_document_exists(change)
             ensure_matched_revisions(change)
             if table.config.filter(doc):
-                # best effort will swallow errors in the table
-                table.best_effort_save(doc)
+                if table.run_asynchronous:
+                    async_tables.append(table.config._id)
+                else:
+                    # best effort will swallow errors in the table
+                    table.best_effort_save(doc)
             elif table.config.deleted_filter(doc):
                 table.delete(doc)
+
+        if async_tables:
+            future_time = datetime.utcnow() + timedelta(days=1)
+            error = PillowError.get_or_create(change, pillow_instance)
+            error.date_next_attempt = future_time
+            error.save()
+            save_document.delay(async_tables, doc, pillow_instance.pillow_id)
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):

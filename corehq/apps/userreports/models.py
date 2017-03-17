@@ -94,6 +94,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     meta = SchemaProperty(DataSourceMeta)
     is_deactivated = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
+    asynchronous = BooleanProperty(default=False)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.

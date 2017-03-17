@@ -57,3 +57,19 @@ class IndicatorAdapter(object):
 
     def delete(self, doc):
         raise NotImplementedError
+
+    @property
+    def run_asynchronous(self):
+        if self.config.asynchronous:
+            return True
+
+        for indicator in self.config.configured_indicators:
+            if indicator['type'] == 'expression':
+                if indicator['expression']['type'] == 'related_doc':
+                    return True
+
+        for name, expression in self.config.named_expressions.items():
+            if expression['type'] == 'related_doc':
+                return True
+
+        return False
