@@ -117,7 +117,7 @@ class KafkaChangeFeed(ChangeFeed):
             topic = self._get_single_topic_or_fail()
             return str(get_topic_offset(topic))
         except ValueError:
-            return json.dumps(self.get_latest_offsets())
+            return self.get_latest_offsets()
 
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         config = {

@@ -1,3 +1,4 @@
+import json
 from collections import namedtuple
 from datetime import datetime
 
@@ -53,6 +54,11 @@ class PillowCheckpoint(object):
         return get_or_create_checkpoint(self.checkpoint_id).sequence
 
     def update_to(self, seq):
+        if isinstance(seq, dict):
+            seq = json.dumps(seq)
+        elif isinstance(seq, int):
+            seq = str(seq)
+
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
         )

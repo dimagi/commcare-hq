@@ -131,6 +131,9 @@ class ChangeFeed(object):
     @abstractmethod
     def get_latest_offsets_as_checkpoint_value(self):
         """
-        :return: The latest offset value as a string
-                 (string change ID, or a json string if multiple feeds are used)
+        :return: The latest offset value in the format expected by the ``since`` param
+                 of ``iter_changes``:
+                   * string change ID for Cloudant and CouchDB
+                   * int change ID for single kafka topic
+                   * or a dict if multiple kafka topics are used
         """
