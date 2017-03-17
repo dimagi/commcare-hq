@@ -257,7 +257,7 @@
                                                         </span>
                                                     </label>
                                                 </div>
-                                                <form method="post" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}">{% csrf_token %}
+                                                <form method="post" action="{% url "send_to_recipients" domain %}">{% csrf_token %}
                                                     <div class="form-group">
                                                         <label>{% trans "Send to" %}</label>
                                                         <input type="text" name="recipients" value="" class="form-control"
