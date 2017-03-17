@@ -88,6 +88,7 @@ class TimedSchedule(Schedule):
 
                 target_date = date(year, month, current_event.day)
             else:
+                # It's a negative day, which counts back from the last day of the month
                 target_date = date(year, month, days_in_month + current_event.day + 1)
 
         return datetime.combine(target_date, current_event.time)
