@@ -156,8 +156,9 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
                 table.delete(doc)
 
         if async_tables:
-            future_time = datetime.utcnow() + timedelta(hours=1)
-            error = PillowError.get_or_create(change, pillow_instance, date_next=future_time)
+            future_time = datetime.utcnow() + timedelta(days=1)
+            error = PillowError.get_or_create(change, pillow_instance)
+            error.date_next_attempt = future_time
             error.save()
             save_document.delay(async_tables, doc, pillow_instance.pillow_id)
 
