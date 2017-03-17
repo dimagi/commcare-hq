@@ -129,13 +129,15 @@ class PillowBase(object):
         pass
 
     def _normalize_checkpoint_sequence(self):
-        from pillowtop.feed.couch import CouchChangeFeed
-        from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-
         if self.checkpoint is None:
             return {}
 
         sequence = self.get_last_checkpoint_sequence()
+        return self._normalize_sequence(sequence)
+
+    def _normalize_sequence(self, sequence):
+        from pillowtop.feed.couch import CouchChangeFeed
+        from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
         change_feed = self.get_change_feed()
 
         if not isinstance(sequence, dict):
@@ -158,10 +160,10 @@ class PillowBase(object):
 
     def _record_change_in_datadog(self, change, timer):
         change_feed = self.get_change_feed()
-        sequence = self._normalize_checkpoint_sequence()
+        current_seq = self._normalize_sequence(change_feed.get_processed_offsets())
         current_offsets = change_feed.get_current_offsets()
 
-        for topic, value in sequence.iteritems():
+        for topic, value in current_seq.iteritems():
             datadog_gauge('commcare.change_feed.processed_offsets', value, tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 'topic:{}'.format(topic),

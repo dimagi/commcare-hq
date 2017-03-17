@@ -106,6 +106,9 @@ class KafkaChangeFeed(ChangeFeed):
             topic: sequence + 1 for topic, sequence in self._processed_topic_offsets.items()
         }
 
+    def get_processed_offsets(self):
+        return copy(self._processed_topic_offsets)
+
     def get_current_offsets(self):
         return get_multi_topic_offset(self.topics)
 
