@@ -644,6 +644,7 @@ class Detail(OrderedXmlObject, IdNode):
     ORDER = ('title', 'lookup', 'details', 'fields')
 
     nodeset = StringField('@nodeset')
+    print_template = StringField('@print-template')
 
     title = NodeField('title/text', Text)
     lookup = NodeField('lookup', Lookup)
