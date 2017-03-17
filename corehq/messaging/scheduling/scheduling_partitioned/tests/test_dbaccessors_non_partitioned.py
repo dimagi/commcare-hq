@@ -22,7 +22,6 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
 )
 from corehq.util.exceptions import AccessRestricted
 from datetime import datetime, date
-from django.conf import settings
 from django.test import TestCase
 
 
@@ -185,8 +184,8 @@ class TestSchedulingNonPartitionedDBAccessorsDeleteAndFilter(BaseSchedulingNontP
         save_timed_schedule_instance(self.timed_instance3)
 
     def tearDown(self):
-         AlertScheduleInstance.objects.using(self.db).filter(domain=self.domain).delete()
-         TimedScheduleInstance.objects.using(self.db).filter(domain=self.domain).delete()
+        AlertScheduleInstance.objects.using(self.db).filter(domain=self.domain).delete()
+        TimedScheduleInstance.objects.using(self.db).filter(domain=self.domain).delete()
 
     def test_delete_alert_schedule_instance(self):
         self.assertEqual(AlertScheduleInstance.objects.using(self.db).count(), 3)

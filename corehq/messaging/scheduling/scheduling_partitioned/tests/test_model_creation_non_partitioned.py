@@ -1,4 +1,3 @@
-import re
 from corehq.form_processor.tests.utils import only_run_with_non_partitioned_database
 from django.apps import apps
 from django.db import ProgrammingError, transaction
