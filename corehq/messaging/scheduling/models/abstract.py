@@ -6,7 +6,7 @@ from corehq.messaging.scheduling.exceptions import (
     NoAvailableContent,
     UnknownContentType,
 )
-from corehq.messaging.scheduling.util import utcnow
+from corehq.messaging.scheduling import util
 
 
 class Schedule(models.Model):
@@ -36,7 +36,7 @@ class Schedule(models.Model):
         raise NotImplementedError()
 
     def move_to_next_event_not_in_the_past(self, instance):
-        while instance.active and instance.next_event_due < utcnow():
+        while instance.active and instance.next_event_due < util.utcnow():
             self.move_to_next_event(instance)
 
 

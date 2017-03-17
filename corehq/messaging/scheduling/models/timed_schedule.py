@@ -1,7 +1,7 @@
 import calendar
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
-from corehq.messaging.scheduling.util import utcnow
+from corehq.messaging.scheduling import util
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from datetime import timedelta, datetime, date
 from dimagi.utils.decorators.memoized import memoized
@@ -33,14 +33,14 @@ class TimedSchedule(Schedule):
         if start_date:
             instance.start_date = start_date
         else:
-            instance.start_date = ServerTime(utcnow()).user_time(instance.timezone).done().date()
+            instance.start_date = ServerTime(util.utcnow()).user_time(instance.timezone).done().date()
 
         self.set_next_event_due_timestamp(instance)
 
         if (
             not self.schedule_length == self.MONTHLY and
             not start_date and
-            instance.next_event_due < utcnow()
+            instance.next_event_due < util.utcnow()
         ):
             instance.start_date += timedelta(days=1)
             instance.next_event_due += timedelta(days=1)
