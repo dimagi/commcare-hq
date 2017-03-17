@@ -68,7 +68,7 @@ class Command(BaseCommand):
 
         xform_archived.disconnect(rebuild_form_cases)
         with open(log_file, "w") as f:
-            for form in to_archive:
+            for form in with_progress_bar(to_archive):
                 f.write(form.form_id + "\n")
                 if options['commit']:
                     form.archive(user_id="remove_duplicate_forms_script")
