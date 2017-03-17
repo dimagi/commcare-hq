@@ -68,4 +68,8 @@ class IndicatorAdapter(object):
                 if indicator['expression']['type'] == 'related_doc':
                     return True
 
+        for name, expression in self.config.named_expressions.items():
+            if expression['type'] == 'related_doc':
+                return True
+
         return False

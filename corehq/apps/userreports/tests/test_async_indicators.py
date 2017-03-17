@@ -2,6 +2,7 @@ from django.test import SimpleTestCase
 
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.tests.utils import get_data_source_with_related_doc_type
 
 
 class RunAsynchronousTest(SimpleTestCase):
@@ -59,5 +60,10 @@ class RunAsynchronousTest(SimpleTestCase):
             }
         }])
 
+        adapter = get_indicator_adapter(indicator_configuration)
+        self.assertTrue(adapter.run_asynchronous)
+
+    def test_named_expression(self):
+        indicator_configuration = get_data_source_with_related_doc_type()
         adapter = get_indicator_adapter(indicator_configuration)
         self.assertTrue(adapter.run_asynchronous)
