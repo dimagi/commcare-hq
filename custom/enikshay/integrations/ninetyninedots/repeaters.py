@@ -71,7 +71,7 @@ class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
             case_properties.get('dots_99_registered') is None
         )
         return enabled and not_registered and not is_submission_from_test_location(
-            get_person_case_from_episode(episode_case))
+            get_person_case_from_episode(episode_case.domain, episode_case))
 
 
 class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
@@ -151,7 +151,9 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
             and registered
             and from_enikshay
             and not previously_updated
-            and not is_submission_from_test_location(get_person_case_from_episode(episode_case))
+            and not is_submission_from_test_location(
+                get_person_case_from_episode(episode_case.domain, episode_case)
+            )
         )
 
 
@@ -186,7 +188,9 @@ class NinetyNineDotsTreatmentOutcomeRepeater(Base99DOTSRepeater):
             enabled
             and registered
             and case_properties_changed(episode_case, [TREATMENT_OUTCOME])
-            and not is_submission_from_test_location(get_person_case_from_episode(episode_case))
+            and not is_submission_from_test_location(
+                get_person_case_from_episode(episode_case.domain, episode_case)
+            )
         )
 
 
