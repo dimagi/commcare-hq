@@ -36,7 +36,7 @@ class process_couch_changes(ContextDecorator):
             self.pillow = get_pillow_by_name(pillow_name, instantiate=True)
 
     def __enter__(self):
-        self.seq = self.pillow.get_change_feed().get_latest_change_id()
+        self.seq = self.pillow.get_change_feed().get_checkpoint_value()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.pillow.process_changes(since=self.seq, forever=False)

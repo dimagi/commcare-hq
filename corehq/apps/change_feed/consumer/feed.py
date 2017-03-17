@@ -112,13 +112,10 @@ class KafkaChangeFeed(ChangeFeed):
     def get_current_offsets(self):
         return get_multi_topic_offset(self.topics)
 
-    def get_latest_change_id(self):
-        topic = self._get_single_topic_or_fail()
-        return get_topic_offset(topic)
-
     def get_checkpoint_value(self):
         try:
-            return self.get_latest_change_id()
+            topic = self._get_single_topic_or_fail()
+            return get_topic_offset(topic)
         except ValueError:
             return json.dumps(self.get_current_offsets())
 

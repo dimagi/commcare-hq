@@ -115,14 +115,6 @@ class ChangeFeed(object):
         pass
 
     @abstractmethod
-    def get_latest_change_id(self):
-        """
-        Should return an integer ID representing the last change - can be used
-        to show progress / changes remaining to process
-        """
-        pass
-
-    @abstractmethod
     def get_current_offsets(self):
         """
         :return: A dictionary of ``(topic/db_name, offset integer)`` pairs representing

@@ -20,14 +20,11 @@ class MockChangeFeed(ChangeFeed):
                 yield val
                 self._since += 1
 
-    def get_latest_change_id(self):
-        return len(self._queue)
-
     def get_current_offsets(self):
-        return {'test': self.get_latest_change_id()}
+        return {'test': len(self._queue)}
 
     def get_checkpoint_value(self):
-        return str(self.get_latest_change_id())
+        return str(len(self._queue))
 
     def get_processed_offsets(self):
         return {'test': self._since}
@@ -54,14 +51,11 @@ class RandomChangeFeed(ChangeFeed):
                 yield self._change_generator(self._since)
                 self._since += 1
 
-    def get_latest_change_id(self):
-        return self._count
-
     def get_current_offsets(self):
-        return {'test': self.get_latest_change_id()}
+        return {'test': self._count}
 
     def get_checkpoint_value(self):
-        return str(self.get_latest_change_id())
+        return str(self._count)
 
     def get_processed_offsets(self):
         return {'test': self._since}

@@ -30,17 +30,14 @@ class CouchChangeFeed(ChangeFeed):
             yield change_from_couch_row(couch_change, document_store=self._document_store)
             self._last_processed_seq = couch_change.get('seq', None)
 
-    def get_latest_change_id(self):
-        return get_current_seq(self._couch_db)
-
     def get_processed_offsets(self):
         return {self._couch_db.dbname: force_seq_int(self._last_processed_seq)}
 
     def get_current_offsets(self):
-        return {self._couch_db.dbname: force_seq_int(self.get_latest_change_id())}
+        return {self._couch_db.dbname: force_seq_int(get_current_seq(self._couch_db))}
 
     def get_checkpoint_value(self):
-        return str(self.get_latest_change_id())
+        return str(get_current_seq(self._couch_db))
 
     @property
     def couch_db(self):
