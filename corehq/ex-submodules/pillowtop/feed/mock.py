@@ -12,11 +12,13 @@ class MockChangeFeed(ChangeFeed):
         self._queue = queue
 
     def iter_changes(self, since, forever=False):
+        self._since = since
         if forever:
             raise ValueError('Forever option not supported for mock feed!')
         else:
             for val in self._queue[since:]:
                 yield val
+                self._since += 1
 
     def get_latest_change_id(self):
         return len(self._queue)
@@ -26,6 +28,9 @@ class MockChangeFeed(ChangeFeed):
 
     def get_checkpoint_value(self):
         return str(self.get_latest_change_id())
+
+    def get_processed_offsets(self):
+        return {'test': self._since}
 
 
 class RandomChangeFeed(ChangeFeed):
@@ -38,14 +43,16 @@ class RandomChangeFeed(ChangeFeed):
     def __init__(self, count, change_generator=None):
         self._count = count
         self._change_generator = change_generator or random_change
+        self._since = None
 
     def iter_changes(self, since, forever=False):
+        self._since = since
         if forever:
             raise ValueError('Forever option not supported for random feed!')
         else:
-            while since < self._count:
-                yield self._change_generator(since)
-                since += 1
+            while self._since < self._count:
+                yield self._change_generator(self._since)
+                self._since += 1
 
     def get_latest_change_id(self):
         return self._count
@@ -55,6 +62,9 @@ class RandomChangeFeed(ChangeFeed):
 
     def get_checkpoint_value(self):
         return str(self.get_latest_change_id())
+
+    def get_processed_offsets(self):
+        return {'test': self._since}
 
 
 def random_change(sequence_id):
