@@ -4,12 +4,8 @@ from django.db import models
 
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.decorators.memoized import memoized
-from pillowtop.utils import get_pillow_by_name, get_all_pillow_instances, force_seq_int
 from pillowtop.exceptions import PillowNotFoundError
-
-
-from corehq.apps.users.models import WebUser
+from pillowtop.utils import get_pillow_by_name, get_all_pillow_instances, safe_force_seq_int
 
 
 class HqDeploy(Document):
@@ -46,7 +42,7 @@ class HqDeploy(Document):
 
 class HistoricalPillowCheckpoint(models.Model):
     seq = models.TextField()
-    seq_int = models.IntegerField()
+    seq_int = models.IntegerField(null=True)
     checkpoint_id = models.CharField(max_length=255, db_index=True)
     date_updated = models.DateField()
 
@@ -59,7 +55,7 @@ class HistoricalPillowCheckpoint(models.Model):
     def create_checkpoint_snapshot(cls, checkpoint):
         db_seq = checkpoint.get_current_sequence_id()
         cls.objects.create(seq=db_seq,
-                           seq_int=force_seq_int(db_seq) or 0,
+                           seq_int=safe_force_seq_int(db_seq),
                            checkpoint_id=checkpoint.checkpoint_id,
                            date_updated=date.today())
 

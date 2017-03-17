@@ -5,13 +5,13 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 
 from corehq.sql_db.operations import HqRunPython
-from pillowtop.utils import force_seq_int
+from pillowtop.utils import safe_force_seq_int
 
 
 def set_seq_int(apps, schema_editor):
     HistoricalPillowCheckpoint = apps.get_model('hqadmin', 'HistoricalPillowCheckpoint')
     for checkpoint in HistoricalPillowCheckpoint.objects.all():
-        checkpoint.seq_int = force_seq_int(checkpoint.seq)
+        checkpoint.seq_int = safe_force_seq_int(checkpoint.seq)
         checkpoint.save()
 
 
@@ -32,12 +32,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='esrestorepillowcheckpoints',
             name='seq_int',
-            field=models.IntegerField(default=0),
+            field=models.IntegerField(default=None, null=True),
             preserve_default=False,
         ),
         migrations.RenameModel(
             old_name='ESRestorePillowCheckpoints',
             new_name='HistoricalPillowCheckpoint',
         ),
-        HqRunPython(set_seq_int, lambda apps, schema_editor: 1),
+        HqRunPython(set_seq_int),
     ]
