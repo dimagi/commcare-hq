@@ -1,7 +1,6 @@
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.models import CaseRepeater
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import NIKSHAY_INTEGRATION
@@ -14,8 +13,9 @@ from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_open_episode_case_from_person,
 )
-from custom.enikshay.exceptions import NikshayLocationNotFound, ENikshayCaseNotFound
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
+from custom.enikshay.integrations.utils import is_submission_from_test_location
 from custom.enikshay.integrations.ninetyninedots.repeaters import case_properties_changed
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
 
@@ -52,7 +52,7 @@ class NikshayRegisterPatientRepeater(CaseRepeater):
                 not episode_case_properties.get('nikshay_id', False) and
                 case_properties_changed(episode_case, [EPISODE_PENDING_REGISTRATION]) and
                 episode_case_properties.get(EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
-                not test_submission(person_case)
+                not is_submission_from_test_location(person_case)
             )
         else:
             return False
@@ -90,7 +90,7 @@ class NikshayHIVTestRepeater(CaseRepeater):
             return (
                 episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 episode_case_properties.get('nikshay_id') and
-                not test_submission(person_case) and
+                not is_submission_from_test_location(person_case) and
                 (
                     related_dates_changed(person_case) or
                     person_hiv_status_changed(person_case)
@@ -124,17 +124,6 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
             episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys()
         )
-
-
-def test_submission(person_case):
-    try:
-        phi_location = SQLLocation.objects.get(location_id=person_case.owner_id)
-    except SQLLocation.DoesNotExist:
-        raise NikshayLocationNotFound(
-            "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
-            .format(location_id=person_case.owner_id, person_id=person_case.case_id)
-        )
-    return phi_location.metadata.get('is_test', "yes") == "yes"
 
 
 def person_hiv_status_changed(case):

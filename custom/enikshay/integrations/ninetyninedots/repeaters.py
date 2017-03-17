@@ -11,9 +11,11 @@ from corehq.apps.repeaters.signals import create_repeat_records
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.xform import get_case_updates
 
+from custom.enikshay.integrations.utils import is_submission_from_test_location
 from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
     get_episode_case_from_adherence,
+    get_person_case_from_episode,
     CASE_TYPE_EPISODE,
     CASE_TYPE_PERSON,
 )
@@ -21,10 +23,6 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME,
     NINETYNINEDOTS_EPISODE_PROPERTIES,
     NINETYNINEDOTS_PERSON_PROPERTIES,
-)
-from custom.enikshay.case_utils import (
-    get_occurrence_case_from_episode,
-    get_person_case_from_occurrence,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
@@ -61,16 +59,19 @@ class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
         from custom.enikshay.integrations.ninetyninedots.views import RegisterPatientRepeaterView
         return reverse(RegisterPatientRepeaterView.urlname, args=[domain])
 
-    def allowed_to_forward(self, case):
-        # checks whitelisted case types and users
-        allowed_case_types_and_users = self._allowed_case_type(case) and self._allowed_user(case)
-        case_properties = case.dynamic_case_properties()
+    def allowed_to_forward(self, episode_case):
+        allowed_case_types_and_users = self._allowed_case_type(episode_case) and self._allowed_user(episode_case)
+        if not allowed_case_types_and_users:
+            return False
+
+        case_properties = episode_case.dynamic_case_properties()
         enabled = case_properties.get('dots_99_enabled') == 'true'
         not_registered = (
             case_properties.get('dots_99_registered') == 'false' or
             case_properties.get('dots_99_registered') is None
         )
-        return allowed_case_types_and_users and enabled and not_registered
+        return enabled and not_registered and not is_submission_from_test_location(
+            get_person_case_from_episode(episode_case))
 
 
 class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
@@ -110,7 +111,7 @@ class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
         except ENikshayCaseNotFound:
             return False
 
-        return registered_episode and props_changed
+        return registered_episode and props_changed and not is_submission_from_test_location(person_case)
 
 
 class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
@@ -145,7 +146,13 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
         registered = episode_case_properties.get('dots_99_registered') == 'true'
         from_enikshay = adherence_case_properties.get('adherence_source') == 'enikshay'
         previously_updated = adherence_case_properties.get('dots_99_updated') == 'true'
-        return enabled and registered and from_enikshay and not previously_updated
+        return (
+            enabled
+            and registered
+            and from_enikshay
+            and not previously_updated
+            and not is_submission_from_test_location(get_person_case_from_episode(episode_case))
+        )
 
 
 class NinetyNineDotsTreatmentOutcomeRepeater(Base99DOTSRepeater):
@@ -175,7 +182,12 @@ class NinetyNineDotsTreatmentOutcomeRepeater(Base99DOTSRepeater):
         episode_case_properties = episode_case.dynamic_case_properties()
         enabled = episode_case_properties.get('dots_99_enabled') == 'true'
         registered = episode_case_properties.get('dots_99_registered') == 'true'
-        return enabled and registered and case_properties_changed(episode_case, [TREATMENT_OUTCOME])
+        return (
+            enabled
+            and registered
+            and case_properties_changed(episode_case, [TREATMENT_OUTCOME])
+            and not is_submission_from_test_location(get_person_case_from_episode(episode_case))
+        )
 
 
 def episode_registered_with_99dots(episode):
