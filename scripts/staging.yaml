@@ -45,11 +45,11 @@
 trunk: master
 name: autostaging
 branches:
-  - vellum-staging # J$ 11/13
-  - nh/new_rb  # Norman 11/22
+  #- vellum-staging # J$ 11/13
+  #- nh/new_rb  # Norman 11/22
   - np/django1.10 # NP 2/12
-  - nc/adherence-mockup  # Noah 3/2
-  - sr-drilldown-loc-ucr # 6/3
+  #- nc/adherence-mockup  # Noah 3/2
+  #- sr-drilldown-loc-ucr # 6/3
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
