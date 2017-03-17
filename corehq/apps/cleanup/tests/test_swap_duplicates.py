@@ -20,8 +20,8 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
     def _submit_form(self, id_=None):
         xform_source = self.get_xml('xform_template').format(xmlns="foo", name="bar", id=id_ or uuid.uuid4().hex)
-        _, xform, __ = submit_form_locally(xform_source, DOMAIN)
-        return xform
+        result = submit_form_locally(xform_source, DOMAIN)
+        return result.xform
 
     def test_simple_swap(self):
         # Test a form with a single dup

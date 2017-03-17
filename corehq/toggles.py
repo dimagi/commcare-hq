@@ -46,7 +46,7 @@ ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, T
 class StaticToggle(object):
 
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
-                 description=None, save_fn=None):
+                 description=None, save_fn=None, always_enabled=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -56,12 +56,15 @@ class StaticToggle(object):
         # updated.  This is only applicable to domain toggles.  It must accept
         # two parameters, `domain_name` and `toggle_is_enabled`
         self.save_fn = save_fn
+        self.always_enabled = always_enabled or set()
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
 
     def enabled(self, item, **kwargs):
+        if item in self.always_enabled:
+            return True
         return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in self.namespaces])
 
     def enabled_for_request(self, request):
@@ -129,7 +132,7 @@ class PredictablyRandomToggle(StaticToggle):
         assert namespaces, 'namespaces must be defined!'
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
         self.randomness = randomness
-        self.always_disabled = always_disabled or []
+        self.always_disabled = always_disabled or set()
 
     @property
     def randomness_percent(self):
@@ -636,13 +639,6 @@ CUSTOM_INSTANCES = StaticToggle(
     namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
-CLOUDCARE_CACHE = StaticToggle(
-    'cloudcare_cache',
-    'Aggresively cache case list, can result in stale data',
-    TAG_EXPERIMENTAL,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',
@@ -917,7 +913,7 @@ EDIT_FORMPLAYER = PredictablyRandomToggle(
     'Edit forms on Formplayer',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.1,
+    randomness=0.5,
 )
 
 PREVIEW_APP = PredictablyRandomToggle(
@@ -954,13 +950,6 @@ APP_MANAGER_V2 = StaticToggle(
     'Prototype for case management onboarding (App Manager V2)',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-SHOW_PREVIEW_APP_SETTINGS = StaticToggle(
-    'preview_app_settings',
-    'Show preview app settings button',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1036,4 +1025,36 @@ INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     'Include metadata in UCR excel exports',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
+)
+
+VIEW_APP_CHANGES = StaticToggle(
+    'app-changes-with-improved-diff',
+    'Improved app changes view',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
+    'couch_sql_migration_blacklist',
+    "Domains to exclude from migrating to SQL backend. Includes the folling"
+    "by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    always_enabled={
+        'ews-ghana', 'ils-gateway', 'ils-gateway-train'
+    }
+)
+
+SHOW_DEV_TOGGLE_INFO = StaticToggle(
+    'highlight_feature_flags',
+    'Highlight / Mark Feature Flags in the UI',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER]
+)
+
+DASHBOARD_GRAPHS = StaticToggle(
+    'dashboard_graphs',
+    'Show submission graph on dashboard',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )

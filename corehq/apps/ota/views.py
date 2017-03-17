@@ -95,7 +95,7 @@ def search(request, domain):
             to="{}@{}.com".format('frener', 'dimagi'),
             notify_admins=False, send_to_ops=False
         )
-        _soft_assert(False, "Someone in domain: {} tried accessing case search without a config".format(domain), e)
+        _soft_assert(False, u"Someone in domain: {} tried accessing case search without a config".format(domain), e)
         config = CaseSearchConfig(domain=domain)
 
     query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)

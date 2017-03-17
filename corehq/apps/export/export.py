@@ -32,7 +32,7 @@ class ExportFile(object):
         self.format = format
 
     def __enter__(self):
-        return self.file.payload
+        return self.file.file
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.file.delete()

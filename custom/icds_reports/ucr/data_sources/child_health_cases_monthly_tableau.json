@@ -193,6 +193,7 @@
       },
       {
         "column_id": "awc_id",
+        "create_index": true,
         "datatype": "string",
         "display_name": null,
         "expression": {
@@ -484,6 +485,25 @@
         "type": "boolean"
       },
       {
+        "column_id": "has_aadhar_id",
+        "type": "boolean",
+        "filter": {
+          "type":"boolean_expression",
+          "operator": "eq",
+          "property_value": "yes",
+          "expression": {
+            "type": "icds_get_last_case_property_update",
+            "case_id_expression": {
+              "type": "icds_parent_id"
+            },
+            "case_property": "has_aadhar",
+            "end_date": {
+              "type": "icds_month_end"
+            }
+          }
+        }
+      },
+      {
         "column_id": "wer_eligible",
         "display_name": null,
         "filter": {
@@ -509,6 +529,36 @@
           "expression_if_true": {
             "type": "icds_get_last_case_property_update",
             "case_property": "weight_child",
+            "start_date": {
+              "type": "icds_month_start"
+            },
+            "end_date": {
+              "type": "icds_month_end"
+            }
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "height_recorded_in_month",
+        "type": "expression",
+        "datatype": "decimal",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "wer_eligible"
+          },
+          "expression_if_true": {
+            "type": "icds_get_last_case_property_update",
+            "case_property": "height_child",
             "start_date": {
               "type": "icds_month_start"
             },
@@ -2900,6 +2950,7 @@
         ]
       }
     },
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "backend_id": "LABORATORY"
   }
 }

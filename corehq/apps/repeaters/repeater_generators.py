@@ -180,9 +180,9 @@ class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, form):
         cases = cases_referenced_by_xform(form)
-        return json.dumps({'form_id': form._id,
+        return json.dumps({'form_id': form.form_id,
                            'received_on': json_format_datetime(form.received_on),
-                           'case_ids': [case._id for case in cases]})
+                           'case_ids': [case.case_id for case in cases]})
 
     @property
     def content_type(self):

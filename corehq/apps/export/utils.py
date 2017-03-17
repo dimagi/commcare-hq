@@ -6,6 +6,7 @@ from dimagi.utils.modules import to_function
 from dimagi.utils.couch import CriticalSection
 from toggle.shortcuts import set_toggle
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.toggles import OLD_EXPORTS, NAMESPACE_DOMAIN, ALLOW_USER_DEFINED_EXPORT_COLUMNS
 from corehq.util.log import with_progress_bar
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
@@ -37,6 +38,8 @@ from .const import (
     TRANSFORM_FUNCTIONS,
     SKIPPABLE_PROPERTIES,
 )
+
+from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 
 
 def is_occurrence_deleted(last_occurrences, app_ids_and_versions):
@@ -651,3 +654,11 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
             for column_meta in meta.skipped_columns:
                 column_meta.pretty_print()
     return metas
+
+
+def domain_has_excel_dashboard_access(domain):
+    return domain_has_privilege(domain, EXCEL_DASHBOARD)
+
+
+def domain_has_daily_saved_export_access(domain):
+    return domain_has_privilege(domain, DAILY_SAVED_EXPORT)

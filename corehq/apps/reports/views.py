@@ -792,7 +792,8 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
         send_html_email_async.delay(
             subject, email, body,
-            email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+            email_from=settings.DEFAULT_FROM_EMAIL,
+            ga_track=True,
             ga_tracking_info={
                 'cd4': request.domain,
                 'cd10': report_slug
@@ -803,7 +804,8 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
             body = render_full_report_notification(request, content).content
             send_html_email_async.delay(
                 subject, recipient, body,
-                email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+                email_from=settings.DEFAULT_FROM_EMAIL,
+                ga_track=True,
                 ga_tracking_info={
                     'cd4': request.domain,
                     'cd10': report_slug

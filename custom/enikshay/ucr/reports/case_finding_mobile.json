@@ -14,7 +14,7 @@
     "report_id": "case_finding_mobile",
     "config": {
         "description": "",
-        "title": "Case Finding - Mobile Report",
+        "title": "Summary of Case Finding - Mobile",
         "sort_expression": [],
         "visible": false,
         "configured_charts": [],
@@ -24,11 +24,11 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "display": "Case Open Date",
-                "field": "opened_on",
+                "display": "Date of Diagnosis",
+                "field": "date_of_diagnosis",
                 "type": "date",
                 "show_all": true,
-                "slug": "patient_registration_date"
+                "slug": "date_of_diagnosis"
             },
             {
                 "compare_as_string": false,

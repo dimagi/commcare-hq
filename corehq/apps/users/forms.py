@@ -18,6 +18,7 @@ from django.template import Context
 from django_countries.data import COUNTRIES
 
 from corehq import toggles
+from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
@@ -227,6 +228,16 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         required=False,
         label=ugettext_lazy("Opt out of emails about CommCare updates."),
     )
+    analytics_enabled = forms.BooleanField(
+        required=False,
+        label=ugettext_lazy("Enable Tracking"),
+        help_text=ugettext_lazy(
+            "Allow Dimagi to collect usage information to improve CommCare. "
+            "You can learn more about the information we collect and the ways "
+            "we use it in our "
+            '<a href="http://www.dimagi.com/policy/">privacy policy</a>'
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs['existing_user']
@@ -269,6 +280,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             hqcrispy.Field('first_name'),
             hqcrispy.Field('last_name'),
             hqcrispy.Field('email'),
+            twbscrispy.PrependedText('analytics_enabled', ''),
         ]
 
         if self.set_email_opt_out:
@@ -307,6 +319,13 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         if not self.set_email_opt_out:
             result.remove('email_opt_out')
         return result
+
+    def update_user(self, save=True, **kwargs):
+        if save:
+            analytics_enabled = self.cleaned_data['analytics_enabled']
+            if self.user.analytics_enabled != analytics_enabled:
+                set_analytics_opt_out(self.user, analytics_enabled)
+        return super(UpdateMyAccountInfoForm, self).update_user(save=save, **kwargs)
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):

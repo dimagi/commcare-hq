@@ -24,7 +24,7 @@ class SerializationTests(TestCase):
     def test_serialize_attachments(self):
         form_id = uuid.uuid4().hex
         form_xml = get_simple_form_xml(form_id)
-        form = submit_form_locally(form_xml, domain=self.domain)[1]
+        form = submit_form_locally(form_xml, domain=self.domain).xform
 
         form_xml = form.get_attachment_meta('form.xml')
         form_json = form.to_json(include_attachments=True)

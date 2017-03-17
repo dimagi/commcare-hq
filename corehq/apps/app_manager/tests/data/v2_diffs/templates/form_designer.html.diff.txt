@@ -64,13 +64,12 @@
                      {% if request.couch_user.days_since_created == 0 %}
                          analytics.workflow('Saved the Form Builder within first 24 hours');
                      {% endif %}
-@@ -129,12 +159,11 @@
-             csrftoken: $.cookie('csrftoken')
-         };
- 
--        {% include 'app_manager/v1/partials/form_designer_requirejs_config.html' with vellum_debug=vellum_debug %}
-+        {% include 'app_manager/v2/partials/form_designer_requirejs_config.html' with vellum_debug=vellum_debug %}
- 
+@@ -157,11 +187,10 @@
+                 'jquery.vellum': 'main'
+             }
+         });
+-        
++
          require(["jquery", "jquery.vellum", "moment"], function ($) {
              $(function () {
                  $("#edit").hide();
@@ -78,7 +77,7 @@
  
                  $('#formdesigner').vellum(VELLUM_OPTIONS);
  
-@@ -151,17 +180,101 @@
+@@ -178,17 +207,96 @@
              });
          });
          analytics.workflow('Entered the Form Builder');
@@ -136,7 +135,7 @@
 +        <h4>{% blocktrans %}This is a <i class="fcc fcc-app-createform"></i> Registration Form.{% endblocktrans %}</h4>
 +        <p>
 +          {% blocktrans %}
-+          It's useful for asking questions to register an item that you would like to track over time.
++            Users will fill it out when they need to <strong>add</strong> a new item to the application.
 +          {% endblocktrans %}
 +        </p>
 +    </script>
@@ -149,12 +148,7 @@
 +        <h4>{% blocktrans %}This is a <i class="fcc fcc-app-updateform"></i> Followup Form.{% endblocktrans %}</h4>
 +        <p>
 +          {% blocktrans %}
-+            It's useful for asking questions to update an item that you are tracking over time.
-+          {% endblocktrans %}
-+        </p>
-+        <p>
-+          {% blocktrans %}
-+            The <strong>App Properties</strong> section below includes item properties you can reference or update in this form.
++            Users will fill it out when they need to <strong>update</strong> an item that has already been added to the application.
 +          {% endblocktrans %}
 +        </p>
 +    </script>
@@ -163,7 +157,7 @@
 +        <h4>{% blocktrans %}This is a <i class="fa fa-file-o"></i> Survey.{% endblocktrans %}</h4>
 +        <p>
 +          {% blocktrans %}
-+          It's useful for asking questions to collect data once.
++          It's useful for asking questions once, for information that you won't need to follow up on later.
 +          {% endblocktrans %}
 +        </p>
 +    </script>

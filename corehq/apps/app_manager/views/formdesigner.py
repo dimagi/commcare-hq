@@ -9,9 +9,13 @@ from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.notifications import get_facility_for_form, notify_form_opened
+
+from corehq.apps.app_manager.exceptions import AppManagerException
 
 from corehq.apps.app_manager.views.utils import back_to_main, bail
 from corehq import toggles, privileges, feature_previews
@@ -39,7 +43,6 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
-from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.tour import tours
 from corehq.apps.analytics import ab_tests
 from corehq.apps.domain.models import Domain
@@ -156,8 +159,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'include_fullstory': include_fullstory,
         'notifications_enabled': request.user.is_superuser,
         'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
-        'toggle_url': reverse(ToggleEditView.urlname, args=["vellum_beta"]),
-        'toggle_item': request.user.username,
     })
     notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
 
@@ -207,8 +208,14 @@ def get_form_data_schema(request, domain, form_unique_id):
         data.append(get_session_schema(form))
         if form.requires_case() or is_usercase_in_use(domain):
             data.append(get_casedb_schema(form))
-    except Exception:
-        logger.exception("schema error")
+    except AppManagerException as e:
+        notify_exception(request, message=e.message)
+        return HttpResponseBadRequest(_(
+            "There is an error in the case management of your application. "
+            "Please fix the error to see case properties in this tree"
+        ))
+    except Exception as e:
+        notify_exception(request, message=e.message)
         return HttpResponseBadRequest("schema error, see log for details")
 
     data.extend(

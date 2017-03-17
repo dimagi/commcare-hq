@@ -24,8 +24,8 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "display": "Case Open Date",
-                "field": "opened_on",
+                "display": "Date of Diagnosis",
+                "field": "date_of_diagnosis",
                 "slug": "date",
                 "type": "date"
             },

@@ -1,11 +1,14 @@
 from __future__ import absolute_import
-import datetime
+from datetime import datetime
+import sys
 
 from celery.task import task
 from couchdbkit import ResourceConflict
 from django.utils.translation import ugettext as _
 from corehq import toggles
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE
+from corehq.apps.userreports.const import (
+    UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE
+)
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.models import (
@@ -17,6 +20,8 @@ from corehq.util.context_managers import notify_someone
 from corehq.util.couch import get_document_or_not_found
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
+from pillowtop.logger import pillow_logging
+from pillow_retry.models import PillowError
 
 
 def _get_config_by_id(indicator_config_id):
@@ -51,7 +56,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
         if not id_is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.
-            config.meta.build.initiated = datetime.datetime.utcnow()
+            config.meta.build.initiated = datetime.utcnow()
             config.meta.build.finished = False
             config.save()
 
@@ -68,7 +73,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         adapter = get_indicator_adapter(config, can_handle_laboratory=True)
         if not id_is_static(indicator_config_id):
-            config.meta.build.initiated_in_place = datetime.datetime.utcnow()
+            config.meta.build.initiated_in_place = datetime.utcnow()
             config.meta.build.finished_in_place = False
             config.save()
 
@@ -179,3 +184,27 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
 def delete_data_source_task(domain, config_id):
     from corehq.apps.userreports.views import delete_data_source_shared
     delete_data_source_shared(domain, config_id)
+
+
+@task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
+def save_document(indicator_config_ids, doc, from_pillow_id):
+    error = PillowError.objects.get(doc_id=doc['_id'], pillow=from_pillow_id)
+    try:
+        for config_id in indicator_config_ids:
+            config = _get_config_by_id(config_id)
+            adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+            adapter.best_effort_save(doc)
+    except Exception as exception:
+        error.add_attempt(exception, sys.exc_info()[2])
+        error.save()
+        error_id = error.id
+        pillow_logging.exception(
+            "[%s] Error on change: %s, %s. Logged as: %s" % (
+                from_pillow_id,
+                doc['_id'],
+                exception,
+                error_id
+            )
+        )
+    else:
+        error.delete()

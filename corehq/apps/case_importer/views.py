@@ -10,9 +10,9 @@ from corehq.apps.case_importer.suggested_fields import get_suggested_case_fields
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 
 from corehq.apps.case_importer.util import get_importer_error_message
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from django.contrib import messages
 from django.shortcuts import render
@@ -77,7 +77,7 @@ def excel_config(request, domain):
                             'Please try again with a different spreadsheet.')
 
     case_types_from_apps = get_case_types_from_apps(domain)
-    unrecognized_case_types = [t for t in CaseAccessors(domain).get_case_types()
+    unrecognized_case_types = [t for t in get_case_types_for_domain_es(domain)
                                if t not in case_types_from_apps]
 
     if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
