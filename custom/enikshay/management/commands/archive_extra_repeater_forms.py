@@ -1,10 +1,12 @@
 from django.core.management.base import BaseCommand
 
+from casexml.apps.case.signals import rebuild_form_cases
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml.parser import CaseUpdateAction
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.util.log import with_progress_bar
+from couchforms.signals import xform_archived
 
 domain = "enikshay"
 
@@ -51,8 +53,10 @@ class Command(BaseCommand):
 
         print "Will archive {} forms".format(len(to_archive))
 
+        xform_archived.disconnect(rebuild_form_cases)
         with open(log_file, "w") as f:
             for form in to_archive:
                 f.write(form.form_id + "\n")
                 if options['commit']:
                     form.archive(user_id="remove_duplicate_forms_script")
+        xform_archived.connect(rebuild_form_cases)
