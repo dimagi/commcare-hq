@@ -33,10 +33,10 @@ class CouchChangeFeed(ChangeFeed):
     def get_processed_offsets(self):
         return {self._couch_db.dbname: force_seq_int(self._last_processed_seq)}
 
-    def get_current_offsets(self):
+    def get_latest_offsets(self):
         return {self._couch_db.dbname: force_seq_int(get_current_seq(self._couch_db))}
 
-    def get_checkpoint_value(self):
+    def get_latest_offsets_as_checkpoint_value(self):
         return str(get_current_seq(self._couch_db))
 
     @property

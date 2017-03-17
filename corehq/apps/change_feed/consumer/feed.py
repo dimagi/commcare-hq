@@ -109,15 +109,15 @@ class KafkaChangeFeed(ChangeFeed):
     def get_processed_offsets(self):
         return copy(self._processed_topic_offsets)
 
-    def get_current_offsets(self):
+    def get_latest_offsets(self):
         return get_multi_topic_offset(self.topics)
 
-    def get_checkpoint_value(self):
+    def get_latest_offsets_as_checkpoint_value(self):
         try:
             topic = self._get_single_topic_or_fail()
             return str(get_topic_offset(topic))
         except ValueError:
-            return json.dumps(self.get_current_offsets())
+            return json.dumps(self.get_latest_offsets())
 
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         config = {

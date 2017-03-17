@@ -115,7 +115,7 @@ class ChangeFeed(object):
         pass
 
     @abstractmethod
-    def get_current_offsets(self):
+    def get_latest_offsets(self):
         """
         :return: A dictionary of ``(topic/db_name, offset integer)`` pairs representing
                  the max sequence ID that is available for each topic.
@@ -129,7 +129,8 @@ class ChangeFeed(object):
         """
 
     @abstractmethod
-    def get_checkpoint_value(self):
+    def get_latest_offsets_as_checkpoint_value(self):
         """
-        :return: The current string change ID, or a json string if multiple feeds are used
+        :return: The latest offset value as a string
+                 (string change ID, or a json string if multiple feeds are used)
         """
