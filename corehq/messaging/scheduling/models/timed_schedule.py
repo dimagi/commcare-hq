@@ -136,7 +136,8 @@ class TimedSchedule(Schedule):
 
             for event in self.timedevent_set.all():
                 event.content.delete()
-                event.delete()
+
+            self.timedevent_set.all().delete()
 
             if content.pk is None:
                 content.save()
@@ -164,7 +165,8 @@ class TimedSchedule(Schedule):
 
             for event in self.timedevent_set.all():
                 event.content.delete()
-                event.delete()
+
+            self.timedevent_set.all().delete()
 
             if content.pk is None:
                 content.save()
