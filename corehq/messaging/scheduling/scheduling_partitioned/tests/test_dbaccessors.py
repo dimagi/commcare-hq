@@ -148,12 +148,34 @@ class TestSchedulingPartitionedDBAccessorsGetAndSave(BaseSchedulingPartitionedDB
             instance.delete()
 
         with self.assertRaises(AccessRestricted):
-            self.make_timed_schedule_instance(uuid.uuid4()).save()
+            [obj for obj in AlertScheduleInstance.objects.all()]
 
-        instance = self.make_timed_schedule_instance(uuid.uuid4())
-        save_timed_schedule_instance(instance)
         with self.assertRaises(AccessRestricted):
-            instance.delete()
+            AlertScheduleInstance.objects.all()[0]
+
+        with self.assertRaises(AccessRestricted):
+            AlertScheduleInstance.objects.all()[0:10]
+
+        with self.assertRaises(AccessRestricted):
+            len(AlertScheduleInstance.objects.all())
+
+        with self.assertRaises(AccessRestricted):
+            AlertScheduleInstance.objects.count()
+
+        with self.assertRaises(AccessRestricted):
+            AlertScheduleInstance.objects.filter(schedule_instance_id=None)
+
+        with self.assertRaises(AccessRestricted):
+            AlertScheduleInstance.objects.exclude(schedule_instance_id=None)
+
+        with self.assertRaises(AccessRestricted):
+            AlertScheduleInstance.objects.get(schedule_instance_id=None)
+
+        with self.assertRaises(AccessRestricted):
+            AlertScheduleInstance.objects.create(schedule_instance_id=None)
+
+        with self.assertRaises(AccessRestricted):
+            AlertScheduleInstance.objects.get_or_create(schedule_instance_id=None)
 
 
 @partitioned

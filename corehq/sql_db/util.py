@@ -44,7 +44,7 @@ def save_object_to_partitioned_database(obj, partition_value):
     else:
         db_name = 'default'
 
-    super(obj.__class__, obj).save(using=db_name)
+    obj.save(using=db_name)
 
 
 def delete_object_from_partitioned_database(obj, partition_value):
@@ -62,7 +62,7 @@ def delete_object_from_partitioned_database(obj, partition_value):
     else:
         db_name = 'default'
 
-    super(obj.__class__, obj).delete(using=db_name)
+    obj.delete(using=db_name)
 
 
 def run_query_across_partitioned_databases(model_class, q_expression, values=None):

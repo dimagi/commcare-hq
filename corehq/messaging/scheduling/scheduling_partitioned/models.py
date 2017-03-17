@@ -8,6 +8,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.scheduling.exceptions import UnknownRecipientType
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
+from corehq.sql_db.models import PartitionedModel
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from datetime import tzinfo
 from dimagi.utils.decorators.memoized import memoized
@@ -15,7 +16,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 
 
-class ScheduleInstance(models.Model):
+class ScheduleInstance(PartitionedModel):
     schedule_instance_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     domain = models.CharField(max_length=126)
     recipient_type = models.CharField(max_length=126)
