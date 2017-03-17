@@ -115,8 +115,8 @@ hqDefine('app_manager/js/app_diff.js', function () {
          * returns {String} An html string representing the diff
          */
         self.generateHtmlDiff = function(appDataOneJson, appDataTwoJson) {
-            var elementsOne = [],
-                elementsTwo = [],
+            var elementsOne = [new TitleDatum(gettext('Form Changes'))],
+                elementsTwo = [new TitleDatum(gettext('Form Changes'))],
                 optionsOne = { formNameMap: appDataOneJson.form_name_map },
                 optionsTwo = { formNameMap: appDataTwoJson.form_name_map },
                 textOne,
@@ -125,17 +125,27 @@ hqDefine('app_manager/js/app_diff.js', function () {
                 diffObjects,
                 totalChanges = { added: 0, removed: 0 },
                 fullHtml;
-            _.each(appDataOneJson.case_data.case_types, function(d) {
-                elementsOne.push(new CaseTypeDatum(d, $.extend(true, {}, optionsOne, self.options)));
-            });
-            _.each(appDataTwoJson.case_data.case_types, function(d) {
-                elementsTwo.push(new CaseTypeDatum(d, $.extend(true, {}, optionsTwo, self.options)));
-            });
+
+            // Insert form elements
             _.each(appDataOneJson.form_data.modules, function(d) {
                 elementsOne.push(new ModuleDatum(d, self.options));
             });
             _.each(appDataTwoJson.form_data.modules, function(d) {
                 elementsTwo.push(new ModuleDatum(d, self.options));
+            });
+
+            // Title block for case changes
+            elementsOne.push({ toString: function() { return '<hr />'; } });
+            elementsOne.push(new TitleDatum(gettext('Case Changes')));
+            elementsTwo.push({ toString: function() { return '<hr />'; } });
+            elementsTwo.push(new TitleDatum(gettext('Case Changes')));
+
+            // Insert case changes
+            _.each(appDataOneJson.case_data.case_types, function(d) {
+                elementsOne.push(new CaseTypeDatum(d, $.extend(true, {}, optionsOne, self.options)));
+            });
+            _.each(appDataTwoJson.case_data.case_types, function(d) {
+                elementsTwo.push(new CaseTypeDatum(d, $.extend(true, {}, optionsTwo, self.options)));
             });
 
 
@@ -165,6 +175,13 @@ hqDefine('app_manager/js/app_diff.js', function () {
             );
 
             return header + fullHtml;
+        };
+    };
+
+    var TitleDatum = function(title) {
+
+        this.toString = function() {
+            return HtmlUtils.makeHeader(title);
         };
     };
 
@@ -399,12 +416,16 @@ hqDefine('app_manager/js/app_diff.js', function () {
         makeLi: function(line, className, icon, close) {
             return HtmlUtils.makeEl('li', line, className, icon, close);
         },
+        makeHeader: function(line, className) {
+            return HtmlUtils.makeEl('h5', line, className, '', true);
+        },
         makeSpan: function(line, className, icon) {
             return HtmlUtils.makeEl('span', line, className, icon, true);
         },
         makeEl: function(el, line, className, icon, close) {
             var iconEl = HtmlUtils.makeIcon(icon);
             var closeEl = '';
+            className = className || '';
             if (close) {
                 closeEl = HtmlUtils.closeEl(el);
             }
