@@ -1,10 +1,12 @@
 from django.core.management.base import BaseCommand
 
+from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.signals import rebuild_form_cases
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml.parser import CaseUpdateAction
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import UserRequestedRebuild
 from corehq.util.log import with_progress_bar
 from couchforms.signals import xform_archived
 
@@ -33,6 +35,7 @@ class Command(BaseCommand):
 
     def handle(self, log_file, **options):
         to_archive = []
+        cases_affected = set()
         episode_case_ids = CaseAccessors(domain).get_case_ids_in_domain("episode")
         if options.get('limit'):
             episode_case_ids = episode_case_ids[:options.get('limit')]
@@ -51,7 +54,9 @@ class Command(BaseCommand):
                         if isinstance(action, CaseUpdateAction):
                             if set(action.dynamic_properties.keys()) == {"nikshay_registered", "nikshay_error"}:
                                 nikshay_to_archive.append(form)
+                                cases_affected.add(episode_case_id)
                             elif set(action.dynamic_properties.keys()) == {"dots_99_registered", "dots_99_error"}:
+                                cases_affected.add(episode_case_id)
                                 dots_99_to_archvie.append(form)
 
             # get_case_updates() returns the forms in the correct order, but sorting is probably a good idea in case
@@ -74,3 +79,7 @@ class Command(BaseCommand):
                 if options['commit']:
                     form.archive(user_id="remove_duplicate_forms_script")
         xform_archived.connect(rebuild_form_cases)
+
+        print "Will rebuild {} cases".format(len(cases_affected))
+        for case_id in with_progress_bar(cases_affected):
+            rebuild_case_from_forms(domain, case_id, UserRequestedRebuild(user_id="remove_duplicate_forms_script"))
