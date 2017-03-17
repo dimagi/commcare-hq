@@ -1107,7 +1107,7 @@ class FormBase(DocumentSchema):
                 include_translations=include_translations,
             )
         except XFormException as e:
-            raise XFormException("Error in form {}".format(self.full_path_name), e)
+            raise XFormException(u"Error in form {}".format(self.full_path_name), e)
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1158,7 +1158,7 @@ class FormBase(DocumentSchema):
 
     @property
     def full_path_name(self):
-        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
+        return u"%(app_name)s > %(module_name)s > %(form_name)s" % {
             'app_name': self.get_app().name,
             'module_name': self.get_module().default_name(),
             'form_name': self.default_name()
