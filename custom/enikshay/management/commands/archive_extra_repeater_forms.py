@@ -70,6 +70,7 @@ class Command(BaseCommand):
         with open(log_file, "w") as f:
             for form in with_progress_bar(to_archive):
                 f.write(form.form_id + "\n")
+                f.flush()
                 if options['commit']:
                     form.archive(user_id="remove_duplicate_forms_script")
         xform_archived.connect(rebuild_form_cases)
