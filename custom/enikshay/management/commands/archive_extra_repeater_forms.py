@@ -24,9 +24,18 @@ class Command(BaseCommand):
             help="Don't do a dry run, but actually archive the forms",
         )
 
+        parser.add_argument(
+            '--limit',
+            dest='limit',
+            type=int,
+            help="Limit to the first n cases",
+        )
+
     def handle(self, log_file, **options):
         to_archive = []
         episode_case_ids = CaseAccessors(domain).get_case_ids_in_domain("episode")
+        if options.get('limit'):
+            episode_case_ids = episode_case_ids[:options.get('limit')]
         for episode_case_id in with_progress_bar(episode_case_ids):
             nikshay_to_archive = []
             dots_99_to_archvie = []
