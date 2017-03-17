@@ -122,6 +122,15 @@ def force_seq_int(seq):
         return seq
 
 
+def safe_force_seq_int(seq, default=None):
+    if isinstance(seq, dict):
+        return default
+    try:
+        return force_seq_int(seq)
+    except (AssertionError, ValueError):
+        return default
+
+
 def get_all_pillows_json():
     pillow_configs = get_all_pillow_configs()
     return [get_pillow_json(pillow_config) for pillow_config in pillow_configs]
