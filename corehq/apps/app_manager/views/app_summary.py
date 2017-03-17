@@ -91,15 +91,21 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
         }
 
 
-class FormDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
+class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
 
-    urlname = 'form_data'
+    urlname = 'app_data_json'
 
     def get(self, request, *args, **kwargs):
         modules, errors = get_form_data(self.domain, self.app)
         return json_response({
-            'response': modules,
-            'errors': errors,
+            'response': {
+                'form_data': {
+                    'modules': modules,
+                    'errors': errors,
+                },
+                'case_data': self.app.get_case_metadata().to_json(),
+                'form_name_map': _get_name_map(self.app),
+            },
             'success': True,
         })
 

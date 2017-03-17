@@ -24,8 +24,7 @@ from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 from pillow_retry.models import PillowError
 
-
-REBUILD_CHECK_INTERVAL = 10 * 60  # in seconds
+REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 
 
 class ConfigurableReportTableManagerMixin(object):
