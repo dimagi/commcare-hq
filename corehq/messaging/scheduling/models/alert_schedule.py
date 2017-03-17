@@ -1,4 +1,5 @@
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
+from corehq.messaging.scheduling.util import utcnow
 from datetime import timedelta, datetime
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models
@@ -16,7 +17,7 @@ class AlertSchedule(Schedule):
         return list(self.alertevent_set.order_by('order'))
 
     def set_first_event_due_timestamp(self, instance, start_date=None):
-        instance.next_event_due = datetime.utcnow()
+        instance.next_event_due = utcnow()
         self.set_next_event_due_timestamp(instance)
 
     def set_next_event_due_timestamp(self, instance):
