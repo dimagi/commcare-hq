@@ -121,13 +121,18 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
             return False
 
         episode_case_properties = episode_case.dynamic_case_properties()
-        return (
+        if (
             episode_case_properties.get('nikshay_registered', 'false') == 'true' and
             episode_case_properties.get('nikshay_id', False) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
-            episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys() and
-            not is_submission_from_test_location(get_person_case_from_episode(episode_case.domain, episode_case))
-        )
+            episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys()
+        ):
+            try:
+                person_case = get_person_case_from_episode(episode_case.domain, episode_case)
+            except ENikshayCaseNotFound:
+                return False
+            return not is_submission_from_test_location(person_case)
+        return False
 
 
 def person_hiv_status_changed(case):
