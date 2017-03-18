@@ -64,8 +64,14 @@
                         {% case "no modules" %}
                             This application has no modules.
                         {% case "missing module" %}
+                            {% blocktrans %}
                             This application is missing a module. If you have deleted any modules recently, make sure that
                             you have removed all references to them. If you continue to experience problems, please report an issue.
+                            {% endblocktrans %}
+                            {% if error.message %}
+                            <br/>{% trans "Details:" %}<br/>
+                            {{ error.message }}
+                            {% endif %}
                         {% case "no forms" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
@@ -74,6 +80,10 @@
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             has no forms or case list.
+                        {% case "no reports" %}
+                            Report module
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            has no reports.
                         {% case "circular case hierarchy" %}
                             {% url "view_module" domain app.id error.module.id as module_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs %}

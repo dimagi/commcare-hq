@@ -2,7 +2,7 @@ from __future__ import print_function
 import os
 from couchdbkit import Database
 from dimagi.utils.couch.database import get_db
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from corehq.apps.domainsync.config import DocumentTransform, save
 
 
@@ -12,13 +12,20 @@ class Command(BaseCommand):
     args = '<sourcedb> <doc_ids_or_file_path> (<domain>)'
     label = ""
 
-    def handle(self, *args, **options):
-        if len(args) < 2 or len(args) > 3:
-            raise CommandError('Usage is copy_doc %s' % self.args)
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'sourcedb',
+        )
+        parser.add_argument(
+            'doc_ids_or_file',
+        )
+        parser.add_argument(
+            'domain',
+            nargs='?',
+        )
 
-        sourcedb = Database(args[0])
-        doc_ids_or_file = args[1]
-        domain = args[2] if len(args) == 3 else None
+    def handle(self, sourcedb, doc_ids_or_file, domain, **options):
+        sourcedb = Database(sourcedb)
 
         if os.path.isfile(doc_ids_or_file):
             with open(doc_ids_or_file) as f:

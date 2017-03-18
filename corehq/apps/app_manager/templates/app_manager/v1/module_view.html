@@ -6,6 +6,14 @@
 {% block head %}{{ block.super }}
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
+{% block stylesheets %}{{ block.super }}
+    <style>
+        /* Prevent help icons from disturbing horizontal alignment of table headers */
+        th > .hq-help {
+            position: absolute;
+        }
+    </style>
+{% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
@@ -21,13 +29,13 @@
     <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
 
     {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
-        {% for detail in details %}
-            {% if detail.type == 'case' %}
-                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
-            {% else %}
-                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
-            {% endif %}
-        {% endfor %}
+      {% for detail in details %}
+          {% if detail.type == 'case' %}
+              {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+          {% else %}
+              {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+          {% endif %}
+      {% endfor %}
     {% endif %}
 
     {% if case_list_form_options %}

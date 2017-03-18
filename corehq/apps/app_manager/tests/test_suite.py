@@ -62,6 +62,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 field=detail.columns[0].field,
                 type='index',
                 direction='descending',
+                blanks='first',
             )
         )
         self.assertXmlPartialEqual(
@@ -78,12 +79,13 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 field=detail.columns[0].field,
                 type='string',
                 direction='descending',
+                blanks='first',
                 sort_calculation='random()'
             )
         )
         sort_node = """
         <partial>
-            <sort direction="descending" order="1" type="string">
+            <sort direction="descending" blanks="first" order="1" type="string">
               <text>
                 <xpath function="random()"/>
               </text>

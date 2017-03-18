@@ -1,5 +1,4 @@
 from __future__ import print_function
-from optparse import make_option
 
 from django.core.management.base import BaseCommand
 from toggle.models import Toggle
@@ -15,16 +14,18 @@ class Command(BaseCommand):
     fixture format.
     The Feature Flag FLAT_LOCATION_FIXTURE should be removed after this
     """
-    option_list = BaseCommand.option_list + (
-        make_option("--check",
-                    action="store_true",
-                    dest="check",
-                    default=False,
-                    help="Include this option to check what changes would occur and highlight domains that need "
-                         "attention"),
-    )
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--check",
+            action="store_true",
+            dest="check",
+            default=False,
+            help="Include this option to check what changes would occur and highlight domains that need "
+                 "attention",
+        )
+
+    def handle(self, **options):
         dry_run = options['check']
 
         # 1. Find domains with locations
@@ -48,13 +49,13 @@ class Command(BaseCommand):
         # and update their location configuration to use hierarchical fixture for now
         for domain in domains_to_stay_on_hierarchical_fixture:
             if not dry_run:
-                print("Setting HIERARCHICAL_LOCATION_FIXTURE toggle for domain: %s" % domain)
+                print(u"Setting HIERARCHICAL_LOCATION_FIXTURE toggle for domain: %s" % domain)
                 HIERARCHICAL_LOCATION_FIXTURE.set(domain, True, NAMESPACE_DOMAIN)
             else:
-                print("HIERARCHICAL_LOCATION_FIXTURE toggle would be set for domain: %s" % domain)
+                print(u"HIERARCHICAL_LOCATION_FIXTURE toggle would be set for domain: %s" % domain)
 
             if not dry_run:
-                print("Enabling legacy fixture for domain: %s" % domain)
+                print(u"Enabling legacy fixture for domain: %s" % domain)
                 location_configuration = LocationFixtureConfiguration.for_domain(domain)
                 print("Current Configuration, Persisted: %s, Use Flat fixture: %s, Use Hierarchical fixture %s" % (
                     not location_configuration._state.adding, location_configuration.sync_hierarchical_fixture,
@@ -62,7 +63,7 @@ class Command(BaseCommand):
 
                 enable_legacy_fixture_for_domain(domain)
             else:
-                print("Legacy fixture to be enabled for domain: %s" % domain)
+                print(u"Legacy fixture to be enabled for domain: %s" % domain)
                 location_configuration = LocationFixtureConfiguration.for_domain(domain)
                 print("Current Configuration, Persisted: %s, Use Flat fixture: %s, Use Hierarchical fixture %s" % (
                     not location_configuration._state.adding, location_configuration.sync_hierarchical_fixture,

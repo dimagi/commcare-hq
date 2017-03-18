@@ -7,10 +7,8 @@ from corehq.apps.domain.models import Domain
 
 class Command(BaseCommand):
     help = "Migrates the 'can_use_data' field to not be the opposite of what it sounds like."
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         opted_out_domains = []
         failed = []
         for domain in Domain.get_all():

@@ -24,17 +24,17 @@ def get_submit_url(domain, app_id=None):
 def submit_form_locally(instance, domain, **kwargs):
     # intentionally leave these unauth'd for now
     kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
-    response, xform, cases = SubmissionPost(
+    result = SubmissionPost(
         domain=domain,
         instance=instance,
         **kwargs
     ).run()
-    if not 200 <= response.status_code < 300:
+    if not 200 <= result.response.status_code < 300:
         raise LocalSubmissionError('Error submitting (status code %s): %s' % (
-            response.status_code,
-            response.content,
+            result.response.status_code,
+            result.response.content,
         ))
-    return response, xform, cases
+    return result
 
 
 def get_meta_appversion_text(form_metadata):

@@ -21,7 +21,6 @@ from corehq.apps.hqcase.dbaccessors import (
     get_case_ids_in_domain,
     get_case_ids_in_domain_by_owner,
     get_case_properties,
-    get_case_types_for_domain,
 )
 from corehq.elastic import get_es_new, EsMeta
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -116,12 +115,6 @@ class DBAccessorsTest(TestCase):
             {case.get_id for case in self.cases
              if case.domain == self.domain
                 and not case.closed and case.user_id == 'XXX'},
-        )
-
-    def test_get_case_types_for_domain(self):
-        self.assertEqual(
-            set(get_case_types_for_domain(self.domain)),
-            {case.type for case in self.cases if case.domain == self.domain}
         )
 
     def test_get_case_ids_in_domain_by_owner(self):

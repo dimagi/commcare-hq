@@ -37,6 +37,7 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "awc_id",
+        "create_index": true,
         "expression": {
           "value_expression": {
             "datatype": null,
@@ -70,6 +71,7 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "supervisor_id",
+        "create_index": true,
         "expression": {
           "location_id_expression": {
             "value_expression": {
@@ -896,6 +898,7 @@
         ]
       }
     },
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "backend_id": "LABORATORY"
   }
 }

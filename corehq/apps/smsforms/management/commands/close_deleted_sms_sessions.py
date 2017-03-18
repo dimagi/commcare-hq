@@ -9,10 +9,8 @@ from touchforms.formplayer.api import (
 
 
 class Command(BaseCommand):
-    args = ""
-    help = ""
     
-    def handle(self, *args, **options):
+    def handle(self, **options):
         sessions = SQLXFormsSession.objects.filter(
             Q(session_type__isnull=True) | Q(session_type=XFORMS_SESSION_SMS),
             end_time__isnull=True,

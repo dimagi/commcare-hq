@@ -298,7 +298,7 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.messaging.smsbackends.unicel',
     'corehq.messaging.smsbackends.icds_nic',
-    'corehq.apps.reports',
+    'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
     'corehq.apps.data_interfaces',
@@ -876,6 +876,11 @@ MOBILE_INTEGRATION_TEST_TOKEN = None
 
 OVERRIDE_UCR_BACKEND = None
 
+# CommCare HQ - To indicate server
+COMMCARE_HQ_NAME = "CommCare HQ"
+# CommCare - To Indicate mobile
+COMMCARE_NAME = "CommCare"
+
 ENTERPRISE_MODE = False
 
 CUSTOM_LANDING_PAGE = False
@@ -1419,10 +1424,6 @@ MESSAGE_TAGS = {
 
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
-# CommCare HQ - To indicate server
-COMMCARE_HQ_NAME = "CommCare HQ"
-# CommCare - To Indicate mobile
-COMMCARE_NAME = "CommCare"
 
 DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
@@ -1566,6 +1567,25 @@ PILLOWTOPS = {
             'name': 'kafka-ucr-main',
             'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
+            'name': 'kafka-ucr-main-08',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+            'params': {
+                'ucr_division': '08'
+            }
+        },
+        {
+            'name': 'kafka-ucr-main-9f',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+            'params': {
+                'ucr_division': '9f'
+            }
         },
         {
             'name': 'kafka-ucr-static',
@@ -1603,18 +1623,10 @@ PILLOWTOPS = {
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
-        'custom.m4change.models.AncHmisCaseFluffPillow',
-        'custom.m4change.models.LdHmisCaseFluffPillow',
-        'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
-        'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
-        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow',
-        'custom.m4change.models.AllHmisCaseFluffPillow',
+        'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.CouvertureFluffPillow',
-        'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassageFluffPillow',
-        'custom.intrahealth.models.TauxDeRuptureFluffPillow',
-        'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.intrahealth.models.IntraHealthFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
@@ -1671,7 +1683,9 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsTreatmentOutcomeRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater'
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
@@ -1856,7 +1870,9 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
     ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
-    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression')
+    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression'),
+    ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
+    ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [

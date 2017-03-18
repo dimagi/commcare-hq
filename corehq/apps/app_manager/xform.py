@@ -25,7 +25,7 @@ import collections
 import re
 
 
-VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
+VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio', 'markdown')
 
 
 def parse_xml(string):
@@ -642,7 +642,7 @@ class XForm(WrappedNode):
 
     @property
     def audio_references(self):
-        return self.media_references(form="audio")
+        return self.media_references(form="audio") + self.media_references(form="expanded-audio")
 
     @property
     def video_references(self):
@@ -653,7 +653,8 @@ class XForm(WrappedNode):
         video = self.media_references_by_lang(lang=lang, form="video")
         audio = self.media_references_by_lang(lang=lang, form="audio")
         inline_video = self.media_references_by_lang(lang=lang, form="video-inline")
-        return images + video + audio + inline_video
+        expanded_audio = self.media_references_by_lang(lang=lang, form="expanded-audio")
+        return images + video + audio + inline_video + expanded_audio
 
     def get_instance_ids(self):
         def _get_instances():

@@ -77,3 +77,22 @@ dcexpulmonory = {
     'pulmonary': 'N',
     'extra_pulmonary': 'Y',
 }
+
+treatment_outcome = {
+    'cured': '1',
+    'treatment_complete': '2',
+    'died': '3',
+    'failure': '4',
+    'regimen_changed': '7',
+}
+
+hiv_status = {
+    'reactive': 'Pos',
+    'non_reactive': 'Neg',
+    'unknown': 'Unknown',
+}
+
+art_initiated = {
+    'no': 0,
+    'yes': 1,
+}

@@ -1,6 +1,6 @@
 from __future__ import print_function
 import json
-from optparse import make_option
+
 from django.core.management import BaseCommand, CommandError
 from pillowtop import get_pillow_by_name
 

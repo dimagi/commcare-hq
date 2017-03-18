@@ -18,7 +18,6 @@ from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
-from optparse import make_option
 
 
 ONE_HOUR = 60 * 60

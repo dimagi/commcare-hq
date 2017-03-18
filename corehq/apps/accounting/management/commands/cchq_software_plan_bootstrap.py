@@ -1,10 +1,6 @@
 # Use modern Python
 from __future__ import absolute_import, print_function, unicode_literals
 
-# Standard library imports
-import logging
-from optparse import make_option
-
 # Django imports
 from django.apps import apps as default_apps
 from django.core.management.base import BaseCommand
@@ -19,12 +15,19 @@ from corehq.apps.accounting.utils import log_accounting_info
 class Command(BaseCommand):
     help = 'Populate a fresh db with standard set of Software Plans.'
 
-    option_list = (
-        make_option('--verbose', action='store_true', default=False,
-                    help='Enable debug output'),
-        make_option('--testing', action='store_true', default=False,
-                    help='Run this command for testing purposes.'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--verbose',
+            action='store_true',
+            default=False,
+            help='Enable debug output',
+        )
+        parser.add_argument(
+            '--testing',
+            action='store_true',
+            default=False,
+            help='Run this command for testing purposes.',
+        )
 
     def handle(self, verbose=False, testing=False, *args, **options):
         log_accounting_info(

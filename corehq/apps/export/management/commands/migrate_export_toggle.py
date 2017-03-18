@@ -11,7 +11,7 @@ from corehq import toggles
 class Command(BaseCommand):
     help = "Migrates old exports to new ones"
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         for doc in Domain.get_all(include_docs=False):
             domain = doc['key']
             if not use_new_exports(domain):

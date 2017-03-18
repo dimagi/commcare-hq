@@ -37,6 +37,7 @@ def _build_raw_indicator(spec, context):
         datatype=wrapped.datatype,
         is_nullable=wrapped.is_nullable,
         is_primary_key=wrapped.is_primary_key,
+        create_index=wrapped.create_index,
     )
     return RawIndicator(
         wrapped.display_name,
@@ -52,6 +53,7 @@ def _build_expression_indicator(spec, context):
         datatype=wrapped.datatype,
         is_nullable=wrapped.is_nullable,
         is_primary_key=wrapped.is_primary_key,
+        create_index=wrapped.create_index,
     )
     return RawIndicator(
         wrapped.display_name,
