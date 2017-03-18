@@ -1,8 +1,8 @@
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
 from corehq.messaging.scheduling import util
-from datetime import timedelta
+from datetime import timedelta, time
 from dimagi.utils.decorators.memoized import memoized
-from django.db import models
+from django.db import models, transaction
 
 
 class AlertSchedule(Schedule):
@@ -43,24 +43,23 @@ class AlertSchedule(Schedule):
             instance.active = False
 
     @classmethod
-    def create(cls, domain):
-        return cls.objects.create(domain=domain)
+    def create_simple_alert(cls, domain, content):
+        with transaction.atomic():
+            schedule = cls(domain=domain)
+            schedule.save()
 
-    def add_event(self, time_to_wait, content, order=None):
-        if order is None:
-            order = self.alertevent_set.count() + 1
+            if content.pk is None:
+                content.save()
 
-        if content.pk is None:
-            content.save()
+            event = AlertEvent(
+                order=1,
+                schedule=schedule,
+                time_to_wait=time(0, 0),
+            )
+            event.content = content
+            event.save()
 
-        event = AlertEvent(
-            schedule=self,
-            order=order,
-            time_to_wait=time_to_wait
-        )
-        event.content = content
-        event.save()
-        return self
+        return schedule
 
 
 class AlertEvent(Event):

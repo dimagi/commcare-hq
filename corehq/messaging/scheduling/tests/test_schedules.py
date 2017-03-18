@@ -2,15 +2,20 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import partitioned
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+    save_alert_schedule_instance,
     save_timed_schedule_instance,
+    delete_alert_schedule_instance,
     delete_timed_schedule_instance,
+    get_alert_schedule_instances_for_schedule,
     get_timed_schedule_instances_for_schedule,
 )
 from corehq.messaging.scheduling.models import (
+    AlertSchedule,
     TimedSchedule,
     SMSContent,
 )
 from corehq.messaging.scheduling.tasks import (
+    refresh_alert_schedule_instances,
     refresh_timed_schedule_instances,
 )
 from datetime import datetime, date, time
@@ -353,3 +358,68 @@ class EndOfMonthScheduleTest(TestCase):
         self.assertNumInstancesForSchedule(1)
         self.assertTimedScheduleInstance(instance, 0, 3, datetime(2017, 6, 30, 16, 0), False, date(2017, 4, 1))
         self.assertEqual(send_patch.call_count, 2)
+
+
+@partitioned
+@patch('corehq.messaging.scheduling.models.content.SMSContent.send')
+@patch('corehq.messaging.scheduling.util.utcnow')
+class AlertTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(AlertTest, cls).setUpClass()
+        cls.domain = 'alert-test'
+        cls.domain_obj = Domain(name=cls.domain, default_timezone='America/New_York')
+        cls.domain_obj.save()
+        cls.user1 = CommCareUser.create(cls.domain, 'user1', 'password')
+        cls.user2 = CommCareUser.create(cls.domain, 'user2', 'password')
+        cls.schedule = AlertSchedule.create_simple_alert(cls.domain, SMSContent())
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.schedule.delete()
+        cls.domain_obj.delete()
+        super(AlertTest, cls).tearDownClass()
+
+    def tearDown(self):
+        for instance in get_alert_schedule_instances_for_schedule(self.schedule):
+            delete_alert_schedule_instance(instance)
+
+    def assertAlertScheduleInstance(self, instance, current_event_num, schedule_iteration_num,
+            next_event_due, active, recipient):
+        self.assertEqual(instance.domain, self.domain)
+        self.assertEqual(instance.recipient_type, recipient.doc_type)
+        self.assertEqual(instance.recipient_id, recipient.get_id)
+        self.assertEqual(instance.alert_schedule_id, self.schedule.schedule_id)
+        self.assertEqual(instance.current_event_num, current_event_num)
+        self.assertEqual(instance.schedule_iteration_num, schedule_iteration_num)
+        self.assertEqual(instance.next_event_due, next_event_due)
+        self.assertEqual(instance.active, active)
+
+    def assertNumInstancesForSchedule(self, num):
+        self.assertEqual(len(list(get_alert_schedule_instances_for_schedule(self.schedule))), num)
+
+    def test_alert(self, utcnow_patch, send_patch):
+        self.assertNumInstancesForSchedule(0)
+
+        # Schedule the alert
+        utcnow_patch.return_value = datetime(2017, 3, 16, 6, 42, 21)
+        refresh_alert_schedule_instances(self.schedule, (('CommCareUser', self.user1.get_id),))
+        self.assertNumInstancesForSchedule(1)
+        [instance] = get_alert_schedule_instances_for_schedule(self.schedule)
+        self.assertAlertScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 6, 42, 21), True, self.user1)
+        self.assertEqual(send_patch.call_count, 0)
+
+        # Send first event
+        instance.handle_current_event()
+        save_alert_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertAlertScheduleInstance(instance, 0, 2, datetime(2017, 3, 16, 6, 42, 21), False, self.user1)
+        self.assertEqual(send_patch.call_count, 1)
+
+        # Once an alert has been sent, we don't allow scheduling new instances of old alerts
+        refresh_alert_schedule_instances(self.schedule, (('CommCareUser', self.user2.get_id),))
+        self.assertNumInstancesForSchedule(1)
+        [instance] = get_alert_schedule_instances_for_schedule(self.schedule)
+        self.assertAlertScheduleInstance(instance, 0, 2, datetime(2017, 3, 16, 6, 42, 21), False, self.user1)
+        self.assertEqual(send_patch.call_count, 1)
