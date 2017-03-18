@@ -6,6 +6,19 @@
     <td>{{ repeater.get_cancelled_record_count }}</td>
     <td>{{ repeater.get_success_record_count }}</td>
     <td>
+        {% if repeater.is_case_repeater %}
+        <a class="btn btn-default"
+           href="{% url 'edit_case_repeater' domain repeater.get_id %}">{% trans "Edit"%}
+        </a>
+        {% elif repeater.is_form_repeater %}
+        <a class="btn btn-default"
+           href="{% url 'edit_form_repeater' domain repeater.get_id %}">{% trans "Edit"%}
+        </a>
+        {% else %}
+        <a class="btn btn-default"
+           href="{% url 'edit_repeater' domain repeater.get_id %}?repeater_type={{ cls }}">{% trans "Edit"%}
+        </a>
+        {% endif %}
         <a
             class="btn btn-default"
             href="
