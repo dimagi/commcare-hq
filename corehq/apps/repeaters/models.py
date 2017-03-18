@@ -315,6 +315,14 @@ class Repeater(Document, UnicodeMixIn):
         generator = self.get_payload_generator(self.format_or_default_format())
         return generator.handle_exception(exception, repeat_record)
 
+    @property
+    def is_form_repeater(self):
+        return bool(filter(lambda parent_class: parent_class.__name__ == "FormRepeater", self.__class__.__mro__))
+
+    @property
+    def is_case_repeater(self):
+        return bool(filter(lambda parent_class: parent_class.__name__ == "CaseRepeater", self.__class__.__mro__))
+
 
 class FormRepeater(Repeater):
     """
