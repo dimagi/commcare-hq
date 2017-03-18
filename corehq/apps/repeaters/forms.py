@@ -34,7 +34,6 @@ class GenericRepeaterForm(forms.Form):
     password = forms.CharField(
         required=False,
         label='Password',
-        widget=forms.PasswordInput()
     )
 
     def __init__(self, *args, **kwargs):
