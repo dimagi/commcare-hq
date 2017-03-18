@@ -74,7 +74,7 @@ class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):
 
     def get_response(self):
         response = super(BaseModifySubscriptionActionHandler, self).get_response()
-        return len([x for x in response if not x]) == 0
+        return all(response)
 
 
 # TODO - cache
