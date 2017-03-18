@@ -10,19 +10,20 @@ from django.utils.translation import ugettext_lazy as _, ungettext
 from couchexport.models import SavedExportSchema
 
 from corehq import privileges
+from corehq.apps.accounting.tasks import (
+    archive_logos,
+    restore_logos,
+)
 from corehq.apps.accounting.utils import (
     get_active_reminders_by_domain_name,
     get_privileges,
     log_accounting_error,
     log_accounting_info,
 )
-from corehq.apps.app_manager.dbaccessors import get_all_apps
-from corehq.apps.app_manager.models import Application
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
@@ -191,19 +192,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
     def response_commcare_logo_uploader(domain, new_plan_version):
         """Make sure no existing applications are using a logo.
         """
-        try:
-            for app in get_all_apps(domain.name):
-                if isinstance(app, Application):
-                    has_archived = app.archive_logos()
-                    if has_archived:
-                        app.save()
-            return True
-        except Exception:
-            log_accounting_error(
-                "Failed to remove all commcare logos for domain %s." % domain.name,
-                show_stack_trace=True,
-            )
-            return False
+        archive_logos.delay(domain.name)
+        return True
 
     @staticmethod
     def response_domain_security(domain, new_plan_version):
@@ -267,19 +257,8 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     def response_commcare_logo_uploader(domain, new_plan_version):
         """Make sure no existing applications are using a logo.
         """
-        try:
-            for app in get_all_apps(domain.name):
-                if isinstance(app, HQMediaMixin):
-                    has_restored = app.restore_logos()
-                    if has_restored:
-                        app.save()
-            return True
-        except Exception:
-            log_accounting_error(
-                "Failed to restore all commcare logos for domain %s."
-                % domain.name
-            )
-            return False
+        restore_logos.delay(domain.name)
+        return True
 
     @staticmethod
     def response_report_builder(project, new_plan_version):
