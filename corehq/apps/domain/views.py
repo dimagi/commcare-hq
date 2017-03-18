@@ -2506,23 +2506,31 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
             'repeater_type': self.repeater_type,
         }
 
+    def initialize_repeater(self):
+        return self.repeater_class()
+
     def make_repeater(self):
-        repeater = self.repeater_class(
-            domain=self.domain,
-            url=self.add_repeater_form.cleaned_data['url'],
-            use_basic_auth=self.add_repeater_form.cleaned_data['use_basic_auth'],
-            username=self.add_repeater_form.cleaned_data['username'],
-            password=self.add_repeater_form.cleaned_data['password'],
-            format=self.add_repeater_form.cleaned_data['format']
-        )
+        repeater = self.initialize_repeater()
+        return self.set_repeater_attr(repeater, self.add_repeater_form.cleaned_data)
+
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater.domain = self.domain
+        repeater.url = cleaned_data['url']
+        repeater.use_basic_auth = cleaned_data['use_basic_auth']
+        repeater.username = cleaned_data['username']
+        repeater.password = cleaned_data['password']
+        repeater.format = cleaned_data['format']
         return repeater
+
+    def post_save(self, request, repeater):
+        messages.success(request, _("Forwarding set up to %s" % repeater.url))
+        return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
 
     def post(self, request, *args, **kwargs):
         if self.add_repeater_form.is_valid():
             repeater = self.make_repeater()
             repeater.save()
-            messages.success(request, _("Forwarding set up to %s" % repeater.url))
-            return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
+            return self.post_save(request, repeater)
         return self.get(request, *args, **kwargs)
 
 
@@ -2534,8 +2542,8 @@ class AddFormRepeaterView(AddRepeaterView):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
-    def make_repeater(self):
-        repeater = super(AddFormRepeaterView, self).make_repeater()
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater = super(AddFormRepeaterView, self).set_repeater_attr(repeater, cleaned_data)
         repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
         return repeater
 
