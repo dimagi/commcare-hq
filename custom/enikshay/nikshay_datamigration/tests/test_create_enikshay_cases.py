@@ -54,12 +54,6 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         )
         self.case_accessor = CaseAccessors(self.domain)
 
-    def tearDown(self):
-        Outcome.objects.all().delete()
-        PatientDetail.objects.all().delete()
-
-        super(TestCreateEnikshayCases, self).tearDown()
-
     @patch('custom.enikshay.nikshay_datamigration.factory.datetime')
     def test_case_creation(self, mock_datetime):
         mock_datetime.utcnow.return_value = datetime(2016, 9, 8, 1, 2, 3, 4123)
