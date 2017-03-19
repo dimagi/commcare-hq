@@ -290,7 +290,8 @@ hqDefine('app_manager/js/app_manager.js', function () {
 
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
             $('.appnav-responsive').on('click', function () {
-                $('#js-appmanager-body').addClass('hide')
+                // TODO doesn't handle vellum with saved changes.
+                $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
             });
         }
 
