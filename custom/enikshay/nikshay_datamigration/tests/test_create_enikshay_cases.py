@@ -51,16 +51,11 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
             PatientId=self.patient_detail,
             Outcome='NULL',
             HIVStatus='Neg',
-            # loginDate=datetime(2016, 1, 2),
         )
-        # Household.objects.create(
-        #     PatientID=patient_detail,
-        # )
         self.case_accessor = CaseAccessors(self.domain)
 
     def tearDown(self):
         Outcome.objects.all().delete()
-        # Household.objects.all().delete()
         PatientDetail.objects.all().delete()
 
         super(TestCreateEnikshayCases, self).tearDown()
