@@ -313,6 +313,8 @@ class EnikshayCaseFactory(object):
                 'owner_id': self.drtb_hiv.location_id,
                 'update': {
                     'name': self.patient_detail.pname,
+
+                    'migration_created_case': 'true',
                 }
             },
             'indices': [CaseIndex(

@@ -200,6 +200,12 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         drtb_hiv_referral_case = self.case_accessor.get_case(drtb_hiv_referral_case_ids[0])
         self.assertEqual('A B C', drtb_hiv_referral_case.name)
         self.assertEqual(self.drtb_hiv.location_id, drtb_hiv_referral_case.owner_id)
+        self.assertEqual(
+            OrderedDict([
+                ('migration_created_case', 'true'),
+            ]),
+            drtb_hiv_referral_case.dynamic_case_properties()
+        )
 
     def test_case_update(self):
         self.outcome.HIVStatus = None
