@@ -85,6 +85,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('is_active', 'yes'),
                 ('last_name', 'C'),
                 ('migration_created_case', 'true'),
+                ('migration_created_from_record', 'MH-ABD-05-16-0001'),
                 ('person_id', 'NIK-MH-ABD-05-16-0001'),
                 ('phi', 'PHI'),
                 ('phi_assigned_to', self.phi.location_id),
@@ -112,6 +113,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('ihv_date', '2016-12-25'),
                 ('initial_home_visit_status', 'completed'),
                 ('migration_created_case', 'true'),
+                ('migration_created_from_record', 'MH-ABD-05-16-0001'),
                 ('occurrence_episode_count', '1'),
                 ('occurrence_id', '20160908010203004'),
             ]),
@@ -148,6 +150,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('episode_pending_registration', 'no'),
                 ('episode_type', 'confirmed_tb'),
                 ('migration_created_case', 'true'),
+                ('migration_created_from_record', 'MH-ABD-05-16-0001'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occupation', 'physical_mathematical_and_engineering'),
                 ('patient_type_choice', 'treatment_after_lfu'),
@@ -203,6 +206,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(
             OrderedDict([
                 ('migration_created_case', 'true'),
+                ('migration_created_from_record', 'MH-ABD-05-16-0001'),
             ]),
             drtb_hiv_referral_case.dynamic_case_properties()
         )
