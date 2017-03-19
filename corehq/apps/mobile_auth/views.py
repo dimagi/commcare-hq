@@ -67,8 +67,6 @@ def fetch_key_records(request, domain):
     device_id = request.GET.get('device_id')
     if device_id and isinstance(request.couch_user, CommCareUser):
         if not request.couch_user.is_demo_user:
-            # temporary NIC fix; db conflicts happen when multiple logins happen
-            # because of following, so disable it for demo users
             request.couch_user.update_device_id_last_used(device_id)
             request.couch_user.save()
     return HttpResponse(payload)
