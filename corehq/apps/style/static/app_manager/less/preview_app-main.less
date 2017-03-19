@@ -17,7 +17,7 @@ preview_app/less */
 @preview-phone-case-offset-y: 40px;
 @preview-phone-case-offset-x: 15px;
 
-
+@transition-speed: .5s;
 
 .preview-phone-container {
   box-sizing: border-box;
@@ -38,11 +38,21 @@ preview_app/less */
   .transition(all 1s);
 }
 
-#js-appmanager-body.offset-for-preview {
+#js-appmanager-body.offset-for-preview,
+#formdesigner.offset-for-preview {
   margin-right: @preview-phone-wrapper-width;
   width: -webkit-calc(~"100% - " @preview-phone-wrapper-width);
   width: -moz-calc(~"100% - " @preview-phone-wrapper-width);
   width: calc(~"100% - " @preview-phone-wrapper-width);
+}
+
+#js-appmanager-body.offset-for-tablet,
+#formdesigner.offset-for-tablet {
+  margin-right: @preview-tablet-wrapper-width;
+  width: -webkit-calc(~"100% - " @preview-tablet-wrapper-width);
+  width: -moz-calc(~"100% - " @preview-tablet-wrapper-width);
+  width: calc(~"100% - " @preview-tablet-wrapper-width);
+  .transition(all @transition-speed);
 }
 
 #hq-messages-container > div > div > .alert {
