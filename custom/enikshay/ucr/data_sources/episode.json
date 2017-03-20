@@ -3826,6 +3826,33 @@
             },
             {
                 "type": "boolean",
+                "column_id": "successfully_treated",
+                "filter": {
+                    "type": "or",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "cured"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "treatment_complete"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
                 "column_id": "died",
                 "filter": {
                     "type": "boolean_expression",
@@ -3887,6 +3914,204 @@
                         "property_name": "treatment_outcome"
                     },
                     "property_value": "not_evaluated"
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_cured",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "cured"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_treatment_complete",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "treatment_complete"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_successfully_treated",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "or",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_outcome"
+                                    },
+                                    "property_value": "cured"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_outcome"
+                                    },
+                                    "property_value": "treatment_complete"
+                                }
+                            ]
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_died",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "died"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_failure",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "failure"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_loss_to_follow_up",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "loss_to_follow_up"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_regimen_changed",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "regimen_changed"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_not_evaluated",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "not_evaluated"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
                 }
             },
             {
