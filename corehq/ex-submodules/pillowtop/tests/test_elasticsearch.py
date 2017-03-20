@@ -212,7 +212,6 @@ class TestSendToElasticsearch(SimpleTestCase):
         update = doc.copy()
         del update['property']
         update['new_prop'] = 'new_val'
-        self._send_to_es_and_check(update, update=True)
         # merging should still keep old 'property'
         self._send_to_es_and_check(update, update=True, es_merge_update=True)
 
