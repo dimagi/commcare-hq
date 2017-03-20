@@ -1,6 +1,7 @@
 from corehq.apps.app_manager.models import Application
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.util.quickcache import quickcache
 from dimagi.ext.jsonobject import JsonObject, StringProperty
 
 
@@ -36,6 +37,7 @@ def get_yes_no(val):
         return 'N/A'
 
 
+@quickcache(['item'])
 def get_two_last_forms(item, xmlns):
     xforms_ids = CaseAccessors(item['domain']).get_case_xform_ids(item['_id'])
     forms = FormAccessors(item['domain']).get_forms(xforms_ids)
