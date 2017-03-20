@@ -18,6 +18,7 @@ class Command(BaseCommand):
         print('Generating data dictionary for domains')
         old_export_domains = []
         failed_wrap = []
+        other_failures = []
         for domain_dict in with_progress_bar(Domain.get_all(include_docs=False)):
             domain = domain_dict['key']
             try:
@@ -26,9 +27,14 @@ class Command(BaseCommand):
                 old_export_domains.append(domain)
             except WrappingAttributeError as e:
                 failed_wrap.append((domain, unicode(e)))
+            except Exception:
+                other_failures.append((domain, unicode(e)))
         print('--- Old Export Domains ---')
         for domain in old_export_domains:
             print(domain)
         print('--- Failed Wrap Domains ---')
         for domain, error in failed_wrap:
+            print('{}: {}'.format(domain, error))
+        print('--- Other Failed Domains ---')
+        for domain, error in other_failures:
             print('{}: {}'.format(domain, error))
