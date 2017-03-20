@@ -93,6 +93,8 @@ def _terminate_subscriptions(domain_name):
             current_subscription.is_active = False
             current_subscription.save()
 
+            current_subscription.transfer_credits()
+
         Subscription.objects.filter(
             Q(date_start__gt=today) | Q(date_start=today, is_active=False),
             subscriber__domain=domain_name,

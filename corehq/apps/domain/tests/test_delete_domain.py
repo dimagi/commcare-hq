@@ -1,5 +1,7 @@
+import random
 import uuid
 from datetime import date, datetime
+from decimal import Decimal
 
 from dateutil.relativedelta import relativedelta
 from django.test import TestCase
@@ -8,7 +10,9 @@ from casexml.apps.stock.models import DocDomainMapping, StockReport, StockTransa
 
 from corehq.apps.accounting.models import (
     BillingAccount,
+    CreditLine,
     DefaultProductPlan,
+    FeatureType,
     SoftwarePlanEdition,
     Subscription,
     SubscriptionManager,
@@ -181,6 +185,29 @@ class TestDeleteDomain(TestCase):
                 id=next_subscription.id
             ).is_hidden_to_ops
         )
+
+    def test_active_subscription_credits_transferred_to_account(self):
+        credit_amount = random.randint(1, 10)
+        CreditLine.add_credit(
+            credit_amount,
+            feature_type=FeatureType.SMS,
+            subscription=self.current_subscription,
+        )
+
+        self.domain.delete()
+
+        subscription_credits = CreditLine.get_credits_by_subscription_and_features(
+            self.current_subscription,
+            feature_type=FeatureType.SMS,
+        )
+        self.assertEqual(len(subscription_credits), 1)
+        self.assertEqual(subscription_credits[0].balance, Decimal('0.0000'))
+        account_credits = CreditLine.get_credits_for_account(
+            self.current_subscription.account,
+            feature_type=FeatureType.SMS,
+        )
+        self.assertEqual(len(account_credits), 1)
+        self.assertEqual(account_credits[0].balance, Decimal(credit_amount))
 
     def tearDown(self):
         self.domain2.delete()
