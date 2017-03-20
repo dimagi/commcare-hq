@@ -9,19 +9,19 @@ function api_get_children(loc_uuid, callback, loc_url) {
     });
 }
 
-function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_filter, func, show_location_filter, loc_url) {
+function LocationSelectViewModel(options) {
     var model = this;
 
-    this.default_caption = default_caption || 'All';
-    this.auto_drill = (_.isBoolean(auto_drill) ? auto_drill : true);
-    this.loc_filter = loc_filter || function(loc) { return true; };
-    this.func = typeof func !== 'undefined' ? func : LocationModel;
-    this.show_location_filter = ko.observable((typeof show_location_filter !== 'undefined') ? show_location_filter : 'y');
+    this.default_caption = options.default_caption || 'All';
+    this.auto_drill = (_.isBoolean(options.auto_drill) ? options.auto_drill : true);
+    this.loc_filter = options.loc_filter || function(loc) { return true; };
+    this.func = typeof options.func !== 'undefined' ? options.func : LocationModel;
+    this.show_location_filter = ko.observable((typeof options.show_location_filter !== 'undefined') ? options.show_location_filter : 'y');
 
     this.root = ko.observable();
     this.selected_path = ko.observableArray();
 
-    this.location_types = $.map(hierarchy, function(e) {
+    this.location_types = $.map(options.hierarchy, function(e) {
         return {type: e[0], allowed_parents: e[1]};
     });
 
@@ -79,7 +79,7 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
 
     // load location hierarchy and set initial path
     this.load = function(locs, selected) {
-        this.root(new model.func({name: '_root', children: locs}, this, undefined, undefined, undefined, loc_url));
+        this.root(new model.func({name: '_root', children: locs}, this, undefined, undefined, undefined, options.loc_url));
         this.path_push(this.root());
 
         if (selected) {

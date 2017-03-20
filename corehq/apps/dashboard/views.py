@@ -10,7 +10,7 @@ from corehq.apps.dashboard.models import (
     TileConfiguration,
     AppsPaginatedContext,
     IconContext,
-    ReportsPaginatedContext, Tile, DataPaginatedContext)
+    ReportsPaginatedContext, Tile, DataPaginatedContext, DatadogContext)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
     DefaultProjectSettingsView
@@ -18,8 +18,9 @@ from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.views import DefaultProjectUserSettingsView
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
 from corehq.apps.style.decorators import use_angular_js
+from corehq.toggles import DASHBOARD_GRAPHS
 from django_prbac.utils import has_privilege
 
 
@@ -174,6 +175,14 @@ def _get_default_tile_configurations():
     can_edit_users = lambda request: (request.couch_user.can_edit_commcare_users()
                                       or request.couch_user.can_edit_web_users())
 
+    def can_edit_locations_not_users(request):
+        if not has_privilege(request, privileges.LOCATIONS):
+            return False
+        user = request.couch_user
+        return not can_edit_users(request) and (
+            user.can_edit_locations() or user_can_edit_location_types(user, request.project)
+        )
+
     can_view_commtrack_setup = lambda request: (request.project.commtrack_enabled)
 
     can_view_exchange = lambda request: can_edit_apps(request) and not settings.ENTERPRISE_MODE
@@ -201,6 +210,14 @@ def _get_default_tile_configurations():
             visibility_check=can_edit_apps,
             urlname='default_app',
             help_text=_('Build, update, and deploy applications'),
+        ),
+        TileConfiguration(
+            title=_('Form Submissions'),
+            slug='graph',
+            icon='fcc fcc-reports',
+            context_processor_class=DatadogContext,
+            visibility_check=DASHBOARD_GRAPHS.enabled_for_request,
+            help_text=_("Form submissions for this domain over the last 7 days"),
         ),
         TileConfiguration(
             title=_('Reports'),
@@ -239,6 +256,15 @@ def _get_default_tile_configurations():
             visibility_check=can_edit_users,
             help_text=_('Manage accounts for mobile workers '
                         'and CommCareHQ users'),
+        ),
+        TileConfiguration(
+            title=_('Organization'),
+            slug='locations',
+            icon='fcc fcc-users',
+            context_processor_class=IconContext,
+            urlname='default_locations_view',
+            visibility_check=can_edit_locations_not_users,
+            help_text=_('Manage the Organization Hierarchy'),
         ),
         TileConfiguration(
             title=_('Messaging'),

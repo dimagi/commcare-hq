@@ -3,18 +3,23 @@
 {% load compress %}
 {% load statici18n %}
 
-{% block less_debug %}
+{% block css %}
+
+{% if less_debug %}
 <link type="text/less"
       rel="stylesheet"
       media="all"
-      href="{% static 'cloudcare/less/formplayer-webapp.debug.less' %}" />
-{% endblock %}
+      href="{% static 'cloudcare/less/formplayer-webapp.debug.less' %}"/>
 
-{% block css %}
+{% else %}
+{% compress css %}
 <link type="text/less"
       rel="stylesheet"
       media="all"
       href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
+{% endcompress %}
+{% endif %}
+
 {% endblock %}
 
 {% block body %}

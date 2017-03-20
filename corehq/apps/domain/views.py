@@ -7,12 +7,14 @@ import logging
 import json
 import cStringIO
 import pytz
+import sys
 
 from couchdbkit import ResourceNotFound
 import dateutil
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
+from django.template import RequestContext
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET
 from django.views.generic import View
@@ -24,9 +26,9 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, render_to_response
 from django.contrib import messages
-from django.contrib.auth.views import password_reset_confirm
+from django.contrib.auth.views import password_reset_confirm, password_reset
 from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -1034,8 +1036,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 }
             except BillingRecord.DoesNotExist:
                 log_accounting_error(
-                    "An invoice was generated for %(invoice_id)d "
-                    "(domain: %(domain)s), but no billing record!" % {
+                    u"An invoice was generated for %(invoice_id)d "
+                    u"(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
                     }
@@ -3257,3 +3259,25 @@ class PasswordResetView(View):
         couch_user = CouchUser.from_django_user(user)
         clear_login_attempts(couch_user)
         return response
+
+
+def exception_safe_password_reset(request, *args, **kwargs):
+    """
+    Django's password reset function raises SMTP errors if there's any
+    problem with the mailserver. Catch that more elegantly with a simple wrapper.
+    """
+    # Django docs on password reset are weak. See these links instead:
+    #
+    # http://streamhacker.com/2009/09/19/django-ia-auth-password-reset/
+    # http://www.rkblog.rk.edu.pl/w/p/password-reset-django-10/
+    # http://blog.montylounge.com/2009/jul/12/django-forgot-password/
+    try:
+        return password_reset(request, *args, **kwargs)
+    except None:
+        vals = {
+            'current_page': {'page_name': _('Oops!')},
+            'error_msg': 'There was a problem with your request',
+            'error_details': sys.exc_info(),
+            'show_homepage_link': 1,
+        }
+        return render_to_response('error.html', vals, context_instance=RequestContext(request))

@@ -25,27 +25,47 @@ POOL_SIZE = 10
 class Command(BaseCommand):
     help = "Update MVP indicators in existing cases and forms."
     args = "<domain> <case or form> <case or form label> <start at record #>"
-    label = ""
     start_at_record = 0
     domains = None
 
-    def handle(self, *args, **options):
-        self.domains = [args[0]] if len(args) > 0 and args[0] != "all" else MVP.DOMAINS
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'domain',
+            default='all',
+            nargs='?',
+        )
+        parser.add_argument(
+            'document',
+            default='all',
+            nargs='?',
+        )
+        parser.add_argument(
+            'document_type',
+            default='all',
+            nargs='?',
+        )
+        parser.add_argument(
+            'start',
+            default=0,
+            nargs='?',
+            type=int,
+        )
+
+    def handle(self, domain, document, document_type, start, **options):
+        self.domains = [domain] if domain != 'all' else MVP.DOMAINS
 
         cases = ['child', 'pregnancy', 'household']
 
         process_forms = True
         process_cases = True
 
-        self.start_at_record = int(args[3]) if len(args) > 3 else 0
+        self.start_at_record = start
 
-        if len(args) > 1 and args[1] != "all":
-            document = args[1]
+        if document != "all":
             process_cases = document == "case"
             process_forms = document == "form"
 
-        if len(args) > 2 and args[2] != "all":
-            document_type = args[2]
+        if document_type != "all":
             if process_cases:
                 cases = [document_type]
         else:

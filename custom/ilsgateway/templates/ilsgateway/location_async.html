@@ -43,7 +43,12 @@
       var location_url = '{{ api_root }}';
 
       var show_location_filter = {% if make_optional and not loc_id %}'n'{% else %}'y'{% endif%};
-      var model = new LocationSelectViewModel(hierarchy, undefined, false, undefined, undefined, show_location_filter, location_url);
+
+      var model = new LocationSelectViewModel({
+        "hierarchy": hierarchy,
+        "show_location_filter": show_location_filter,
+        "loc_url": location_url
+      });
       $('#group_{{ control_slug }}').koApplyBindings(model);
       model.load(locs, selected);
 

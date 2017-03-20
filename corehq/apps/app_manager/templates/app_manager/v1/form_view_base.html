@@ -283,6 +283,11 @@
             setupValidation('{% url "validate_form_for_build" domain app.id form.unique_id %}');
         });
     </script>
+    <script>
+        $(function (){
+            $('.property-description').popover();
+        });
+    </script>
 {% endblock %}
 
 {% block form-view %}
@@ -428,6 +433,7 @@
                         {% block usercase_management_content %}
                             {%  if form.uses_usercase and not allow_usercase %}
                                 <div class="container-fluid col-sm-6">
+                              {{ request|toggle_tag_info:"USER_PROPERTY_EASY_REFS" }}
                               {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                                 <p>{% blocktrans %}
                                     The User Properties feature is no longer available because of the change in your

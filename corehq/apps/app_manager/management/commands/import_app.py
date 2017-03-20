@@ -11,8 +11,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'source_domain',
-            dest='domain'
+            'domain'
         )
         parser.add_argument(
             'app_id',

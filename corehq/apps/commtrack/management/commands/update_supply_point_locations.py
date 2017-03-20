@@ -47,7 +47,7 @@ class Command(BaseCommand):
     help = ("Make sure all supply point cases have their owner_id set "
             "to the location_id")
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         all_domains = Domain.get_all_names()
         total = len(all_domains)
         finished = 0

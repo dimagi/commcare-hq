@@ -148,3 +148,15 @@ def print_tasks(worker, task_state):
             print(task_info.id, task_info.time_start, task_info.name)
         else:
             print(task_info.id, task_info.name)
+
+
+def get_running_workers(timeout=10):
+    app = Celery()
+    app.config_from_object(settings)
+    result = app.control.ping(timeout=timeout)
+
+    worker_names = []
+    for worker_info in result:
+        worker_names.extend(worker_info.keys())
+
+    return worker_names

@@ -11,13 +11,17 @@ class SiteCodeTest(TestCase):
 
     domain = 'test-site-code'
 
-    def setUp(self):
-        self.project = bootstrap_domain(self.domain)
-        LocationType(domain=self.domain, name='type').save()
+    @classmethod
+    def setUpClass(cls):
+        super(SiteCodeTest, cls).setUpClass()
+        cls.project = bootstrap_domain(cls.domain)
+        LocationType(domain=cls.domain, name='type').save()
 
-    def tearDown(self):
-        self.project.delete()
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
         delete_all_locations()
+        super(SiteCodeTest, cls).tearDownClass()
 
     def testSimpleName(self):
         location = Location(

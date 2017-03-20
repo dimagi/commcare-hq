@@ -151,6 +151,42 @@
         };
     };
 
+    dashboardControllers.DatadogTileController = function ($scope, djangoRMI) {
+        var self = this;
+
+        $scope.url = '';
+        $scope.helpText = '';
+
+        self.retries = 0;
+
+        self.init = function (attrs) {
+            $scope.title = attrs.title;
+            $scope.slug = attrs.slug;
+            self.refreshGraph();
+        };
+
+        self.refreshGraph = function () {
+            djangoRMI.update_tile({
+                slug: $scope.slug,
+            }).success(self.updateGraph).error(self.retry);
+        };
+
+        self.updateGraph = function (data) {
+            if (data.success) {
+                $scope.url = data.response.url;
+                $scope.helpText = data.response.helpText;
+            }
+        };
+
+        self.retry = function () {
+            self.retries ++;
+            if (self.retries <= 1) {
+                self.refreshGraph();
+            }
+        };
+    };
+
+
     dashboardControllers.permissionsController = function ($scope, djangoRMI) {
         var self = this;
 
@@ -255,9 +291,24 @@
         };
     };
 
+    dashboardDirectives.datadogGraphDirective = function (dashboardConfig) {
+        var link = function ($scope, element, attrs, controller) {
+            controller.init(attrs);
+        };
+
+        return {
+            scope: true,
+            restrict: 'EA',
+            templateUrl: utils.getTemplate(dashboardConfig, 'datadog_tile.html'),
+            controller: dashboardControllers.DatadogTileController,
+            link: link,
+        };
+    };
+
     dashboard.controller(dashboardControllers);
     dashboard.directive('tilePaginate', dashboardDirectives.paginatedTileDirective);
     dashboard.directive('tileIcon', dashboardDirectives.iconTileDirective);
+    dashboard.directive('tileGraph', dashboardDirectives.datadogGraphDirective);
     dashboard.directive('processExternalLink', dashboardDirectives.externalLinkDirective);
     dashboard.directive('trackAnalytics', dashboardDirectives.trackAnalyticsDirective);
     dashboard.directive('checkPermissions', dashboardDirectives.checkPermissionsDirective);

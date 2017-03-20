@@ -6,4 +6,9 @@ FormplayerFrontend.Constants = {
     // These should match corehq/apps/cloudcare/const.py
     WEB_APPS_ENVIRONMENT: 'web-apps',
     PREVIEW_APP_ENVIRONMENT: 'preview-app',
+
+    LayoutStyles: {
+        GRID: 'grid',
+        LIST: 'list',
+    },
 };

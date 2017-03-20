@@ -68,7 +68,6 @@ class Migration(migrations.Migration):
             "SELECT 1",
         ),
         migrator.get_migration('archive_unarchive_form.sql'),
-        migrator.get_migration('case_modified_since.sql'),
         migrator.get_migration('check_form_exists.sql'),
         migrator.get_migration('get_case_attachments.sql'),
         migrator.get_migration('get_case_by_id.sql'),

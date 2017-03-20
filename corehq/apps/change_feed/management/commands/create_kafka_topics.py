@@ -6,7 +6,7 @@ from corehq.apps.change_feed.connection import get_kafka_client
 
 class Command(BaseCommand):
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         create_kafka_topics()
 
 

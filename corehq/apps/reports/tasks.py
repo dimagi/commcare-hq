@@ -83,7 +83,7 @@ def get_report_queue(report):
         return 'celery'
 
 
-@task(ignore_result=True)
+@task(queue='background_queue', ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
     try:

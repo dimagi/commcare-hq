@@ -3,20 +3,23 @@
 {% load compress %}
 {% load statici18n %}
 
-{% block less_debug %}
+{% block css %}
+
+{% if less_debug %}
 <link type="text/less"
       rel="stylesheet"
       media="all"
       href="{% static 'preview_app/less/preview_app.debug.less' %}"/>
-{% endblock %}
 
-{% block css %}
+{% else %}
 {% compress css %}
 <link type="text/less"
       rel="stylesheet"
       media="all"
       href="{% static 'preview_app/less/preview_app.less' %}"/>
 {% endcompress %}
+{% endif %}
+
 {% endblock %}
 
 {% block body %}

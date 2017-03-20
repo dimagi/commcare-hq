@@ -36,6 +36,7 @@ class TestLocationSync(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestLocationSync, cls).setUpClass()
         delete_all_locations()
         cls.domain_obj = create_domain(DOMAIN)
         loc_types = setup_location_types(DOMAIN, ['state', 'county', 'city'])
@@ -46,6 +47,7 @@ class TestLocationSync(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
+        super(TestLocationSync, cls).tearDownClass()
 
     def tearDown(self):
         delete_all_locations()
