@@ -2062,7 +2062,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
-    print_template = StringProperty()
+    print_template = DictProperty()
 
     def get_tab_spans(self):
         '''

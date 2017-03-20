@@ -38,6 +38,7 @@ from corehq.apps.app_manager.util import (
     module_case_hierarchy_has_circular_reference, get_app_manager_template)
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
+from corehq.apps.hqmedia.models import ApplicationMediaReference, CommCareMultimedia
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration
@@ -155,6 +156,9 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
         slug = 'm1_case_long'   # TODO
+        print_template = app.modules[1].case_details.long.print_template
+        if not print_template:
+            print_template = {}
         context.update({
             'print_uploader': MultimediaHTMLUploadController(
                 slug,
@@ -163,6 +167,11 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
                     args=[app.domain, app.id],
                 )
             ),
+            'print_ref': ApplicationMediaReference(
+                print_template.get('path'),
+                media_class=CommCareMultimedia,
+            ).as_dict(),
+            'print_media_info': print_template,
         })
     return context
 

@@ -424,10 +424,9 @@ class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
         ref = super(
             ProcessDetailPrintTemplateUploadView, self
         ).process_upload()
-        self.app.modules[1].case_details.long.print_template = ref['ref']['path']  # TODO
+        self.app.modules[1].case_details.long.print_template = ref['ref']   # TODO
         self.app.save()
         return ref
-
 
 
 class RemoveLogoView(BaseMultimediaView):
