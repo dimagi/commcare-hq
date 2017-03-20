@@ -2,6 +2,7 @@ import random
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+from mock import patch
 
 from dateutil.relativedelta import relativedelta
 from django.test import TestCase
@@ -208,6 +209,14 @@ class TestDeleteDomain(TestCase):
         )
         self.assertEqual(len(account_credits), 1)
         self.assertEqual(account_credits[0].balance, Decimal(credit_amount))
+
+    @patch('corehq.apps.accounting.models.DomainDowngradeActionHandler.get_response')
+    def test_downgraded(self, mock_get_response):
+        mock_get_response.return_value = True
+
+        self.domain.delete()
+
+        self.assertEqual(len(mock_get_response.call_args_list), 1)
 
     def tearDown(self):
         self.domain2.delete()

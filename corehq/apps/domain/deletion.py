@@ -5,6 +5,7 @@ from django.db import connection, transaction
 from django.db.models import Q
 
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.utils import get_change_status
 
 
 class BaseDeletion(object):
@@ -94,6 +95,14 @@ def _terminate_subscriptions(domain_name):
             current_subscription.save()
 
             current_subscription.transfer_credits()
+
+            _, downgraded_privs, upgraded_privs = get_change_status(current_subscription.plan_version, None)
+            current_subscription.subscriber.deactivate_subscription(
+                downgraded_privileges=downgraded_privs,
+                upgraded_privileges=upgraded_privs,
+                old_subscription=current_subscription,
+                new_subscription=None,
+            )
 
         Subscription.objects.filter(
             Q(date_start__gt=today) | Q(date_start=today, is_active=False),
