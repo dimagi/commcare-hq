@@ -69,6 +69,7 @@ class _UserCaseHelper(object):
             update=fields
         )
         self._submit_case_block(caseblock)
+        self._user_case_changed(fields)
 
     def update_user_case(self, case, case_type, fields):
         caseblock = CaseBlock(
@@ -81,6 +82,7 @@ class _UserCaseHelper(object):
             update=fields
         )
         self._submit_case_block(caseblock)
+        self._user_case_changed(fields)
 
     def close_user_case(self, case, case_type):
         caseblock = CaseBlock(
@@ -91,6 +93,14 @@ class _UserCaseHelper(object):
             close=True,
         )
         self._submit_case_block(caseblock)
+
+    def _user_case_changed(self, fields):
+        add_inferred_export_properties.delay(
+            'UserSave',
+            self.domain,
+            USERCASE_TYPE,
+            fields.keys(),
+        )
 
 
 class CallCenterCase(namedtuple('CallCenterCase', 'case_id hq_user_id')):
@@ -156,12 +166,6 @@ def _get_user_case_fields(commcare_user):
         'phone_number': commcare_user.phone_number or ''
     })
 
-    add_inferred_export_properties.delay(
-        'UserSave',
-        commcare_user.domain,
-        USERCASE_TYPE,
-        fields.keys(),
-    )
     return fields
 
 
