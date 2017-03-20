@@ -1,6 +1,6 @@
 from django.conf import settings
 import django.core.exceptions
-from corehq.apps.users.models import CouchUser, InvalidUser
+from corehq.apps.users.models import CouchUser, InvalidUser, PublishCouchUser
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
 
 
@@ -41,4 +41,6 @@ class UsersMiddleware(object):
                     request.couch_user = InvalidUser()
                 if request.couch_user:
                     request.couch_user.current_domain = domain
+        else: # TODO add feature flag
+            request.couch_user = PublishCouchUser()
         return None

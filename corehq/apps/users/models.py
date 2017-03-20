@@ -2376,3 +2376,35 @@ class UserCache(object):
             user = CouchUser.get_by_user_id(user_id)
             self.cache[user_id] = user
             return user
+
+
+class PublishCouchUser(CouchUser):
+
+    username = "public_user"
+    doc_type = "CommCareUser"
+
+    @property
+    def is_active(self):
+        return True
+
+    def is_domain_admin(self):
+        return False
+
+    def is_member_of(self, domain):
+        return True
+
+    def has_permission(self, domain, perm=None, data=None):
+        return True
+
+    def can_view_report(self, domain, report):
+        return True
+
+    def can_view_some_reports(self, domain):
+        return False
+
+    @property
+    def analytics_enabled(self):
+        return False
+
+    def can_edit_data(self):
+        return False
