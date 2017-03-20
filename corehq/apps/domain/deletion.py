@@ -2,6 +2,7 @@ from datetime import date
 
 from django.apps import apps
 from django.db import connection, transaction
+from django.db.models import Q
 
 from corehq.apps.accounting.models import Subscription
 
@@ -91,6 +92,11 @@ def _terminate_subscriptions(domain_name):
             current_subscription.date_end = today
             current_subscription.is_active = False
             current_subscription.save()
+
+        Subscription.objects.filter(
+            Q(date_start__gt=today) | Q(date_start=today, is_active=False),
+            subscriber__domain=domain_name,
+        ).update(is_hidden_to_ops=True)
 
 
 # We use raw queries instead of ORM because Django queryset delete needs to

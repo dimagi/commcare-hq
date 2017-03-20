@@ -11,6 +11,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan,
     SoftwarePlanEdition,
     Subscription,
+    SubscriptionManager,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.domain.models import Domain
@@ -162,6 +163,24 @@ class TestDeleteDomain(TestCase):
         terminated_subscription = Subscription.objects.get(subscriber__domain=self.domain.name)
         self.assertFalse(terminated_subscription.is_active)
         self.assertIsNotNone(terminated_subscription.date_end)
+
+    def test_accounting_future_subscription_suppressed(self):
+        self.current_subscription.date_end = self.current_subscription.date_start + relativedelta(days=5)
+        self.current_subscription.save()
+        next_subscription = Subscription.new_domain_subscription(
+            self.current_subscription.account,
+            self.domain.name,
+            DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.PRO),
+            date_start=self.current_subscription.date_end,
+        )
+
+        self.domain.delete()
+
+        self.assertTrue(
+            super(SubscriptionManager, Subscription.objects).get_queryset().get(
+                id=next_subscription.id
+            ).is_hidden_to_ops
+        )
 
     def tearDown(self):
         self.domain2.delete()
