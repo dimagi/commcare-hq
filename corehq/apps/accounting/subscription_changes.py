@@ -10,10 +10,6 @@ from django.utils.translation import ugettext_lazy as _, ungettext
 from couchexport.models import SavedExportSchema
 
 from corehq import privileges
-from corehq.apps.accounting.tasks import (
-    archive_logos,
-    restore_logos,
-)
 from corehq.apps.accounting.utils import (
     get_active_reminders_by_domain_name,
     get_privileges,
@@ -192,6 +188,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
     def response_commcare_logo_uploader(domain, new_plan_version):
         """Make sure no existing applications are using a logo.
         """
+        from corehq.apps.accounting.tasks import archive_logos
         archive_logos.delay(domain.name)
         return True
 
@@ -257,6 +254,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     def response_commcare_logo_uploader(domain, new_plan_version):
         """Make sure no existing applications are using a logo.
         """
+        from corehq.apps.accounting.tasks import restore_logos
         restore_logos.delay(domain.name)
         return True
 
