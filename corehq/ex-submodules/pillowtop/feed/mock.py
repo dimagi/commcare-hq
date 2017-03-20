@@ -29,9 +29,6 @@ class MockChangeFeed(ChangeFeed):
     def get_processed_offsets(self):
         return {'test': self._since}
 
-    def get_processed_offsets(self):
-        return {'test': self._since}
-
 
 class RandomChangeFeed(ChangeFeed):
     """
@@ -59,9 +56,6 @@ class RandomChangeFeed(ChangeFeed):
 
     def get_latest_offsets_as_checkpoint_value(self):
         return self._count
-
-    def get_processed_offsets(self):
-        return {'test': self._since}
 
     def get_processed_offsets(self):
         return {'test': self._since}
