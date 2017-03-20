@@ -185,7 +185,7 @@ def update_calculated_properties():
                 del props['cp_last_form']
             if props['cp_300th_form'] is None:
                 del props['cp_300th_form']
-            send_to_elasticsearch("domains", props)
+            send_to_elasticsearch("domains", props, es_merge_update=True)
         except Exception as e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 
