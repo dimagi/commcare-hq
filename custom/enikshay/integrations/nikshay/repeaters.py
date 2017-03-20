@@ -15,7 +15,7 @@ from custom.enikshay.case_utils import (
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
-from custom.enikshay.integrations.utils import is_submission_from_test_location
+from custom.enikshay.integrations.utils import is_valid_person_submission
 from custom.enikshay.integrations.ninetyninedots.repeaters import case_properties_changed
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
 
@@ -52,7 +52,7 @@ class NikshayRegisterPatientRepeater(CaseRepeater):
                 not episode_case_properties.get('nikshay_id', False) and
                 case_properties_changed(episode_case, [EPISODE_PENDING_REGISTRATION]) and
                 episode_case_properties.get(EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
-                not is_submission_from_test_location(person_case)
+                is_valid_person_submission(person_case)
             )
         else:
             return False
@@ -90,11 +90,11 @@ class NikshayHIVTestRepeater(CaseRepeater):
             return (
                 episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 episode_case_properties.get('nikshay_id') and
-                not is_submission_from_test_location(person_case) and
                 (
                     related_dates_changed(person_case) or
                     person_hiv_status_changed(person_case)
-                )
+                ) and
+                is_valid_person_submission(person_case)
             )
         else:
             return False
@@ -121,18 +121,12 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
             return False
 
         episode_case_properties = episode_case.dynamic_case_properties()
-        if (
+        return (
             episode_case_properties.get('nikshay_registered', 'false') == 'true' and
             episode_case_properties.get('nikshay_id', False) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
             episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys()
-        ):
-            try:
-                person_case = get_person_case_from_episode(episode_case.domain, episode_case)
-            except ENikshayCaseNotFound:
-                return False
-            return not is_submission_from_test_location(person_case)
-        return False
+        )
 
 
 def person_hiv_status_changed(case):
