@@ -23,7 +23,11 @@
         var selected = '{{ loc_id }}';
         var hierarchy = {{ hierarchy|JSON }};
 
-        var model = new LocationSelectViewModel(hierarchy, false, null, false, IntrahealthLocModel);
+        var model = new LocationSelectViewModel({
+            "hierarchy": hierarchy,
+            "auto_drill": false,
+            "show_location_filter": show_location_filter
+        });
         $('#group_{{ control_slug }}').koApplyBindings(model);
         model.load(locs, selected);
     });

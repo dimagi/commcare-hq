@@ -45,8 +45,13 @@
 
           var loc_id = {{ location.get_id|JSON }};
           var hierarchy = {{ hierarchy|JSON }};
-          model = new LocationSelectViewModel(hierarchy, '\u2026', false, function(loc) {
-              return loc.uuid() != loc_id && loc.can_have_children();
+          model = new LocationSelectViewModel({
+              "hierarchy": hierarchy,
+              "default_caption": '\u2026',
+              "auto_drill":false,
+              "func": function(loc) {
+                  return loc.uuid() != loc_id && loc.can_have_children();
+              }
           });
 
           model.editing = ko.observable(false);
