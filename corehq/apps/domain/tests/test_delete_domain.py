@@ -1,7 +1,18 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
+
+from dateutil.relativedelta import relativedelta
 from django.test import TestCase
+
 from casexml.apps.stock.models import DocDomainMapping, StockReport, StockTransaction
+
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+)
+from corehq.apps.accounting.tests import generator
 from corehq.apps.domain.models import Domain
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
@@ -77,13 +88,27 @@ class TestDeleteDomain(TestCase):
         )
         MobileBackendInvitation.objects.create(domain=domain_name, backend=backend)
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestDeleteDomain, cls).setUpClass()
+        generator.instantiate_accounting()
+
     def setUp(self):
+        super(TestDeleteDomain, self).setUp()
         self.domain = Domain(name="test", is_active=True)
         self.domain.save()
         self.domain.convert_to_commtrack()
+        self.current_subscription = Subscription.new_domain_subscription(
+            BillingAccount.get_or_create_account_by_domain(self.domain.name, created_by='tests')[0],
+            self.domain.name,
+            DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ADVANCED),
+            date_start=date.today() - relativedelta(days=1),
+        )
+
         self.domain2 = Domain(name="test2", is_active=True)
         self.domain2.save()
         self.domain2.convert_to_commtrack()
+
         LocationType.objects.create(
             domain='test',
             name='facility',
@@ -131,5 +156,13 @@ class TestDeleteDomain(TestCase):
         self._assert_sql_counts('test', 0)
         self._assert_sql_counts('test2', 2)
 
+    def test_active_subscription_terminated(self):
+        self.domain.delete()
+
+        terminated_subscription = Subscription.objects.get(subscriber__domain=self.domain.name)
+        self.assertFalse(terminated_subscription.is_active)
+        self.assertIsNotNone(terminated_subscription.date_end)
+
     def tearDown(self):
         self.domain2.delete()
+        super(TestDeleteDomain, self).tearDown()
