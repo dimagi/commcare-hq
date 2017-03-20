@@ -17,6 +17,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime, ServerTime
 from dimagi.utils.couch import CriticalSection
+from django.core.cache import cache
 
 
 class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type use_fixtures')):
@@ -95,12 +96,25 @@ class _UserCaseHelper(object):
         self._submit_case_block(caseblock)
 
     def _user_case_changed(self, fields):
-        add_inferred_export_properties.delay(
-            'UserSave',
-            self.domain,
-            USERCASE_TYPE,
-            fields.keys(),
-        )
+        field_names = fields.keys()
+        if _domain_has_new_fields(self.domain, field_names):
+            add_inferred_export_properties.delay(
+                'UserSave',
+                self.domain,
+                USERCASE_TYPE,
+                field_names,
+            )
+
+
+def _domain_has_new_fields(domain, field_names):
+    cache_key = u'user_case_fields_{}'.format(domain)
+    cached_fields = cache.get(cache_key)
+    new_field_set = set(field_names)
+    if cached_fields != new_field_set:
+        cache.set(cache_key, new_field_set)
+        return True
+
+    return False
 
 
 class CallCenterCase(namedtuple('CallCenterCase', 'case_id hq_user_id')):
