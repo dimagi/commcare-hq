@@ -119,8 +119,9 @@ class CouchDocumentProvider(DocumentProvider):
             raise ValueError("Invalid (duplicate?) doc types")
 
         self.couchdb = next(iter(self.doc_type_map.values())).get_db()
-        dbname = self.couchdb.dbname
-        assert all(m.get_db().dbname == dbname for m in self.doc_type_map.values()), \
+        couchid = lambda db: getattr(db, "dbname", id(db))
+        dbid = couchid(self.couchdb)
+        assert all(couchid(m.get_db()) == dbid for m in self.doc_type_map.values()), \
             "documents must live in same couch db: %s" % repr(self.doc_type_map)
 
         if domain:
