@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import print_function
 import json
+import os
 import uuid
 from cStringIO import StringIO
 from os.path import join
@@ -11,7 +12,7 @@ from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.s3db import maybe_not_found
 from corehq.blobs.tests.util import (
     install_blob_db,
-    TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB, TemporaryS3BlobDB
+    TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB
 )
 from corehq.blobs.util import random_url_id
 from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict
@@ -504,11 +505,8 @@ class TestMigrateBackend(TestCase):
         self._sql_save(obj, rex)
 
     def setUp(self):
-        with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
-            config = settings.S3_BLOB_DB_SETTINGS
-
-        lost_db = TemporaryFilesystemBlobDB()  # must be created before S3 dbs
-        db1 = TemporaryS3BlobDB(config)
+        lost_db = TemporaryFilesystemBlobDB()  # must be created before other dbs
+        db1 = TemporaryFilesystemBlobDB()
         assert get_blob_db() is db1, (get_blob_db(), db1)
         missing = "found.not"
         name = "blob.bin"
@@ -565,7 +563,7 @@ class TestMigrateBackend(TestCase):
                 ))
 
         self.test_size = len(self.couch_docs) + len(self.sql_docs)
-        db2 = TemporaryS3BlobDB(config)
+        db2 = TemporaryFilesystemBlobDB()
         self.db = TemporaryMigratingBlobDB(db2, db1)
         assert get_blob_db() is self.db, (get_blob_db(), self.db)
         BaseMigrationTest.discard_migration_state(self.slug)
@@ -583,10 +581,9 @@ class TestMigrateBackend(TestCase):
                 doc.delete()
 
     def test_migrate_backend(self):
-        # verify: attachment is in couch and migration not complete
+        # verify: migration not complete
         with maybe_not_found():
-            s3_blobs = sum(1 for b in self.db.new_db._s3_bucket().objects.all())
-            self.assertEqual(s3_blobs, 0)
+            self.assertEqual(os.listdir(self.db.new_db.rootdir), [])
 
         with tempdir() as tmp:
             filename = join(tmp, "file.txt")
