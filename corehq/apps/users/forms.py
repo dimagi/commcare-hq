@@ -366,7 +366,7 @@ class RoleForm(forms.Form):
 class SetUserPasswordForm(SetPasswordForm):
 
     new_password1 = forms.CharField(
-        label=ugettext_lazy("New password"),
+        label=ugettext_noop("New password"),
         widget=forms.PasswordInput(),
     )
 
