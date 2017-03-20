@@ -172,7 +172,7 @@ class PillowBase(object):
     def _record_change_in_datadog(self, change, timer):
         change_feed = self.get_change_feed()
         current_seq = self._normalize_sequence(change_feed.get_processed_offsets())
-        current_offsets = change_feed.get_current_offsets()
+        current_offsets = change_feed.get_latest_offsets()
 
         for topic, value in current_seq.iteritems():
             datadog_gauge('commcare.change_feed.processed_offsets', value, tags=[

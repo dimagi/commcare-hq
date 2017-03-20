@@ -115,15 +115,7 @@ class ChangeFeed(object):
         pass
 
     @abstractmethod
-    def get_latest_change_id(self):
-        """
-        Should return an integer ID representing the last change - can be used
-        to show progress / changes remaining to process
-        """
-        pass
-
-    @abstractmethod
-    def get_current_offsets(self):
+    def get_latest_offsets(self):
         """
         :return: A dictionary of ``(topic/db_name, offset integer)`` pairs representing
                  the max sequence ID that is available for each topic.
@@ -137,7 +129,11 @@ class ChangeFeed(object):
         """
 
     @abstractmethod
-    def get_checkpoint_value(self):
+    def get_latest_offsets_as_checkpoint_value(self):
         """
-        :return: The current string change ID, or a json string if multiple feeds are used
+        :return: The latest offset value in the format expected by the ``since`` param
+                 of ``iter_changes``:
+                   * string change ID for Cloudant and CouchDB
+                   * int change ID for single kafka topic
+                   * or a dict if multiple kafka topics are used
         """

@@ -93,8 +93,8 @@ class KafkaChangeFeed(ChangeFeed):
 
         try:
             for message in consumer:
-                self._processed_topic_offsets[message.topic] = message.offset
                 yield change_from_kafka_message(message)
+                self._processed_topic_offsets[message.topic] = message.offset
         except ConsumerTimeout:
             assert not forever, 'Kafka pillow should not timeout when waiting forever!'
             # no need to do anything since this is just telling us we've reached the end of the feed
@@ -109,18 +109,15 @@ class KafkaChangeFeed(ChangeFeed):
     def get_processed_offsets(self):
         return copy(self._processed_topic_offsets)
 
-    def get_current_offsets(self):
+    def get_latest_offsets(self):
         return get_multi_topic_offset(self.topics)
 
-    def get_latest_change_id(self):
-        topic = self._get_single_topic_or_fail()
-        return get_topic_offset(topic)
-
-    def get_checkpoint_value(self):
+    def get_latest_offsets_as_checkpoint_value(self):
         try:
-            return self.get_latest_change_id()
+            topic = self._get_single_topic_or_fail()
+            return str(get_topic_offset(topic))
         except ValueError:
-            return json.dumps(self.get_current_offsets())
+            return self.get_latest_offsets()
 
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         config = {
