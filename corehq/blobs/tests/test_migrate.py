@@ -549,7 +549,7 @@ class TestMigrateBackend(TestCase):
             return item, ident
         self.sql_docs = []
         with mod.allow_form_processing_queries():
-            for rex in self.sql_reindex_accessors:
+            for rex in (x() for x in self.sql_reindex_accessors):
                 item, ident = create_obj(rex)
                 helper = rex.blob_helper({"_obj_not_json": item})
                 db1.put(StringIO(data), ident, helper._blobdb_bucket())
