@@ -154,13 +154,15 @@ class BaseDocMigrator(BaseDocProcessor):
     # If true, load attachment content before migrating.
     load_attachments = False
 
-    def __init__(self, slug, couchdb, filename=None, blob_helper=BlobHelper):
+    def __init__(self, slug, couchdb, filename=None, blob_helper=BlobHelper,
+                 complete_migration=True):
         super(BaseDocMigrator, self).__init__()
         self.slug = slug
         self.couchdb = couchdb
         self.dirpath = None
         self.filename = filename
         self.blob_helper = blob_helper
+        self.complete_migration = complete_migration
         if filename is None:
             self.dirpath = mkdtemp()
             self.filename = os.path.join(self.dirpath, "export.txt")
@@ -223,7 +225,7 @@ class BaseDocMigrator(BaseDocProcessor):
             os.remove(self.filename)
             os.rmdir(self.dirpath)
 
-        if not skipped:
+        if not skipped and self.complete_migration:
             BlobMigrationState.objects.get_or_create(slug=self.slug)[0].save()
 
 
@@ -544,6 +546,7 @@ class MultiDbMigrator(object):
     def __init__(self, slug, couch_types, sql_reindexers, doc_migrator_class):
         self.slug = slug
         self.migrators = migrators = []
+        doc_migrator = partial(doc_migrator_class, complete_migration=False)
 
         def db_key(doc_type):
             if isinstance(doc_type, tuple):
@@ -551,10 +554,10 @@ class MultiDbMigrator(object):
             return doc_type.get_db().dbname
 
         for key, types in groupby(sorted(couch_types, key=db_key), key=db_key):
-            migrators.append(Migrator(slug, list(types), doc_migrator_class))
+            migrators.append(Migrator(slug, list(types), doc_migrator))
 
         for rex in sql_reindexers:
-            migrators.append(SqlMigrator(slug, rex(), doc_migrator_class))
+            migrators.append(SqlMigrator(slug, rex(), doc_migrator))
 
     def migrate(self, filename, *args, **kw):
         def filen(n):
@@ -566,6 +569,8 @@ class MultiDbMigrator(object):
             migrated += one_migrated
             skipped += one_skipped
             print("\n")
+        if not skipped:
+            BlobMigrationState.objects.get_or_create(slug=self.slug)[0].save()
         return migrated, skipped
 
 
