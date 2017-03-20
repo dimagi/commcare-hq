@@ -1,0 +1,139 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% if report.needs_filters %}
+    {% include 'reports/partials/description.html' %}
+{% else %}
+    <div class="row">
+        <div class="col-md-1"></div>
+        <div class="col-md-10">
+            <table class="table table-striped">
+                <tbody>
+                    <tr><td><strong>Name:</strong></td><td>{{ patient_name }}</td></tr>
+                    <tr><td><strong>Treatment Phase (IP or CP):</strong></td><td>{{ treatment_phase }}</td></tr>
+                    <tr><td><strong>Adherence Schedule</strong></td><td>{{ adherence_schedule }}</td></tr>
+                    <tr><td><strong>Doses:</strong></td><td>{{ doses }}</td></tr>
+                    <tr><td><strong>Patient Type</strong></td><td>{{ patient_type }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-1"></div>
+    </div>
+
+
+    <style>
+        .cal td {
+            height: 110px;
+            position: relative;
+            border-width: 2px !important;
+        }
+        .cal td.hidden-day {
+            border-width: 0px !important;
+        }
+        .cal .bottom-left {
+            position: absolute;
+            bottom: 0px;
+            left: 0px;
+            max-width: 50%;
+            padding: 5%;
+        }
+        .cal .bottom-right {
+            position: absolute;
+            bottom: 0px;
+            right: 0px;
+            max-width: 50%;
+            padding: 5%;
+        }
+        .cal .middle-icon {
+            margin-bottom: 6px;
+        }
+        .cal {
+            border: none;
+        }
+        .cal .icon {
+            width: 32px;
+            max-width: 100%;
+        }
+        .cal div.icon div {
+            {# This ensures that the containing div keeps a 1:1 aspect ratio #}
+            width: 100%;
+            padding-bottom: 100%;
+        }
+    </style>
+
+    <div class="row">
+        <div class="col-md-1"></div>
+        <div class="col-md-10">
+            <h3>Calendar</h3>
+
+            <table class="table table-bordered cal" >
+                <col style="width:14%">
+                <col style="width:14%">
+                <col style="width:14%">
+                <col style="width:14%">
+                <col style="width:14%">
+                <col style="width:14%">
+                <col style="width:14%">
+                <tbody>
+                    {% for week in weeks %}
+                        <tr>
+                        {% for day in week.days %}
+                            {% if day %}
+                                <td>
+                                    <div>
+                                        {% if day.month_string %}
+                                            <span>{{ day.month_string }}</span>
+                                        {% endif %}
+                                        <span class="pull-right">{{ day.day_string }}</span>
+                                    </div>
+                                    {% if day.adherence_image_key %}
+                                        <div class="bottom-left">
+                                            <img class="icon" src="
+                                                {% if day.adherence_image_key == "directly_observed_dose" %}
+                                                    {% static "enikshay/images/directly_observed_dose_img-r1kddv.png" %}
+                                                {% elif day.adherence_image_key == "missed_dose" %}
+                                                    {% static "enikshay/images/missed_dose_img-svu0dh.png" %}
+                                                {% elif day.adherence_image_key == "unobserved_dose_img" %}
+                                                    {% static "enikshay/images/unobserved_dose_img-i5fiyj.png" %}
+                                                {% elif day.adherence_image_key == "self_administered_dose" %}
+                                                    {% static "enikshay/images/self_administered_dose_img-bo8lb8.png" %}
+                                                {% elif day.adherence_image_key == "unobserved_dose_img_dot" %}
+                                                    {% static "enikshay/images/unobserved_dose_img_dots-pvjiix.png" %}
+                                                {% elif day.adherence_image_key == "dose_unknown_expected" %}
+                                                    {% static "enikshay/images/dose_unknown_expected_img-vkcdx3.png" %}
+                                                {% endif %}
+                                            ">
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="bottom-right" >
+                                        {% if day.show_conflicting_data %}
+                                            <div class="middle-icon">
+                                                <img class="icon" src="{% static "enikshay/images/conflicting_data_img-35k7pb.png" %}">
+                                            </div>
+                                        {% endif %}
+                                        {% if day.show_unexpected_image %}
+                                            <img class="icon" src="{% static "enikshay/images/dose_unexepected_flag_img-2w5alk.png" %}">
+                                        {% elif day.show_conflicting_data %}
+                                            {% comment %}
+                                                Add a spacer div that will keep the "conflicting data" icon at the
+                                                same height even if the "unexpected dose" icon is not present.
+                                            {% endcomment %}
+                                            <div class="icon">
+                                                <div></div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                </td>
+                            {% else %}
+                                <td class="hidden-day"></td>
+                            {% endif %}
+                        {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-1"></div>
+    </div>
+{% endif %}
