@@ -555,6 +555,7 @@ class TestMigrateBackend(TestCase):
                 db1.put(StringIO(data), ident, helper._blobdb_bucket())
                 self.sql_docs.append(item)
                 lost, lost_blob_id = create_obj(rex)
+                self.sql_docs.append(lost)
                 self.not_founds.add((
                     rex.model_class.__name__,
                     lost.id,
