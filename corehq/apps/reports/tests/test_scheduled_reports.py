@@ -167,25 +167,26 @@ class ScheduledReportSendingTest(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain_obj = create_domain(cls.domain)
+        cls.user = WebUser.create(
+            domain=cls.domain,
+            username='dummy@example.com',
+            password='secret',
+        )
 
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
+        cls.user.delete()
 
     def test_get_scheduled_report_response(self):
         domain = self.domain
-        user = WebUser.create(
-            domain=domain,
-            username='dummy@example.com',
-            password='secret',
-        )
         report_config = ReportConfig.wrap({
             "date_range": "last30",
             "days": 30,
             "domain": domain,
             "report_slug": "worker_activity",
             "report_type": "project_report",
-            "owner_id": user._id,
+            "owner_id": self.user._id,
         })
         report_config.save()
         report = ReportNotification(
@@ -193,6 +194,6 @@ class ScheduledReportSendingTest(TestCase):
         )
         report.save()
         response = get_scheduled_report_response(
-            couch_user=user, domain=domain, scheduled_report_id=report._id
+            couch_user=self.user, domain=domain, scheduled_report_id=report._id
         )[0]
-        self.assertTrue(user.username in response)
+        self.assertTrue(self.user.username in response)
