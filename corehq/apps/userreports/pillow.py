@@ -6,8 +6,6 @@ import hashlib
 from alembic.autogenerate.api import compare_metadata
 from kafka.util import kafka_bytestring
 import six
-from sqlalchemy import select
-from sqlalchemy.sql import exists
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.const import (
