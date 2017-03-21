@@ -50,7 +50,8 @@
               "auto_drill": false,
               "loc_filter": function(loc) {
                   return loc.uuid() != loc_id && loc.can_have_children();
-              }
+              },
+              "loc_url": location_url
           });
 
           model.editing = ko.observable(false);
