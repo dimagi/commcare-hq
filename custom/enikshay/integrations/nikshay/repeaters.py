@@ -88,7 +88,6 @@ class NikshayHIVTestRepeater(CaseRepeater):
             episode_case_properties = episode_case.dynamic_case_properties()
 
             return (
-                episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 episode_case_properties.get('nikshay_id') and
                 (
                     related_dates_changed(person_case) or
@@ -122,7 +121,6 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
 
         episode_case_properties = episode_case.dynamic_case_properties()
         return (
-            episode_case_properties.get('nikshay_registered', 'false') == 'true' and
             episode_case_properties.get('nikshay_id', False) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
             episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys() and
