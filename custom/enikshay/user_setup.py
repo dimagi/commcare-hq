@@ -1,4 +1,4 @@
-from collections import namedtuple
+# TODO Is this going to be translated, or English only?
 from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.users.signals import clean_commcare_user
@@ -114,11 +114,11 @@ def clean_location_callback(sender, domain, location, forms, **kwargs):
 
     if location_form.is_new_location:
         validate_nikshay_code(domain, location_form)
+        set_site_code(location_form)
     else:
         validate_nikshay_code_unchanged(location, location_form)
 
     set_available_tests(location, location_form)
-    set_site_code(location_form)
 
 
 def set_site_code(location_form):
@@ -126,12 +126,12 @@ def set_site_code(location_form):
     the codes of the ancestor locations."""
     # TODO How is this supposed to work if 'nikshay_code' isn't always required?
     # maybe use site_code?
-    nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code') or ''
-    parent = location_form.cleaned_data['parent']
-    ancestors = parent.get_ancestors(include_self=True) if parent else []
-    ancestor_codes = [l.metadata.get('nikshay_code') or '' for l in ancestors]
-    ancestor_codes.append(nikshay_code)
-    location_form.cleaned_data['site_code'] = '-'.join(ancestor_codes)
+    # nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code') or ''
+    # parent = location_form.cleaned_data['parent']
+    # ancestors = parent.get_ancestors(include_self=True) if parent else []
+    # ancestor_codes = [l.metadata.get('nikshay_code') or '' for l in ancestors]
+    # ancestor_codes.append(nikshay_code)
+    # location_form.cleaned_data['site_code'] = '-'.join(ancestor_codes)
 
 
 def validate_nikshay_code(domain, location_form):
@@ -165,8 +165,7 @@ def validate_nikshay_code_unchanged(location, location_form):
 
 def set_available_tests(location, location_form):
     if location_form.cleaned_data['location_type'] == 'cdst':
-        # TODO find the real field name
-        location.metadata['list of available tests'] = 'cbnaat'
+        location.metadata['tests_available'] = 'cbnaat'
 
 
 def connect_signals():
