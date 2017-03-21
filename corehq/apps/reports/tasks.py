@@ -70,17 +70,7 @@ def send_delayed_report(report):
     """
     Sends a scheduled report, via  celery background task.
     """
-    send_report.apply_async(args=[report._id], queue=get_report_queue(report))
-
-
-def get_report_queue(report):
-    # This is a super-duper hacky, hard coded way to deal with the fact that MVP reports
-    # consistently crush the celery queue for everyone else.
-    # Just send them to their own longrunning background queue
-    if report.domain in get_mvp_domains():
-        return 'background_queue'
-    else:
-        return 'celery'
+    send_report.delay(report._id)
 
 
 @task(queue='background_queue', ignore_result=True)
