@@ -491,9 +491,24 @@ class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, Niksha
     def test_available_for_domain(self):
         self.assertTrue(NikshayTreatmentOutcomeRepeater.available_for_domain(self.domain))
 
+    def test_trigger_test_submission(self):
+        self.phi.metadata['is_test'] = 'yes'
+        self.phi.save()
+        self.create_case(self.episode)
+        self.assign_person_to_location(self.phi.location_id)
+        update_case(
+            self.domain,
+            self.episode_id,
+            {
+                TREATMENT_OUTCOME: "cured",
+            }
+        )
+        self.assertEqual(0, len(self.repeat_records().all()))
+
     def test_trigger(self):
         # nikshay not enabled
         self.create_case(self.episode)
+        self.assign_person_to_location(self.phi.location_id)
         self._create_nikshay_enabled_case()
         update_case(
             self.domain,
