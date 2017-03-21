@@ -48,7 +48,7 @@
               "hierarchy": hierarchy,
               "default_caption": "\u2026",
               "auto_drill": false,
-              "func": function(loc) {
+              "loc_filter": function(loc) {
                   return loc.uuid() != loc_id && loc.can_have_children();
               }
           });
