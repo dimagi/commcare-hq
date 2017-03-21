@@ -1258,7 +1258,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @classmethod
     def from_django_user_include_anonymous(cls, domain, django_user):
-        if django_user.is_anonymous():
+        if django_user.is_anonymous:
             return cls.get_anonymous_mobile_worker(domain)
         else:
             return cls.get_by_username(django_user.username)

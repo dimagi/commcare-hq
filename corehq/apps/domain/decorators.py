@@ -79,7 +79,7 @@ def login_and_domain_required(view_func):
         user = req.user
         domain_name, domain = load_domain(req, domain)
         if domain:
-            if user.is_authenticated() and user.is_active:
+            if user.is_authenticated and user.is_active:
                 if not domain.is_active:
                     msg = _((
                         'The domain "{domain}" has not yet been activated. '
@@ -172,7 +172,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
     def _outer(fn):
         @wraps(fn)
         def safe_fn(request, domain, *args, **kwargs):
-            if request.user.is_authenticated() and allow_sessions:
+            if request.user.is_authenticated and allow_sessions:
                 return login_and_domain_required(fn)(request, domain, *args, **kwargs)
             else:
                 # if sessions are blocked or user is not already authenticated, check for authentication
@@ -307,7 +307,7 @@ def api_domain_view(view):
     @api_key()
     @login_and_domain_required
     def _inner(request, domain, *args, **kwargs):
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             request.couch_user = CouchUser.from_django_user(request.user)
             return view(request, domain, *args, **kwargs)
         else:
@@ -320,7 +320,7 @@ def login_required(view_func):
     def _inner(request, *args, **kwargs):
         login_url = reverse('login')
         user = request.user
-        if not (user.is_authenticated() and user.is_active):
+        if not (user.is_authenticated and user.is_active):
             return _redirect_for_login_or_domain(request,
                     REDIRECT_FIELD_NAME, login_url)
 

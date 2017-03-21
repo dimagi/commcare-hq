@@ -252,7 +252,7 @@ class DashboardPageView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         domain = kwargs['domain']
         url = DashboardReport.get_raw_url(domain, request=self.request)
-        user = self.request.couch_user if self.request.user.is_authenticated() else None
+        user = self.request.couch_user if self.request.user.is_authenticated else None
         dm = user.get_domain_membership(domain) if user else None
         if dm:
             if dm.program_id:

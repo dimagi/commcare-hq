@@ -110,7 +110,7 @@ def request_new_domain(request, form, is_new_user=True):
 
     dom_req.domain = new_domain.name
 
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         if not current_user:
             current_user = WebUser()
             current_user.sync_from_django_user(request.user)
