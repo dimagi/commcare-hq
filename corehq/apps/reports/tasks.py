@@ -59,18 +59,18 @@ from .models import (
     ReportNotification,
     UnsupportedScheduledReportError,
 )
-from .scheduled import get_scheduled_reports
+from .scheduled import get_scheduled_report_ids
 
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = 60 * 60 * 24
 
 
-def send_delayed_report(report):
+def send_delayed_report(report_id):
     """
     Sends a scheduled report, via  celery background task.
     """
-    send_report.delay(report._id)
+    send_report.delay(report_id)
 
 
 @task(queue='background_queue', ignore_result=True)
@@ -105,8 +105,8 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
 def daily_reports():
-    for rep in get_scheduled_reports('daily'):
-        send_delayed_report(rep)
+    for report_id in get_scheduled_report_ids('daily'):
+        send_delayed_report(report_id)
 
 
 @periodic_task(
@@ -114,8 +114,8 @@ def daily_reports():
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
 def weekly_reports():
-    for rep in get_scheduled_reports('weekly'):
-        send_delayed_report(rep)
+    for report_id in get_scheduled_report_ids('weekly'):
+        send_delayed_report(report_id)
 
 
 @periodic_task(
@@ -123,8 +123,8 @@ def weekly_reports():
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
 def monthly_reports():
-    for rep in get_scheduled_reports('monthly'):
-        send_delayed_report(rep)
+    for report_id in get_scheduled_report_ids('monthly'):
+        send_delayed_report(report_id)
 
 
 @periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))

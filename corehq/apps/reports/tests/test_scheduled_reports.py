@@ -2,7 +2,7 @@ from datetime import datetime
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.models import ReportNotification, ReportConfig
-from corehq.apps.reports.scheduled import guess_reporting_minute, get_scheduled_reports
+from corehq.apps.reports.scheduled import guess_reporting_minute, get_scheduled_report_ids
 from corehq.apps.reports.views import get_scheduled_report_response
 from corehq.apps.users.models import WebUser
 
@@ -49,7 +49,7 @@ class ScheduledReportTest(TestCase):
             report.delete()
 
     def _check(self, period, as_of, count):
-        self.assertEqual(count, len(list(get_scheduled_reports(period, as_of))))
+        self.assertEqual(count, len(list(get_scheduled_report_ids(period, as_of))))
 
     def testDefaultValue(self):
         now = datetime.utcnow()
@@ -60,7 +60,7 @@ class ScheduledReportTest(TestCase):
         else:
             self.assertRaises(
                 ValueError,
-                lambda: list(get_scheduled_reports('daily', None))
+                lambda: list(get_scheduled_report_ids('daily', None))
             )
 
     def testDailyReportEmptyMinute(self):
@@ -79,7 +79,7 @@ class ScheduledReportTest(TestCase):
         # but not too lenient
         self.assertRaises(
             ValueError,
-            lambda: list(get_scheduled_reports('daily', datetime(2014, 10, 31, 12, 6)))
+            lambda: list(get_scheduled_report_ids('daily', datetime(2014, 10, 31, 12, 6)))
         )
 
     def testDailyReportWithMinuteHalfHour(self):
