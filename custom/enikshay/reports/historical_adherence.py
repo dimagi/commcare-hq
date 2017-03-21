@@ -3,9 +3,11 @@ import datetime
 
 import pytz
 from dateutil.parser import parse
+from django.http import HttpResponse
 from django.utils.dateparse import parse_datetime
 
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -49,11 +51,25 @@ class HistoricalAdherenceReport(EnikshayReport):
     fields = (DatespanFilter, EpisodeFilter)
 
     emailable = False
+    exportable = False
+    printable = True
 
     def __init__(self, *args, **kwargs):
         super(HistoricalAdherenceReport, self).__init__(*args, **kwargs)
         self.episode = CaseAccessors(self.domain).get_case(self.episode_case_id)
         self.episode_properties = self.episode.dynamic_case_properties()
+
+
+    @property
+    @request_cache()
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "enikshay/print_report.html"
+        return HttpResponse(self._async_context()['report'])
 
     @property
     def episode_case_id(self):
