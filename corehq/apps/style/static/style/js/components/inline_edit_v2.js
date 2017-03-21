@@ -102,9 +102,9 @@ hqDefine('style/js/components/inline_edit_v2.js', function() {
                             var sanitize_properties = [".variable-app_name", ".variable-module_name", ".variable-form_name"];
                             for(var i=0; i<sanitize_properties.length; i++) {
                                 if(data.update.hasOwnProperty(sanitize_properties[i])) {
-                                    var sanitized_value = $("<div/>").html(DOMPurify.sanitize(self.value())).text();
+                                    var sanitized_value = data.update[sanitize_properties[i]];
                                     self.value(sanitized_value);
-                                    self.readOnlyValue = data.update[sanitize_properties[i]];
+                                    self.readOnlyValue = sanitized_value;
                                     break;
                                 }
                             }
