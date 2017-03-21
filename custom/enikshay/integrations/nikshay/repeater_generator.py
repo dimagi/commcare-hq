@@ -181,19 +181,11 @@ class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
         properties_dict = {
             "PatientID": episode_case_properties.get('nikshay_id'),
             "HIVStatus": hiv_status.get(person_case_properties.get('hiv_status')),
-            "HIVTestDate": datetime.datetime.strptime(
-                person_case_properties.get('hiv_test_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
-            ).strftime('%d/%m/%Y'),
-            "CPTDeliverDate": datetime.datetime.strptime(
-                person_case_properties.get('cpt_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
-            ).strftime('%d/%m/%Y'),
-            "ARTCentreDate": datetime.datetime.strptime(
-                person_case_properties.get('art_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
-            ).strftime('%d/%m/%Y'),
+            "HIVTestDate": _format_date(person_case_properties, 'hiv_test_date'),
+            "CPTDeliverDate": _format_date(person_case_properties, 'cpt_initiation_date'),
+            "ARTCentreDate": _format_date(person_case_properties, 'art_initiation_date'),
             "InitiatedOnART": art_initiated.get(person_case_properties.get('art_initiated', 'no')),
-            "InitiatedDate": datetime.datetime.strptime(
-                person_case_properties.get('art_initiation_date', NIKSHAY_NULL_DATE), '%Y-%m-%d'
-            ).strftime('%d/%m/%Y'),
+            "InitiatedDate": _format_date(person_case_properties, 'art_initiation_date'),
             "Source": ENIKSHAY_ID,
             "regby": repeat_record.repeater.username,
             "password": repeat_record.repeater.password,
@@ -336,3 +328,11 @@ def _save_error_message(domain, case_id, error, reg_field="nikshay_registered", 
             error_field: error,
         },
     )
+
+
+def _format_date(case_properties, case_property):
+    date = case_properties.get(case_property) or NIKSHAY_NULL_DATE
+    try:
+        return datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%d/%m/%Y')
+    except ValueError:
+        return datetime.datetime.strptime(NIKSHAY_NULL_DATE, '%Y-%m-%d').strftime('%d/%m/%Y')

@@ -81,6 +81,7 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
                 'create': False,
                 "update": dict(
                     nikshay_registered='true',
+                    nikshay_id=DUMMY_NIKSHAY_ID,
                 )
             }
         )
@@ -310,6 +311,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self._assert_case_property_equal(updated_episode_case, 'nikshay_error', unicode(message))
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
 
     def setUp(self):
@@ -330,20 +332,12 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
     def test_available_for_domain(self):
         self.assertTrue(NikshayHIVTestRepeater.available_for_domain(self.domain))
 
-    @run_with_all_backends
     def test_trigger(self):
         # nikshay not enabled
+        self.create_case(self.episode)
+        self._create_nikshay_registered_case()
         self.assertEqual(0, len(self.repeat_records().all()))
 
-        self.factory.create_or_update_cases([self.episode])
-        update_case(
-            self.domain,
-            self.episode_id,
-            {
-                "nikshay_registered": 'true',
-                "nikshay_id": DUMMY_NIKSHAY_ID,
-            },
-        )
         update_case(
             self.domain,
             self.person_id,
@@ -353,6 +347,7 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
             }
         )
         self.assertEqual(1, len(self.repeat_records().all()))
+
         update_case(
             self.domain,
             self.person_id,
@@ -362,6 +357,7 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
             }
         )
         self.assertEqual(2, len(self.repeat_records().all()))
+
         update_case(
             self.domain,
             self.person_id,
@@ -456,6 +452,22 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload["CPTDeliverDate"], "02/01/2016")
         self.assertEqual(payload["InitiatedDate"], "03/04/2016")
         self.assertEqual(payload["ARTCentreDate"], "03/04/2016")
+
+        update_case(
+            self.domain, self.person_id,
+            {
+                "art_initiation_date": "foo",
+            }
+        )
+
+        self.person_case = CaseAccessors(self.domain).get_case(self.person_id)
+        payload = (json.loads(
+            NikshayHIVTestPayloadGenerator(None).get_payload(self.repeat_record, self.person_case))
+        )
+
+        self.assertEqual(payload["CPTDeliverDate"], "02/01/2016")
+        self.assertEqual(payload["InitiatedDate"], "01/01/1900")
+        self.assertEqual(payload["ARTCentreDate"], "01/01/1900")
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
