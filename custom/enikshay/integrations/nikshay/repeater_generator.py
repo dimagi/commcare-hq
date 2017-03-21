@@ -61,7 +61,7 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
 
         return username, password
 
-    def _base_properties(self, repeat_record, person_case):
+    def _base_properties(self, repeat_record):
         username, password = self._get_credentials(repeat_record)
         return {
             "regBy": username,
@@ -71,10 +71,6 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
             "IP_From": "127.0.0.1",
             "IP_FROM": "127.0.0.1",
         }
-
-    def handle_exception(self, exception, repeat_record):
-        if isinstance(exception, RequestConnectionError):
-            update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": unicode(exception)})
 
 
 @RegisterGenerator(NikshayRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
@@ -87,7 +83,7 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
 
-        properties_dict = self._base_properties(repeat_record, person_case)
+        properties_dict = self._base_properties(repeat_record)
         properties_dict.update({
             "dotcenter": "NA",
             "Local_ID": person_case.get_id,
@@ -131,6 +127,10 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
         else:
             _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
 
+    def handle_exception(self, exception, repeat_record):
+        if isinstance(exception, RequestConnectionError):
+            update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": unicode(exception)})
+
 
 @RegisterGenerator(NikshayTreatmentOutcomeRepeater, 'case_json', 'JSON', is_default=True)
 class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
@@ -139,9 +139,8 @@ class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
         """
         https://docs.google.com/document/d/1yUWf3ynHRODyVVmMrhv5fDhaK_ufZSY7y0h9ke5rBxU/edit#heading=h.6zwqb0ms7iz9
         """
-        person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
         episode_case_properties = episode_case.dynamic_case_properties()
-        base_properties = self._base_properties(repeat_record, person_case)
+        base_properties = self._base_properties(repeat_record)
         base_properties.update({
             "PatientID": episode_case_properties.get("nikshay_id"),
             "OutcomeDate": episode_case_properties.get(TREATMENT_OUTCOME_DATE),
@@ -164,9 +163,14 @@ class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
         _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
                             "treatment_outcome_nikshay_registered", "treatment_outcome_nikshay_error")
 
+    def handle_exception(self, exception, repeat_record):
+        if isinstance(exception, RequestConnectionError):
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
+                                "treatment_outcome_nikshay_registered", "treatment_outcome_nikshay_error")
+
 
 @RegisterGenerator(NikshayHIVTestRepeater, 'case_json', 'JSON', is_default=True)
-class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
+class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
     @property
     def content_type(self):
         return 'application/json'
@@ -178,7 +182,8 @@ class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
         episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
-        properties_dict = {
+        base_properties = self._base_properties(repeat_record)
+        base_properties.update({
             "PatientID": episode_case_properties.get('nikshay_id'),
             "HIVStatus": hiv_status.get(person_case_properties.get('hiv_status')),
             "HIVTestDate": _format_date(person_case_properties, 'hiv_test_date'),
@@ -186,13 +191,9 @@ class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
             "ARTCentreDate": _format_date(person_case_properties, 'art_initiation_date'),
             "InitiatedOnART": art_initiated.get(person_case_properties.get('art_initiated', 'no')),
             "InitiatedDate": _format_date(person_case_properties, 'art_initiation_date'),
-            "Source": ENIKSHAY_ID,
-            "regby": repeat_record.repeater.username,
-            "password": repeat_record.repeater.password,
-            "IP_FROM": "127.0.0.1",
-        }
+        })
 
-        return json.dumps(properties_dict)
+        return json.dumps(base_properties)
 
     def handle_success(self, response, payload_doc, repeat_record):
         # Simple success message that has {"Nikshay_Message": "Success"...}
