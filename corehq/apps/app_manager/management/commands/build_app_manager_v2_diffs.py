@@ -40,7 +40,7 @@ class Command(BaseCommand):
     Computes diffs of
     '''
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         self.base_dir = os.path.dirname(os.path.realpath(__file__))
         self._make_diffs(
             RELATIVE_YAML_V1,

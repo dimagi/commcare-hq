@@ -29,8 +29,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'sync_log',
-            dest='sync_logs',
+            'sync_logs',
+            metavar='sync_log',
             help="A json file of the synclog you are trying to compare. Passing "
                  "in a folder will compare all of the files in that folder.",
             nargs='+',

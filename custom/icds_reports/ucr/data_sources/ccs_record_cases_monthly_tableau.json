@@ -196,6 +196,7 @@
       },
       {
         "column_id": "awc_id",
+        "create_index": true,
         "datatype": "string",
         "display_name": null,
         "expression": {
@@ -416,6 +417,25 @@
           ]
         },
         "type": "boolean"
+      },
+      {
+        "column_id": "has_aadhar_id",
+        "type": "boolean",
+        "filter": {
+          "type":"boolean_expression",
+          "operator": "eq",
+          "property_value": "yes",
+          "expression": {
+            "type": "icds_get_last_case_property_update",
+            "case_id_expression": {
+              "type": "icds_parent_id"
+            },
+            "case_property": "has_aadhar",
+            "end_date": {
+              "type": "icds_month_end"
+            }
+          }
+        }
       },
       {
         "column_id": "trimester",

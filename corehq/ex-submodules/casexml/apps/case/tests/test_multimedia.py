@@ -90,7 +90,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
         """
         RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
         """
-        response, form, cases = submit_form_locally(
+        response, form, cases, _ = submit_form_locally(
             xml_data,
             TEST_DOMAIN_NAME,
             attachments=dict_attachments,

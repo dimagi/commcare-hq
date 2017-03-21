@@ -38,8 +38,6 @@ def bootstrap_telerivet_gateway(apps):
 
 class Command(BaseCommand):
     help = "bootstrap Telerivet SMS backend gateway fees"
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         bootstrap_telerivet_gateway(None)

@@ -1,5 +1,6 @@
 from datetime import datetime
 from celery.schedules import crontab
+from couchdbkit import ResourceNotFound
 
 from django.conf import settings
 from celery.task import periodic_task, task
@@ -62,9 +63,16 @@ def check_repeaters():
 def process_repeat_record(repeat_record):
     if repeat_record.state == RECORD_FAILURE_STATE and repeat_record.overall_tries >= repeat_record.max_possible_tries:
         repeat_record.cancel()
+        repeat_record.save()
         return
     if repeat_record.cancelled:
         return
+
+    try:
+        repeat_record.repeater
+    except ResourceNotFound:
+        repeat_record.cancel()
+        repeat_record.save()
 
     try:
         if repeat_record.repeater.doc_type.endswith(DELETED_SUFFIX):

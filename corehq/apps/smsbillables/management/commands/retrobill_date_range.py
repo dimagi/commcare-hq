@@ -1,34 +1,41 @@
 from __future__ import print_function
-import datetime
+
+from django.core.management import BaseCommand
+
+import dateutil.parser
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS
 from corehq.apps.smsbillables.models import SmsBillable
-from django.core.management import BaseCommand
-from optparse import make_option
-
-
-def str_to_int_tuple(string_tuple):
-    return tuple([int(_) for _ in string_tuple])
 
 
 class Command(BaseCommand):
     help = 'Create SmsBillables for all SMSs in the given datetime range'
 
-    option_list = (
-        make_option('--create', action='store_true', default=False, help='Save SmsBillables in the database'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'start_datetime',
+            type=dateutil.parser.parse,
+        )
+        parser.add_argument(
+            'end_datetime',
+            type=dateutil.parser.parse,
+        )
+        parser.add_argument(
+            '--create',
+            action='store_true',
+            default=False,
+            help='Save SmsBillables in the database',
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, start_datetime, end_datetime, **options):
         num_sms = 0
-
-        start_datetime = datetime.datetime(*str_to_int_tuple(args[0:6]))
-        end_datetime = datetime.datetime(*str_to_int_tuple(args[6:12]))
 
         for domain in Domain.get_all():
             result = SMS.by_domain(
                 domain.name,
                 start_date=start_datetime,
-                end_date=end_datetime
+                end_date=end_datetime,
             )
 
             for sms_log in result:

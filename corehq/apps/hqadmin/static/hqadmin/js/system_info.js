@@ -147,28 +147,34 @@ hqDefine('hqadmin/js/system_info.js', function () {
             self.pillow_model.perform_operation(operation);
         }
     }
-    
+
     function PillowProgress(name, db_offset, seq) {
         var self = this;
         self.name = name;
         self.db_offset = db_offset;
         self.seq = seq;
-    
+
+        self.changes_behind = function () {
+            return self.db_offset - self.seq;
+        };
+
         self.width = function() {
             return (self.seq * 100) / self.db_offset;
         };
     
         self.status = function() {
-            if (self.width() > 98) {
+            if (self.changes_behind() < 500) {
                 return 'progress-bar-success';
-            } else if (self.width() < 50) {
-                return 'progress-bar-danger';
-            } else if (self.width() < 75) {
+            } else if (self.changes_behind() < 1000) {
+                return ''; // will be a blue, but not quite info
+            } else if (self.changes_behind() < 5000) {
                 return 'progress-bar-warning';
+            } else {
+                return 'progress-bar-danger';
             }
         };
     }
-    
+
     function PillowModel(pillow) {
         var self = this;
         self.name = ko.observable();

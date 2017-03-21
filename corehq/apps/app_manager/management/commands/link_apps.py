@@ -8,14 +8,13 @@ class Command(BaseCommand):
     """
     Creates a master and linked app pair for two existing apps
     """
-    args = "master_app linked_app"
 
-    def handle(self, *args, **options):
-        if len(args) != 2:
-            raise CommandError("Usage is ./manage.py link_apps %s" % self.args)
+    def add_arguments(self, parser):
+        parser.add_argument('master_id')
+        parser.add_argument('linked_id')
+
+    def handle(self, master_id, linked_id, **options):
         print("Linking apps")
-        master_id = args[0]
-        linked_id = args[1]
         master_app = Application.get(master_id)
         linked_app = Application.get(linked_id)
         master_app.linked_whitelist.append(linked_app.domain)

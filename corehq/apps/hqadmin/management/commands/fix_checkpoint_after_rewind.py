@@ -12,12 +12,12 @@ def confirm(msg):
 
 
 class Command(BaseCommand):
-    args = 'pillow_name'
     help = ("Update the sequence ID of a pillow that has been rewound due to a cloudant issue")
 
-    def handle(self, *args, **options):
-        pillow_name = args[0]
+    def add_arguments(self, parser):
+        parser.add_argument('pillow_name')
 
+    def handle(self, pillow_name, **options):
         confirm("Are you sure you want to reset the checkpoint for the '{}' pillow?".format(pillow_name))
         confirm("Have you stopped the pillow?")
 

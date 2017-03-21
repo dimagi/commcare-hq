@@ -37,7 +37,7 @@ class SupervisorConfCommand(BaseCommand):
         self.conf_dest = options['conf_destination']
         self.params = options['params'] or {}
         if self.params:
-            self.params = json.loads(self.params)
+            self.params = self.extend_params(json.loads(self.params))
 
         service_dir = settings.SERVICE_DIR
 
@@ -60,6 +60,14 @@ class SupervisorConfCommand(BaseCommand):
         with open(destination_fullpath, 'w') as fout:
             fout.write(rendered_configuration)
             print("\t[make_supervisor_conf] Wrote supervisor configuration: %s" % destination_fullpath)
+
+    def extend_params(self, params):
+        import multiprocessing
+        cpus = multiprocessing.cpu_count()
+        factor = params.get('gunicorn_workers_factor', 1)
+        static_factor = params.get('gunicorn_workers_static_factor', 0)
+        params['gunicorn_workers'] = static_factor + (factor * cpus)
+        return params
 
 
 class Command(SupervisorConfCommand):

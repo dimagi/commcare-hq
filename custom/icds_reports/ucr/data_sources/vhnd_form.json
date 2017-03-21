@@ -32,6 +32,7 @@
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "awc_id",
+        "create_index": true,
         "expression": {
           "value_expression": {
             "datatype": null,
@@ -65,6 +66,7 @@
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "supervisor_id",
+        "create_index": true,
         "expression": {
           "location_id_expression": {
             "value_expression": {

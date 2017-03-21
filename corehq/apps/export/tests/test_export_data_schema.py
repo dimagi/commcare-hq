@@ -1129,3 +1129,112 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
         # One for case, one for case history
         self.assertEqual(len(schema.group_schemas), 2)
+
+
+class TestOrderingOfSchemas(SimpleTestCase):
+    case_type = 'ordering'
+    domain = 'ordering'
+
+    def _create_schema(self, items):
+        return CaseExportDataSchema(
+            domain=self.domain,
+            case_type=self.case_type,
+            group_schemas=[
+                ExportGroupSchema(
+                    path=[],
+                    items=[
+                    ]
+                )
+            ]
+        )
+
+    def _assert_item_order(self, schema, path, items):
+        group_schema = filter(lambda gs: gs.path == path, schema.group_schemas)[0]
+
+        for item in group_schema.items:
+            if not items:
+                break
+
+            self.assertEqual(item.path, items.pop(0).path)
+
+    def test_basic_ordering(self):
+        schema = self._create_schema([
+            ExportItem(path=[PathNode(name='two')]),
+            ExportItem(path=[PathNode(name='one')]),
+            ExportItem(path=[PathNode(name='three')]),
+        ])
+
+        ordered_schema = self._create_schema([
+            ExportItem(path=[PathNode(name='one')]),
+            ExportItem(path=[PathNode(name='two')]),
+            ExportItem(path=[PathNode(name='three')]),
+        ])
+
+        schema = CaseExportDataSchema._reorder_schema_from_schema(
+            schema,
+            ordered_schema,
+        )
+        self._assert_item_order(
+            schema,
+            [],
+            [
+                ExportItem(path=[PathNode(name='one')]),
+                ExportItem(path=[PathNode(name='two')]),
+                ExportItem(path=[PathNode(name='three')]),
+            ],
+        )
+
+    def test_no_match_ordering(self):
+        schema = self._create_schema([
+            ExportItem(path=[PathNode(name='two')]),
+            ExportItem(path=[PathNode(name='one')]),
+            ExportItem(path=[PathNode(name='three')]),
+        ])
+
+        ordered_schema = self._create_schema([
+            ExportItem(path=[PathNode(name='four')]),
+            ExportItem(path=[PathNode(name='five')]),
+            ExportItem(path=[PathNode(name='six')]),
+        ])
+
+        schema = CaseExportDataSchema._reorder_schema_from_schema(
+            schema,
+            ordered_schema,
+        )
+        self._assert_item_order(
+            schema,
+            [],
+            [
+                ExportItem(path=[PathNode(name='two')]),
+                ExportItem(path=[PathNode(name='one')]),
+                ExportItem(path=[PathNode(name='three')]),
+            ],
+        )
+
+    def test_partial_match_ordering(self):
+        schema = self._create_schema([
+            ExportItem(path=[PathNode(name='two')]),
+            ExportItem(path=[PathNode(name='one')]),
+            ExportItem(path=[PathNode(name='three')]),
+        ])
+
+        ordered_schema = self._create_schema([
+            ExportItem(path=[PathNode(name='one')]),
+            ExportItem(path=[PathNode(name='four')]),
+            ExportItem(path=[PathNode(name='five')]),
+            ExportItem(path=[PathNode(name='six')]),
+        ])
+
+        schema = CaseExportDataSchema._reorder_schema_from_schema(
+            schema,
+            ordered_schema,
+        )
+        self._assert_item_order(
+            schema,
+            [],
+            [
+                ExportItem(path=[PathNode(name='one')]),
+                ExportItem(path=[PathNode(name='two')]),
+                ExportItem(path=[PathNode(name='three')]),
+            ],
+        )

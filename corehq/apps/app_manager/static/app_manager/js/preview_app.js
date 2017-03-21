@@ -102,6 +102,9 @@ hqDefine('app_manager/js/preview_app.js', function() {
         } else {
             _private.phoneView(true);
         }
+        setTimeout(function () {
+            $(window).trigger(module.EVENTS.RESIZE);
+        }, 1001);
     };
 
     _private.toggleLocalStorageDatum = function(datum) {

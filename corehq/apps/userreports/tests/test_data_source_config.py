@@ -103,6 +103,7 @@ class DataSourceConfigurationDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(DataSourceConfigurationDbTest, cls).setUpClass()
         DataSourceConfiguration(domain='foo', table_id='foo1', referenced_doc_type='doc1').save()
         DataSourceConfiguration(domain='foo', table_id='foo2', referenced_doc_type='doc2').save()
         DataSourceConfiguration(domain='bar', table_id='bar1', referenced_doc_type='doc3').save()
@@ -111,6 +112,7 @@ class DataSourceConfigurationDbTest(TestCase):
     def tearDownClass(cls):
         for config in DataSourceConfiguration.all():
             config.delete()
+        super(DataSourceConfigurationDbTest, cls).tearDownClass()
 
     def test_get_by_domain(self):
         results = DataSourceConfiguration.by_domain('foo')

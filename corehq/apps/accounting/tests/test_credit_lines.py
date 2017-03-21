@@ -177,6 +177,7 @@ class TestCreditLines(BaseInvoiceTestCase):
 
         self._test_credit_use(subscription_credit)
         self._test_credit_use(account_credit)
+        other_domain.delete()
 
     def test_combined_credits(self):
         """
@@ -289,6 +290,11 @@ class TestCreditTransfers(BaseAccountingTest):
         )[0]
         cls.web_user_name = generator.create_arbitrary_web_user_name()
         cls.other_account = generator.billing_account(cls.web_user_name, cls.web_user_name)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        super(TestCreditTransfers, cls).tearDownClass()
 
     def _ensure_transfer(self, original_credits):
         transferred_credits = []
