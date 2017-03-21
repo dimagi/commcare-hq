@@ -909,14 +909,6 @@ EDIT_FORMPLAYER = PredictablyRandomToggle(
     randomness=0.5,
 )
 
-PREVIEW_APP = PredictablyRandomToggle(
-    'preview_app',
-    'Preview an application in the app builder',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=1.0,
-)
-
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Disable column limit in UCR',
