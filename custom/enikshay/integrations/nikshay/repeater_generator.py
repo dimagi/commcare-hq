@@ -189,7 +189,8 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
             "HIVTestDate": _format_date(person_case_properties, 'hiv_test_date'),
             "CPTDeliverDate": _format_date(person_case_properties, 'cpt_initiation_date'),
             "ARTCentreDate": _format_date(person_case_properties, 'art_initiation_date'),
-            "InitiatedOnART": art_initiated.get(person_case_properties.get('art_initiated', 'no')),
+            "InitiatedOnART": art_initiated.get(
+                person_case_properties.get('art_initiated', 'no'), art_initiated['no']),
             "InitiatedDate": _format_date(person_case_properties, 'art_initiation_date'),
         })
 
