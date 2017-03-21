@@ -496,6 +496,9 @@ class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, Niksha
         self.phi.save()
         self.create_case(self.episode)
         self.assign_person_to_location(self.phi.location_id)
+        self._create_nikshay_registered_case()
+        self.assertEqual(0, len(self.repeat_records().all()))
+
         update_case(
             self.domain,
             self.episode_id,
@@ -509,15 +512,7 @@ class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, Niksha
         # nikshay not enabled
         self.create_case(self.episode)
         self.assign_person_to_location(self.phi.location_id)
-        self._create_nikshay_enabled_case()
-        update_case(
-            self.domain,
-            self.episode_id,
-            {
-                "nikshay_registered": 'true',
-                "nikshay_id": DUMMY_NIKSHAY_ID,
-            },
-        )
+        self._create_nikshay_registered_case()
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # change triggered
