@@ -23,7 +23,15 @@
         var hierarchy = {{ hierarchy|JSON }};
         var location_url = '{{ api_root }}';
 
-        var model = new LocationSelectViewModel(hierarchy, false, null, false, IntrahealthLocModel, undefined, location_url);
+        var model = new LocationSelectViewModel({
+            "hierarchy": hierarchy,
+            "default_caption": false,
+            "auto_drill": null,
+            "loc_filter": false,
+            "loc_url": location_url,
+            "func": IntrahealthLocModel
+        });
+
         $('#group_{{ control_slug }}').koApplyBindings(model);
         model.load(locs, selected);
     });

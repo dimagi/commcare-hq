@@ -9,7 +9,11 @@
       var hierarchy = {{ context_.hierarchy|JSON }};
 
       var show_location_filter = {% if not context_.loc_id %}'n'{% else %}'y'{% endif%};
-      var model = new LocationSelectViewModel(hierarchy, undefined, false, undefined, undefined, undefined, loc_url);
+      var model = new LocationSelectViewModel({
+        "hierarchy": hierarchy,
+        "auto_drill": false,
+        "loc_url": loc_url
+      });
       $('#group_{{ context_.input_name }}').koApplyBindings(model);
       model.load(locs, selected);
 
