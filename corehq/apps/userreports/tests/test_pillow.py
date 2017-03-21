@@ -198,7 +198,7 @@ class IndicatorPillowTest(TestCase):
         since = self.pillow.get_change_feed().get_current_offsets()
 
         # save case to DB - should also publish to kafka
-        _save_sql_case(sample_doc)
+        case = _save_sql_case(sample_doc)
 
         # run pillow and check changes
         self.pillow.process_changes(since=since, forever=False)
@@ -206,8 +206,7 @@ class IndicatorPillowTest(TestCase):
 
         sample_doc['type'] = 'wrong_type'
 
-        case = _save_sql_case(sample_doc)
-        self.pillow.process_changes(since=since, forever=False)
+        self.pillow.process_change(doc_to_change(sample_doc))
         self.adapter.refresh_table()
 
         self.assertEqual(0, self.adapter.get_query_object().count())
