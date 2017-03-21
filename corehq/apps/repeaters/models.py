@@ -136,7 +136,7 @@ class GeneratorCollection(object):
         return self.format_generator_map[format].generator_class
 
 
-class Repeater(Document, UnicodeMixIn):
+class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     """
     Represents the configuration of a repeater. Will specify the URL to forward to and
     other properties of the configuration.
