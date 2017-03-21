@@ -87,6 +87,7 @@ class EditCaseRepeaterView(EditRepeaterView, AddCaseRepeaterView):
 
 class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
     urlname = 'edit_form_repeater'
+    page_title = ugettext_lazy("Edit Form Repeater")
 
     @property
     def page_url(self):
