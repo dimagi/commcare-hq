@@ -4,6 +4,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
 from django.views.generic.base import View
 
+from corehq.apps.users.models import PublicCouchUser
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 
@@ -268,6 +269,8 @@ class ProjectReportDispatcher(ReportDispatcher):
         if domain is None:
             return False
         if not request.couch_user.is_active:
+            return False
+        if isinstance(request.couch_user, PublicCouchUser) and self.prefix != 'custom_project_report':
             return False
         return request.couch_user.can_view_report(domain, report)
 

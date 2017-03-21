@@ -25,11 +25,13 @@ from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
 from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.users.models import PublicCouchUser
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports, can_view_sms_exports
 from corehq.form_processor.utils import use_new_exports
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
+from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
@@ -72,6 +74,8 @@ class ProjectReportsTab(UITab):
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
+        if isinstance(self.couch_user, PublicCouchUser) and PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
+            return []
         return [(_("Tools"), [
             {'title': MySavedReportsView.page_title,
              'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
@@ -862,6 +866,7 @@ class CloudcareTab(UITab):
         return (
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
+            and not isinstance(self.couch_user, PublicCouchUser)
             and (self.couch_user.can_edit_data() or self.couch_user.is_commcare_user())
         )
 

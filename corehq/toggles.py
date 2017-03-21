@@ -1074,3 +1074,10 @@ DASHBOARD_GRAPHS = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+PUBLISH_CUSTOM_REPORTS = StaticToggle(
+    'publish_custom_reports',
+    "Publish custom reports (No needed Authorization)",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)

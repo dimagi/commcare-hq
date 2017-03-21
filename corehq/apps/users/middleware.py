@@ -1,9 +1,7 @@
 from django.conf import settings
 import django.core.exceptions
-from corehq.apps.users.models import CouchUser, InvalidUser, PublishCouchUser
-from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
-
-
+from corehq.apps.users.models import CouchUser, InvalidUser, PublicCouchUser
+from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE, PUBLISH_CUSTOM_REPORTS
 
 SESSION_USER_KEY_PREFIX = "session_user_doc_%s"
 
@@ -41,6 +39,7 @@ class UsersMiddleware(object):
                     request.couch_user = InvalidUser()
                 if request.couch_user:
                     request.couch_user.current_domain = domain
-        else: # TODO add feature flag
-            request.couch_user = PublishCouchUser()
+        elif 'domain' in view_kwargs and '/reports/custom/' in request.path\
+                and PUBLISH_CUSTOM_REPORTS.enabled(view_kwargs['domain']):
+            request.couch_user = PublicCouchUser()
         return None

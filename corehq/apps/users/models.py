@@ -2378,7 +2378,7 @@ class UserCache(object):
             return user
 
 
-class PublishCouchUser(CouchUser):
+class PublicCouchUser(CouchUser):
 
     username = "public_user"
     doc_type = "CommCareUser"
@@ -2400,11 +2400,35 @@ class PublishCouchUser(CouchUser):
         return True
 
     def can_view_some_reports(self, domain):
-        return False
+        return True
 
     @property
     def analytics_enabled(self):
         return False
 
     def can_edit_data(self):
+        return False
+
+    def can_edit_apps(self):
+        return False
+
+    def is_eula_signed(self, version=None):
+        return True
+
+    def is_commcare_user(self):
+        return True
+
+    def is_web_user(self):
+        return False
+
+    def can_access_any_exports(self, domain):
+        return False
+
+    def can_edit_commcare_users(self):
+        return False
+
+    def can_edit_locations(self):
+        return False
+
+    def can_edit_web_users(self):
         return False
