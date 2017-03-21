@@ -12,6 +12,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.soft_assert import soft_assert
 from custom.enikshay.case_utils import CASE_TYPE_ADHERENCE, get_person_case_from_episode
 from custom.enikshay.reports.generic import EnikshayReport
 
@@ -256,6 +257,19 @@ class HistoricalAdherenceReport(EnikshayReport):
             if self.get_adherence_source(primary_adherence_case) == "99DOTS":
                 return "unobserved_dose_img_dot"
             return "unobserved_dose_img"
+        if adherence_value not in (
+            "dose_unknown_expected",
+            "unobserved_dose_img_dot",
+            "self_administered_dose",
+            "unobserved_dose_img",
+            "missed_dose",
+            "directly_observed_dose",
+            None,
+            ""
+        ):
+            assert_ = soft_assert(to='ncarnahan'+'@'+'dimagi'+'.com')
+            assert_(False, "Got an unexpected adherence_value of {} for case {}".format(
+                adherence_value, primary_adherence_case.case_id))
         return adherence_value
 
     def unknown_img_holder(self, date):
