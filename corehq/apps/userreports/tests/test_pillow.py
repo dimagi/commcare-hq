@@ -162,7 +162,7 @@ class IndicatorPillowTest(TestCase):
             case.save()
 
         # send to kafka
-        since = self.pillow.get_change_feed().get_current_offsets()
+        since = self.pillow.get_change_feed().get_latest_offsets()
         producer.send_change(topics.CASE, doc_to_change(sample_doc).metadata)
 
         # run pillow and check changes
@@ -176,7 +176,7 @@ class IndicatorPillowTest(TestCase):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
 
-        since = self.pillow.get_change_feed().get_current_offsets()
+        since = self.pillow.get_change_feed().get_latest_offsets()
 
         # save case to DB - should also publish to kafka
         case = _save_sql_case(sample_doc)
@@ -206,7 +206,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
         self.pillow.bootstrap(configs=[self.config])
         with trap_extra_setup(KafkaUnavailableError):
-            self.pillow.get_change_feed().get_current_offsets()
+            self.pillow.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
         self.config.delete()
@@ -223,7 +223,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         '''
 
         for i in range(3):
-            since = self.pillow.get_change_feed().get_current_offsets()
+            since = self.pillow.get_change_feed().get_latest_offsets()
             form, cases = post_case_blocks(
                 [
                     CaseBlock(
