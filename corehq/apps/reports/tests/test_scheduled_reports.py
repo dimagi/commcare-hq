@@ -3,7 +3,6 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.models import ReportNotification, ReportConfig
 from corehq.apps.reports.scheduled import guess_reporting_minute, get_scheduled_reports
-from corehq.apps.reports.tasks import get_report_queue
 from corehq.apps.reports.views import get_scheduled_report_response
 from corehq.apps.users.models import WebUser
 
@@ -197,12 +196,3 @@ class ScheduledReportSendingTest(TestCase):
             couch_user=user, domain=domain, scheduled_report_id=report._id
         )[0]
         self.assertTrue(user.username in response)
-
-
-class TestMVPCeleryQueueHack(SimpleTestCase):
-
-    def test_queue_selection_mvp(self):
-        self.assertEqual('background_queue', get_report_queue(ReportNotification(domain='mvp-tiby')))
-
-    def test_queue_selection_normal(self):
-        self.assertEqual('celery', get_report_queue(ReportNotification(domain='not-mvp')))
