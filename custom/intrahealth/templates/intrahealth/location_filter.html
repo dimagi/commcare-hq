@@ -25,9 +25,11 @@
 
         var model = new LocationSelectViewModel({
             "hierarchy": hierarchy,
-            "auto_drill": false,
-            "show_location_filter": show_location_filter,
-            "loc_url": location_url
+            "default_caption": false,
+            "auto_drill": null,
+            "loc_filter": false,
+            "loc_url": location_url,
+            "func": IntrahealthLocModel
         });
 
         $('#group_{{ control_slug }}').koApplyBindings(model);
