@@ -1,6 +1,6 @@
 function (doc) {
     var state = 'PENDING';
-    if (doc.doc_type === 'RepeatRecord') {
+    if (doc.doc_type === 'RepeatRecord' || doc.doc_type === 'RepeatRecord-Failed') {
         if (doc.succeeded) {
             state = 'SUCCESS';
         } else if (doc.cancelled) {
@@ -12,4 +12,3 @@ function (doc) {
         emit([doc.domain, null, state], null);
     }
 }
-
