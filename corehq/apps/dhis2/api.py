@@ -1,8 +1,7 @@
-import httplib
 import json
 import logging
-
 import requests
+from corehq.apps.dhis2.dbaccessors import get_dhis2_connection
 
 
 logger = logging.getLogger('json_api_logger')
@@ -26,7 +25,8 @@ def json_serializer(obj):
 def log_request(func):
 
     def request_wrapper(self, path, data=None, **kwargs):
-        log = logger.info
+        domain_log_level = get_dhis2_connection(self.domain_name).get('log_level', logging.INFO)
+        log_level = logging.INFO
         request_error = ''
         response_status = None
         response_body = ''
@@ -36,24 +36,25 @@ def log_request(func):
             response_status = status
             response_body = '' if response is None else json.dumps(response)
         except Exception as err:
-            log = logger.error
+            log_level = logging.ERROR
             request_error = str(err)
             raise err
         else:
             return status, response
         finally:
-            log({
-                'domain': self.domain_name if self.domain_name is not None else '[N/A]',
-                'request_method': func.__name__.upper(),
-                'request_url': self.server_url + path,
-                'request_headers': json.dumps(self.headers),
-                'request_params': json.dumps(kwargs),
-                'request_body': '' if data is None else json.dumps(data, default=json_serializer),
+            if log_level >= domain_log_level:
+                logger.log(log_level, {
+                    'domain': self.domain_name if self.domain_name is not None else '[N/A]',
+                    'request_method': func.__name__.upper(),
+                    'request_url': self.server_url + path,
+                    'request_headers': json.dumps(self.headers),
+                    'request_params': json.dumps(kwargs),
+                    'request_body': '' if data is None else json.dumps(data, default=json_serializer),
 
-                'request_error': request_error,
-                'response_status': response_status,
-                'response_body': response_body,
-            })
+                    'request_error': request_error,
+                    'response_status': response_status,
+                    'response_body': response_body,
+                })
 
     return request_wrapper
 

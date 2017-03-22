@@ -19,6 +19,7 @@ class Dhis2Connection(Document):
     server_url = StringProperty()
     username = StringProperty()
     password = StringProperty()
+    log_level = IntegerProperty()
 
 
 class DataValueMap(DocumentSchema):

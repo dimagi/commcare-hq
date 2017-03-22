@@ -13,10 +13,20 @@ from corehq.apps.dhis2.models import Dhis2Connection, DataSetMap, DataValueMap
 from corehq.apps.style import crispy as hqcrispy
 
 
+LOG_LEVEL_CHOICES = (
+    (logging.CRITICAL, 'Critical'),
+    (logging.ERROR, 'Error'),
+    (logging.WARNING, 'Warning'),
+    (logging.INFO, 'Info'),
+    (logging.DEBUG, 'Debug'),
+)
+
+
 class Dhis2ConnectionForm(forms.Form):
     server_url = forms.CharField(label=_('DHIS2 Server URL'), required=True)
     username = forms.CharField(label=_('Username'), required=True)
-    password = forms.CharField(label=_('Password'), widget=forms.PasswordInput, required=True)
+    password = forms.CharField(label=_('Password'), widget=forms.PasswordInput, required=False)
+    log_level = forms.TypedChoiceField(label=_('Log Level'), required=False, choices=LOG_LEVEL_CHOICES, coerce=int)
 
     def __init__(self, *args, **kwargs):
         super(Dhis2ConnectionForm, self).__init__(*args, **kwargs)
@@ -30,6 +40,7 @@ class Dhis2ConnectionForm(forms.Form):
                 crispy.Field('server_url'),
                 crispy.Field('username'),
                 crispy.Field('password'),
+                crispy.Field('log_level'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -52,6 +63,7 @@ class Dhis2ConnectionForm(forms.Form):
                 # strong, considering we'd have to store the algorithm and the key together anyway; it just
                 # shouldn't be plaintext.
                 dhis2_conn.password = b64encode(bz2.compress(self.cleaned_data['password']))
+            dhis2_conn.log_level = self.cleaned_data['log_level']
             dhis2_conn.save()
             return True
         except Exception as err:
