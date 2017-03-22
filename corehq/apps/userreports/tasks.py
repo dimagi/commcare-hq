@@ -10,7 +10,8 @@ from django.utils.translation import ugettext as _
 
 from corehq import toggles
 from corehq.apps.userreports.const import (
-    UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE
+    UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
+    ASYNC_INDICATOR_QUEUE_TIME,
 )
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
@@ -22,7 +23,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.util.context_managers import notify_someone
 from corehq.util.couch import get_document_or_not_found
 from dimagi.utils.couch import CriticalSection, release_lock
@@ -186,14 +187,15 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
 
 
 @periodic_task(
-    run_every=timedelta(minutes=5),
+    run_every=ASYNC_INDICATOR_QUEUE_TIME,
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def queue_async_indicators():
     start = datetime.utcnow()
-    cutoff = start + timedelta(minutes=5)
+    cutoff = start + ASYNC_INDICATOR_QUEUE_TIME
+    time_for_crit_section = ASYNC_INDICATOR_QUEUE_TIME.seconds - 10
 
-    with CriticalSection(['queue-async-indicators'], timeout=timedelta(minutes=5).seconds-10):
+    with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
         redis_client = get_redis_client().client.get_client()
         indicators = AsyncIndicator.objects.all()[:10000]
         paginator = Paginator(indicators, 1000)
@@ -203,7 +205,7 @@ def queue_async_indicators():
                 if now > cutoff:
                     break
 
-                lock_key = _get_indicator_lock_key(indicator)
+                lock_key = _get_indicator_queued_lock_key(indicator)
                 lock = redis_client.lock(lock_key, timeout=60 * 60 * 6)
                 if not lock.acquire(blocking=False):
                     continue
@@ -211,13 +213,14 @@ def queue_async_indicators():
                 save_document.delay(indicator.id, indicator.doc_id, indicator.pillow)
 
 
-def _get_indicator_lock_key(indicator):
+def _get_indicator_queued_lock_key(indicator):
     return 'async_indicator_queued-{}'.format(indicator.id)
 
 
 @task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def save_document(async_indicator_id, doc_id, pillow):
-    with CriticalSection(['async_indicator_save-{}_{}'.format(doc_id, pillow)]):
+    lock_key = get_async_indicator_modify_lock_key(doc_id, pillow)
+    with CriticalSection([lock_key]):
         indicator = AsyncIndicator.objects.get(pk=async_indicator_id)
         doc_store = get_document_store(indicator.domain, indicator.doc_type)
         doc = doc_store.get_document(indicator.doc_id)
@@ -228,7 +231,7 @@ def save_document(async_indicator_id, doc_id, pillow):
             adapter.best_effort_save(doc)
 
         redis_client = get_redis_client().client.get_client()
-        lock_key = _get_indicator_lock_key(indicator)
-        lock = redis_client.lock(lock_key, timeout=60 * 60 * 6)
+        queued_lock_key = _get_indicator_queued_lock_key(indicator)
+        lock = redis_client.lock(queued_lock_key)
         release_lock(lock, degrade_gracefully=True)
         indicator.delete()

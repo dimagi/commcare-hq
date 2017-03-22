@@ -43,7 +43,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory,
     ReportColumnFactory, ReportOrderByFactory
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch import CriticalSection
@@ -706,7 +706,7 @@ class AsyncIndicator(models.Model):
     def update_indicators(cls, change, pillow, table_ids):
         doc_id = change.id
         pillow_id = pillow.pillow_id
-        with CriticalSection(['async_indicator_save-{}_{}'.format(doc_id, pillow_id)]):
+        with CriticalSection([get_async_indicator_modify_lock_key(doc_id, pillow_id)]):
             try:
                 indicator = cls.objects.get(doc_id=doc_id, pillow=pillow_id)
             except cls.DoesNotExist:
