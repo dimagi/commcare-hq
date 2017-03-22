@@ -30,7 +30,7 @@
      id:'comment-id',
 -    readOnlyClass: 'app-comment',
 +    containerClass: 'app-comment',
-     value: '{{ module.comment|html_name|escapejs }}',
+     value: '{{ module.comment|escapejs }}',
 -    placeholder: '{% trans "Enter module description here"|escapejs %}',
 +    placeholder: 'Enter {% if module.case_type != '' %}case list{% endif %} description here',
      url: '{% url "edit_module_attr" domain app.id module.id 'comment' %}',
