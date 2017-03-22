@@ -46,6 +46,7 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -705,26 +706,27 @@ class AsyncIndicator(models.Model):
     def update_indicators(cls, change, pillow, table_ids):
         doc_id = change.id
         pillow_id = pillow.pillow_id
-        try:
-            indicator = cls.objects.get(doc_id=doc_id, pillow=pillow_id)
-        except cls.DoesNotExist:
-            doc_type = change.document['doc_type']
-            domain = change.document['domain']
-            indicator = AsyncIndicator(
-                doc_id=doc_id,
-                doc_type=doc_type,
-                domain=domain,
-                pillow=pillow_id,
-                indicator_config_ids=table_ids
-            )
-        else:
-            current_table_ids = indicator.indicator_config_ids
-            new_table_ids = list(set(current_table_ids).union(set(table_ids)))
-            indicator.indicator_config_ids = new_table_ids
+        with CriticalSection(['async_indicator_save-{}_{}'.format(doc_id, pillow_id)]):
+            try:
+                indicator = cls.objects.get(doc_id=doc_id, pillow=pillow_id)
+            except cls.DoesNotExist:
+                doc_type = change.document['doc_type']
+                domain = change.document['domain']
+                indicator = AsyncIndicator(
+                    doc_id=doc_id,
+                    doc_type=doc_type,
+                    domain=domain,
+                    pillow=pillow_id,
+                    indicator_config_ids=table_ids
+                )
+            else:
+                current_table_ids = indicator.indicator_config_ids
+                new_table_ids = list(set(current_table_ids).union(set(table_ids)))
+                indicator.indicator_config_ids = new_table_ids
 
-        indicator.save()
+            indicator.save()
 
-        return indicator
+            return indicator
 
 
 def get_datasource_config(config_id, domain):

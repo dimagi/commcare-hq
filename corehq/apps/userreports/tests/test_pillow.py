@@ -300,17 +300,22 @@ class AsyncIndicatorTest(TestCase):
                     ).as_xml()
                 ], domain=self.domain
             )
+            indicators = AsyncIndicator.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+            self.assertEqual(indicators.count(), 0)
+
             self.pillow.process_changes(since=since, forever=False)
+            self.assertEqual(indicators.count(), 1)
+
             queue_async_indicators()
             rows = self.adapter.get_query_object()
             self.assertEqual(rows.count(), 1)
+
             row = rows[0]
             self.assertEqual(int(row.parent_property), i)
+
             errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
             self.assertEqual(errors.count(), 0)
-            indicators = AsyncIndicator.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
             self.assertEqual(indicators.count(), 0)
-            indicators.delete()
 
     @patch('corehq.apps.userreports.tasks._get_config_by_id')
     def test_async_save_fails(self, config):
@@ -335,13 +340,18 @@ class AsyncIndicatorTest(TestCase):
                 ).as_xml()
             ], domain=self.domain
         )
+
+        indicators = AsyncIndicator.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+        self.assertEqual(indicators.count(), 0)
         self.pillow.process_changes(since=since, forever=False)
+        self.assertEqual(indicators.count(), 1)
+
         queue_async_indicators()
         rows = self.adapter.get_query_object()
         self.assertEqual(rows.count(), 0)
+
         errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
         self.assertEqual(errors.count(), 0)
-        indicators = AsyncIndicator.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
         self.assertEqual(indicators.count(), 1)
         indicators.delete()
 
