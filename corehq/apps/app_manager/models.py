@@ -2658,6 +2658,18 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                           "that there are no issues with this form.".format(error=e, form_id=self.unique_id))
             pass
 
+    def get_action_type(self):
+        actions = self.actions.actions_meta_by_tag
+        by_type = defaultdict(list)
+        action_type = []
+        for action_tag, action_meta in actions.iteritems():
+            by_type[action_meta.get('type')].append(action_tag)
+
+        for type, tag_list in by_type.iteritems():
+            action_type.append(u'{} ({})'.format(type, ', '.join(tag_list)))
+
+        return ' '.join(action_type)
+
     def pre_move_hook(self, from_module, to_module):
         if from_module != to_module:
             try:
