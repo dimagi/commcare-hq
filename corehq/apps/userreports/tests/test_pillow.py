@@ -195,7 +195,7 @@ class IndicatorPillowTest(TestCase):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
 
-        since = self.pillow.get_change_feed().get_current_offsets()
+        since = self.pillow.get_change_feed().get_latest_offsets()
 
         # save case to DB - should also publish to kafka
         case = _save_sql_case(sample_doc)
