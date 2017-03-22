@@ -37,7 +37,16 @@ class DjangoModelHandler(logging.Handler):
     """
     def __init__(self, model_class, *args, **kwargs):
         super(DjangoModelHandler, self).__init__(*args, **kwargs)
-        self.model_class = import_string(model_class) if isinstance(model_class, basestring) else model_class
+        self._model_class = model_class
+
+    @property
+    def model_class(self):
+        """
+        Lazyload model class so that we can configure it in settings.py before we can load app modules
+        """
+        if isinstance(self._model_class, basestring):
+            self._model_class = import_string(self._model_class)
+        return self._model_class
 
     def emit(self, record):
         created = time.localtime(record.created)

@@ -1090,7 +1090,7 @@ LOGGING = {
         'json_api_handler': {
             'level': 'INFO',
             'class': 'corehq.apps.dhis2.handlers.DjangoModelHandler',
-            # 'model_class': 'corehq.apps.dhis2.models.JsonApiLog',  # TODO: Why won't handler accept this param?!
+            'model_class': 'corehq.apps.dhis2.models.JsonApiLog',
         },
     },
     'loggers': {
