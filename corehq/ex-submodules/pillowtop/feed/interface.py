@@ -56,13 +56,15 @@ class Change(object):
     def set_document(self, document):
         self.document = document
 
-    def get_document(self):
+    def get_document(self, raise_error=False):
         if not self.document and self.document_store and not self._document_checked:
             try:
                 self.document = self.document_store.get_document(self.id)
             except DocumentNotFoundError:
                 self.document = None
                 self._document_checked = True  # set this flag to avoid multiple redundant lookups
+                if raise_error:
+                    raise
         return self.document
 
     def __repr__(self):

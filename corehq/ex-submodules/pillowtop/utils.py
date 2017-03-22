@@ -12,7 +12,7 @@ from dimagi.utils.modules import to_function
 
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
-from pillowtop.dao.exceptions import DocumentMismatchError, DocumentNotFoundError
+from pillowtop.dao.exceptions import DocumentMismatchError, DocumentNotFoundError, DocumentMissingError
 
 
 def _get_pillow_instance(full_class_str):
@@ -268,11 +268,14 @@ def _convert_rev_to_int(rev):
 
 def ensure_document_exists(change):
     """
-    Ensures that the document recorded in Kafka exists and is properly returned
+    This is to ensure that the Couch document exists in the Couch database when the
+    change is processed. We only care about the scenario where the document is missing.
 
     :raises: DocumentNotFoundError - Raised when the document is not found
     """
-    doc = change.get_document()
-    if doc is None:
-        pillow_logging.warning("Unable to get document from change: {}".format(change))
-        raise DocumentNotFoundError()  # force a retry
+    try:
+        change.get_document(raise_error=True)
+    except DocumentMissingError:
+        raise
+    except DocumentNotFoundError:
+        pass
