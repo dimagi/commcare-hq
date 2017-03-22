@@ -2666,7 +2666,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             by_type[action_meta.get('type')].append(action_tag)
 
         for type, tag_list in by_type.iteritems():
-            action_type.append(u'{} ({})'.format(type, ', '.join(tag_list)))
+            action_type.append(u'{} ({})'.format(type, ', '.join(filter(None, tag_list))))
 
         return ' '.join(action_type)
 
