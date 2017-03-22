@@ -85,13 +85,14 @@ def run_case_update_rules_for_domain(domain, now=None):
 
     for case_type, rules in rules_by_case_type.iteritems():
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-        case_ids = AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date)
+        case_id_chunks = AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date)
 
-        for case in CaseAccessors(domain).iter_cases(case_ids):
-            for rule in rules:
-                stop_processing = rule.apply_rule(case, now)
-                if stop_processing:
-                    break
+        for case_ids in case_id_chunks:
+            for case in CaseAccessors(domain).iter_cases(case_ids):
+                for rule in rules:
+                    stop_processing = rule.apply_rule(case, now)
+                    if stop_processing:
+                        break
 
         for rule in rules:
             rule.last_run = now
