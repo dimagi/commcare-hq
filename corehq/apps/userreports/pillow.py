@@ -35,7 +35,7 @@ class ConfigurableReportTableManagerMixin(object):
         self.data_source_provider = data_source_provider
         self.auto_repopulate_tables = auto_repopulate_tables
         self.ucr_division = kwargs.pop('ucr_division', None)
-        self.specific_ucr = kwargs.pop('specific_ucr', None)
+        self.include_ucrs = kwargs.pop('include_ucrs', None)
         self.exclude_ucrs = kwargs.pop('exclude_ucrs', None)
         super(ConfigurableReportTableManagerMixin, self).__init__(*args, **kwargs)
 
@@ -45,8 +45,11 @@ class ConfigurableReportTableManagerMixin(object):
     def get_filtered_configs(self, configs=None):
         configs = configs or self.get_all_configs()
 
-        if self.specific_ucr:
-            configs = [config for config in configs if config.table_id == self.specific_ucr]
+        if self.exclude_ucrs:
+            configs = [config for config in configs if config.table_id not in self.exclude_ucrs]
+
+        if self.include_ucrs:
+            configs = [config for config in configs if config.table_id in self.include_ucrs]
         elif self.ucr_division:
             ucr_start = self.ucr_division[0]
             ucr_end = self.ucr_division[-1]
@@ -56,9 +59,6 @@ class ConfigurableReportTableManagerMixin(object):
                 if ucr_start <= table_hash <= ucr_end:
                     filtered_configs.append(configs)
             configs = filtered_configs
-
-        if self.exclude_ucrs:
-            configs = [config for config in configs if config.table_id not in self.exclude_ucrs]
 
         return configs
 
@@ -219,14 +219,14 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
 # TODO(Emord) make other pillows support params dictionary
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
-                         specific_ucr=None, exclude_ucrs=None, topics=None):
+                         include_ucrs=None, exclude_ucrs=None, topics=None):
     topics = topics or KAFKA_TOPICS
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
             auto_repopulate_tables=False,
             ucr_division=ucr_division,
-            specific_ucr=specific_ucr,
+            include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
         ),
         pillow_name=pillow_id,
@@ -235,14 +235,14 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
 
 
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
-                                specific_ucr=None, exclude_ucrs=None, topics=None):
+                                include_ucrs=None, exclude_ucrs=None, topics=None):
     topics = topics or KAFKA_TOPICS
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),
             auto_repopulate_tables=True,
             ucr_division=ucr_division,
-            specific_ucr=specific_ucr,
+            include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
         ),
         pillow_name=pillow_id,
