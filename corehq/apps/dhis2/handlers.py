@@ -1,6 +1,5 @@
-import datetime
 import logging
-import time
+from datetime import datetime
 from django.utils.module_loading import import_string
 
 
@@ -49,8 +48,8 @@ class DjangoModelHandler(logging.Handler):
         return self._model_class
 
     def emit(self, record):
-        created = time.localtime(record.created)
-        kwargs = dict(record.args, timestamp=datetime.datetime(
+        created = datetime.utcfromtimestamp(record.created)
+        kwargs = dict(record.args, timestamp=datetime(
             year=created.tm_year,
             month=created.tm_mon,
             day=created.tm_mday,
