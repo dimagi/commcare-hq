@@ -416,4 +416,3 @@ class TestGetFormData(SimpleTestCase):
 
         modules, errors = util.get_form_data('domain', app)
         self.assertEqual(modules[0]['forms'][0]['action_type'], 'load (load_0)')
-
