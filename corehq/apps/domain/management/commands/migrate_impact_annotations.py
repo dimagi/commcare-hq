@@ -5,9 +5,8 @@ from corehq.apps.domain.models import Domain
 
 class Command(BaseCommand):
     help = "Migrates wam and pam eligibility from apps to domains"
-    args = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         print("Migrating impact annotations")
 
         for domain in Domain.get_all():

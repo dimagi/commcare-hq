@@ -8,10 +8,9 @@ from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
-    args = ""
     help = ("(Migration) Autofill the new field assigned_location_ids to existing users")
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         self.options = options
         user_ids = with_progress_bar(self.get_user_ids())
         iter_update(CouchUser.get_db(), self.migrate_user, user_ids, verbose=True)

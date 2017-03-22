@@ -89,6 +89,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         self.couch_user.delete()
         self._clear_docs()
+        self.domain.delete()
 
         self.teardown_subscription()
 

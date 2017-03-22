@@ -1,7 +1,6 @@
 from __future__ import print_function
 import re
 from collections import defaultdict
-from optparse import make_option
 
 from datetime import datetime
 from uuid import UUID

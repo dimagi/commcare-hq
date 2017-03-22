@@ -139,6 +139,17 @@ class ShardAccessor(object):
 
 
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
+    startkey_min_value = datetime.min
+
+    def is_sharded(self):
+        """
+        :return: True the django model is sharded, otherwise false.
+        """
+        # TODO check for subclass of PartitionedModel when PR merged:
+        # https://github.com/dimagi/commcare-hq/pull/14852
+        from corehq.form_processor.models import RestrictedManager
+        return isinstance(self.model_class.objects, RestrictedManager)
+
     @abstractproperty
     def model_class(self):
         """
@@ -586,17 +597,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return cases
 
     @staticmethod
-    def case_modified_since(case_id, server_modified_on):
-        """
-        Return True if a case has been modified since the given modification date.
-        Assumes that the case exists in the DB.
-        """
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_modified FROM case_modified_since(%s, %s)', [case_id, server_modified_on])
-            result = fetchone_as_namedtuple(cursor)
-            return result.case_modified
-
-    @staticmethod
     def get_case_xform_ids(case_id):
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
@@ -865,7 +865,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 [domain, case_ids]
             )
             results = fetchall_as_namedtuple(cursor)
-            return dict((result.case_id, result.server_modified_on) for result in results)
+            return {result.case_id: result.server_modified_on for result in results}
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
@@ -880,16 +880,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return CaseAccessorSQL.get_cases_by_external_id(domain, user_id, case_type)[0]
         except IndexError:
             return None
-
-    @staticmethod
-    def get_case_types_for_domain(domain):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_type FROM get_case_types_for_domain(%s)',
-                [domain]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return {result.case_type for result in results}
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):

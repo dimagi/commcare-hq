@@ -80,6 +80,7 @@ def _get_default(list):
 class Permissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
     edit_commcare_users = BooleanProperty(default=False)
+    edit_locations = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
@@ -160,6 +161,7 @@ class Permissions(DocumentSchema):
         return Permissions(
             edit_web_users=True,
             edit_commcare_users=True,
+            edit_locations=True,
             edit_data=True,
             edit_apps=True,
             view_reports=True,
@@ -185,7 +187,9 @@ class UserRolePresets(object):
         return {
             cls.READ_ONLY_NO_REPORTS: lambda: Permissions(),
             cls.READ_ONLY: lambda: Permissions(view_reports=True),
-            cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True, view_reports=True),
+            cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True,
+                                                       edit_locations=True,
+                                                       view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
             cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
         }
@@ -338,10 +342,16 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return {details['name'] for role, details in PERMISSIONS_PRESETS.iteritems()}
 
 PERMISSIONS_PRESETS = {
-    'edit-apps': {'name': 'App Editor', 'permissions': Permissions(edit_apps=True, view_reports=True)},
-    'field-implementer': {'name': 'Field Implementer', 'permissions': Permissions(edit_commcare_users=True, view_reports=True)},
-    'read-only': {'name': 'Read Only', 'permissions': Permissions(view_reports=True)},
-    'no-permissions': {'name': 'Read Only', 'permissions': Permissions(view_reports=True)},
+    'edit-apps': {'name': 'App Editor',
+                  'permissions': Permissions(edit_apps=True, view_reports=True)},
+    'field-implementer': {'name': 'Field Implementer',
+                          'permissions': Permissions(edit_commcare_users=True,
+                                                     edit_locations=True,
+                                                     view_reports=True)},
+    'read-only': {'name': 'Read Only',
+                  'permissions': Permissions(view_reports=True)},
+    'no-permissions': {'name': 'Read Only',
+                       'permissions': Permissions(view_reports=True)},
 }
 
 
@@ -1248,7 +1258,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @classmethod
     def from_django_user_include_anonymous(cls, domain, django_user):
-        if django_user.is_anonymous():
+        if django_user.is_anonymous:
             return cls.get_anonymous_mobile_worker(domain)
         else:
             return cls.get_by_username(django_user.username)

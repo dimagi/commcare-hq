@@ -8,6 +8,7 @@ from corehq.apps.casegroups.dbaccessors import get_case_group_meta_in_domain
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
 from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.apps.repeaters.const import (
@@ -16,7 +17,6 @@ from corehq.apps.repeaters.const import (
     RECORD_CANCELLED_STATE,
     RECORD_PENDING_STATE,
 )
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 class GroupFilterMixin(object):
@@ -67,7 +67,7 @@ class CaseTypeMixin(object):
 
     @property
     def options(self):
-        case_types = CaseAccessors(self.domain).get_case_types()
+        case_types = get_case_types_for_domain_es(self.domain)
         return [(case, "%s" % case) for case in case_types
                 if case != USER_LOCATION_OWNER_MAP_TYPE]
 

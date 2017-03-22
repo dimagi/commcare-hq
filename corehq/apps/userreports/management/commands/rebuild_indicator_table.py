@@ -1,15 +1,12 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from corehq.apps.userreports import tasks
 
 
 class Command(BaseCommand):
     help = "Rebuild a user configurable reporting table"
-    args = '<indicator_config_id>'
-    label = ""
 
-    def handle(self, *args, **options):
-        if len(args) < 1:
-            raise CommandError('Usage is rebuild_indicator_table %s' % self.args)
+    def add_arguments(self, parser):
+        parser.add_argument('indicator_config_id')
 
-        config_id = args[0]
-        tasks.rebuild_indicators(config_id)
+    def handle(self, indicator_config_id, **options):
+        tasks.rebuild_indicators(indicator_config_id)

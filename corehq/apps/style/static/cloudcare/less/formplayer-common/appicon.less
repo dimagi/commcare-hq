@@ -28,7 +28,29 @@
   }
 }
 
-.appicon {
+.make-gridicon-size(@icon-height) {
+  .gridicon {
+    width: @icon-height;
+    height: @icon-height;
+    margin: 10% auto;
+
+    .gridicon-icon {
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      max-width: 100%;
+      max-height: 100%;
+      line-height: @icon-height;
+      font-size: @icon-height / 2;
+    }
+  }
+  .gridicon-circle {
+    border-radius: 2 * @icon-height;
+  }
+}
+
+.appicon, .gridicon {
   background-color: @cc-neutral-mid;
   text-align: center;
   color: white;
@@ -54,7 +76,7 @@
     }
   }
 
-  .appicon-icon {
+  .appicon-icon, .gridicon-icon {
     position: absolute;
     box-sizing: border-box;
     top: 0;
@@ -67,18 +89,36 @@
   }
 }
 
+.gridicon {
+  background-size: contain;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: 50%;
+  // For icons with their own image, don't make assumptions about the shadowing
+  .box-shadow(0 0 0 0 rgba(0, 0, 0, 0));
+}
+
+.gridicon.gridicon-circle {
+  background-color: @cc-neutral-mid;
+  .box-shadow(0 0 5px 0 rgba(0, 0, 0, 0.45));
+}
+
 .make-appicon-size(170px, 115px, 35px, 16px);
+.make-gridicon-size(70px);
 
 @media(min-width: @screen-xs) {
   .make-appicon-size(200px, 135px, 35px, 16px);
+  .make-gridicon-size(60px);
 }
 
 @media(min-width: @screen-sm) {
   .make-appicon-size(210px, 140px, 40px, 18px);
+  .make-gridicon-size(70px);
 }
 
 @media(min-width: @screen-md) {
   .make-appicon-size(230px, 150px, 45px, 20px);
+  .make-gridicon-size(130px);
 }
 
 .appicon-start {

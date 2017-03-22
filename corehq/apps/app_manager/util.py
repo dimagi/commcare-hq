@@ -1,11 +1,12 @@
 from collections import defaultdict, namedtuple, OrderedDict
-from copy import deepcopy
+from copy import deepcopy, copy
 import functools
 from itertools import chain
 import json
 import os
 import uuid
 import yaml
+from django.core.urlresolvers import reverse
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_case_sharing_apps_in_domain
@@ -14,6 +15,7 @@ from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
@@ -276,6 +278,11 @@ class ParentCasePropertyBuilder(object):
                 case_properties.update(p for p in updates if "/" not in p)
             case_properties.update(self.get_save_to_case_updates(form, case_type))
 
+        if toggles.DATA_DICTIONARY.enabled(self.app.domain):
+            data_dict_props = CaseProperty.objects.filter(case_type__domain=self.app.domain,
+                                                          case_type__name=case_type, deprecated=False)
+            case_properties |= {prop.name for prop in data_dict_props}
+
         parent_types, contributed_properties = self.get_parent_types_and_contributed_properties(
             case_type, include_shared_properties=include_shared_properties
         )
@@ -435,8 +442,8 @@ def get_casedb_schema(form):
         "id": generation_names[i],
         "name": "{} ({})".format(generation_names[i], " or ".join(ctypes)) if i > 0 else base_case_type,
         "structure": {
-            p: {"description": descriptions_dict.get(base_case_type, {}).get(p, '')}
-            for type in [map[t] for t in ctypes] for p in type},
+            p: {"description": descriptions_dict.get(t, {}).get(p, '')}
+            for t in ctypes for p in map[t]},
         "related": {"parent": {
             "hashtag": "#case/" + generation_names[i + 1],
             "subset": generation_names[i + 1],
@@ -870,3 +877,48 @@ def get_app_manager_template(domain, v1, v2):
     if domain is not None and toggles.APP_MANAGER_V2.enabled(domain):
         return v2
     return v1
+
+
+def get_form_data(domain, app):
+    from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+
+    modules = []
+    errors = []
+    for module in app.get_modules():
+        forms = []
+        module_meta = {
+            'id': module.unique_id,
+            'name': module.name,
+            'short_comment': module.short_comment,
+            'module_type': module.module_type,
+            'is_surveys': module.is_surveys,
+        }
+
+        for form in module.get_forms():
+            form_meta = {
+                'id': form.unique_id,
+                'name': form.name,
+                'short_comment': form.short_comment,
+                'action_type': form.get_action_type(),
+            }
+            try:
+                questions = form.get_questions(
+                    app.langs,
+                    include_triggers=True,
+                    include_groups=True,
+                    include_translations=True
+                )
+                form_meta['questions'] = [FormQuestionResponse(q).to_json() for q in questions]
+            except XFormException as e:
+                form_meta['error'] = {
+                    'details': unicode(e),
+                    'edit_url': reverse('form_source', args=[domain, app._id, module.id, form.id])
+                }
+                form_meta['module'] = copy(module_meta)
+                errors.append(form_meta)
+            else:
+                forms.append(form_meta)
+
+        module_meta['forms'] = forms
+        modules.append(module_meta)
+    return modules, errors

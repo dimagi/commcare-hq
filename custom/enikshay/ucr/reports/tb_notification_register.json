@@ -24,8 +24,8 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "display": "Case Open Date",
-                "field": "opened_on",
+                "display": "Date of Diagnosis",
+                "field": "date_of_diagnosis",
                 "slug": "date",
                 "type": "date"
             },
@@ -66,13 +66,6 @@
                 "slug": "episode_type",
                 "datatype": "string",
                 "pre_value": "confirmed_tb"
-            },
-            {
-                "type": "pre",
-                "field": "closed",
-                "slug": "closed",
-                "datatype": "integer",
-                "pre_value": 0
             }
         ],
         "columns": [

@@ -84,7 +84,7 @@ class CallReport(BaseCommConnectLogReport):
         abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
         
         for call in data:
-            doc_info = self.get_recipient_info(call.couch_recipient_doc_type,
+            doc_info = self.get_recipient_info(self.domain, call.couch_recipient_doc_type,
                 call.couch_recipient, contact_cache)
 
             form_unique_id = call.form_unique_id

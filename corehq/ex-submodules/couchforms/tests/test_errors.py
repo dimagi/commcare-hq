@@ -25,7 +25,7 @@ class CaseProcessingErrorsTest(TestCase):
         """
 
         domain = 'special_domain'
-        _, xform, _ = submit_form_locally(
+        result = submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
                     <instanceID>abc-easy-as-123</instanceID>
@@ -36,8 +36,8 @@ class CaseProcessingErrorsTest(TestCase):
             </data>""",
             domain,
         )
-        self.assertTrue(xform.is_error)
-        self.assertEqual(xform.problem, 'IllegalCaseId: case_id must not be empty')
+        self.assertTrue(result.xform.is_error)
+        self.assertEqual(result.xform.problem, 'IllegalCaseId: case_id must not be empty')
 
     @softer_assert()
     def test_uses_referrals(self):
@@ -48,7 +48,7 @@ class CaseProcessingErrorsTest(TestCase):
         # - the form is not saved under its original id
         # - an XFormError is saved with the original id as orig_id
         domain = 'special_domain'
-        _, xform, _ = submit_form_locally(
+        result = submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
                     <instanceID>abc-easy-as-456</instanceID>
@@ -64,8 +64,8 @@ class CaseProcessingErrorsTest(TestCase):
             </data>""",
             domain,
         )
-        self.assertTrue(xform.is_error)
-        self.assertEqual(xform.problem, 'UsesReferrals: Sorry, referrals are no longer supported!')
+        self.assertTrue(result.xform.is_error)
+        self.assertEqual(result.xform.problem, 'UsesReferrals: Sorry, referrals are no longer supported!')
 
 
 @use_sql_backend

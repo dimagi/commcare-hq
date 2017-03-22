@@ -50,7 +50,9 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     log_accounting_info,
 )
+from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.notifications.models import Notification
 from corehq.apps.users.models import FakeUser, WebUser
@@ -721,3 +723,35 @@ def _create_overdue_notification(invoice, context):
                                        domain_specific=True, type='billing',
                                        domains=[invoice.get_domain()])
     note.activate()
+
+
+@task(queue='background_queue', ignore_result=True, acks_late=True)
+def archive_logos(domain_name):
+    try:
+        for app in get_all_apps(domain_name):
+            if isinstance(app, HQMediaMixin):
+                has_archived = app.archive_logos()
+                if has_archived:
+                    app.save()
+    except Exception as e:
+        log_accounting_error(
+            "Failed to remove all commcare logos for domain %s." % domain_name,
+            show_stack_trace=True,
+        )
+        raise e
+
+
+@task(queue='background_queue', ignore_result=True, acks_late=True)
+def restore_logos(domain_name):
+    try:
+        for app in get_all_apps(domain_name):
+            if isinstance(app, HQMediaMixin):
+                has_restored = app.restore_logos()
+                if has_restored:
+                    app.save()
+    except Exception as e:
+        log_accounting_error(
+            "Failed to restore all commcare logos for domain %s." % domain_name,
+            show_stack_trace=True,
+        )
+        raise e

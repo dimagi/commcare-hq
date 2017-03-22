@@ -24,34 +24,20 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
             if not self.deleted_ok:
                 raise IllegalCaseId("Case [%s] is deleted " % case.case_id)
 
-    def _get_case(self, case_id):
-        try:
-            if self.lock:
-                try:
-                    case, lock = CommCareCaseSQL.get_locked_obj(_id=case_id)
-                except redis.RedisError:
-                    case = CaseAccessorSQL.get_case(case_id)
-                else:
-                    self.locks.append(lock)
-            else:
-                case = CaseAccessorSQL.get_case(case_id)
-        except CaseNotFound:
-            return None
-
-        return case
-
     def _iter_cases(self, case_ids):
         return iter(CaseAccessorSQL.get_cases(case_ids))
 
     def get_cases_for_saving(self, now):
         cases = self.get_changed()
 
+        saved_case_ids = [case.case_id for case in cases if case.is_saved()]
+        cases_modified_on = CaseAccessorSQL.get_last_modified_dates(self.domain, saved_case_ids)
         for case in cases:
             if case.is_saved():
-                modified = CaseAccessorSQL.case_modified_since(case.case_id, case.server_modified_on)
-                assert not modified, (
-                    "Aborting because the case has been modified"
-                    " by another process. {}".format(case.case_id)
+                modified_on = cases_modified_on.get(case.case_id, None)
+                assert case.server_modified_on == modified_on, (
+                    "Aborting because the case has been modified by another process: "
+                    "case={}, {} != {}".format(case.case_id, case.server_modified_on, modified_on)
                 )
             case.server_modified_on = now
         return cases

@@ -73,17 +73,13 @@
              <i class="fa fa-plus"></i>
              {% trans "Load properties" %}
          </a>
-@@ -122,50 +130,52 @@
+@@ -122,65 +130,68 @@
  </script>
  
  <script type="text/html" id="case-config:case-transaction:case-properties">
 -    <div class="panel-heading panel-title">
 -        {% trans "Save data to the following case properties" %}
-+    <div class="panel-heading">
-+      <h4 class="panel-title panel-title-nolink">
-+        <i class="fa fa-save"></i> {% trans "Save Question Answers to Case Properties" %}
-+      </h4>
-     </div>
+-    </div>
 -    <table class="table table-condensed" data-bind="visible: case_properties().length">
 -        <thead>
 -            <tr>
@@ -93,17 +89,7 @@
 -                <th>{% trans "Case Property" %}</th>
 -            </tr>
 -        </thead>
-+    <div class="panel-body">
-+        <table class="table table-savecaseprops" data-bind="visible: case_properties().length">
-+            <thead>
-+                <tr>
-+                    <th class="col-sm-1"></th>
-+                    <th class="col-sm-5">{% trans "Question Answer" %}</th>
-+                    <th class="col-sm-1"></th>
-+                    <th class="col-sm-5">{% trans "Case Property" %}</th>
-+                </tr>
-+            </thead>
- 
+-
 -        <tbody data-bind="foreach: case_properties">
 -            <tr class="form-group" data-bind="css: {'has-error': validate, warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())}">
 -                <td class="col-sm-1">
@@ -123,14 +109,44 @@
 -                <td class="col-sm-5">
 -                    <div data-bind="template: {
 -                        name: 'case-config:case-properties:property',
--                        data: {property: $data, suggestedProperties: case_transaction.suggestedSaveProperties}
+-                        data: {property: $data, suggestedProperties: case_transaction.suggestedSaveProperties},
 -                    }"></div>
 -                    <p class="help-block" data-bind="html: validate, visible: validate"></p>
+-                    <!-- ko if: $data.description -->
+-                    <inline-edit params="
+-                        value: $data.description,
+-                        rows: 3,
+-                        cols: 30,
+-                        placeholder: '{% trans "Click here to add a description" %}',
+-                        url: '{% url "update_property_description" domain %}',
+-                        saveParams: {'caseType': $data.caseType, 'name':  $data.key},
+-                        saveValueName: 'description',
+-                        errorMessage: '{% trans "Error updating description. Please try again." %}',
+-                        readOnlyClass: 'property-description',
+-                        readOnlyAttrs: {'data-content': $data.description},
+-                        afterRenderFunc: $root.makePopover,
+-                    "></inline-edit>
+-                    <!-- /ko -->
 -                </td>
 -            </tr>
 -        </tbody>
 -    </table>
--    <div class="panel-body">
++    <div class="panel-heading">
++      <h4 class="panel-title panel-title-nolink">
++        <i class="fa fa-save"></i> {% trans "Save Question Answers to Case Properties" %}
++      </h4>
++    </div>
+     <div class="panel-body">
++        <table class="table table-savecaseprops" data-bind="visible: case_properties().length">
++            <thead>
++                <tr>
++                    <th class="col-sm-1"></th>
++                    <th class="col-sm-5">{% trans "Question Answer" %}</th>
++                    <th class="col-sm-1"></th>
++                    <th class="col-sm-5">{% trans "Case Property" %}</th>
++                </tr>
++            </thead>
++
 +            <tbody data-bind="foreach: case_properties">
 +                <tr class="form-group" data-bind="css: {'has-error': validate, warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())}">
 +                    <td class="col-sm-1 text-center">
@@ -150,9 +166,25 @@
 +                    <td class="col-sm-5">
 +                        <div data-bind="template: {
 +                            name: 'case-config:case-properties:property',
-+                            data: {property: $data, suggestedProperties: case_transaction.suggestedSaveProperties}
++                            data: {property: $data, suggestedProperties: case_transaction.suggestedSaveProperties},
++                            afterRender: $root.makePopover
 +                        }"></div>
 +                        <p class="help-block" data-bind="html: validate, visible: validate"></p>
++                        <!-- ko if: $data.description -->
++                        <inline-edit params="
++                            value: $data.description,
++                            rows: 3,
++                            cols: 30,
++                            placeholder: '{% trans "Click here to add a description" %}',
++                            url: '{% url "update_property_description" domain %}',
++                            saveParams: {'caseType': $data.caseType, 'name':  $data.key},
++                            saveValueName: 'description',
++                            errorMessage: '{% trans "Error updating description. Please try again." %}',
++                            readOnlyClass: 'property-description',
++                            readOnlyAttrs: {'data-content': $data.description},
++                            afterRenderFunc: $root.makePopover,
++                        "></inline-edit>
++                        <!-- /ko -->
 +                    </td>
 +                </tr>
 +            </tbody>
@@ -166,7 +198,7 @@
              <i class="fa fa-plus"></i>
              {% trans "Save properties" %}
          </a>
-@@ -173,12 +183,14 @@
+@@ -188,12 +199,14 @@
  </script>
  
  <script type="text/html" id="case-config:refresh-form-questions">
@@ -185,6 +217,7 @@
 +                        }">
          <i class="fa fa-refresh"></i>
 -    </div>
+-</script>
 +    </button>
 +  </p>
- </script>
++</script>

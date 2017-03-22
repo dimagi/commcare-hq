@@ -18,7 +18,7 @@ from corehq.apps.case_importer.tracking.filestorage import make_temp_file
 from corehq.apps.data_dictionary.util import save_case_property
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.data_dictionary import util
-from corehq.apps.data_dictionary.models import CaseType, CaseProperty
+from corehq.apps.data_dictionary.models import CaseType, CaseProperty, PROPERTY_TYPE_CHOICES
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.style.decorators import use_jquery_ui
@@ -65,7 +65,8 @@ def data_dictionary_json(request, domain, case_type_name=None):
                 "description": prop.description,
                 "name": prop.name,
                 "data_type": prop.data_type,
-                "group": prop.group
+                "group": prop.group,
+                "deprecated": prop.deprecated,
             })
         props.append(p)
     return JsonResponse({'case_types': props})
@@ -85,11 +86,25 @@ def update_case_property(request, domain):
         description = property.get('description')
         data_type = property.get('data_type')
         group = property.get('group')
-        error = save_case_property(name, case_type, domain, data_type, description, group)
+        deprecated = property.get('deprecated')
+        error = save_case_property(name, case_type, domain, data_type, description, group, deprecated)
         if error:
             errors.append(error)
     if errors:
         return JsonResponse({"status": "failed", "errors": errors}, status=400)
+    else:
+        return JsonResponse({"status": "success"})
+
+
+@login_and_domain_required
+@toggles.DATA_DICTIONARY.required_decorator()
+def update_case_property_description(request, domain):
+    case_type = request.POST.get('caseType')
+    name = request.POST.get('name')
+    description = request.POST.get('description')
+    error = save_case_property(name, case_type, domain, description=description)
+    if error:
+        return JsonResponse({"status": "failed", "errors": error}, status=400)
     else:
         return JsonResponse({"status": "success"})
 
@@ -105,8 +120,9 @@ def _export_data_dictionary(domain):
             'Group': prop.group,
             'Data Type': prop.data_type,
             'Description': prop.description,
+            'Deprecated': prop.deprecated
         } for prop in case_type.properties.all()]
-    headers = ('Case Property', 'Group', 'Data Type', 'Description')
+    headers = ('Case Property', 'Group', 'Data Type', 'Description', 'Deprecated')
     outfile = StringIO()
     writer = Excel2007ExportWriter()
     header_table = [(tab_name, [headers]) for tab_name in export_data]
@@ -156,6 +172,7 @@ class DataDictionaryView(BaseProjectDataView):
                 couch_user=self.request.couch_user,
                 project=self.request.project
             ),
+            'question_types': [{'value': k, 'display': v} for k, v in PROPERTY_TYPE_CHOICES if k],
         })
         return main_context
 
@@ -209,9 +226,9 @@ def _process_bulk_upload(bulk_file, domain):
         for worksheet in workbook.worksheets:
             case_type = worksheet.title
             for row in itertools.islice(worksheet.iter_rows(), 1, None):
-                name, group, data_type, description = [cell.value for cell in row[:4]]
+                name, group, data_type, description, deprecated = [cell.value for cell in row[:5]]
                 if name:
-                    error = save_case_property(name, case_type, domain, data_type, description, group)
+                    error = save_case_property(name, case_type, domain, data_type, description, group, deprecated)
                     if error:
                         errors.append(error)
     return errors

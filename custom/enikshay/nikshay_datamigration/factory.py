@@ -149,6 +149,7 @@ class EnikshayCaseFactory(object):
                     'sex': self.patient_detail.sex,
 
                     'migration_created_case': 'true',
+                    'migration_created_from_record': self.patient_detail.PregId,
                 },
             },
         }
@@ -209,7 +210,9 @@ class EnikshayCaseFactory(object):
                     'name': 'Occurrence #1',
                     'occurrence_episode_count': 1,
                     'occurrence_id': get_human_friendly_id(),
+
                     'migration_created_case': 'true',
+                    'migration_created_from_record': self.patient_detail.PregId,
                 },
             },
             'indices': [CaseIndex(
@@ -278,6 +281,7 @@ class EnikshayCaseFactory(object):
                     'treatment_supporter_mobile_number': validate_phone_number(self.patient_detail.dotmob),
 
                     'migration_created_case': 'true',
+                    'migration_created_from_record': self.patient_detail.PregId,
                 },
             },
             'indices': [CaseIndex(
@@ -313,6 +317,9 @@ class EnikshayCaseFactory(object):
                 'owner_id': self.drtb_hiv.location_id,
                 'update': {
                     'name': self.patient_detail.pname,
+
+                    'migration_created_case': 'true',
+                    'migration_created_from_record': self.patient_detail.PregId,
                 }
             },
             'indices': [CaseIndex(

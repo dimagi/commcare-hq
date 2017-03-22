@@ -122,7 +122,8 @@ BEGIN
 		'counsel_manage_breast_problems, ' ||
 		'counsel_skin_to_skin, ' ||
 		'counsel_immediate_breastfeeding, ' ||
-		'weight_recorded_in_month FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'weight_recorded_in_month, ' ||
+		'height_recorded_in_month FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
 
@@ -294,7 +295,8 @@ BEGIN
 		'sum(counsel_comp_feeding_vid), ' ||
 		'sum(fully_immunized_eligible), ' ||
 		'sum(fully_immunized_on_time), ' ||
-		'sum(fully_immunized_late) ' ||
+		'sum(fully_immunized_late), ' ||
+		'sum(has_aadhar_id) ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
@@ -343,7 +345,8 @@ BEGIN
 		'sum(counsel_play_cf_video), ' ||
 		'sum(fully_immunized_eligible), ' ||
 		'sum(fully_immunized_on_time), ' ||
-		'sum(fully_immunized_late) ';
+		'sum(fully_immunized_late), ' ||
+		'sum(has_aadhar_id) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -486,7 +489,8 @@ BEGIN
 		'sum(counsel_immediate_bf), ' ||
 		'sum(counsel_fp_vid), ' ||
 		'sum(counsel_immediate_conception), ' ||
-		'sum(counsel_accessible_postpartum_fp) ' ||
+		'sum(counsel_accessible_postpartum_fp), ' ||
+		'sum(has_aadhar_id) ' ||
 		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
@@ -537,7 +541,8 @@ BEGIN
 		'sum(counsel_immediate_bf), ' ||
 		'sum(counsel_fp_vid), ' ||
 		'sum(counsel_immediate_conception), ' ||
-		'sum(counsel_accessible_postpartum_fp) ';
+		'sum(counsel_accessible_postpartum_fp), ' ||
+		'sum(has_aadhar_id) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -860,7 +865,7 @@ BEGIN
 	'(' ||
 		'pse_score + thr_score + wer_score, ' ||
 		'CASE WHEN (pse_score + thr_score + wer_score) >= 60 THEN 1 ELSE 0 END, ' ||
-		'CASE WHEN ((pse_score + thr_score + wer_score) >= 40 AND (pse_score + thr_score + wer_score) < 40) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN ((pse_score + thr_score + wer_score) >= 40 AND (pse_score + thr_score + wer_score) < 60) THEN 1 ELSE 0 END, ' ||
 		'CASE WHEN (pse_score + thr_score + wer_score) < 40 THEN 1 ELSE 0 END' ||
 	')';
 
@@ -910,7 +915,7 @@ BEGIN
 		'sum(ebf) AS usage_num_ebf, ' ||
 		'sum(cf) AS usage_num_cf, ' ||
 		'sum(delivery) AS usage_num_delivery, ' ||
-		'CASE WHEN (sum(pse) + sum(gmp) + sum(thr) + sum(home_visit)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active, ' ||
+		'CASE WHEN (sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active, ' ||
 		'sum(due_list_ccs) AS usage_num_due_list_ccs, ' ||
 		'sum(due_list_child) AS usage_num_due_list_child_health, ' ||
 		'avg(pse_time) AS usage_time_pse, ' ||

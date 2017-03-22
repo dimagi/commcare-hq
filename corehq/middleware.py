@@ -110,7 +110,7 @@ class TimeoutMiddleware(object):
                                   for domain in couch_user.get_domains())
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return
 
         secure_session = request.session.get('secure_session')

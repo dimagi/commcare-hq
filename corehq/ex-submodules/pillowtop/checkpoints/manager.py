@@ -1,3 +1,4 @@
+import json
 from collections import namedtuple
 from datetime import datetime
 
@@ -53,6 +54,11 @@ class PillowCheckpoint(object):
         return get_or_create_checkpoint(self.checkpoint_id).sequence
 
     def update_to(self, seq):
+        if isinstance(seq, dict):
+            seq = json.dumps(seq)
+        elif isinstance(seq, int):
+            seq = str(seq)
+
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
         )
@@ -112,11 +118,16 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
             time_hit = seconds_since_last_update >= self.max_checkpoint_delay
         return context.do_set_checkpoint and (frequency_hit or time_hit)
 
+    def update_checkpoint(self, new_seq):
+        self.checkpoint.update_to(new_seq)
+        self.last_update = datetime.utcnow()
+
     def fire_change_processed(self, change, context):
         if self.should_update_checkpoint(context):
-            updated_to = change['seq']
-            self.checkpoint.update_to(updated_to)
-            self.last_update = datetime.utcnow()
+            self.update_checkpoint(change['seq'])
+            return True
+
+        return False
 
 
 def get_default_django_checkpoint_for_legacy_pillow_class(pillow_class):

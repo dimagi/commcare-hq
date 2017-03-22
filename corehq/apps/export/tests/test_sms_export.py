@@ -76,7 +76,7 @@ class TestSmsExport(SimpleTestCase):
 
         with export_file as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'Messages': {
                         u'headers': [
@@ -104,7 +104,7 @@ class TestSmsExport(SimpleTestCase):
 
         with export_file as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'Messages': {
                         u'headers': [
@@ -143,7 +143,7 @@ class TestSmsExport(SimpleTestCase):
 
         with export_file as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'Messages': {
                         u'headers': [
@@ -179,7 +179,7 @@ class TestSmsExport(SimpleTestCase):
 
         with export_file as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'Messages': {
                         u'headers': [
@@ -219,7 +219,7 @@ class TestSmsExport(SimpleTestCase):
 
         with export_file as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'Messages': {
                         u'headers': [

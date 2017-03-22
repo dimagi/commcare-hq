@@ -4,8 +4,10 @@ import sys
 
 from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from pillowtop.const import CHECKPOINT_MIN_WAIT
+from pillowtop.utils import force_seq_int
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
 
@@ -90,10 +92,11 @@ class PillowBase(object):
         try:
             for change in self.get_change_feed().iter_changes(since=since, forever=forever):
                 if change:
-                    self._record_change_in_datadog(change)
+                    timer = TimingContext()
                     try:
                         context.changes_seen += 1
-                        self.process_with_error_handling(change)
+                        with timer:
+                            self.process_with_error_handling(change)
                     except Exception as e:
                         notify_exception(None, u'processor error in pillow {} {}'.format(
                             self.get_name(), e,
@@ -101,8 +104,11 @@ class PillowBase(object):
                         self._record_change_exception_in_datadog(change)
                         raise
                     else:
-                        self.fire_change_processed_event(change, context)
+                        updated = self.fire_change_processed_event(change, context)
+                        if updated:
+                            self._record_checkpoint_in_datadog()
                         self._record_change_success_in_datadog(change)
+                    self._record_change_in_datadog(change, timer)
                 else:
                     updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
                     if updated:
@@ -122,16 +128,21 @@ class PillowBase(object):
 
     @abstractmethod
     def fire_change_processed_event(self, change, context):
+        """
+        :return: True if checkpoint was updated otherwise False
+        """
         pass
 
     def _normalize_checkpoint_sequence(self):
-        from pillowtop.feed.couch import CouchChangeFeed
-        from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-
         if self.checkpoint is None:
             return {}
 
         sequence = self.get_last_checkpoint_sequence()
+        return self._normalize_sequence(sequence)
+
+    def _normalize_sequence(self, sequence):
+        from pillowtop.feed.couch import CouchChangeFeed
+        from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
         change_feed = self.get_change_feed()
 
         if not isinstance(sequence, dict):
@@ -144,31 +155,43 @@ class PillowBase(object):
             else:
                 return {}
 
-            sequence = {topic: int(sequence)}
+            sequence = {topic: force_seq_int(sequence)}
         return sequence
 
     def _record_checkpoint_in_datadog(self):
         datadog_counter('commcare.change_feed.change_feed.checkpoint', tags=[
             'pillow_name:{}'.format(self.get_name()),
         ])
+        checkpoint_sequence = self._normalize_checkpoint_sequence()
+        for topic, value in checkpoint_sequence.iteritems():
+            datadog_gauge('commcare.change_feed.checkpoint_offsets', value, tags=[
+                'pillow_name:{}'.format(self.get_name()),
+                'topic:{}'.format(topic),
+            ])
 
-    def _record_change_in_datadog(self, change):
+    def _record_change_in_datadog(self, change, timer):
         change_feed = self.get_change_feed()
-        sequence = self._normalize_checkpoint_sequence()
+        current_seq = self._normalize_sequence(change_feed.get_processed_offsets())
+        current_offsets = change_feed.get_latest_offsets()
 
-        for topic, value in sequence.iteritems():
-            datadog_gauge('commcare.change_feed.processed_offsets'.format(topic), value, tags=[
+        for topic, value in current_seq.iteritems():
+            datadog_gauge('commcare.change_feed.processed_offsets', value, tags=[
+                'pillow_name:{}'.format(self.get_name()),
+                'topic:{}'.format(topic),
+            ])
+            if topic in current_offsets:
+                datadog_gauge('commcare.change_feed.need_processing', current_offsets[topic] - value, tags=[
+                    'pillow_name:{}'.format(self.get_name()),
+                    'topic:{}'.format(topic),
+                ])
+
+        for topic, offset in current_offsets.iteritems():
+            datadog_gauge('commcare.change_feed.current_offsets', offset, tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 'topic:{}'.format(topic),
             ])
 
-        for topic, offset in change_feed.get_current_offsets().iteritems():
-            datadog_gauge('commcare.change_feed.current_offsets'.format(topic), offset, tags=[
-                'pillow_name:{}'.format(self.get_name()),
-                'topic:{}'.format(topic),
-            ])
-
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change)
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change, timer)
 
     def _record_change_success_in_datadog(self, change):
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change)
@@ -176,15 +199,19 @@ class PillowBase(object):
     def _record_change_exception_in_datadog(self, change):
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change)
 
-    def __record_change_metric_in_datadog(self, metric, change):
+    def __record_change_metric_in_datadog(self, metric, change, timer=None):
         if change.metadata is not None:
-            datadog_counter(metric, tags=[
-                'datasource:{}'.format(change.metadata.data_source_name),
-                'document_type:{}'.format(change.metadata.document_type),
-                'domain:{}'.format(change.metadata.domain),
-                'is_deletion:{}'.format(change.metadata.is_deletion),
-                'pillow_name:{}'.format(self.get_name()),
-            ])
+            tags = [
+                u'datasource:{}'.format(change.metadata.data_source_name),
+                u'document_type:{}'.format(change.metadata.document_type),
+                u'domain:{}'.format(change.metadata.domain),
+                u'is_deletion:{}'.format(change.metadata.is_deletion),
+                u'pillow_name:{}'.format(self.get_name())
+            ]
+            datadog_counter(metric, tags=tags)
+
+            if timer:
+                datadog_gauge('commcare.change_feed.processing_time', timer.duration, tags=tags)
 
 
 class ChangeEventHandler(object):
@@ -195,6 +222,9 @@ class ChangeEventHandler(object):
 
     @abstractmethod
     def fire_change_processed(self, change, context):
+        """
+        :return: True if checkpoint was updated otherwise False
+        """
         pass
 
 
@@ -209,7 +239,11 @@ class ConstructedPillow(PillowBase):
         self._name = name
         self._checkpoint = checkpoint
         self._change_feed = change_feed
-        self._processor = processor
+        if isinstance(processor, list):
+            self.processors = processor
+        else:
+            self.processors = [processor]
+
         self._change_processed_event_handler = change_processed_event_handler
 
     @property
@@ -230,11 +264,13 @@ class ConstructedPillow(PillowBase):
         return self._change_feed
 
     def process_change(self, change):
-        self._processor.process_change(self, change)
+        for processor in self.processors:
+            processor.process_change(self, change)
 
     def fire_change_processed_event(self, change, context):
         if self._change_processed_event_handler is not None:
-            self._change_processed_event_handler.fire_change_processed(change, context)
+            return self._change_processed_event_handler.fire_change_processed(change, context)
+        return False
 
 
 def handle_pillow_error(pillow, change, exception):

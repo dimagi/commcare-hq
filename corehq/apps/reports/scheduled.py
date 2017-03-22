@@ -7,7 +7,7 @@ from corehq.util.soft_assert import soft_assert
 _soft_assert = soft_assert(exponential_backoff=True)
 
 
-def get_scheduled_reports(period, as_of=None):
+def get_scheduled_report_ids(period, as_of=None):
     as_of = as_of or datetime.utcnow()
     assert period in ('daily', 'weekly', 'monthly'), period
 
@@ -50,13 +50,13 @@ def get_scheduled_reports(period, as_of=None):
         raise StopIteration
 
     for key in keys:
-        for report in ReportNotification.view(
+        for result in ReportNotification.view(
             "reportconfig/all_notifications",
             reduce=False,
-            include_docs=True,
+            include_docs=False,
             **key
         ).all():
-            yield report
+            yield result['id']
 
 
 def guess_reporting_minute(now=None):

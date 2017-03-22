@@ -1,6 +1,5 @@
 from __future__ import print_function
 import os
-from optparse import make_option
 
 from django.core.management.base import BaseCommand
 
@@ -12,17 +11,18 @@ from dimagi.utils.couch.database import get_db
 # for use like `cat doc_ids.txt | ./manage.py get_doc_domains `xargs echo`
 class Command(BaseCommand):
     help = "Takes a file with one doc id per line and outputs their domains"
-    args = '<filename>'
-    option_list = (
-        make_option('--full', action='store_true', dest='full', default=False,
-            help = "Output a full list of doc ids, followed by their domain"),
-    )
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--full',
+            action='store_true',
+            dest='full',
+            default=False,
+            help="Output a full list of doc ids, followed by their domain",
+        )
+
+    def handle(self, filename, **options):
         self.full = options.get('full')
-        if not args:
-            return "You must pass in a file name"
-        filename = args[0]
         if not os.path.exists(filename):
             return "File %s not found" % filename
         with open(filename) as file:

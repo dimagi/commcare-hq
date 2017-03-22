@@ -67,7 +67,7 @@ def generate_for_all_outcomes(slug, filters):
             '',
             CountColumn(
                 'doc_id',
-                filters=filters,
+                filters=filters + [RawFilter("treatment_outcome IS NOT NULL")],
                 alias='total_%s' % slug
             )
         )
