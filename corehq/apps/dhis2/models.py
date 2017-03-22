@@ -126,7 +126,7 @@ class JsonApiLog(models.Model):
     request_url = models.CharField(max_length=255)
     request_headers = jsonfield.JSONField(blank=True)
     request_params = jsonfield.JSONField(blank=True)
-    request_body = jsonfield.JSONField(blank=True)
-    request_error = models.TextField(blank=True)
-    response_status = models.IntegerField()
-    response_body = models.TextField(blank=True)
+    request_body = jsonfield.JSONField(blank=True, null=True)  # NULL for GET, but POST can take an empty body
+    request_error = models.TextField(null=True)
+    response_status = models.IntegerField(null=True)
+    response_body = models.TextField(blank=True, null=True)
