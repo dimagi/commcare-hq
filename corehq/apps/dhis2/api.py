@@ -24,15 +24,31 @@ def json_serializer(obj):
 
 def log_request(func):
 
-    def request_wrapper(self, path, data=None, **kwargs):
+    def log(log_level, json_api_request, request_error, response_status, response_body, path, data=None, **params):
+        """
+        Unpack path and data from args and kwargs in order to log them separately
+        """
+        logger.log(log_level, {
+            'domain': json_api_request.domain_name if json_api_request.domain_name is not None else '[N/A]',
+            'request_method': func.__name__.upper(),
+            'request_url': json_api_request.server_url + path,
+            'request_headers': json.dumps(json_api_request.headers),
+            'request_params': json.dumps(params),
+            'request_body': '' if data is None else json.dumps(data, default=json_serializer),
+
+            'request_error': request_error,
+            'response_status': response_status,
+            'response_body': response_body,
+        })
+
+    def request_wrapper(self, *args, **kwargs):
         domain_log_level = get_dhis2_connection(self.domain_name).get('log_level', logging.INFO)
         log_level = logging.INFO
         request_error = ''
         response_status = None
         response_body = ''
         try:
-            # This assumes that we always send data with post and put
-            status, response = func(self, path, **kwargs) if data is None else func(self, path, data, **kwargs)
+            status, response = func(self, *args, **kwargs)
             response_status = status
             response_body = '' if response is None else json.dumps(response)
         except Exception as err:
@@ -43,18 +59,7 @@ def log_request(func):
             return status, response
         finally:
             if log_level >= domain_log_level:
-                logger.log(log_level, {
-                    'domain': self.domain_name if self.domain_name is not None else '[N/A]',
-                    'request_method': func.__name__.upper(),
-                    'request_url': self.server_url + path,
-                    'request_headers': json.dumps(self.headers),
-                    'request_params': json.dumps(kwargs),
-                    'request_body': '' if data is None else json.dumps(data, default=json_serializer),
-
-                    'request_error': request_error,
-                    'response_status': response_status,
-                    'response_body': response_body,
-                })
+                log(log_level, self, request_error, response_status, response_body, *args, **kwargs)
 
     return request_wrapper
 
