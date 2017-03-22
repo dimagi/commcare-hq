@@ -70,7 +70,7 @@ class JsonApiRequest(object):
     """
 
     def __init__(self, server_url, username, password, domain_name=None):
-        self.server_url = server_url  # e.g. "https://dhis2.example.com/api/26/"
+        self.server_url = server_url if server_url.endswith('/') else server_url + '/'
         self.headers = {'Accept': 'application/json'}
         self.auth = (username, password)
         self.domain_name = domain_name
@@ -90,6 +90,7 @@ class JsonApiRequest(object):
 
     @log_request
     def get(self, path, **kwargs):
+        path = path.lstrip('/')
         try:
             response = requests.get(self.server_url + path, headers=self.headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
@@ -98,6 +99,7 @@ class JsonApiRequest(object):
 
     @log_request
     def delete(self, path, **kwargs):
+        path = path.lstrip('/')
         try:
             response = requests.delete(self.server_url + path, headers=self.headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
@@ -106,6 +108,7 @@ class JsonApiRequest(object):
 
     @log_request
     def post(self, path, data, **kwargs):
+        path = path.lstrip('/')
         # Make a copy of self.headers so as not to set content type on requests that don't send content
         headers = dict(self.headers, **{'Content-type': 'application/json'})
         json_data = json.dumps(data, default=json_serializer)
@@ -117,6 +120,7 @@ class JsonApiRequest(object):
 
     @log_request
     def put(self, path, data, **kwargs):
+        path = path.lstrip('/')
         headers = dict(self.headers, **{'Content-type': 'application/json'})
         json_data = json.dumps(data, default=json_serializer)
         try:
