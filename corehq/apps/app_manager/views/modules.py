@@ -4,6 +4,7 @@ import json
 import logging
 from lxml import etree
 
+from django.utils import html
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, gettext_lazy
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
@@ -19,7 +20,7 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs
 from corehq import toggles, feature_previews
-from corehq.apps.app_manager.templatetags.xforms_extras import trans, html_name
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import (
     CAREPLAN_GOAL,
     CAREPLAN_TASK,
@@ -541,11 +542,11 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
             name = request.POST.get(attribute, None)
-            module[attribute][lang] = html_name(name)
+            module[attribute][lang] = html.strip_tags(name)
             if should_edit("name"):
                 resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
     if should_edit('comment'):
-        module.comment = html_name(request.POST.get('comment'))
+        module.comment = html.strip_tags(request.POST.get('comment'))
     for SLUG in ('case_list', 'task_list'):
         show = '{SLUG}-show'.format(SLUG=SLUG)
         label = '{SLUG}-label'.format(SLUG=SLUG)
