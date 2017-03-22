@@ -37,7 +37,15 @@ def get_sms_export_base_query(domain):
 def get_groups_user_ids(group_ids):
     q = (GroupES()
          .doc_id(group_ids))
-    return [user for user_list in q.values_list("users", flat=True) for user in user_list]
+
+    results = []
+    for user_list in q.values_list("users", flat=True):
+        if isinstance(user_list, basestring):
+            results.append(user_list)
+        else:
+            results.extend(user_list)
+
+    return results
 
 
 def get_ledger_section_entry_combinations(domain):
