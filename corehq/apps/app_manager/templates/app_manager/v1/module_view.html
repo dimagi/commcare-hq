@@ -72,6 +72,17 @@
     print_ref.setObjReference({{ print_media_info|JSON }});
     printTemplateUploader.currentReference = print_ref;
 
+    function removePrintTemplate(slug) {
+        $.post(
+            '{% url "hqmedia_remove_detail_print_template" domain app.id %}',
+            function(data, status) {
+                if(status == 'success'){
+                    print_ref.url("");
+                }
+            }
+        );
+    }
+
     {% endwith %}
     </script>
 {% endblock %}

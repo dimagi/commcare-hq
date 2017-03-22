@@ -429,6 +429,16 @@ class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
         return ref
 
 
+class RemoveDetailPrintTemplateView(BaseMultimediaView):
+    name = "hqmedia_remove_detail_print_template"
+
+    @method_decorator(requires_privilege_raise404(privileges.COMMCARE_LOGO_UPLOADER))
+    def post(self, *args, **kwargs):
+        del self.app.modules[1].case_details.long.print_template    # TODO
+        self.app.save()
+        return HttpResponse()
+
+
 class RemoveLogoView(BaseMultimediaView):
     name = "hqmedia_remove_logo"
 
