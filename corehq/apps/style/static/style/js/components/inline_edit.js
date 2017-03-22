@@ -113,7 +113,6 @@ hqDefine('style/js/components/inline_edit.js', function() {
                         self.hasError(false);
                         sanitizeValue();
                         self.serverValue = self.readOnlyValue;
-
                         if (self.postSave) {
                             self.postSave(data);
                         }
