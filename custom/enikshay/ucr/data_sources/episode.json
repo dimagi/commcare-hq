@@ -1215,13 +1215,66 @@
                 }
             },
             {
+                "display_name": "dosage_frequency",
+                "column_id": "dosage_frequency",
+                "datatype": "string",
+                "type": "expression",
+                "expression":{
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "complete_treatment_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "ql_weight_band_and_dosage",
+                            "dosage_frequency"
+                        ]
+                    }
+                }
+            },
+            {
                 "display_name": "type_of_regimen",
                 "column_id": "type_of_regimen",
                 "datatype": "string",
                 "type": "expression",
-                "expression":{
-                    "type": "property_name",
-                    "property_name": "regimen"
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "patient_type_choice"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "new"
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": "New"
+                    },
+                    "expression_if_false": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_initiated"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes_private"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": "Outside RNTCP"
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": "Previously Treated"
+                        }
+                    }
                 }
             },
             {
@@ -1422,29 +1475,6 @@
                     "property_name": "ip_initiation_date"
                 },
                 "column_id": "ip_initiation_date"
-            },
-            {
-                "display_name": "dosage_frequency",
-                "datatype": "string",
-                "type": "expression",
-                "is_primary_key": false,
-                "transform": {
-                },
-                "is_nullable": true,
-                "expression": {
-                    "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "dosage_frequency"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "type": "named",
-                        "name": "person_id"
-                    }
-                },
-                "column_id": "dosage_frequency"
             },
             {
                 "display_name": "treatment_outcome_date",
