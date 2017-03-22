@@ -242,7 +242,7 @@ class NonReporting(ReportingRatesData):
                 st = StockTransaction.objects.filter(
                     case_id=supply_point_id,
                     report__date__lte=self.config['startdate']
-                ).select_related('report__date').order_by('-report__date')
+                ).select_related('report').order_by('-report__date')
                 if st:
                     date = ews_date_format(st[0].report.date)
                 else:
