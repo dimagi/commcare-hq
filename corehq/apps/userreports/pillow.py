@@ -217,28 +217,33 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self._processor.rebuild_table(sql_adapter)
 
 
-def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', params=None):
-    params = params or {}
-    topics = params.pop('topics', KAFKA_TOPICS)
+# TODO(Emord) make other pillows support params dictionary
+def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
+                         specific_ucr=None, exclude_ucrs=None, topics=None):
+    topics = topics or KAFKA_TOPICS
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
             auto_repopulate_tables=False,
-            **params
+            ucr_division=ucr_division,
+            specific_ucr=specific_ucr,
+            exclude_ucrs=exclude_ucrs,
         ),
         pillow_name=pillow_id,
         topics=topics
     )
 
 
-def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', params=None):
-    params = params or {}
-    topics = params.pop('topics', KAFKA_TOPICS)
+def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
+                                specific_ucr=None, exclude_ucrs=None, topics=None):
+    topics = topics or KAFKA_TOPICS
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),
             auto_repopulate_tables=True,
-            **params
+            ucr_division=ucr_division,
+            specific_ucr=specific_ucr,
+            exclude_ucrs=exclude_ucrs,
         ),
         pillow_name=pillow_id,
         topics=topics
