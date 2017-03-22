@@ -956,8 +956,8 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
-        log_accounting_info("Starting _apply_upgrades_and_downgrades")
         _soft_assert_domain_not_loaded(isinstance(self.domain, six.string_types), "domain is object")
+
 
         if new_plan_version is None:
             new_plan_version = DefaultProductPlan.get_default_plan_version()
@@ -973,14 +973,10 @@ class Subscriber(models.Model):
         if upgraded_privileges:
             Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version)
 
-        log_accounting_info("Processed")
-
         if Subscriber.should_send_subscription_notification(old_subscription, new_subscription):
             send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
 
-        log_accounting_info("send signal")
         subscription_upgrade_or_downgrade.send_robust(None, domain=self.domain)
-        log_accounting_info("Exiting _apply_upgrades_and_downgrades")
 
     @staticmethod
     def should_send_subscription_notification(old_subscription, new_subscription):
