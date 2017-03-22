@@ -36,6 +36,7 @@ class ConfigurableReportTableManagerMixin(object):
         self.auto_repopulate_tables = auto_repopulate_tables
         self.ucr_division = kwargs.pop('ucr_division', None)
         self.specific_ucr = kwargs.pop('specific_ucr', None)
+        self.exclude_ucrs = kwargs.pop('exclude_ucrs', None)
         super(ConfigurableReportTableManagerMixin, self).__init__(*args, **kwargs)
 
     def get_all_configs(self):
@@ -55,6 +56,9 @@ class ConfigurableReportTableManagerMixin(object):
                 if ucr_start <= table_hash <= ucr_end:
                     filtered_configs.append(configs)
             configs = filtered_configs
+
+        if self.exclude_ucrs:
+            configs = [config for config in configs if config.table_id not in self.exclude_ucrs]
 
         return configs
 
