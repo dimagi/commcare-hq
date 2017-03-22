@@ -28,6 +28,7 @@ DOSE_TAKEN_INDICATORS = [
     'self_administered_dose',
 ]
 Schedule = namedtuple("Schedule", ['days_dose_expected', 'mark_expected', 'title'])
+india_timezone = pytz.timezone('Asia/Kolkata')
 
 
 class HiddenFilter(BaseReportFilter):
@@ -97,9 +98,12 @@ class HistoricalAdherenceReport(EnikshayReport):
     @property
     def default_datespan(self):
         start = self.adherence_schedule_date_start
-        end = datetime.date.today()
 
-        datespan = DateSpan(start, end, timezone=self.timezone, inclusive=self.inclusive)
+        utc_now = datetime.datetime.now(pytz.utc)
+        india_now = utc_now.astimezone(india_timezone)
+        end = india_now.date()
+
+        datespan = DateSpan(start, end, timezone=india_timezone, inclusive=self.inclusive)
         datespan.max_days = self.datespan_max_days
         datespan.is_default = True
 
