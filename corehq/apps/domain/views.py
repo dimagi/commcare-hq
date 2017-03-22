@@ -52,7 +52,6 @@ from corehq.apps.dhis2.forms import (
     DataValueMapFormSet,
     DataValueMapFormSetHelper,
 )
-from corehq.apps.dhis2.models import DataValueMap
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
