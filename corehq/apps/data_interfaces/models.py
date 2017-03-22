@@ -1,3 +1,4 @@
+import jsonfield
 import pytz
 import re
 from collections import defaultdict
@@ -13,6 +14,8 @@ from django.db import models
 from corehq.apps.hqcase.utils import update_case
 from corehq.form_processor.models import CommCareCaseSQL
 from django.utils.translation import ugettext_lazy
+from jsonobject.api import JsonObject
+from jsonobject.properties import StringProperty
 
 ALLOWED_DATE_REGEX = re.compile('^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
@@ -32,6 +35,7 @@ class AutomaticUpdateRule(models.Model):
     # number of days old that a case's server_modified_on date must be
     # before we run the rule against it.
     server_modified_boundary = models.IntegerField(null=True)
+    migrated = models.BooleanField(default=False)
 
     class Meta:
         app_label = "data_interfaces"
@@ -204,6 +208,40 @@ class AutomaticUpdateRule(models.Model):
         self.save()
 
 
+class CaseRuleCriteria(models.Model):
+    rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
+    match_property_definition = models.ForeignKey('MatchPropertyDefinition', on_delete=models.CASCADE)
+    custom_match_definition = models.ForeignKey('CustomMatchDefinition', on_delete=models.CASCADE)
+
+    @property
+    def definition(self):
+        if self.match_property_definition_id:
+            return self.match_property_definition
+        elif self.custom_match_definition_id:
+            return self.custom_match_definition
+        else:
+            raise ValueError("No available definition found")
+
+
+class CaseRuleCriteriaDefinition(models.Model):
+
+    class Meta:
+        abstract = True
+
+    def matches(self, case, now):
+        raise NotImplementedError()
+
+
+class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
+    property_name = models.CharField(max_length=126)
+    property_value = models.CharField(max_length=126, null=True)
+    match_type = models.CharField(max_length=15)
+
+
+class CustomMatchDefinition(CaseRuleCriteriaDefinition):
+    name = models.CharField(max_length=126)
+
+
 class AutomaticUpdateRuleCriteria(models.Model):
     # True when today < (the date in property_name - property_value days)
     MATCH_DAYS_BEFORE = 'DAYS_BEFORE'
@@ -314,6 +352,75 @@ class AutomaticUpdateRuleCriteria(models.Model):
             self.MATCH_NOT_EQUAL: self.check_not_equal,
             self.MATCH_HAS_VALUE: self.check_has_value,
         }.get(self.match_type)(case, now)
+
+
+class CaseRuleAction(models.Model):
+    rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
+    update_case_definition = models.ForeignKey('UpdateCaseDefinition', on_delete=models.CASCADE)
+    custom_action_definition = models.ForeignKey('CustomActionDefinition', on_delete=models.CASCADE)
+
+    @property
+    def definition(self):
+        if self.update_case_definition_id:
+            return self.update_case_definition
+        elif self.custom_action_definition_id:
+            return self.custom_action_definition
+        else:
+            raise ValueError("No available definition found")
+
+
+class CaseRuleActionDefinition(models.Model):
+
+    class Meta:
+        abstract = True
+
+    def run(self, case):
+        raise NotImplementedError()
+
+
+class UpdateCaseDefinition(CaseRuleActionDefinition):
+    # Expected to be a list of PropertyDefinition objects representing the
+    # case properties to update
+    properties_to_update = jsonfield.JSONField(default=list)
+
+    # True to close the case, otherwise False
+    close_case = models.BooleanField()
+
+    VALUE_TYPE_EXACT = "EXACT"
+    VALUE_TYPE_CASE_PROPERTY = "CASE_PROPERTY"
+
+    class PropertyDefinition(JsonObject):
+        # The case property name
+        name = StringProperty()
+
+        # The type of the value property:
+        #   VALUE_TYPE_EXACT means `value` is the exact value to set to the case property referred to by `name`.
+        #   VALUE_TYPE_CASE_PROPERTY means `value` is a case property to resolve first and then set to the case
+        #   property referred to by `name`.
+        value_type = StringProperty()
+
+        # Meaning depends on value_type, see above
+        value = StringProperty()
+
+    def get_properties_to_update(self):
+        return [self.PropertyDefinition(**fields) for fields in self.properties_to_update]
+
+    def set_properties_to_update(self, properties):
+        if not isinstance(properties, (list, tuple)):
+            raise ValueError("Expected list or tuple")
+
+        result = []
+        for p in properties:
+            if not isinstance(p, self.PropertyDefinition):
+                raise ValueError("Expected UpdateCaseDefinition.PropertyDefinition")
+
+            result.append(p.to_json())
+
+        self.properties_to_update = result
+
+
+class CustomActionDefinition(CaseRuleActionDefinition):
+    name = models.CharField(max_length=126)
 
 
 class AutomaticUpdateAction(models.Model):
