@@ -12,7 +12,7 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 import six
 from six.moves import range
 

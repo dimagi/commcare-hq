@@ -1,5 +1,5 @@
 from collections import namedtuple
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext_noop, ugettext as _
 from corehq import toggles
 

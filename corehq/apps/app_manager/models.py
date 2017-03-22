@@ -58,7 +58,7 @@ from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound

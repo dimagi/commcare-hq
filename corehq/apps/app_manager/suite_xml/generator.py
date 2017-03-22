@@ -1,6 +1,6 @@
 import urllib
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from corehq.apps.app_manager.exceptions import MediaResourceError
 from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper

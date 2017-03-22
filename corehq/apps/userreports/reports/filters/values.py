@@ -1,7 +1,7 @@
 import datetime
 from collections import namedtuple
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from sqlagg.filters import (
     BasicFilter,

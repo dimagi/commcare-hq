@@ -15,7 +15,7 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser, UserRole
 from corehq.apps.hqwebapp.tasks import send_html_email_async

@@ -8,7 +8,7 @@ from collections import defaultdict, OrderedDict, namedtuple
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import models
 from django.http import Http404
 

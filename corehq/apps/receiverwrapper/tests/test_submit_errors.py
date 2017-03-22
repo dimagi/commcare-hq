@@ -3,7 +3,7 @@ from django.test import TestCase
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
 from django.test.client import Client
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 import os
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors

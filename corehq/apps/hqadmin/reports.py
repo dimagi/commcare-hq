@@ -1081,7 +1081,7 @@ class GlobalAdminReports(AdminDomainStatsReport):
     def template_context(self):
         context = super(GlobalAdminReports, self).template_context
         indicator_data = copy.deepcopy(INDICATOR_DATA)
-        from django.core.urlresolvers import reverse
+        from django.urls import reverse
         for key in self.indicators:
             indicator_data[key]["ajax_url"] = reverse(
                 indicator_data[key]["ajax_view"]

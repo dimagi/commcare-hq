@@ -1,7 +1,7 @@
 import json
 from collections import namedtuple
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test.testcases import TestCase, SimpleTestCase
 from django.test.client import Client
 
