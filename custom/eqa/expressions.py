@@ -163,8 +163,8 @@ class EQAPercentExpression(JsonObject):
         return {
             'question_id': self.question_id,
             'display_text': self.display_text,
-            'current_submission': "%d%%" % curr_ques,
-            'previous_submission': "%d%%" % prev_ques,
+            'current_submission': "%d%%" % curr_ques if curr_ques != -1 else "N/A",
+            'previous_submission': "%d%%" % prev_ques if prev_ques != -1 else "N/A",
             'status': status
         }
 
