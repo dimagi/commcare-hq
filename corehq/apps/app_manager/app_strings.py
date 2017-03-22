@@ -179,8 +179,8 @@ class AppStringsBase(object):
         self._load_translations = load_translations
 
     @memoized
-    def get_default_translations(self, lang):
-        return self._load_translations(lang)
+    def get_default_translations(self, lang, commcare_version):
+        return self._load_translations(lang, commcare_version=commcare_version)
 
     def create_custom_app_strings(self, app, lang, for_default=False):
         custom = dict(_create_custom_app_strings(app, lang, for_default=for_default))
@@ -258,8 +258,10 @@ class AppStringsBase(object):
 class DumpKnownAppStrings(AppStringsBase):
 
     def app_strings_parts(self, app, lang, for_default=False):
+        commcare_version = app.build_version.vstring if app.build_version else None
+
         yield self.create_custom_app_strings(app, lang, for_default=for_default)
-        yield self.get_default_translations(lang)
+        yield self.get_default_translations(lang, commcare_version)
         yield non_empty_only(app.translations.get(lang, {}))
 
 
@@ -281,7 +283,8 @@ class SelectKnownAppStrings(AppStringsBase):
     def app_strings_parts(self, app, lang, for_default=False):
         yield self.create_custom_app_strings(app, lang,
                                              for_default=for_default)
-        cc_trans = self.get_default_translations(lang)
+        commcare_version = app.build_version.vstring if app.build_version else None
+        cc_trans = self.get_default_translations(lang, commcare_version)
         yield dict((key, cc_trans[key])
                    for key in self.get_app_translation_keys(app)
                    if key in cc_trans)

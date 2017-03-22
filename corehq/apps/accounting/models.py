@@ -20,7 +20,6 @@ from django_prbac.models import Role
 import jsonfield
 import stripe
 
-from couchdbkit import ResourceNotFound
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
@@ -76,6 +75,8 @@ MAX_INVOICE_COMMUNICATIONS = 5
 SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
+
+CONSISTENT_DATES_CHECK = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
 
 _soft_assert_domain_not_loaded = soft_assert(
     to='{}@{}'.format('npellegrino', 'dimagi.com'),
@@ -461,9 +462,10 @@ class BillingAccount(ValidateModelMixin, models.Model):
         old_user = self.auto_pay_user
         subject = _("Your card is no longer being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
-        try:
-            old_user_name = WebUser.get_by_username(old_user).first_name
-        except ResourceNotFound:
+        old_web_user = WebUser.get_by_username(old_user)
+        if old_web_user:
+            old_user_name = old_web_user.first_name
+        else:
             old_user_name = old_user
 
         context = {
@@ -486,10 +488,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         from corehq.apps.domain.views import EditExistingBillingAccountView
         subject = _("Your card is being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
-        try:
-            new_user_name = WebUser.get_by_username(self.auto_pay_user).first_name
-        except ResourceNotFound:
-            new_user_name = self.auto_pay_user
+        web_user = WebUser.get_by_username(self.auto_pay_user)
+        new_user_name = web_user.first_name if web_user else self.auto_pay_user
         try:
             last_4 = self.autopay_card.last4
         except StripePaymentMethod.DoesNotExist:
@@ -956,27 +956,38 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
+        log_accounting_info("Starting _apply_upgrades_and_downgrades")
         _soft_assert_domain_not_loaded(isinstance(self.domain, six.string_types), "domain is object")
 
-
+        log_accounting_info("Check new_plan_version=%s" % str(new_plan_version))
         if new_plan_version is None:
             new_plan_version = DefaultProductPlan.get_default_plan_version()
 
+        log_accounting_info("Check downgraded_privileges=%s, upgraded_privileges=%s" % (
+            str(new_plan_version),
+            str(upgraded_privileges),
+        ))
         if downgraded_privileges is None or upgraded_privileges is None:
             change_status_result = get_change_status(None, new_plan_version)
             downgraded_privileges = downgraded_privileges or change_status_result.downgraded_privs
             upgraded_privileges = upgraded_privileges or change_status_result.upgraded_privs
 
+        log_accounting_info("Check downgraded_privileges=%s" % str(downgraded_privileges))
         if downgraded_privileges:
             Subscriber._process_downgrade(self.domain, downgraded_privileges, new_plan_version)
 
+        log_accounting_info("Check upgraded_privileges=%s" % str(upgraded_privileges))
         if upgraded_privileges:
             Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version)
+
+        log_accounting_info("Processed")
 
         if Subscriber.should_send_subscription_notification(old_subscription, new_subscription):
             send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
 
+        log_accounting_info("send signal")
         subscription_upgrade_or_downgrade.send_robust(None, domain=self.domain)
+        log_accounting_info("Exiting _apply_upgrades_and_downgrades")
 
     @staticmethod
     def should_send_subscription_notification(old_subscription, new_subscription):
@@ -1123,8 +1134,11 @@ class Subscription(models.Model):
         """
         assert date_start is not None
         for sub in Subscription.objects.filter(
-            subscriber=self.subscriber
-        ).exclude(id=self.id).all():
+            CONSISTENT_DATES_CHECK,
+            subscriber=self.subscriber,
+        ).exclude(
+            id=self.id,
+        ):
             related_has_no_end = sub.date_end is None
             current_has_no_end = date_end is None
             start_before_related_end = sub.date_end is not None and date_start < sub.date_end
@@ -2085,14 +2099,11 @@ class BillingRecordBase(models.Model):
         for email in contact_emails:
             greeting = _("Hello,")
             can_view_statement = False
-            try:
-                web_user = WebUser.get_by_username(email)
-                if web_user is not None:
-                    if web_user.first_name:
-                        greeting = _("Dear %s,") % web_user.first_name
-                    can_view_statement = web_user.is_domain_admin(domain)
-            except ResourceNotFound:
-                pass
+            web_user = WebUser.get_by_username(email)
+            if web_user is not None:
+                if web_user.first_name:
+                    greeting = _("Dear %s,") % web_user.first_name
+                can_view_statement = web_user.is_domain_admin(domain)
             context['greeting'] = greeting
             context['can_view_statement'] = can_view_statement
             email_html = render_to_string(self.html_template, context)
@@ -2699,6 +2710,13 @@ class CreditLine(ValidateModelMixin, models.Model):
             subscription=subscription,
             feature_type__exact=feature_type,
             product_type__exact=product_type,
+        ).all()
+
+    @classmethod
+    def get_non_general_credits_by_subscription(cls, subscription):
+        return cls.objects.filter(subscription=subscription).filter(
+            Q(product_type__in=[c[0] for c in SoftwareProductType.CHOICES] + [SoftwareProductType.ANY]) |
+            Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
 
     @classmethod

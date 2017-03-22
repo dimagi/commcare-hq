@@ -263,7 +263,7 @@ def get_apps_base_context(request, domain, app):
         'app_subset': {
             'commcare_minor_release': app.commcare_minor_release,
             'doc_type': app.get_doc_type(),
-            'form_counts_by_module': [len(m.forms) for m in app.modules],
+            'form_counts_by_module': [len(m.forms) for m in app.modules] if not app.is_remote_app() else [],
             'version': app.version,
         } if app else {},
         'timezone': timezone,
@@ -297,8 +297,9 @@ def app_source(request, domain, app_id):
 @require_can_edit_apps
 def copy_app(request, domain):
     app_id = request.POST.get('app')
+    app = get_app(domain, app_id)
     form = CopyApplicationForm(
-        domain, app_id, request.POST,
+        domain, app, request.POST,
         export_zipped_apps_enabled=toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
     )
     if form.is_valid():
@@ -316,23 +317,21 @@ def copy_app(request, domain):
                 for slug in data['toggles'].split(","):
                     set_toggle(slug, domain, True, namespace=toggles.NAMESPACE_DOMAIN)
             extra_properties = {'name': data['name']}
-            if data.get('linked'):
+            linked = data.get('linked')
+            if linked:
                 extra_properties['master'] = app_id
                 extra_properties['doc_type'] = 'LinkedApplication'
-                app = get_app(None, app_id)
                 if domain not in app.linked_whitelist:
                     app.linked_whitelist.append(domain)
                     app.save()
             app_copy = import_app_util(app_id_or_source, domain, extra_properties)
-            mobile_ucrs = False
-            for module in app_copy.modules:
-                if isinstance(module, ReportModule):
-                    mobile_ucrs = True
-                    break
-            if mobile_ucrs:
-                messages.error(request, _('This linked application uses mobile UCRs '
-                                          'which are currently not supported. For this application '
-                                          'to function correctly, you will need to remove those modules.'))
+            if linked:
+                for module in app_copy.modules:
+                    if isinstance(module, ReportModule):
+                        messages.error(request, _('This linked application uses mobile UCRs which '
+                                                  'are currently not supported. For this application to '
+                                                  'function correctly, you will need to remove those modules.'))
+                        break
             return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
         return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
@@ -635,6 +634,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'use_j2me_endpoint',
         # Application only
         'cloudcare_enabled',
+        'anonymous_cloudcare_enabled',
         'case_sharing',
         'translation_strategy',
         'auto_gps_capture',
@@ -653,6 +653,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('build_spec', BuildSpec.from_string),
         ('case_sharing', None),
         ('cloudcare_enabled', None),
+        ('anonymous_cloudcare_enabled', None),
         ('commtrack_requisition_mode', lambda m: None if m == 'disabled' else m),
         ('manage_urls', None),
         ('name', None),
@@ -698,6 +699,12 @@ def edit_app_attr(request, domain, app_id, attr):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
         if not has_privilege(request, privileges.CLOUDCARE):
             app.cloudcare_enabled = False
+
+    if should_edit("anonymous_cloudcare_enabled"):
+        if app.get_doc_type() not in ("Application",):
+            raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
+        if not has_privilege(request, privileges.CLOUDCARE):
+            app.anonymous_cloudcare_enabled = False
 
     def require_remote_app():
         if app.get_doc_type() not in ("RemoteApp",):

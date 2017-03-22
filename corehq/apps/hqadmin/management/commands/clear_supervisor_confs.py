@@ -1,5 +1,5 @@
+from __future__ import print_function
 import os
-from optparse import make_option
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -21,5 +21,5 @@ class Command(BaseCommand):
         env_confs = filter(lambda x: x.startswith('%s_' % environment) and x.endswith('.conf'), files)
         for c in env_confs:
             os.remove(os.path.join(conf_dir, c))
-            print "\t[clear_supervisor_confs] Removed supervisor configuration file: %s" % c
+            print("\t[clear_supervisor_confs] Removed supervisor configuration file: %s" % c)
 

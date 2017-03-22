@@ -22,11 +22,16 @@ from couchforms.models import doc_types, XFormInstance
 
 
 class Command(BaseCommand):
-    args = "<path to domain list>"
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('path')
+        parser.add_argument('--strict', action='store_true', default=False,
+                            help="Abort domain migration even for diffs in deleted doc types")
+
+    def handle(self, path, **options):
         with_traceback = options['traceback']
-        path = args[0]
+        self.strict = options['strict']
+
         if not os.path.isfile(path):
             raise CommandError("Couldn't locate domain list: {}".format(path))
 
@@ -58,7 +63,7 @@ class Command(BaseCommand):
             self.stderr.write("Migration has diffs, aborting for domain {}".format(domain))
             self.abort(domain)
             writer = SimpleTableWriter(self.stdout, TableRowFormatter([50, 10, 10, 10]))
-            writer.write_table(['Doc Type', '# Couch', '# SQL', '# Diffs'], [
+            writer.write_table(['Doc Type', '# Couch', '# SQL', '# Diffs', '# Docs with Diffs'], [
                 (doc_type,) + stat for doc_type, stat in stats.items()
             ])
         else:
@@ -73,9 +78,9 @@ class Command(BaseCommand):
         stats = {}
 
         def _update_stats(doc_type, couch_count, sql_count):
-            diff_count = diff_stats.pop(doc_type, 0)
+            diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
             if diff_count or couch_count != sql_count:
-                stats[doc_type] = (couch_count, sql_count, diff_count)
+                stats[doc_type] = (couch_count, sql_count, diff_count, num_docs_with_diffs)
 
         for doc_type in doc_types():
             form_ids_in_couch = len(set(get_form_ids_by_type(domain, doc_type)))
@@ -92,11 +97,13 @@ class Command(BaseCommand):
         case_ids_in_sql = len(set(CaseAccessorSQL.get_case_ids_in_domain(domain)))
         _update_stats("CommCareCase", case_ids_in_couch, case_ids_in_sql)
 
-        case_ids_in_couch = len(set(get_doc_ids_in_domain_by_type(
-            domain, "CommCareCase-Deleted", XFormInstance.get_db())
-        ))
-        case_ids_in_sql = len(set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)))
-        _update_stats("CommCareCase-Deleted", case_ids_in_couch, case_ids_in_sql)
+        if self.strict:
+            # only care about these in strict mode
+            case_ids_in_couch = len(set(get_doc_ids_in_domain_by_type(
+                domain, "CommCareCase-Deleted", XFormInstance.get_db())
+            ))
+            case_ids_in_sql = len(set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)))
+            _update_stats("CommCareCase-Deleted", case_ids_in_couch, case_ids_in_sql)
 
         if diff_stats:
             for key in diff_stats.keys():

@@ -36,6 +36,7 @@ from corehq.apps.export.views import (
     DeIdDashboardFeedListView,
     DashboardFeedPaywall,
     DailySavedExportPaywall,
+    CopyExportView,
 )
 
 urlpatterns = [
@@ -139,6 +140,9 @@ urlpatterns = [
     url(r"^custom/case/edit/(?P<export_id>[\w\-]+)/$",
         EditCustomCaseExportView.as_view(),
         name=EditCustomCaseExportView.urlname),
+    url(r"^custom/copy/(?P<export_id>[\w\-]+)/$",
+        CopyExportView.as_view(),
+        name=CopyExportView.urlname),
 
     # Delete export views
     url(r"^custom/delete/(?P<export_id>[\w\-]+)/$",

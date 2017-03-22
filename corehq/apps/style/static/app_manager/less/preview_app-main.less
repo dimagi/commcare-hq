@@ -8,9 +8,9 @@ EXTERNAL styling of the preview app container in app manager.
 For the styling of the app preview content and layout, please check out
 preview_app/less */
 
-@preview-phone-wrapper-width: 300px;
+@preview-phone-wrapper-width: 310px;
 @preview-phone-width: 250px;
-@preview-tablet-wrapper-width: 500px;
+@preview-tablet-wrapper-width: 515px;
 @preview-tablet-width: 450px;
 @preview-tablet-height: 644px;
 @preview-phone-height: 444px;
@@ -43,6 +43,9 @@ preview_app/less */
 
 #js-appmanager-body.offset-for-preview {
   margin-right: @preview-phone-wrapper-width;
+  width: -webkit-calc(~"100% - " @preview-phone-wrapper-width);
+  width: -moz-calc(~"100% - " @preview-phone-wrapper-width);
+  width: calc(~"100% - " @preview-phone-wrapper-width);
 }
 
 #hq-messages-container > div > div > .alert {
@@ -60,14 +63,16 @@ preview_app/less */
   position: fixed;
   z-index: @zindex-app-preview;
   width: 0;
-  background-color: rgba(50, 50, 50, .3);
+  background-color: @cc-light-cool-accent-hi;
   .transition(width 1s);
   overflow: hidden;
+  border-left: 0px;
 
 
   &.open {
     width: @preview-phone-wrapper-width;
-    .box-shadow(0 0px 10px 3px rgba(0,0,0,.45));
+    .box-shadow(0 0px 10px 3px rgba(0,0,0,.35));
+    border-left: 10px solid @cc-light-cool-accent-mid;
   }
 
   &.open.small-height  {
@@ -93,6 +98,9 @@ preview_app/less */
 .preview-tablet-mode {
   #js-appmanager-body.offset-for-preview {
     margin-right: @preview-tablet-wrapper-width;
+    width: -webkit-calc(~"100% - " @preview-tablet-wrapper-width);
+    width: -moz-calc(~"100% - " @preview-tablet-wrapper-width);
+    width: calc(~"100% - " @preview-tablet-wrapper-width);
   }
   #hq-messages-container.offset-for-preview > div > div > .alert {
     margin-right: @preview-tablet-wrapper-width + 10;

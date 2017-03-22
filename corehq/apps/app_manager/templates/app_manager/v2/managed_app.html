@@ -8,6 +8,8 @@
 
 {% block js %}
     {{ block.super }}
+    <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
+    <script src="{% static 'app_manager/js/apps_base.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
@@ -41,8 +43,8 @@
           </div>
           <h2 class="appnav-name">
             <a href="{% url "view_app" domain app.id %}"
-               class="variable-app_name appnav-responsive">
-                {{ app.name }}
+               class="appnav-responsive">
+                <span class="variable-app_name">{{ app.name }}</span>
             </a>
           </h2>
       </div>
@@ -88,12 +90,19 @@
           <button type="button" class="popover-additem-option new-module" data-type="survey">
             <i class="fa fa-file-o"></i>
             {% trans "Surveys" %}
+            <p>{% blocktrans %}
+              Collect data once.
+            {% endblocktrans %}</p>
+          </button>
           </button>
         </div>
         <div class="col-xs-6">
           <button type="button" class="popover-additem-option new-module" data-type="case">
             <i class="fa fa-bars"></i>
             {% trans "Case List" %}
+            <p>{% blocktrans %}
+              Track items over time.
+            {% endblocktrans %}</p>
           </button>
         </div>
       </div>

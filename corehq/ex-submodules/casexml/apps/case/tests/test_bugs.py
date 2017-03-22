@@ -8,15 +8,15 @@ from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
 )
-from corehq.util.test_utils import TestFileMixin, softer_assert
+from corehq.util.test_utils import TestFileMixin
 
 
 class SimpleCaseBugTests(SimpleTestCase):
@@ -27,28 +27,19 @@ class SimpleCaseBugTests(SimpleTestCase):
             CommCareCase(_id='test').to_xml(version)
 
 
-class CaseBugTestCouchOnly(TestCase, TestFileMixin):
-
-    file_path = ('data', 'bugs')
-    root = os.path.dirname(__file__)
-
-    @classmethod
-    def setUpClass(cls):
-        super(CaseBugTestCouchOnly, cls).setUpClass()
-        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
-
-    @classmethod
-    def tearDownClass(cls):
-        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
-        super(CaseBugTestCouchOnly, cls).tearDownClass()
+class CaseBugTestCouchOnly(TestCase):
 
     def test_conflicting_ids(self):
         """
         If a form and a case share an ID it's a conflict
         """
-        xml_data = self.get_xml('id_conflicts')
+        conflict_id = uuid.uuid4().hex
+        case_block = CaseBlock(
+            case_id=conflict_id,
+            create=True,
+        ).as_string()
         with self.assertRaises(BulkSaveError):
-            submit_form_locally(xml_data, 'test-domain')
+            submit_case_blocks(case_block, 'test-conflicts', form_id=conflict_id)
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -73,88 +64,100 @@ class CaseBugTest(TestCase, TestFileMixin):
         """
         Ensure that form processor fails on empty id
         """
-        xml_data = self.get_xml('empty_id')
-        response, form, cases = submit_form_locally(xml_data, 'test-domain')
-        self.assertIn('IllegalCaseId', response.content)
+        case_block = CaseBlock(
+            case_id='',
+            create=True,
+        ).as_string()
+        form, cases = submit_case_blocks(case_block, 'test-domain')
+        self.assertIn('IllegalCaseId', form.problem)
+        self.assertEqual([], cases)  # should make no cases
 
-    def _testCornerCaseDatatypeBugs(self, value):
-
-        def _test(custom_format_args):
-            case_id = uuid.uuid4().hex
-            format_args = {
-                'case_id': case_id,
-                'user_id': uuid.uuid4().hex,
-                'case_name': 'data corner cases',
-                'case_type': 'datatype-check',
+    def _test_datatypes_in_various_properties(self, value):
+        case_id = uuid.uuid4().hex
+        create_caseblock = CaseBlock(
+            case_id=case_id,
+            user_id=value,
+            case_name=value,
+            case_type=value,
+            create=True,
+        ).as_string()
+        update_caseblock = CaseBlock(
+            case_id=case_id,
+            user_id=value,
+            update={
+                'case_name': value,
+                'case_type': value,
             }
-            format_args.update(custom_format_args)
-            for filename in ['bugs_in_case_create_datatypes', 'bugs_in_case_update_datatypes']:
-                format_args['form_id'] = uuid.uuid4().hex
-                xml_data = self.get_xml(filename).format(**format_args)
-                response, form, [case] = submit_form_locally(xml_data, 'test-domain')
-                self.assertEqual(format_args['user_id'], case.user_id)
-                self.assertEqual(format_args['case_name'], case.name)
-                self.assertEqual(format_args['case_type'], case.type)
+        ).as_string()
+        for caseblock in create_caseblock, update_caseblock:
+            form, [case] = submit_case_blocks(caseblock, 'test-domain')
+            self.assertEqual(value, case.user_id)
+            self.assertEqual(value, case.name)
+            self.assertEqual(value, case.type)
 
-        _test({'case_name': value})
-        _test({'case_type': value})
-        _test({'user_id': value})
-
-    def testDateInCasePropertyBug(self):
+    def test_date_in_various_properties(self):
         """
         Submits a case name/case type/user_id that looks like a date
         """
-        self._testCornerCaseDatatypeBugs('2011-11-16')
+        self._test_datatypes_in_various_properties('2011-11-16')
 
-    def testIntegerInCasePropertyBug(self):
+    def test_integer_in_various_properties(self):
         """
         Submits a case name/case type/user_id that looks like a number
         """
-        self._testCornerCaseDatatypeBugs('42')
+        self._test_datatypes_in_various_properties('42')
 
-    def testDecimalInCasePropertyBug(self):
+    def test_decimal_in_various_properties(self):
         # Submits a case name/case type/user_id that looks like a decimal
-        self._testCornerCaseDatatypeBugs('4.06')
+        self._test_datatypes_in_various_properties('4.06')
 
-    def testDuplicateCasePropertiesBug(self):
-        # Submit multiple values for the same property in an update block
+    def test_duplicate_case_properties(self):
+        """
+        Submit multiple values for the same property in an update block
+        """
         case_id = '061ecbae-d9be-4bb5-bdd4-e62abd5eaf7b'
         post_case_blocks([
             CaseBlock(create=True, case_id=case_id).as_xml()
         ])
         xml_data = self.get_xml('duplicate_case_properties')
-        response, form, [case] = submit_form_locally(xml_data, 'test-domain')
-        self.assertEqual("", case.dynamic_case_properties()['foo'])
+        result = submit_form_locally(xml_data, 'test-domain')
+        self.assertEqual("", result.case.dynamic_case_properties()['foo'])
 
         xml_data = self.get_xml('duplicate_case_properties_2')
-        response, form, [case] = submit_form_locally(xml_data, 'test-domain')
-        self.assertEqual("2", case.dynamic_case_properties()['bar'])
+        result = submit_form_locally(xml_data, 'test-domain')
+        self.assertEqual("2", result.case.dynamic_case_properties()['bar'])
 
-    def testMultipleCaseBlocks(self):
-        # How do we do when submitting a form with multiple blocks for the same case?
-        case_id = 'MCLPZ69ON942EKNIBR5WF1G2L'
-        create_form, _ = post_case_blocks([
-            CaseBlock(create=True, case_id=case_id).as_xml()
-        ])
-        xml_data = self.get_xml('multiple_case_blocks')
-        response, form, [case] = submit_form_locally(xml_data, 'test-domain')
-
-        self.assertEqual('1630005', case.dynamic_case_properties()['community_code'])
-        self.assertEqual('SantaMariaCahabon', case.dynamic_case_properties()['district_name'])
-        self.assertEqual('TAMERLO', case.dynamic_case_properties()['community_name'])
+    def test_multiple_case_blocks(self):
+        """Ensure we can submit a form with multiple blocks for the same case"""
+        case_id = uuid.uuid4().hex
+        case_blocks = [
+            CaseBlock(create=True, case_id=case_id, update={
+                'p1': 'v1',
+                'p2': 'v2',
+            }).as_string(),
+            CaseBlock(case_id=case_id, update={
+                'p2': 'v4',
+                'p3': 'v3',
+            }).as_string(),
+        ]
+        form, [case] = submit_case_blocks(case_blocks, 'test-domain')
+        self.assertEqual('v1', case.dynamic_case_properties()['p1'])
+        self.assertEqual('v4', case.dynamic_case_properties()['p2'])
+        self.assertEqual('v3', case.dynamic_case_properties()['p3'])
 
         ids = case.xform_ids
-        self.assertEqual(2, len(ids))
-        self.assertEqual([create_form.form_id, form.form_id], ids)
+        self.assertEqual(1, len(ids))
+        self.assertEqual(form.form_id, ids[0])
 
-    def testLotsOfSubcases(self):
-        # How do we do when submitting a form with multiple blocks for the same case?
+    def test_lots_of_subcases(self):
+        """Creates a bunch of subcases"""
+        # cz 2/24/2017: unclear why this test is here
         xml_data = self.get_xml('lots_of_subcases')
-        response, form, cases = submit_form_locally(xml_data, 'test-domain')
-        self.assertEqual(11, len(cases))
+        result = submit_form_locally(xml_data, 'test-domain')
+        self.assertEqual(11, len(result.cases))
 
-    def testSubmitToDeletedCase(self):
-        # submitting to a deleted case should succeed and affect the case
+    def test_submit_to_deleted_case(self):
+        """submitting to a deleted case should succeed and affect the case"""
         case_id = uuid.uuid4().hex
         xform, [case] = post_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',

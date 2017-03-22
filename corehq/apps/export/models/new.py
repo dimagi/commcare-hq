@@ -1,3 +1,4 @@
+from __future__ import print_function
 from copy import copy
 from datetime import datetime
 from itertools import groupby
@@ -8,6 +9,8 @@ from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
+from django.db import models
+from django.http import Http404
 
 from corehq.apps.reports.models import HQUserType
 from soil.progress import set_task_progress
@@ -16,6 +19,7 @@ from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.util.timezones.utils import get_timezone_for_domain
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -27,6 +31,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_latest_app_ids_and_versions,
     get_app_ids_in_domain,
+    get_app,
 )
 from corehq.apps.app_manager.models import Application, AdvancedFormActions
 from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
@@ -78,8 +83,11 @@ from corehq.apps.export.dbaccessors import (
     get_case_inferred_schema,
     get_form_inferred_schema,
 )
-from corehq.apps.export.utils import is_occurrence_deleted
-
+from corehq.apps.export.utils import (
+    is_occurrence_deleted,
+    domain_has_daily_saved_export_access,
+    domain_has_excel_dashboard_access,
+)
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -109,13 +117,14 @@ class PathNode(DocumentSchema):
     # This is true if this step in the path corresponds with an array (such as a repeat group)
     is_repeat = BooleanProperty(default=False)
 
+    def __key(self):
+        return (type(self), self.doc_type, self.name, self.is_repeat)
+
     def __eq__(self, other):
-        return (
-            type(self) == type(other) and
-            self.doc_type == other.doc_type and
-            self.name == other.name and
-            self.is_repeat == other.is_repeat
-        )
+        return self.__key() == other.__key()
+
+    def __hash__(self):
+        return hash(self.__key())
 
 
 class ExportItem(DocumentSchema):
@@ -842,6 +851,13 @@ class ExportInstance(BlobMixin, Document):
         """
         return self.fetch_attachment(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, stream=stream)
 
+    def copy_export(self):
+        export_json = self.to_json()
+        del export_json['_id']
+        export_json['name'] = '{} - Copy'.format(self.name)
+        new_export = self.__class__.wrap(export_json)
+        return new_export
+
 
 class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
@@ -1308,11 +1324,16 @@ class ExportDataSchema(Document):
                 continue
 
             app = Application.wrap(app_doc)
-            current_schema = cls._process_app_build(
-                current_schema,
-                app,
-                identifier,
-            )
+            try:
+                current_schema = cls._process_app_build(
+                    current_schema,
+                    app,
+                    identifier,
+                )
+            except Exception as e:
+                _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
+                _soft_assert(False, 'Failed to process app {}. {}'.format(app._id, e))
+                continue
 
             # Only record the version of builds on the schema. We don't care about
             # whether or not the schema has seen the current build because that always
@@ -1327,6 +1348,12 @@ class ExportDataSchema(Document):
         if inferred_schema:
             current_schema = cls._merge_schemas(current_schema, inferred_schema)
 
+        try:
+            current_schema = cls._reorder_schema_from_app(current_schema, app_id, identifier)
+        except Exception as e:
+            _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
+            _soft_assert(False, 'Failed to process app during reorder {}. {}'.format(app._id, e))
+
         current_schema.domain = domain
         current_schema.app_id = app_id
         current_schema.version = cls.schema_version()
@@ -1337,6 +1364,47 @@ class ExportDataSchema(Document):
             original_id,
             original_rev
         )
+        return current_schema
+
+    @classmethod
+    def _reorder_schema_from_app(cls, current_schema, app_id, identifier):
+        try:
+            app = get_app(current_schema.domain, app_id)
+        except Http404:
+            return current_schema
+
+        ordered_schema = cls._process_app_build(
+            cls(),
+            app,
+            identifier,
+        )
+        return cls._reorder_schema_from_schema(current_schema, ordered_schema)
+
+    @classmethod
+    def _reorder_schema_from_schema(cls, current_schema, ordered_schema):
+        # First create a dictionary that maps item path to order number
+        # {
+        #   (PathNode(), PathNode()): 0
+        #   (PathNode(), PathNode()): 1
+        #   ...
+        # }
+
+        orders = {}
+        for group_schema in ordered_schema.group_schemas:
+            for idx, item in enumerate(group_schema.items):
+                orders[tuple(item.path)] = idx
+
+        # Next iterate through current schema and order the ones that have an order
+        # and put the rest at the bottom. The ones not ordered are deleted items
+        for group_schema in current_schema.group_schemas:
+            ordered_items = [None] * len(group_schema.items)
+            unordered_items = []
+            for idx, item in enumerate(group_schema.items):
+                if tuple(item.path) in orders:
+                    ordered_items.insert(orders[tuple(item.path)], item)
+                else:
+                    unordered_items.append(item)
+            group_schema.items = filter(None, ordered_items) + unordered_items
         return current_schema
 
     @classmethod
@@ -2295,12 +2363,12 @@ class ConversionMeta(DocumentSchema):
     info = ListProperty()
 
     def pretty_print(self):
-        print '---' * 15
-        print '{:<20}| {}'.format('Original Path', self.path)
-        print '{:<20}| {}'.format('Failure Reason', self.failure_reason)
+        print('---' * 15)
+        print('{:<20}| {}'.format('Original Path', self.path))
+        print('{:<20}| {}'.format('Failure Reason', self.failure_reason))
         for idx, line in enumerate(self.info):
             prefix = 'Info' if idx == 0 else ''
-            print '{:<20}| {}'.format(prefix, line)
+            print('{:<20}| {}'.format(prefix, line))
 
 
 class ExportMigrationMeta(Document):
@@ -2337,6 +2405,36 @@ class ExportMigrationMeta(Document):
             args=[self.domain, self.saved_export_id],
         ))
 
+
+class DailySavedExportNotification(models.Model):
+    user_id = models.CharField(max_length=255, db_index=True)
+    domain = models.CharField(max_length=255, db_index=True)
+
+    @classmethod
+    def notified(cls, user_id, domain):
+        return bool(cls.objects.filter(user_id=user_id, domain=domain).count())
+
+    @classmethod
+    def mark_notified(cls, user_id, domain):
+        cls.objects.get_or_create(user_id=user_id, domain=domain)
+
+    @classmethod
+    def user_added_before_feature_release(cls, user_added_on):
+        return user_added_on < datetime(2017, 1, 25)
+
+    @classmethod
+    def user_to_be_notified(cls, domain, user):
+        from corehq.apps.export.views import use_new_daily_saved_exports_ui
+
+        return (
+            use_new_daily_saved_exports_ui(domain) and
+            cls.user_added_before_feature_release(user.created_on) and
+            not DailySavedExportNotification.notified(user.user_id, domain) and
+            (
+                domain_has_daily_saved_export_access(domain) or
+                domain_has_excel_dashboard_access(domain)
+            )
+        )
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []

@@ -244,7 +244,7 @@
     <li class="text-hq-nav-header">{% trans "Actions" %}</li>
     {% if app.get_doc_type != "LinkedApplication" %}
     <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
-        <a href="{% url "view_app" domain app.id %}copy/#copy" {% if is_app_view %}data-toggle="tab"{% endif %} data-pagetitle="{% trans "Copy" %}: {{ app.name }}">
+        <a href="{% url "view_app" domain app.id %}copy/#copy-app-form" {% if is_app_view %}data-toggle="tab"{% endif %} data-pagetitle="{% trans "Copy" %}: {{ app.name }}">
             <i class="fa fa-copy"></i>
             {% trans "Copy Application" %}
         </a>

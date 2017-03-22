@@ -8,7 +8,7 @@ from corehq.util.test_utils import TestFileMixin
 from couchforms.datatypes import GeoPoint
 from couchforms.models import XFormInstance
 
-from corehq.form_processor.tests.utils import run_with_all_backends, post_xform
+from corehq.form_processor.tests.utils import use_sql_backend, post_xform
 
 
 class TestMeta(TestCase, TestFileMixin):
@@ -25,7 +25,6 @@ class TestMeta(TestCase, TestFileMixin):
             del expected['deprecatedID']
         self.assertEqual(xform.metadata.to_json(), expected)
 
-    @run_with_all_backends
     def testClosed(self):
         xml_data = self.get_xml('meta')
         xform = post_xform(xml_data)
@@ -51,7 +50,6 @@ class TestMeta(TestCase, TestFileMixin):
         }
         self._check_metadata(xform, result)
 
-    @run_with_all_backends
     def testDecimalAppVersion(self):
         '''
         Tests that an appVersion that looks like a decimal:
@@ -77,7 +75,6 @@ class TestMeta(TestCase, TestFileMixin):
         }
         self._check_metadata(xform, result)
 
-    @run_with_all_backends
     def testMetaBadUsername(self):
         xml_data = self.get_xml('meta_bad_username')
         xform = post_xform(xml_data)
@@ -97,7 +94,6 @@ class TestMeta(TestCase, TestFileMixin):
         }
         self._check_metadata(xform, result)
 
-    @run_with_all_backends
     def testMetaAppVersionDict(self):
         xml_data = self.get_xml('meta_dict_appversion')
         xform = post_xform(xml_data)
@@ -117,7 +113,6 @@ class TestMeta(TestCase, TestFileMixin):
         }
         self._check_metadata(xform, result)
 
-    @run_with_all_backends
     def test_gps_location(self):
         xml_data = self.get_xml('gps_location', override_path=('data',))
 
@@ -148,7 +143,6 @@ class TestMeta(TestCase, TestFileMixin):
         }
         self._check_metadata(xform, result)
 
-    @run_with_all_backends
     def test_empty_gps_location(self):
         xml_data = self.get_xml('gps_empty_location', override_path=('data',))
         xform = post_xform(xml_data)
@@ -160,7 +154,6 @@ class TestMeta(TestCase, TestFileMixin):
 
         self.assertEqual(xform.metadata.to_json()['location'], None)
 
-    @run_with_all_backends
     def testMetaDateInDatetimeFields(self):
         xml_data = self.get_xml('date_in_meta', override_path=('data',))
         xform = post_xform(xml_data)
@@ -168,9 +161,13 @@ class TestMeta(TestCase, TestFileMixin):
         self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
         self.assertEqual(datetime(2014, 7, 11), xform.metadata.timeEnd)
 
-    @run_with_all_backends
     def test_missing_meta_key(self):
         xml_data = self.get_xml('missing_date_in_meta', override_path=('data',))
         xform = post_xform(xml_data)
         self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
         self.assertIsNone(xform.metadata.timeEnd)
+
+
+@use_sql_backend
+class TestMetaSQL(TestMeta):
+    pass

@@ -278,28 +278,42 @@ hqDefine('locations/js/location_types.js', function(){
 
         self.expand_to_options = function(){
             // display all locations with the same index as being on the same level
-            var children = self.children(),
-                children_same_levels = self.view.types_by_index(children),
-                children_to_return = [];
-            for (var level in children_same_levels){
+            var locs_to_return = [],
+                locs = self.children();
+            if (self.expand_from() && self.expand_from() !== ROOT_LOCATION_ID){
+                locs = self.view.loc_types_by_id()[self.expand_from()].children();
+            }
+            if (self.expand_from() && self.expand_from() === ROOT_LOCATION_ID){
+                locs = self.view.loc_types();
+            }
+            var locs_same_levels = self.view.types_by_index(locs);
+            for (var level in locs_same_levels){
                 // Only display a single child at each level
-                var child_to_add = children_same_levels[level][0];
-                children_to_return.push(new LocationTypeModel({
+                var child_to_add = locs_same_levels[level][0];
+                locs_to_return.push(new LocationTypeModel({
                     name: child_to_add.compiled_name(),
                     pk: child_to_add.pk,
                 }, false, self.view));
             }
             return {
-                children: children_to_return.slice(0, children_to_return.length - 1),
-                leaf: children_to_return[children_to_return.length - 1],
+                children: locs_to_return.slice(0, locs_to_return.length - 1),
+                leaf: locs_to_return[locs_to_return.length - 1],
             };
         };
 
         self.include_without_expanding_options = function(){
             if (self.expand_from() !== ROOT_LOCATION_ID){
-                var options = self.parents().reverse();
-                options.push(self);
-                return options;
+                var types_same_levels = self.view.types_by_index(self.view.loc_types()),
+                    levels_to_return = [];
+                for (var level in types_same_levels){
+                    // Only display a single child at each level
+                    var level_to_add = types_same_levels[level][0];
+                    levels_to_return.push(new LocationTypeModel({
+                        name: level_to_add.compiled_name(),
+                        pk: level_to_add.pk,
+                    }, false, self.view));
+                }
+                return levels_to_return;
             } else {
                 return [];
             }

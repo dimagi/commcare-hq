@@ -24,8 +24,8 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "display": "Case Open Date",
-                "field": "opened_on",
+                "display": "Date of Diagnosis",
+                "field": "date_of_diagnosis",
                 "slug": "date",
                 "type": "date"
             },
@@ -40,6 +40,25 @@
                     "type": "location"
                 },
                 "display": "Location"
+            },
+            {
+                "slug": "is_migrated",
+                "required": false,
+                "datatype": "integer",
+                "show_all": true,
+                "choices": [
+                    {
+                        "display": "Show only migrated from Nikshay",
+                        "value": 1
+                    },
+                    {
+                        "display": "Show only eNikshay",
+                        "value": 0
+                    }
+                ],
+                "field": "case_created_by_migration",
+                "type": "choice_list",
+                "display": "Filter migrated data"
             },
             {
                 "type": "pre",
@@ -361,7 +380,7 @@
             {
                 "display": "Health Facility for Treatment",
                 "type": "field",
-                "field": "phi_assigned_to",
+                "field": "phi",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,

@@ -22,7 +22,6 @@ from casexml.apps.case.xml import V2
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from .util import (
-    LocationHierarchyPerTest,
     setup_location_types_with_structure,
     setup_locations_with_structure,
     LocationStructure,
@@ -63,7 +62,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
-class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     location_type_names = ['state', 'county', 'city']
     location_structure = [
         ('Massachusetts', [
@@ -91,6 +90,14 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
 
     def tearDown(self):
         self.user._couch_user.delete()
+        for lt in self.location_types.values():
+            lt.expand_to = None
+            lt._expand_from_root = False
+            lt._expand_from = None
+            lt.include_without_expanding = None
+            lt.save()
+        for loc in self.locations.values():
+            loc.location_type.refresh_from_db()
         super(LocationFixturesTest, self).tearDown()
 
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
@@ -245,6 +252,20 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             ['Massachusetts', 'New York', 'Middlesex', 'Suffolk', 'New York City', 'Boston', 'Revere']
         )  # (New York City is of type "county")
 
+    def test_include_without_expanding_lower_level(self):
+        # I want all all the cities, but am at the state level
+        self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
+        location_type = self.locations['Massachusetts'].location_type
+
+        # Get all the cities
+        location_type.include_without_expanding = self.locations['Revere'].location_type
+        location_type.save()
+        self._assert_fixture_has_locations(
+            'expand_from_root',  # This is the same as expanding from root / getting all locations
+            ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
+             'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
+        )
+
     @flag_enabled('FLAT_LOCATION_FIXTURE')
     def test_index_location_fixtures(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'])
@@ -362,7 +383,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
-class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+class WebUserLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     location_type_names = ['state', 'county', 'city']
     location_structure = [
@@ -419,7 +440,7 @@ class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsM
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
-class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+class ForkedHierarchyLocationFixturesTest(TestCase, FixtureHasLocationsMixin):
     """
     - State
         - County
@@ -427,6 +448,7 @@ class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLo
         - Region
             - Town
     """
+    domain = 'forked-hierarchy-domain'
     location_type_structure = [
         LocationTypeStructure('state', [
             LocationTypeStructure('county', [
@@ -463,6 +485,9 @@ class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLo
         self.location_types = setup_location_types_with_structure(self.domain, self.location_type_structure)
         self.locations = setup_locations_with_structure(self.domain, self.location_structure)
 
+    def tearDown(self):
+        self.domain_obj.delete()
+
     def test_forked_locations(self, *args):
         self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
         location_type = self.locations['Massachusetts'].location_type
@@ -478,6 +503,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ShouldSyncLocationFixturesTest, cls).setUpClass()
         delete_all_users()
         cls.domain = "Erebor"
         cls.domain_obj = create_domain(cls.domain)
@@ -495,6 +521,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
+        super(ShouldSyncLocationFixturesTest, cls).tearDownClass()
 
     def test_should_sync_locations_change_location_type(self):
         """

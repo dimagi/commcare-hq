@@ -14,8 +14,6 @@ def bootstrap_usage_fees(apps):
 
 class Command(BaseCommand):
     help = "bootstrap usage fees"
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         bootstrap_usage_fees(apps)

@@ -6,11 +6,12 @@ from fluff import TYPE_INTEGER
 
 class Column(object):
 
-    def __init__(self, id, datatype, is_nullable=True, is_primary_key=False):
+    def __init__(self, id, datatype, is_nullable=True, is_primary_key=False, create_index=False):
         self.id = id
         self.datatype = datatype
         self.is_nullable = is_nullable
         self.is_primary_key = is_primary_key
+        self.create_index = create_index
 
     @property
     def database_column_name(self):

@@ -2,12 +2,14 @@ from datetime import date, datetime
 
 from django.db import models
 
+import dateutil.parser
+
 
 def _parse_datetime_or_null_to_date(datetime_str):
     if datetime_str == 'NULL':
         return ''
     else:
-        return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S.%f').date()
+        return dateutil.parser.parse(datetime_str).date()
 
 
 class PatientDetail(models.Model):
@@ -239,7 +241,7 @@ class PatientDetail(models.Model):
 
 
 class Outcome(models.Model):
-    PatientId = models.OneToOneField(PatientDetail, primary_key=True)
+    PatientId = models.OneToOneField(PatientDetail, primary_key=True, on_delete=models.CASCADE)
     Outcome = models.CharField(
         max_length=255,
         choices=(

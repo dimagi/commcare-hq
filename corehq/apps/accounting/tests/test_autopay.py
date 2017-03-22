@@ -26,6 +26,11 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         cls._generate_invoices()
 
     @classmethod
+    def tearDownClass(cls):
+        cls.non_autopay_domain.delete()
+        super(TestBillingAutoPay, cls).tearDownClass()
+
+    @classmethod
     def _generate_autopayable_entities(cls):
         """
         Create account, domain and subscription linked to the autopay user that have autopay enabled
@@ -33,10 +38,10 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         cls.autopay_account = cls.account
         cls.autopay_account.created_by_domain = cls.domain
         cls.autopay_account.save()
-        cls.autopay_user = generator.arbitrary_web_user()
+        cls.autopay_user_email = generator.create_arbitrary_web_user_name()
         cls.fake_card = FakeStripeCard()
         cls.fake_stripe_customer = FakeStripeCustomer(cards=[cls.fake_card])
-        cls.autopay_account.update_autopay_user(cls.autopay_user.username, cls.domain)
+        cls.autopay_account.update_autopay_user(cls.autopay_user_email, cls.domain)
 
     @classmethod
     def _generate_non_autopayable_entities(cls):
@@ -44,8 +49,8 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         Create account, domain, and subscription linked to the autopay user, but that don't have autopay enabled
         """
         cls.non_autopay_account = generator.billing_account(
-            web_user_creator=generator.arbitrary_web_user(is_dimagi=True),
-            web_user_contact=cls.autopay_user
+            web_user_creator=generator.create_arbitrary_web_user_name(is_dimagi=True),
+            web_user_contact=cls.autopay_user_email
         )
         cls.non_autopay_domain = generator.arbitrary_domain()
         # Non-autopay subscription has same parameters as the autopayable subscription
@@ -105,7 +110,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
 
     def _create_autopay_method(self, fake_customer):
         fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
-        self.payment_method = StripePaymentMethod(web_user=self.autopay_user.username,
+        self.payment_method = StripePaymentMethod(web_user=self.autopay_user_email,
                                                   customer_id=self.fake_stripe_customer.id)
         self.payment_method.set_autopay(self.fake_card, self.autopay_account, self.domain)
         self.payment_method.save()

@@ -1,4 +1,4 @@
-from optparse import make_option
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 import sys
 from pillowtop import get_pillow_by_name, get_all_pillow_configs
@@ -6,32 +6,28 @@ from pillowtop import get_pillow_by_name, get_all_pillow_configs
 
 class Command(BaseCommand):
     help = "Reset checkpoints for pillowtop"
-    args = '<pillow_class>'
-    label = 'Pillow class'
 
-    option_list = (
-        make_option('--noinput',
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'pillow_class',
+        )
+        parser.add_argument(
+            '--noinput',
             action='store_true',
             dest='interactive',
             default=False,
-            help="Suppress confirmation messages - dangerous mode!"),
-    )
+            help="Suppress confirmation messages - dangerous mode!",
+        )
 
-    def handle(self, *labels, **options):
+    def handle(self, pillow_class, **options):
         """
         More targeted pillow checkpoint reset system - must specify the pillow class_name to reset the checkpoint
         """
 
-        if not labels:
-            pillow_names = [config.name for config in get_all_pillow_configs()]
-            print "\nNo pillow specified, options are:\n\t%s\n" % ('\n\t'.join(pillow_names))
-            sys.exit()
-
-        pillow_name = labels[0]
-        pillow_to_use = get_pillow_by_name(pillow_name)
+        pillow_to_use = get_pillow_by_name(pillow_class)
         if not pillow_to_use:
-            print ""
-            print "\n\tPillow class [%s] not in configuration, what are you trying to do?\n" % pillow_name
+            print("")
+            print("\n\tPillow class [%s] not in configuration, what are you trying to do?\n" % pillow_class)
             sys.exit()
 
         if not options.get('interactive'):
@@ -40,15 +36,15 @@ class Command(BaseCommand):
             operation, and may take a long time, and cause extraneous updates to the requisite
             consumers of the _changes feeds  Are you sure you want to do this?
 
-Type 'yes' to continue, or 'no' to cancel: """ % pillow_name)
+Type 'yes' to continue, or 'no' to cancel: """ % pillow_class)
         else:
             confirm = 'yes'
 
         if confirm != 'yes':
-            print "Reset cancelled."
+            print("Reset cancelled.")
             return
 
-        print "Resetting checkpoint for %s" % pillow_to_use.checkpoint.checkpoint_id
-        print "\tOld checkpoint: %s" % pillow_to_use.get_checkpoint().sequence
+        print("Resetting checkpoint for %s" % pillow_to_use.checkpoint.checkpoint_id)
+        print("\tOld checkpoint: %s" % pillow_to_use.get_checkpoint().sequence)
         pillow_to_use.checkpoint.reset()
-        print "\n\tNew checkpoint reset to zero"
+        print("\n\tNew checkpoint reset to zero")

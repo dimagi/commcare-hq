@@ -1,5 +1,6 @@
+from __future__ import print_function
 import json
-from optparse import make_option
+
 from corehq.util.couch import IterDB
 from corehq.util.log import with_progress_bar
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -11,14 +12,21 @@ from couchforms.models import XFormInstance
 class Command(BaseCommand):
     filename = 'device_log_docs_to_delete'
 
-    option_list = (
-        make_option('--dump', action='store_true', default=False,
-                    help='Dump all device log docs to a file named device_log_docs_to_delete'),
-        make_option('--delete', action='store_true', default=False,
-                    help='Read docs from a file named device_log_docs_to_delete and delete them'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--dump',
+            action='store_true',
+            default=False,
+            help='Dump all device log docs to a file named device_log_docs_to_delete',
+        )
+        parser.add_argument(
+            '--delete',
+            action='store_true',
+            default=False,
+            help='Read docs from a file named device_log_docs_to_delete and delete them',
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         if options.get('dump'):
             self.dump_to_file()
         if options.get('delete'):
@@ -56,4 +64,4 @@ class Command(BaseCommand):
                     assert doc['doc_type'] == 'XFormInstance'
                     iter_db.delete(doc)
         if iter_db.errors_by_type:
-            print 'There were some errors', iter_db.errors_by_type
+            print('There were some errors', iter_db.errors_by_type)

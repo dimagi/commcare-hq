@@ -13,11 +13,14 @@
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
     <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
     <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
+    <script src="{% static "jsdiff/diff.js" %}"></script>
 
     {# these scripts are for releases.html, but including them there causes hard-to-reproduce problems #}
     <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
     <script src="{% static 'app_manager/js/releases.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_diff.js' %}"></script>
     <script src="{% static 'app_manager/js/language-profiles.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
@@ -178,6 +181,9 @@
                 }
             );
         }
+        function anonymousAppUrl() {
+            return '{{ app.anonymous_cloudcare_url }}';
+        }
     </script>
     <script>
         $(function () {
@@ -193,7 +199,7 @@
         });
     </script>
     <script>
-        $("#copy form button").click(function() {
+        $("#copy-app-form form button").click(function() {
             var $submit = $(this),
                 $form = $submit.closest("form"),
                 domain = $form.find("#id_domain").val(),
@@ -315,7 +321,7 @@
             </div>
 
         {% endif %}
-        <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy">
+        <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy-app-form">
             {% if linked_apps_enabled %}
             <div class="tabbable">
                 <ul class="nav nav-tabs">
@@ -329,6 +335,7 @@
                         <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
                             {% crispy copy_app_form %}
                         </form>
+                        {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
                         {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
                             <h3>Export compressed application</h3>
                             <form action="{% url "gzip_app" domain app.id %}" method="POST">

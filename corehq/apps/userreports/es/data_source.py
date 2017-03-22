@@ -166,7 +166,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
             query = query.filter(filter)
 
         innermost_agg_col = self.aggregation_columns[-1]
-        innermost_agg = TermsAggregation(innermost_agg_col, innermost_agg_col)
+        innermost_agg = TermsAggregation(innermost_agg_col, innermost_agg_col, size=max_size)
 
         aggregations = []
         for col in self.top_level_columns:
@@ -177,9 +177,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
         # go through aggregations in reverse order so that they are nested properly
         # todo: Refactor NestedTermAggregationsHelper to support this use case
         for agg_column in self.aggregation_columns[:-1][::-1]:
-            top_agg = TermsAggregation(agg_column, agg_column).aggregation(top_agg)
-
-        top_agg.size(max_size)
+            top_agg = TermsAggregation(agg_column, agg_column, size=max_size).aggregation(top_agg)
 
         if self.order_by:
             # todo sort by more than one column

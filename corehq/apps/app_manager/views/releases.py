@@ -33,7 +33,7 @@ from corehq.apps.style.decorators import use_angular_js
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.timezones.utils import get_timezone_for_user
 
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, get_latest_build_id
 from corehq.apps.app_manager.models import BuildProfile
 from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
 from corehq.apps.users.models import CommCareUser
@@ -113,8 +113,6 @@ def get_releases_context(request, domain, app_id):
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
 
     context.update({
-        'intro_only': len(
-            app.modules) == 0 and toggles.APP_MANAGER_V2.enabled(domain),
         'release_manager': True,
         'can_send_sms': can_send_sms,
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
@@ -125,8 +123,11 @@ def get_releases_context(request, domain, app_id):
         'build_profile_access': build_profile_access and not toggles.APP_MANAGER_V2.enabled(domain),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
+        'latest_build_id': get_latest_build_id(domain, app_id)
     })
     if not app.is_remote_app():
+        if toggles.APP_MANAGER_V2.enabled(domain) and len(app.modules) == 0:
+            context.update({'intro_only': True})
         # Multimedia is not supported for remote applications at this time.
         try:
             multimedia_state = app.check_media_state()
@@ -190,10 +191,6 @@ def save_copy(request, domain, app_id):
         # For apps (mainly Exchange apps) that lost unique_id attributes on Module
         app.ensure_module_unique_ids(should_save=True)
         errors = app.validate_app()
-    except ModuleNotFoundException:
-        errors = [{
-            "type": "missing module",
-        }]
 
     if not errors:
         try:

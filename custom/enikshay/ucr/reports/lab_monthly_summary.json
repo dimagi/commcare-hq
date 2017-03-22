@@ -14,7 +14,7 @@
     "report_id": "lab_monthly_summary",
     "config": {
         "description": "",
-        "title": "Lab Monthly Summary",
+        "title": "Lab Summary",
         "sort_expression": [],
         "visible": true,
         "configured_charts": [],
@@ -24,10 +24,10 @@
                 "compare_as_string": false,
                 "datatype": "string",
                 "required": false,
-                "display": "Case Open Date",
-                "field": "opened_on",
+                "display": "Date of Test Result Update",
+                "field": "date_reported",
                 "type": "date",
-                "slug": "opened_on"
+                "slug": "date_reported"
             },
             {
                 "compare_as_string": false,

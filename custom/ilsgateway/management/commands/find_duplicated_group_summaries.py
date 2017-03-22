@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management import BaseCommand
 from django.db import connection
 
@@ -21,11 +22,11 @@ class Command(BaseCommand):
             cursor.execute(query)
             return cursor.fetchall()
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         for location_id, title, date, ids in self.get_duplicated_rows():
             ids = ids.split(',')
             sql_location = SQLLocation.objects.get(location_id=location_id)
-            print "title: %s, location: %s, date: %s" % (title, sql_location.name, date)
+            print("title: %s, location: %s, date: %s" % (title, sql_location.name, date))
             for pk in ids:
                 gs = GroupSummary.objects.get(pk=int(pk))
-                print "Group summary:", gs.org_summary_id, gs.total, gs.responded, gs.on_time, gs.complete
+                print("Group summary:", gs.org_summary_id, gs.total, gs.responded, gs.on_time, gs.complete)

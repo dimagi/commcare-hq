@@ -24,7 +24,7 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "display": "Case Open Date",
+                "display": "Date of Test Result Update",
                 "field": "date_reported",
                 "type": "date",
                 "slug": "date_reported"

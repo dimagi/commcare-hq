@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from celery import Celery
@@ -18,6 +19,6 @@ class Command(BaseCommand):
         worker_responses = celery.control.ping(timeout=10, destination=[hostname])
         pings = parse_celery_pings(worker_responses)
         if hostname in pings:
-            print 'Did not shutdown worker'
+            print('Did not shutdown worker')
             exit(1)
-        print 'Successfully initiated warm shutdown'
+        print('Successfully initiated warm shutdown')

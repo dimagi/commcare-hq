@@ -2,6 +2,7 @@ from celery.schedules import crontab
 from celery.task import task, periodic_task
 from celery.utils.log import get_task_logger
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, AUTO_UPDATE_XMLNS
+from corehq.util.decorators import serial_task
 from datetime import datetime
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
@@ -14,7 +15,7 @@ from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_f
 from corehq.toggles import DATA_MIGRATION
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from .dispatcher import EditDataInterfaceDispatcher
-from dimagi.utils.django.email import send_HTML_email
+from corehq.util.log import send_HTML_email
 from dimagi.utils.couch import CriticalSection
 
 
@@ -55,7 +56,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
 
 
 @periodic_task(
-    run_every=crontab(hour=0, minute=0, day_of_week='sat'),
+    run_every=crontab(hour=0, minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
     ignore_result=True
 )
@@ -71,7 +72,12 @@ def run_case_update_rules(now=None):
             run_case_update_rules_for_domain.delay(domain, now)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@serial_task(
+    '{domain}',
+    timeout=36 * 60 * 60,
+    max_retries=0,
+    queue='background_queue',
+)
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
     all_rules = AutomaticUpdateRule.by_domain(domain)

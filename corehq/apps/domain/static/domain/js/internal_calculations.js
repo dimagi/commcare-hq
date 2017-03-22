@@ -1,4 +1,5 @@
-$(function() {
+/* globals hqDefine */
+hqDefine("domain/js/internal_calculations.js", function() {
     function load_calculation($calc_group) {
         var $calc_btn = $calc_group.find('.load-calc-btn');
         var $calc_error = $calc_group.find('.calc-error');
@@ -19,13 +20,15 @@ $(function() {
         });
     }
 
-    $(document).on("click", ".load-calc-btn", function() {
-        load_calculation($(this).parent());
-    });
-
-    $(document).on("click", '#load-all-btn', function() {
-        $('.calc-group').each(function(_, ele) {
-            load_calculation($(ele));
+    $(function() {
+        $(document).on("click", ".load-calc-btn", function() {
+            load_calculation($(this).parent());
         });
-    })
+    
+        $(document).on("click", '#load-all-btn', function() {
+            $('.calc-group').each(function(_, ele) {
+                load_calculation($(ele));
+            });
+        })
+    });
 });

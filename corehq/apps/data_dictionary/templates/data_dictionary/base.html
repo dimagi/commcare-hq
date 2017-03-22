@@ -8,20 +8,6 @@
 <script src="{% static 'data_dictionary/js/data_dictionary.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}
-<script>
-    $(function () {
-        $('#hq-content').parent().initializeDataDictionary(
-            "{% url 'data_dictionary_json' domain %}",
-            "{% url 'update_case_property' domain %}"
-        );
-        $('#download-dict').click(function() {
-            window.analytics.usage('Data Dictionary', 'downloaded data dictionary');
-        })
-    });
-</script>
-{% endblock %}
-
 {% block page_breadcrumbs %}
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
@@ -36,44 +22,58 @@
 {% block page_navigation %}
     <h2 class="text-hq-nav-header">{% trans "Data Dictionary" %}</h2>
     <ul class="nav nav-hq-sidebar" data-bind="foreach: caseTypes">
-        <li data-bind="css: { active: $data.name() == $root.activeCaseType() }">
-            <a href="#" data-bind="text: $data.name(), click: $root.goToCaseType"></a>
+        <li data-bind="css: { active: $data.name == $root.activeCaseType() }">
+            <a href="#" data-bind="text: $data.name, click: $root.goToCaseType"></a>
         </li>
     </ul>
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl 'data_dictionary_json' domain %}
+    {% registerurl 'update_case_property' domain %}
+    {% initial_page_data 'typeChoices' question_types %}
     <div data-bind="saveButton: saveButton"></div>
     <div class="row">
         <div class="col-md-10">
-            <a class="btn btn-info" id="download-dict" href="{% url "export_data_dictionary" domain %}">Export to Excel</a>
-            <a class="btn btn-default" href="{% url "upload_data_dict" domain %}">Import from Excel</a>
             <h3 data-bind="text: $root.activeCaseType()"></h3>
+            <a class="btn btn-info" id="download-dict" href="{% url "export_data_dictionary" domain %}">
+                 <i class="fa fa-cloud-download"></i>
+                {% trans "Export to Excel" %}
+            </a>
+            <a class="btn btn-default" href="{% url "upload_data_dict" domain %}">
+                <i class="fa fa-cloud-upload"></i>
+                {% trans "Import from Excel" %}
+            </a>
+            <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default pull-right">{% trans "Show Deprecated Properties" %}</button>
+            <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-default pull-right">{% trans "Hide Deprecated Properties" %}</button>
             <table id="data-dictionary-table" class="table">
                 <thead>
                     <th></th>
                     <th>{% trans "Case Property" %}</th>
                     <th>{% trans "Data Type" %}</th>
                     <th>{% trans "Description" %}</th>
+                    <th></th>
                 </thead>
                 <tbody data-bind="sortable: casePropertyList">
                     <!-- ko if: isGroup -->
                     <tr class="active">
                         <td><i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }, click: $root.toggleGroup"></i></td>
-                        <td data-bind="text: name() ? name : 'No Group'"></td>
+                        <td data-bind="text: name ? name : 'No Group'"></td>
                         <td>{% trans "Case Property Group" %}</td>
+                        <td></td>
                         <td></td>
                     </tr>
                     <!-- /ko -->
                     <!-- ko if: !isGroup -->
-                    <tr data-bind="visible: expanded, attr: {'data-order': _sortableOrder}">
+                    <tr data-bind="visible: expanded() && (!deprecated() || $root.showAll()), attr: {'data-order': _sortableOrder}">
                         <td class="sortable-handle">
                             <i class="fa fa-arrows-v"></i>
                         </td>
                         <td data-bind="text: name"></td>
                         <td>
-                            <select data-bind="
-                                options: availableDataTypes,
+                            <select class ="form-control"
+                                    data-bind="
+                                options: $root.availableDataTypes,
                                 optionsCaption: 'Select a data type',
                                 optionsText: 'display',
                                 optionsValue: 'value',
@@ -81,12 +81,18 @@
                             "></select>
                         </td>
                         <td>
-                            <textarea data-bind="
+                            <textarea class="form-control" data-bind="
                               value: $data.description,
                               rows: 1,
                               placeholder: '{% trans "Click here to add a description" %}',
                             "></textarea>
                         </td>
+                        <!-- ko if: !deprecated() -->
+                        <td><button data-bind="click: deprecateProperty" class="btn btn-warning btn-sm">{% trans "Deprecate Property" %}</button></td>
+                        <!-- /ko -->
+                        <!-- ko if: deprecated() -->
+                        <td><button data-bind="click: restoreProperty" class="btn btn-info btn-sm">{% trans "Restore Property" %}</button></td>
+                        <!-- /ko -->
                     </tr>
                     <!-- /ko -->
                 </tbody>

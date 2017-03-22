@@ -66,13 +66,15 @@ class IndicatorsFixturesProvider(object):
                 'config': config.to_json()
             })
 
-        try:
-            fixtures.append(gen_fixture(restore_user, restore_user.get_call_center_indicators(config)))
-        except Exception:  # blanket exception catching intended
-            notify_exception(None, 'problem generating callcenter fixture', details={
-                'user_id': restore_user.user_id,
-                'domain': restore_user.domain
-            })
+        indicator_set = restore_user.get_call_center_indicators(config)
+        if indicator_set:
+            try:
+                fixtures.append(gen_fixture(restore_user, indicator_set))
+            except Exception:  # blanket exception catching intended
+                notify_exception(None, 'problem generating callcenter fixture', details={
+                    'user_id': restore_user.user_id,
+                    'domain': restore_user.domain
+                })
 
         return fixtures
 
@@ -110,8 +112,7 @@ def gen_fixture(restore_user, indicator_set):
         </indicators>
     </fixture>
     """
-    if indicator_set is None:
-        return []
+    assert indicator_set is not None
 
     name = indicator_set.name
     data = indicator_set.get_data()
