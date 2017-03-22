@@ -30,13 +30,6 @@ class TestRepeatRecordDBAccessors(TestCase):
             repeater_id=cls.repeater_id,
             next_check=before,
         )
-        failed_hq_error = RepeatRecord(
-            domain=cls.domain,
-            failure_reason='Some python error',
-            repeater_id=cls.repeater_id,
-            next_check=before,
-        )
-        failed_hq_error.doc_type += '-Failed'
         success = RepeatRecord(
             domain=cls.domain,
             succeeded=True,
@@ -64,7 +57,6 @@ class TestRepeatRecordDBAccessors(TestCase):
 
         cls.records = [
             failed,
-            failed_hq_error,
             success,
             pending,
             overdue,
@@ -89,7 +81,7 @@ class TestRepeatRecordDBAccessors(TestCase):
 
     def test_get_failure_repeat_record_count(self):
         count = get_failure_repeat_record_count(self.domain, self.repeater_id)
-        self.assertEqual(count, 2)
+        self.assertEqual(count, 1)
 
     def test_get_paged_repeat_records_with_state_and_no_records(self):
         count = get_repeat_record_count('wrong-domain', state=RECORD_PENDING_STATE)
