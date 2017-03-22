@@ -263,9 +263,13 @@ class MySavedReportsView(BaseProjectReportSectionView):
             # the _id check is for weird bugs we've seen in the wild that look like
             # oddities in couch.
             return (
-                hasattr(rn, "_id") and rn._id
-                and (not hasattr(rn, 'report_slug')
-                     or rn.report_slug != 'admin_domains')
+                hasattr(rn, "_id")
+                and rn._id
+                and rn.configs
+                and (
+                    not hasattr(rn, 'report_slug')
+                    or rn.report_slug != 'admin_domains'
+                )
             )
 
         scheduled_reports = [
