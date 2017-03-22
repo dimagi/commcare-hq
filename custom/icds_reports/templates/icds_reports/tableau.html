@@ -37,7 +37,7 @@
 
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="row filter">
                     <button id="resetFilters" class="btn btn-block btn-primary">Reset Drilldown</button>
                 </div>
@@ -56,11 +56,31 @@
                         </div>
                     </div>
                 {% endif %}
-                {% for filter in filters %}
+                {% for filter in filters|slice:":3" %}
                     <div id="group_{{ filter.slug }}" class="row filter">
                         {{ filter.html }}
                     </div>
                 {% endfor %}
+                <div class="panel-group" id="accordion" role="tablist">
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab">
+                            <h4 class="panel-title">
+                                <a role="button" data-toggle="collapse" data-parent="#accordion" href="#additionalFilters" aria-expanded="false" aria-controls="additionalFilters">
+                                    Additional filters
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="additionalFilters" class="panel-collapse collapse" role="tabpanel" aria-labelledby="additionalFilters">
+                            <div class="panel-body">
+                                {% for filter in filters|slice:"3:" %}
+                                    <div id="group_{{ filter.slug }}" class="row filter">
+                                        {{ filter.html }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="row filter pull-right">
                     <button class="btn btn-default" id="applyFilters">Apply</button>
                 </div>

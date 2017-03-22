@@ -24,7 +24,8 @@ def location_hierarchy_config(domain, location_types=None):
 class ICDSTableauFilterMixin(object):
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None,
                  css_label=None, css_field=None):
-        css_label = 'col-xs-4 col-md-3 col-lg-3 control-label'
+        css_label = 'col-xs-4 col-md-4 col-lg-4 control-label'
+        css_field = 'col-xs-8 col-md-8 col-lg-8'
         super(ICDSTableauFilterMixin, self).__init__(
             request, domain, timezone, parent_report, css_label, css_field
         )
