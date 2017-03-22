@@ -27,6 +27,10 @@ from pillow_retry.models import PillowError
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 
 
+class PillowConfigError(Exception):
+    pass
+
+
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_provider, auto_repopulate_tables=False, *args, **kwargs):
@@ -37,6 +41,8 @@ class ConfigurableReportTableManagerMixin(object):
         self.ucr_division = kwargs.pop('ucr_division', None)
         self.include_ucrs = kwargs.pop('include_ucrs', None)
         self.exclude_ucrs = kwargs.pop('exclude_ucrs', None)
+        if self.include_ucrs and self.ucr_division:
+            raise PillowConfigError("You can't have include_ucrs and ucr_division")
         super(ConfigurableReportTableManagerMixin, self).__init__(*args, **kwargs)
 
     def get_all_configs(self):
