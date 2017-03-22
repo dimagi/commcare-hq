@@ -1,8 +1,7 @@
 import datetime
 import logging
 import time
-
-from corehq.apps.dhis2.models import JsonApiLog
+from django.utils.module_loading import import_string
 
 
 class DjangoModelHandler(logging.Handler):
@@ -38,7 +37,7 @@ class DjangoModelHandler(logging.Handler):
     """
     def __init__(self, model_class, *args, **kwargs):
         super(DjangoModelHandler, self).__init__(*args, **kwargs)
-        self.model_class = model_class
+        self.model_class = import_string(model_class) if isinstance(model_class, basestring) else model_class
 
     def emit(self, record):
         created = time.localtime(record.created)
@@ -51,11 +50,3 @@ class DjangoModelHandler(logging.Handler):
             second=created.tm_sec,
         ))
         self.model_class.objects.create(**kwargs)
-
-
-class JsonApiHandler(DjangoModelHandler):
-    """
-    Used for logging JSON API requests to JsonApiLog instances.
-    """
-    def __init__(self, *args, **kwargs):
-        super(JsonApiHandler, self).__init__(JsonApiLog, *args, **kwargs)

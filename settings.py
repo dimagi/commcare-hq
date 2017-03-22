@@ -1088,8 +1088,9 @@ LOGGING = {
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
         },
         'json_api_handler': {
-            'class': 'corehq.apps.dhis2.handlers.JsonApiHandler',
             'level': 'INFO',
+            'class': 'corehq.apps.dhis2.handlers.DjangoModelHandler',
+            # 'model_class': 'corehq.apps.dhis2.models.JsonApiLog',  # TODO: Why won't handler accept this param?!
         },
     },
     'loggers': {
