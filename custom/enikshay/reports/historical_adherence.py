@@ -19,8 +19,14 @@ from custom.enikshay.reports.generic import EnikshayReport
 from django.utils.translation import ugettext_lazy
 
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.memoized import memoized
 
-
+# TODO: Once Sraven's PR is merged, share this list
+DOSE_TAKEN_INDICATORS = [
+    'directly_observed_dose',
+    'unobserved_dose',
+    'self_administered_dose',
+]
 Schedule = namedtuple("Schedule", ['days_dose_expected', 'mark_expected', 'title'])
 
 
@@ -106,11 +112,21 @@ class HistoricalAdherenceReport(EnikshayReport):
         report_context['weeks'] = self.get_calendar()
         report_context['patient_name'] = person.name
         report_context['treatment_phase'] = self.get_treatment_phase()
-        report_context['doses'] = "2"
+        report_context['doses'] = self.get_doses()
         report_context['adherence_schedule'] = self.get_adherence_schedule().title
         report_context['patient_type'] = self.get_patient_type()
 
         return report_context
+
+    def get_doses(self):
+        adherence = self.get_adherence_cases_dict()
+        dose_taken_adherence = defaultdict(list)
+        for date, adherence_cases in adherence.iteritems():
+            for case in adherence_cases:
+                adherence_value = case.dynamic_case_properties().get('adherence_value')
+                if adherence_value in DOSE_TAKEN_INDICATORS:
+                    dose_taken_adherence[date].append(case)
+        return len(dose_taken_adherence.keys())
 
     def get_treatment_phase(self):
         if self.episode_properties.get("treatment_initiated", False) == "yes":
@@ -153,6 +169,7 @@ class HistoricalAdherenceReport(EnikshayReport):
         day = self.episode_properties.get('adherence_schedule_date_start')
         return parse(day).date()
 
+    @memoized
     def get_adherence_cases_dict(self):
         indexed_cases = CaseAccessors(self.domain).get_reverse_indexed_cases([self.episode_case_id])
         open_adherence_cases = [
