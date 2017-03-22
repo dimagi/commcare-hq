@@ -48,15 +48,15 @@ def log_request(func):
         response_status = None
         response_body = ''
         try:
-            status, response = func(self, *args, **kwargs)
-            response_status = status
-            response_body = '' if response is None else json.dumps(response)
+            response = func(self, *args, **kwargs)
+            response_status = response.status_code
+            response_body = response.content
         except Exception as err:
             log_level = logging.ERROR
             request_error = str(err)
             raise err
         else:
-            return status, response
+            return response
         finally:
             if log_level >= domain_log_level:
                 log(log_level, self, request_error, response_status, response_body, *args, **kwargs)
@@ -82,11 +82,15 @@ class JsonApiRequest(object):
 
         :raises JsonApiError: if HTTP status is not in the 200 (OK) range
         """
-        if 200 <= response.status_code < 300:
-            return response.status_code, response.json() if response.content else None
-        else:
+        if not 200 <= response.status_code < 300:
             raise JsonApiError('API request to {} failed with HTTP status {}: {}'.format(
                 response.url, response.status_code, response.text))
+        if response.content:
+            try:
+                response.json()
+            except ValueError:
+                raise JsonApiError('API response is not valid JSON: {}'.format(response.content))
+        return response
 
     @log_request
     def get(self, path, **kwargs):
