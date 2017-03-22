@@ -191,8 +191,8 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # doc save errors and data source config errors
     retry_errors = False
 
-    def __init__(self, processor, pillow_name):
-        change_feed = KafkaChangeFeed(KAFKA_TOPICS, group_id=pillow_name)
+    def __init__(self, processor, pillow_name, topics):
+        change_feed = KafkaChangeFeed(topics, group_id=pillow_name)
         checkpoint = PillowCheckpoint(pillow_name)
         event_handler = MultiTopicCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
@@ -219,6 +219,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', params=None):
     params = params or {}
+    topics = params.pop('topics', KAFKA_TOPICS)
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
@@ -226,11 +227,13 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', params=None):
             **params
         ),
         pillow_name=pillow_id,
+        topics=topics
     )
 
 
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', params=None):
     params = params or {}
+    topics = params.pop('topics', KAFKA_TOPICS)
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),
@@ -238,4 +241,5 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', params=None):
             **params
         ),
         pillow_name=pillow_id,
+        topics=topics
     )
