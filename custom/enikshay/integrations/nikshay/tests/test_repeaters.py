@@ -1,4 +1,5 @@
 import json
+from mock import patch
 from collections import namedtuple
 from datetime import datetime
 from django.test import TestCase, override_settings
@@ -395,7 +396,8 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         )
 
     @run_with_all_backends
-    def test_payload_properties(self):
+    @patch("socket.gethostbyname", return_value="198.1.1.1")
+    def test_payload_properties(self, _):
         update_case(
             self.domain, self.person_id,
             {
@@ -410,7 +412,7 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload['Source'], ENIKSHAY_ID)
         self.assertEqual(payload['regby'], "arwen")
         self.assertEqual(payload['password'], "Hadhafang")
-        self.assertEqual(payload['IP_FROM'], "127.0.0.1")
+        self.assertEqual(payload['IP_FROM'], "198.1.1.1")
         self.assertEqual(payload["PatientID"], DUMMY_NIKSHAY_ID)
 
         self.assertEqual(payload["HIVStatus"], "Unknown")
@@ -496,6 +498,9 @@ class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, Niksha
         self.phi.save()
         self.create_case(self.episode)
         self.assign_person_to_location(self.phi.location_id)
+        self._create_nikshay_registered_case()
+        self.assertEqual(0, len(self.repeat_records().all()))
+
         update_case(
             self.domain,
             self.episode_id,
@@ -509,15 +514,7 @@ class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, Niksha
         # nikshay not enabled
         self.create_case(self.episode)
         self.assign_person_to_location(self.phi.location_id)
-        self._create_nikshay_enabled_case()
-        update_case(
-            self.domain,
-            self.episode_id,
-            {
-                "nikshay_registered": 'true',
-                "nikshay_id": DUMMY_NIKSHAY_ID,
-            },
-        )
+        self._create_nikshay_registered_case()
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # change triggered
@@ -558,7 +555,8 @@ class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, Nikshay
         self.cases = self.create_case_structure()
         self.assign_person_to_location(self.phi.location_id)
 
-    def test_payload_properties(self):
+    @patch("socket.gethostbyname", return_value="198.1.1.1")
+    def test_payload_properties(self, _):
         episode_case = self._create_nikshay_enabled_case()
         update_case(
             self.domain,
@@ -574,7 +572,7 @@ class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, Nikshay
             NikshayTreatmentOutcomePayload(None).get_payload(None, episode_case))
         )
         self.assertEqual(payload['Source'], ENIKSHAY_ID)
-        self.assertEqual(payload['IP_From'], "127.0.0.1")
+        self.assertEqual(payload['IP_From'], "198.1.1.1")
         self.assertEqual(payload['PatientID'], self.person_id)
         self.assertEqual(payload['regBy'], "tbu-dmdmo01")
         self.assertEqual(payload['OutcomeDate'], "1990-01-01")

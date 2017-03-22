@@ -124,7 +124,7 @@ class UserRegistrationView(BasePageView):
     @use_ko_validation
     @method_decorator(transaction.atomic)
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             # Redirect to a page which lets user choose whether or not to create a new account
             domains_for_user = Domain.active_for_user(request.user)
             if len(domains_for_user) == 0:

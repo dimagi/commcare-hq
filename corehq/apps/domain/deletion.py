@@ -1,5 +1,11 @@
+from datetime import date
+
 from django.apps import apps
-from django.db import connection
+from django.db import connection, transaction
+from django.db.models import Q
+
+from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.utils import get_change_status
 
 
 class BaseDeletion(object):
@@ -77,6 +83,33 @@ def _delete_web_user_membership(domain_name):
         web_user.save()
 
 
+def _terminate_subscriptions(domain_name):
+    today = date.today()
+
+    with transaction.atomic():
+        current_subscription = Subscription.get_subscribed_plan_by_domain(domain_name)[1]
+
+        if current_subscription:
+            current_subscription.date_end = today
+            current_subscription.is_active = False
+            current_subscription.save()
+
+            current_subscription.transfer_credits()
+
+            _, downgraded_privs, upgraded_privs = get_change_status(current_subscription.plan_version, None)
+            current_subscription.subscriber.deactivate_subscription(
+                downgraded_privileges=downgraded_privs,
+                upgraded_privileges=upgraded_privs,
+                old_subscription=current_subscription,
+                new_subscription=None,
+            )
+
+        Subscription.objects.filter(
+            Q(date_start__gt=today) | Q(date_start=today, is_active=False),
+            subscriber__domain=domain_name,
+        ).update(is_hidden_to_ops=True)
+
+
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
@@ -107,6 +140,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('sms', 'MobileBackendInvitation', 'domain'),
     CustomDeletion('sms', _delete_domain_backends),
     CustomDeletion('users', _delete_web_user_membership),
+    CustomDeletion('accounting', _terminate_subscriptions),
 ]
 
 

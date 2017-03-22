@@ -6,7 +6,7 @@ from functools import wraps
 from django import http
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.core.urlresolvers import reverse as _reverse
+from django.urls import reverse as _reverse
 from django.utils.encoding import smart_bytes
 from django.utils.http import urlencode
 

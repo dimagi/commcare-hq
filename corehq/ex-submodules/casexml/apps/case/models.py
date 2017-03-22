@@ -159,7 +159,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
     representation of the case - the result of playing all
     the actions in sequence.
     """
-    _migrating_blobs_from_couch = True
 
     domain = StringProperty()
     export_tag = StringListProperty()
