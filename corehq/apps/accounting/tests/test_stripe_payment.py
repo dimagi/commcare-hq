@@ -8,6 +8,7 @@ import stripe
 
 from corehq.apps.accounting.models import PaymentRecord, PaymentMethod, BillingAccount
 from corehq.apps.accounting.payment_handlers import CreditStripePaymentHandler
+from corehq.apps.accounting.tests import generator
 from corehq.apps.domain.models import Domain
 
 
@@ -15,6 +16,7 @@ class TestCreditStripePaymentHandler(TransactionTestCase):
 
     def setUp(self):
         super(TestCreditStripePaymentHandler, self).setUp()
+        generator.instantiate_accounting()
         self.domain = Domain(name='test-domain')
         self.domain.save()
         self.payment_method = PaymentMethod()

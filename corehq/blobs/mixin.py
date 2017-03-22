@@ -258,16 +258,21 @@ class BlobHelper(object):
             raise TypeError("BlobHelper requires a real _id")
         self._id = doc["_id"]
         self.doc = doc
+        self.doc_type = doc["doc_type"]
         self.database = database
         self.couch_only = "external_blobs" not in doc
         self._migrating_blobs_from_couch = bool(doc.get("_attachments")) \
             and not self.couch_only
         self._attachments = doc.get("_attachments")
-        blobs = doc.get("external_blobs", {})
+        blobs = self.get_external_blobs(doc, {})
         self.external_blobs = {n: BlobMeta.wrap(m.copy())
                                for n, m in blobs.iteritems()}
 
     _atomic_blobs = None
+
+    @staticmethod
+    def get_external_blobs(doc, default=None):
+        return doc.get("external_blobs", default)
 
     @property
     def blobs(self):

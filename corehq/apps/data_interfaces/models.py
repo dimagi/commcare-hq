@@ -69,15 +69,40 @@ class AutomaticUpdateRule(models.Model):
 
     @classmethod
     def get_case_ids(cls, domain, case_type, boundary_date=None):
-        query = (CaseES()
-                 .domain(domain)
-                 .case_type(case_type)
-                 .is_closed(closed=False)
-                 .exclude_source())
-        if boundary_date is not None:
-            query = query.server_modified_range(lte=boundary_date)
-        results = query.run()
-        return results.doc_ids
+        """
+        Retrieves the case ids in chunks, yielding a list of case ids each time
+        until there are none left.
+        """
+        offset = 0
+        chunk_size = 10000
+
+        # We have to sort on _uid; _id is not sortable. See:
+        # https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-uid-field.html
+        # https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-id-field.html
+
+        while True:
+            query = (CaseES()
+                     .domain(domain)
+                     .case_type(case_type)
+                     .is_closed(closed=False)
+                     .exclude_source()
+                     .sort('_uid')
+                     .start(offset)
+                     .size(chunk_size))
+
+            if boundary_date is not None:
+                query = query.server_modified_range(lte=boundary_date)
+
+            results = query.run()
+            ids = results.doc_ids
+
+            if len(ids) > 0:
+                yield ids
+
+            if len(ids) < chunk_size:
+                return
+
+            offset += chunk_size
 
     def rule_matches_case(self, case, now):
         try:
