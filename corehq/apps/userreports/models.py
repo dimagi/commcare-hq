@@ -688,6 +688,11 @@ class StaticReportConfiguration(JsonObject):
 
 
 class AsyncIndicator(models.Model):
+    """Indicator that has not yet been processed
+
+    These indicators will be picked up by a queue and placed into celery to be
+    saved. Once saved to the data sources, this record will be deleted
+    """
     doc_id = models.CharField(max_length=255, null=False, db_index=True)
     doc_type = models.CharField(max_length=126, null=False)
     domain = models.CharField(max_length=126, null=False)
@@ -703,7 +708,7 @@ class AsyncIndicator(models.Model):
         ordering = ["date_created"]
 
     @classmethod
-    def update_indicators(cls, change, pillow, table_ids):
+    def update_indicators(cls, change, pillow, config_ids):
         doc_id = change.id
         pillow_id = pillow.pillow_id
         with CriticalSection([get_async_indicator_modify_lock_key(doc_id, pillow_id)]):
@@ -717,16 +722,16 @@ class AsyncIndicator(models.Model):
                     doc_type=doc_type,
                     domain=domain,
                     pillow=pillow_id,
-                    indicator_config_ids=table_ids
+                    indicator_config_ids=config_ids
                 )
             else:
-                current_table_ids = indicator.indicator_config_ids
-                new_table_ids = list(set(current_table_ids).union(set(table_ids)))
-                indicator.indicator_config_ids = new_table_ids
+                current_config_ids = indicator.indicator_config_ids
+                new_config_ids = list(set(current_config_ids).union(set(config_ids)))
+                indicator.indicator_config_ids = new_config_ids
 
             indicator.save()
 
-            return indicator
+        return indicator
 
 
 def get_datasource_config(config_id, domain):
