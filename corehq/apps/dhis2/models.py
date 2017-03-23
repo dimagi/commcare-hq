@@ -122,6 +122,7 @@ class JsonApiLog(models.Model):
     """
     domain = models.CharField(max_length=126, db_index=True)  # 126 seems to be a popular length
     timestamp = models.DateTimeField()
+    log_level = models.IntegerField(null=True)
     request_method = models.CharField(max_length=12)
     request_url = models.CharField(max_length=255)
     request_headers = jsonfield.JSONField(blank=True)

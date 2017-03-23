@@ -30,6 +30,7 @@ def log_request(func):
         """
         logger.log(log_level, {
             'domain': json_api_request.domain_name if json_api_request.domain_name is not None else '[N/A]',
+            'log_level': log_level,
             'request_method': func.__name__.upper(),
             'request_url': json_api_request.server_url + path,
             'request_headers': json.dumps(json_api_request.headers),
