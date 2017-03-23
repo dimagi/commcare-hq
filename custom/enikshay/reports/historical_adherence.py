@@ -60,6 +60,7 @@ class HistoricalAdherenceReport(EnikshayReport):
     slug = 'historical_adherence'
     use_datatables = False
     report_template_path = 'enikshay/historical_adherence.html'
+    print_override_template = "enikshay/print_report.html"
     fields = (DatespanFilter, EpisodeFilter)
 
     emailable = False
@@ -71,17 +72,6 @@ class HistoricalAdherenceReport(EnikshayReport):
         self.episode = CaseAccessors(self.domain).get_case(self.episode_case_id)
         self.episode_properties = self.episode.dynamic_case_properties()
         self.person = get_person_case_from_episode(self.domain, self.episode_case_id)
-
-    @property
-    @request_cache()
-    def print_response(self):
-        """
-        Returns the report for printing.
-        """
-        self.is_rendered_as_email = True
-        self.use_datatables = False
-        self.override_template = "enikshay/print_report.html"
-        return HttpResponse(self._async_context()['report'])
 
     @property
     def episode_case_id(self):
