@@ -19,12 +19,30 @@ from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from fluff.signals import get_migration_context, get_tables_to_rebuild, reformat_alembic_diffs
 from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 from pillow_retry.models import PillowError
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
+
+
+def time_ucr_process_change(method):
+    def timed(*args, **kw):
+        ts = datetime.now()
+        result = method(*args, **kw)
+        te = datetime.now()
+        seconds = (te - ts).total_seconds()
+        if seconds > 0.1:
+            table = args[1]
+            doc = args[2]
+            message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
+                table.config._id, doc['_id'], seconds
+            )
+            pillow_logging.warning(message)
+        return result
+    return timed
 
 
 class ConfigurableReportTableManagerMixin(object):
@@ -128,6 +146,11 @@ class ConfigurableReportTableManagerMixin(object):
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
 
+    @time_ucr_process_change
+    def _save_doc_to_table(self, table, doc):
+        # best effort will swallow errors in the table
+        table.best_effort_save(doc)
+
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
         if change.deleted:
@@ -142,17 +165,16 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             return
 
         async_tables = []
+        doc = change.get_document()
+        ensure_document_exists(change)
+        ensure_matched_revisions(change)
 
         for table in self.table_adapters_by_domain[domain]:
-            doc = change.get_document()
-            ensure_document_exists(change)
-            ensure_matched_revisions(change)
             if table.config.filter(doc):
                 if table.run_asynchronous:
                     async_tables.append(table.config._id)
                 else:
-                    # best effort will swallow errors in the table
-                    table.best_effort_save(doc)
+                    self._save_doc_to_table(table, doc)
             elif table.config.deleted_filter(doc):
                 table.delete(doc)
 
