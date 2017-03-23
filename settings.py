@@ -1966,6 +1966,7 @@ DOMAIN_MODULE_MAP = {
     'enikshay-domain-copy-test': 'custom.enikshay',
     'enikshay-aks-audit': 'custom.enikshay',
     'np-migration-3': 'custom.enikshay',
+    'noahtest': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -1978,7 +1979,7 @@ DOMAIN_MODULE_MAP = {
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
     'care-macf-ghana': 'custom.care_pathways',
-    'pnlppgi': 'custom.pnlppgi'
+    'pnlppgi': 'custom.pnlppgi',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
