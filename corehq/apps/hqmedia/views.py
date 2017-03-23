@@ -413,12 +413,12 @@ class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
 
     @property
     def form_path(self):
-        return ("jr://file/commcare/text/module%s_detail_print%s"
-                % (self.module_id, self.file_ext))
+        return ("jr://file/commcare/text/module_%s_detail_print%s"
+                % (self.module_unique_id, self.file_ext))
 
     @property
-    def module_id(self):
-        return int(self.kwargs.get('module_id'))
+    def module_unique_id(self):
+        return self.kwargs.get('module_unique_id')
 
     def validate_file(self, replace_diff_ext=True):
         return super(ProcessDetailPrintTemplateUploadView, self).validate_file(replace_diff_ext)
@@ -427,7 +427,7 @@ class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
         ref = super(
             ProcessDetailPrintTemplateUploadView, self
         ).process_upload()
-        self.app.modules[self.module_id].case_details.long.print_template = ref['ref']
+        self.app.get_module_by_unique_id(self.module_unique_id).case_details.long.print_template = ref['ref']
         self.app.save()
         return ref
 
@@ -436,14 +436,14 @@ class RemoveDetailPrintTemplateView(BaseMultimediaView):
     name = "hqmedia_remove_detail_print_template"
 
     @property
-    def module_id(self):
+    def module_unique_id(self):
         if self.request.method == 'POST':
-            return int(self.request.POST.get('module_id'))
+            return self.request.POST.get('module_unique_id')
         return None
 
     @method_decorator(toggles.CASE_DETAIL_PRINT.required_decorator())
     def post(self, *args, **kwargs):
-        del self.app.modules[self.module_id].case_details.long.print_template
+        del self.app.get_module_by_unique_id(self.module_unique_id).case_details.long.print_template
         self.app.save()
         return HttpResponse()
 

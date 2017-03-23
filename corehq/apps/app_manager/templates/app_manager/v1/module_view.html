@@ -76,7 +76,7 @@
         $.post(
             '{% url "hqmedia_remove_detail_print_template" domain app.id %}',
             {
-                module_id: {{ module.id }},
+                module_unique_id: '{{ module.unique_id }}',
             },
             function(data, status) {
                 if(status == 'success'){

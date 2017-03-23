@@ -164,7 +164,7 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
                 slug,
                 reverse(
                     ProcessDetailPrintTemplateUploadView.name,
-                    args=[app.domain, app.id, module.id],
+                    args=[app.domain, app.id, module.unique_id],
                 )
             ),
             'print_ref': ApplicationMediaReference(
