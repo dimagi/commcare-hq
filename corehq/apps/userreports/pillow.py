@@ -28,6 +28,10 @@ from pillow_retry.models import PillowError
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 
 
+class PillowConfigError(Exception):
+    pass
+
+
 def time_ucr_process_change(method):
     def timed(*args, **kw):
         ts = datetime.now()
@@ -47,18 +51,40 @@ def time_ucr_process_change(method):
 
 class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, data_source_provider, auto_repopulate_tables=False,
-                 ucr_division='0f', *args, **kwargs):
+    def __init__(self, data_source_provider, auto_repopulate_tables=False, *args, **kwargs):
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
         self.data_source_provider = data_source_provider
         self.auto_repopulate_tables = auto_repopulate_tables
-        self.ucr_start = ucr_division[0]
-        self.ucr_end = ucr_division[-1]
+        self.ucr_division = kwargs.pop('ucr_division', None)
+        self.include_ucrs = kwargs.pop('include_ucrs', None)
+        self.exclude_ucrs = kwargs.pop('exclude_ucrs', None)
+        if self.include_ucrs and self.ucr_division:
+            raise PillowConfigError("You can't have include_ucrs and ucr_division")
         super(ConfigurableReportTableManagerMixin, self).__init__(*args, **kwargs)
 
     def get_all_configs(self):
         return self.data_source_provider.get_data_sources()
+
+    def get_filtered_configs(self, configs=None):
+        configs = configs or self.get_all_configs()
+
+        if self.exclude_ucrs:
+            configs = [config for config in configs if config.table_id not in self.exclude_ucrs]
+
+        if self.include_ucrs:
+            configs = [config for config in configs if config.table_id in self.include_ucrs]
+        elif self.ucr_division:
+            ucr_start = self.ucr_division[0]
+            ucr_end = self.ucr_division[-1]
+            filtered_configs = []
+            for config in configs:
+                table_hash = hashlib.md5(config.table_id).hexdigest()[0]
+                if ucr_start <= table_hash <= ucr_end:
+                    filtered_configs.append(configs)
+            configs = filtered_configs
+
+        return configs
 
     def needs_bootstrap(self):
         return (
@@ -71,17 +97,14 @@ class ConfigurableReportTableManagerMixin(object):
             self.bootstrap()
 
     def bootstrap(self, configs=None):
-        # sets up the initial stuff
-        if configs is None:
-            configs = self.get_all_configs()
-
+        configs = self.get_filtered_configs(configs)
         self.table_adapters_by_domain = defaultdict(list)
+
         for config in configs:
-            table_hash = hashlib.md5(config.table_id).hexdigest()[0]
-            if self.ucr_start <= table_hash <= self.ucr_end:
-                self.table_adapters_by_domain[config.domain].append(
-                    get_indicator_adapter(config, can_handle_laboratory=True)
-                )
+            self.table_adapters_by_domain[config.domain].append(
+                get_indicator_adapter(config, can_handle_laboratory=True)
+            )
+
         self.rebuild_tables_if_necessary()
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
@@ -196,8 +219,8 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # doc save errors and data source config errors
     retry_errors = False
 
-    def __init__(self, processor, pillow_name):
-        change_feed = KafkaChangeFeed(KAFKA_TOPICS, group_id=pillow_name)
+    def __init__(self, processor, pillow_name, topics):
+        change_feed = KafkaChangeFeed(topics, group_id=pillow_name)
         checkpoint = PillowCheckpoint(pillow_name)
         event_handler = MultiTopicCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
@@ -222,23 +245,34 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self._processor.rebuild_table(sql_adapter)
 
 
-def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division='0f'):
+# TODO(Emord) make other pillows support params dictionary
+def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
+                         include_ucrs=None, exclude_ucrs=None, topics=None):
+    topics = topics or KAFKA_TOPICS
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
             auto_repopulate_tables=False,
-            ucr_division=ucr_division
+            ucr_division=ucr_division,
+            include_ucrs=include_ucrs,
+            exclude_ucrs=exclude_ucrs,
         ),
         pillow_name=pillow_id,
+        topics=topics
     )
 
 
-def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division='0f'):
+def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
+                                include_ucrs=None, exclude_ucrs=None, topics=None):
+    topics = topics or KAFKA_TOPICS
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),
             auto_repopulate_tables=True,
-            ucr_division=ucr_division
+            ucr_division=ucr_division,
+            include_ucrs=include_ucrs,
+            exclude_ucrs=exclude_ucrs,
         ),
         pillow_name=pillow_id,
+        topics=topics
     )
