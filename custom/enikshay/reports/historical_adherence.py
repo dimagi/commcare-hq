@@ -4,9 +4,12 @@ import datetime
 import pytz
 from dateutil.parser import parse
 from django.http import HttpResponse
-from django.utils.dateparse import parse_datetime
 
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.permissions import (
+    location_safe,
+    user_can_access_location_id,
+    location_restricted_response,
+)
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.base import BaseReportFilter
@@ -49,6 +52,7 @@ class EpisodeFilter(HiddenFilter):
     slug = "episode_id"
 
 
+@location_safe
 class HistoricalAdherenceReport(EnikshayReport):
 
     name = ugettext_lazy('Historical Adherence')
@@ -66,7 +70,7 @@ class HistoricalAdherenceReport(EnikshayReport):
         super(HistoricalAdherenceReport, self).__init__(*args, **kwargs)
         self.episode = CaseAccessors(self.domain).get_case(self.episode_case_id)
         self.episode_properties = self.episode.dynamic_case_properties()
-
+        self.person = get_person_case_from_episode(self.domain, self.episode_case_id)
 
     @property
     @request_cache()
@@ -83,9 +87,11 @@ class HistoricalAdherenceReport(EnikshayReport):
     def episode_case_id(self):
         return self.request.GET.get("episode_id")
 
-    @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
-        return super(HistoricalAdherenceReport, self).decorator_dispatcher(request, *args, **kwargs)
+        response = super(HistoricalAdherenceReport, self).decorator_dispatcher(request, *args, **kwargs)
+        if not user_can_access_location_id(self.domain, self.request.couch_user, self.person.owner_id):
+            return location_restricted_response(request)
+        return response
 
     @property
     def headers(self):
@@ -112,9 +118,9 @@ class HistoricalAdherenceReport(EnikshayReport):
     @property
     def report_context(self):
         report_context = super(HistoricalAdherenceReport, self).report_context
-        person = get_person_case_from_episode(self.domain, self.episode_case_id)
+
         report_context['weeks'] = self.get_calendar()
-        report_context['patient_name'] = person.name
+        report_context['patient_name'] = self.person.name
         report_context['treatment_phase'] = self.get_treatment_phase()
         report_context['doses'] = self.get_doses()
         report_context['adherence_schedule'] = self.get_adherence_schedule().title
