@@ -24,14 +24,15 @@ def json_serializer(obj):
 
 def log_request(func):
 
-    def log(log_level, json_api_request, request_error, response_status, response_body, path, data=None, **params):
+    def log(log_level, json_api_request, request_error, response_status, response_body, method_func, path,
+            data=None, **params):
         """
-        Unpack path and data from args and kwargs in order to log them separately
+        Unpack function, path and data from args and kwargs in order to log them separately
         """
         logger.log(log_level, {
             'domain': json_api_request.domain_name,
             'log_level': log_level,
-            'request_method': func.__name__.upper(),
+            'request_method': method_func.__name__.upper(),
             'request_url': json_api_request.server_url + path,
             'request_headers': json.dumps(json_api_request.headers),
             'request_params': json.dumps(params),
@@ -94,42 +95,38 @@ class JsonApiRequest(object):
         return response
 
     @log_request
+    def send_request(self, method_func, *args, **kwargs):
+        try:
+            response = method_func(*args, **kwargs)
+        except requests.RequestException as err:
+            raise JsonApiError(str(err))
+        return self.json_or_error(response)
+
     def get(self, path, **kwargs):
         path = path.lstrip('/')
-        try:
-            response = requests.get(self.server_url + path, headers=self.headers, auth=self.auth, **kwargs)
-        except requests.RequestException as err:
-            raise JsonApiError(str(err))
-        return self.json_or_error(response)
+        return self.send_request(
+            requests.get, self.server_url + path, headers=self.headers, auth=self.auth, **kwargs
+        )
 
-    @log_request
     def delete(self, path, **kwargs):
         path = path.lstrip('/')
-        try:
-            response = requests.delete(self.server_url + path, headers=self.headers, auth=self.auth, **kwargs)
-        except requests.RequestException as err:
-            raise JsonApiError(str(err))
-        return self.json_or_error(response)
+        return self.send_request(
+            requests.delete, self.server_url + path, headers=self.headers, auth=self.auth, **kwargs
+        )
 
-    @log_request
     def post(self, path, data, **kwargs):
         path = path.lstrip('/')
         # Make a copy of self.headers so as not to set content type on requests that don't send content
         headers = dict(self.headers, **{'Content-type': 'application/json'})
         json_data = json.dumps(data, default=json_serializer)
-        try:
-            response = requests.post(self.server_url + path, json_data, headers=headers, auth=self.auth, **kwargs)
-        except requests.RequestException as err:
-            raise JsonApiError(str(err))
-        return self.json_or_error(response)
+        return self.send_request(
+            requests.post, self.server_url + path, json_data, headers=headers, auth=self.auth, **kwargs
+        )
 
-    @log_request
     def put(self, path, data, **kwargs):
         path = path.lstrip('/')
         headers = dict(self.headers, **{'Content-type': 'application/json'})
         json_data = json.dumps(data, default=json_serializer)
-        try:
-            response = requests.put(self.server_url + path, json_data, headers=headers, auth=self.auth, **kwargs)
-        except requests.RequestException as err:
-            raise JsonApiError(str(err))
-        return self.json_or_error(response)
+        return self.send_request(
+            requests.put, self.server_url + path, json_data, headers=headers, auth=self.auth, **kwargs
+        )
