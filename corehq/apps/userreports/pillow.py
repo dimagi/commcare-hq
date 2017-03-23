@@ -12,6 +12,7 @@ from corehq.apps.userreports.const import (
     KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
 )
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
+from corehq.apps.userreports.es.adapter import ESAlchemy
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.specs import EvaluationContext
@@ -235,7 +236,12 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
         eval_context = EvaluationContext(doc)
 
         def exist_in_database(document):
-            return table.get_query_object().filter_by(doc_id=document['_id']).count() > 0
+            query_object = table.get_query_object()
+            if isinstance(query_object, ESAlchemy):
+                records = query_object.es.doc_id(document['_id'])
+            else:
+                records = table.get_query_object().filter_by(doc_id=document['_id'])
+            return records.count > 0
 
         for table in self.table_adapters_by_domain[domain]:
             if table.config.filter(doc):

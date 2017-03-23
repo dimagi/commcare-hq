@@ -207,6 +207,9 @@ class IndicatorESAdapter(IndicatorAdapter):
                 id=normalize_id(primary_key_values), doc_type="indicator"
             )
 
+    def delete(self, doc):
+        self.es.delete(index=self.table_name, doc_type='indicator', id=doc['_id'])
+
 
 def build_es_mapping(data_source_config):
     properties = {}
