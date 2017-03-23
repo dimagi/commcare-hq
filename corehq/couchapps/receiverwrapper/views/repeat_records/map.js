@@ -8,7 +8,7 @@ function (doc) {
         } else if (doc.failure_reason) {
             state = 'FAIL';
         }
-        emit([doc.domain, doc.repeater_id, state], null);
-        emit([doc.domain, null, state], null);
+        emit([doc.domain, doc.repeater_id, state, doc.last_checked], null);
+        emit([doc.domain, null, state, doc.last_checked], null);
     }
 }
