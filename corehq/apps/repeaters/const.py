@@ -5,6 +5,7 @@ MAX_RETRY_WAIT = timedelta(days=7)
 MIN_RETRY_WAIT = timedelta(minutes=60)
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
+REPEATER_FAILED_SUFFIX = '-Failed'
 
 POST_TIMEOUT = 45  # seconds
 
