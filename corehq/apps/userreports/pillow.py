@@ -52,6 +52,15 @@ def time_ucr_process_change(method):
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_provider, auto_repopulate_tables=False, *args, **kwargs):
+        """Initializes the processor for UCRs
+
+        Keyword Arguments:
+        ucr_division -- two hexadecimal digits that are used to determine a subset of UCR
+                        datasources to process. The second digit should be higher than the
+                        first
+        include_ucrs -- list of ucr 'table_ids' to be included in this processor
+        exclude_ucrs -- list of ucr 'table_ids' to be excluded in this processor
+        """
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
         self.data_source_provider = data_source_provider
