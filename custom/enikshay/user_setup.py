@@ -179,6 +179,8 @@ def set_issuer_id(domain, user):
     if not user.user_data.get('issuer_id', None):
         issuer_id, created = IssuerId.objects.get_or_create(domain=domain, user_id=user._id)
         user.user_data['issuer_id'] = issuer_id.pk
+        # note that this is saving the user a second time 'cause it needs a
+        # user id first, but if refactoring, be wary of a loop!
         user.save()
 
 
