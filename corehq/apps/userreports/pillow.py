@@ -81,7 +81,7 @@ class ConfigurableReportTableManagerMixin(object):
             for config in configs:
                 table_hash = hashlib.md5(config.table_id).hexdigest()[0]
                 if ucr_start <= table_hash <= ucr_end:
-                    filtered_configs.append(configs)
+                    filtered_configs.append(config)
             configs = filtered_configs
 
         return configs
