@@ -1,10 +1,8 @@
-from corehq.form_processor.tests.utils import partitioned
 from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
 from corehq.util.exceptions import AccessRestricted
 from django.test import TestCase
 
 
-@partitioned
 class TestAccessRestricted(TestCase):
 
     def test_access_restricted(self):
