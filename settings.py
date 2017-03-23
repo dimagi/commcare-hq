@@ -1343,7 +1343,6 @@ COUCHDB_APPS = [
     ('m4change', 'm4change'),
     ('export', 'meta'),
     ('callcenter', 'meta'),
-    ('enikshay', 'meta'),
 
     # users and groups
     ('groups', USERS_GROUPS_DB),
