@@ -4,7 +4,10 @@ import hashlib
 from django.http import Http404
 import math
 
+from django.contrib import messages
 from django.conf import settings
+from django.core.urlresolvers import reverse
+from django.utils.safestring import mark_safe
 from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
 
@@ -94,6 +97,13 @@ class StaticToggle(object):
                     or (hasattr(request, 'domain') and self.enabled(request.domain))
                 ):
                     return view_func(request, *args, **kwargs)
+                if request.user.is_superuser:
+                    from corehq.apps.toggle_ui.views import ToggleEditView
+                    toggle_url = reverse(ToggleEditView.urlname, args=[self.slug])
+                    messages.warning(request, mark_safe((
+                        'This <a href="{}">feature flag</a> should be enabled '
+                        'to access this URL'
+                    ).format(toggle_url)))
                 raise Http404()
             return wrapped_view
         return decorator
