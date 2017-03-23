@@ -29,7 +29,7 @@ def log_request(func):
         Unpack path and data from args and kwargs in order to log them separately
         """
         logger.log(log_level, {
-            'domain': json_api_request.domain_name if json_api_request.domain_name is not None else '[N/A]',
+            'domain': json_api_request.domain_name,
             'log_level': log_level,
             'request_method': func.__name__.upper(),
             'request_url': json_api_request.server_url + path,
