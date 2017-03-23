@@ -2098,8 +2098,8 @@ class SplitGPSExportColumn(ExportColumn):
             return super(SplitGPSExportColumn, self).get_headers()
         header = self.label
         header_templates = [
-            _(u'{}: latitude (meters)'),
-            _(u'{}: longitude (meters)'),
+            _(u'{}: latitude (degrees)'),
+            _(u'{}: longitude (degrees)'),
             _(u'{}: altitude (meters)'),
             _(u'{}: accuracy (meters)'),
         ]
