@@ -535,13 +535,6 @@ class RepeatRecord(Document):
                 ))
 
             self._payload_exception(e, reraise=False)
-        except IgnoreDocument:
-            # this repeater is pointing at a document with no payload
-            logging.info(u'Repeater {} in domain {} references a document with no payload'.format(
-                self._id, self.domain,
-            ))
-            # Mark it succeeded so that we don't try again
-            self.update_success()
         except Exception as e:
             self._payload_exception(e, reraise=True)
 
