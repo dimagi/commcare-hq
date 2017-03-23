@@ -1,8 +1,7 @@
 from __future__ import absolute_import
 from datetime import datetime
 
-from celery.task import task
-from celery.task.base import periodic_task
+from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
 from django.core.paginator import Paginator
