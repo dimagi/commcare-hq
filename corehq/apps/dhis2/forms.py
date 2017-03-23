@@ -14,11 +14,9 @@ from corehq.apps.style import crispy as hqcrispy
 
 
 LOG_LEVEL_CHOICES = (
-    (logging.CRITICAL, 'Critical'),
+    (99, 'Disable logging'),
     (logging.ERROR, 'Error'),
-    (logging.WARNING, 'Warning'),
     (logging.INFO, 'Info'),
-    (logging.DEBUG, 'Debug'),
 )
 
 
