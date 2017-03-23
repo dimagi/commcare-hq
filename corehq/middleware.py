@@ -6,7 +6,7 @@ import datetime
 from django.conf import settings
 from django.core.exceptions import MiddlewareNotUsed
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib.auth.views import logout as django_logout
 
 from corehq.apps.domain.models import Domain

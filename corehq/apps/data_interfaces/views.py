@@ -46,7 +46,7 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from django.db import transaction
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseServerError
 from django.shortcuts import render
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation

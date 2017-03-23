@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.utils.decorators import method_decorator
 import pytz
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \

@@ -2,7 +2,7 @@ import json
 import uuid
 from urllib import urlencode
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
 

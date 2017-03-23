@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext_lazy as _
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from corehq.apps.repeaters.models import CaseRepeater
 from corehq.form_processor.models import CommCareCaseSQL

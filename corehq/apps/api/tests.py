@@ -7,7 +7,7 @@ from copy import deepcopy
 from datetime import datetime
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import QueryDict
 from django.test import TestCase
 from django.utils.http import urlencode

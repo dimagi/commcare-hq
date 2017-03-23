@@ -2,7 +2,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.loader import render_to_string
 
 from corehq.apps.domain.views import EditInternalDomainInfoView

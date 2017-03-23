@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.urlresolvers import resolve, reverse
+from django.urls import resolve, reverse
 from django.http import Http404
 from ws4redis.context_processors import default
 from corehq.apps.accounting.utils import domain_has_privilege

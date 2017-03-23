@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils import html
 from django.utils.translation import ugettext as _, ugettext_noop
 from sqlagg.base import AliasColumn
