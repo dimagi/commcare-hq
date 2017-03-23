@@ -106,7 +106,7 @@ def validate_location(domain, user_form):
     user_form.add_error('location_id', _("You must select a location."))
 
 
-def clean_location_callback(sender, domain, location, forms, **kwargs):
+def clean_location_callback(sender, domain, request_user, location, forms, **kwargs):
     if not toggles.ENIKSHAY.enabled(domain):
         return
 
