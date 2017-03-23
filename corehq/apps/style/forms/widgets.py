@@ -129,7 +129,7 @@ class _Select2Mixin(object):
         js = ('select2-3.4.5-legacy/select2.js',)
 
     def render(self, name, value, attrs=None, choices=()):
-        output = super(_Select2Mixin, self).render(name, value, attrs, choices)
+        output = super(_Select2Mixin, self).render(name, value, attrs)
         output += """
             <script>
                 $(function() {

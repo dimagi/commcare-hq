@@ -963,6 +963,13 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     ),
 )
 
+ENIKSHAY = StaticToggle(
+    'enikshay',
+    "Enable custom enikshay functionality: additional user and location validation",
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 DATA_DICTIONARY = StaticToggle(
     'data_dictionary',
     'Domain level data dictionary of cases',
