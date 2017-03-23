@@ -7,6 +7,7 @@ from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
+from django.conf import settings
 
 
 J2ME = 'j2me'
@@ -66,12 +67,17 @@ def guess_phone_type_from_user_agent(user_agent):
 
 
 def get_username_and_password_from_request(request):
+    from corehq.apps.hqwebapp.utils import extract_password
+
     username, password = None, None
     if 'HTTP_AUTHORIZATION' in request.META:
         auth = request.META['HTTP_AUTHORIZATION'].split()
         if len(auth) == 2:
             if auth[0].lower() == BASIC:
                 username, password = base64.b64decode(auth[1]).split(':', 1)
+                if settings.ENABLE_PASSWORD_HASHING:
+                    password = extract_password(password)
+
     return username, password
 
 
