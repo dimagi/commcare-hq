@@ -42,7 +42,6 @@ from .const import (
     RECORD_PENDING_STATE,
     RECORD_CANCELLED_STATE,
     POST_TIMEOUT,
-    REPEATER_FAILED_SUFFIX
 )
 from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
@@ -539,8 +538,7 @@ class RepeatRecord(Document):
             self._payload_exception(e, reraise=True)
 
     def _payload_exception(self, exception, reraise=False):
-        if not self.doc_type.endswith(REPEATER_FAILED_SUFFIX):
-            self.doc_type = self.doc_type + REPEATER_FAILED_SUFFIX
+        self.succeeded = False
         self.failure_reason = unicode(exception)
         self.save()
         if reraise:
