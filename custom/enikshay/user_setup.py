@@ -16,7 +16,7 @@ LOC_TYPES_TO_USER_TYPES = {
 }
 
 
-def clean_user_callback(sender, domain, user, forms, **kwargs):
+def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
     if not toggles.ENIKSHAY.enabled(domain):
         return
 

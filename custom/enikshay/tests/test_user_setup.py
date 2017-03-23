@@ -173,6 +173,7 @@ class TestUserSetupUtils(TestCase):
         clean_commcare_user.send(
             'BaseEditUserView.update_user',
             domain=self.domain,
+            request_user=self.web_user,
             user=user,
             forms={'UpdateCommCareUserInfoForm': user_form,
                    'CustomDataEditor': custom_data}
