@@ -1122,7 +1122,7 @@ LOGGING = {
         },
         'pillowtop': {
             'handlers': ['pillowtop'],
-            'level': 'ERROR',
+            'level': 'INFO',
             'propagate': False,
         },
         'smsbillables': {
