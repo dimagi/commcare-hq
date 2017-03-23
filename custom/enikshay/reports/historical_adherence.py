@@ -3,14 +3,12 @@ import datetime
 
 import pytz
 from dateutil.parser import parse
-from django.http import HttpResponse
 
 from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_location_id,
     location_restricted_response,
 )
-from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -206,7 +204,7 @@ class HistoricalAdherenceReport(EnikshayReport):
             days = []
             for i in range(7):
                 date = sunday + datetime.timedelta(days=i)
-                if date >= first_date and date <= last_date :
+                if date >= first_date and date <= last_date:
                     cases_for_date = adherence_cases_dict.get(date, [])
                     days.append(Day(
                         date,
@@ -284,13 +282,14 @@ class HistoricalAdherenceReport(EnikshayReport):
             None,
             ""
         ):
-            assert_ = soft_assert(to='ncarnahan'+'@'+'dimagi'+'.com')
+            assert_ = soft_assert(to='ncarnahan' + '@' + 'dimagi' + '.com')
             assert_(False, "Got an unexpected adherence_value of {} for case {}".format(
                 adherence_value, primary_adherence_case.case_id))
         return adherence_value
 
     def unknown_img_holder(self, date):
-        if (self.mark_expected
+        if (
+            self.mark_expected
             and self.adherence_schedule_date_start < date
             and date.weekday() in self.expected_days
         ):
@@ -318,7 +317,8 @@ class Week(object):
 
 class Day(object):
 
-    def __init__(self, date, adherence_image_key, show_unexpected_image, show_conflicting_data, force_month_label=False):
+    def __init__(self, date, adherence_image_key, show_unexpected_image, show_conflicting_data,
+                 force_month_label=False):
         self.date = date
         self.month_string = self.date.strftime("%b") if self.date.day == 1 or force_month_label else ""
         self.day_string = self.date.day
