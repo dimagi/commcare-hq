@@ -70,6 +70,10 @@ from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
 from corehq.util.view_utils import reverse
+from corehq.apps.hqwebapp.utils import (
+    generate_password_salt1,
+    generate_password_salt2,
+)
 
 
 def is_deploy_in_progress():
@@ -369,6 +373,11 @@ class HQLoginView(LoginView):
     def get_context_data(self, **kwargs):
         context = super(HQLoginView, self).get_context_data(**kwargs)
         context.update(self.extra_context)
+        if settings.ENABLE_PASSWORD_HASHING:
+            context.update({'implement_password_hashing': True,
+                            'psalt1': generate_password_salt1(),
+                            'psalt2': generate_password_salt2()
+                            })
         return context
 
 
