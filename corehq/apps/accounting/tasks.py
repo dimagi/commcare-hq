@@ -356,18 +356,12 @@ def create_wire_credits_invoice(domain_name,
                                 amount,
                                 invoice_items,
                                 contact_emails):
-    account = BillingAccount.get_or_create_account_by_domain(
-        domain_name,
-        created_by=account_created_by,
-        entry_point=account_entry_point
-    )[0]
     wire_invoice = WirePrepaymentInvoice.objects.create(
         domain=domain_name,
         date_start=datetime.datetime.utcnow(),
         date_end=datetime.datetime.utcnow(),
         date_due=None,
         balance=amount,
-        account=account,
     )
     wire_invoice.items = invoice_items
 
