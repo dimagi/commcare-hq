@@ -13,6 +13,7 @@ from corehq.apps.users.forms import UpdateCommCareUserInfoForm
 from corehq.apps.users.signals import clean_commcare_user
 from .utils import setup_enikshay_locations
 from ..user_setup import validate_nikshay_code, LOC_TYPES_TO_USER_TYPES, set_user_role, validate_usertype
+from ..models import IssuerId
 
 
 @flag_enabled('ENIKSHAY')
@@ -50,6 +51,7 @@ class TestUserSetupUtils(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         cls.web_user.delete()
+        IssuerId.objects.all().delete()
         super(TestUserSetupUtils, cls).tearDownClass()
 
     def assertValid(self, form):
@@ -232,3 +234,11 @@ class TestUserSetupUtils(TestCase):
         self.assertValid(form)
         validate_nikshay_code(self.domain, form)
         self.assertInvalid(form)
+
+    def test_issuer_id(self):
+        areo = self.make_user('ahotah@martell.biz', 'DTO')
+        self.assertTrue(areo.user_data['issuer_id'])
+
+        # the next id should be 1 more than this ID
+        arys = self.make_user('aoakheart@kingsguard.gov', 'DTO')
+        self.assertTrue(areo.user_data['issuer_id'] + 1 == arys.user_data['issuer_id'])
