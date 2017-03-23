@@ -155,8 +155,8 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
         }
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
-        slug = 'm1_case_long'   # TODO
-        print_template = app.modules[1].case_details.long.print_template
+        slug = 'detail_print'
+        print_template = module.case_details.long.print_template
         if not print_template:
             print_template = {}
         context.update({
@@ -164,7 +164,7 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
                 slug,
                 reverse(
                     ProcessDetailPrintTemplateUploadView.name,
-                    args=[app.domain, app.id],
+                    args=[app.domain, app.id, module.id],
                 )
             ),
             'print_ref': ApplicationMediaReference(

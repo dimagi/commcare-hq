@@ -413,9 +413,12 @@ class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
 
     @property
     def form_path(self):
-        # TODO
-        return ("jr://file/commcare/print/data/m1_case_long%s"
-                % (self.file_ext))
+        return ("jr://file/commcare/text/module%s_detail_print%s"
+                % (self.module_id, self.file_ext))
+
+    @property
+    def module_id(self):
+        return int(self.kwargs.get('module_id'))
 
     def validate_file(self, replace_diff_ext=True):
         return super(ProcessDetailPrintTemplateUploadView, self).validate_file(replace_diff_ext)
@@ -424,7 +427,7 @@ class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
         ref = super(
             ProcessDetailPrintTemplateUploadView, self
         ).process_upload()
-        self.app.modules[1].case_details.long.print_template = ref['ref']   # TODO
+        self.app.modules[self.module_id].case_details.long.print_template = ref['ref']
         self.app.save()
         return ref
 
