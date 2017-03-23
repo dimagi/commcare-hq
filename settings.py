@@ -1089,6 +1089,11 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
         },
+        'json_api_handler': {
+            'level': 'INFO',
+            'class': 'corehq.apps.dhis2.handlers.DjangoModelHandler',
+            'model_class': 'corehq.apps.dhis2.models.JsonApiLog',
+        },
     },
     'loggers': {
         '': {
@@ -1184,6 +1189,11 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
+        },
+        'json_api_logger': {
+            'handlers': ['json_api_handler'],
+            'level': 'DEBUG',
+            'propagate': True,
         }
     }
 }
