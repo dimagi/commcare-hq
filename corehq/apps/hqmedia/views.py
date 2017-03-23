@@ -435,9 +435,15 @@ class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
 class RemoveDetailPrintTemplateView(BaseMultimediaView):
     name = "hqmedia_remove_detail_print_template"
 
-    @method_decorator(requires_privilege_raise404(privileges.COMMCARE_LOGO_UPLOADER))
+    @property
+    def module_id(self):
+        if self.request.method == 'POST':
+            return int(self.request.POST.get('module_id'))
+        return None
+
+    @method_decorator(toggles.CASE_DETAIL_PRINT.required_decorator())
     def post(self, *args, **kwargs):
-        del self.app.modules[1].case_details.long.print_template    # TODO
+        del self.app.modules[self.module_id].case_details.long.print_template
         self.app.save()
         return HttpResponse()
 

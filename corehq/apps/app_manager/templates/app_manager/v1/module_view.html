@@ -75,6 +75,9 @@
     function removePrintTemplate(slug) {
         $.post(
             '{% url "hqmedia_remove_detail_print_template" domain app.id %}',
+            {
+                module_id: {{ module.id }},
+            },
             function(data, status) {
                 if(status == 'success'){
                     print_ref.url("");
