@@ -172,7 +172,7 @@ class HistoricalAdherenceReport(EnikshayReport):
         indexed_cases = CaseAccessors(self.domain).get_reverse_indexed_cases([self.episode_case_id])
         open_adherence_cases = [
             case for case in indexed_cases
-            if not case.closed and case.type == CASE_TYPE_ADHERENCE
+            if case.type == CASE_TYPE_ADHERENCE
         ]
 
         adherence = defaultdict(list)  # datetime.date -> list of adherence cases
