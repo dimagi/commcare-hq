@@ -22,7 +22,7 @@ from dimagi.utils.logging import notify_error
 
 logger = get_task_logger('data_interfaces')
 ONE_HOUR = 60 * 60
-ONE_DAY_IN_SECONDS = 24 * 60 * 60
+HALT_AFTER = 23 * 60 * 60
 
 
 @task(ignore_result=True)
@@ -93,7 +93,7 @@ def run_case_update_rules_for_domain(domain, now=None):
         for case_ids in case_id_chunks:
             for case in CaseAccessors(domain).iter_cases(case_ids):
                 time_elapsed = datetime.utcnow() - start_run
-                if time_elapsed.seconds > ONE_DAY_IN_SECONDS:
+                if time_elapsed.seconds > HALT_AFTER:
                     notify_error(
                         "Halting rule run for domain %s as it's been running for more than a day." % domain
                     )
