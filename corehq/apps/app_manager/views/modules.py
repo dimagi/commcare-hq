@@ -7,7 +7,7 @@ from lxml import etree
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, gettext_lazy
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.views.decorators.http import require_GET
 from django.contrib import messages
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \

@@ -58,7 +58,7 @@ from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
@@ -2657,6 +2657,18 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                           "There is probably nothing to worry about, but you could check to make sure "
                           "that there are no issues with this form.".format(error=e, form_id=self.unique_id))
             pass
+
+    def get_action_type(self):
+        actions = self.actions.actions_meta_by_tag
+        by_type = defaultdict(list)
+        action_type = []
+        for action_tag, action_meta in actions.iteritems():
+            by_type[action_meta.get('type')].append(action_tag)
+
+        for type, tag_list in by_type.iteritems():
+            action_type.append(u'{} ({})'.format(type, ', '.join(filter(None, tag_list))))
+
+        return ' '.join(action_type)
 
     def pre_move_hook(self, from_module, to_module):
         if from_module != to_module:

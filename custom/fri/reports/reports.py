@@ -24,7 +24,7 @@ from custom.fri.api import get_message_bank, add_metadata, get_date
 from corehq.apps.sms.models import INCOMING, OUTGOING, SMS
 from corehq.apps.users.models import UserCache
 from custom.fri.api import get_interactive_participants, get_valid_date_range
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from dateutil.parser import parse
 

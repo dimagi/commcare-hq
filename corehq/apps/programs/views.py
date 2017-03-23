@@ -6,7 +6,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext as _, ugettext_noop
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.products.models import SQLProduct

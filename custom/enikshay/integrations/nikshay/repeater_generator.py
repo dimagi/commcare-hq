@@ -1,5 +1,6 @@
 import json
 import datetime
+import socket
 
 from corehq.apps.repeaters.exceptions import RequestConnectionError
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
@@ -63,13 +64,14 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
 
     def _base_properties(self, repeat_record):
         username, password = self._get_credentials(repeat_record)
+        server_ip = socket.gethostbyname(socket.gethostname())
         return {
             "regBy": username,
             "regby": username,
             "password": password,
             "Source": ENIKSHAY_ID,
-            "IP_From": "127.0.0.1",
-            "IP_FROM": "127.0.0.1",
+            "IP_From": server_ip,
+            "IP_FROM": server_ip,
         }
 
 
@@ -189,7 +191,8 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
             "HIVTestDate": _format_date(person_case_properties, 'hiv_test_date'),
             "CPTDeliverDate": _format_date(person_case_properties, 'cpt_initiation_date'),
             "ARTCentreDate": _format_date(person_case_properties, 'art_initiation_date'),
-            "InitiatedOnART": art_initiated.get(person_case_properties.get('art_initiated', 'no')),
+            "InitiatedOnART": art_initiated.get(
+                person_case_properties.get('art_initiated', 'no'), art_initiated['no']),
             "InitiatedDate": _format_date(person_case_properties, 'art_initiation_date'),
         })
 

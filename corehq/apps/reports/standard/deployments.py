@@ -2,7 +2,7 @@
 from datetime import date, datetime, timedelta
 
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext_noop, ugettext as _
 
 from casexml.apps.phone.analytics import get_sync_logs_for_user

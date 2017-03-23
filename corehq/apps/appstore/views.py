@@ -6,7 +6,7 @@ from urllib import urlencode
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator

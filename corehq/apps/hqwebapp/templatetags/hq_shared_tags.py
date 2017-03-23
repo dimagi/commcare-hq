@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.http import QueryDict
 from django import template
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from dimagi.utils.decorators.memoized import memoized

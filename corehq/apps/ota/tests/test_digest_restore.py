@@ -2,7 +2,7 @@ import time
 from python_digest import build_authorization_request, calculate_nonce
 from django.test import TestCase, Client
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.domain.shortcuts import create_domain

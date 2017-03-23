@@ -1,6 +1,7 @@
 import contextlib
 import os
 import tempfile
+from collections import Counter
 
 import datetime
 
@@ -65,6 +66,9 @@ class _Writer(object):
         else:
             name = ''
         name = safe_filename(name)
+        all_sheet_names = Counter(
+            table.label for instance in export_instances for table in instance.selected_tables
+        )
 
         fd, self._path = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as file:
@@ -78,10 +82,12 @@ class _Writer(object):
                     for t in instance.selected_tables
                 ]
                 for table_index, table in enumerate(instance.selected_tables):
-                    sheet_name = table.label or "Sheet{}".format(table_index + 1)
-                    if len(export_instances) > 1:
+                    sheet_name = table.label or u"Sheet{}".format(table_index + 1)
+                    # If it's a bulk export and the sheet has the same name as another sheet,
+                    # Prefix the sheet name with the export name
+                    if len(export_instances) > 1 and all_sheet_names[sheet_name] > 1:
                         sheet_name = u"{}-{}".format(
-                            instance.name or "Export{}".format(instance_index + 1),
+                            instance.name or u"Export{}".format(instance_index + 1),
                             sheet_name
                         )
                     table_titles[table] = sheet_name

@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 from bs4 import BeautifulSoup
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.test.client import Client

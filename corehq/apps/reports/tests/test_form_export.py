@@ -4,7 +4,7 @@ import json
 import datetime
 
 import mock
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.export.models import FormExportInstance, TableConfiguration, ExportColumn, ScalarItem, PathNode
