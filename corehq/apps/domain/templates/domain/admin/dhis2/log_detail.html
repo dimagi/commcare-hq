@@ -19,37 +19,38 @@
                 </tr>
                 <tr>
                     <th>{% trans "Status" %}:</th>
-                    <td>{% if log.response_status %}{{ log.response_status }}{% else %}[N/A]{% endif %}</td>
+                    <td>{% if log.response_status %}
+                        {{ log.response_status }}{% else %}[N/A]
+                    {% endif %}</td>
                 </tr>
-
                 <tr>
                     <th>{% trans "Request headers" %}:</th>
                     <td><pre>{{ log.request_headers }}</pre></td>
                 </tr>
-                {% if log.request_params %}
                 <tr>
                     <th>{% trans "Request params" %}:</th>
-                    <td><pre>{{ log.request_params }}</pre></td>
+                    <td>{% if log.request_params %}
+                        <pre>{{ log.request_params }}</pre>{% else %}&nbsp;
+                    {% endif %}</td>
                 </tr>
-                {% endif %}
-                {% if log.request_body %}
                 <tr>
                     <th>{% trans "Request body" %}:</th>
-                    <td><pre>{{ log.request_body }}</pre></td>
+                    <td>{% if log.request_body %}
+                        <pre>{{ log.request_body }}</pre>{% else %}&nbsp;
+                    {% endif %}</td>
                 </tr>
-                {% endif %}
-                {% if log.request_error %}
                 <tr>
                     <th>{% trans "Request error" %}:</th>
-                    <td><pre>{{ log.request_error }}</pre></td>
+                    <td>{% if log.request_error %}
+                        <pre>{{ log.request_error }}</pre>{% else %}&nbsp;
+                    {% endif %}</td>
                 </tr>
-                {% endif %}
-                {% if log.response_body %}
                 <tr>
                     <th>{% trans "Response body" %}:</th>
-                    <td><pre>{{ log.response_body }}</pre></td>
+                    <td>{% if log.response_body %}
+                        <pre>{{ log.response_body }}</pre>{% else %}&nbsp;
+                    {% endif %}</td>
                 </tr>
-                {% endif %}
             </table>
         </div>
         <p>
