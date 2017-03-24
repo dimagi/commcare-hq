@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import hashlib
 from simpleeval import InvalidExpression
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.document_stores import get_document_store
@@ -278,6 +279,7 @@ class EvalExpressionSpec(JsonObject):
 class FormsExpressionSpec(JsonObject):
     type = TypeProperty('get_case_forms')
     case_id_expression = DefaultProperty(required=True)
+    xmlns = ListProperty(required=False)
 
     def configure(self, case_id_expression):
         self._case_id_expression = case_id_expression
@@ -293,12 +295,19 @@ class FormsExpressionSpec(JsonObject):
 
     def _get_forms(self, case_id, context):
         domain = context.root_doc['domain']
+        if self.xmlns:
+            xmlns_hash = hashlib.md5(''.join(self.xmlns)).hexdigest()[:4]
+        else:
+            xmlns_hash = ''
 
-        cache_key = (self.__class__.__name__, case_id)
+        cache_key = (self.__class__.__name__, case_id, xmlns_hash)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
         xforms = FormProcessorInterface(domain).get_case_forms(case_id)
+        if self.xmlns:
+            xforms = [f for f in xforms if f.xmlns in self.xmlns]
+
         xforms = [f.to_json() for f in xforms if f.domain == domain]
 
         context.set_cache_value(cache_key, xforms)
