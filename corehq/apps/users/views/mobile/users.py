@@ -7,7 +7,7 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404
 from django.http.response import HttpResponseServerError
@@ -80,6 +80,7 @@ from corehq.apps.users.forms import (
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.const import ANONYMOUS_USERNAME, ANONYMOUS_FIRSTNAME, ANONYMOUS_LASTNAME
+from corehq.apps.users.signals import clean_commcare_user
 from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
@@ -280,6 +281,12 @@ class EditCommCareUserView(BaseEditUserView):
             phone_number = self.request.POST['phone_number']
             phone_number = re.sub('\s', '', phone_number)
             if re.match(r'\d+$', phone_number):
+                clean_commcare_user.send(
+                    'EditCommCareUserView.phone_number',
+                    domain=self.domain,
+                    user=self.editable_user,
+                    forms={'phone_number': phone_number},
+                )
                 self.editable_user.add_phone_number(phone_number)
                 self.editable_user.save()
                 messages.success(request, _("Phone number added!"))
@@ -771,6 +778,18 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             }
 
         self.request.POST = form_data
+
+        self._mobile_worker_form.is_valid()
+        self.custom_data.is_valid()
+        clean_commcare_user.send(
+            'MobileWorkerListView.create_mobile_worker',
+            domain=self.domain,
+            user=None,
+            forms={
+                self._mobile_worker_form.__class__.__name__: self._mobile_worker_form,
+                self.custom_data.__class__.__name__: self.custom_data,
+            }
+        )
 
         if not self._mobile_worker_form.is_valid() or not self.custom_data.is_valid():
             return {

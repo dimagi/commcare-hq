@@ -865,7 +865,7 @@ BEGIN
 	'(' ||
 		'pse_score + thr_score + wer_score, ' ||
 		'CASE WHEN (pse_score + thr_score + wer_score) >= 60 THEN 1 ELSE 0 END, ' ||
-		'CASE WHEN ((pse_score + thr_score + wer_score) >= 40 AND (pse_score + thr_score + wer_score) < 40) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN ((pse_score + thr_score + wer_score) >= 40 AND (pse_score + thr_score + wer_score) < 60) THEN 1 ELSE 0 END, ' ||
 		'CASE WHEN (pse_score + thr_score + wer_score) < 40 THEN 1 ELSE 0 END' ||
 	')';
 
@@ -915,7 +915,7 @@ BEGIN
 		'sum(ebf) AS usage_num_ebf, ' ||
 		'sum(cf) AS usage_num_cf, ' ||
 		'sum(delivery) AS usage_num_delivery, ' ||
-		'CASE WHEN (sum(pse) + sum(gmp) + sum(thr) + sum(home_visit)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active, ' ||
+		'CASE WHEN (sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active, ' ||
 		'sum(due_list_ccs) AS usage_num_due_list_ccs, ' ||
 		'sum(due_list_child) AS usage_num_due_list_child_health, ' ||
 		'avg(pse_time) AS usage_time_pse, ' ||

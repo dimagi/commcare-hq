@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import TestCase, Client
 from corehq.apps.app_manager.models import Application
 from corehq.apps.cloudcare.views import FormplayerMain

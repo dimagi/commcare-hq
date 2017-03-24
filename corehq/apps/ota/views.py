@@ -1,5 +1,5 @@
 from distutils.version import LooseVersion
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop

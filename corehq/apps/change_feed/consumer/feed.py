@@ -106,18 +106,18 @@ class KafkaChangeFeed(ChangeFeed):
             topic: sequence + 1 for topic, sequence in self._processed_topic_offsets.items()
         }
 
-    def get_current_offsets(self):
+    def get_processed_offsets(self):
+        return copy(self._processed_topic_offsets)
+
+    def get_latest_offsets(self):
         return get_multi_topic_offset(self.topics)
 
-    def get_latest_change_id(self):
-        topic = self._get_single_topic_or_fail()
-        return get_topic_offset(topic)
-
-    def get_checkpoint_value(self):
+    def get_latest_offsets_as_checkpoint_value(self):
         try:
-            return self.get_latest_change_id()
+            topic = self._get_single_topic_or_fail()
+            return str(get_topic_offset(topic))
         except ValueError:
-            return json.dumps(self.get_current_offsets())
+            return self.get_latest_offsets()
 
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         config = {
@@ -158,6 +158,9 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
         if self.should_update_checkpoint(context):
             updated_to = self.change_feed.get_current_checkpoint_offsets()
             self.update_checkpoint(json.dumps(updated_to))
+            return True
+
+        return False
 
 
 def change_from_kafka_message(message):

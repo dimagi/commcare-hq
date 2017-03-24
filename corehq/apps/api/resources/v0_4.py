@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from tastypie import fields
 from tastypie.authentication import Authentication

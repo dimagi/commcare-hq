@@ -7,7 +7,7 @@ from couchexport.models import Format
 from couchdbkit import ResourceNotFound
 from corehq.apps.commtrack.util import get_or_create_default_program
 from django.views.decorators.http import require_POST
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.utils.translation import ugettext as _, ugettext_noop

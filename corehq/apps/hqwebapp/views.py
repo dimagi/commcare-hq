@@ -120,7 +120,7 @@ def not_found(request, template_name='404.html'):
 @require_GET
 @location_safe
 def redirect_to_default(req, domain=None):
-    if not req.user.is_authenticated():
+    if not req.user.is_authenticated:
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
@@ -297,7 +297,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 @sensitive_post_parameters('auth-password')
 def _login(req, domain_name, template_name):
 
-    if req.user.is_authenticated() and req.method == "GET":
+    if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
         if redirect_to:
             return HttpResponseRedirect(redirect_to)

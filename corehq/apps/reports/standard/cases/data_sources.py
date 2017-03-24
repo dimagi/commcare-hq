@@ -1,7 +1,7 @@
 import datetime
 import dateutil
 from django.core import cache
-from django.core.urlresolvers import NoReverseMatch
+from django.urls import NoReverseMatch
 from django.template.defaultfilters import yesno
 from django.utils import html
 from django.utils.translation import ugettext as _

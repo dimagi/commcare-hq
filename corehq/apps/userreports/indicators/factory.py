@@ -76,10 +76,10 @@ def _build_choice_list_indicator(spec, context):
     base_display_name = wrapped_spec.display_name
 
     def _construct_display(choice):
-        return '{base} ({choice})'.format(base=base_display_name, choice=choice)
+        return u'{base} ({choice})'.format(base=base_display_name, choice=choice)
 
     def _construct_column(choice):
-        return '{col}_{choice}'.format(col=spec['column_id'], choice=choice)
+        return u'{col}_{choice}'.format(col=spec['column_id'], choice=choice)
 
     choice_indicators = [
         BooleanIndicator(
