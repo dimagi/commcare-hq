@@ -51,19 +51,8 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
             PatientId=self.patient_detail,
             Outcome='NULL',
             HIVStatus='Neg',
-            # loginDate=datetime(2016, 1, 2),
         )
-        # Household.objects.create(
-        #     PatientID=patient_detail,
-        # )
         self.case_accessor = CaseAccessors(self.domain)
-
-    def tearDown(self):
-        Outcome.objects.all().delete()
-        # Household.objects.all().delete()
-        PatientDetail.objects.all().delete()
-
-        super(TestCreateEnikshayCases, self).tearDown()
 
     @patch('custom.enikshay.nikshay_datamigration.factory.datetime')
     def test_case_creation(self, mock_datetime):
@@ -90,6 +79,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('is_active', 'yes'),
                 ('last_name', 'C'),
                 ('migration_created_case', 'true'),
+                ('migration_created_from_record', 'MH-ABD-05-16-0001'),
                 ('person_id', 'NIK-MH-ABD-05-16-0001'),
                 ('phi', 'PHI'),
                 ('phi_assigned_to', self.phi.location_id),
@@ -117,6 +107,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('ihv_date', '2016-12-25'),
                 ('initial_home_visit_status', 'completed'),
                 ('migration_created_case', 'true'),
+                ('migration_created_from_record', 'MH-ABD-05-16-0001'),
                 ('occurrence_episode_count', '1'),
                 ('occurrence_id', '20160908010203004'),
             ]),
@@ -153,6 +144,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('episode_pending_registration', 'no'),
                 ('episode_type', 'confirmed_tb'),
                 ('migration_created_case', 'true'),
+                ('migration_created_from_record', 'MH-ABD-05-16-0001'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occupation', 'physical_mathematical_and_engineering'),
                 ('patient_type_choice', 'treatment_after_lfu'),
@@ -205,6 +197,13 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         drtb_hiv_referral_case = self.case_accessor.get_case(drtb_hiv_referral_case_ids[0])
         self.assertEqual('A B C', drtb_hiv_referral_case.name)
         self.assertEqual(self.drtb_hiv.location_id, drtb_hiv_referral_case.owner_id)
+        self.assertEqual(
+            OrderedDict([
+                ('migration_created_case', 'true'),
+                ('migration_created_from_record', 'MH-ABD-05-16-0001'),
+            ]),
+            drtb_hiv_referral_case.dynamic_case_properties()
+        )
 
     def test_case_update(self):
         self.outcome.HIVStatus = None

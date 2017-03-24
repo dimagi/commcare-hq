@@ -1,3 +1,4 @@
+from datetime import datetime
 from abc import ABCMeta, abstractmethod
 from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
@@ -18,6 +19,7 @@ class ChangeMeta(jsonobject.JsonObject):
     document_subtype = jsonobject.StringProperty()
     domain = jsonobject.StringProperty()
     is_deletion = jsonobject.BooleanProperty()
+    publish_timestamp = jsonobject.DateTimeProperty(default=datetime.utcnow)
     _allow_dynamic_properties = False
 
 
@@ -115,21 +117,25 @@ class ChangeFeed(object):
         pass
 
     @abstractmethod
-    def get_latest_change_id(self):
+    def get_latest_offsets(self):
         """
-        Should return an integer ID representing the last change - can be used
-        to show progress / changes remaining to process
-        """
-        pass
-
-    @abstractmethod
-    def get_current_offsets(self):
-        """
-        :return: A dictionary of ``(topic/db_name, offset integer)`` pairs
+        :return: A dictionary of ``(topic/db_name, offset integer)`` pairs representing
+                 the max sequence ID that is available for each topic.
         """
 
     @abstractmethod
-    def get_checkpoint_value(self):
+    def get_processed_offsets(self):
         """
-        :return: The current string change ID, or a json string if multiple feeds are used
+        :return: A dictionary of ``topic/dbname, offset integer`` pairs representing
+                 the last sequence ID that was processed for each topic.
+        """
+
+    @abstractmethod
+    def get_latest_offsets_as_checkpoint_value(self):
+        """
+        :return: The latest offset value in the format expected by the ``since`` param
+                 of ``iter_changes``:
+                   * string change ID for Cloudant and CouchDB
+                   * int change ID for single kafka topic
+                   * or a dict if multiple kafka topics are used
         """

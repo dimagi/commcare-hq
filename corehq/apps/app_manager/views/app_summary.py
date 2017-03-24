@@ -2,7 +2,7 @@ from copy import copy
 from StringIO import StringIO
 from collections import namedtuple
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import Http404
 from django.utils.translation import ugettext_noop, ugettext_lazy as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
@@ -55,6 +55,7 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
             'form_name_map': _get_name_map(self.app),
             'langs': self.app.langs,
             'app_id': self.app.id,
+            'app_name': self.app.name,
         }
 
     @property
@@ -117,7 +118,7 @@ def _get_name_map(app):
         module_url = reverse('view_module', kwargs=keywords)
         name_map[module.unique_id] = {
             'module_name': module.name,
-            'module_url': module_url
+            'module_url': module_url,
         }
         for form in module.get_forms():
             keywords = {'domain': app.domain, 'app_id': app.id, 'module_id': module.id}

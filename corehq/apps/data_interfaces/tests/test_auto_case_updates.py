@@ -139,7 +139,7 @@ class AutomaticCaseUpdateTest(TestCase):
         super(AutomaticCaseUpdateTest, self).tearDown()
 
     def _get_case_ids(self, *args, **kwargs):
-        return [self.case_id]
+        return [[self.case_id]]
 
     def _get_case(self):
         return self.case_db.get_case(self.case_id)

@@ -158,7 +158,11 @@ class TestSendToElasticsearch(SimpleTestCase):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
         self._send_to_es_and_check(doc)
 
-    def _send_to_es_and_check(self, doc, update=False, delete=False, esgetter=None):
+    def _send_to_es_and_check(self, doc, update=False, es_merge_update=False,
+                              delete=False, esgetter=None):
+        if update and es_merge_update:
+            old_doc = self.es.get_source(self.index, TEST_INDEX_INFO.type, doc['_id'])
+
         send_to_elasticsearch(
             index=self.index,
             doc_type=TEST_INDEX_INFO.type,
@@ -167,6 +171,7 @@ class TestSendToElasticsearch(SimpleTestCase):
             name='test',
             data=doc,
             update=update,
+            es_merge_update=es_merge_update,
             delete=delete,
             except_on_failure=True,
             retries=1
@@ -175,9 +180,14 @@ class TestSendToElasticsearch(SimpleTestCase):
         if not delete:
             self.assertEqual(1, get_doc_count(self.es, self.index))
             es_doc = self.es.get_source(self.index, TEST_INDEX_INFO.type, doc['_id'])
-            for prop in doc:
-                self.assertEqual(doc[prop], es_doc[prop])
-            self.assertTrue(all(prop in doc for prop in es_doc))
+            if es_merge_update:
+                old_doc.update(es_doc)
+                for prop in doc:
+                    self.assertEqual(doc[prop], old_doc[prop])
+            else:
+                for prop in doc:
+                    self.assertEqual(doc[prop], es_doc[prop])
+                self.assertTrue(all(prop in doc for prop in es_doc))
         else:
             self.assertEqual(0, get_doc_count(self.es, self.index))
 
@@ -194,6 +204,16 @@ class TestSendToElasticsearch(SimpleTestCase):
 
         del doc['property']
         self._send_to_es_and_check(doc, update=True)
+
+    def test_merge_doc(self):
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
+        self._send_to_es_and_check(doc)
+
+        update = doc.copy()
+        del update['property']
+        update['new_prop'] = 'new_val'
+        # merging should still keep old 'property'
+        self._send_to_es_and_check(update, update=True, es_merge_update=True)
 
     def test_delete_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}

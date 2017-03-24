@@ -1,7 +1,7 @@
 import re
 from uuid import uuid4
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import TestCase, Client
 from mock import patch
 

@@ -9,7 +9,7 @@ from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, validate_email
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.forms.widgets import PasswordInput
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, string_concat
@@ -366,7 +366,7 @@ class RoleForm(forms.Form):
 class SetUserPasswordForm(SetPasswordForm):
 
     new_password1 = forms.CharField(
-        label=ugettext_lazy("New password"),
+        label=ugettext_noop("New password"),
         widget=forms.PasswordInput(),
     )
 

@@ -48,7 +48,7 @@ class TestLocationDataSource(TestCase):
         self.pillow = get_kafka_ucr_pillow()
         self.pillow.bootstrap(configs=[self.data_source_config])
         with trap_extra_setup(KafkaUnavailableError):
-            self.pillow.get_change_feed().get_current_offsets()
+            self.pillow.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
         self.domain_obj.delete()
@@ -79,7 +79,7 @@ class TestLocationDataSource(TestCase):
         self.assertDataSourceAccurate(["Westworld", "Sweetwater", "Las Mudas"])
 
         # Insert new location
-        since = self.pillow.get_change_feed().get_current_offsets()
+        since = self.pillow.get_change_feed().get_latest_offsets()
         self._make_loc("Blood Arroyo", self.town)
 
         # Change an existing location
@@ -91,7 +91,7 @@ class TestLocationDataSource(TestCase):
         self.assertDataSourceAccurate(["Westworld", "Pariah", "Las Mudas", "Blood Arroyo"])
 
         # Delete a location
-        since = self.pillow.get_change_feed().get_current_offsets()
+        since = self.pillow.get_change_feed().get_latest_offsets()
         las_mudas.delete()
         self.pillow.process_changes(since=since, forever=False)
         # No actual change - deletions are not yet processed

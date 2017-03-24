@@ -66,8 +66,9 @@ def fetch_key_records(request, domain):
     payload = FetchKeyRecords(domain, user_id, last_issued).get_payload()
     device_id = request.GET.get('device_id')
     if device_id and isinstance(request.couch_user, CommCareUser):
-        request.couch_user.update_device_id_last_used(device_id)
-        request.couch_user.save()
+        if not request.couch_user.is_demo_user:
+            request.couch_user.update_device_id_last_used(device_id)
+            request.couch_user.save()
     return HttpResponse(payload)
 
 

@@ -142,13 +142,10 @@ def arbitrary_domain():
 @unit_testing_only
 def arbitrary_commcare_user(domain, is_active=True):
     username = unique_name()
-    try:
-        commcare_user = CommCareUser.create(domain, username, 'test123')
-        commcare_user.is_active = is_active
-        commcare_user.save()
-        return commcare_user
-    except Exception:
-        pass
+    commcare_user = CommCareUser.create(domain, username, 'test123')
+    commcare_user.is_active = is_active
+    commcare_user.save()
+    return commcare_user
 
 
 @unit_testing_only

@@ -5,7 +5,7 @@ from StringIO import StringIO
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
-from django.core.urlresolvers import RegexURLResolver, Resolver404
+from django.urls import RegexURLResolver, Resolver404
 from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string

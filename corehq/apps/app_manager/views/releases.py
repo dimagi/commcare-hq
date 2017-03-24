@@ -241,10 +241,7 @@ def _track_build_for_app_preview(domain, couch_user, app_id, message):
         'domain': domain,
         'app_id': app_id,
         'is_dimagi': couch_user.is_dimagi,
-        'preview_app_enabled': (
-            toggles.PREVIEW_APP.enabled(domain) or
-            toggles.PREVIEW_APP.enabled(couch_user.username)
-        )
+        'preview_app_enabled': True,
     })
 
 

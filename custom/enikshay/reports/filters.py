@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseReportFilter, BaseSingleOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter

@@ -291,7 +291,7 @@ class AbstractCommCareCase(CaseToXMLMixin):
         """
         if identifier in self.case_attachments:
             from dimagi.utils import web
-            from django.core.urlresolvers import reverse
+            from django.urls import reverse
             return "%s%s" % (web.get_url_base(),
                  reverse("api_case_attachment", kwargs={
                      "domain": self.domain,

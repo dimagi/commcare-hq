@@ -1,0 +1,39 @@
+{% load compress %}
+{% load hq_shared_tags %}
+
+{% compress css %}
+  {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
+  <link type="text/css" rel="stylesheet" media="screen" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
+  <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2.css' %}" />
+  <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
+  {% endcompress %}
+
+  {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/font-workflow.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/new_appmanager.debug.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
+    {% else %}
+    {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/font-workflow.less' %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/new_appmanager.less' %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/preview_app.less' %}"/>
+    {% endcompress %}
+  {% endif %}

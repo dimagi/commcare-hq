@@ -6,7 +6,7 @@ These are used in the Beneficiary Payment Report and Conditions Met Report
 import re
 import datetime
 from decimal import Decimal
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.defaultfilters import yesno
 from corehq.apps.reports.datatables import DTSortType
 from custom.opm.constants import InvalidRow, BIRTH_PREP_XMLNS, CHILDREN_FORMS, CFU1_XMLNS, DOMAIN, CFU2_XMLNS, \

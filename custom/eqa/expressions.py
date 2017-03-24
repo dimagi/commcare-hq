@@ -1,6 +1,7 @@
 from corehq.apps.app_manager.models import Application
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.util.quickcache import quickcache
 from dimagi.ext.jsonobject import JsonObject, StringProperty
 
 
@@ -13,7 +14,7 @@ STATUSES = {
     (0, 99): "**Needs improvement**",
     (99, 1): "Satisfactory",
     (1, 99): "Satisfactory",
-    (99, 99): "Other",
+    (99, 99): "N/A",
 }
 
 
@@ -36,6 +37,26 @@ def get_yes_no(val):
         return 'N/A'
 
 
+@quickcache(['item'])
+def get_two_last_forms(item, xmlns):
+    xforms_ids = CaseAccessors(item['domain']).get_case_xform_ids(item['_id'])
+    forms = FormAccessors(item['domain']).get_forms(xforms_ids)
+    f_forms = [f for f in forms if f.xmlns == xmlns]
+    s_forms = sorted(f_forms, key=lambda x: x.received_on)
+
+    if len(s_forms) >= 2:
+        curr_form = s_forms[-1]
+        prev_form = s_forms[-2]
+    elif len(s_forms) == 1:
+        curr_form = s_forms[-1]
+        prev_form = None
+    else:
+        curr_form = None
+        prev_form = None
+
+    return curr_form, prev_form
+
+
 class EQAExpressionSpec(JsonObject):
     type = TypeProperty('eqa_expression')
     question_id = StringProperty()
@@ -43,20 +64,7 @@ class EQAExpressionSpec(JsonObject):
     xmlns = StringProperty()
 
     def __call__(self, item, context=None):
-        xforms_ids = CaseAccessors(item['domain']).get_case_xform_ids(item['_id'])
-        forms = FormAccessors(item['domain']).get_forms(xforms_ids)
-        f_forms = [f for f in forms if f.xmlns == self.xmlns]
-        s_forms = sorted(f_forms, key=lambda x: x.received_on)
-
-        if len(s_forms) >= 2:
-            curr_form = s_forms[-1]
-            prev_form = s_forms[-2]
-        elif len(s_forms) == 1:
-            curr_form = s_forms[-1]
-            prev_form = None
-        else:
-            curr_form = None
-            prev_form = None
+        curr_form, prev_form = get_two_last_forms(item, self.xmlns)
 
         path_question = 'form/%s' % self.question_id
 
@@ -68,7 +76,7 @@ class EQAExpressionSpec(JsonObject):
             'display_text': self.display_text,
             'current_submission': get_yes_no(curr_ques),
             'previous_submission': get_yes_no(prev_ques),
-            'status': STATUSES.get((curr_ques, prev_ques))
+            'status': STATUSES.get((curr_ques, prev_ques), "N/A")
         }
 
 
@@ -129,6 +137,38 @@ class EQAActionItemSpec(JsonObject):
                     }
 
 
+class EQAPercentExpression(JsonObject):
+    type = TypeProperty('eqa_percent_expression')
+    question_id = StringProperty()
+    display_text = StringProperty()
+    xmlns = StringProperty()
+
+    def __call__(self, item, context=None):
+        curr_form, prev_form = get_two_last_forms(item, self.xmlns)
+
+        path_question = 'form/%s' % self.question_id
+
+        curr_ques = get_val(curr_form, path_question, -1)
+        prev_ques = get_val(prev_form, path_question, -1)
+
+        if curr_ques == -1 or prev_ques == -1:
+            status = "N/A"
+        elif curr_ques > prev_ques:
+            status = "Improved"
+        elif curr_ques < prev_ques:
+            status = "Declined"
+        else:
+            status = "Satisfactory"
+
+        return {
+            'question_id': self.question_id,
+            'display_text': self.display_text,
+            'current_submission': "%d%%" % curr_ques if curr_ques != -1 else "N/A",
+            'previous_submission': "%d%%" % prev_ques if prev_ques != -1 else "N/A",
+            'status': status
+        }
+
+
 def eqa_expression(spec, context):
     wrapped = EQAExpressionSpec.wrap(spec)
     return wrapped
@@ -136,4 +176,9 @@ def eqa_expression(spec, context):
 
 def cqi_action_item(spec, context):
     wrapped = EQAActionItemSpec.wrap(spec)
+    return wrapped
+
+
+def eqa_percent_expression(spec, context):
+    wrapped = EQAPercentExpression.wrap(spec)
     return wrapped

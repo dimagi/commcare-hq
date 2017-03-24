@@ -2,7 +2,7 @@ from collections import OrderedDict
 from functools import partial
 
 from django.template.loader import render_to_string
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django import template
 from django.utils.html import format_html
 from couchdbkit.exceptions import ResourceNotFound

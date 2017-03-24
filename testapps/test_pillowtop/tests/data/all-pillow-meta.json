@@ -285,5 +285,19 @@
         "checkpoint_id": "kafka-ucr-static",
         "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
         "name": "kafka-ucr-static"
+    },
+    "kafka-ucr-static-08": {
+        "advertised_name": "kafka-ucr-static-08",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "kafka-ucr-static-08",
+        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
+        "name": "kafka-ucr-static-08"
+    },
+    "kafka-ucr-static-9f": {
+        "advertised_name": "kafka-ucr-static-9f",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "kafka-ucr-static-9f",
+        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
+        "name": "kafka-ucr-static-9f"
     }
 }

@@ -2,7 +2,7 @@ from datetime import datetime
 import dateutil
 import warnings
 from django.core.cache import cache
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util

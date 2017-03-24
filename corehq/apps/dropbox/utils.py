@@ -1,7 +1,7 @@
 from dropbox.client import DropboxOAuth2Flow
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from dimagi.utils.web import get_url_base
 

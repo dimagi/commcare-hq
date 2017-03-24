@@ -1,27 +1,28 @@
 /* globals LOAD_LOCS_URL, REQUIRED */
 
-function api_get_children(loc_uuid, callback) {
+function api_get_children(loc_uuid, callback, loc_url) {
     var params = (loc_uuid ? {parent_id: loc_uuid} : {});
     $('#loc_ajax').show().removeClass('hide');
-    $.getJSON(LOAD_LOCS_URL, params, function(allData) {
+    $.getJSON(loc_url, params, function(allData) {
         $('#loc_ajax').hide().addClass('hide');
         callback(allData.objects);
     });
 }
 
-function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_filter, func, show_location_filter) {
+function LocationSelectViewModel(options) {
     var model = this;
 
-    this.default_caption = default_caption || 'All';
-    this.auto_drill = (_.isBoolean(auto_drill) ? auto_drill : true);
-    this.loc_filter = loc_filter || function(loc) { return true; };
-    this.func = typeof func !== 'undefined' ? func : LocationModel;
-    this.show_location_filter = ko.observable((typeof show_location_filter !== 'undefined') ? show_location_filter : 'y');
+    this.loc_url = options.loc_url;
+    this.default_caption = options.default_caption || 'All';
+    this.auto_drill = (_.isBoolean(options.auto_drill) ? options.auto_drill : true);
+    this.loc_filter = options.loc_filter || function(loc) { return true; };
+    this.func = typeof options.func !== 'undefined' ? options.func : LocationModel;
+    this.show_location_filter = ko.observable((typeof options.show_location_filter !== 'undefined') ? options.show_location_filter : 'y');
 
     this.root = ko.observable();
     this.selected_path = ko.observableArray();
 
-    this.location_types = $.map(hierarchy, function(e) {
+    this.location_types = $.map(options.hierarchy, function(e) {
         return {type: e[0], allowed_parents: e[1]};
     });
 
@@ -192,7 +193,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
         api_get_children(this.uuid(), function(resp) {
             loc.set_children(resp);
             callback(loc);
-        });
+        }, root.loc_url);
     };
 
     //warning: duplicate code with location_tree.async.js

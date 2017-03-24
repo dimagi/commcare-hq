@@ -1,17 +1,16 @@
-from datetime import datetime
-
 from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.util.doc_processor.interface import DocumentProvider
 from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider
 
 
 class SqlModelArgsProvider(ArgsProvider):
-    def __init__(self, model_filter_attribute):
+    def __init__(self, model_filter_attribute, model_attribute_min_value, db_list):
         self.model_filter_attribute = model_filter_attribute
-        self.db_list = get_sql_db_aliases_in_use()
+        self.model_attribute_min_value = model_attribute_min_value
+        self.db_list = db_list
 
     def get_initial_args(self):
-        return [self.db_list[0], datetime.min, None], {}
+        return [self.db_list[0], self.model_attribute_min_value, None], {}
 
     def get_next_args(self, result, *last_args, **last_view_kwargs):
         if result:
@@ -28,7 +27,7 @@ class SqlModelArgsProvider(ArgsProvider):
             except IndexError:
                 raise StopIteration
 
-            return [next_db, datetime.min, None], {}
+            return [next_db, self.model_attribute_min_value, None], {}
 
 
 def resumable_sql_model_iterator(iteration_key, reindex_accessor, chunk_size=100, event_handler=None):
@@ -52,7 +51,16 @@ def resumable_sql_model_iterator(iteration_key, reindex_accessor, chunk_size=100
     def data_function(from_db, filter_value, last_id):
         return reindex_accessor.get_docs(from_db, filter_value, last_id, limit=chunk_size)
 
-    args_provider = SqlModelArgsProvider(reindex_accessor.startkey_attribute_name)
+    if reindex_accessor.is_sharded():
+        db_list = get_sql_db_aliases_in_use()
+    else:
+        db_list = ['default']
+
+    args_provider = SqlModelArgsProvider(
+        reindex_accessor.startkey_attribute_name,
+        reindex_accessor.startkey_min_value,
+        db_list,
+    )
 
     class ResumableModelIterator(ResumableFunctionIterator):
         def __iter__(self):

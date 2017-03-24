@@ -1,7 +1,7 @@
 import json
 from collections import Counter
 from couchdbkit.exceptions import ResourceNotFound
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, \

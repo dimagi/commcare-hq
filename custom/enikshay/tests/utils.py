@@ -171,7 +171,7 @@ class ENikshayLocationStructureMixin(object):
         self.domain = getattr(self, 'domain', 'fake-domain-from-mixin')
         self.project = Domain(name=self.domain)
         self.project.save()
-        locations = self._setup_enikshay_locations(self.domain)
+        _, locations = setup_enikshay_locations(self.domain)
         self.sto = locations['STO']
         self.sto.metadata = {
             'nikshay_code': 'MH',
@@ -219,41 +219,42 @@ class ENikshayLocationStructureMixin(object):
             )
         )[0]
 
-    def _setup_enikshay_locations(self, domain_name):
-        location_type_structure = [
-            LocationTypeStructure('ctd', [
-                LocationTypeStructure('sto', [
-                    LocationTypeStructure('cto', [
-                        LocationTypeStructure('dto', [
-                            LocationTypeStructure('tu', [
-                                LocationTypeStructure('phi', []),
-                                LocationTypeStructure('dmc', []),
-                            ]),
-                            LocationTypeStructure('drtb-hiv', []),
-                        ])
-                    ]),
-                    LocationTypeStructure('drtb', []),
-                    LocationTypeStructure('cdst', []),
-                ])
-            ])
-        ]
-        location_structure = [
-            LocationStructure('CTD', 'ctd', [
-                LocationStructure('STO', 'sto', [
-                    LocationStructure('CTO', 'cto', [
-                        LocationStructure('DTO', 'dto', [
-                            LocationStructure('TU', 'tu', [
-                                LocationStructure('PHI', 'phi', []),
-                                LocationStructure('DMC', 'dmc', []),
-                            ]),
-                            LocationStructure('DRTB-HIV', 'drtb-hiv', []),
-                        ])
-                    ]),
-                    LocationStructure('DRTB', 'drtb', []),
-                    LocationStructure('CDST', 'cdst', []),
-                ])
-            ])
-        ]
 
-        setup_location_types_with_structure(domain_name, location_type_structure)
-        return setup_locations_with_structure(domain_name, location_structure)
+def setup_enikshay_locations(domain_name):
+    location_type_structure = [
+        LocationTypeStructure('ctd', [
+            LocationTypeStructure('sto', [
+                LocationTypeStructure('cto', [
+                    LocationTypeStructure('dto', [
+                        LocationTypeStructure('tu', [
+                            LocationTypeStructure('phi', []),
+                            LocationTypeStructure('dmc', []),
+                        ]),
+                        LocationTypeStructure('drtb-hiv', []),
+                    ])
+                ]),
+                LocationTypeStructure('drtb', []),
+                LocationTypeStructure('cdst', []),
+            ])
+        ])
+    ]
+    location_structure = [
+        LocationStructure('CTD', 'ctd', [
+            LocationStructure('STO', 'sto', [
+                LocationStructure('CTO', 'cto', [
+                    LocationStructure('DTO', 'dto', [
+                        LocationStructure('TU', 'tu', [
+                            LocationStructure('PHI', 'phi', []),
+                            LocationStructure('DMC', 'dmc', []),
+                        ]),
+                        LocationStructure('DRTB-HIV', 'drtb-hiv', []),
+                    ])
+                ]),
+                LocationStructure('DRTB', 'drtb', []),
+                LocationStructure('CDST', 'cdst', []),
+            ])
+        ])
+    ]
+
+    return (setup_location_types_with_structure(domain_name, location_type_structure),
+            setup_locations_with_structure(domain_name, location_structure))
