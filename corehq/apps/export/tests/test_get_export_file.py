@@ -46,7 +46,7 @@ from corehq.apps.export.tests.util import (
 from corehq.elastic import send_to_elasticsearch, get_es_new
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
+from corehq.util.test_utils import trap_extra_setup, flag_enabled
 from couchexport.export import get_writer
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
@@ -127,6 +127,53 @@ class WriterTest(SimpleTestCase):
                         u'headers': [u'Q3', u'Q1'],
                         u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
 
+                    }
+                }
+            )
+
+    @patch('corehq.apps.export.export.MAX_EXPORTABLE_ROWS', 2)
+    @flag_enabled('PAGINATED_EXPORTS')
+    def test_paginated_table(self):
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            tables=[
+                TableConfiguration(
+                    label="My table",
+                    selected=True,
+                    columns=[
+                        ExportColumn(
+                            label="Q3",
+                            item=ScalarItem(
+                                path=[PathNode(name='form'), PathNode(name='q3')],
+                            ),
+                            selected=True
+                        ),
+                        ExportColumn(
+                            label="Q1",
+                            item=ScalarItem(
+                                path=[PathNode(name='form'), PathNode(name='q1')],
+                            ),
+                            selected=True
+                        ),
+                    ]
+                )
+            ]
+        )
+        writer = _get_writer([export_instance])
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, self.docs + self.docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export.read()),
+                {
+                    u'My table_000': {
+                        u'headers': [u'Q3', u'Q1'],
+                        u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
+                    },
+                    u'My table_001': {
+                        u'headers': [u'Q3', u'Q1'],
+                        u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
                     }
                 }
             )
