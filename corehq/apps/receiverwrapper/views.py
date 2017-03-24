@@ -66,7 +66,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             "form_meta": meta,
         }
         log_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, details)
-        notify_exception(None, "Received a submission with POST.keys()", details)
+        notify_exception(request, "Received a submission with POST.keys()", details)
         return HttpResponseBadRequest(e.message)
 
     app_id, build_id = get_app_and_build_ids(domain, app_id)
