@@ -5,11 +5,20 @@ from corehq.apps.hqadmin.history import download_changes
 
 class Command(BaseCommand):
     help = "Gets recent changes and prints them out in a csv format"
-    args = "(number of changes) (filename)"
-    label = ""
 
-    def handle(self, *args, **options):
-        limit = int(args[0]) if args else 500
-        file = args[1] if len(args) > 1 else 'database_changes.csv'
-        with open(file, 'wb') as f:
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'limit',
+            default=500,
+            nargs='?',
+            type=int,
+        )
+        parser.add_argument(
+            'filename',
+            default='database_changes.csv',
+            nargs='?',
+        )
+
+    def handle(self, limit, filename, **options):
+        with open(filename, 'wb') as f:
             download_changes(get_db(), limit, f)

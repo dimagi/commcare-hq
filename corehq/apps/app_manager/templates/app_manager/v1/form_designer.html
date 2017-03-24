@@ -124,6 +124,14 @@
                 },
                 topOffset: function () {
                     return $('#hq-navigation').outerHeight();
+                },
+                toggleFullScreenCallback: function (isFullscreen) {
+                  var $preview = $('#js-appmanager-preview');
+                  if (isFullscreen) {
+                    $preview.addClass('fullscreen');
+                  } else {
+                    $preview.removeClass('fullscreen');
+                  }
                 }
             },
             csrftoken: $.cookie('csrftoken')

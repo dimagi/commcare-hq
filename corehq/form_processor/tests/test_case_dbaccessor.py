@@ -56,13 +56,6 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(case1.case_id, cases[0].case_id)
         self.assertEqual(case2.case_id, cases[1].case_id)
 
-    def test_case_modified_since(self):
-        case = _create_case()
-
-        self.assertFalse(CaseAccessorSQL.case_modified_since(case.case_id, case.server_modified_on))
-
-        self.assertTrue(CaseAccessorSQL.case_modified_since(case.case_id, datetime.utcnow()))
-
     def test_get_case_xform_ids(self):
         form_id1 = uuid.uuid4().hex
         case = _create_case(form_id=form_id1)
@@ -601,15 +594,6 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(case.case_id, case2.case_id)
 
         self.assertEqual([], CaseAccessorSQL.get_cases_by_external_id('d2', '123', case_type='t2'))
-
-    def test_get_case_types_for_domain(self):
-        case_types = {'c1', 'c2', 'c3'}
-        for type_ in case_types:
-            for i in range(3):
-                _create_case(case_type=type_)
-
-        types = CaseAccessorSQL.get_case_types_for_domain(DOMAIN)
-        self.assertEqual(case_types, types)
 
     def test_closed_transactions(self):
         case = _create_case()

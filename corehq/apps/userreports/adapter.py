@@ -57,3 +57,7 @@ class IndicatorAdapter(object):
 
     def delete(self, doc):
         raise NotImplementedError
+
+    @property
+    def run_asynchronous(self):
+        return self.config.asynchronous

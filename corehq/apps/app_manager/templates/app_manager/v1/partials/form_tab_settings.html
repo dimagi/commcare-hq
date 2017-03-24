@@ -64,10 +64,12 @@
 
             </div>
 
+            {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
             {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
                 {% include "app_manager/v1/partials/custom_instances.html" %}
             {% endif %}
 
+            {{ request|toggle_tag_info:"NO_VELLUM" }}
             {% if request|toggle_enabled:'NO_VELLUM' %}
             <div class="form-group">
                 <label class="control-label col-sm-2">

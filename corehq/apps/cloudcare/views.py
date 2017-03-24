@@ -481,8 +481,6 @@ def get_cases_skip_arg(request, domain):
     The caching is mainly a hack for touchforms to respond more quickly. Touchforms makes repeated requests to
     get the list of case_ids associated with a user.
     """
-    if not toggles.CLOUDCARE_CACHE.enabled(domain):
-        return True
     request_params = request.GET
     return (not string_to_boolean(request_params.get('use_cache', 'false')) or
         not string_to_boolean(request_params.get('ids_only', 'false')))
@@ -505,17 +503,6 @@ def get_cases(request, domain):
     case_id = request_params.get("case_id", "")
     footprint = string_to_boolean(request_params.get("footprint", "false"))
     accessor = CaseAccessors(domain)
-
-    if toggles.HSPH_HACK.enabled(domain):
-        hsph_case_id = request_params.get('hsph_hack', None)
-        if hsph_case_id != 'None' and hsph_case_id and user_id:
-            case = accessor.get_case(hsph_case_id)
-            usercase_id = CommCareUser.get_by_user_id(user_id).get_usercase_id()
-            usercase = accessor.get_case(usercase_id) if usercase_id else None
-            return json_response(map(
-                lambda case: CaseAPIResult(domain=domain, id=case['_id'], couch_doc=case, id_only=ids_only),
-                filter(None, [case, case.parent, usercase])
-            ))
 
     if case_id and not footprint:
         # short circuit everything else and just return the case

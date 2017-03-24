@@ -330,12 +330,12 @@ class FundamentalCaseTests(TestCase):
             </data>
         """
         with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False):
-            _, xform, _ = submit_form_locally(form.format(form_id=form_id), 'domain1')
+            xform = submit_form_locally(form.format(form_id=form_id), 'domain1').xform
             self.assertEqual(form_id, xform.form_id)
 
         with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
             # form with duplicate ID submitted to different domain gets a new ID
-            _, xform, _ = submit_form_locally(form.format(form_id=form_id), 'domain2')
+            xform = submit_form_locally(form.format(form_id=form_id), 'domain2').xform
             self.assertNotEqual(form_id, xform.form_id)
 
     def test_globally_unique_case_id(self):

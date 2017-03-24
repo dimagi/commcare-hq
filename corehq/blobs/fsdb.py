@@ -75,7 +75,16 @@ class FilesystemBlobDB(AbstractBlobDB):
         return success
 
     def copy_blob(self, content, info, bucket):
-        raise NotImplementedError
+        path = self.get_path(info.identifier, bucket)
+        dirpath = dirname(path)
+        if not isdir(dirpath):
+            os.makedirs(dirpath)
+        with openfile(path, "xb") as fh:
+            while True:
+                chunk = content.read(CHUNK_SIZE)
+                if not chunk:
+                    break
+                fh.write(chunk)
 
     def get_path(self, identifier=None, bucket=DEFAULT_BUCKET):
         bucket_path = safejoin(self.rootdir, bucket)

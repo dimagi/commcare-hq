@@ -111,6 +111,13 @@
         "full_class_name": "custom.intrahealth.models.IntraHealthFluffPillow",
         "name": "IntraHealthFluffPillow"
     },
+    "IntraHealthFormFluffPillow": {
+        "advertised_name": "IntraHealthFormFluffPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "fluff.IntraHealthFormFluffPillow.testhq",
+        "full_class_name": "custom.intrahealth.models.IntraHealthFormFluffPillow",
+        "name": "IntraHealthFormFluffPillow"
+    },
     "KafkaDomainPillow": {
         "advertised_name": "KafkaDomainPillow",
         "change_feed_type": "KafkaChangeFeed",
@@ -124,13 +131,6 @@
         "checkpoint_id": "LedgerToElasticsearchPillow-test_ledgers_2016-03-15",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "LedgerToElasticsearchPillow"
-    },
-    "LivraisonFluffPillow": {
-        "advertised_name": "LivraisonFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.LivraisonFluffPillow.testhq",
-        "full_class_name": "custom.intrahealth.models.LivraisonFluffPillow",
-        "name": "LivraisonFluffPillow"
     },
     "M4ChangeFormFluffPillow": {
         "advertised_name": "M4ChangeFormFluffPillow",
@@ -160,13 +160,6 @@
         "full_class_name": "custom.opm.models.OpmUserFluffPillow",
         "name": "OpmUserFluffPillow"
     },
-    "RecapPassageFluffPillow": {
-        "advertised_name": "RecapPassageFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.RecapPassageFluffPillow.testhq",
-        "full_class_name": "custom.intrahealth.models.RecapPassageFluffPillow",
-        "name": "RecapPassageFluffPillow"
-    },
     "RecouvrementFluffPillow": {
         "advertised_name": "RecouvrementFluffPillow",
         "change_feed_type": "KafkaChangeFeed",
@@ -194,20 +187,6 @@
         "checkpoint_id": "SqlSMSPillow-test_smslogs_2017-02-09",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "SqlSMSPillow"
-    },
-    "TauxDeRuptureFluffPillow": {
-        "advertised_name": "TauxDeRuptureFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.TauxDeRuptureFluffPillow.testhq",
-        "full_class_name": "custom.intrahealth.models.TauxDeRuptureFluffPillow",
-        "name": "TauxDeRuptureFluffPillow"
-    },
-    "TauxDeSatisfactionFluffPillow": {
-        "advertised_name": "TauxDeSatisfactionFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.TauxDeSatisfactionFluffPillow.testhq",
-        "full_class_name": "custom.intrahealth.models.TauxDeSatisfactionFluffPillow",
-        "name": "TauxDeSatisfactionFluffPillow"
     },
     "UCLAPatientFluffPillow": {
         "advertised_name": "UCLAPatientFluffPillow",
@@ -286,11 +265,39 @@
         "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
         "name": "kafka-ucr-main"
     },
+    "kafka-ucr-main-08": {
+        "advertised_name": "kafka-ucr-main-08",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "kafka-ucr-main-08",
+        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
+        "name": "kafka-ucr-main-08"
+    },
+    "kafka-ucr-main-9f": {
+        "advertised_name": "kafka-ucr-main-9f",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "kafka-ucr-main-9f",
+        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
+        "name": "kafka-ucr-main-9f"
+    },
     "kafka-ucr-static": {
         "advertised_name": "kafka-ucr-static",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "kafka-ucr-static",
         "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
         "name": "kafka-ucr-static"
+    },
+    "kafka-ucr-static-08": {
+        "advertised_name": "kafka-ucr-static-08",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "kafka-ucr-static-08",
+        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
+        "name": "kafka-ucr-static-08"
+    },
+    "kafka-ucr-static-9f": {
+        "advertised_name": "kafka-ucr-static-9f",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "kafka-ucr-static-9f",
+        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
+        "name": "kafka-ucr-static-9f"
     }
 }

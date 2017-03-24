@@ -21,7 +21,7 @@ class FluffPreindexPlugin(PreindexPlugin):
         designs = []
         for config in get_fluff_pillow_configs():
             pillow = config.get_instance()
-            for processor in pillow._processors:
+            for processor in pillow.processors:
                 app_label = processor.indicator_class._meta.app_label
                 designs.append(DesignInfo(
                     app_label=self.app_label,

@@ -260,7 +260,15 @@
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
                      <p class="alert alert-warning">
-@@ -477,7 +455,7 @@
+@@ -433,7 +411,6 @@
+                         {% block usercase_management_content %}
+                             {%  if form.uses_usercase and not allow_usercase %}
+                                 <div class="container-fluid col-sm-6">
+-                              {{ request|toggle_tag_info:"USER_PROPERTY_EASY_REFS" }}
+                               {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+                                 <p>{% blocktrans %}
+                                     The User Properties feature is no longer available because of the change in your
+@@ -478,7 +455,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -269,7 +277,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -490,23 +468,25 @@
+@@ -491,23 +468,25 @@
                      </p>
                  {% endif %}
              </div>

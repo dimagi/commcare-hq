@@ -433,6 +433,7 @@
                         {% block usercase_management_content %}
                             {%  if form.uses_usercase and not allow_usercase %}
                                 <div class="container-fluid col-sm-6">
+                              {{ request|toggle_tag_info:"USER_PROPERTY_EASY_REFS" }}
                               {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                                 <p>{% blocktrans %}
                                     The User Properties feature is no longer available because of the change in your

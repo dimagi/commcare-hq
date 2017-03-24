@@ -59,31 +59,21 @@ from .models import (
     ReportNotification,
     UnsupportedScheduledReportError,
 )
-from .scheduled import get_scheduled_reports
+from .scheduled import get_scheduled_report_ids
 
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = 60 * 60 * 24
 
 
-def send_delayed_report(report):
+def send_delayed_report(report_id):
     """
     Sends a scheduled report, via  celery background task.
     """
-    send_report.apply_async(args=[report._id], queue=get_report_queue(report))
+    send_report.delay(report_id)
 
 
-def get_report_queue(report):
-    # This is a super-duper hacky, hard coded way to deal with the fact that MVP reports
-    # consistently crush the celery queue for everyone else.
-    # Just send them to their own longrunning background queue
-    if report.domain in get_mvp_domains():
-        return 'background_queue'
-    else:
-        return 'celery'
-
-
-@task(ignore_result=True)
+@task(queue='background_queue', ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
     try:
@@ -115,8 +105,8 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
 def daily_reports():
-    for rep in get_scheduled_reports('daily'):
-        send_delayed_report(rep)
+    for report_id in get_scheduled_report_ids('daily'):
+        send_delayed_report(report_id)
 
 
 @periodic_task(
@@ -124,8 +114,8 @@ def daily_reports():
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
 def weekly_reports():
-    for rep in get_scheduled_reports('weekly'):
-        send_delayed_report(rep)
+    for report_id in get_scheduled_report_ids('weekly'):
+        send_delayed_report(report_id)
 
 
 @periodic_task(
@@ -133,8 +123,8 @@ def weekly_reports():
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
 def monthly_reports():
-    for rep in get_scheduled_reports('monthly'):
-        send_delayed_report(rep)
+    for report_id in get_scheduled_report_ids('monthly'):
+        send_delayed_report(report_id)
 
 
 @periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
@@ -185,7 +175,7 @@ def update_calculated_properties():
                 del props['cp_last_form']
             if props['cp_300th_form'] is None:
                 del props['cp_300th_form']
-            send_to_elasticsearch("domains", props)
+            send_to_elasticsearch("domains", props, es_merge_update=True)
         except Exception as e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 

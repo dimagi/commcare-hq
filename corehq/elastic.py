@@ -54,7 +54,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     return get_es_new().exists(index_info.index, index_info.type, doc_id)
 
 
-def send_to_elasticsearch(index_name, doc, delete=False):
+def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
     """
     Utility method to update the doc in elasticsearch.
     Duplicates the functionality of pillowtop but can be called directly.
@@ -75,6 +75,7 @@ def send_to_elasticsearch(index_name, doc, delete=False):
         except_on_failure=True,
         update=doc_exists,
         delete=delete,
+        es_merge_update=es_merge_update,
     )
 
 EsMeta = namedtuple('EsMeta', 'index, type')

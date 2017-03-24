@@ -64,8 +64,14 @@
                         {% case "no modules" %}
                             This application has no modules.
                         {% case "missing module" %}
+                            {% blocktrans %}
                             This application is missing a module. If you have deleted any modules recently, make sure that
                             you have removed all references to them. If you continue to experience problems, please report an issue.
+                            {% endblocktrans %}
+                            {% if error.message %}
+                            <br/>{% trans "Details:" %}<br/>
+                            {{ error.message }}
+                            {% endif %}
                         {% case "no forms" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>

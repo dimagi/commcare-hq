@@ -26,6 +26,11 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         cls._generate_invoices()
 
     @classmethod
+    def tearDownClass(cls):
+        cls.non_autopay_domain.delete()
+        super(TestBillingAutoPay, cls).tearDownClass()
+
+    @classmethod
     def _generate_autopayable_entities(cls):
         """
         Create account, domain and subscription linked to the autopay user that have autopay enabled

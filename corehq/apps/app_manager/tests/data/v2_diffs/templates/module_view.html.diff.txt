@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -11,104 +11,111 @@
+@@ -19,104 +19,111 @@
      <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
      <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
      <script src="{% static 'app_manager/js/module-view.js' %}"></script>
@@ -24,15 +24,20 @@
      <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
  
      {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
-         {% for detail in details %}
-             {% if detail.type == 'case' %}
--                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+-      {% for detail in details %}
+-          {% if detail.type == 'case' %}
+-              {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+-          {% else %}
+-              {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+-          {% endif %}
+-      {% endfor %}
++        {% for detail in details %}
++            {% if detail.type == 'case' %}
 +                {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
-             {% else %}
--                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
++            {% else %}
 +                {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
-             {% endif %}
-         {% endfor %}
++            {% endif %}
++        {% endfor %}
      {% endif %}
  
      {% if case_list_form_options %}
@@ -194,7 +199,7 @@
  <script type="text/html" id="module-forms-template">
      <div class="checkbox">
          <label>
-@@ -122,10 +129,10 @@
+@@ -130,10 +137,10 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}

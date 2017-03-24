@@ -278,6 +278,8 @@ HQ_APPS = (
     'corehq.apps.sms',
     'corehq.apps.smsforms',
     'corehq.apps.ivr',
+    'corehq.messaging.scheduling',
+    'corehq.messaging.scheduling.scheduling_partitioned',
     'corehq.messaging.smsbackends.tropo',
     'corehq.messaging.smsbackends.twilio',
     'corehq.apps.dropbox',
@@ -296,7 +298,7 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.messaging.smsbackends.unicel',
     'corehq.messaging.smsbackends.icds_nic',
-    'corehq.apps.reports',
+    'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
     'corehq.apps.data_interfaces',
@@ -1575,11 +1577,49 @@ PILLOWTOPS = {
             'name': 'kafka-ucr-main',
             'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
+            'name': 'kafka-ucr-main-08',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+            'params': {
+                'ucr_division': '08'
+            }
+        },
+        {
+            'name': 'kafka-ucr-main-9f',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+            'params': {
+                'ucr_division': '9f'
+            }
         },
         {
             'name': 'kafka-ucr-static',
             'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
+            'name': 'kafka-ucr-static-08',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
+            'params': {
+                'ucr_division': '08'
+            }
+        },
+        {
+            'name': 'kafka-ucr-static-9f',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
+            'params': {
+                'ucr_division': '9f'
+            }
         },
         {
             'name': 'ReportCaseToElasticsearchPillow',
@@ -1614,11 +1654,8 @@ PILLOWTOPS = {
         'custom.opm.models.OpmUserFluffPillow',
         'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.CouvertureFluffPillow',
-        'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassageFluffPillow',
-        'custom.intrahealth.models.TauxDeRuptureFluffPillow',
-        'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.intrahealth.models.IntraHealthFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
@@ -1675,7 +1712,9 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsTreatmentOutcomeRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater'
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
@@ -1756,7 +1795,8 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patient_overview_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patients_due_to_follow_up.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_treatment_outcome_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_treatment_outcome.json')
 ]
 
 
@@ -1858,9 +1898,12 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
+    ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
     ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
-    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression')
+    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression'),
+    ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
+    ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [

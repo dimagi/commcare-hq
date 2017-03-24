@@ -20,7 +20,7 @@ from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
-from corehq.apps.userreports.const import UCR_SQL_BACKEND
+from corehq.apps.userreports.const import UCR_SQL_BACKEND, VALID_REFERENCED_DOC_TYPES
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
     get_report_configs_for_domain, get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -94,6 +94,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     meta = SchemaProperty(DataSourceMeta)
     is_deactivated = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
+    asynchronous = BooleanProperty(default=False)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -286,6 +287,10 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             for column in set(columns):
                 columns.remove(column)
             raise BadSpecError(_('Report contains duplicate column ids: {}').format(', '.join(set(columns))))
+
+        if self.referenced_doc_type not in VALID_REFERENCED_DOC_TYPES:
+            raise BadSpecError(
+                _('Report contains invalid referenced_doc_type: {}').format(self.referenced_doc_type))
 
         self.parsed_expression
 
