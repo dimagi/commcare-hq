@@ -56,8 +56,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn(_("Username"), prop_name='username.exact'),
-            DataTablesColumn(_("Last Submission"), prop_name='reporting_metadata.last_submissions.submission_date'),
-            DataTablesColumn(_("Last Sync"),  sortable=False),
+            DataTablesColumn(_("Last Submission"),
+                             prop_name='reporting_metadata.last_submissions.submission_date'),
+            DataTablesColumn(_("Last Sync"), sortable=False),
             DataTablesColumn(_("Application"),
                              help_text=_("Displays application of last submitted form"),
                              prop_name='reporting_metadata.last_submissions.app_id'),
@@ -96,7 +97,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 filters.term('reporting_metadata.last_submissions.app_id', self.selected_app_id)
             )
         return user_query.run()
-
 
     @property
     def total_records(self):
@@ -149,7 +149,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             build_version = _get_build_version(app_version_info_to_use)
 
             rows.append([
-                user_display_string(user.get('username', ''), user.get('first_name', ''), user.get('last_name', '')),
+                user_display_string(user.get('username', ''),
+                                    user.get('first_name', ''),
+                                    user.get('last_name', '')),
                 _fmt_date(last_seen, False), _fmt_date(last_sync, False),
                 app_name or "---", build_version, commcare_version
             ])
@@ -337,7 +339,7 @@ def _fmt_date(date, include_sort_key=True):
         text = u'<span class="{cls}">{text}</span>'.format(
                 cls=_timedelta_class(datetime.utcnow() - date),
                 text=_(_naturaltime_with_hover(date)),
-            )
+        )
     if include_sort_key:
         return format_datatables_data(text, _get_sort_key(date))
     else:
