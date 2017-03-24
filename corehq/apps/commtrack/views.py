@@ -2,7 +2,7 @@ import json
 import copy
 
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop

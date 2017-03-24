@@ -1,7 +1,7 @@
 from collections import namedtuple
 import cgi
 from django.db.models import Q, Count
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _

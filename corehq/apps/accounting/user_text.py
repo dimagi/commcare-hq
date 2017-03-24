@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy as _, ugettext
 from corehq.apps.accounting.models import (

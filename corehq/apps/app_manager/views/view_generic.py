@@ -1,6 +1,6 @@
 from django.http import Http404
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.shortcuts import render
 from corehq.apps.app_manager.const import APP_V1
 

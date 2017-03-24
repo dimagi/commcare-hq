@@ -12,7 +12,7 @@ from tastypie.utils import dict_strip_unicode_keys
 from collections import namedtuple
 
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from tastypie import fields
 from tastypie.bundle import Bundle

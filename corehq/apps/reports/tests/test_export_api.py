@@ -2,7 +2,7 @@ from datetime import datetime
 import time
 import uuid
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test.client import Client
 from django.test import SimpleTestCase
 

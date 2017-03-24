@@ -14537,11 +14537,11 @@ msgid "Messages"
 msgstr ""
 
 #: corehq/apps/export/models/new.py:2101
-msgid "{}: latitude (meters)"
+msgid "{}: latitude (degrees)"
 msgstr ""
 
 #: corehq/apps/export/models/new.py:2102
-msgid "{}: longitude (meters)"
+msgid "{}: longitude (degrees)"
 msgstr ""
 
 #: corehq/apps/export/models/new.py:2103

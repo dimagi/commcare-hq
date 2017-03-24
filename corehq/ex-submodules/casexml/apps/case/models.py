@@ -13,7 +13,6 @@ import logging
 
 from django.core.cache import cache
 from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
 

@@ -173,6 +173,18 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "known_patient_contact": "Contact of known TB patient",
+                        "prison_inmate": "Prison inmate",
+                        "miner": "Miner",
+                        "migrant": "Migrant",
+                        "refugee": "Refugee",
+                        "slum_dweller": "Slum dweller",
+                        "health_care_worker": "Health care worker",
+                        "tribal_population": "Tribal population",
+                        "other": "Other"
+                    }
                 },
                 "calculate_total": false
             },
@@ -193,7 +205,7 @@
                         "treatment_after_failure": "Treatment After Failure",
                         "treatment_after_lfu": "Treatment After Loss to Follow-up",
                         "transfer_in": "Transferred In",
-                        "other_previously_treated": "Others Previously Treated"
+                        "other_previously_treated": "Other Previously Treated"
                     }
                 },
                 "calculate_total": false
@@ -319,6 +331,12 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "reactive": "Reactive",
+                        "non_reactive": "Non-Reactive",
+                        "unknown": "Unknown"
+                    }
                 },
                 "calculate_total": false
             },
@@ -331,6 +349,12 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "diabetic": "Diabetic",
+                        "non_diabetic": "Non-diabetic",
+                        "unknown": "Unknown"
+                    }
                 },
                 "calculate_total": false
             },
@@ -511,6 +535,16 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "cured": "Cured",
+                        "treatment_complete": "Treatment complete",
+                        "died": "Patient died",
+                        "failure": "Treatment Failure",
+                        "loss_to_follow_up": "Loss to follow up",
+                        "regimen_changed": "Regimen changed (switched to CAT4)",
+                        "not_evaluated": "Not evaluated"
+                    }
                 },
                 "calculate_total": false
             },
@@ -619,6 +653,17 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "tbhv": "TBHV",
+                        "asha": "ASHA",
+                        "aww": "AWW",
+                        "private_medical_pracitioner": "Private Medical Practitioner",
+                        "health_worker": "Health worker",
+                        "ngo_volunteer": "NGO volunteer",
+                        "other_community_volunteer": "Other community volunteer",
+                        "patient_family_member": "Patient's family member"
+                    }
                 },
                 "calculate_total": false
             }

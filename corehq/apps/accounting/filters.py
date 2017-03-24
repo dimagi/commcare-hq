@@ -3,7 +3,7 @@ import calendar
 import datetime
 from dateutil.relativedelta import relativedelta
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext_noop as _
 
 from dimagi.utils.dates import DateSpan

@@ -8,7 +8,7 @@ from wsgiref.util import FileWrapper
 
 from django.conf import settings
 from django.core import cache
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import IntegrityError
 from django.http import HttpResponse, StreamingHttpResponse
 

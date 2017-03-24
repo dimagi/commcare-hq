@@ -28,7 +28,7 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin

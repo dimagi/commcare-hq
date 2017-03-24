@@ -7,7 +7,7 @@ from base64 import b64decode
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import (
     HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden, JsonResponse,
 )
