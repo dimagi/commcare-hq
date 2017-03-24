@@ -53,6 +53,15 @@ class IndicatorAdapter(object):
         """
         Saves the document. Should bubble up known errors.
         """
+        indicator_rows = self.get_all_values(doc)
+        self.save_rows(indicator_rows, doc)
+
+    def get_all_values(self, doc):
+        "Gets all the values from a document to save"
+        return self.config.get_all_values(doc)
+
+    def save_rows(self, rows, doc):
+        "Saves rows to a data source"
         raise NotImplementedError
 
     def delete(self, doc):

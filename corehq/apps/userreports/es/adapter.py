@@ -198,16 +198,21 @@ class IndicatorESAdapter(IndicatorAdapter):
         """
         Saves the document. Should bubble up known errors.
         """
-        indicator_rows = self.config.get_all_values(doc)
-        if indicator_rows:
-            es = get_es_new()
-            for indicator_row in indicator_rows:
-                primary_key_values = [str(i.value) for i in indicator_row if i.column.is_primary_key]
-                all_values = {i.column.database_column_name: i.value for i in indicator_row}
-                es.index(
-                    index=self.table_name, body=all_values,
-                    id=normalize_id(primary_key_values), doc_type="indicator"
-                )
+        indicator_rows = self.get_all_values(doc)
+        self.save_rows(indicator_rows, doc)
+
+    def save_rows(self, rows, doc):
+        if not rows:
+            return
+
+        es = get_es_new()
+        for row in rows:
+            primary_key_values = [str(i.value) for i in row if i.column.is_primary_key]
+            all_values = {i.column.database_column_name: i.value for i in row}
+            es.index(
+                index=self.table_name, body=all_values,
+                id=normalize_id(primary_key_values), doc_type="indicator"
+            )
 
 
 def build_es_mapping(data_source_config):

@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.es.adapter import IndicatorESAdapter
 from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter
@@ -45,9 +46,20 @@ class IndicatorLaboratoryAdapter(IndicatorAdapter):
         raise NotImplementedError
 
     def best_effort_save(self, doc):
-        self.es_adapter.best_effort_save(doc)
-        self.sql_adapter.best_effort_save(doc)
+        indicator_rows = self.get_all_values(doc)
 
-    def save(self, doc):
-        self.es_adapter.save(doc)
-        self.sql_adapter.save(doc)
+        try:
+            self.es_adapter.save_rows(indicator_rows, doc)
+        except Exception as e:
+            self.es_adapter.handle_exception(doc, e)
+
+        try:
+            self.sql_adapter.save_rows(indicator_rows, doc)
+        except IntegrityError:
+            pass  # can be due to users messing up their tables/data so don't bother logging
+        except Exception as e:
+            self.sql_adapter.handle_exception(doc, e)
+
+    def save_rows(self, rows, doc):
+        self.es_adapter.save_rows(rows, doc)
+        self.sql_adapter.save_rows(rows, doc)
