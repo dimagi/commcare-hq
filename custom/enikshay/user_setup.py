@@ -1,8 +1,9 @@
 # TODO Is this going to be translated, or English only?
 from django.utils.translation import ugettext as _
 from corehq import toggles
-from corehq.apps.users.signals import clean_commcare_user
+from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
 from corehq.apps.locations.signals import clean_location
+from .models import IssuerId
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
 LOC_TYPES_TO_USER_TYPES = {
@@ -168,6 +169,22 @@ def set_available_tests(location, location_form):
         location.metadata['tests_available'] = 'cbnaat'
 
 
+def save_user_callback(sender, couch_user, **kwargs):
+    if toggles.ENIKSHAY.enabled(couch_user.domain):
+        set_issuer_id(couch_user.domain, couch_user)
+
+
+def set_issuer_id(domain, user):
+    """Add a serially increasing custom user data "Issuer ID" to the user."""
+    if not user.user_data.get('issuer_id', None):
+        issuer_id, created = IssuerId.objects.get_or_create(domain=domain, user_id=user._id)
+        user.user_data['issuer_id'] = issuer_id.pk
+        # note that this is saving the user a second time 'cause it needs a
+        # user id first, but if refactoring, be wary of a loop!
+        user.save()
+
+
 def connect_signals():
     clean_location.connect(clean_location_callback, dispatch_uid="clean_location_callback")
     clean_commcare_user.connect(clean_user_callback, dispatch_uid="clean_user_callback")
+    commcare_user_post_save.connect(save_user_callback, dispatch_uid="save_user_callback")
