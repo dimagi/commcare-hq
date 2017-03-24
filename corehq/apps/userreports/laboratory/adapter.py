@@ -1,4 +1,3 @@
-from sqlalchemy.exc import IntegrityError
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.es.adapter import IndicatorESAdapter
 from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter
