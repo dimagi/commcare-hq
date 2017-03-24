@@ -56,15 +56,15 @@
                    data-bind="visible: print_ref.getUrl(), attr: {href: print_ref.getUrl()}"
                    target="_blank"
                    data-toggle="tooltip"
-                   data-title="{% trans "Opens file in new tab." %}">{% trans "View" %}</a>
+                   data-title="{% trans "Opens file in new tab." %}">{% trans "Open HTML" %}</a>
                 <button type="button" class="btn btn-default" data-toggle="modal" data-target="#detail_print"
                         data-bind="
                             attr: { 'data-hqmediapath': print_ref.path },
                             event: { mediaUploadComplete: print_ref.uploadComplete },
                         ">
                     <i class="fa fa-cloud-upload"></i>
-                    <span data-bind="{visible: !print_ref.getUrl()}">{% trans "Upload Template" %}</span>
-                    <span data-bind="{visible: print_ref.getUrl()}">{% trans "Replace Template" %}</span>
+                    <span data-bind="{visible: !print_ref.getUrl()}">{% trans "Upload HTML" %}</span>
+                    <span data-bind="{visible: print_ref.getUrl()}">{% trans "Replace HTML" %}</span>
                 </button>
                 <a class="btn btn-danger"
                    data-bind="

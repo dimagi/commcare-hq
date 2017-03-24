@@ -113,7 +113,7 @@ class MultimediaVideoUploadController(BaseMultimediaFileUploadController):
 
 
 class MultimediaHTMLUploadController(BaseMultimediaFileUploadController):
-    media_type = ugettext_noop("html")
+    media_type = ugettext_noop("text")
 
     existing_file_template = "hqmedia/uploader/preview_html_single.html"
 
