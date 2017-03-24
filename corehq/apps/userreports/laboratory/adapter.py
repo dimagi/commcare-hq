@@ -46,19 +46,13 @@ class IndicatorLaboratoryAdapter(IndicatorAdapter):
         raise NotImplementedError
 
     def best_effort_save(self, doc):
-        indicator_rows = self.get_all_values(doc)
-
         try:
-            self.es_adapter.save_rows(indicator_rows, doc)
+            indicator_rows = self.get_all_values(doc)
         except Exception as e:
-            self.es_adapter.handle_exception(doc, e)
-
-        try:
-            self.sql_adapter.save_rows(indicator_rows, doc)
-        except IntegrityError:
-            pass  # can be due to users messing up their tables/data so don't bother logging
-        except Exception as e:
-            self.sql_adapter.handle_exception(doc, e)
+            self.handle_exception(doc, e)
+        else:
+            self.es_adapter.best_effort_save_rows(indicator_rows, doc)
+            self.sql_adapter.best_effort_save_rows(indicator_rows, doc)
 
     def save_rows(self, rows, doc):
         self.es_adapter.save_rows(rows, doc)

@@ -188,18 +188,11 @@ class IndicatorESAdapter(IndicatorAdapter):
 
         return distinct_values, too_many_values
 
-    def best_effort_save(self, doc):
+    def best_effort_save_rows(self, rows, doc):
         try:
-            self.save(doc)
+            self.save_rows(rows, doc)
         except Exception as e:
             self.handle_exception(doc, e)
-
-    def save(self, doc):
-        """
-        Saves the document. Should bubble up known errors.
-        """
-        indicator_rows = self.get_all_values(doc)
-        self.save_rows(indicator_rows, doc)
 
     def save_rows(self, rows, doc):
         if not rows:

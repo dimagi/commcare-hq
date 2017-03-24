@@ -95,9 +95,9 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
         return distinct_values, too_many_values
 
-    def best_effort_save(self, doc):
+    def best_effort_save_rows(self, rows, doc):
         try:
-            self.save(doc)
+            self.save_rows(rows, doc)
         except IntegrityError:
             pass  # can be due to users messing up their tables/data so don't bother logging
         except Exception as e:

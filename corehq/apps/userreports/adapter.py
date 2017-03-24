@@ -36,6 +36,17 @@ class IndicatorAdapter(object):
         For certain known, expected errors this will do no additional logging.
         For unexpected errors it will log them.
         """
+        try:
+            indicator_rows = self.get_all_values(doc)
+        except Exception as e:
+            self.handle_exception(doc, e)
+        else:
+            self.best_effort_save_rows(indicator_rows, doc)
+
+    def best_effort_save_rows(self, rows, doc):
+        """
+        Like save_rows, but catches errors
+        """
         raise NotImplementedError
 
     def handle_exception(self, doc, exception):
