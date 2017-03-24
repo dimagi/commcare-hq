@@ -45,34 +45,37 @@
 
 {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
     <br><br>
-    <legend>Printing</legend>
-    <!-- TODO: if not on 2.35+, show an alert-info instead -->
-    <div class="form-group">
-        <label class="col-sm-2 control-label">
-            {% trans "Document Template" %}
-        </label>
-        <div class="col-sm-4">
-            <a class="btn btn-default existing-media"
-               data-bind="visible: print_ref.getUrl(), attr: {href: print_ref.getUrl()}"
-               target="_blank"
-               data-toggle="tooltip"
-               data-title="{% trans "Opens file in new tab." %}">{% trans "View" %}</a>
-            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#detail_print"
-                    data-bind="
-                        attr: { 'data-hqmediapath': print_ref.path },
-                        event: { mediaUploadComplete: print_ref.uploadComplete },
-                    ">
-                <i class="fa fa-cloud-upload"></i>
-                <span data-bind="{visible: !print_ref.getUrl()}">{% trans "Upload Template" %}</span>
-                <span data-bind="{visible: print_ref.getUrl()}">{% trans "Replace Template" %}</span>
-            </button>
-            <a class="btn btn-danger"
-               data-bind="
-                    click: removePrintTemplate,
-                    visible: print_ref.getUrl(),
-            ">
-                <i class="fa fa-remove"></i>
-            </a>
+    <legend>{% trans "Printing" %}</legend>
+    {% if app.enable_detail_print %}
+        <div class="form-group">
+            <label class="col-sm-2 control-label">
+                {% trans "Document Template" %}
+            </label>
+            <div class="col-sm-4">
+                <a class="btn btn-default existing-media"
+                   data-bind="visible: print_ref.getUrl(), attr: {href: print_ref.getUrl()}"
+                   target="_blank"
+                   data-toggle="tooltip"
+                   data-title="{% trans "Opens file in new tab." %}">{% trans "View" %}</a>
+                <button type="button" class="btn btn-default" data-toggle="modal" data-target="#detail_print"
+                        data-bind="
+                            attr: { 'data-hqmediapath': print_ref.path },
+                            event: { mediaUploadComplete: print_ref.uploadComplete },
+                        ">
+                    <i class="fa fa-cloud-upload"></i>
+                    <span data-bind="{visible: !print_ref.getUrl()}">{% trans "Upload Template" %}</span>
+                    <span data-bind="{visible: print_ref.getUrl()}">{% trans "Replace Template" %}</span>
+                </button>
+                <a class="btn btn-danger"
+                   data-bind="
+                        click: removePrintTemplate,
+                        visible: print_ref.getUrl(),
+                ">
+                    <i class="fa fa-remove"></i>
+                </a>
+            </div>
         </div>
-    </div>
+    {% else %}
+        <div class="alert alert-warning">{% trans "Printing the case detail is not supported on this version of CommCare" %}</div>
+    {% endif %}
 {% endif %}
