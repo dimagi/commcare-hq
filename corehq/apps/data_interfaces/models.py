@@ -10,7 +10,8 @@ from corehq.form_processor.exceptions import CaseNotFound
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import date, datetime, time, timedelta
 from dateutil.parser import parse
-from django.db import models
+from dimagi.utils.couch import CriticalSection
+from django.db import models, transaction
 from corehq.apps.hqcase.utils import update_case
 from corehq.form_processor.models import CommCareCaseSQL
 from django.utils.translation import ugettext_lazy
@@ -39,6 +40,57 @@ class AutomaticUpdateRule(models.Model):
 
     class Meta:
         app_label = "data_interfaces"
+
+    def migrate(self):
+        if not self.pk:
+            raise ValueError("Expected model to be saved first")
+
+        with CriticalSection(['migrate-rule-%s' % self.pk]):
+            rule = AutomaticUpdateRule.objects.get(pk=self.pk)
+            if not rule.migrated:
+                with transaction.atomic():
+                    # Migrate Criteria
+                    for old_criteria in rule.automaticupdaterulecriteria_set.all():
+                        new_criteria_definition = MatchPropertyDefinition(
+                            property_name=old_criteria.property_name,
+                            property_value=old_criteria.property_value,
+                            match_type=old_criteria.match_type,
+                        )
+                        new_criteria_definition.save()
+
+                        new_criteria = CaseRuleCriteria(rule=rule)
+                        new_criteria.definition = new_criteria_definition
+                        new_criteria.save()
+
+                    # Migrate Actions
+                    properties_to_update = []
+                    close_case = False
+                    for old_action in rule.automaticupdateaction_set.all():
+                        if old_action.action == AutomaticUpdateAction.ACTION_UPDATE:
+                            properties_to_update.append(
+                                UpdateCaseDefinition.PropertyDefinition(
+                                    name=old_action.property_name,
+                                    value_type=old_action.property_value_type,
+                                    value=old_action.property_value,
+                                )
+                            )
+                        elif old_action.action == AutomaticUpdateAction.ACTION_CLOSE:
+                            close_case = True
+                        else:
+                            raise ValueError("Unexpected action found: %s" % old_action.action)
+
+                    new_action_definition = UpdateCaseDefinition(close_case=close_case)
+                    new_action_definition.set_properties_to_update(properties_to_update)
+                    new_action_definition.save()
+
+                    new_action = CaseRuleAction(rule=rule)
+                    new_action.definition = new_action_definition
+                    new_action.save()
+
+                    rule.migrated = True
+                    rule.save()
+
+            return rule
 
     @classmethod
     def by_domain(cls, domain, active_only=True):
@@ -210,8 +262,9 @@ class AutomaticUpdateRule(models.Model):
 
 class CaseRuleCriteria(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
-    match_property_definition = models.ForeignKey('MatchPropertyDefinition', on_delete=models.CASCADE)
-    custom_match_definition = models.ForeignKey('CustomMatchDefinition', on_delete=models.CASCADE)
+    match_property_definition = models.ForeignKey('MatchPropertyDefinition', on_delete=models.CASCADE, null=True)
+    custom_match_definition = models.ForeignKey('CustomMatchDefinition', on_delete=models.CASCADE, null=True)
+    closed_parent_definition = models.ForeignKey('ClosedParentDefinition', on_delete=models.CASCADE, null=True)
 
     @property
     def definition(self):
@@ -219,8 +272,25 @@ class CaseRuleCriteria(models.Model):
             return self.match_property_definition
         elif self.custom_match_definition_id:
             return self.custom_match_definition
+        elif self.closed_parent_definition_id:
+            return self.closed_parent_definition
         else:
             raise ValueError("No available definition found")
+
+    @definition.setter
+    def definition(self, value):
+        self.match_property_definition = None
+        self.custom_match_definition = None
+        self.closed_parent_definition = None
+
+        if isinstance(value, MatchPropertyDefinition):
+            self.match_property_definition = value
+        elif isinstance(value, CustomMatchDefinition):
+            self.custom_match_definition = value
+        elif isinstance(value, ClosedParentDefinition):
+            self.closed_parent_definition = value
+        else:
+            raise ValueError("Unexpected type found: %s" % type(value))
 
 
 class CaseRuleCriteriaDefinition(models.Model):
@@ -360,8 +430,8 @@ class AutomaticUpdateRuleCriteria(models.Model):
 
 class CaseRuleAction(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
-    update_case_definition = models.ForeignKey('UpdateCaseDefinition', on_delete=models.CASCADE)
-    custom_action_definition = models.ForeignKey('CustomActionDefinition', on_delete=models.CASCADE)
+    update_case_definition = models.ForeignKey('UpdateCaseDefinition', on_delete=models.CASCADE, null=True)
+    custom_action_definition = models.ForeignKey('CustomActionDefinition', on_delete=models.CASCADE, null=True)
 
     @property
     def definition(self):
@@ -371,6 +441,18 @@ class CaseRuleAction(models.Model):
             return self.custom_action_definition
         else:
             raise ValueError("No available definition found")
+
+    @definition.setter
+    def definition(self, value):
+        self.update_case_definition = None
+        self.custom_action_definition = None
+
+        if isinstance(value, UpdateCaseDefinition):
+            self.update_case_definition = value
+        elif isinstance(value, CustomActionDefinition):
+            self.custom_action_definition = value
+        else:
+            raise ValueError("Unexpected type found: %s" % type(value))
 
 
 class CaseRuleActionDefinition(models.Model):
