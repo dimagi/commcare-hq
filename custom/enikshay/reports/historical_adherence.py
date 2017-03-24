@@ -196,7 +196,7 @@ class HistoricalAdherenceReport(EnikshayReport):
         """
         adherence_cases_dict = self.get_adherence_cases_dict()
         first_date, last_date = self._get_date_range()
-        assert first_date < last_date
+        assert first_date <= last_date
 
         calendar = []  # A list of Weeks
         sunday = self._get_first_sunday_before_or_equal_to(first_date)
