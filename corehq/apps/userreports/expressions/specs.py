@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 import hashlib
 from simpleeval import InvalidExpression
+from corehq.apps.es.forms import FormES
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
@@ -308,6 +309,60 @@ class FormsExpressionSpec(JsonObject):
         if self.xmlns:
             xforms = [f for f in xforms if f.xmlns in self.xmlns]
 
+        xforms = [f.to_json() for f in xforms if f.domain == domain]
+
+        context.set_cache_value(cache_key, xforms)
+        return xforms
+
+
+class FormsInDateExpressionSpec(JsonObject):
+    type = TypeProperty('get_case_forms_in_date')
+    case_id_expression = DefaultProperty(required=True)
+    xmlns = ListProperty(required=False)
+    from_date_expression = DictProperty(required=True)
+    to_date_expression = DictProperty(required=True)
+
+    def configure(self, case_id_expression, from_date_expression, to_date_expression):
+        self._case_id_expression = case_id_expression
+        self._from_date_expression = from_date_expression
+        self._to_date_expression = to_date_expression
+
+    def __call__(self, item, context=None):
+        case_id = self._case_id_expression(item, context)
+        from_date = self._from_date_expression(item, context)
+        to_date = self._to_date_expression(item, context)
+
+        if not case_id:
+            return []
+
+        assert context.root_doc['domain']
+        return self._get_forms(case_id, from_date, to_date, context)
+
+    def _get_forms(self, case_id, from_date, to_date, context):
+        domain = context.root_doc['domain']
+        cache_hash = "{},{}".format(from_date.toordinal(), to_date.toordinal())
+        if self.xmlns:
+            cache_hash += ''.join(self.xmlns)
+
+        cache_hash = hashlib.md5(cache_hash).hexdigest()[:4]
+
+        cache_key = (self.__class__.__name__, case_id, cache_hash)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        xform_ids = CaseAccessors(domain).get_case_xform_ids(case_id)
+        # TODO(Emord) this will eventually break down when cases have a lot of
+        # forms associated with them. perhaps change to intersecting two sets
+        query = (
+            FormES()
+            .domain(domain)
+            .completed(gte=from_date, lte=to_date)
+            .doc_id(xform_ids)
+        )
+        if self.xmlns:
+            query = query.xmlns(self.xmlns)
+        form_ids = query.get_ids()
+        xforms = FormAccessors(domain).get_forms(form_ids)
         xforms = [f.to_json() for f in xforms if f.domain == domain]
 
         context.set_cache_value(cache_key, xforms)
