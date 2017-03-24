@@ -242,6 +242,10 @@ class CustomMatchDefinition(CaseRuleCriteriaDefinition):
     name = models.CharField(max_length=126)
 
 
+class ClosedParentDefinition(CaseRuleCriteriaDefinition):
+    pass
+
+
 class AutomaticUpdateRuleCriteria(models.Model):
     # True when today < (the date in property_name - property_value days)
     MATCH_DAYS_BEFORE = 'DAYS_BEFORE'
