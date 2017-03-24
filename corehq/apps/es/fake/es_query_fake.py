@@ -1,4 +1,6 @@
+import datetime
 import logging
+import pytz
 import uuid
 from corehq.apps.es.es_query import ESQuerySet
 from corehq.apps.es.utils import values_list
@@ -131,6 +133,36 @@ class ESQueryFake(object):
             return doc[field] in valid_terms
 
         return self._filtered(_term_query)
+
+    def date_range(self, field, gt=None, gte=None, lt=None, lte=None):
+        def format_time(t):
+            if t:
+                t = datetime.datetime(*(t.timetuple()[:6]))
+                return pytz.UTC.localize(t)
+            return t
+
+        gt = format_time(gt)
+        gte = format_time(gte)
+        lt = format_time(lt)
+        lte = format_time(lte)
+
+        def _date_comparison(doc):
+            if gt and doc:
+                if not doc[field] > gt:
+                    return False
+            if gte and doc:
+                if not doc[field] >= gte:
+                    return False
+            if lt and doc:
+                if not doc[field] < lt:
+                    return False
+            if lte and doc:
+                if not doc[field] <= lte:
+                    return False
+
+            return True
+
+        return self._filtered(_date_comparison)
 
     def __getattr__(self, item):
         """
