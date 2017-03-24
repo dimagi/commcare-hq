@@ -308,10 +308,10 @@ class HistoricalAdherenceReport(EnikshayReport):
 class Week(object):
     def __init__(self, days):
         assert len(days) == 7
-        if days[0]:
-            assert days[0].date.weekday() == 6  # is sunday
-        else:
-            assert days[-1].date.weekday() == 5  # is saturday
+        weekdays = [6, 0, 1, 2, 3, 4, 5]  # Sunday, Monday, ...
+        for i, day in enumerate(days):
+            if day:
+                assert day.date.weekday() == weekdays[i]
         self.days = days
 
 
