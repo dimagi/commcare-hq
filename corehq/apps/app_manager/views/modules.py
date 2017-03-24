@@ -155,7 +155,7 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
         }
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
-        slug = 'detail_print'
+        slug = 'module_%s_detail_print' % module.unique_id
         print_template = module.case_details.long.print_template
         if not print_template:
             print_template = {}

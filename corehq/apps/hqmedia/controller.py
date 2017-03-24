@@ -120,7 +120,7 @@ class MultimediaHTMLUploadController(BaseMultimediaFileUploadController):
     @property
     def upload_params(self):
         return {
-            'path': 'jr://file/commcare/print/data/m1_case_detail.html',    # TODO
+            'path': 'jr://file/commcare/text/%s.html' % self.slug,
             'replace_attachment': True,
         }
 
