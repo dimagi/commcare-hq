@@ -51,9 +51,9 @@ class IndicatorLaboratoryAdapter(IndicatorAdapter):
         except Exception as e:
             self.handle_exception(doc, e)
         else:
-            self.es_adapter.best_effort_save_rows(indicator_rows, doc)
-            self.sql_adapter.best_effort_save_rows(indicator_rows, doc)
+            self.es_adapter._best_effort_save_rows(indicator_rows, doc)
+            self.sql_adapter._best_effort_save_rows(indicator_rows, doc)
 
-    def save_rows(self, rows, doc):
-        self.es_adapter.save_rows(rows, doc)
-        self.sql_adapter.save_rows(rows, doc)
+    def _save_rows(self, rows, doc):
+        self.es_adapter._save_rows(rows, doc)
+        self.sql_adapter._save_rows(rows, doc)

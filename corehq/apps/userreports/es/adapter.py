@@ -188,13 +188,13 @@ class IndicatorESAdapter(IndicatorAdapter):
 
         return distinct_values, too_many_values
 
-    def best_effort_save_rows(self, rows, doc):
+    def _best_effort_save_rows(self, rows, doc):
         try:
-            self.save_rows(rows, doc)
+            self._save_rows(rows, doc)
         except Exception as e:
             self.handle_exception(doc, e)
 
-    def save_rows(self, rows, doc):
+    def _save_rows(self, rows, doc):
         if not rows:
             return
 

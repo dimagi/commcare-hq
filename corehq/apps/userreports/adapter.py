@@ -41,11 +41,11 @@ class IndicatorAdapter(object):
         except Exception as e:
             self.handle_exception(doc, e)
         else:
-            self.best_effort_save_rows(indicator_rows, doc)
+            self._best_effort_save_rows(indicator_rows, doc)
 
-    def best_effort_save_rows(self, rows, doc):
+    def _best_effort_save_rows(self, rows, doc):
         """
-        Like save_rows, but catches errors
+        Like save rows, but should catch errors and log them
         """
         raise NotImplementedError
 
@@ -65,13 +65,13 @@ class IndicatorAdapter(object):
         Saves the document. Should bubble up known errors.
         """
         indicator_rows = self.get_all_values(doc)
-        self.save_rows(indicator_rows, doc)
+        self._save_rows(indicator_rows, doc)
 
     def get_all_values(self, doc):
         "Gets all the values from a document to save"
         return self.config.get_all_values(doc)
 
-    def save_rows(self, rows, doc):
+    def _save_rows(self, rows, doc):
         "Saves rows to a data source"
         raise NotImplementedError
 
