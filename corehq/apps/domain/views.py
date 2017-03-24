@@ -3171,8 +3171,8 @@ class DataSetMapView(BaseAdminProjectSettingsView):
     def datavalue_map_formset(self):
         initial = self.get_initial()
         if self.request.method == 'POST':
-            return DataValueMapFormSet(self.request.POST, initial=initial)
-        return DataValueMapFormSet(initial=initial)
+            return DataValueMapFormSet(self.request.POST, initial=[dict(m) for m in initial['datavalue_maps']])
+        return DataValueMapFormSet(initial=[dict(m) for m in initial['datavalue_maps']])
 
     @property
     def page_context(self):
