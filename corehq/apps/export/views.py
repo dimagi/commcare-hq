@@ -547,6 +547,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
             'show_sync_to_dropbox': self.show_sync_to_dropbox,
             'show_date_range': self.show_date_range,
             'check_for_multimedia': self.check_for_multimedia,
+            'is_sms_export': self.sms_export,
         }
         if (
             self.default_datespan.startdate is not None
