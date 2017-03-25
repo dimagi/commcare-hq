@@ -12,7 +12,7 @@ from dimagi.utils.modules import to_function
 
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
-from pillowtop.dao.exceptions import DocumentMismatchError, DocumentNotFoundError, DocumentMissingError
+from pillowtop.dao.exceptions import DocumentMismatchError, DocumentMissingError
 
 
 def _get_pillow_instance(full_class_str):
@@ -271,7 +271,7 @@ def ensure_document_exists(change):
     This is to ensure that the Couch document exists in the Couch database when the
     change is processed. We only care about the scenario where the document is missing.
 
-    :raises: DocumentNotFoundError - Raised when the document is not found
+    :raises: DocumentMissingError - Raised when the document is missing (never existed)
     """
     change.get_document()
     if change.error_raised is not None and isinstance(change.error_raised, DocumentMissingError):
