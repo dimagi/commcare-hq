@@ -273,9 +273,6 @@ def ensure_document_exists(change):
 
     :raises: DocumentNotFoundError - Raised when the document is not found
     """
-    try:
-        change.get_document(raise_error=True)
-    except DocumentMissingError:
-        raise
-    except DocumentNotFoundError:
-        pass
+    change.get_document()
+    if change.error_raised is not None and isinstance(change.error_raised, DocumentMissingError):
+        raise change.error_raised
