@@ -49,6 +49,25 @@ def time_ucr_process_change(method):
     return timed
 
 
+def _filter_by_hash(configs, ucr_division):
+    ucr_start = ucr_division[0]
+    ucr_end = ucr_division[-1]
+    filtered_configs = []
+    for config in configs:
+        table_hash = hashlib.md5(config.table_id).hexdigest()[0]
+        if ucr_start <= table_hash <= ucr_end:
+            filtered_configs.append(config)
+    return filtered_configs
+
+
+def _exclude_missing_domains(configs):
+    from corehq.apps.es import DomainES
+
+    config_domains = {conf.domain for conf in configs}
+    domains_present = set(DomainES().in_domains(config_domains).values_list('name', flat=True))
+    return [config for config in configs if config.domain in domains_present]
+
+
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_provider, auto_repopulate_tables=False, *args, **kwargs):
@@ -84,14 +103,9 @@ class ConfigurableReportTableManagerMixin(object):
         if self.include_ucrs:
             configs = [config for config in configs if config.table_id in self.include_ucrs]
         elif self.ucr_division:
-            ucr_start = self.ucr_division[0]
-            ucr_end = self.ucr_division[-1]
-            filtered_configs = []
-            for config in configs:
-                table_hash = hashlib.md5(config.table_id).hexdigest()[0]
-                if ucr_start <= table_hash <= ucr_end:
-                    filtered_configs.append(config)
-            configs = filtered_configs
+            configs = _filter_by_hash(configs, self.ucr_division)
+
+        configs = _exclude_missing_domains(configs)
 
         return configs
 
@@ -107,6 +121,9 @@ class ConfigurableReportTableManagerMixin(object):
 
     def bootstrap(self, configs=None):
         configs = self.get_filtered_configs(configs)
+        if not configs:
+            pillow_logging.warning("UCR pillow has no configs to process")
+
         self.table_adapters_by_domain = defaultdict(list)
 
         for config in configs:
