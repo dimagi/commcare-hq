@@ -62,9 +62,15 @@ def _filter_by_hash(configs, ucr_division):
 
 def _exclude_missing_domains(configs):
     from corehq.apps.es import DomainES
+    from corehq.elastic import ESError
 
     config_domains = {conf.domain for conf in configs}
-    domains_present = set(DomainES().in_domains(config_domains).values_list('name', flat=True))
+    try:
+        domains_present = set(DomainES().in_domains(config_domains).values_list('name', flat=True))
+    except ESError:
+        pillow_logging.exception("Unable to filter configs by domain")
+        return configs
+
     return [config for config in configs if config.domain in domains_present]
 
 
