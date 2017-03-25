@@ -41,6 +41,9 @@ class AutomaticUpdateRule(models.Model):
     class Meta:
         app_label = "data_interfaces"
 
+    class MigrationError(Exception):
+        pass
+
     def migrate(self):
         if not self.pk:
             raise ValueError("Expected model to be saved first")
@@ -161,6 +164,9 @@ class AutomaticUpdateRule(models.Model):
             offset += chunk_size
 
     def rule_matches_case(self, case, now):
+        if self.migrated:
+            raise self.MigrationError("Attempted to call old method on migrated model.")
+
         try:
             return self._rule_matches_case(case, now)
         except (CaseNotFound, ResourceNotFound):
@@ -169,6 +175,9 @@ class AutomaticUpdateRule(models.Model):
             return False
 
     def _rule_matches_case(self, case, now):
+        if self.migrated:
+            raise self.MigrationError("Attempted to call old method on migrated model.")
+
         if case.type != self.case_type:
             return False
 
@@ -180,6 +189,9 @@ class AutomaticUpdateRule(models.Model):
                    for criterion in self.automaticupdaterulecriteria_set.all()])
 
     def apply_actions(self, case):
+        if self.migrated:
+            raise self.MigrationError("Attempted to call old method on migrated model.")
+
         cases_to_update = defaultdict(dict)
         close = False
 
@@ -235,6 +247,9 @@ class AutomaticUpdateRule(models.Model):
         :return: True to stop processing further rules on the case (e.g., the
         case is closed or deleted), False otherwise
         """
+        if self.migrated:
+            raise self.MigrationError("Attempted to call old method on migrated model.")
+
         if self.deleted:
             raise Exception("Attempted to call apply_rule on a deleted rule")
 
