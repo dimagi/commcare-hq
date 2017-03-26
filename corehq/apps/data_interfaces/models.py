@@ -11,6 +11,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from datetime import date, datetime, time, timedelta
 from dateutil.parser import parse
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.decorators.memoized import memoized
 from django.db import models, transaction
 from corehq.apps.hqcase.utils import update_case
 from corehq.form_processor.models import CommCareCaseSQL
@@ -42,6 +43,9 @@ class AutomaticUpdateRule(models.Model):
         app_label = "data_interfaces"
 
     class MigrationError(Exception):
+        pass
+
+    class RuleError(Exception):
         pass
 
     def migrate(self):
@@ -273,6 +277,86 @@ class AutomaticUpdateRule(models.Model):
     def soft_delete(self):
         self.deleted = True
         self.save()
+
+    @property
+    @memoized
+    def memoized_criteria(self):
+        return self.caserulecriteria_set.all().select_related(
+            'match_property_definition',
+            'custom_match_definition',
+            'closed_parent_definition',
+        )
+
+    @property
+    @memoized
+    def memoized_actions(self):
+        return self.caseruleaction_set.all().select_related(
+            'update_case_definition',
+            'custom_action_definition',
+        )
+
+    def run_rule(self, case, now):
+        """
+        :return: CaseRuleActionResult object aggregating the results from all actions.
+        """
+        if not self.migrated:
+            raise self.MigrationError("Attempted to call new method on non-migrated model.")
+
+        if self.deleted:
+            raise self.RuleError("Attempted to call run_rule on a deleted rule")
+
+        if not self.active:
+            raise self.RuleError("Attempted to call run_rule on an inactive rule")
+
+        if not isinstance(case, (CommCareCase, CommCareCaseSQL)) or case.domain != self.domain:
+            raise self.RuleError("Invalid case given")
+
+        if case.is_deleted or case.closed:
+            return CaseRuleActionResult()
+
+        if self.criteria_match(case, now):
+            return self.apply_actions(case)
+
+        return CaseRuleActionResult()
+
+    def criteria_match(self, case, now):
+        if not self.migrated:
+            raise self.MigrationError("Attempted to call new method on non-migrated model.")
+
+        if case.type != self.case_type:
+            return False
+
+        if self.filter_on_server_modified and \
+                (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))):
+            return False
+
+        for criteria in self.memoized_criteria:
+            try:
+                result = criteria.definition.matches(case, now)
+            except (CaseNotFound, ResourceNotFound):
+                # This might happen if the criteria references a parent case and the
+                # parent case is not found
+                result = False
+
+            if not result:
+                return False
+
+        return True
+
+    def run_actions(self, case):
+        if not self.migrated:
+            raise self.MigrationError("Attempted to call new method on non-migrated model.")
+
+        aggregated_result = CaseRuleActionResult()
+
+        for action in self.memoized_actions:
+            result = action.definition.run(case)
+            if not isinstance(result, CaseRuleActionResult):
+                raise TypeError("Expected CaseRuleActionResult")
+
+            aggregated_result.add_result(result)
+
+        return aggregated_result
 
 
 class CaseRuleCriteria(models.Model):
@@ -583,6 +667,12 @@ class CaseRuleActionResult(object):
         self.num_related_updates = num_related_updates
         self.num_related_closes = num_related_closes
 
+    def add_result(self, result):
+        self.num_updates += result.num_updates
+        self.num_closes += result.num_closes
+        self.num_related_updates += result.num_related_updates
+        self.num_related_closes += result.num_related_closes
+
 
 class CaseRuleActionDefinition(models.Model):
 
@@ -590,6 +680,9 @@ class CaseRuleActionDefinition(models.Model):
         abstract = True
 
     def run(self, case):
+        """
+        Should return an instance of CaseRuleActionResult
+        """
         raise NotImplementedError()
 
 
