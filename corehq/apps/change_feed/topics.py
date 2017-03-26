@@ -1,4 +1,5 @@
 from kafka.common import OffsetRequest
+from kafka.util import kafka_bytestring
 
 from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
@@ -105,10 +106,14 @@ def validate_offsets(expected_offsets):
     in the current kafka feed
     """
     if expected_offsets:
-        available_offsets = get_multi_topic_first_available_offsets([str(x) for x in expected_offsets.keys()])
-        for topic in expected_offsets.keys():
-            if expected_offsets[topic] < available_offsets[topic]:
-                messsage = (
-                    'First available topic offset for {} is {} but needed {}.'
-                ).format(topic, available_offsets[topic], expected_offsets[topic])
-                raise UnavailableKafkaOffset(messsage)
+        topics = [kafka_bytestring(x) for x in expected_offsets.keys()]
+        available_offsets = get_multi_topic_first_available_offsets(topics)
+        for topic, partitions in expected_offsets.items():
+            for partition, offset in partitions.items():
+                if partition not in available_offsets[topic]:
+                    raise UnavailableKafkaOffset("Invalid partition '{}' for topic '{}'".format(partition, topic))
+                if expected_offsets[topic][partition] < available_offsets[topic][partition]:
+                    messsage = (
+                        'First available topic offset for {}:{} is {} but needed {}.'
+                    ).format(topic, partition, available_offsets[topic], expected_offsets[topic])
+                    raise UnavailableKafkaOffset(messsage)
