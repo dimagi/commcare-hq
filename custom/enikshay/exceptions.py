@@ -12,3 +12,7 @@ class NikshayLocationNotFound(ENikshayException):
 
 class NikshayCodeNotFound(ENikshayException):
     pass
+
+
+class RequiredValueMissing(ENikshayException):
+    pass
