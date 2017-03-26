@@ -20,7 +20,7 @@ class KafkaChangeFeed(ChangeFeed):
     Kafka-based implementation of a ChangeFeed
     """
 
-    def __init__(self, topics, group_id, partition=0, strict=False):
+    def __init__(self, topics, group_id, strict=False):
         """
         Create a change feed listener for a list of kafka topics, a group ID, and partition.
 
@@ -28,8 +28,7 @@ class KafkaChangeFeed(ChangeFeed):
         """
         self._topics = topics
         self._group_id = group_id
-        self._partition = partition
-        self._processed_topic_offsets = {}  # maps topics to sequence IDs
+        self._processed_topic_offsets = {topic: {} for topic in self._topics}
         self.strict = strict
 
     def __unicode__(self):
@@ -59,9 +58,7 @@ class KafkaChangeFeed(ChangeFeed):
 
         reset = 'largest' if start_from_latest else 'smallest'
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
-        if start_from_latest:
-            self._processed_topic_offsets = {topic: {} for topic in self._topics}
-        else:
+        if not start_from_latest:
             if self.strict:
                 validate_offsets(since)
 
