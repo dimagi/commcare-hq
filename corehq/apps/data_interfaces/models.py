@@ -566,6 +566,24 @@ class CaseRuleAction(models.Model):
             raise ValueError("Unexpected type found: %s" % type(value))
 
 
+class CaseRuleActionResult(object):
+
+    def _validate_int(self, value):
+        if not isinstance(value, int):
+            raise ValueError("Expected int")
+
+    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0, num_related_closes=0):
+        self._validate_int(num_updates)
+        self._validate_int(num_closes)
+        self._validate_int(num_related_updates)
+        self._validate_int(num_related_closes)
+
+        self.num_updates = num_updates
+        self.num_closes = num_closes
+        self.num_related_updates = num_related_updates
+        self.num_related_closes = num_related_closes
+
+
 class CaseRuleActionDefinition(models.Model):
 
     class Meta:
@@ -649,12 +667,17 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
             if value != _get_case_property_value(case, prop.name):
                 _add_update_property(prop.name, value, case)
 
+        num_updates = 0
+        num_closes = 0
+        num_related_updates = 0
+
         # Update any referenced parent cases
         for case_id, properties in cases_to_update.items():
             if case_id == case.case_id:
                 continue
             update_case(case.domain, case_id, case_properties=properties, close=False,
                 xmlns=AUTO_UPDATE_XMLNS)
+            num_related_updates += 1
 
         # Update / close the case
         properties = cases_to_update[case.case_id]
@@ -662,7 +685,17 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
             update_case(case.domain, case.case_id, case_properties=properties, close=self.close_case,
                 xmlns=AUTO_UPDATE_XMLNS)
 
-        return self.close_case
+            if properties:
+                num_updates += 1
+
+            if self.close_case:
+                num_closes += 1
+
+        return CaseRuleActionResult(
+            num_updates=num_updates,
+            num_closes=num_closes,
+            num_related_updates=num_related_updates,
+        )
 
 
 class CustomActionDefinition(CaseRuleActionDefinition):
