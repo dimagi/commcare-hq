@@ -145,7 +145,8 @@ class ENikshayCaseStructureMixin(object):
                     lab_serial_number=19,
                     test_type_value="microscopy-zn",
                     purpose_of_testing="diagnostic",
-                    result_grade="1+"
+                    result_grade="1+",
+                    testing_facility_id=self.dmc.get_id,
                 )
             },
             indices=[CaseIndex(
@@ -163,7 +164,7 @@ class ENikshayCaseStructureMixin(object):
             attrs={
                 'create': True,
                 'case_type': 'lab_referral',
-                'owner_id': self.dmc_location.get_id,
+                'owner_id': self.dmc.get_id,
                 "update": {}
             },
             indices=[CaseIndex(
@@ -244,7 +245,7 @@ class ENikshayLocationStructureMixin(object):
         self.phi.save()
 
         self.dmc = locations['DMC']
-        self.phi.metadata = {
+        self.dmc.metadata = {
             'nikshay_code': '123',
             'is_test': 'no',
         }

@@ -731,7 +731,8 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         )
 
     @run_with_all_backends
-    def test_payload_properties(self):
+    @patch("socket.gethostbyname", return_value="198.1.1.1")
+    def test_payload_properties(self, _):
         payload = (json.loads(
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case))
         )
@@ -739,7 +740,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         self.assertEqual(payload['Local_ID'], self.person_id)
         self.assertEqual(payload['RegBy'], "arwen")
         self.assertEqual(payload['password'], "Hadhafang")
-        self.assertEqual(payload['IP_From'], "127.0.0.1")
+        self.assertEqual(payload['IP_From'], "198.1.1.1")
         self.assertEqual(payload['TestDate'],
                          datetime.strptime(self.test_case.dynamic_case_properties().get('date_tested'),
                                            '%Y-%m-%d').strftime('%d/%m/%Y'),
@@ -748,7 +749,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         self.assertEqual(payload['IntervalId'], 0)
         self.assertEqual(payload['PatientWeight'], 1)
         self.assertEqual(payload["SmearResult"], 11)
-        self.assertEqual(payload["DMC"], 123)
+        self.assertEqual(payload["DMC"], '123')
         self.assertEqual(payload["PatientID"], DUMMY_NIKSHAY_ID)
 
     @run_with_all_backends
@@ -791,7 +792,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         update_case(self.domain, self.test_id, {
             "purpose_of_testing": "diagnostic",
             "result_grade": "scanty",
-            "bacilli_count": '1'
+            "max_bacilli_count": '1'
         })
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         payload = (json.loads(
@@ -843,7 +844,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
 
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
-        self.update_case_with(self.test_id, {"result_grade": "scanty", "bacilli_count": "10"})
+        self.update_case_with(self.test_id, {"result_grade": "scanty", "max_bacilli_count": "10"})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
 
         with self.assertRaisesMessage(
@@ -867,13 +868,11 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
-        self.update_case_with(self.test_id, {"result_grade": "scanty", "bacilli_count": "1"})
+        self.update_case_with(self.test_id, {"result_grade": "scanty", "max_bacilli_count": "1"})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
     def test_mandatory_field_dmc_code(self):
-        lab_referral_case = CaseAccessors(self.domain).get_case(self.lab_referral_id)
-
         # valid
         NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case)
 
@@ -886,26 +885,26 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case)
 
-        # missing location id as owner_id
-        lab_referral_case.owner_id = ''
-        lab_referral_case.save()
+        self.dmc.metadata['nikshay_code'] = "123"
+        self.dmc.save()
+        # missing location id
+        self.update_case_with(self.test_id, {'testing_facility_id': ''})
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
         with self.assertRaisesMessage(
-                NikshayLocationNotFound,
-                "Location with id: {location_id} not found."
-                "This is the owner for lab referral with id: {lab_referral_case_id}"
-                .format(location_id=lab_referral_case.owner_id,
-                        lab_referral_case_id=lab_referral_case.case_id)
+                RequiredValueMissing,
+                "Value missing for dmc_code/testing_facility_id for test case: {test_case_id}"
+                .format(test_case_id=self.test_id)
         ):
-            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case)
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
         # missing location
-        lab_referral_case.owner_id = '123456'
-        lab_referral_case.save()
+        self.update_case_with(self.test_id, {'testing_facility_id': '123'})
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
         with self.assertRaisesMessage(
                 NikshayLocationNotFound,
                 "Location with id: {location_id} not found."
-                "This is the owner for lab referral with id: {lab_referral_case_id}"
-                .format(location_id=123456,
-                        lab_referral_case_id=lab_referral_case.case_id)
+                "This is the testing facility id assigned for test: {test_case_id}"
+                        .format(location_id=123,
+                                test_case_id=self.test_id)
         ):
-            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case)
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)

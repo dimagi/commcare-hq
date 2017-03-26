@@ -75,6 +75,7 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
         return {
             "regBy": username,
             "regby": username,
+            "RegBy": username,
             "password": password,
             "Source": ENIKSHAY_ID,
             "IP_From": server_ip,

@@ -223,6 +223,7 @@ def date_tested_added_for_test(case):
 def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(NikshayRegisterPatientRepeater, case)
     create_repeat_records(NikshayTreatmentOutcomeRepeater, case)
+    create_repeat_records(NikshayFollowupRepeater, case)
 
 
 def create_hiv_test_repeat_records(sender, case, **kwargs):
