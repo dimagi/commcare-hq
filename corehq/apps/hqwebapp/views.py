@@ -369,8 +369,7 @@ class HQLoginView(LoginView):
     def get_context_data(self, **kwargs):
         context = super(HQLoginView, self).get_context_data(**kwargs)
         context.update(self.extra_context)
-        if settings.ENABLE_PASSWORD_HASHING:
-            context['implement_password_hashing'] = True
+        context['implement_password_hashing'] = settings.ENABLE_PASSWORD_HASHING
         return context
 
 

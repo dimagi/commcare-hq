@@ -67,7 +67,7 @@ def guess_phone_type_from_user_agent(user_agent):
 
 
 def get_username_and_password_from_request(request):
-    from corehq.apps.hqwebapp.utils import extract_password
+    from corehq.apps.hqwebapp.utils import decode_password
 
     username, password = None, None
     if 'HTTP_AUTHORIZATION' in request.META:
@@ -75,8 +75,7 @@ def get_username_and_password_from_request(request):
         if len(auth) == 2:
             if auth[0].lower() == BASIC:
                 username, password = base64.b64decode(auth[1]).split(':', 1)
-                if settings.ENABLE_PASSWORD_HASHING:
-                    password = extract_password(password)
+                password = decode_password(password)
 
     return username, password
 
