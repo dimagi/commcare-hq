@@ -615,6 +615,55 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
 
         self.properties_to_update = result
 
+    def run(self, case):
+        cases_to_update = defaultdict(dict)
+
+        def _get_case_property_value(current_case, name):
+            result = current_case.resolve_case_property(name)
+            if result:
+                return result[0].value
+
+            return None
+
+        def _add_update_property(name, value, current_case):
+            while name.startswith('parent/'):
+                name = name[7:]
+                # uses first parent if there are multiple
+                parent_cases = current_case.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
+                if parent_cases:
+                    current_case = parent_cases[0]
+                else:
+                    return
+            cases_to_update[current_case.case_id][name] = value
+
+        for prop in self.get_properties_to_update():
+            if prop.value_type == self.VALUE_TYPE_CASE_PROPERTY:
+                value = _get_case_property_value(case, prop.value)
+                if value is None:
+                    continue
+            elif prop.value_type == self.VALUE_TYPE_EXACT:
+                value = prop.value
+            else:
+                raise ValueError("Unexpected value_type found: %s" % prop.value_type)
+
+            if value != _get_case_property_value(case, prop.name):
+                _add_update_property(prop.name, value, case)
+
+        # Update any referenced parent cases
+        for case_id, properties in cases_to_update.items():
+            if case_id == case.case_id:
+                continue
+            update_case(case.domain, case_id, case_properties=properties, close=False,
+                xmlns=AUTO_UPDATE_XMLNS)
+
+        # Update / close the case
+        properties = cases_to_update[case.case_id]
+        if self.close_case or properties:
+            update_case(case.domain, case.case_id, case_properties=properties, close=self.close_case,
+                xmlns=AUTO_UPDATE_XMLNS)
+
+        return self.close_case
+
 
 class CustomActionDefinition(CaseRuleActionDefinition):
     name = models.CharField(max_length=126)
