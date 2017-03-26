@@ -1,6 +1,7 @@
 {% extends "style/base_page.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load compress %}
 
 {% block title %}{% trans "Log into CommCare HQ" %}{% endblock title %}
 
@@ -10,17 +11,9 @@
     {% endblock %}
 
     {% if implement_password_hashing %}
-        <script src="{% static 'domain/js/encoder.js' %}"></script>
-        <script>
-            $(document).ready(function(){
-                (function(){
-                  p_field=$("#id_auth-password");
-                  p_field.parents("form")[0].onsubmit = function(){
-                    p_encoder = new HexParsr("{{psalt1}}","{{psalt2}}");
-                    p_field.val(p_encoder.xyz(p_field.val()))
-                  };
-                })()
-            });
-        </script>
+        {% compress js %}
+            {{ block.super }}
+            <script src="{% static 'domain/js/encoder.js' %}"></script>
+        {% endcompress %}
     {% endif %}
 {% endblock page_content %}

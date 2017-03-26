@@ -86,14 +86,6 @@ def aliased_language_name(lang_code):
         raise KeyError('Unknown language code %s' % lang_code)
 
 
-def generate_password_salt1():
-    return "sha256$" + uuid.uuid4().get_hex()[:6]
-
-
-def generate_password_salt2():
-    return uuid.uuid4().get_hex()[:6] + "="
-
-
 def extract_password(password):
     # Passwords set with expected salts length and padding would respect this regex
     reg_exp = r"^sha256\$([a-z|0-9|A-Z]{6})(.*)([a-z|0-9|A-Z]{6})=$"
