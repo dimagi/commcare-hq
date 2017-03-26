@@ -4,7 +4,7 @@ import requests
 
 import settings
 from corehq.apps.export.views import ExportsPermissionsMixin
-from django.core.urlresolvers import reverse, resolve, Resolver404
+from django.urls import reverse, resolve, Resolver404
 from corehq.tabs.uitab import url_is_location_safe
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.reports.models import ReportConfig, FormExportSchema, CaseExportSchema

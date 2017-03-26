@@ -1,3 +1,4 @@
+from datetime import datetime
 from abc import ABCMeta, abstractmethod
 from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
@@ -18,6 +19,7 @@ class ChangeMeta(jsonobject.JsonObject):
     document_subtype = jsonobject.StringProperty()
     domain = jsonobject.StringProperty()
     is_deletion = jsonobject.BooleanProperty()
+    publish_timestamp = jsonobject.DateTimeProperty(default=datetime.utcnow)
     _allow_dynamic_properties = False
 
 

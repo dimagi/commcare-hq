@@ -452,7 +452,6 @@ class WriterTest(SimpleTestCase):
         """
         export_instances = [
             FormExportInstance(
-                # export_format=Format.JSON,
                 tables=[
                     TableConfiguration(
                         label="My table",
@@ -471,7 +470,24 @@ class WriterTest(SimpleTestCase):
                 ]
             ),
             FormExportInstance(
-                # export_format=Format.JSON,
+                tables=[
+                    TableConfiguration(
+                        label="My other table",
+                        selected=True,
+                        path=[PathNode(name="form", is_repeat=False), PathNode(name="q2", is_repeat=False)],
+                        columns=[
+                            ExportColumn(
+                                label="Q4",
+                                item=ScalarItem(
+                                    path=[PathNode(name='form'), PathNode(name='q2'), PathNode(name='q4')],
+                                ),
+                                selected=True,
+                            ),
+                        ]
+                    )
+                ]
+            ),
+            FormExportInstance(
                 tables=[
                     TableConfiguration(
                         label="My other table",
@@ -496,12 +512,13 @@ class WriterTest(SimpleTestCase):
         with writer.open(export_instances):
             _write_export_instance(writer, export_instances[0], self.docs)
             _write_export_instance(writer, export_instances[1], self.docs)
+            _write_export_instance(writer, export_instances[2], self.docs)
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'Export1-My table': {
+                    u'My table': {
                         u'headers': [u'Q3'],
                         u'rows': [[u'baz'], [u'bop']],
 
@@ -509,7 +526,11 @@ class WriterTest(SimpleTestCase):
                     u'Export2-My other table': {
                         u'headers': [u'Q4'],
                         u'rows': [[u'bar'], [u'boop']],
-                    }
+                    },
+                    u'Export3-My other table': {
+                        u'headers': [u'Q4'],
+                        u'rows': [[u'bar'], [u'boop']],
+                    },
                 }
             )
 

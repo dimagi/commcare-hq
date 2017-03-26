@@ -1,5 +1,5 @@
 import logging
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import Http404
 import json
 from corehq.apps.api.es import ReportXFormES

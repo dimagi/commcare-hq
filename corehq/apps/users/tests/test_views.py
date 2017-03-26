@@ -1,6 +1,6 @@
 import json
 from django.test import TestCase
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
