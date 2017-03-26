@@ -111,8 +111,8 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         # normalize over number of items (form or case) saved
         normalized_time = timer.duration / (1 + len(result.cases))
         datadog_gauge('commcare.xform_submissions.normalized_timings', normalized_time, tags=tags)
-        datadog_gauge('commcare.xform_submissions.case_count', len(result.cases), tags=tags)
-        datadog_gauge('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=tags)
+        datadog_counter('commcare.xform_submissions.case_count', len(result.cases), tags=tags)
+        datadog_counter('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=tags)
 
     return response
 
