@@ -76,7 +76,8 @@ def _exclude_missing_domains(configs):
 
 class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, data_source_provider, auto_repopulate_tables=False, *args, **kwargs):
+    def __init__(self, data_source_provider, auto_repopulate_tables=False, ucr_division=None,
+                 include_ucrs=None, exclude_ucrs=None, *args, **kwargs):
         """Initializes the processor for UCRs
 
         Keyword Arguments:
@@ -90,9 +91,9 @@ class ConfigurableReportTableManagerMixin(object):
         self.last_bootstrapped = datetime.utcnow()
         self.data_source_provider = data_source_provider
         self.auto_repopulate_tables = auto_repopulate_tables
-        self.ucr_division = kwargs.pop('ucr_division', None)
-        self.include_ucrs = kwargs.pop('include_ucrs', None)
-        self.exclude_ucrs = kwargs.pop('exclude_ucrs', None)
+        self.ucr_division = ucr_division
+        self.include_ucrs = include_ucrs
+        self.exclude_ucrs = exclude_ucrs
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
         super(ConfigurableReportTableManagerMixin, self).__init__(*args, **kwargs)
