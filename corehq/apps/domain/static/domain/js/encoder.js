@@ -21,10 +21,22 @@
     }
 
     $(function(){
-      var password_field=$("#id_auth-password");
-      password_field.parents("form")[0].onsubmit = function(){
-        password_encoder = new HexParsr();
-        password_field.val(password_encoder.encode(password_field.val()));
-      };
+      var password_field = $("#id_auth-password");
+      if(password_field.length) {
+          password_field.parents("form")[0].onsubmit = function() {
+            password_encoder = new HexParsr();
+            password_field.val(password_encoder.encode(password_field.val()));
+          };
+      }
+      var reset_password_fields = $("#id_old_password, #id_new_password1, #id_new_password2");
+      if(reset_password_fields.length) {
+          $(reset_password_fields[0]).parents("form")[0].onsubmit = function() {
+              for(var i=0; i<reset_password_fields.length; i++) {
+                  password_field = $(reset_password_fields[i]);
+                  password_encoder = new HexParsr();
+                  password_field.val(password_encoder.encode(password_field.val()));
+              }
+          }
+      }
     });
 })();
