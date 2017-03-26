@@ -46,10 +46,11 @@ class KafkaChangeFeed(ChangeFeed):
 
     def iter_changes(self, since, forever):
         """
-        Since can either be an integer (for single topic change feeds) or a dict
-        of topics to integers (for multiple topic change feeds)
+        Since must be a dictionary of topic partition offsets.
         """
         # a special value of since=None will start from the end of the change stream
+        if since is not None and (not isinstance(since, dict) or not since):
+            raise ValueError("'since' must be None or a topic offset dictionary")
 
         # in milliseconds, -1 means wait forever for changes
         timeout = -1 if forever else MIN_TIMEOUT
@@ -58,41 +59,27 @@ class KafkaChangeFeed(ChangeFeed):
 
         reset = 'largest' if start_from_latest else 'smallest'
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
-        if not start_from_latest:
-            if isinstance(since, dict):
-                if not since:
-                    since = {topic: 0 for topic in self._topics}
-                self._processed_topic_offsets = copy(since)
-            else:
-                # single topic
-                single_topic = self._get_single_topic_or_fail()
-                try:
-                    offset = int(since)  # coerce sequence IDs to ints
-                except ValueError:
-                    notify_error("kafka pillow {} couldn't parse sequence ID {}. rewinding...".format(
-                        self._group_id, since
-                    ))
-                    # since kafka only keeps 7 days of data this isn't a big deal. Hopefully we will only see
-                    # these once when each pillow moves over.
-                    offset = 0
-                self._processed_topic_offsets = {single_topic: offset}
-
-            def _make_offset_tuple(topic):
-                if topic in self._processed_topic_offsets:
-                    return (topic, self._partition, self._processed_topic_offsets[topic])
-                else:
-                    return (topic, self._partition)
-
-            offsets = [_make_offset_tuple(topic) for topic in self._topics]
+        if start_from_latest:
+            self._processed_topic_offsets = {topic: {} for topic in self._topics}
+        else:
             if self.strict:
-                self._validate_offsets(offsets)
+                validate_offsets(since)
+
+            self._processed_topic_offsets = copy(since)
+
+            offsets = []
+            for topic in self._topics:
+                if topic not in self._processed_topic_offsets:
+                    raise ValueError('Offset dictionary missing topic: {}'.format(topic))
+                for partition, offset in self._processed_topic_offsets[topic].items():
+                    offsets.append((topic, partition, offset))
 
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions(*offsets)
 
         try:
             for message in consumer:
-                self._processed_topic_offsets[message.topic] = message.offset
+                self._processed_topic_offsets[message.topic][message.partition] = message.offset
                 yield change_from_kafka_message(message)
         except ConsumerTimeout:
             assert not forever, 'Kafka pillow should not timeout when waiting forever!'
@@ -125,10 +112,6 @@ class KafkaChangeFeed(ChangeFeed):
             *self._topics,
             **config
         )
-
-    def _validate_offsets(self, offsets):
-        expected_values = {offset[0]: offset[2] for offset in offsets if len(offset) > 2}
-        validate_offsets(expected_values)
 
 
 class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
