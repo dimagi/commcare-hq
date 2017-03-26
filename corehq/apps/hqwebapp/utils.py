@@ -98,7 +98,10 @@ def extract_password(password):
         stripped_password = match_groups[1]
         # decode the stripped password to get internal block
         # decoded(salt1 + encoded_password + salt2)
-        decoded_password = base64.b64decode(stripped_password)
+        try:
+            decoded_password = base64.b64decode(stripped_password)
+        except TypeError:
+            return ''
         match_result_2 = re.match(reg_exp, decoded_password)
         # strip out hashes from the internal block and ensure 3 matches
         if match_result_2 and len(match_result_2.groups()) == 3:
@@ -108,7 +111,10 @@ def extract_password(password):
                 # decode to get the real password
                 password_hash = re.match(reg_exp, decoded_password).groups()[1]
                 # return password decoded for UTF-8 support
-                return base64.b64decode(password_hash).decode('utf-8')
+                try:
+                    return base64.b64decode(password_hash).decode('utf-8')
+                except TypeError:
+                    return ''
             else:
                 # this sounds like someone tried to hash something but failed so ignore the password submitted
                 # completely
