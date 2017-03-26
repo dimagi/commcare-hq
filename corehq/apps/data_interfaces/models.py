@@ -318,9 +318,105 @@ class CaseRuleCriteriaDefinition(models.Model):
 
 
 class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
+    # True when today < (the date in property_name - property_value days)
+    MATCH_DAYS_BEFORE = 'DAYS_BEFORE'
+
+    # True when today >= (the date in property_name + property_value days)
+    MATCH_DAYS_AFTER = 'DAYS'
+
+    MATCH_EQUAL = 'EQUAL'
+    MATCH_NOT_EQUAL = 'NOT_EQUAL'
+    MATCH_HAS_VALUE = 'HAS_VALUE'
+
     property_name = models.CharField(max_length=126)
     property_value = models.CharField(max_length=126, null=True)
     match_type = models.CharField(max_length=15)
+
+    def get_case_values(self, case):
+        values = case.resolve_case_property(self.property_name)
+        return [element.value for element in values]
+
+    def _try_date_conversion(self, date_or_string):
+        if (
+            not isinstance(date_or_string, date) and
+            isinstance(date_or_string, basestring) and
+            ALLOWED_DATE_REGEX.match(date_or_string)
+        ):
+            date_or_string = parse(date_or_string)
+
+        return date_or_string
+
+    def clean_datetime(self, timestamp):
+        if not isinstance(timestamp, datetime):
+            timestamp = datetime.combine(timestamp, time(0, 0))
+
+        if timestamp.tzinfo:
+            # Convert to UTC and make it a naive datetime for comparison to datetime.utcnow()
+            timestamp = timestamp.astimezone(pytz.utc).replace(tzinfo=None)
+
+        return timestamp
+
+    def check_days_before(self, case, now):
+        values = self.get_case_values(case)
+        for date_to_check in values:
+            date_to_check = self._try_date_conversion(date_to_check)
+
+            if not isinstance(date_to_check, date):
+                continue
+
+            date_to_check = self.clean_datetime(date_to_check)
+
+            days = int(self.property_value)
+            if now < (date_to_check - timedelta(days=days)):
+                return True
+
+        return False
+
+    def check_days_after(self, case, now):
+        values = self.get_case_values(case)
+        for date_to_check in values:
+            date_to_check = self._try_date_conversion(date_to_check)
+
+            if not isinstance(date_to_check, date):
+                continue
+
+            date_to_check = self.clean_datetime(date_to_check)
+
+            days = int(self.property_value)
+            if now >= (date_to_check + timedelta(days=days)):
+                return True
+
+        return False
+
+    def check_equal(self, case, now):
+        return any([
+            value == self.property_value for value in self.get_case_values(case)
+        ])
+
+    def check_not_equal(self, case, now):
+        return any([
+            value != self.property_value for value in self.get_case_values(case)
+        ])
+
+    def check_has_value(self, case, now):
+        values = self.get_case_values(case)
+        for value in values:
+            if value is None:
+                continue
+            if isinstance(value, basestring) and not value.strip():
+                continue
+            return True
+
+        return False
+
+    def matches(self, case, now):
+        return {
+            self.MATCH_DAYS_BEFORE: self.check_days_before,
+            self.MATCH_DAYS_AFTER: self.check_days_after,
+            self.MATCH_EQUAL: self.check_equal,
+            self.MATCH_NOT_EQUAL: self.check_not_equal,
+            self.MATCH_HAS_VALUE: self.check_has_value,
+        }.get(self.match_type)(case, now)
 
 
 class CustomMatchDefinition(CaseRuleCriteriaDefinition):
