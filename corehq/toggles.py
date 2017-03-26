@@ -4,7 +4,10 @@ import hashlib
 from django.http import Http404
 import math
 
+from django.contrib import messages
 from django.conf import settings
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
 
@@ -94,6 +97,13 @@ class StaticToggle(object):
                     or (hasattr(request, 'domain') and self.enabled(request.domain))
                 ):
                     return view_func(request, *args, **kwargs)
+                if request.user.is_superuser:
+                    from corehq.apps.toggle_ui.views import ToggleEditView
+                    toggle_url = reverse(ToggleEditView.urlname, args=[self.slug])
+                    messages.warning(request, mark_safe((
+                        'This <a href="{}">feature flag</a> should be enabled '
+                        'to access this URL'
+                    ).format(toggle_url)))
                 raise Http404()
             return wrapped_view
         return decorator
@@ -639,13 +649,6 @@ CUSTOM_INSTANCES = StaticToggle(
     namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
-CLOUDCARE_CACHE = StaticToggle(
-    'cloudcare_cache',
-    'Aggresively cache case list, can result in stale data',
-    TAG_EXPERIMENTAL,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',
@@ -715,13 +718,6 @@ BASIC_CHILD_MODULE = StaticToggle(
     'Basic modules can be child modules',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-HSPH_HACK = StaticToggle(
-    'hsph_hack',
-    'Optmization hack for HSPH',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
 )
 
 USE_OLD_CLOUDCARE = StaticToggle(
@@ -923,14 +919,6 @@ EDIT_FORMPLAYER = PredictablyRandomToggle(
     randomness=0.5,
 )
 
-PREVIEW_APP = PredictablyRandomToggle(
-    'preview_app',
-    'Preview an application in the app builder',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=1.0,
-)
-
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Disable column limit in UCR',
@@ -985,6 +973,13 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     ),
 )
 
+ENIKSHAY = StaticToggle(
+    'enikshay',
+    "Enable custom enikshay functionality: additional user and location validation",
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 DATA_DICTIONARY = StaticToggle(
     'data_dictionary',
     'Domain level data dictionary of cases',
@@ -1032,6 +1027,13 @@ INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     'Include metadata in UCR excel exports',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
+)
+
+VIEW_APP_CHANGES = StaticToggle(
+    'app-changes-with-improved-diff',
+    'Improved app changes view',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(

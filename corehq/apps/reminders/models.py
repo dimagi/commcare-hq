@@ -1292,6 +1292,9 @@ class CaseReminderHandler(Document):
             if reminder:
                 reminder.retire()
         else:
+            if self.recipient == RECIPIENT_USER and reminder and reminder.user_id is None:
+                reminder.user_id = case.modified_by
+
             start_condition_reached = case_matches_criteria(case, self.start_match_type, self.start_property, self.start_value)
             start, spawn, used_now = self.get_case_criteria_reminder_start_date_info(case, now)
             if not spawn:

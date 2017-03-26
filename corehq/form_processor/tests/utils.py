@@ -172,8 +172,36 @@ run_with_all_backends = functools.partial(
 )
 
 
+def partitioned(cls):
+    """
+    Marks a test to be run with the partitioned database settings in
+    addition to the non-partitioned database settings.
+    """
+    return attr(sql_backend=True)(cls)
+
+
+def only_run_with_non_partitioned_database(cls):
+    """
+    Only runs the test with the non-partitioned database settings.
+    """
+    if settings.USE_PARTITIONED_DATABASE:
+        return nottest(cls)
+
+    return cls
+
+
+def only_run_with_partitioned_database(cls):
+    """
+    Only runs the test with the partitioned database settings.
+    """
+    if not settings.USE_PARTITIONED_DATABASE:
+        return nottest(cls)
+
+    return partitioned(cls)
+
+
 def use_sql_backend(cls):
-    return attr(sql_backend=True)(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
+    return partitioned(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
 
 
 @unit_testing_only

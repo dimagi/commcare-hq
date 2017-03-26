@@ -1,4 +1,4 @@
-from django.core.urlresolvers import  NoReverseMatch
+from django.urls import NoReverseMatch
 from django.utils import html
 
 from corehq.apps.api.es import ReportCaseES, ReportXFormES

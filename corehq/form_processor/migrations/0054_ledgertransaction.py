@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 import corehq.form_processor.models
 from corehq.sql_db.operations import HqRunSQL
+from corehq.util.mixin import DisabledDbMixin
 
 
 class Migration(migrations.Migration):
@@ -31,7 +32,7 @@ class Migration(migrations.Migration):
             options={
                 'db_table': 'form_processor_ledgertransaction',
             },
-            bases=(corehq.form_processor.models.DisabledDbMixin, models.Model),
+            bases=(DisabledDbMixin, models.Model),
         ),
         migrations.AlterField(
             model_name='ledgertransaction',

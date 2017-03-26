@@ -1,7 +1,7 @@
 import json
 
-from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.views.generic import View
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_lazy

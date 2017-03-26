@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
@@ -230,13 +230,13 @@ def _get_default_tile_configurations():
                         'project data'),
         ),
         TileConfiguration(
-            title=_('CommCare Supply Setup'),
+            title=_('{cc_name} Supply Setup').format(cc_name=settings.COMMCARE_NAME),
             slug='commtrack_setup',
             icon='fcc fcc-commtrack',
             context_processor_class=IconContext,
             urlname='default_commtrack_setup',
             visibility_check=can_view_commtrack_setup,
-            help_text=_("Update CommCare Supply Settings"),
+            help_text=_("Update {cc_name} Supply Settings").format(cc_name=settings.COMMCARE_NAME),
         ),
         TileConfiguration(
             title=_('Data'),

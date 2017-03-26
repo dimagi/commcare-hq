@@ -90,6 +90,10 @@ def generate_for_all_outcomes(slug, filters):
 class TreatmentOutcomeSqlData(EnikshaySqlData):
 
     @property
+    def date_property(self):
+        return 'treatment_initiation_date'
+
+    @property
     def filters(self):
         filters = super(TreatmentOutcomeSqlData, self).filters
         filters.append(

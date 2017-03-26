@@ -58,7 +58,7 @@ from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
@@ -1002,8 +1002,7 @@ class FormBase(DocumentSchema):
         }
 
         xml_valid = False
-        if (self.source == '' or
-                len(self.get_questions(self.get_app().langs, include_triggers=True)) == 0):
+        if self.source == '':
             errors.append(dict(type="blank form", **meta))
         else:
             try:
@@ -1018,6 +1017,10 @@ class FormBase(DocumentSchema):
             except ValueError:
                 logging.error("Failed: _parse_xml(string=%r)" % self.source)
                 raise
+
+        if not errors:
+            if len(self.get_questions(self.get_app().langs, include_triggers=True)) == 0:
+                errors.append(dict(type="blank form", **meta))
             else:
                 try:
                     self.validate_form()
@@ -1096,12 +1099,15 @@ class FormBase(DocumentSchema):
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False):
-        return XForm(self.source).get_questions(
-            langs=langs,
-            include_triggers=include_triggers,
-            include_groups=include_groups,
-            include_translations=include_translations,
-        )
+        try:
+            return XForm(self.source).get_questions(
+                langs=langs,
+                include_triggers=include_triggers,
+                include_groups=include_groups,
+                include_translations=include_translations,
+            )
+        except XFormException as e:
+            raise XFormException(u"Error in form {}".format(self.full_path_name), e)
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1152,7 +1158,7 @@ class FormBase(DocumentSchema):
 
     @property
     def full_path_name(self):
-        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
+        return u"%(app_name)s > %(module_name)s > %(form_name)s" % {
             'app_name': self.get_app().name,
             'module_name': self.get_module().default_name(),
             'form_name': self.default_name()
@@ -1988,6 +1994,7 @@ class SortElement(IndexedSchema):
     field = StringProperty()
     type = StringProperty()
     direction = StringProperty()
+    blanks = StringProperty()
     display = DictProperty()
     sort_calculation = StringProperty(default="")
 
@@ -2650,6 +2657,18 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                           "There is probably nothing to worry about, but you could check to make sure "
                           "that there are no issues with this form.".format(error=e, form_id=self.unique_id))
             pass
+
+    def get_action_type(self):
+        actions = self.actions.actions_meta_by_tag
+        by_type = defaultdict(list)
+        action_type = []
+        for action_tag, action_meta in actions.iteritems():
+            by_type[action_meta.get('type')].append(action_tag)
+
+        for type, tag_list in by_type.iteritems():
+            action_type.append(u'{} ({})'.format(type, ', '.join(filter(None, tag_list))))
+
+        return ' '.join(action_type)
 
     def pre_move_hook(self, from_module, to_module):
         if from_module != to_module:
@@ -4125,7 +4144,7 @@ class ReportModule(ModuleBase):
                 'type': 'report config ref invalid',
                 'module': self.get_module_info()
             })
-        if not self.reports:
+        elif not self.reports:
             errors.append({
                 'type': 'no reports',
                 'module': self.get_module_info(),
@@ -4163,8 +4182,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def source_module(self):
         if self.source_module_id:
             try:
-                return self._parent.get_module_by_unique_id(self.source_module_id,
-                       error=_("Could not find source module for '{}'.").format(self.default_name()))
+                return self._parent.get_module_by_unique_id(self.source_module_id)
             except ModuleNotFoundException:
                 pass
         return None
@@ -5578,7 +5596,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if matches(obj):
                 return obj
         if not error:
-            error = _("Could not find '{unique_id}' in app '{app_id}'.").format(
+            error = _("Could not find module with ID='{unique_id}' in app '{app_id}'.").format(
                 app_id=self.id, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
@@ -5843,7 +5861,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not self.modules:
             errors.append({'type': "no modules"})
         for module in self.get_modules():
-            errors.extend(module.validate_for_build())
+            try:
+                errors.extend(module.validate_for_build())
+            except ModuleNotFoundException as ex:
+                errors.append({
+                    "type": "missing module",
+                    "message": ex.message
+                })
 
         for form in self.get_forms():
             errors.extend(form.validate_for_build(validate_module=False))

@@ -17,7 +17,7 @@ import KISSmetrics
 import logging
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from email_validator import validate_email, EmailNotValidError
 from corehq.toggles import deterministic_random
 from corehq.util.decorators import analytics_task

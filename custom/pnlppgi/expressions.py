@@ -24,7 +24,7 @@ class YearExpressionSpec(JsonObject):
             date = force_to_datetime(item[self.property])
         except ValueError:
             return -1
-        return date.year
+        return date.isocalendar()[0]
 
 
 def week_expression(spec, context):

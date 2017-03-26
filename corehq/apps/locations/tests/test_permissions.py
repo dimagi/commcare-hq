@@ -5,7 +5,7 @@ import string
 from StringIO import StringIO
 import mock
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse
 
 from corehq.apps.es.fake.users_fake import UserESFake
