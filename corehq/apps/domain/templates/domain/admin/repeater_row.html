@@ -1,6 +1,11 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 <tr>
-    <td>{{ repeater.url }}</td>
+    <td>{{ repeater.url }}
+        {% if repeater.white_listed_case_types %}
+            <br/>Case Types: {{ repeater.white_listed_case_types|concat_list }}
+        {% endif %}
+    </td>
     <td>{{ repeater.get_pending_record_count }}</td>
     <td>{{ repeater.get_failure_record_count }}</td>
     <td>{{ repeater.get_cancelled_record_count }}</td>
