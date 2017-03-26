@@ -58,7 +58,7 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         self.assertTrue(table_manager.needs_bootstrap())
 
     def test_get_filtered_configs(self):
-        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider())
+        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider(), filter_missing_domains=True)
         ds1 = get_sample_data_source()
         ds1.domain = 'domain1'
         ds2 = DataSourceConfiguration.wrap(ds1.to_json())
@@ -75,7 +75,7 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         self.assertEqual(filtered_configs, [ds1])
 
     def test_get_filtered_configs_es_error(self):
-        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider())
+        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider(), filter_missing_domains=True)
         ds1 = get_sample_data_source()
         ds1.domain = 'domain1'
         ds2 = DataSourceConfiguration.wrap(ds1.to_json())
