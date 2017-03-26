@@ -68,15 +68,35 @@ def get_multi_topic_first_available_offsets(topics):
 
 
 def _get_topic_offsets(topics, latest):
+    """
+    :param topics: list of topics
+    :param latest: True to fetch latest offsets, False to fetch earliest available
+    :return: {offset: {partition: offset}}
+    """
+
     # https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol#AGuideToTheKafkaProtocol-OffsetRequest
-    time_value = -1 if latest else -2
+    # https://cfchou.github.io/blog/2015/04/23/a-closer-look-at-kafka-offsetrequest/
     assert set(topics) <= set(ALL)
     client = get_kafka_client()
-    offset_requests = [OffsetRequest(topic, 0, time_value, 1) for topic in topics]
+    partition_meta = client.topic_partitions
+
+    # only return the offset of the latest message in the partition
+    num_offsets = 1
+    time_value = -1 if latest else -2
+
+    offsets = {}
+    offset_requests = []
+    for topic in topics:
+        partitions = list(partition_meta.get(topic, {}))
+        offsets[topic] = {partition: None for partition in partitions}
+        for partition in partitions:
+            offset_requests.append(OffsetRequest(topic, partition, time_value, num_offsets))
+
     responses = client.send_offset_request(offset_requests)
-    return {
-        r.topic: r.offsets[0] for r in responses
-    }
+    for r in responses:
+        offsets[r.topic][r.partition] = r.offsets[0]
+
+    return offsets
 
 
 def validate_offsets(expected_offsets):
