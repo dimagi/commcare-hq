@@ -45,25 +45,25 @@ def get_topic(document_type_object):
 
 def get_topic_offset(topic):
     """
-    :returns: The kafka offset for the topic."""
-    return get_multi_topic_offset([topic])[topic]
+    :returns: The kafka offset dict for the topic."""
+    return get_multi_topic_offset([topic])
 
 
 def get_all_offsets():
     """
-    :returns: A dict of offsets keyed by topic"""
+    :returns: A dict of offsets keyed by topic and parition"""
     return get_multi_topic_offset(ALL)
 
 
 def get_multi_topic_offset(topics):
     """
-    :returns: A dict of offsets keyed by topic"""
+    :returns: A dict of offsets keyed by topic and partition"""
     return _get_topic_offsets(topics, latest=True)
 
 
 def get_multi_topic_first_available_offsets(topics):
     """
-    :returns: A dict of offsets keyed by topic"""
+    :returns: A dict of offsets keyed by topic and partition"""
     return _get_topic_offsets(topics, latest=False)
 
 

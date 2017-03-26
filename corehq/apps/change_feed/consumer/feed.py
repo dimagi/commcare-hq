@@ -7,8 +7,7 @@ from kafka.common import ConsumerTimeout
 
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
-from corehq.apps.change_feed.topics import get_multi_topic_offset, get_topic_offset, \
-    validate_offsets
+from corehq.apps.change_feed.topics import get_multi_topic_offset, validate_offsets
 from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
@@ -113,11 +112,7 @@ class KafkaChangeFeed(ChangeFeed):
         return get_multi_topic_offset(self.topics)
 
     def get_latest_offsets_as_checkpoint_value(self):
-        try:
-            topic = self._get_single_topic_or_fail()
-            return str(get_topic_offset(topic))
-        except ValueError:
-            return self.get_latest_offsets()
+        return self.get_latest_offsets()
 
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         config = {
