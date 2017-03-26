@@ -126,3 +126,9 @@ def extract_password(password):
     else:
         # return the password received AS-IS
         return password
+
+
+def decode_password(password):
+    if settings.ENABLE_PASSWORD_HASHING:
+        return extract_password(password)
+    return password
