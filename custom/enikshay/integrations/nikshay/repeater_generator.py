@@ -138,7 +138,6 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
         "DMC": owner_id
         """
         self.test_case = test_case
-        dmc_code = self._get_dmc_code()
         occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
         episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
         person_case = get_person_case_from_occurrence(test_case.domain, occurence_case.get_id)
@@ -146,7 +145,7 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
         test_case_properties = test_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
 
-        interval_id, lab_serial_number, result_grade = self._get_mandatory_fields(test_case_properties)
+        interval_id, lab_serial_number, result_grade, dmc_code = self._get_mandatory_fields(test_case_properties)
 
         test_conducted_on = self._formatted_date(test_case_properties.get('date_tested'))
         # example output for
@@ -182,9 +181,10 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
         interval_id = self._get_interval_id(test_case_properties.get('purpose_of_testing'),
                                             test_case_properties.get('follow_up_test_reason'))
 
+        dmc_code = self._get_dmc_code(test_case_properties)
         lab_serial_number = test_case_properties.get('lab_serial_number', None)
         test_result_grade = test_case_properties.get('result_grade', None)
-        bacilli_count = test_case_properties.get('bacilli_count', None)
+        bacilli_count = test_case_properties.get('max_bacilli_count', None)
         result_grade = self.get_result_grade(test_result_grade, bacilli_count)
 
         if any(mandatory_value is None for mandatory_value in [lab_serial_number, result_grade]):
@@ -192,7 +192,8 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
                                        "LabSerialNo: {lab_serial_number}, ResultGrade: {result_grade}"
                                        .format(lab_serial_number=lab_serial_number,
                                                result_grade=test_result_grade))
-        return interval_id, lab_serial_number, result_grade
+
+        return interval_id, lab_serial_number, result_grade, dmc_code
 
     def get_result_grade(self, test_result_grade, bacilli_count):
         if test_result_grade in smear_result_grade.keys():
@@ -216,14 +217,17 @@ class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
                                        )
         return interval_id
 
-    def _get_dmc_code(self):
-        lab_referral_case = get_lab_referral_from_test(self.test_case.domain, self.test_case.get_id)
-        dmc = SQLLocation.active_objects.get_or_None(location_id=lab_referral_case.owner_id)
+    def _get_dmc_code(self, test_case_properties):
+        dmc_location_id = test_case_properties.get("testing_facility_id", None)
+        if not dmc_location_id:
+            raise RequiredValueMissing("Value missing for dmc_code/testing_facility_id for test case: " +
+                                       self.test_case.get_id)
+        dmc = SQLLocation.active_objects.get_or_None(location_id=dmc_location_id)
         if not dmc:
             raise NikshayLocationNotFound(
                 "Location with id: {location_id} not found."
-                "This is the owner for lab referral with id: {lab_referral_case_id}"
-                .format(location_id=lab_referral_case.owner_id, lab_referral_case_id=lab_referral_case.case_id)
+                "This is the testing facility id assigned for test: {test_case_id}"
+                .format(location_id=dmc_location_id, test_case_id=self.test_case.get_id)
             )
         nikshay_code = dmc.metadata.get('nikshay_code')
         if not nikshay_code or (isinstance(nikshay_code, (str, unicode)) and not nikshay_code.isdigit()):
