@@ -99,9 +99,17 @@ def run_case_update_rules_for_domain(domain, now=None):
                     )
                     return
 
+                last_result = None
                 for rule in rules:
-                    stop_processing = rule.apply_rule(case, now)
-                    if stop_processing:
+                    if last_result:
+                        if last_result.num_related_updates > 0 or last_result.num_related_closes > 0:
+                            case.get_parent.reset_cache(case)
+
+                        if last_result.num_updates > 0:
+                            case = CaseAccessors(domain).get_case(case.case_id)
+
+                    last_result = rule.run_rule(case, now)
+                    if last_result.num_closes > 0:
                         break
 
         for rule in rules:
