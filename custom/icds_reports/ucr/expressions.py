@@ -988,6 +988,11 @@ def get_case_history_by_date(spec, context):
     else:
         case_id_expression = spec['case_id_expression']
 
+    case_history_spec = {
+        "type": "icds_get_case_history",
+        "case_id_expression": case_id_expression
+    }
+
     filters = []
     if spec['start_date'] is not None:
         start_date_filter = {
@@ -1026,18 +1031,14 @@ def get_case_history_by_date(spec, context):
     if spec['filter'] is not None:
         filters.append(spec['filter'])
 
-    spec = {
-        "type": "icds_get_case_history",
-        "case_id_expression": case_id_expression
-    }
     if len(filters) > 0:
-        spec = {
+        case_history_spec = {
             "filter_expression": {
                 "type": "and",
                 "filters": filters
             },
             "type": "filter_items",
-            "items_expression": spec
+            "items_expression": case_history_spec
         }
     spec = {
         'type': 'sort_items',
@@ -1046,7 +1047,7 @@ def get_case_history_by_date(spec, context):
             'type': 'property_name',
             'property_name': '@date_modified',
         },
-        "items_expression": spec
+        "items_expression": case_history_spec
     }
     return ExpressionFactory.from_spec(spec, context)
 
