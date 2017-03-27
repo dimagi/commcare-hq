@@ -1,7 +1,7 @@
-from ..models import compress_id
+from ..user_setup import compress_id
 
 
-def test_growth():
+def test_compression():
     growth = "HLJXYUWMNV"
     gb = len(growth)
     lead = "ACE3459KFPRT"
