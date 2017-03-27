@@ -153,7 +153,7 @@ class FormsInDateExpressionSpec(JsonObject):
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        xform_ids = CaseAccessors(domain).get_case_xform_ids(case_id)
+        xform_ids = self._get_case_form_ids(case_id, context)
         # TODO(Emord) this will eventually break down when cases have a lot of
         # forms associated with them. perhaps change to intersecting two sets
         query = (
@@ -174,10 +174,29 @@ class FormsInDateExpressionSpec(JsonObject):
 
         form_ids = query.get_ids()
         xforms = FormAccessors(domain).get_forms(form_ids)
-        xforms = [f.to_json() for f in xforms if f.domain == domain]
+        xforms = [self._get_form_json(f, context) for f in xforms if f.domain == domain]
 
         context.set_cache_value(cache_key, xforms)
         return xforms
+
+    def _get_case_form_ids(self, case_id, context):
+        cache_key = (self.__class__.__name__, 'helper', case_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        domain = context.root_doc['domain']
+        xform_ids = CaseAccessors(domain).get_case_xform_ids(case_id)
+        context.set_cache_value(cache_key, xform_ids)
+        return xform_ids
+
+    def _get_form_json(self, form, context):
+        cache_key = (self.__class__.__name__, 'xform', form.get_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        form_json = form.to_json()
+        context.set_cache_value(cache_key, form_json)
+        return form_json
 
 
 def month_start(spec, context):
@@ -406,68 +425,17 @@ def get_case_forms_by_date(spec, context):
     else:
         case_id_expression = spec['case_id_expression']
 
+    get_case_forms_expression = {
+        "type": "icds_get_case_forms_in_date",
+        "case_id_expression": case_id_expression
+    }
     filters = []
     if spec['start_date'] is not None:
-        start_date_filter = {
-            'operator': 'gte',
-            'expression': {
-                'datatype': 'integer',
-                'from_date_expression': spec['start_date'],
-                'type': 'diff_days',
-                'to_date_expression': {
-                    'datatype': 'date',
-                    'type': 'property_path',
-                    'property_path': [
-                        'form',
-                        'meta',
-                        'timeEnd'
-                    ]
-                }
-            },
-            'type': 'boolean_expression',
-            'property_value': 0
-        }
-        filters.append(start_date_filter)
+        get_case_forms_expression['from_date_expression'] = spec['start_date']
     if spec['end_date'] is not None:
-        end_date_filter = {
-            'operator': 'gte',
-            'expression': {
-                'datatype': 'integer',
-                'from_date_expression': {
-                    'datatype': 'date',
-                    'type': 'property_path',
-                    'property_path': [
-                        'form',
-                        'meta',
-                        'timeEnd'
-                    ]
-                },
-                'type': 'diff_days',
-                'to_date_expression': spec['end_date']
-            },
-            'type': 'boolean_expression',
-            'property_value': 0
-        }
-        filters.append(end_date_filter)
+        get_case_forms_expression['to_date_expression'] = spec['end_date']
     if spec['xmlns'] is not None and len(spec['xmlns']) > 0:
-        xmlns_filters = []
-        for x in spec['xmlns']:
-                x_filter = {
-                    "operator": "eq",
-                    "type": "boolean_expression",
-                    "expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "xmlns"
-                    },
-                    "property_value": x
-                }
-                xmlns_filters.append(x_filter)
-        xmlns_filter = {
-            "type": "or",
-            "filters": xmlns_filters
-        }
-        filters.append(xmlns_filter)
+        get_case_forms_expression['xmlns'] = spec['xmlns']
     if spec['form_filter'] is not None:
         filters.append(spec['form_filter'])
 
@@ -489,10 +457,7 @@ def get_case_forms_by_date(spec, context):
                     "filters": filters
                 },
                 "type": "filter_items",
-                "items_expression": {
-                    "type": "get_case_forms",
-                    "case_id_expression": case_id_expression
-                }
+                "items_expression": get_case_forms_expression
             }
         }
     else:
@@ -507,10 +472,7 @@ def get_case_forms_by_date(spec, context):
                 ],
                 "datatype": "date"
             },
-            "items_expression": {
-                "type": "get_case_forms",
-                "case_id_expression": case_id_expression
-            }
+            "items_expression": get_case_forms_expression
         }
     return ExpressionFactory.from_spec(spec, context)
 
