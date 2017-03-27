@@ -72,7 +72,7 @@ def _get_topic_offsets(topics, latest):
     """
     :param topics: list of topics
     :param latest: True to fetch latest offsets, False to fetch earliest available
-    :return: {offset: {partition: offset}}
+    :return: dict: { (topic, partition): offset, ... }
     """
 
     # https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol#AGuideToTheKafkaProtocol-OffsetRequest
@@ -89,13 +89,13 @@ def _get_topic_offsets(topics, latest):
     offset_requests = []
     for topic in topics:
         partitions = list(partition_meta.get(topic, {}))
-        offsets[topic] = {partition: None for partition in partitions}
         for partition in partitions:
+            offsets[(topic, partition)] = None
             offset_requests.append(OffsetRequest(topic, partition, time_value, num_offsets))
 
     responses = client.send_offset_request(offset_requests)
     for r in responses:
-        offsets[r.topic][r.partition] = r.offsets[0]
+        offsets[(r.topic, r.partition)] = r.offsets[0]
 
     return offsets
 
@@ -106,14 +106,15 @@ def validate_offsets(expected_offsets):
     in the current kafka feed
     """
     if expected_offsets:
-        topics = [kafka_bytestring(x) for x in expected_offsets.keys()]
+        topics = [kafka_bytestring(x[0]) for x in expected_offsets.keys()]
         available_offsets = get_multi_topic_first_available_offsets(topics)
-        for topic, partitions in expected_offsets.items():
-            for partition, offset in partitions.items():
-                if partition not in available_offsets[topic]:
-                    raise UnavailableKafkaOffset("Invalid partition '{}' for topic '{}'".format(partition, topic))
-                if expected_offsets[topic][partition] < available_offsets[topic][partition]:
-                    messsage = (
-                        'First available topic offset for {}:{} is {} but needed {}.'
-                    ).format(topic, partition, available_offsets[topic], expected_offsets[topic])
-                    raise UnavailableKafkaOffset(messsage)
+        for topic_partition, offset in expected_offsets.items():
+            topic, partition = topic_partition
+            if topic_partition not in available_offsets:
+                raise UnavailableKafkaOffset("Invalid partition '{}' for topic '{}'".format(partition, topic))
+
+            if expected_offsets[topic_partition] < available_offsets[topic_partition]:
+                message = (
+                    'First available topic offset for {}:{} is {} but needed {}.'
+                ).format(topic, partition, available_offsets[topic_partition], expected_offsets[topic_partition])
+                raise UnavailableKafkaOffset(message)

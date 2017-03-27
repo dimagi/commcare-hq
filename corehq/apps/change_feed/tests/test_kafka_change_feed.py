@@ -49,11 +49,10 @@ class KafkaChangeFeedTest(SimpleTestCase):
     @trap_extra_setup(KafkaUnavailableError)
     def test_expired_checkpoint_iteration_strict(self):
         feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed', strict=True)
-        first_avaliable_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
+        first_available_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
         since = {
-            topic: {partition: offset - 1}
-            for topic, partitions in first_avaliable_offsets.items()
-            for partition, offset in partitions.items()
+            topic_partition: offset - 1
+            for topic_partition, offset in first_available_offsets.items()
         }
         with self.assertRaises(UnavailableKafkaOffset):
             feed.iter_changes(since=since, forever=False).next()
@@ -61,8 +60,8 @@ class KafkaChangeFeedTest(SimpleTestCase):
     @trap_extra_setup(KafkaUnavailableError)
     def test_non_expired_checkpoint_iteration_strict(self):
         feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed', strict=True)
-        first_avaliable_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
-        feed.iter_changes(since=first_avaliable_offsets, forever=False).next()
+        first_available_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
+        feed.iter_changes(since=first_available_offsets, forever=False).next()
 
 
 class KafkaCheckpointTest(TestCase):

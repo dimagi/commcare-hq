@@ -62,21 +62,26 @@ class KafkaChangeFeed(ChangeFeed):
             if self.strict:
                 validate_offsets(since)
 
+            checkpoint_topics = {tp[0] for tp in self._processed_topic_offsets}
+            extra_topics = checkpoint_topics - set(self._topics)
+            if extra_topics:
+                raise ValueError("'since' contains extra topics: {}".format(list(extra_topics)))
+
             self._processed_topic_offsets = copy(since)
 
-            offsets = []
-            for topic in self._topics:
-                if topic not in self._processed_topic_offsets:
-                    raise ValueError('Offset dictionary missing topic: {}'.format(topic))
-                for partition, offset in self._processed_topic_offsets[topic].items():
-                    offsets.append((topic, partition, offset))
+            offsets = [
+                copy(self._processed_topic_offsets)
+            ]
+            topics_missing = set(self._topics) - checkpoint_topics
+            for topic in topics_missing:
+                offsets.append(topic)  # consume all available partitions
 
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions(*offsets)
 
         try:
             for message in consumer:
-                self._processed_topic_offsets[message.topic][message.partition] = message.offset
+                self._processed_topic_offsets[(message.topic, message.partition)] = message.offset
                 yield change_from_kafka_message(message)
         except ConsumerTimeout:
             assert not forever, 'Kafka pillow should not timeout when waiting forever!'
@@ -86,7 +91,7 @@ class KafkaChangeFeed(ChangeFeed):
         # the way kafka works, the checkpoint should increment by 1 because
         # querying the feed is inclusive of the value passed in.
         return {
-            topic: sequence + 1 for topic, sequence in self._processed_topic_offsets.items()
+            topic_partition: sequence + 1 for topic_partition, sequence in self._processed_topic_offsets.items()
         }
 
     def get_processed_offsets(self):
