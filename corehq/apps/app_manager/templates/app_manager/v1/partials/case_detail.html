@@ -53,7 +53,7 @@
             </label>
             <div class="col-sm-4">
                 <a class="btn btn-default existing-media"
-                   data-bind="visible: url, attr: {href: url}"
+                   data-bind="visible: url(), attr: {href: url()}"
                    target="_blank"
                    data-toggle="tooltip"
                    data-title="{% trans "Opens file in new tab." %}">{% trans "Open HTML" %}</a>
@@ -70,7 +70,7 @@
                 <a class="btn btn-danger"
                    data-bind="
                         click: removePrintTemplate,
-                        visible: url,
+                        visible: url(),
                 ">
                     <i class="fa fa-remove"></i>
                 </a>
