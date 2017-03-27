@@ -1356,7 +1356,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 }
                 if (spec.state.long !== undefined) {
                     this.longScreen = addScreen(spec.state, "long");
-                    this.print_ref2 = spec.print_ref;
+                    this.printTemplateReference = spec.print_ref;
                 }
             };
             DetailScreenConfig.init = function (spec) {
