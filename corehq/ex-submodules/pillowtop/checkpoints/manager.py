@@ -55,6 +55,8 @@ class PillowCheckpoint(object):
 
     def update_to(self, seq):
         if isinstance(seq, dict):
+            # json doesn't like tuples as keys
+            seq = {'{},{}'.format(*key): val for key, val in seq.items()}
             seq = json.dumps(seq)
         elif isinstance(seq, int):
             seq = str(seq)
