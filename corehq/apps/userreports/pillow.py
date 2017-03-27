@@ -6,7 +6,7 @@ import hashlib
 from alembic.autogenerate.api import compare_metadata
 import six
 
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.const import (
     KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
 )
@@ -231,7 +231,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     def __init__(self, processor, pillow_name, topics):
         change_feed = KafkaChangeFeed(topics, group_id=pillow_name)
         checkpoint = PillowCheckpoint(pillow_name)
-        event_handler = MultiTopicCheckpointEventHandler(
+        event_handler = KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
         )
         super(ConfigurableReportKafkaPillow, self).__init__(

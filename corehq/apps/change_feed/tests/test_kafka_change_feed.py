@@ -4,7 +4,7 @@ from kafka import KeyedProducer
 from kafka.common import KafkaUnavailableError
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from corehq.apps.change_feed.producer import send_to_kafka
 from corehq.apps.change_feed.topics import get_multi_topic_first_available_offsets
@@ -77,7 +77,7 @@ class KafkaCheckpointTest(TestCase):
             checkpoint=checkpoint,
             change_feed=feed,
             processor=processor,
-            change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            change_processed_event_handler=KafkaCheckpointEventHandler(
                 checkpoint=checkpoint, checkpoint_frequency=1, change_feed=feed
             )
         )

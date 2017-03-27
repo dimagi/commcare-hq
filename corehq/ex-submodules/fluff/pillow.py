@@ -1,9 +1,8 @@
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from dimagi.utils.read_only import ReadOnlyObject
-from pillowtop.checkpoints.manager import PillowCheckpoint, \
-    PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.checkpoints.util import get_machine_id
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.interface import PillowProcessor
@@ -137,13 +136,14 @@ class FluffPillow(ConstructedPillow):
         name = '{}Pillow'.format(indicator_name)
         checkpoint = PillowCheckpoint('fluff.{}.{}'.format(name, get_machine_id()))
 
+        change_feed = KafkaChangeFeed(topics=[self.kafka_topic], group_id=indicator_name)
         super(FluffPillow, self).__init__(
             name=name,
             checkpoint=checkpoint,
-            change_feed=KafkaChangeFeed(topics=[self.kafka_topic], group_id=indicator_name),
+            change_feed=change_feed,
             processor=processor,
-            change_processed_event_handler=PillowCheckpointEventHandler(
-                checkpoint=checkpoint, checkpoint_frequency=1000,
+            change_processed_event_handler=KafkaCheckpointEventHandler(
+                checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
             )
         )
 

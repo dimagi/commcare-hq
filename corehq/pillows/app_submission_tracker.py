@@ -1,6 +1,6 @@
 from __future__ import print_function
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, \
     change_meta_from_doc_meta_and_document
 from corehq.apps.change_feed.data_sources import FORM_SQL, COUCH
@@ -31,7 +31,7 @@ def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadat
         checkpoint=checkpoint,
         change_feed=change_feed,
         processor=form_processor,
-        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+        change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
         ),
     )
