@@ -110,7 +110,6 @@ class HistoricalAdherenceReportTests(ENikshayCaseStructureMixin, TestCase):
 
         # Create an adherence case
         date = datetime.date(2017, 1, 1)
-        # Shit, problem is probably the same case id thing?
         self.create_adherence_case(
             date, "99DOTS", adherence_value="directly_observed_dose", case_id=uuid.uuid4().hex)
         self.create_adherence_case(
