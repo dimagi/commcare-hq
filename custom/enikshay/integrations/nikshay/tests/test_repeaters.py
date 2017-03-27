@@ -636,7 +636,6 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
 
         self.assertEqual(0, len(self.repeat_records().all()))
 
-
         self.factory.create_or_update_cases([self.lab_referral, self.episode])
 
         # skip if episode case not nikshay registered
@@ -888,6 +887,10 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         self.dmc.metadata['nikshay_code'] = "123"
         self.dmc.save()
         # missing location id
+        lab_referral_case = CaseAccessors(self.domain).get_case(self.lab_referral_id)
+        lab_referral_case.owner_id = ''
+        lab_referral_case.save()
+
         self.update_case_with(self.test_id, {'testing_facility_id': ''})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         with self.assertRaisesMessage(
