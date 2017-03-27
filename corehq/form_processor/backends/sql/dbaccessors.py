@@ -829,10 +829,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     )
                     logging.debug(msg)
                 raise CaseSaveError(e)
-            else:
-                case.clear_tracked_models()
-                for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
-                    attachment.delete_content()
+
+        def _cleanup():
+            case.clear_tracked_models()
+            for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
+                attachment.delete_content()
+
+        transaction.on_commit(_cleanup)
 
     @staticmethod
     def get_open_case_ids_for_owner(domain, owner_id):
@@ -1006,6 +1009,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             raise LedgerValueNotFound
 
     @staticmethod
+    @transaction.atomic
     def save_ledger_values(ledger_values, deprecated_form=None):
         if not ledger_values:
             return
@@ -1027,7 +1031,9 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                 except InternalError as e:
                     raise LedgerSaveError(e)
 
-            ledger_value.clear_tracked_models()
+            def _cleanup():
+                ledger_value.clear_tracked_models()
+            transaction.on_commit(_cleanup)
 
     @staticmethod
     def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
