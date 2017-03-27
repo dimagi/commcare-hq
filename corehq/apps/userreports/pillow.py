@@ -49,9 +49,35 @@ def time_ucr_process_change(method):
     return timed
 
 
+def _filter_by_hash(configs, ucr_division):
+    ucr_start = ucr_division[0]
+    ucr_end = ucr_division[-1]
+    filtered_configs = []
+    for config in configs:
+        table_hash = hashlib.md5(config.table_id).hexdigest()[0]
+        if ucr_start <= table_hash <= ucr_end:
+            filtered_configs.append(config)
+    return filtered_configs
+
+
+def _exclude_missing_domains(configs):
+    from corehq.apps.es import DomainES
+    from corehq.elastic import ESError
+
+    config_domains = {conf.domain for conf in configs}
+    try:
+        domains_present = set(DomainES().in_domains(config_domains).values_list('name', flat=True))
+    except ESError:
+        pillow_logging.exception("Unable to filter configs by domain")
+        return configs
+
+    return [config for config in configs if config.domain in domains_present]
+
+
 class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, data_source_provider, auto_repopulate_tables=False, *args, **kwargs):
+    def __init__(self, data_source_provider, auto_repopulate_tables=False, ucr_division=None,
+                 include_ucrs=None, exclude_ucrs=None, filter_missing_domains=False):
         """Initializes the processor for UCRs
 
         Keyword Arguments:
@@ -65,12 +91,12 @@ class ConfigurableReportTableManagerMixin(object):
         self.last_bootstrapped = datetime.utcnow()
         self.data_source_provider = data_source_provider
         self.auto_repopulate_tables = auto_repopulate_tables
-        self.ucr_division = kwargs.pop('ucr_division', None)
-        self.include_ucrs = kwargs.pop('include_ucrs', None)
-        self.exclude_ucrs = kwargs.pop('exclude_ucrs', None)
+        self.ucr_division = ucr_division
+        self.include_ucrs = include_ucrs
+        self.exclude_ucrs = exclude_ucrs
+        self.filter_missing_domains = filter_missing_domains
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
-        super(ConfigurableReportTableManagerMixin, self).__init__(*args, **kwargs)
 
     def get_all_configs(self):
         return self.data_source_provider.get_data_sources()
@@ -84,14 +110,10 @@ class ConfigurableReportTableManagerMixin(object):
         if self.include_ucrs:
             configs = [config for config in configs if config.table_id in self.include_ucrs]
         elif self.ucr_division:
-            ucr_start = self.ucr_division[0]
-            ucr_end = self.ucr_division[-1]
-            filtered_configs = []
-            for config in configs:
-                table_hash = hashlib.md5(config.table_id).hexdigest()[0]
-                if ucr_start <= table_hash <= ucr_end:
-                    filtered_configs.append(config)
-            configs = filtered_configs
+            configs = _filter_by_hash(configs, self.ucr_division)
+
+        if self.filter_missing_domains:
+            configs = _exclude_missing_domains(configs)
 
         return configs
 
@@ -107,6 +129,9 @@ class ConfigurableReportTableManagerMixin(object):
 
     def bootstrap(self, configs=None):
         configs = self.get_filtered_configs(configs)
+        if not configs:
+            pillow_logging.warning("UCR pillow has no configs to process")
+
         self.table_adapters_by_domain = defaultdict(list)
 
         for config in configs:
@@ -283,6 +308,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
+            filter_missing_domains=True,
         ),
         pillow_name=pillow_id,
         topics=topics
