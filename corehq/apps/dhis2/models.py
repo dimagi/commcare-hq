@@ -3,7 +3,7 @@ from itertools import chain
 import jsonfield
 from django.db import models
 
-from corehq.apps.dhis2.utils import get_ucr_data
+from corehq.apps.dhis2.utils import get_date_filter, get_last_month, get_report_config, get_ucr_data
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     Document,
@@ -98,7 +98,9 @@ class DataSetMap(Document):
         return datavalues
 
     def get_dataset(self):
-        ucr_data = get_ucr_data(self.domain, self.ucr_id)
+        report_config = get_report_config(self.domain, self.ucr_id)
+        date_filter = get_date_filter(report_config)
+        ucr_data = get_ucr_data(report_config, date_filter)
 
         dataset = {
             'dataValues': [dv for dv in chain(self.get_datavalues(row) for row in ucr_data)]
@@ -107,8 +109,11 @@ class DataSetMap(Document):
             dataset['dataSet'] = self.data_set_id
         if self.org_unit_id:
             dataset['orgUnit'] = self.org_unit_id
-        if self.period:  # TODO: Should we rather pull this from the report config date range?
+        if self.period:
             dataset['period'] = self.period
+        elif date_filter:
+            last_month = get_last_month()
+            dataset['period'] = last_month.startdate.strftime('%Y%m')
         if self.attribute_option_combo_id:
             dataset['attributeOptionCombo'] = self.attribute_option_combo_id
         if self.complete_date:
