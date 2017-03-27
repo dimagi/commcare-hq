@@ -11,7 +11,7 @@ from django.utils.decorators import method_decorator
 
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.apps.domain.views import AddRepeaterView, AddFormRepeaterView
+from corehq.apps.domain.views import AddRepeaterView, AddFormRepeaterView, BaseRepeaterView
 from corehq.apps.style.decorators import use_select2
 from corehq.apps.repeaters.models import RepeatRecord, Repeater
 from corehq.util.xml_utils import indent_xml
@@ -38,14 +38,19 @@ class AddCaseRepeaterView(AddRepeaterView):
         return repeater
 
 
-class EditRepeaterView(AddRepeaterView):
+class EditRepeaterView(BaseRepeaterView):
     urlname = 'edit_repeater'
+    template_name = 'domain/admin/add_form_repeater.html'
 
     @property
     @memoized
     def add_repeater_form(self):
         if self.request.method == 'POST':
-            return super(EditRepeaterView, self).add_repeater_form
+            return self.repeater_form_class(
+                self.request.POST,
+                domain=self.domain,
+                repeater_class=self.repeater_class
+            )
         else:
             repeater_id = self.kwargs['repeater_id']
             repeater = Repeater.get(repeater_id)
@@ -79,6 +84,7 @@ class EditRepeaterView(AddRepeaterView):
 class EditCaseRepeaterView(EditRepeaterView, AddCaseRepeaterView):
     urlname = 'edit_case_repeater'
     page_title = ugettext_lazy("Edit Case Repeater")
+    template_name = 'repeaters/add_case_repeater.html'
 
     @property
     def page_url(self):

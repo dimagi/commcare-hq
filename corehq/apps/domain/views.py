@@ -2444,15 +2444,13 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
         }
 
 
-class AddRepeaterView(BaseAdminProjectSettingsView):
-    urlname = 'add_repeater'
+class BaseRepeaterView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Forward Data")
-    template_name = 'domain/admin/add_form_repeater.html'
     repeater_form_class = GenericRepeaterForm
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+        return super(BaseRepeaterView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
@@ -2486,18 +2484,8 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
             )
 
     @property
-    @memoized
     def add_repeater_form(self):
-        if self.request.method == 'POST':
-            return self.repeater_form_class(
-                self.request.POST,
-                domain=self.domain,
-                repeater_class=self.repeater_class
-            )
-        return self.repeater_form_class(
-            domain=self.domain,
-            repeater_class=self.repeater_class
-        )
+        return None
 
     @property
     def page_context(self):
@@ -2507,7 +2495,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
         }
 
     def initialize_repeater(self):
-        return self.repeater_class()
+        raise NotImplementedError
 
     def make_repeater(self):
         repeater = self.initialize_repeater()
@@ -2523,8 +2511,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
         return repeater
 
     def post_save(self, request, repeater):
-        messages.success(request, _("Forwarding set up to %s" % repeater.url))
-        return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
+        pass
 
     def post(self, request, *args, **kwargs):
         if self.add_repeater_form.is_valid():
@@ -2532,6 +2519,32 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
             repeater.save()
             return self.post_save(request, repeater)
         return self.get(request, *args, **kwargs)
+
+
+class AddRepeaterView(BaseRepeaterView):
+    urlname = 'add_repeater'
+    template_name = 'domain/admin/add_form_repeater.html'
+
+    @property
+    @memoized
+    def add_repeater_form(self):
+        if self.request.method == 'POST':
+            return self.repeater_form_class(
+                self.request.POST,
+                domain=self.domain,
+                repeater_class=self.repeater_class
+            )
+        return self.repeater_form_class(
+            domain=self.domain,
+            repeater_class=self.repeater_class
+        )
+
+    def initialize_repeater(self):
+        return self.repeater_class()
+
+    def post_save(self, request, repeater):
+        messages.success(request, _("Forwarding set up to %s" % repeater.url))
+        return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
 
 
 class AddFormRepeaterView(AddRepeaterView):
