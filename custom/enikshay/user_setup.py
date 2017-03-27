@@ -1,9 +1,8 @@
-# TODO Is this going to be translated, or English only?
 from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
 from corehq.apps.locations.signals import clean_location
-from .models import IssuerId
+from .models import IssuerId, compress_issuer_id
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
 LOC_TYPES_TO_USER_TYPES = {
@@ -175,10 +174,12 @@ def save_user_callback(sender, couch_user, **kwargs):
 
 
 def set_issuer_id(domain, user):
-    """Add a serially increasing custom user data "Issuer ID" to the user."""
-    if not user.user_data.get('issuer_id', None):
+    """Add a serially increasing custom user data "Issuer ID" to the user, as
+    well as a human-readable compressed form."""
+    if not user.user_data.get('id_issuer_number', None):
         issuer_id, created = IssuerId.objects.get_or_create(domain=domain, user_id=user._id)
-        user.user_data['issuer_id'] = issuer_id.pk
+        user.user_data['id_issuer_number'] = issuer_id.pk
+        user.user_data['id_issuer_body'] = compress_issuer_id(issuer_id.pk)
         # note that this is saving the user a second time 'cause it needs a
         # user id first, but if refactoring, be wary of a loop!
         user.save()
