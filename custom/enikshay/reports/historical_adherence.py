@@ -270,13 +270,13 @@ class HistoricalAdherenceReport(EnikshayReport):
             return self.unknown_img_holder(date)
         if adherence_value == "unobserved_dose":
             if self.get_adherence_source(primary_adherence_case) == "99DOTS":
-                return "unobserved_dose_img_dot"
-            return "unobserved_dose_img"
+                return "unobserved_dose_dot"
+            return "unobserved_dose"
         if adherence_value not in (
             "dose_unknown_expected",
-            "unobserved_dose_img_dot",
+            "unobserved_dose_dot",
             "self_administered_dose",
-            "unobserved_dose_img",
+            "unobserved_dose",
             "missed_dose",
             "directly_observed_dose",
             None,

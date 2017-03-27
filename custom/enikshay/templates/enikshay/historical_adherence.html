@@ -89,19 +89,7 @@
                                     {% if day.adherence_image_key %}
                                         <div class="bottom-left">
                                             <img class="icon" src="
-                                                {% if day.adherence_image_key == "directly_observed_dose" %}
-                                                    {% static "enikshay/images/directly_observed_dose_img-r1kddv.png" %}
-                                                {% elif day.adherence_image_key == "missed_dose" %}
-                                                    {% static "enikshay/images/missed_dose_img-svu0dh.png" %}
-                                                {% elif day.adherence_image_key == "unobserved_dose_img" %}
-                                                    {% static "enikshay/images/unobserved_dose_img-i5fiyj.png" %}
-                                                {% elif day.adherence_image_key == "self_administered_dose" %}
-                                                    {% static "enikshay/images/self_administered_dose_img-bo8lb8.png" %}
-                                                {% elif day.adherence_image_key == "unobserved_dose_img_dot" %}
-                                                    {% static "enikshay/images/unobserved_dose_img_dots-pvjiix.png" %}
-                                                {% elif day.adherence_image_key == "dose_unknown_expected" %}
-                                                    {% static "enikshay/images/dose_unknown_expected_img-vkcdx3.png" %}
-                                                {% endif %}
+                                                {% static "enikshay/images/"|add:day.adherence_image_key|add:".png" %}
                                             ">
                                         </div>
                                     {% endif %}
@@ -109,11 +97,11 @@
                                     <div class="bottom-right" >
                                         {% if day.show_conflicting_data %}
                                             <div class="middle-icon">
-                                                <img class="icon" src="{% static "enikshay/images/conflicting_data_img-35k7pb.png" %}">
+                                                <img class="icon" src="{% static "enikshay/images/conflicting_data.png" %}">
                                             </div>
                                         {% endif %}
                                         {% if day.show_unexpected_image %}
-                                            <img class="icon" src="{% static "enikshay/images/dose_unexepected_flag_img-2w5alk.png" %}">
+                                            <img class="icon" src="{% static "enikshay/images/dose_unexpected_flag.png" %}">
                                         {% elif day.show_conflicting_data %}
                                             {% comment %}
                                                 Add a spacer div that will keep the "conflicting data" icon at the
