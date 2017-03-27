@@ -89,8 +89,10 @@ class _Writer(object):
                         )
                     table_titles[table] = sheet_name
             self.writer.open(headers, file, table_titles=table_titles, archive_basepath=name)
-            yield
-            self.writer.close()
+            try:
+                yield
+            finally:
+                self.writer.close()
 
     def write(self, table, row):
         """
@@ -146,8 +148,10 @@ class _PaginatedWriter(object):
                 table_titles=self._get_paginated_table_titles(),
                 archive_basepath=self.name
             )
-            yield
-            self.writer.close()
+            try:
+                yield
+            finally:
+                self.writer.close()
 
     def _get_name(self, export_instances):
         if len(export_instances) == 1:
