@@ -1,8 +1,12 @@
-import uuid
 from datetime import datetime, date
-from dateutil.relativedelta import relativedelta
+import uuid
 from xml.etree import ElementTree
+
+from dateutil.relativedelta import relativedelta
 from django.test import override_settings
+import mock
+
+from corehq.apps.es.fake.forms_fake import FormESFake
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
@@ -27,8 +31,13 @@ NUTRITION_STATUS_SEVERE = "red"
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
+@mock.patch('custom.icds_reports.ucr.expressions.FormES', FormESFake)
 class TestChildHealthDataSource(BaseICDSDatasourceTest):
     datasource_filename = 'child_health_cases_monthly_tableau'
+
+    def tearDown(self):
+        FormESFake.reset_docs()
+        super(BaseICDSDatasourceTest, self).tearDown()
 
     def _create_case(
             self, case_id, dob,
@@ -150,6 +159,10 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
 
         self.casefactory.create_or_update_cases([child_task_case])
 
+    def _submit_form(self, form):
+        blah = submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        FormESFake.save_doc(blah.xform.to_json())
+
     def _submit_gmp_form(
             self, form_date, case_id, nutrition_status=None):
 
@@ -172,7 +185,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         form.append(case)
         add_element(form, 'zscore_grading_wfa', nutrition_status)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_dailyfeeding_form(
             self, form_date, case_id):
@@ -191,7 +204,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
         form.append(case)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_thr_rations_form(
             self, form_date, case_id, rations_distributed=0, case_id_2=None):
@@ -231,7 +244,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         child_thr.append(child_thr_persons)
         form.append(child_thr)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_delivery_form(
             self, form_date, case_id, nutrition_status=None, case_id_2=None):
@@ -275,7 +288,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             form.append(child_repeat2)
 
         ElementTree.dump(form)
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_ebf_form(
             self, form_date, case_id, is_ebf=None, water_or_milk=None,
@@ -319,7 +332,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             child.append(child_repeat2)
         form.append(child)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_pnc_form(self, form_date, case_id, is_ebf=None, other_milk_to_child=None,
                          counsel_exclusive_bf=None, counsel_increase_food_bf=None,
@@ -360,7 +373,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             child.append(child_repeat2)
         form.append(child)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_cf_form(
             self, form_date, case_id, comp_feeding=None, diet_diversity=None,
@@ -406,7 +419,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             child.append(child_repeat2)
         form.append(child)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_bp_form(
             self, form_date, case_id, counsel_immediate_bf='no'):
@@ -429,7 +442,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         add_element(bp2, 'immediate_breastfeeding', counsel_immediate_bf)
         form.append(bp2)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def test_demographic_data(self):
         case_id = uuid.uuid4().hex

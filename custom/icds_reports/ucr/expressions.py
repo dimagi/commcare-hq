@@ -62,6 +62,8 @@ class GetLastFormRepeatSpec(JsonObject):
 class GetCaseHistorySpec(JsonObject):
     type = TypeProperty('icds_get_case_history')
     case_id_expression = DefaultProperty(required=True)
+    start_date = DefaultProperty(required=False)
+    end_date = DefaultProperty(required=False)
 
     def configure(self, case_id_expression, case_forms_expression):
         self._case_id_expression = case_id_expression
@@ -964,12 +966,17 @@ def child_valid_in_month(spec, context):
 
 def get_case_history(spec, context):
     wrapped = GetCaseHistorySpec.wrap(spec)
+    case_forms_expression = {
+        'type': 'get_case_forms',
+        'case_id_expression': wrapped.case_id_expression
+    }
+    if spec['start_date'] and spec['end_date']:
+        case_forms_expression['type'] = 'icds_get_case_forms_in_date'
+        case_forms_expression['from_date_expression'] = wrapped.start_date
+        case_forms_expression['to_date_expression'] = wrapped.end_date
     wrapped.configure(
         case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context),
-        case_forms_expression=ExpressionFactory.from_spec({
-            'type': 'get_case_forms',
-            'case_id_expression': wrapped.case_id_expression
-        }, context)
+        case_forms_expression=ExpressionFactory.from_spec(case_forms_expression, context)
     )
     return wrapped
 
@@ -1011,6 +1018,7 @@ def get_case_history_by_date(spec, context):
             'property_value': 0
         }
         filters.append(start_date_filter)
+        case_history_spec['start_date'] = spec['start_date']
     if spec['end_date'] is not None:
         end_date_filter = {
             'operator': 'gte',
@@ -1028,6 +1036,7 @@ def get_case_history_by_date(spec, context):
             'property_value': 0
         }
         filters.append(end_date_filter)
+        case_history_spec['end_date'] = spec['end_date']
     if spec['filter'] is not None:
         filters.append(spec['filter'])
 
