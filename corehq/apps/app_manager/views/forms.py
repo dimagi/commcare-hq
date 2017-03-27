@@ -12,7 +12,6 @@ from django.template.loader import render_to_string
 from lxml import etree
 from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
-from django.utils import html
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -261,15 +260,14 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
 
     if should_edit("name"):
         name = request.POST['name']
-        form.name[lang] = html.strip_tags(name)
+        form.name[lang] = name
         xform = form.wrapped_xform()
         if xform.exists():
             xform.set_name(name)
             save_xform(app, form, xform.render())
         resp['update'] = {'.variable-form_name': trans(form.name, [lang], use_delim=False)}
     if should_edit('comment'):
-        form.comment = html.strip_tags(request.POST['comment'])
-
+        form.comment = request.POST['comment']
     if should_edit("xform") or "xform" in request.FILES:
         try:
             # support FILES for upload and POST for ajax post from Vellum

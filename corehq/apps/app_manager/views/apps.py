@@ -7,7 +7,6 @@ from collections import defaultdict
 from StringIO import StringIO
 from wsgiref.util import FileWrapper
 
-from django.utils import html
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.http import urlencode as django_urlencode
@@ -679,8 +678,7 @@ def edit_app_attr(request, domain, app_id, attr):
 
     if should_edit("name"):
         clear_app_cache(request, domain)
-        name = html.strip_tags(hq_settings['name'])
-        app.name = name
+        name = hq_settings['name']
         resp['update'].update({
             '.variable-app_name': name,
             '[data-id="{id}"]'.format(id=app_id): ApplicationsTab.make_app_title(name, app.doc_type),
@@ -711,9 +709,6 @@ def edit_app_attr(request, domain, app_id, attr):
         app['profile_url'] = hq_settings['profile_url']
     if should_edit("manage_urls"):
         require_remote_app()
-
-    if should_edit('comment') and request.POST.get('comment'):
-        app.comment = html.strip_tags(request.POST['comment'])
 
     app.save(resp)
     # this is a put_attachment, so it has to go after everything is saved

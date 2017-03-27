@@ -98,20 +98,8 @@ hqDefine('style/js/components/inline_edit_v2.js', function() {
                     dataType: 'JSON',
                     data: data,
                     success: function (data) {
-                        function sanitizeValue() {
-                            var sanitize_properties = [".variable-app_name", ".variable-module_name", ".variable-form_name"];
-                            for(var i=0; i<sanitize_properties.length; i++) {
-                                if(data.update.hasOwnProperty(sanitize_properties[i])) {
-                                    var sanitized_value = data.update[sanitize_properties[i]];
-                                    self.value(sanitized_value);
-                                    self.readOnlyValue = sanitized_value;
-                                    break;
-                                }
-                            }
-                        }
                         self.isSaving(false);
                         self.hasError(false);
-                        sanitizeValue();
                         self.serverValue = self.readOnlyValue;
                         if (self.postSave) {
                             self.postSave(data);
