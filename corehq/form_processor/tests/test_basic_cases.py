@@ -32,13 +32,13 @@ class FundamentalCaseTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super(FundamentalCaseTests, cls).setUpClass()
-        FormProcessorTestUtils.delete_all_cases(DOMAIN)
-        FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        FormProcessorTestUtils.delete_all_cases()
+        FormProcessorTestUtils.delete_all_xforms()
 
     @classmethod
     def tearDownClass(cls):
-        FormProcessorTestUtils.delete_all_cases(DOMAIN)
-        FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        FormProcessorTestUtils.delete_all_cases()
+        FormProcessorTestUtils.delete_all_xforms()
         super(FundamentalCaseTests, cls).tearDownClass()
 
     def setUp(self):
@@ -381,9 +381,12 @@ class FundamentalCaseTestsSQL(FundamentalCaseTests):
         except DataError:
             pass
 
-        form_ids = FormAccessorSQL.get_form_ids_in_domain_by_state('domain2', XFormInstanceSQL.ERROR)
-        self.assertEqual(len(form_ids), 1)
-        form = FormAccessorSQL.get_form(form_ids[0])
+        normal_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_state('domain2', XFormInstanceSQL.NORMAL)
+        self.assertEqual(len(normal_form_ids), 0)
+
+        error_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_state('domain2', XFormInstanceSQL.ERROR)
+        self.assertEqual(len(error_form_ids), 1)
+        form = FormAccessorSQL.get_form(error_form_ids[0])
         attachments = form.get_attachments()
         self.assertEqual(len(attachments), 1)
 
