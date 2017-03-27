@@ -41,7 +41,7 @@ class HiddenFilter(BaseReportFilter):
 
 
 class EpisodeFilter(HiddenFilter):
-    label = "Episode Case ID"
+    label = ugettext_lazy("Episode Case ID")
     slug = "episode_id"
 
 
