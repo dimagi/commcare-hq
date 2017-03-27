@@ -89,7 +89,6 @@ from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.users.models import CouchUser
-from no_exceptions.exceptions import Http403
 from .models import SQLLocation
 
 LOCATION_ACCESS_DENIED = mark_safe(ugettext_lazy(
