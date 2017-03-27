@@ -31,7 +31,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin, PaginatedReportMixin
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
-from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.reports.util import format_datatables_data, get_app_name
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -79,6 +79,15 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def selected_app_id(self):
         return self.request_params.get(SelectApplicationFilter.slug, None)
 
+    @memoized
+    def get_app_name(self, app_id):
+        try:
+            app = get_app(self.domain, app_id)
+        except ResourceNotFound:
+            pass
+        else:
+            return app.name
+
     @property
     @memoized
     def user_query(self):
@@ -117,12 +126,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 last_seen = string_to_utc_datetime(last_sub.get('submission_date'))
 
                 if last_sub.get('app_id'):
-                    try:
-                        app = get_app(self.domain, last_sub['app_id'])
-                    except ResourceNotFound:
-                        pass
-                    else:
-                        app_name = app.name
+                    app_name = self.get_app_name(last_sub.get('app_id'))
 
                 app_version_info_from_form = AppVersionInfo(last_sub.get('build_version'),
                                                             last_sub.get('commcare_version'), None)
