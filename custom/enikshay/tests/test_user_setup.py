@@ -1,4 +1,5 @@
 import mock
+from datetime import datetime
 from django.test import TestCase, override_settings
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition, CustomDataEditor
@@ -243,3 +244,16 @@ class TestUserSetupUtils(TestCase):
         # the next id should be 1 more than this ID
         arys = self.make_user('aoakheart@kingsguard.gov', 'DTO')
         self.assertTrue(areo_number + 1 == arys.user_data['id_issuer_number'])
+
+    def test_device_id(self):
+        user = self.make_user('redviper@martell.biz', 'DTO')
+        user.update_device_id_last_used('rotary', datetime(1984, 1, 1))
+        user.update_device_id_last_used('palm-pilot', datetime(1997, 1, 1))
+        user.update_device_id_last_used('blackberry', datetime(2008, 1, 1))
+        user.save()
+        self.assertEqual(user.user_data['id_device_number'], 3)
+
+        # Oberyn uses the palm-pilot again, which was device #2
+        user.update_device_id_last_used('palm-pilot', datetime(2017, 1, 1))
+        user.save()
+        self.assertEqual(user.user_data['id_device_number'], 2)

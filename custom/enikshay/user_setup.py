@@ -174,13 +174,13 @@ def save_user_callback(sender, couch_user, **kwargs):
         set_issuer_id(couch_user.domain, couch_user)
 
 
-def compress_issuer_id(issuer_id):
+def compress_nikshay_id(serial_id, body_digit_count):
     return compress_id(
-        serial_id=issuer_id,
+        serial_id=serial_id,
         growth_symbols=list("HLJXYUWMNV"),
         lead_symbols=list("ACE3459KFPRT"),
         body_symbols=list("ACDEFHJKLMNPQRTUVWXY3479"),
-        body_digit_count=3,
+        body_digit_count=body_digit_count,
     )
 
 
@@ -232,13 +232,28 @@ def compress_id(serial_id, growth_symbols, lead_symbols, body_symbols, body_digi
     return ''.join(output)
 
 
+def get_last_used_device_number(user):
+    _, index = max((device.last_used, i) for i, device in enumerate(user.devices))
+    return index + 1
+
+
 def set_issuer_id(domain, user):
     """Add a serially increasing custom user data "Issuer ID" to the user, as
     well as a human-readable compressed form."""
+    changed = False
     if not user.user_data.get('id_issuer_number', None):
         issuer_id, created = IssuerId.objects.get_or_create(domain=domain, user_id=user._id)
         user.user_data['id_issuer_number'] = issuer_id.pk
-        user.user_data['id_issuer_body'] = compress_issuer_id(issuer_id.pk)
+        user.user_data['id_issuer_body'] = compress_nikshay_id(issuer_id.pk, 3)
+        changed = True
+
+    device_number = get_last_used_device_number(user)
+    if device_number and user.user_data.get('id_device_number', None) != device_number:
+        user.user_data['id_device_number'] = device_number
+        user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
+        changed = True
+
+    if changed:
         # note that this is saving the user a second time 'cause it needs a
         # user id first, but if refactoring, be wary of a loop!
         user.save()
