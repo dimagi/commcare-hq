@@ -28,7 +28,7 @@ class KafkaChangeFeed(ChangeFeed):
         """
         self._topics = topics
         self._group_id = group_id
-        self._processed_topic_offsets = {topic: {} for topic in self._topics}
+        self._processed_topic_offsets = {}
         self.strict = strict
 
     def __unicode__(self):
@@ -62,7 +62,7 @@ class KafkaChangeFeed(ChangeFeed):
             if self.strict:
                 validate_offsets(since)
 
-            checkpoint_topics = {tp[0] for tp in self._processed_topic_offsets}
+            checkpoint_topics = {tp[0] for tp in since}
             extra_topics = checkpoint_topics - set(self._topics)
             if extra_topics:
                 raise ValueError("'since' contains extra topics: {}".format(list(extra_topics)))
