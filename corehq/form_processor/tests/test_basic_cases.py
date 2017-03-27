@@ -2,6 +2,7 @@
 from datetime import datetime
 import uuid
 from django.conf import settings
+from django.db.utils import DataError
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -14,8 +15,10 @@ from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
@@ -361,7 +364,28 @@ class FundamentalCaseTests(TestCase):
 
 @use_sql_backend
 class FundamentalCaseTestsSQL(FundamentalCaseTests):
-    pass
+    def test_db_integrity_error(self):
+        case_id = uuid.uuid4().hex
+        case = CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id='user1',
+            owner_id='user1',
+            case_type='demo',
+            case_name='this is a very long case name that exeeds the 255 char limit' * 5
+        )
+
+        try:
+            post_case_blocks([case.as_xml()], domain='domain2')
+            self.fail('expected execption')
+        except DataError:
+            pass
+
+        form_ids = FormAccessorSQL.get_form_ids_in_domain_by_state('domain2', XFormInstanceSQL.ERROR)
+        self.assertEqual(len(form_ids), 1)
+        form = FormAccessorSQL.get_form(form_ids[0])
+        attachments = form.get_attachments()
+        self.assertEqual(len(attachments), 1)
 
 
 def _submit_case_block(create, case_id, **kwargs):
