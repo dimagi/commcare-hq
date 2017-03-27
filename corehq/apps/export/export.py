@@ -2,6 +2,7 @@ import contextlib
 import os
 import tempfile
 from collections import Counter
+from memory_profiler import profile
 
 import datetime
 
@@ -141,6 +142,7 @@ def get_export_download(export_instances, filters, filename=None):
     return download
 
 
+@profile
 def get_export_file(export_instances, filters, progress_tracker=None):
     """
     Return an export file for the given ExportInstance and list of filters
@@ -172,6 +174,7 @@ def get_export_size(export_instance, filters):
     return _get_export_documents(export_instance, filters).count
 
 
+@profile
 def _write_export_instance(writer, export_instance, documents, progress_tracker=None):
     """
     Write rows to the given open _Writer.

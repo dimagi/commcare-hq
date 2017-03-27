@@ -1,5 +1,6 @@
 import logging
 from celery.task import task
+from memory_profiler import profile
 
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.export import get_export_file, rebuild_export
@@ -15,6 +16,7 @@ logger = logging.getLogger('export_migration')
 
 
 @task
+@profile
 def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60):
     export_file = get_export_file(
         export_instances,
