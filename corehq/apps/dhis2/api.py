@@ -1,6 +1,7 @@
 import json
 import logging
 import requests
+from django.core.serializers.json import DjangoJSONEncoder
 from corehq.apps.dhis2.dbaccessors import get_dhis2_connection
 
 
@@ -12,14 +13,6 @@ class JsonApiError(Exception):
     JsonApiError is raised for HTTP or socket errors.
     """
     pass
-
-
-def json_serializer(obj):
-    """
-    A JSON serializer that serializes dates and times
-    """
-    if hasattr(obj, 'isoformat'):
-        return obj.isoformat()
 
 
 def log_request(func):
@@ -36,7 +29,7 @@ def log_request(func):
             'request_url': json_api_request.server_url + path,
             'request_headers': json.dumps(json_api_request.headers),
             'request_params': json.dumps(params),
-            'request_body': '' if data is None else json.dumps(data, default=json_serializer),
+            'request_body': '' if data is None else json.dumps(data, cls=DjangoJSONEncoder),
 
             'request_error': request_error,
             'response_status': response_status,
@@ -118,7 +111,7 @@ class JsonApiRequest(object):
         path = path.lstrip('/')
         # Make a copy of self.headers so as not to set content type on requests that don't send content
         headers = dict(self.headers, **{'Content-type': 'application/json'})
-        json_data = json.dumps(data, default=json_serializer)
+        json_data = json.dumps(data, cls=DjangoJSONEncoder)
         return self.send_request(
             requests.post, self.server_url + path, json_data, headers=headers, auth=self.auth, **kwargs
         )
@@ -126,7 +119,7 @@ class JsonApiRequest(object):
     def put(self, path, data, **kwargs):
         path = path.lstrip('/')
         headers = dict(self.headers, **{'Content-type': 'application/json'})
-        json_data = json.dumps(data, default=json_serializer)
+        json_data = json.dumps(data, cls=DjangoJSONEncoder)
         return self.send_request(
             requests.put, self.server_url + path, json_data, headers=headers, auth=self.auth, **kwargs
         )
