@@ -379,6 +379,18 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             propertyOptions: this.dataSourceIndicators,
             selectablePropertyOptions: this.selectableDataSourceIndicators,
         });
+        this.defaultFiltersList.validate = function() {
+                var isColumnsValid = PropertyList.prototype.validate.call(this);
+                var isFilterValuesValid = !_.contains(
+                    _.map(
+                        this.columns(),
+                        function(c) {return Boolean(c.filterValue())}
+                    ),
+                    false
+                );
+                return isColumnsValid && isFilterValuesValid;
+
+        };
         this.columnsList = new PropertyList({
             hasFormatCol: false,
             hasCalculationCol: reportType === "table" || reportType === "worker",
