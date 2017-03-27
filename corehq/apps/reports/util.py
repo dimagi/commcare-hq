@@ -6,13 +6,11 @@ import math
 import pytz
 import warnings
 
-from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
 from casexml.apps.case.models import CommCareCase
 
-from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.utils import use_new_exports, should_use_sql_backend

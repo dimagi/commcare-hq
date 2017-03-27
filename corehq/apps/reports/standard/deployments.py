@@ -31,7 +31,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin, PaginatedReportMixin
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
-from corehq.apps.reports.util import format_datatables_data, get_app_name
+from corehq.apps.reports.util import format_datatables_data
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
