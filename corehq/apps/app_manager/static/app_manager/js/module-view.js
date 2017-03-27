@@ -39,6 +39,7 @@ $(function () {
                 includeClosed: options.include_closed,
                 defaultProperties: options.default_properties || [],
                 searchButtonDisplayCondition: options.search_button_display_condition,
+                print_ref: print_ref,
             });
 
             var $list_home = $("#" + detail.type + "-detail-screen-config-tab");

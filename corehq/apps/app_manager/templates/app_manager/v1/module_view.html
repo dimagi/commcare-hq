@@ -80,7 +80,11 @@
             },
             function(data, status) {
                 if(status == 'success'){
-                    print_ref.url("");
+                    print_ref.setObjReference({
+                        path: print_ref.path,
+                    });
+                    print_ref.is_matched(false);
+                    printTemplateUploader.updateUploadFormUI();
                 }
             }
         );

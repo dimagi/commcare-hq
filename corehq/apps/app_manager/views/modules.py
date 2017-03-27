@@ -158,7 +158,9 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
         slug = 'module_%s_detail_print' % module.unique_id
         print_template = module.case_details.long.print_template
         if not print_template:
-            print_template = {}
+            print_template = {
+                'path': 'jr://file/commcare/text/%s.html' % slug,
+            }
         context.update({
             'print_uploader': MultimediaHTMLUploadController(
                 slug,
