@@ -22,7 +22,7 @@ from custom.enikshay.case_utils import (
     get_occurrence_case_from_test,
     get_open_episode_case_from_occurrence,
     get_person_case_from_occurrence,
-)
+    get_lab_referral_from_test)
 from custom.enikshay.integrations.nikshay.repeaters import (
     NikshayRegisterPatientRepeater,
     NikshayHIVTestRepeater,
@@ -298,6 +298,10 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
 
     def _get_dmc_code(self, test_case_properties):
         dmc_location_id = test_case_properties.get("testing_facility_id", None)
+        if not dmc_location_id:
+            # fallback to lab referral case owner id for older versions of app
+            lab_referral_case = get_lab_referral_from_test(self.test_case.domain, self.test_case.get_id)
+            dmc_location_id = lab_referral_case.owner_id
         if not dmc_location_id:
             raise RequiredValueMissing("Value missing for dmc_code/testing_facility_id for test case: " +
                                        self.test_case.get_id)
