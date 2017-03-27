@@ -5,7 +5,7 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty
+from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
 
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -111,6 +111,7 @@ class FormsInDateExpressionSpec(JsonObject):
     xmlns = ListProperty(required=False)
     from_date_expression = DictProperty(required=True)
     to_date_expression = DictProperty(required=True)
+    count = BooleanProperty(default=False)
 
     def configure(self, case_id_expression, from_date_expression, to_date_expression):
         self._case_id_expression = case_id_expression
@@ -130,7 +131,7 @@ class FormsInDateExpressionSpec(JsonObject):
 
     def _get_forms(self, case_id, from_date, to_date, context):
         domain = context.root_doc['domain']
-        cache_hash = "{},{}".format(from_date.toordinal(), to_date.toordinal())
+        cache_hash = "{}{}{}".format(from_date.toordinal(), to_date.toordinal(), self.count)
         if self.xmlns:
             cache_hash += ''.join(self.xmlns)
 
@@ -151,6 +152,11 @@ class FormsInDateExpressionSpec(JsonObject):
         )
         if self.xmlns:
             query = query.xmlns(self.xmlns)
+        if self.count:
+            count = query.count()
+            context.set_cache_value(cache_key, count)
+            return count
+
         form_ids = query.get_ids()
         xforms = FormAccessors(domain).get_forms(form_ids)
         xforms = [f.to_json() for f in xforms if f.domain == domain]

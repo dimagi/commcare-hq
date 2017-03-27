@@ -35,7 +35,7 @@ class TestFormsExpressionSpecWithFilter(TestCase):
         delete_all_cases()
         super(TestFormsExpressionSpecWithFilter, cls).tearDownClass()
 
-    def _make_expression(self, from_statement, to_statement, xmlns=None):
+    def _make_expression(self, from_statement, to_statement, xmlns=None, count=False):
         spec = {
             "type": "icds_get_case_forms_in_date",
             "case_id_expression": {
@@ -81,6 +81,8 @@ class TestFormsExpressionSpecWithFilter(TestCase):
         if xmlns:
             spec['xmlns'] = [xmlns]
 
+        spec['count'] = count
+
         return ExpressionFactory.from_spec(spec)
 
     def test_from_inside_date_range(self):
@@ -112,3 +114,17 @@ class TestFormsExpressionSpecWithFilter(TestCase):
         forms = expression(self.case.to_json(), context)
 
         self.assertEqual(forms, [])
+
+    def test_count_correct_xmlns(self):
+        expression = self._make_expression(
+            'iteration - 1', 'iteration + 1', 'http://commcarehq.org/case', count=True
+        )
+        context = EvaluationContext({"domain": self.domain}, 0)
+        count = expression(self.case.to_json(), context)
+        self.assertEqual(count, 1)
+
+    def test_count_incorrect_xmlns(self):
+        expression = self._make_expression('iteration - 1', 'iteration + 1', 'silly-xmlns', count=True)
+        context = EvaluationContext({"domain": self.domain}, 0)
+        count = expression(self.case.to_json(), context)
+        self.assertEqual(count, 0)
