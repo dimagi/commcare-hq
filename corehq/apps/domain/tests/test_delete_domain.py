@@ -18,7 +18,6 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionManager,
 )
-from corehq.apps.accounting.tests import generator
 from corehq.apps.domain.models import Domain
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
@@ -97,7 +96,6 @@ class TestDeleteDomain(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestDeleteDomain, cls).setUpClass()
-        generator.instantiate_accounting()
 
     def setUp(self):
         super(TestDeleteDomain, self).setUp()
