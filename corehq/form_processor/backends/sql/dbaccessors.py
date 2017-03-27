@@ -477,14 +477,16 @@ class FormAccessorSQL(AbstractFormAccessor):
                 [form.form_id, form, unsaved_attachments, operations]
             )
             result = fetchone_as_namedtuple(cursor)
+
+        def _clean_form_set_id():
             form.id = result.form_pk
+            try:
+                del form.unsaved_attachments
+            except AttributeError:
+                pass
 
-        try:
-            del form.unsaved_attachments
-        except AttributeError:
-            pass
-
-        form.clear_tracked_models()
+            form.clear_tracked_models()
+        transaction.on_commit(_clean_form_set_id)
 
     @staticmethod
     @transaction.atomic
