@@ -652,8 +652,3 @@ def initial_page_data(parser, token):
     nodelist = NodeList([FakeNode()])
 
     return AddToBlockNode(nodelist, 'initial_page_data')
-
-
-@register.filter
-def concat_list(str_elements):
-    return ", ".join(str_elements)
