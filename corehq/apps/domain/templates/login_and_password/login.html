@@ -9,11 +9,13 @@
     {% block login-content %}
     {% include "login_and_password/partials/login_full.html" %}
     {% endblock %}
-
-    {% if implement_password_hashing %}
-        {% compress js %}
-            {{ block.super }}
-            <script src="{% static 'domain/js/encoder.js' %}"></script>
-        {% endcompress %}
-    {% endif %}
 {% endblock page_content %}
+
+{% if implement_password_hashing %}
+{% block js %}
+    {{ block.super }}
+    {% compress js %}
+        <script src="{% static 'domain/js/encoder.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
+{% endif %}
