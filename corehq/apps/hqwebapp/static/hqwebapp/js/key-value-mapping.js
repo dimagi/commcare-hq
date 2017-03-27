@@ -1,4 +1,4 @@
-/* globals django */
+/* globals django, COMMCAREHQ, uploaders */ // global uploaders is not great, should be fixed
 (function () {
 
 /**
