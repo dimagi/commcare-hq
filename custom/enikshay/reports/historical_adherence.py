@@ -15,6 +15,7 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from custom.enikshay.case_utils import get_person_case_from_episode, get_adherence_cases_by_day
+from custom.enikshay.const import DOSE_TAKEN_INDICATORS
 from custom.enikshay.reports.generic import EnikshayReport
 
 from django.utils.translation import ugettext_lazy
@@ -22,12 +23,6 @@ from django.utils.translation import ugettext_lazy
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 
-# TODO: Once Sraven's PR is merged, share this list
-DOSE_TAKEN_INDICATORS = [
-    'directly_observed_dose',
-    'unobserved_dose',
-    'self_administered_dose',
-]
 Schedule = namedtuple("Schedule", ['days_dose_expected', 'mark_expected', 'title'])
 india_timezone = pytz.timezone('Asia/Kolkata')
 
