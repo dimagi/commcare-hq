@@ -35,7 +35,7 @@ def get_all_parents_of_case(domain, case_id):
 
     parent_case_ids = [
         indexed_case.referenced_id for indexed_case in child_case.indices
-        ]
+    ]
     parent_cases = case_accessor.get_cases(parent_case_ids)
 
     return parent_cases
