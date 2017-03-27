@@ -6,10 +6,9 @@ from dateutil.relativedelta import relativedelta
 from django.test import override_settings
 import mock
 
-from corehq.apps.es.fake.forms_fake import FormESFake
-from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
+from corehq.apps.es.fake.forms_fake import FormESFake
 from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element
 
@@ -34,10 +33,6 @@ NUTRITION_STATUS_SEVERE = "red"
 @mock.patch('custom.icds_reports.ucr.expressions.FormES', FormESFake)
 class TestChildHealthDataSource(BaseICDSDatasourceTest):
     datasource_filename = 'child_health_cases_monthly_tableau'
-
-    def tearDown(self):
-        FormESFake.reset_docs()
-        super(BaseICDSDatasourceTest, self).tearDown()
 
     def _create_case(
             self, case_id, dob,
@@ -158,10 +153,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         )
 
         self.casefactory.create_or_update_cases([child_task_case])
-
-    def _submit_form(self, form):
-        blah = submit_form_locally(ElementTree.tostring(form), self.domain, **{})
-        FormESFake.save_doc(blah.xform.to_json())
 
     def _submit_gmp_form(
             self, form_date, case_id, nutrition_status=None):
