@@ -136,13 +136,13 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
 
     vellum_base = 'corehq/apps/app_manager/static/app_manager/js/'
     vellum_dir = 'vellum'
-    if toggles.VELLUM_BETA.enabled(request.user.username) and isdir(join(vellum_base, 'vellum_beta')):
+    if isdir(join(vellum_base, 'vellum_beta')):
         vellum_dir = 'vellum_beta'
 
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
-        'vellum_debug': settings.VELLUM_DEBUG and not toggles.VELLUM_BETA.enabled(request.user.username),
+        'vellum_debug': settings.VELLUM_DEBUG,
         'nav_form': form,
         'vellum_style_path': 'app_manager/js/{}/style.css'.format(vellum_dir),
         'vellum_ckeditor_path': 'app_manager/js/{}/lib/ckeditor/'.format(vellum_dir),
