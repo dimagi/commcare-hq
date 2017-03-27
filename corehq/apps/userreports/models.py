@@ -717,7 +717,7 @@ class AsyncIndicator(models.Model):
             except cls.DoesNotExist:
                 doc_type = change.document['doc_type']
                 domain = change.document['domain']
-                indicator = AsyncIndicator(
+                indicator = AsyncIndicator.objects.create(
                     doc_id=doc_id,
                     doc_type=doc_type,
                     domain=domain,
@@ -725,11 +725,12 @@ class AsyncIndicator(models.Model):
                     indicator_config_ids=config_ids
                 )
             else:
-                current_config_ids = indicator.indicator_config_ids
-                new_config_ids = list(set(current_config_ids).union(set(config_ids)))
-                indicator.indicator_config_ids = new_config_ids
-
-            indicator.save()
+                current_config_ids = set(indicator.indicator_config_ids)
+                config_ids = set(config_ids)
+                if config_ids - current_config_ids:
+                    new_config_ids = list(current_config_ids).union(config_ids)
+                    indicator.indicator_config_ids = new_config_ids
+                    indicator.save()
 
         return indicator
 
