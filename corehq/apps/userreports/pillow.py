@@ -26,6 +26,7 @@ from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 from pillow_retry.models import PillowError
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
+_slow_ucr_assert = soft_assert('{}@{}'.format('jemord', 'dimagi.com'))
 
 
 class PillowConfigError(Exception):
@@ -45,6 +46,7 @@ def time_ucr_process_change(method):
                 table.config._id, doc['_id'], seconds
             )
             pillow_logging.warning(message)
+            _slow_ucr_assert(seconds < 5, message)
         return result
     return timed
 
