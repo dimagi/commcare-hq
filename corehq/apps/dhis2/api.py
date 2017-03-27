@@ -3,9 +3,7 @@ import logging
 import requests
 from django.core.serializers.json import DjangoJSONEncoder
 from corehq.apps.dhis2.dbaccessors import get_dhis2_connection
-
-
-logger = logging.getLogger('json_api_logger')
+from corehq.apps.dhis2.models import JsonApiLog
 
 
 class JsonApiError(Exception):
@@ -22,19 +20,18 @@ def log_request(func):
         """
         Unpack function, path and data from args and kwargs in order to log them separately
         """
-        logger.log(log_level, {
-            'domain': json_api_request.domain_name,
-            'log_level': log_level,
-            'request_method': method_func.__name__.upper(),
-            'request_url': json_api_request.server_url + path,
-            'request_headers': json.dumps(json_api_request.headers),
-            'request_params': json.dumps(params),
-            'request_body': '' if data is None else json.dumps(data, cls=DjangoJSONEncoder),
-
-            'request_error': request_error,
-            'response_status': response_status,
-            'response_body': response_body,
-        })
+        JsonApiLog.objects.create(
+            domain=json_api_request.domain_name,
+            log_level=log_level,
+            request_method=method_func.__name__.upper(),
+            request_url=json_api_request.server_url + path,
+            request_headers=json.dumps(json_api_request.headers),
+            request_params=json.dumps(params),
+            request_body='' if data is None else json.dumps(data, cls=DjangoJSONEncoder),
+            request_error=request_error,
+            response_status=response_status,
+            response_body=response_body,
+        )
 
     def request_wrapper(self, *args, **kwargs):
         domain_log_level = get_dhis2_connection(self.domain_name).get('log_level', logging.INFO)

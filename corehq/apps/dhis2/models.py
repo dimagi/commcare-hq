@@ -126,7 +126,7 @@ class JsonApiLog(models.Model):
     Store API requests and responses to analyse errors and keep an audit trail
     """
     domain = models.CharField(max_length=126, null=True, db_index=True)  # 126 seems to be a popular length
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(auto_now_add=True)
     log_level = models.IntegerField(null=True)
     request_method = models.CharField(max_length=12)
     request_url = models.CharField(max_length=255)
