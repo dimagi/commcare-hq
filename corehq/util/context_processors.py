@@ -91,7 +91,8 @@ def websockets_override(request):
 
 def enterprise_mode(request):
     return {
-        'enterprise_mode': settings.ENTERPRISE_MODE
+        'enterprise_mode': settings.ENTERPRISE_MODE,
+        'is_sass_environment': settings.IS_SASS_ENVIRONMENT
     }
 
 
