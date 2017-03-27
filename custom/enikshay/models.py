@@ -12,7 +12,19 @@ class IssuerId(models.Model):
     user_id = models.CharField(max_length=50, db_index=True, unique=True)
 
 
+def compress_issuer_id(issuer_id):
+    return compress_id(
+        serial_id=issuer_id,
+        growth_symbols=list("HLJXYUWMNV"),
+        lead_symbols=list("ACE3459KFPRT"),
+        body_symbols=list("ACDEFHJKLMNPQRTUVWXY3479"),
+        body_digit_count=3,
+    )
+
+
 def compress_id(serial_id, growth_symbols, lead_symbols, body_symbols, body_digit_count):
+    """Accepts an integer ID and compresses it according to the spec here:
+    https://docs.google.com/document/d/11Nxk3XMuae9S4L3JZc4FCVTocLz6bOC-glclrgxnQ5o/"""
     if not growth_symbols or not lead_symbols:
         raise AssertionError("We need both growth and lead symbols")
 
