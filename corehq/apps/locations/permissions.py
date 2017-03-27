@@ -89,6 +89,7 @@ from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.users.models import CouchUser
+from no_exceptions.exceptions import Http403
 from .models import SQLLocation
 
 LOCATION_ACCESS_DENIED = mark_safe(ugettext_lazy(
@@ -100,6 +101,11 @@ LOCATION_ACCESS_DENIED = mark_safe(ugettext_lazy(
 LOCATION_SAFE_TASTYPIE_RESOURCES = set()
 
 LOCATION_SAFE_HQ_REPORTS = set()
+
+NOTIFY_EXCEPTION_MSG = (
+    "Someone was just denied access to a page due to location-based "
+    "access restrictions. If this happens a lot, we should investigate."
+)
 
 
 def locations_access_required(view_fn):
@@ -275,10 +281,14 @@ def conditionally_location_safe(conditional_function):
 
 def location_restricted_response(request):
     from corehq.apps.hqwebapp.views import no_permissions
-    msg = ("Someone was just denied access to a page due to location-based "
-           "access restrictions. If this happens a lot, we should investigate.")
-    notify_exception(request, msg)
+    notify_exception(request, NOTIFY_EXCEPTION_MSG)
     return no_permissions(request, message=LOCATION_ACCESS_DENIED)
+
+
+def location_restricted_exception(request):
+    from corehq.apps.hqwebapp.views import no_permissions_exception
+    notify_exception(request, NOTIFY_EXCEPTION_MSG)
+    return no_permissions_exception(request, message=LOCATION_ACCESS_DENIED)
 
 
 def is_location_safe(view_fn, view_args, view_kwargs):

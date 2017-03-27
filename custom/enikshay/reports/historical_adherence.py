@@ -7,7 +7,7 @@ from dateutil.parser import parse
 from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_location_id,
-    location_restricted_response,
+    location_restricted_exception,
 )
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.base import BaseReportFilter
@@ -78,7 +78,7 @@ class HistoricalAdherenceReport(EnikshayReport):
     def decorator_dispatcher(self, request, *args, **kwargs):
         response = super(HistoricalAdherenceReport, self).decorator_dispatcher(request, *args, **kwargs)
         if not user_can_access_location_id(self.domain, self.request.couch_user, self.person.owner_id):
-            return location_restricted_response(request)
+            raise location_restricted_exception(request)
         return response
 
     @property
