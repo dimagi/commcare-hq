@@ -226,6 +226,9 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
         ensure_document_exists(change)
         ensure_matched_revisions(change)
 
+        if doc is None:
+            return
+
         for table in self.table_adapters_by_domain[domain]:
             if table.config.filter(doc):
                 if table.run_asynchronous:
