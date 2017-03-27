@@ -30,38 +30,29 @@ def compress_id(serial_id, growth_symbols, lead_symbols, body_symbols, body_digi
     else:
         growth_digit_count = 0
 
-    digit_bases = []
-    for i in range(growth_digit_count):
-        digit_bases.append(growth_digit_base)
+    digit_bases = ([growth_digit_base] * growth_digit_count
+                   + [lead_digit_base]
+                   + [body_digit_base] * body_digit_count)
 
-    digit_bases.append(lead_digit_base)
-
-    for i in range(body_digit_count):
-        digit_bases.append(body_digit_base)
-
-    # TODO use divisors.insert
-    divisors = [0] * len(digit_bases)
-    divisors[len(divisors)-1] = 1
-    for i in range(len(divisors) - 2, -1, -1):
-        divisors[i] = divisors[i + 1] * digit_bases[i + 1]
+    divisors = [1]
+    for digit_base in reversed(digit_bases[1:]):
+        divisors.insert(0, divisors[0] * digit_base)
 
     remainder = serial_id
-    count = []
-    # TODO can I just iterate over divisors?
-    for i in range(len(digit_bases)):
-        count.append(remainder / divisors[i])
-        remainder = remainder % divisors[i]
+    counts = []
+    for divisor in divisors:
+        counts.append(remainder / divisor)
+        remainder = remainder % divisor
 
     if remainder != 0:
         raise AssertionError("Failure while encoding ID {}!".format(serial_id))
 
     output = []
-    for i in range(growth_digit_count):
-        output.append(growth_symbols[count[i]])
-
-    output.append(lead_symbols[count[len(output)]])
-
-    for i in range(body_digit_count):
-        output.append(body_symbols[count[len(output)]])
-
+    for i, count in enumerate(counts):
+        if i < growth_digit_count:
+            output.append(growth_symbols[count])
+        elif i == growth_digit_count:
+            output.append(lead_symbols[count])
+        else:
+            output.append(body_symbols[count])
     return ''.join(output)
