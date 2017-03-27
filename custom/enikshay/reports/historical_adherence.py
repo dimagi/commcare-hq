@@ -14,7 +14,7 @@ from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
-from custom.enikshay.case_utils import CASE_TYPE_ADHERENCE, get_person_case_from_episode
+from custom.enikshay.case_utils import get_person_case_from_episode, get_adherence_cases_by_day
 from custom.enikshay.reports.generic import EnikshayReport
 
 from django.utils.translation import ugettext_lazy
@@ -169,20 +169,7 @@ class HistoricalAdherenceReport(EnikshayReport):
 
     @memoized
     def get_adherence_cases_dict(self):
-        indexed_cases = CaseAccessors(self.domain).get_reverse_indexed_cases([self.episode_case_id])
-        open_adherence_cases = [
-            case for case in indexed_cases
-            if case.type == CASE_TYPE_ADHERENCE
-        ]
-
-        adherence = defaultdict(list)  # datetime.date -> list of adherence cases
-
-        for case in open_adherence_cases:
-            # Date is in India timezone
-            adherence_datetime = parse(case.dynamic_case_properties().get('adherence_date'))
-            adherence[adherence_datetime.date()].append(case)
-
-        return adherence
+        return get_adherence_cases_by_day(self.domain, self.episode_case_id)
 
     def _get_first_sunday_before_or_equal_to(self, date):
         day = datetime.date(date.year, date.month, date.day)
