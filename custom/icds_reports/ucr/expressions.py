@@ -111,19 +111,25 @@ class FormsInDateExpressionSpec(JsonObject):
     type = TypeProperty('icds_get_case_forms_in_date')
     case_id_expression = DefaultProperty(required=True)
     xmlns = ListProperty(required=False)
-    from_date_expression = DictProperty(required=True)
-    to_date_expression = DictProperty(required=True)
+    from_date_expression = DictProperty(required=False)
+    to_date_expression = DictProperty(required=False)
     count = BooleanProperty(default=False)
 
-    def configure(self, case_id_expression, from_date_expression, to_date_expression):
+    def configure(self, case_id_expression, from_date_expression=None, to_date_expression=None):
         self._case_id_expression = case_id_expression
         self._from_date_expression = from_date_expression
         self._to_date_expression = to_date_expression
 
     def __call__(self, item, context=None):
         case_id = self._case_id_expression(item, context)
-        from_date = self._from_date_expression(item, context)
-        to_date = self._to_date_expression(item, context)
+        if self._from_date_expression:
+            from_date = self._from_date_expression(item, context)
+        else:
+            from_date = None
+        if self._to_date_expression:
+            to_date = self._to_date_expression(item, context)
+        else:
+            to_date = None
 
         if not case_id:
             return []
@@ -133,7 +139,11 @@ class FormsInDateExpressionSpec(JsonObject):
 
     def _get_forms(self, case_id, from_date, to_date, context):
         domain = context.root_doc['domain']
-        cache_hash = "{}{}{}".format(from_date.toordinal(), to_date.toordinal(), self.count)
+        cache_hash = "{}".format(self.count)
+        if from_date:
+            cache_hash += "{}".format(from_date.toordinal())
+        if to_date:
+            cache_hash += "{}".format(to_date.toordinal())
         if self.xmlns:
             cache_hash += ''.join(self.xmlns)
 
@@ -149,9 +159,12 @@ class FormsInDateExpressionSpec(JsonObject):
         query = (
             FormES()
             .domain(domain)
-            .completed(gte=from_date, lte=to_date)
             .doc_id(xform_ids)
         )
+        if from_date:
+            query = query.completed(gte=from_date)
+        if to_date:
+            query = query.completed(lte=to_date)
         if self.xmlns:
             query = query.xmlns(self.xmlns)
         if self.count:
@@ -1109,9 +1122,15 @@ def get_last_case_property_update(spec, context):
 
 def get_forms_in_date_expression(spec, context):
     wrapped = FormsInDateExpressionSpec.wrap(spec)
+    from_date, to_date = None, None
+    if wrapped.from_date_expression:
+        from_date = ExpressionFactory.from_spec(wrapped.from_date_expression, context)
+    if wrapped.to_date_expression:
+        to_date = ExpressionFactory.from_spec(wrapped.to_date_expression, context)
+
     wrapped.configure(
         case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context),
-        from_date_expression=ExpressionFactory.from_spec(wrapped.from_date_expression, context),
-        to_date_expression=ExpressionFactory.from_spec(wrapped.to_date_expression, context)
+        from_date_expression=from_date,
+        to_date_expression=to_date
     )
     return wrapped

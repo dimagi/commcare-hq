@@ -35,14 +35,17 @@ class TestFormsExpressionSpecWithFilter(TestCase):
         delete_all_cases()
         super(TestFormsExpressionSpecWithFilter, cls).tearDownClass()
 
-    def _make_expression(self, from_statement, to_statement, xmlns=None, count=False):
+    def _make_expression(self, from_statement=None, to_statement=None, xmlns=None, count=False):
         spec = {
             "type": "icds_get_case_forms_in_date",
             "case_id_expression": {
                 "type": "property_name",
                 "property_name": "_id"
             },
-            "from_date_expression": {
+        }
+
+        if from_statement:
+            spec["from_date_expression"] = {
                 "type": "add_months",
                 "datatype": "datetime",
                 "date_expression": {
@@ -58,8 +61,10 @@ class TestFormsExpressionSpecWithFilter(TestCase):
                         }
                     }
                 },
-            },
-            "to_date_expression": {
+            }
+
+        if to_statement:
+            spec["to_date_expression"] = {
                 "type": "add_months",
                 "datatype": "datetime",
                 "date_expression": {
@@ -75,8 +80,7 @@ class TestFormsExpressionSpecWithFilter(TestCase):
                         }
                     }
                 },
-            },
-        }
+            }
 
         if xmlns:
             spec['xmlns'] = [xmlns]
@@ -128,3 +132,33 @@ class TestFormsExpressionSpecWithFilter(TestCase):
         context = EvaluationContext({"domain": self.domain}, 0)
         count = expression(self.case.to_json(), context)
         self.assertEqual(count, 0)
+
+    def test_no_from_statement(self):
+        expression = self._make_expression(to_statement='iteration + 1')
+        context = EvaluationContext({"domain": self.domain}, 0)
+        forms = expression(self.case.to_json(), context)
+
+        self.assertEqual(len(forms), 1)
+        self.assertEqual(forms, self.forms)
+
+        expression = self._make_expression(to_statement='iteration - 3')
+        context = EvaluationContext({"domain": self.domain}, 0)
+        forms = expression(self.case.to_json(), context)
+
+        self.assertEqual(len(forms), 0)
+        self.assertEqual(forms, [])
+
+    def test_no_to_statement(self):
+        expression = self._make_expression(from_statement='iteration - 1')
+        context = EvaluationContext({"domain": self.domain}, 0)
+        forms = expression(self.case.to_json(), context)
+
+        self.assertEqual(len(forms), 1)
+        self.assertEqual(forms, self.forms)
+
+        expression = self._make_expression(from_statement='iteration + 3')
+        context = EvaluationContext({"domain": self.domain}, 0)
+        forms = expression(self.case.to_json(), context)
+
+        self.assertEqual(len(forms), 0)
+        self.assertEqual(forms, [])
