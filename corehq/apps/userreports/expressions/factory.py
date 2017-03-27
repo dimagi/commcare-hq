@@ -1,9 +1,12 @@
 from __future__ import absolute_import
+import datetime
 import functools
 import json
-import datetime
+
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
+import six
+
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.specs import (
     PropertyNameGetterSpec, PropertyPathGetterSpec,
@@ -12,7 +15,6 @@ from corehq.apps.userreports.expressions.specs import (
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec,
     IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec,
     CaseSharingGroupsExpressionSpec, ReportingGroupsExpressionSpec, CoalesceExpressionSpec,
-    FormsInDateExpressionSpec
 )
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
@@ -20,7 +22,6 @@ from corehq.apps.userreports.expressions.list_specs import FilterItemsExpression
     MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec, SortItemsExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler
-import six
 
 
 def _make_filter(spec, context):
@@ -186,16 +187,6 @@ def _get_forms_expression(spec, context):
     return wrapped
 
 
-def _get_forms_in_date_expression(spec, context):
-    wrapped = FormsInDateExpressionSpec.wrap(spec)
-    wrapped.configure(
-        case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context),
-        from_date_expression=ExpressionFactory.from_spec(wrapped.from_date_expression, context),
-        to_date_expression=ExpressionFactory.from_spec(wrapped.to_date_expression, context)
-    )
-    return wrapped
-
-
 def _get_subcases_expression(spec, context):
     wrapped = SubcasesExpressionSpec.wrap(spec)
     wrapped.configure(
@@ -304,7 +295,6 @@ class ExpressionFactory(object):
         'diff_days': _diff_days_expression,
         'evaluator': _evaluator_expression,
         'get_case_forms': _get_forms_expression,
-        'get_case_forms_in_date': _get_forms_in_date_expression,
         'get_subcases': _get_subcases_expression,
         'get_case_sharing_groups': _get_case_sharing_groups_expression,
         'get_reporting_groups': _get_reporting_groups_expression,

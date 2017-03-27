@@ -1,9 +1,11 @@
-from corehq.apps.userreports.expressions.factory import ExpressionFactory
+import hashlib
 from jsonobject.base_properties import DefaultProperty
-from corehq.apps.userreports.specs import TypeProperty
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty
 from casexml.apps.case.xform import extract_case_blocks
+from corehq.apps.es.forms import FormES
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.specs import TypeProperty
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty
 
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -26,6 +28,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('icds_get_case_history', 'custom.icds_reports.ucr.expressions.get_case_history'),
     ('icds_get_case_history_by_date', 'custom.icds_reports.ucr.expressions.get_case_history_by_date'),
     ('icds_get_last_case_property_update', 'custom.icds_reports.ucr.expressions.get_last_case_property_update'),
+    ('icds_get_case_forms_in_date', 'custom.icds_reports.ucr.expressions.get_forms_in_date_expression'),
 ]
 
 
@@ -100,6 +103,60 @@ class GetLastCasePropertyUpdateSpec(JsonObject):
     start_date = DefaultProperty(required=False)
     end_date = DefaultProperty(required=False)
     filter = DefaultProperty(required=False)
+
+
+class FormsInDateExpressionSpec(JsonObject):
+    type = TypeProperty('icds_get_case_forms_in_date')
+    case_id_expression = DefaultProperty(required=True)
+    xmlns = ListProperty(required=False)
+    from_date_expression = DictProperty(required=True)
+    to_date_expression = DictProperty(required=True)
+
+    def configure(self, case_id_expression, from_date_expression, to_date_expression):
+        self._case_id_expression = case_id_expression
+        self._from_date_expression = from_date_expression
+        self._to_date_expression = to_date_expression
+
+    def __call__(self, item, context=None):
+        case_id = self._case_id_expression(item, context)
+        from_date = self._from_date_expression(item, context)
+        to_date = self._to_date_expression(item, context)
+
+        if not case_id:
+            return []
+
+        assert context.root_doc['domain']
+        return self._get_forms(case_id, from_date, to_date, context)
+
+    def _get_forms(self, case_id, from_date, to_date, context):
+        domain = context.root_doc['domain']
+        cache_hash = "{},{}".format(from_date.toordinal(), to_date.toordinal())
+        if self.xmlns:
+            cache_hash += ''.join(self.xmlns)
+
+        cache_hash = hashlib.md5(cache_hash).hexdigest()[:4]
+
+        cache_key = (self.__class__.__name__, case_id, cache_hash)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        xform_ids = CaseAccessors(domain).get_case_xform_ids(case_id)
+        # TODO(Emord) this will eventually break down when cases have a lot of
+        # forms associated with them. perhaps change to intersecting two sets
+        query = (
+            FormES()
+            .domain(domain)
+            .completed(gte=from_date, lte=to_date)
+            .doc_id(xform_ids)
+        )
+        if self.xmlns:
+            query = query.xmlns(self.xmlns)
+        form_ids = query.get_ids()
+        xforms = FormAccessors(domain).get_forms(form_ids)
+        xforms = [f.to_json() for f in xforms if f.domain == domain]
+
+        context.set_cache_value(cache_key, xforms)
+        return xforms
 
 
 def month_start(spec, context):
@@ -1032,3 +1089,13 @@ def get_last_case_property_update(spec, context):
         }
     }
     return ExpressionFactory.from_spec(spec, context)
+
+
+def get_forms_in_date_expression(spec, context):
+    wrapped = FormsInDateExpressionSpec.wrap(spec)
+    wrapped.configure(
+        case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context),
+        from_date_expression=ExpressionFactory.from_spec(wrapped.from_date_expression, context),
+        to_date_expression=ExpressionFactory.from_spec(wrapped.to_date_expression, context)
+    )
+    return wrapped
