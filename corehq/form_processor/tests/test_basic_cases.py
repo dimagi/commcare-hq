@@ -361,7 +361,20 @@ class FundamentalCaseTests(TestCase):
 
 @use_sql_backend
 class FundamentalCaseTestsSQL(FundamentalCaseTests):
-    pass
+    def test_long_value_validation(self):
+        case_id = uuid.uuid4().hex
+        case = CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id='user1',
+            owner_id='user1',
+            case_type='demo',
+            case_name='this is a very long case name that exceeds the 255 char limit' * 5
+        )
+
+        message = "Error processing case update: Field: name, Error: Value exceeds allowed length: 255"
+        with self.assertRaisesMessage(ValueError, message):
+            post_case_blocks([case.as_xml()], domain='domain2')
 
 
 def _submit_case_block(create, case_id, **kwargs):
