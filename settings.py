@@ -923,6 +923,8 @@ except ImportError as error:
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
+IS_SASS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
