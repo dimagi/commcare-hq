@@ -56,6 +56,11 @@ def restore(request, domain, app_id=None):
     """
     couch_user = CouchUser.from_django_user_include_anonymous(domain, request.user)
     assert couch_user is not None, 'No couch user to use for restore'
+    device_id = request.GET.get('device_id')
+    if device_id and isinstance(couch_user, CommCareUser):
+        if not couch_user.is_demo_user:
+            couch_user.update_device_id_last_used(device_id)
+            couch_user.save()
     response, _ = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
     return response
 
