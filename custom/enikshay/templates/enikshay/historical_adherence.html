@@ -1,0 +1,116 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% if report.needs_filters %}
+    {% include 'reports/partials/description.html' %}
+{% else %}
+    <div class="row">
+        <div class="col-md-1"></div>
+        <div class="col-md-10">
+            <table class="table table-striped">
+                <tbody>
+                    <tr><td><strong>Name:</strong></td><td>John Doe</td></tr>
+                    <tr><td><strong>Treatment Phase (IP or CP):</strong></td><td>IP</td></tr>
+                    <tr><td><strong>Adherence Schedule</strong></td><td></td></tr>
+                    <tr><td><strong>Doses:</strong></td><td>1</td></tr>
+                    <tr><td><strong>Patient Type</strong></td><td>Recurrent</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-1"></div>
+    </div>
+
+
+    <style>
+        .cal td {
+            height: 100px;
+            position: relative;
+            border-width: 2px !important;
+        }
+        .cal td.hidden-day {
+            border-width: 0px !important;
+        }
+        .cal img {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+        }
+        .cal {
+            border: none;
+        }
+    </style>
+
+    <div class="row">
+        <div class="col-md-1"></div>
+        <div class="col-md-10">
+            <h3>Calendar</h3>
+
+            <table class="table table-bordered cal" >
+                <col style="width:14%">
+                <col style="width:14%">
+                <col style="width:14%">
+                <col style="width:14%">
+                <col style="width:14%">
+                <col style="width:14%">
+                <col style="width:14%">
+                <tbody>
+                    {% for week in weeks %}
+                        <tr>
+                        {% for day in week.days %}
+                            {% if day.display %}
+                                <td>
+                                    {% if day.month_string %}
+                                        <span>{{ day.month_string }}</span>
+                                    {% endif %}
+                                    <span class="pull-right">{{ day.day_string }}</span>
+                                    {% if day.adherence %}
+                                        <img src="{% static 'userreports/images/circle-outline-512.gif' %}">
+                                    {% endif %}
+                                </td>
+                            {% else %}
+                                <td class="hidden-day"></td>
+                            {% endif %}
+                        {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+{#            <table class="table table-bordered cal" >#}
+{#                <col style="width:14%">#}
+{#                <col style="width:14%">#}
+{#                <col style="width:14%">#}
+{#                <col style="width:14%">#}
+{#                <col style="width:14%">#}
+{#                <col style="width:14%">#}
+{#                <col style="width:14%">#}
+{#                <tbody>#}
+{#                    <tr>#}
+{#                        <td>#}
+{#                            <div>#}
+{#                                <span>Jan</span>#}
+{#                                <span class="pull-right">1</span>#}
+{#                            </div>#}
+{#                            <img src="{% static 'userreports/images/circle-outline-512.gif' %}">#}
+{#                        </td>#}
+{#                        <td><span class="pull-right">2</span></td>#}
+{#                        <td><span class="pull-right">3</span></td>#}
+{#                        <td><span class="pull-right">4</span></td>#}
+{#                        <td><span class="pull-right">5</span></td>#}
+{#                        <td><span class="pull-right">6</span></td>#}
+{#                        <td><span class="pull-right">7</span></td>#}
+{#                    </tr>#}
+{#                    <tr>#}
+{#                        <td><span class="pull-right">8</span></td>#}
+{#                        <td><span class="pull-right">9</span></td>#}
+{#                        <td><span class="pull-right">10</span></td>#}
+{#                        <td><span class="pull-right">11</span></td>#}
+{#                        <td><span class="pull-right">12</span></td>#}
+{#                        <td><span class="pull-right">13</span></td>#}
+{#                        <td><span class="pull-right">14</span></td>#}
+{#                    </tr>#}
+{#                </tbody>#}
+{#            </table>#}
+        </div>
+        <div class="col-md-1"></div>
+    </div>
+{% endif %}
