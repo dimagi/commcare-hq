@@ -166,7 +166,6 @@ class NikshayFollowupRepeater(CaseRepeater):
                 date_tested_added_for_test(test_case) and
                 test_case_properties.get('nikshay_registered', 'false') == 'false' and
                 test_case_properties.get('test_type_value', '') in ['microscopy-zn', 'microscopy-fluorescent'] and
-                episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 episode_case_properties.get('nikshay_id') and
                 (
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
