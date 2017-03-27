@@ -12,19 +12,18 @@ class Command(BaseCommand):
     python manage.py show_celery_workers
     python manage.py show_celery_workers <timeout>
     """
-    args = '<timeout>'
-    help = ''
 
-    def handle(self, *args, **options):
-        if len(args) == 0:
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'timeout',
+            nargs='?',
+            type=int,
+        )
+
+    def handle(self, timeout, **options):
+        if timeout is None:
             result = get_running_workers()
         else:
-            timeout = args[0]
-            try:
-                timeout = int(timeout)
-            except (ValueError, TypeError):
-                raise CommandError("Error: Timeout seconds must be an integer")
-
             result = get_running_workers(timeout=timeout)
 
         if not result:

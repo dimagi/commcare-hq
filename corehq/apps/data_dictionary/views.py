@@ -2,7 +2,7 @@ import json
 
 import itertools
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db.models.query import Prefetch
 from django.http import HttpResponse
 from django.http import JsonResponse

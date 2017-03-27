@@ -196,6 +196,16 @@
 
         {% include 'style/includes/analytics_all.html' %}
 
+        {% if is_sass_environment %}
+        {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
+        {% compress js %}
+        <script src="{% static 'style/js/drift.js' %}"></script>
+        <script src="{% static 'style/js/hubspot_drift.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+        {% endif %}
+
+
         {% if less_debug %}
             <script>
                 less = {
@@ -237,7 +247,7 @@
                     {% endif %}
 
                     <div class="navbar-header hq-header">
-                        <a href="{% url "homepage" %}" class="navbar-brand">
+                        <a href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}" class="navbar-brand">
                             {% if CUSTOM_LOGO_URL %}
                                 <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
                             {% else %}

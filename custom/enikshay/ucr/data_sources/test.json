@@ -60,20 +60,8 @@
                 "datatype": "string",
                 "column_id": "lab_serial_number",
                 "expression": {
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "named",
-                        "name": "test_update_form"
-                    },
-                    "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "microscopy",
-                            "ql_microscopy",
-                            "lab_serial_number"
-                        ]
-                    }
+                    "type": "property_name",
+                    "property_name": "lab_serial_number"
                 }
             },
             {
@@ -84,12 +72,13 @@
                     "type": "nested",
                     "argument_expression": {
                         "type": "named",
-                        "name": "sample_receipt_form"
+                        "name": "test_update_form"
                     },
                     "value_expression": {
                         "type": "property_path",
                         "property_path": [
                             "form",
+                            "record_samples_received",
                             "sample_receipt_date"
                         ]
                     }
@@ -136,12 +125,13 @@
                                 "type": "nested",
                                 "argument_expression": {
                                     "type": "named",
-                                    "name": "sample_receipt_form"
+                                    "name": "test_update_form"
                                 },
                                 "value_expression": {
                                     "type": "property_path",
                                     "property_path": [
                                         "form",
+                                        "record_samples_received",
                                         "sample_receipt_date"
                                     ]
                                 }
@@ -160,12 +150,13 @@
                                 "type": "nested",
                                 "argument_expression": {
                                     "type": "named",
-                                    "name": "sample_receipt_form"
+                                    "name": "test_update_form"
                                 },
                                 "value_expression": {
                                     "type": "property_path",
                                     "property_path": [
                                         "form",
+                                        "record_samples_received",
                                         "sample_receipt_date"
                                     ]
                                 }
@@ -275,6 +266,7 @@
                         "property_path": [
                             "form",
                             "rpt_referral_details",
+                            "ql_referral_details",
                             "lab_referral_owner_id"
                         ]
                     }
@@ -1117,15 +1109,18 @@
                 "datatype": "string",
                 "column_id": "history_of_att",
                 "expression": {
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
+                    "type": "nested",
+                    "argument_expression": {
                         "type": "named",
-                        "name": "person_id"
+                        "name": "complete_treatment_form"
                     },
                     "value_expression": {
-                        "type": "property_name",
-                        "property_name": "previous_tb_treatment"
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "ql_prev_episode_details",
+                            "history_of_att"
+                        ]
                     }
                 }
             },

@@ -1,8 +1,14 @@
+import json
+
+import requests
+
+import settings
 from corehq.apps.export.views import ExportsPermissionsMixin
-from django.core.urlresolvers import reverse, resolve, Resolver404
+from django.urls import reverse, resolve, Resolver404
 from corehq.tabs.uitab import url_is_location_safe
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.reports.models import ReportConfig, FormExportSchema, CaseExportSchema
+from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -12,6 +18,7 @@ class TileConfigurationError(Exception):
 
 class TileType(object):
     ICON = 'icon'
+    GRAPH = 'graph'
     PAGINATE = 'paginate'
 
 
@@ -170,6 +177,63 @@ class IconContext(BaseTileContextProcessor):
             'isExternal': self.tile_config.is_external_link,
         }
 
+
+class DatadogContext(BaseTileContextProcessor):
+    """This type of tile queries out to Datadog API to get a chart snapshot.
+    """
+    tile_type = TileType.GRAPH
+
+    @property
+    def context(self):
+        return {
+            'url': self.get_graph()
+        }
+
+    @property
+    def times(self):
+        import time
+        import datetime
+
+        def posix(date):
+            return int(time.mktime(date.timetuple()))
+
+        end = datetime.datetime.now()
+        start = end - datetime.timedelta(days=7)
+        return posix(start), posix(end)
+
+    @quickcache(['self.tile_config.slug'], timeout=3600)
+    def get_graph(self):
+        start, end = self.times
+        tags = ','.join([
+            u'environment:{}'.format(settings.SERVER_ENVIRONMENT),
+            u'domain:{}'.format(self.request.domain)
+        ])
+        response = requests.get(
+            'https://app.datadoghq.com/api/v1/graph/snapshot',
+            params={
+                'metric_query': "sum:commcare.xform_submissions.201{environment:production}.as_rate()",
+                'graph_def': json.dumps({
+                    "requests": [{
+                        "q": "sum:commcare.xform_submissions.count{{{}}}.as_count()".format(tags),
+                        "type": "bars",
+                        "conditional_formats": [],
+                        "aggregator": "avg"
+                    }],
+                    "viz": "timeseries",
+                    "autoscale": True
+                }),
+                'start': start,
+                'end': end,
+                'api_key': settings.DATADOG_API_KEY,
+                'application_key': settings.DATADOG_APP_KEY
+            },
+            headers={
+                "Content-type": "application/json"
+            })
+
+        response.raise_for_status()
+        resp = response.json()
+        return resp['snapshot_url']
 
 class BasePaginatedTileContextProcessor(BaseTileContextProcessor):
     """A resource for serving data to the Angularjs PaginatedTileController

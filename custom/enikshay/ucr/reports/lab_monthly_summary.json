@@ -24,10 +24,10 @@
                 "compare_as_string": false,
                 "datatype": "string",
                 "required": false,
-                "display": "Case Open Date",
-                "field": "opened_on",
+                "display": "Date of Test Result Update",
+                "field": "date_reported",
                 "type": "date",
-                "slug": "opened_on"
+                "slug": "date_reported"
             },
             {
                 "compare_as_string": false,

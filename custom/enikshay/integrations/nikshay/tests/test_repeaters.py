@@ -1,4 +1,5 @@
 import json
+from mock import patch
 from collections import namedtuple
 from datetime import datetime
 from django.test import TestCase, override_settings
@@ -6,12 +7,18 @@ from django.test import TestCase, override_settings
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import flag_enabled
+from custom.enikshay.const import TREATMENT_OUTCOME, TREATMENT_OUTCOME_DATE
 from custom.enikshay.exceptions import NikshayLocationNotFound
-from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater, NikshayHIVTestRepeater
+from custom.enikshay.integrations.nikshay.repeaters import (
+    NikshayRegisterPatientRepeater,
+    NikshayHIVTestRepeater,
+    NikshayTreatmentOutcomeRepeater,
+)
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin, ENikshayLocationStructureMixin
 
 from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator,
+    NikshayTreatmentOutcomePayload,
     NikshayHIVTestPayloadGenerator,
     ENIKSHAY_ID,
 )
@@ -75,6 +82,7 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
                 'create': False,
                 "update": dict(
                     nikshay_registered='true',
+                    nikshay_id=DUMMY_NIKSHAY_ID,
                 )
             }
         )
@@ -144,6 +152,7 @@ class TestNikshayRegisterPatientRepeater(ENikshayLocationStructureMixin, Nikshay
         self.assign_person_to_location(self.phi.location_id)
         self._create_nikshay_enabled_case()
         self.assertEqual(1, len(self.repeat_records().all()))
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
@@ -303,6 +312,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self._assert_case_property_equal(updated_episode_case, 'nikshay_error', unicode(message))
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
 
     def setUp(self):
@@ -323,20 +333,12 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
     def test_available_for_domain(self):
         self.assertTrue(NikshayHIVTestRepeater.available_for_domain(self.domain))
 
-    @run_with_all_backends
     def test_trigger(self):
         # nikshay not enabled
+        self.create_case(self.episode)
+        self._create_nikshay_registered_case()
         self.assertEqual(0, len(self.repeat_records().all()))
 
-        self.factory.create_or_update_cases([self.episode])
-        update_case(
-            self.domain,
-            self.episode_id,
-            {
-                "nikshay_registered": 'true',
-                "nikshay_id": DUMMY_NIKSHAY_ID,
-            },
-        )
         update_case(
             self.domain,
             self.person_id,
@@ -346,6 +348,7 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
             }
         )
         self.assertEqual(1, len(self.repeat_records().all()))
+
         update_case(
             self.domain,
             self.person_id,
@@ -355,6 +358,7 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
             }
         )
         self.assertEqual(2, len(self.repeat_records().all()))
+
         update_case(
             self.domain,
             self.person_id,
@@ -392,7 +396,8 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         )
 
     @run_with_all_backends
-    def test_payload_properties(self):
+    @patch("socket.gethostbyname", return_value="198.1.1.1")
+    def test_payload_properties(self, _):
         update_case(
             self.domain, self.person_id,
             {
@@ -407,7 +412,7 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload['Source'], ENIKSHAY_ID)
         self.assertEqual(payload['regby'], "arwen")
         self.assertEqual(payload['password'], "Hadhafang")
-        self.assertEqual(payload['IP_FROM'], "127.0.0.1")
+        self.assertEqual(payload['IP_FROM'], "198.1.1.1")
         self.assertEqual(payload["PatientID"], DUMMY_NIKSHAY_ID)
 
         self.assertEqual(payload["HIVStatus"], "Unknown")
@@ -449,3 +454,142 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload["CPTDeliverDate"], "02/01/2016")
         self.assertEqual(payload["InitiatedDate"], "03/04/2016")
         self.assertEqual(payload["ARTCentreDate"], "03/04/2016")
+
+        update_case(
+            self.domain, self.person_id,
+            {
+                "art_initiation_date": "foo",
+            }
+        )
+
+        self.person_case = CaseAccessors(self.domain).get_case(self.person_id)
+        payload = (json.loads(
+            NikshayHIVTestPayloadGenerator(None).get_payload(self.repeat_record, self.person_case))
+        )
+
+        self.assertEqual(payload["CPTDeliverDate"], "02/01/2016")
+        self.assertEqual(payload["InitiatedDate"], "01/01/1900")
+        self.assertEqual(payload["ARTCentreDate"], "01/01/1900")
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
+
+    def setUp(self):
+        super(TestNikshayTreatmentOutcomeRepeater, self).setUp()
+
+        self.repeater = NikshayTreatmentOutcomeRepeater(
+            domain=self.domain,
+            url='case-repeater-url',
+            username='test-user'
+        )
+        self.repeater.white_listed_case_types = ['episode']
+        self.repeater.save()
+
+    def test_not_available_for_domain(self):
+        self.assertFalse(NikshayTreatmentOutcomeRepeater.available_for_domain(self.domain))
+
+    @flag_enabled('NIKSHAY_INTEGRATION')
+    def test_available_for_domain(self):
+        self.assertTrue(NikshayTreatmentOutcomeRepeater.available_for_domain(self.domain))
+
+    def test_trigger_test_submission(self):
+        self.phi.metadata['is_test'] = 'yes'
+        self.phi.save()
+        self.create_case(self.episode)
+        self.assign_person_to_location(self.phi.location_id)
+        self._create_nikshay_registered_case()
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        update_case(
+            self.domain,
+            self.episode_id,
+            {
+                TREATMENT_OUTCOME: "cured",
+            }
+        )
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+    def test_trigger(self):
+        # nikshay not enabled
+        self.create_case(self.episode)
+        self.assign_person_to_location(self.phi.location_id)
+        self._create_nikshay_registered_case()
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        # change triggered
+        update_case(
+            self.domain,
+            self.episode_id,
+            {
+                TREATMENT_OUTCOME: "cured",
+            }
+        )
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        # treatment outcome updated
+        update_case(
+            self.domain,
+            self.episode_id,
+            {
+                TREATMENT_OUTCOME: "treatment_complete",
+            }
+        )
+        self.assertEqual(2, len(self.repeat_records().all()))
+
+        # dont trigger for unknown outcome values
+        update_case(
+            self.domain,
+            self.episode_id,
+            {
+                TREATMENT_OUTCOME: "james_bond",
+            }
+        )
+        self.assertEqual(2, len(self.repeat_records().all()))
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
+    def setUp(self):
+        super(TestNikshayTreatmentOutcomePayload, self).setUp()
+        self.cases = self.create_case_structure()
+        self.assign_person_to_location(self.phi.location_id)
+
+    @patch("socket.gethostbyname", return_value="198.1.1.1")
+    def test_payload_properties(self, _):
+        episode_case = self._create_nikshay_enabled_case()
+        update_case(
+            self.domain,
+            self.episode_id,
+            {
+                TREATMENT_OUTCOME: "treatment_complete",
+                TREATMENT_OUTCOME_DATE: "1990-01-01",
+                'nikshay_id': self.person_id,
+            }
+        )
+        episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        payload = (json.loads(
+            NikshayTreatmentOutcomePayload(None).get_payload(None, episode_case))
+        )
+        self.assertEqual(payload['Source'], ENIKSHAY_ID)
+        self.assertEqual(payload['IP_From'], "198.1.1.1")
+        self.assertEqual(payload['PatientID'], self.person_id)
+        self.assertEqual(payload['regBy'], "tbu-dmdmo01")
+        self.assertEqual(payload['OutcomeDate'], "1990-01-01")
+        self.assertEqual(payload['MO'], "Gandalf The Grey")
+        self.assertEqual(payload['MORemark'], 'None Collected in eNikshay')
+        self.assertEqual(payload['Outcome'], '2')
+
+        update_case(
+            self.domain,
+            self.episode_id,
+            {
+                TREATMENT_OUTCOME: "regimen_changed",
+
+            }
+        )
+        episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        payload = (json.loads(
+            NikshayTreatmentOutcomePayload(None).get_payload(None, episode_case))
+        )
+        self.assertEqual(payload['Outcome'], '7')

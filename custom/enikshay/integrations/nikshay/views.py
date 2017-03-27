@@ -7,6 +7,12 @@ class RegisterNikshayPatientRepeaterView(AddCaseRepeaterView):
     page_name = "Register Nikshay Patients"
 
 
+class NikshayTreatmentOutcomesView(AddCaseRepeaterView):
+    urlname = 'nikshay_treatment_outcome'
+    page_title = "Update Nikshay Treatment Outcomes"
+    page_name = "Update Nikshay Treatment Outcomes"
+
+
 class NikshayHIVTestRepeaterView(AddCaseRepeaterView):
     urlname = 'nikshay_patient_hiv_test'
     page_title = "Nikshay Patients HIV Test"

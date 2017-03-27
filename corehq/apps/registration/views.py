@@ -4,7 +4,7 @@ import logging
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import transaction
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import redirect, render
@@ -124,7 +124,7 @@ class UserRegistrationView(BasePageView):
     @use_ko_validation
     @method_decorator(transaction.atomic)
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             # Redirect to a page which lets user choose whether or not to create a new account
             domains_for_user = Domain.active_for_user(request.user)
             if len(domains_for_user) == 0:

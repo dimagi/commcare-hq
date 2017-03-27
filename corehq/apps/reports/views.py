@@ -263,9 +263,13 @@ class MySavedReportsView(BaseProjectReportSectionView):
             # the _id check is for weird bugs we've seen in the wild that look like
             # oddities in couch.
             return (
-                hasattr(rn, "_id") and rn._id
-                and (not hasattr(rn, 'report_slug')
-                     or rn.report_slug != 'admin_domains')
+                hasattr(rn, "_id")
+                and rn._id
+                and rn.configs
+                and (
+                    not hasattr(rn, 'report_slug')
+                    or rn.report_slug != 'admin_domains'
+                )
             )
 
         scheduled_reports = [
@@ -1111,11 +1115,10 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
 
     user_id = request.couch_user._id
 
-    notification = ReportNotification.get(scheduled_report_id)
     user = CouchUser.get_by_user_id(user_id, domain)
 
     try:
-        send_delayed_report(notification)
+        send_delayed_report(scheduled_report_id)
     except Exception as e:
         import logging
         logging.exception(e)

@@ -17,7 +17,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_arguments(
-            'path_to_dir',
+            'path',
         )
         parser.add_arguments(
             'app_id',
@@ -44,10 +44,7 @@ class Command(BaseCommand):
             help="Comment (used for if you deploy the application)",
         )
 
-
-    def handle(self, *args, **options):
-        if len(args) != 2:
-            raise CommandError('Usage: %s\n%s' % (self.args, self.help))
+    def handle(self, path, app_id, **options):
         if options['deploy'] and not options['user']:
             raise CommandError('Deploy argument requires a user')
         elif options['deploy']:
@@ -56,7 +53,6 @@ class Command(BaseCommand):
                 raise CommandError("Couldn't find user with username {}".format(options['user']))
 
         # todo: would be nice if this worked off remote servers too
-        path, app_id = args
 
         app = Application.get(app_id)
         for module_dir in os.listdir(path):

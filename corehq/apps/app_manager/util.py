@@ -1,11 +1,12 @@
 from collections import defaultdict, namedtuple, OrderedDict
-from copy import deepcopy
+from copy import deepcopy, copy
 import functools
 from itertools import chain
 import json
 import os
 import uuid
 import yaml
+from django.urls import reverse
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_case_sharing_apps_in_domain
@@ -876,3 +877,48 @@ def get_app_manager_template(domain, v1, v2):
     if domain is not None and toggles.APP_MANAGER_V2.enabled(domain):
         return v2
     return v1
+
+
+def get_form_data(domain, app):
+    from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+
+    modules = []
+    errors = []
+    for module in app.get_modules():
+        forms = []
+        module_meta = {
+            'id': module.unique_id,
+            'name': module.name,
+            'short_comment': module.short_comment,
+            'module_type': module.module_type,
+            'is_surveys': module.is_surveys,
+        }
+
+        for form in module.get_forms():
+            form_meta = {
+                'id': form.unique_id,
+                'name': form.name,
+                'short_comment': form.short_comment,
+                'action_type': form.get_action_type(),
+            }
+            try:
+                questions = form.get_questions(
+                    app.langs,
+                    include_triggers=True,
+                    include_groups=True,
+                    include_translations=True
+                )
+                form_meta['questions'] = [FormQuestionResponse(q).to_json() for q in questions]
+            except XFormException as e:
+                form_meta['error'] = {
+                    'details': unicode(e),
+                    'edit_url': reverse('form_source', args=[domain, app._id, module.id, form.id])
+                }
+                form_meta['module'] = copy(module_meta)
+                errors.append(form_meta)
+            else:
+                forms.append(form_meta)
+
+        module_meta['forms'] = forms
+        modules.append(module_meta)
+    return modules, errors

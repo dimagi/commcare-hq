@@ -1081,7 +1081,7 @@ class GlobalAdminReports(AdminDomainStatsReport):
     def template_context(self):
         context = super(GlobalAdminReports, self).template_context
         indicator_data = copy.deepcopy(INDICATOR_DATA)
-        from django.core.urlresolvers import reverse
+        from django.urls import reverse
         for key in self.indicators:
             indicator_data[key]["ajax_url"] = reverse(
                 indicator_data[key]["ajax_view"]
@@ -1322,10 +1322,13 @@ class AdminPhoneNumberReport(PhoneNumberReport):
 
         return None
 
+    def _get_queryset(self):
+        return PhoneNumber.objects.filter(phone_number__contains=self.phone_number_filter)
+
     def _get_rows(self, paginate=True, link_user=True):
         owner_cache = {}
         if self.phone_number_filter:
-            data = PhoneNumber.objects.filter(phone_number__contains=self.phone_number_filter)
+            data = self._get_queryset()
         else:
             return
 
@@ -1334,3 +1337,7 @@ class AdminPhoneNumberReport(PhoneNumberReport):
 
         for number in data:
             yield self._fmt_row(number, owner_cache, link_user)
+
+    @property
+    def total_records(self):
+        return self._get_queryset().count()

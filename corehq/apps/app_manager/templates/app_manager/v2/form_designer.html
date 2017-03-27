@@ -26,7 +26,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'moment/moment.js' %}"></script>
     <script src="{% static 'requirejs/require.js' %}"></script>
-    {% if not request|toggle_enabled:'VELLUM_BETA' %}
+    {% if False and not request|toggle_enabled:'VELLUM_BETA' %}
         <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
     {% endif %}
     <script src="{% static 'app_manager/js/app-notifications.js' %}"></script>
@@ -154,6 +154,14 @@
                 },
                 topOffset: function () {
                     return $('#hq-navigation').outerHeight();
+                },
+                toggleFullScreenCallback: function (isFullscreen) {
+                  var $preview = $('#js-appmanager-preview');
+                  if (isFullscreen) {
+                    $preview.addClass('fullscreen');
+                  } else {
+                    $preview.removeClass('fullscreen');
+                  }
                 }
             },
             csrftoken: $("#csrfTokenContainer").val()
@@ -302,7 +310,7 @@
     {{ block.super }}
     {% with slug="vellum_beta" name="New Form Builder" %}
     {% registerurl "enable_vellum_beta" %}
-    {% if not request|toggle_enabled:'VELLUM_BETA' %}
+    {% if False and not request|toggle_enabled:'VELLUM_BETA' %}
         <!-- This will appear on page load, so don't use any animation (normally controlled by .fade) -->
         <div class="modal rollout-modal" data-slug="{{ slug }}">
             <div class="modal-dialog">

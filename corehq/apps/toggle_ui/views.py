@@ -1,7 +1,7 @@
 import json
 from collections import Counter
 from couchdbkit.exceptions import ResourceNotFound
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, \
@@ -180,7 +180,10 @@ class ToggleEditView(ToggleBaseView):
 
 def enable_vellum_beta(request):
     slug = "vellum_beta"
-    toggle = Toggle.get(slug)
+    try:
+        toggle = Toggle.get(slug)
+    except ResourceNotFound:
+        toggle = Toggle(slug=slug)
 
     changed_entries = []
     if request.user.username not in toggle.enabled_users:

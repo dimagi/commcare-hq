@@ -33,7 +33,7 @@ def get_repeat_record_count(domain, repeater_id=None, state=None):
         endkey = [domain, repeater_id, {}]
     elif repeater_id and state:
         startkey = [domain, repeater_id, state]
-        endkey = [domain, repeater_id, state]
+        endkey = [domain, repeater_id, state, {}]
     elif not repeater_id and state:
         ids = sorted(_get_repeater_ids_by_domain(domain))
         if not ids:
@@ -70,23 +70,23 @@ def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
         'reduce': False,
         'limit': limit,
         'skip': skip,
+        'descending': True,
     }
 
     if repeater_id and not state:
-        kwargs['startkey'] = [domain, repeater_id]
-        kwargs['endkey'] = [domain, repeater_id, {}]
+        kwargs['endkey'] = [domain, repeater_id]
+        kwargs['startkey'] = [domain, repeater_id, {}]
     elif repeater_id and state:
-        kwargs['startkey'] = [domain, repeater_id, state]
         kwargs['endkey'] = [domain, repeater_id, state]
+        kwargs['startkey'] = [domain, repeater_id, state, {}]
     elif not repeater_id and state:
-        kwargs['key'] = [domain, None, state]
+        kwargs['endkey'] = [domain, None, state]
+        kwargs['startkey'] = [domain, None, state, {}]
     elif not repeater_id and not state:
-        kwargs['startkey'] = [domain]
-        kwargs['endkey'] = [domain, {}]
+        kwargs['endkey'] = [domain]
+        kwargs['startkey'] = [domain, {}]
 
-    results = RepeatRecord.get_db().view('receiverwrapper/repeat_records',
-        **kwargs
-    ).all()
+    results = RepeatRecord.get_db().view('receiverwrapper/repeat_records', **kwargs).all()
 
     return [RepeatRecord.wrap(result['doc']) for result in results]
 

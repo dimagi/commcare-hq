@@ -12,7 +12,7 @@ from dimagi.utils.modules import to_function
 
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
-from pillowtop.dao.exceptions import DocumentMismatchError, DocumentNotFoundError
+from pillowtop.dao.exceptions import DocumentMismatchError, DocumentMissingError
 
 
 def _get_pillow_instance(full_class_str):
@@ -55,10 +55,13 @@ def get_pillow_configs_from_settings_dict(pillow_settings_dict):
             yield get_pillow_config_from_setting(section, pillow_config)
 
 
-class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 'instance_generator'])):
+class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 'instance_generator', 'params'])):
     """
     Helper object for getting pillow classes/instances from settings
     """
+
+    def __hash__(self):
+        return hash(self.name)
 
     def get_class(self):
         return _import_class_or_function(self.class_name)
@@ -66,7 +69,7 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
     def get_instance(self):
         if self.instance_generator:
             instance_generator_fn = _import_class_or_function(self.instance_generator)
-            return instance_generator_fn(self.name)
+            return instance_generator_fn(self.name, **self.params)
         else:
             return _get_pillow_instance(self.class_name)
 
@@ -78,6 +81,7 @@ def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
             pillow_config_string_or_dict.rsplit('.', 1)[1],
             pillow_config_string_or_dict,
             None,
+            {}
         )
     else:
         assert 'class' in pillow_config_string_or_dict
@@ -87,10 +91,12 @@ def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
             pillow_config_string_or_dict.get('name', class_name),
             class_name,
             pillow_config_string_or_dict.get('instance', None),
+            pillow_config_string_or_dict.get('params', {}),
         )
 
 
-def get_pillow_by_name(pillow_class_name, instantiate=True):
+def get_pillow_by_name(pillow_class_name, instantiate=True, params=None):
+    params = params or {}
     config = get_pillow_config_by_name(pillow_class_name)
     return config.get_instance() if instantiate else config.get_class()
 
@@ -114,6 +120,15 @@ def force_seq_int(seq):
     else:
         assert isinstance(seq, int)
         return seq
+
+
+def safe_force_seq_int(seq, default=None):
+    if isinstance(seq, dict):
+        return default
+    try:
+        return force_seq_int(seq)
+    except (AssertionError, ValueError):
+        return default
 
 
 def get_all_pillows_json():
@@ -141,7 +156,7 @@ def get_pillow_json(pillow_config):
     else:
         time_since_last = ''
         hours_since_last = None
-    offsets = pillow.get_change_feed().get_current_offsets()
+    offsets = pillow.get_change_feed().get_latest_offsets()
 
     def _couch_seq_to_int(checkpoint, seq):
         return force_seq_int(seq) if checkpoint.sequence_format != 'json' else seq
@@ -253,11 +268,11 @@ def _convert_rev_to_int(rev):
 
 def ensure_document_exists(change):
     """
-    Ensures that the document recorded in Kafka exists and is properly returned
+    This is to ensure that the Couch document exists in the Couch database when the
+    change is processed. We only care about the scenario where the document is missing.
 
-    :raises: DocumentNotFoundError - Raised when the document is not found
+    :raises: DocumentMissingError - Raised when the document is missing (never existed)
     """
-    doc = change.get_document()
-    if doc is None:
-        pillow_logging.warning("Unable to get document from change: {}".format(change))
-        raise DocumentNotFoundError()  # force a retry
+    change.get_document()
+    if change.error_raised is not None and isinstance(change.error_raised, DocumentMissingError):
+        raise change.error_raised

@@ -87,7 +87,7 @@ def _prepare_index_for_usage(es, index_info):
 
 
 def _set_checkpoint(pillow):
-    checkpoint_value = pillow.get_change_feed().get_checkpoint_value()
+    checkpoint_value = pillow.get_change_feed().get_latest_offsets_as_checkpoint_value()
     pillow_logging.info('setting checkpoint to {}'.format(checkpoint_value))
     pillow.checkpoint.update_to(checkpoint_value)
 

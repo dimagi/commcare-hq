@@ -13,7 +13,7 @@ function CustomDataField () {
     self.multipleChoice = ko.observable();
 
     self.addChoice = function () {
-        self.choices.push(new Choice());
+        self.choices.unshift(new Choice());
     };
 
     self.removeChoice = function (choice) {

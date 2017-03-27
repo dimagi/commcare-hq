@@ -104,7 +104,9 @@ class PillowBase(object):
                         self._record_change_exception_in_datadog(change)
                         raise
                     else:
-                        self.fire_change_processed_event(change, context)
+                        updated = self.fire_change_processed_event(change, context)
+                        if updated:
+                            self._record_checkpoint_in_datadog()
                         self._record_change_success_in_datadog(change)
                     self._record_change_in_datadog(change, timer)
                 else:
@@ -126,16 +128,21 @@ class PillowBase(object):
 
     @abstractmethod
     def fire_change_processed_event(self, change, context):
+        """
+        :return: True if checkpoint was updated otherwise False
+        """
         pass
 
     def _normalize_checkpoint_sequence(self):
-        from pillowtop.feed.couch import CouchChangeFeed
-        from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-
         if self.checkpoint is None:
             return {}
 
         sequence = self.get_last_checkpoint_sequence()
+        return self._normalize_sequence(sequence)
+
+    def _normalize_sequence(self, sequence):
+        from pillowtop.feed.couch import CouchChangeFeed
+        from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
         change_feed = self.get_change_feed()
 
         if not isinstance(sequence, dict):
@@ -155,28 +162,34 @@ class PillowBase(object):
         datadog_counter('commcare.change_feed.change_feed.checkpoint', tags=[
             'pillow_name:{}'.format(self.get_name()),
         ])
+        checkpoint_sequence = self._normalize_checkpoint_sequence()
+        for topic, value in checkpoint_sequence.iteritems():
+            datadog_gauge('commcare.change_feed.checkpoint_offsets', value, tags=[
+                'pillow_name:{}'.format(self.get_name()),
+                'topic:{}'.format(topic),
+            ])
 
     def _record_change_in_datadog(self, change, timer):
+        from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
         change_feed = self.get_change_feed()
-        sequence = self._normalize_checkpoint_sequence()
-        current_offsets = change_feed.get_current_offsets()
+        current_seq = self._normalize_sequence(change_feed.get_processed_offsets())
+        current_offsets = change_feed.get_latest_offsets()
 
-        for topic, value in sequence.iteritems():
-            datadog_gauge('commcare.change_feed.processed_offsets', value, tags=[
-                'pillow_name:{}'.format(self.get_name()),
-                'topic:{}'.format(topic),
-            ])
+        tags = [
+            'pillow_name:{}'.format(self.get_name()),
+            'feed_type:{}'.format('kafka' if isinstance(change_feed, KafkaChangeFeed) else 'couch')
+        ]
+        for topic, value in current_seq.iteritems():
+            tags_with_topic = tags + ['topic:{}'.format(topic), ]
+
+            datadog_gauge('commcare.change_feed.processed_offsets', value, tags=tags_with_topic)
             if topic in current_offsets:
-                datadog_gauge('commcare.change_feed.need_processing', current_offsets[topic] - value, tags=[
-                    'pillow_name:{}'.format(self.get_name()),
-                    'topic:{}'.format(topic),
-                ])
+                needs_processing = current_offsets[topic] - value
+                datadog_gauge('commcare.change_feed.need_processing', needs_processing, tags=tags_with_topic)
 
         for topic, offset in current_offsets.iteritems():
-            datadog_gauge('commcare.change_feed.current_offsets', offset, tags=[
-                'pillow_name:{}'.format(self.get_name()),
-                'topic:{}'.format(topic),
-            ])
+            tags_with_topic = tags + ['topic:{}'.format(topic), ]
+            datadog_gauge('commcare.change_feed.current_offsets', offset, tags=tags_with_topic)
 
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change, timer)
 
@@ -209,6 +222,9 @@ class ChangeEventHandler(object):
 
     @abstractmethod
     def fire_change_processed(self, change, context):
+        """
+        :return: True if checkpoint was updated otherwise False
+        """
         pass
 
 
@@ -253,7 +269,8 @@ class ConstructedPillow(PillowBase):
 
     def fire_change_processed_event(self, change, context):
         if self._change_processed_event_handler is not None:
-            self._change_processed_event_handler.fire_change_processed(change, context)
+            return self._change_processed_event_handler.fire_change_processed(change, context)
+        return False
 
 
 def handle_pillow_error(pillow, change, exception):
