@@ -43,4 +43,4 @@ def is_valid_test_submission(test_case):
             {lab_referral_id}"
             .format(location_id=lab_referral_case.owner_id, lab_referral_id=lab_referral_case.case_id)
         )
-    return dmc_location.metadata.get('is_test', "yes") == "yes"
+    return dmc_location.metadata.get('is_test', "yes") == "no"
