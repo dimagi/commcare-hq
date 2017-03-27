@@ -36,7 +36,7 @@ class KafkaChangeFeedTest(SimpleTestCase):
     def test_multiple_topics_with_partial_checkpoint(self):
         feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed')
         self.assertEqual(0, len(list(feed.iter_changes(since=None, forever=False))))
-        offsets = {'form': feed.get_latest_offsets()['form']}
+        offsets = {('form', 0): feed.get_latest_offsets()[('form', 0)]}
         expected_metas = [publish_stub_change(topics.FORM), publish_stub_change(topics.CASE)]
         changes = list(feed.iter_changes(since=offsets, forever=False))
         # should include at least the form and the case (may have more than one case since not
@@ -82,7 +82,7 @@ class KafkaCheckpointTest(TestCase):
             )
         )
         offsets = feed.get_latest_offsets()
-        self.assertEqual(set([topics.FORM, topics.CASE]), set(offsets.keys()))
+        self.assertEqual(set([(topics.FORM, 0), (topics.CASE, 0)]), set(offsets.keys()))
 
         # send a few changes to kafka so they should be picked up by the pillow
         publish_stub_change(topics.FORM)
