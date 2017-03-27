@@ -1,10 +1,10 @@
 from __future__ import print_function
 
 from django.core.management.base import BaseCommand
-from toggle.models import Toggle
 
 from corehq.apps.locations.models import SQLLocation, LocationFixtureConfiguration
 from corehq.toggles import HIERARCHICAL_LOCATION_FIXTURE, NAMESPACE_DOMAIN, FLAT_LOCATION_FIXTURE
+from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
 class Command(BaseCommand):
@@ -91,6 +91,4 @@ def enable_legacy_fixture_for_domain(domain):
 
 
 def find_domains_with_flat_fixture_enabled():
-    toggle = Toggle.get(FLAT_LOCATION_FIXTURE.slug)
-    enabled_users = toggle.enabled_users
-    return [user.split('domain:')[1] for user in enabled_users if 'domain:' in user]
+    return find_domains_with_toggle_enabled(FLAT_LOCATION_FIXTURE)

@@ -1188,7 +1188,7 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
-        }
+        },
     }
 }
 
