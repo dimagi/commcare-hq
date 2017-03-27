@@ -1,3 +1,4 @@
+from corehq.util.dates import unix_time
 """
 Available Filters
 -----------------
@@ -71,6 +72,14 @@ def date_range(field, gt=None, gte=None, lt=None, lte=None):
     def format_date(date):
         # TODO This probably needs more sophistication...
         return date.isoformat()
+    params = [d if d is None else format_date(d) for d in [gt, gte, lt, lte]]
+    return range_filter(field, *params)
+
+
+def epoch_range(field, gt=None, gte=None, lt=None, lte=None):
+    """Range filter that accepts datetime objects as arguments"""
+    def format_date(date):
+        return int(unix_time(date))
     params = [d if d is None else format_date(d) for d in [gt, gte, lt, lte]]
     return range_filter(field, *params)
 

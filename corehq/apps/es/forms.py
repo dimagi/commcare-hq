@@ -56,7 +56,7 @@ def app(app_ids):
 
 
 def submitted(gt=None, gte=None, lt=None, lte=None):
-    return filters.date_range('received_on', gt, gte, lt, lte)
+    return filters.epoch_range('received_on_seconds', gt, gte, lt, lte)
 
 
 def completed(gt=None, gte=None, lt=None, lte=None):

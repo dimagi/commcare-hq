@@ -17,6 +17,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.sql import SqlDocumentProvider
+from corehq.util.dates import unix_time, iso_string_to_datetime
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
@@ -100,6 +101,8 @@ def transform_xform_for_elasticsearch(doc_dict):
         user_id = None
     doc_ret['user_type'] = get_user_type(user_id)
     doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
+    received_on_datetime = iso_string_to_datetime(doc_dict['received_on'])
+    doc_ret['received_on_seconds'] = int(unix_time(received_on_datetime))
 
     try:
         case_blocks = extract_case_blocks(doc_ret)
