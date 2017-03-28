@@ -206,7 +206,8 @@ class PillowBase(object):
                 u'document_type:{}'.format(change.metadata.document_type),
                 u'domain:{}'.format(change.metadata.domain),
                 u'is_deletion:{}'.format(change.metadata.is_deletion),
-                u'pillow_name:{}'.format(self.get_name())
+                u'pillow_name:{}'.format(self.get_name()),
+                u'publist_timestamp:{}'.format(change.metadata.publish_timestamp),
             ]
             datadog_counter(metric, tags=tags)
 
