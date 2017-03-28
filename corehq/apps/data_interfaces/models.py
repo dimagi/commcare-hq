@@ -82,7 +82,7 @@ class AutomaticUpdateRule(models.Model):
                  .exclude_source()
                  .size(chunk_size))
 
-        if boundary_date is not None:
+        if boundary_date:
             query = query.server_modified_range(lte=boundary_date)
 
         result = []
@@ -96,7 +96,7 @@ class AutomaticUpdateRule(models.Model):
                 yield result
                 result = []
 
-        if len(result) > 0:
+        if result:
             yield result
 
     def rule_matches_case(self, case, now):
