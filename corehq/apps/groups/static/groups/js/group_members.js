@@ -1,3 +1,4 @@
+/* globals django, uiElement */
 hqDefine("groups/js/group_members.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
 
@@ -42,7 +43,7 @@ hqDefine("groups/js/group_members.js", function() {
             ga_track_event("Editing Group", "Deleted Group", initial_page_data("group_id"), {
                 'hitCallback': function() {
                     $deleteGroupModalForm.submit();
-                }
+                },
             });
             return false;
         });
@@ -83,7 +84,7 @@ hqDefine("groups/js/group_members.js", function() {
                 if (gaEventLabel){
                     ga_track_event('Editing Group', gaEventLabel, initial_page_data("group_id"));
                 }
-            }
+            };
         }
 
         $(function() {
@@ -91,7 +92,7 @@ hqDefine("groups/js/group_members.js", function() {
                 $(this).find(':button').prop('disabled', true);
                 $(this).ajaxSubmit({
                     success: outcome(true, "Group membership", "#edit_membership", "Edit Group Membership"),
-                    error: outcome(false, "Group membership", "#edit_membership")
+                    error: outcome(false, "Group membership", "#edit_membership"),
                 });
                 return false;
             });
@@ -99,12 +100,12 @@ hqDefine("groups/js/group_members.js", function() {
                 $(this).find(':button').disableButton();
                 $(this).ajaxSubmit({
                     success: outcome(true, "Group settings", "#edit-group-settings", "Edit Settings"),
-                    error: outcome(false, "Group settings", "#edit-group-settings")
+                    error: outcome(false, "Group settings", "#edit-group-settings"),
                 });
                 return false;
             });
             $('#group-case-sharing-input').change(function() {
-                if($('#group-case-sharing-input').val() == 'true' && !initial_page_data("domain_uses_case_sharing")) {
+                if($('#group-case-sharing-input').val() === 'true' && !initial_page_data("domain_uses_case_sharing")) {
                     $('#group-case-sharing-warning').prop("hidden", false);
                 } else {
                     $('#group-case-sharing-warning').prop('hidden', true);
@@ -114,7 +115,7 @@ hqDefine("groups/js/group_members.js", function() {
                 $(this).find(':button').prop('disabled', true);
                 $(this).ajaxSubmit({
                     success: outcome(true, "Group data", "#group-data-form", "Edit Group Data"),
-                    error: outcome(false, "Group data", "#group-data-form")
+                    error: outcome(false, "Group data", "#group-data-form"),
                 });
                 return false;
             });
@@ -126,4 +127,4 @@ hqDefine("groups/js/group_members.js", function() {
             button.text(gettext("Please wait and do not navigate away..."));
         });
     });
-})
+});
