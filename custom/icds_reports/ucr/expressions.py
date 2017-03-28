@@ -63,6 +63,7 @@ class GetCaseHistorySpec(JsonObject):
     case_id_expression = DefaultProperty(required=True)
     start_date = DefaultProperty(required=False)
     end_date = DefaultProperty(required=False)
+    xmlns = ListProperty(required=False)
 
     def configure(self, case_id_expression, case_forms_expression):
         self._case_id_expression = case_id_expression
@@ -95,6 +96,7 @@ class GetCaseHistoryByDateSpec(JsonObject):
     start_date = DefaultProperty(required=False)
     end_date = DefaultProperty(required=False)
     filter = DefaultProperty(required=False)
+    xmlns = ListProperty(required=False)
 
 
 class GetLastCasePropertyUpdateSpec(JsonObject):
@@ -104,6 +106,7 @@ class GetLastCasePropertyUpdateSpec(JsonObject):
     start_date = DefaultProperty(required=False)
     end_date = DefaultProperty(required=False)
     filter = DefaultProperty(required=False)
+    xmlns = ListProperty(required=False)
 
 
 class FormsInDateExpressionSpec(JsonObject):
@@ -934,9 +937,10 @@ def get_case_history(spec, context):
     wrapped = GetCaseHistorySpec.wrap(spec)
     case_forms_expression = {
         'type': 'get_case_forms',
-        'case_id_expression': wrapped.case_id_expression
+        'case_id_expression': wrapped.case_id_expression,
+        'xmlns': wrapped.xmlns,
     }
-    if spec['start_date'] and spec['end_date']:
+    if spec['start_date'] or spec['end_date']:
         case_forms_expression['type'] = 'icds_get_case_forms_in_date'
         case_forms_expression['from_date_expression'] = wrapped.start_date
         case_forms_expression['to_date_expression'] = wrapped.end_date
@@ -965,6 +969,9 @@ def get_case_history_by_date(spec, context):
         "type": "icds_get_case_history",
         "case_id_expression": case_id_expression
     }
+
+    if spec['xmlns'] is not None and len(spec['xmlns']) > 0:
+        case_history_spec['xmlns'] = spec['xmlns']
 
     filters = []
     if spec['start_date'] is not None:
@@ -1042,6 +1049,7 @@ def get_last_case_property_update(spec, context):
                     'start_date': spec['start_date'],
                     'end_date': spec['end_date'],
                     'filter': spec['filter'],
+                    'xmlns': spec['xmlns'],
                 },
                 'filter_expression': {
                     'filter': {
