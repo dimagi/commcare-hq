@@ -13,7 +13,7 @@ from nose.tools import nottest
 
 from dimagi.utils.data import generator as data_gen
 
-from corehq.apps.accounting.bootstrap.config.cchq_software_plan_bootstrap import BOOTSTRAP_CONFIG_TESTING
+from corehq.apps.accounting.bootstrap.config.testing import BOOTSTRAP_CONFIG_TESTING
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.apps.accounting.models import (
     BillingAccount,
