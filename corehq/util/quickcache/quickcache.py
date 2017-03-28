@@ -1,4 +1,5 @@
 # coding=utf-8
+from collections import namedtuple
 import functools
 import hashlib
 import inspect
@@ -159,21 +160,48 @@ class QuickCacheHelper(object):
             return content
 
 
-def generic_quickcache(vary_on, cache, skip_arg=None, helper_class=None):
-    helper_class = helper_class or QuickCacheHelper
+class QuickCacheConfig(namedtuple('QuickCacheConfig', [
+    'vary_on',
+    'cache',
+    'skip_arg',
+    'helper_class',
+])):
+    def config(self, **defaults):
+        return self._replace(**defaults)
 
-    def decorator(fn):
-        helper = helper_class(fn, vary_on=vary_on, cache=cache, skip_arg=skip_arg)
+    def __call__(self, vary_on=Ellipsis, **new_values):
+        if vary_on is not Ellipsis:
+            new_values['vary_on'] = vary_on
+        if new_values:
+            return self.config(**new_values).__call__()
 
-        @functools.wraps(fn)
-        def inner(*args, **kwargs):
-            return helper(*args, **kwargs)
+        missing_values = [key for key, value in self._asdict().items()
+                          if value is Ellipsis]
+        if missing_values:
+            raise ValueError(
+                'the quickcache decorator still needs values '
+                'for the following parameters: {}'.format(missing_values))
 
-        inner.clear = helper.clear
-        inner.get_cache_key = helper.get_cache_key
-        inner.prefix = helper.prefix
-        inner.get_cached_value = helper.get_cached_value
+        helper_class_kwargs = self._asdict()
+        helper_class = helper_class_kwargs.pop('helper_class')
 
-        return inner
+        def decorator(fn):
+            helper = helper_class(fn, **helper_class_kwargs)
 
-    return decorator
+            @functools.wraps(fn)
+            def inner(*args, **kwargs):
+                return helper(*args, **kwargs)
+
+            inner.clear = helper.clear
+            inner.get_cache_key = helper.get_cache_key
+            inner.prefix = helper.prefix
+            inner.get_cached_value = helper.get_cached_value
+
+            return inner
+
+        return decorator
+
+
+quickcache_base = QuickCacheConfig(vary_on=Ellipsis, cache=Ellipsis, skip_arg=Ellipsis, helper_class=Ellipsis)
+
+generic_quickcache = quickcache_base.config(skip_arg=None, helper_class=QuickCacheHelper)
