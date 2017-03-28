@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+import time
 
 from django.core.cache.backends.locmem import LocMemCache
 from django.test import SimpleTestCase
-import time
-from corehq.util.quickcache import quickcache, TieredCache
+
 from dimagi.utils import make_uuid
+
+from .. import generic_quickcache, quickcache
+from ..cache_helpers import TieredCache
 
 BUFFER = []
 
@@ -51,7 +54,7 @@ class QuickcacheTest(SimpleTestCase):
         return result
 
     def test_tiered_cache(self):
-        @quickcache([], cache=_cache)
+        @generic_quickcache([], cache=_cache)
         def simple():
             BUFFER.append('called')
             return 'VALUE'
@@ -73,7 +76,7 @@ class QuickcacheTest(SimpleTestCase):
         self.assertEqual(self.consume_buffer(), ['local hit'])
 
     def test_vary_on(self):
-        @quickcache(['n'], cache=_cache)
+        @generic_quickcache(['n'], cache=_cache)
         def fib(n):
             BUFFER.append(n)
             if n < 2:
@@ -103,12 +106,12 @@ class QuickcacheTest(SimpleTestCase):
                 self.id = id
                 self.name = name
 
-            @quickcache(['self.id'], cache=_cache)
+            @generic_quickcache(['self.id'], cache=_cache)
             def get_name(self):
                 BUFFER.append('called method')
                 return self.name
 
-        @quickcache(['item.id'], cache=_cache)
+        @generic_quickcache(['item.id'], cache=_cache)
         def get_name(item):
             BUFFER.append('called function')
             return item.name
@@ -140,7 +143,7 @@ class QuickcacheTest(SimpleTestCase):
 
     def test_bad_vary_on(self):
         with self.assertRaisesRegexp(ValueError, 'cucumber'):
-            @quickcache(['cucumber'], cache=_cache)
+            @generic_quickcache(['cucumber'], cache=_cache)
             def square(number):
                 return number * number
 
@@ -192,7 +195,7 @@ class QuickcacheTest(SimpleTestCase):
         self.assertRegexpMatches(key, 'quickcache.cached_fn.[a-z0-9]{8}/u[a-z0-9]{32}')
 
     def test_unicode_string(self):
-        @quickcache(['name'], cache=_cache)
+        @generic_quickcache(['name'], cache=_cache)
         def by_name(name):
             BUFFER.append('called')
             return 'VALUE'
@@ -209,7 +212,7 @@ class QuickcacheTest(SimpleTestCase):
         self.assertEqual(self.consume_buffer(), ['local hit'])
 
     def test_skippable(self):
-        @quickcache(['name'], cache=_cache_with_set, skip_arg='force')
+        @generic_quickcache(['name'], cache=_cache_with_set, skip_arg='force')
         def by_name(name, force=False):
             BUFFER.append('called')
             return 'VALUE'
@@ -226,7 +229,7 @@ class QuickcacheTest(SimpleTestCase):
         self.assertEqual(self.consume_buffer(), ['cache hit'])
 
     def test_skippable_fn(self):
-        @quickcache(['name'], cache=_cache_with_set, skip_arg=lambda name: name == 'Ben')
+        @generic_quickcache(['name'], cache=_cache_with_set, skip_arg=lambda name: name == 'Ben')
         def by_name(name, force=False):
             BUFFER.append('called')
             return 'VALUE'
@@ -244,7 +247,7 @@ class QuickcacheTest(SimpleTestCase):
         self.assertEqual(self.consume_buffer(), ['called', 'cache set'])
 
     def test_skippable_non_kwarg(self):
-        @quickcache(['name'], cache=_cache_with_set, skip_arg='skip_cache')
+        @generic_quickcache(['name'], cache=_cache_with_set, skip_arg='skip_cache')
         def by_name(name, skip_cache):
             BUFFER.append('called')
             return 'VALUE'

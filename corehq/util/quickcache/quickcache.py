@@ -1,64 +1,13 @@
 # coding=utf-8
-from collections import namedtuple
 import functools
 import hashlib
 import inspect
 from inspect import isfunction
-import logging
-from django.core.cache import caches as django_caches
+
+
 from corehq.util.soft_assert.api import soft_assert
 
-logger = logging.getLogger('quickcache')
-
-
-class CacheWithTimeout(namedtuple('CacheWithTimeout', ['cache', 'timeout'])):
-
-    def get(self, key, default=None):
-        return self.cache.get(key, default=default)
-
-    def set(self, key, value):
-        return self.cache.set(key, value, timeout=self.timeout)
-
-    def delete(self, key):
-        return self.cache.delete(key)
-
-
-class TieredCache(object):
-    """
-    Tries a number of caches in increasing order.
-    Caches should be ordered with faster, more local caches at the beginning
-    and slower, more shared caches towards the end
-
-    Relies on each of the caches' default timeout;
-    TieredCache.set doesn't accept a timeout parameter
-
-    """
-
-    def __init__(self, caches):
-        self.caches = caches
-
-    def get(self, key, default=None):
-        missed = []
-        for cache in self.caches:
-            content = cache.get(key, default=Ellipsis)
-            if content is not Ellipsis:
-                for missed_cache in missed:
-                    missed_cache.set(key, content)
-                logger.debug('missed caches: {}'.format([c.__class__.__name__
-                                                         for c in missed]))
-                logger.debug('hit cache: {}'.format(cache.__class__.__name__))
-                return content
-            else:
-                missed.append(cache)
-        return default
-
-    def set(self, key, value):
-        for cache in self.caches:
-            cache.set(key, value)
-
-    def delete(self, key):
-        for cache in self.caches:
-            cache.delete(key)
+from .logger import logger
 
 
 class QuickCache(object):
@@ -210,100 +159,7 @@ class QuickCache(object):
             return content
 
 
-def quickcache(vary_on, skip_arg=None, timeout=None, memoize_timeout=None,
-               cache=None, helper_class=None):
-    """
-    An easy "all-purpose" cache decorator
-
-    Examples:
-        - caching a singleton function, refresh every 5 minutes
-
-            @quickcache([], timeout=5 * 60)
-            def get_config_from_db():
-                # ...
-
-        - vary on the arguments of a function
-
-            @quickcache(['request.couch_user._rev'], timeout=24 * 60 * 60)
-            def domains_for_user(request):
-                return [Domain.get_by_name(domain)
-                        for domain in request.couch_user.domains]
-
-          now as soon as request.couch_user._rev has changed,
-          the function will be recomputed
-
-        - skip the cache based on the value of a particular arg
-
-            @quickcache(['name'], skip_arg='force')
-            def get_by_name(name, force=False):
-                # ...
-
-        - skip_arg can also be a function and will receive the save arguments as the function:
-
-            def skip_fn(name, address):
-                return name == 'Ben' and 'Chicago' not in address
-
-            @quickcache(['name'], skip_arg=skip_fn)
-            def get_by_name_and_address(name, address):
-                # ...
-
-    Features:
-        - In addition to caching in the default shared cache,
-          quickcache caches in memory for 10 seconds
-          (conceptually the length of a single request).
-          This can be overridden to a different number with memoize_timeout.
-
-        - In addition to varying on the arguments and the name of the function,
-          quickcache will also make sure to vary
-          on the _source code_ of your function.
-          That way if you change the behavior of the function, there won't be
-          any stale cache when you deploy.
-
-        - Can vary on any number of the function's parameters
-
-        - Does not by default vary on all function parameters.
-          This is because it is not in general obvious what it means
-          to vary on an object, for example.
-
-        - Allows you to vary on an attribute of an object,
-          multiple attrs of the same object, attrs of attrs of an object, etc
-
-        - Allows you to pass in a function as the vary_on arg which will get called
-          with the same args and kwargs as the function. It should return a list of simple
-          values to be used for generating the cache key.
-
-        Note on unicode and strings in vary_on:
-          When strings and unicode values are used as vary on parameters they will result in the
-          same cache key if and only if the string values are UTF-8 or ascii encoded.
-          e.g.
-          u'namé' and 'nam\xc3\xa9' (UTF-8 encoding) will result in the same cache key
-          BUT
-          u'namé' and 'nam\xe9' (latin-1 encoding) will NOT result in the same cache key
-
-
-    """
-    if cache and timeout:
-        raise ValueError('You can only use timeout '
-                         'when not overriding the cache')
-
-    timeout = timeout if timeout is not None else 5 * 60
-    memoize_timeout = memoize_timeout or 10
-
-    if cache is None:
-        caches = [
-            CacheWithTimeout(
-                django_caches['locmem'],
-                timeout=memoize_timeout)]
-        if timeout > 0:
-            caches.append(
-                CacheWithTimeout(
-                    django_caches['default'], timeout=timeout))
-        cache = TieredCache(caches)
-
-    return make_quickcache_decorator(vary_on, skip_arg, cache, helper_class=helper_class)
-
-
-def make_quickcache_decorator(vary_on, skip_arg, cache, helper_class=None):
+def generic_quickcache(vary_on, cache, skip_arg=None, helper_class=None):
     helper_class = helper_class or QuickCache
 
     def decorator(fn):

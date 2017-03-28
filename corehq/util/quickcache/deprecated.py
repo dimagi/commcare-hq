@@ -1,5 +1,6 @@
 import warnings
-from .quickcache import QuickCache, quickcache
+from . import quickcache
+from .quickcache import QuickCache
 
 
 def SkippableQuickCache(*args, **kwargs):

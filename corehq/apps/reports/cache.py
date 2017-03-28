@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.utils.cache import _generate_cache_header_key
-from corehq.util.quickcache import quickcache, QuickCache
+from corehq.util.quickcache import QuickCache, generic_quickcache
+from corehq.util.quickcache.django_quickcache import tiered_django_cache
+
 
 DEFAULT_EXPIRY = 60 * 60  # an hour
 CACHE_PREFIX = 'hq.reports'  # a namespace where cache keys go
@@ -58,5 +60,8 @@ def request_cache(expiry=DEFAULT_EXPIRY):
 
     """
 
-    return quickcache(vary_on=_custom_vary_on,
-                      timeout=expiry, helper_class=_ReportQuickCache)
+    return generic_quickcache(
+        vary_on=_custom_vary_on,
+        cache=tiered_django_cache([('locmem', 10), ('default', expiry)]),
+        helper_class=_ReportQuickCache,
+    )
