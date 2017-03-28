@@ -10,6 +10,9 @@
         "enikshay-aks-audit",
         "np-migration-3"
     ],
+    "server_environment": [
+        "softlayer"
+    ],
     "data_source_table": "test",
     "report_id": "lab_monthly_summary",
     "config": {

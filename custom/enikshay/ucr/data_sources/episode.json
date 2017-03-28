@@ -10,6 +10,9 @@
         "enikshay-aks-audit",
         "np-migration-3"
     ],
+    "server_environment": [
+        "softlayer"
+    ],
     "config": {
         "referenced_doc_type": "CommCareCase",
         "engine_id": "ucr",
