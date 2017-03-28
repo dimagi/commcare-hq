@@ -72,7 +72,9 @@ class DetailContributor(SectionContributor):
                                                             detail_type, self.build_profile_id)
                                     r.append(helper.build_case_tile_detail())
                                 else:
-                                    print_template_path = detail.print_template['path'] if detail.print_template else None
+                                    print_template_path = None
+                                    if detail.print_template:
+                                        print_template_path = detail.print_template['path']
                                     d = self.build_detail(
                                         module,
                                         detail_type,
