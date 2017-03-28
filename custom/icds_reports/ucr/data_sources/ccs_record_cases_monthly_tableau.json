@@ -1982,6 +1982,13 @@
         "property_value": 0,
         "expression": {
           "type": "icds_get_case_forms_in_date",
+          "case_id_expression": {
+            "expression": {
+                "type": "property_name",
+                "property_name": "_id"
+            },
+            "type": "root_doc"
+          },
           "xmlns": [
             "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
           ],
@@ -2000,6 +2007,13 @@
         "property_value": 0,
         "expression": {
           "type": "icds_get_case_forms_in_date",
+          "case_id_expression": {
+            "expression": {
+                "type": "property_name",
+                "property_name": "_id"
+            },
+            "type": "root_doc"
+          },
           "xmlns": [
             "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
           ],

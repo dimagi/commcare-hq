@@ -2133,6 +2133,13 @@
       },
       "pse_days": {
         "type": "icds_get_case_forms_in_date",
+        "case_id_expression": {
+          "expression": {
+              "type": "property_name",
+              "property_name": "_id"
+          },
+          "type": "root_doc"
+        },
         "start_date": {
           "type": "icds_month_start"
         },
