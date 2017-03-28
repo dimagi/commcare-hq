@@ -75,8 +75,8 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqcases",
-        "index": "test_hqcases_2016-03-04",
-        "type": "case",
+        "index": "test_hqcases_2017-03-28",
+        "type": "case"
         "meta": {
             "settings": {
                 "analysis": {
@@ -277,8 +277,8 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "xforms",
-        "index": "test_xforms_2016-07-07",
-        "type": "xform",
+        "index": "test_xforms_2017-03-28",
+        "type": "xform"
         "meta": {
             "settings": {
                 "analysis": {
