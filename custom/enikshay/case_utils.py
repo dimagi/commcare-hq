@@ -1,6 +1,7 @@
 import pytz
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from django.utils.dateparse import parse_datetime
+from dateutil.parser import parse
 
 from corehq.apps.locations.models import SQLLocation
 
@@ -209,3 +210,20 @@ def get_person_locations(person_case):
         )
     except (KeyError, AttributeError) as e:
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
+
+
+def get_adherence_cases_by_day(domain, episode_case_id):
+    indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([episode_case_id])
+    adherence_cases = [
+        case for case in indexed_cases
+        if case.type == CASE_TYPE_ADHERENCE
+    ]
+
+    adherence = defaultdict(list)  # datetime.date -> list of adherence cases
+
+    for case in adherence_cases:
+        # adherence_date is in India timezone
+        adherence_datetime = parse(case.dynamic_case_properties().get('adherence_date'))
+        adherence[adherence_datetime.date()].append(case)
+
+    return adherence

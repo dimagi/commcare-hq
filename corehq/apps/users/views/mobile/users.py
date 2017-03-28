@@ -284,6 +284,7 @@ class EditCommCareUserView(BaseEditUserView):
                 clean_commcare_user.send(
                     'EditCommCareUserView.phone_number',
                     domain=self.domain,
+                    request_user=self.request.user,
                     user=self.editable_user,
                     forms={'phone_number': phone_number},
                 )
@@ -784,6 +785,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         clean_commcare_user.send(
             'MobileWorkerListView.create_mobile_worker',
             domain=self.domain,
+            request_user=self.request.user,
             user=None,
             forms={
                 self._mobile_worker_form.__class__.__name__: self._mobile_worker_form,

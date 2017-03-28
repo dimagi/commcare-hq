@@ -1047,6 +1047,13 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     }
 )
 
+PAGINATED_EXPORTS = StaticToggle(
+    'paginated_exports',
+    'Allows for pagination of exports for very large exports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
     'highlight_feature_flags',
     'Highlight / Mark Feature Flags in the UI',
