@@ -10,7 +10,7 @@ from corehq.util.soft_assert.api import soft_assert
 from .logger import logger
 
 
-class QuickCache(object):
+class QuickCacheHelper(object):
     def __init__(self, fn, vary_on, cache, skip_arg=None):
 
         self.fn = fn
@@ -160,7 +160,7 @@ class QuickCache(object):
 
 
 def generic_quickcache(vary_on, cache, skip_arg=None, helper_class=None):
-    helper_class = helper_class or QuickCache
+    helper_class = helper_class or QuickCacheHelper
 
     def decorator(fn):
         helper = helper_class(fn, vary_on=vary_on, cache=cache, skip_arg=skip_arg)

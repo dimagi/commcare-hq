@@ -1,6 +1,6 @@
 import warnings
 from . import quickcache
-from .quickcache import QuickCache
+from .quickcache import QuickCacheHelper
 
 
 def SkippableQuickCache(*args, **kwargs):
@@ -8,7 +8,7 @@ def SkippableQuickCache(*args, **kwargs):
         "SkippableQuickCache is deprecated. Use QuickCache with skip_arg instead.",
         DeprecationWarning
     )
-    return QuickCache(*args, **kwargs)
+    return QuickCacheHelper(*args, **kwargs)
 
 
 def skippable_quickcache(*args, **kwargs):

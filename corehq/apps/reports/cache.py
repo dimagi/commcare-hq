@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.utils.cache import _generate_cache_header_key
-from corehq.util.quickcache import QuickCache, generic_quickcache
+from corehq.util.quickcache import QuickCacheHelper, generic_quickcache
 from corehq.util.quickcache.django_quickcache import tiered_django_cache
 
 
@@ -8,7 +8,7 @@ DEFAULT_EXPIRY = 60 * 60  # an hour
 CACHE_PREFIX = 'hq.reports'  # a namespace where cache keys go
 
 
-class _ReportQuickCache(QuickCache):
+class _ReportQuickCacheHelper(QuickCacheHelper):
     """
     Just like QuickCache, but intercepts the function call to abort caching
     under certain conditions
@@ -17,7 +17,7 @@ class _ReportQuickCache(QuickCache):
     def __call__(self, *args, **kwargs):
         report = args[0]
         if report.is_cacheable and _is_valid(report) and settings.CACHE_REPORTS:
-            return super(_ReportQuickCache, self).__call__(*args, **kwargs)
+            return super(_ReportQuickCacheHelper, self).__call__(*args, **kwargs)
         else:
             return self.fn(*args, **kwargs)
 
@@ -63,5 +63,5 @@ def request_cache(expiry=DEFAULT_EXPIRY):
     return generic_quickcache(
         vary_on=_custom_vary_on,
         cache=tiered_django_cache([('locmem', 10), ('default', expiry)]),
-        helper_class=_ReportQuickCache,
+        helper_class=_ReportQuickCacheHelper,
     )
