@@ -73,36 +73,31 @@ class AutomaticUpdateRule(models.Model):
         Retrieves the case ids in chunks, yielding a list of case ids each time
         until there are none left.
         """
-        offset = 0
-        chunk_size = 10000
+        chunk_size = 100
 
-        # We have to sort on _uid; _id is not sortable. See:
-        # https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-uid-field.html
-        # https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-id-field.html
+        query = (CaseES()
+                 .domain(domain)
+                 .case_type(case_type)
+                 .is_closed(closed=False)
+                 .exclude_source()
+                 .size(chunk_size))
 
-        while True:
-            query = (CaseES()
-                     .domain(domain)
-                     .case_type(case_type)
-                     .is_closed(closed=False)
-                     .exclude_source()
-                     .sort('_uid')
-                     .start(offset)
-                     .size(chunk_size))
+        if boundary_date is not None:
+            query = query.server_modified_range(lte=boundary_date)
 
-            if boundary_date is not None:
-                query = query.server_modified_range(lte=boundary_date)
+        result = []
 
-            results = query.run()
-            ids = results.doc_ids
+        for case_id in query.scroll():
+            if not isinstance(case_id, basestring):
+                raise ValueError("Something is wrong with the query, expected ids only")
 
-            if len(ids) > 0:
-                yield ids
+            result.append(case_id)
+            if len(result) >= chunk_size:
+                yield result
+                result = []
 
-            if len(ids) < chunk_size:
-                return
-
-            offset += chunk_size
+        if len(result) > 0:
+            yield result
 
     def rule_matches_case(self, case, now):
         try:
@@ -185,8 +180,14 @@ class AutomaticUpdateRule(models.Model):
         if not self.active:
             raise Exception("Attempted to call apply_rule on an inactive rule")
 
-        if not isinstance(case, (CommCareCase, CommCareCaseSQL)) or case.domain != self.domain:
-            raise Exception("Invalid case given")
+        if not isinstance(case, (CommCareCase, CommCareCaseSQL)):
+            raise ValueError("Invalid case given")
+
+        if not case.doc_type.startswith('CommCareCase'):
+            raise ValueError("Invalid case given")
+
+        if case.domain != self.domain:
+            raise ValueError("Invalid case given")
 
         if case.is_deleted or case.closed:
             return True
