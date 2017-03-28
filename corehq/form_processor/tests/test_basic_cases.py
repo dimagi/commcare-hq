@@ -375,11 +375,8 @@ class FundamentalCaseTestsSQL(FundamentalCaseTests):
             case_name='name'
         )
 
-        try:
+        with self.assertRaises(DataError):
             post_case_blocks([case.as_xml()], domain='domain2')
-            self.fail('expected execption')
-        except DataError:
-            pass
 
         normal_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_state('domain2', XFormInstanceSQL.NORMAL)
         self.assertEqual(len(normal_form_ids), 0)
