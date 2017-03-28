@@ -132,15 +132,15 @@ class FormProcessorSQL(object):
 
     @classmethod
     def xformerror_from_xform_instance(cls, instance, error_message, with_new_id=False):
-        # scenario - form gets saved but saving case raises an exception - in a sharded DB setup
-        # the form save does not get rolled back so we have to manually remove it before saving the
-        # error form
-        FormAccessorSQL.hard_delete_forms(instance.domain, [instance.form_id], delete_attachments=False)
-
         instance.state = XFormInstanceSQL.ERROR
         instance.problem = error_message
 
         if with_new_id:
+            # scenario - form gets saved but saving case raises an exception - in a sharded DB setup
+            # the form save does not get rolled back so we have to manually remove it before saving the
+            # error form
+            FormAccessorSQL.hard_delete_forms(instance.domain, [instance.form_id], delete_attachments=False)
+
             orig_id = instance.form_id
             cls.assign_new_id(instance)
             instance.orig_id = orig_id
