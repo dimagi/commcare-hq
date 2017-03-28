@@ -79,6 +79,8 @@ any page with `<script src="{% statici18n LANGUAGE_CODE %}"></script>`
 in the template will have access to the global `django` module
 and its methods.
 
+If `djangojs.js` is missing, you can run `./manage.py compilejsi18n` to regenerate it.
+
 For more on Django JS I18n, check out https://docs.djangoproject.com/en/1.7/topics/i18n/translation/.
 
 ## Django URLs
