@@ -212,7 +212,7 @@ class PillowBase(object):
             datadog_counter(metric, tags=tags)
 
             change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).seconds
-            datadog_gauge('commcare.change_feed.lag', change_lag, tags=tags)
+            datadog_gauge('commcare.change_feed.change_lag', change_lag, tags=tags)
 
             if timer:
                 datadog_gauge('commcare.change_feed.processing_time', timer.duration, tags=tags)
