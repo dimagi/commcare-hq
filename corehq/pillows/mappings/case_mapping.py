@@ -1,4 +1,5 @@
 from copy import deepcopy
+from django.conf import settings
 from corehq.pillows.base import DEFAULT_META
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.pillows.mappings import NULL_VALUE
@@ -106,11 +107,13 @@ CASE_MAPPING = {
 CASE_ES_ALIAS = "hqcases"
 
 CASE_INDEX_META = deepcopy(DEFAULT_META)
-CASE_INDEX_META.update({
-    'settings': {
-        'number_of_shards': 10,
-    },
-})
+
+if settings.SERVER_ENVIRONMENT == 'production':
+    CASE_INDEX_META.update({
+        'settings': {
+            'number_of_shards': 10,
+        },
+    })
 
 CASE_INDEX_INFO = ElasticsearchIndexInfo(
     index=CASE_INDEX,

@@ -1,4 +1,5 @@
 from copy import deepcopy
+from django.conf import settings
 from corehq.pillows.base import DEFAULT_META
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.pillows.mappings import NULL_VALUE
@@ -122,11 +123,13 @@ XFORM_MAPPING = {
 XFORM_ES_TYPE = 'xform'
 XFORM_ALIAS = "xforms"
 XFORM_INDEX_META = deepcopy(DEFAULT_META)
-XFORM_INDEX_META.update({
-    'settings': {
-        'number_of_shards': 10,
-    },
-})
+
+if settings.SERVER_ENVIRONMENT == 'production':
+    XFORM_INDEX_META.update({
+        'settings': {
+            'number_of_shards': 10,
+        },
+    })
 
 XFORM_INDEX_INFO = ElasticsearchIndexInfo(
     index=XFORM_INDEX,
