@@ -428,7 +428,7 @@ def get_case_forms_by_date(spec, context):
         get_case_forms_expression['from_date_expression'] = spec['start_date']
     if spec['end_date'] is not None:
         get_case_forms_expression['to_date_expression'] = spec['end_date']
-    if spec['xmlns'] is not None and len(spec['xmlns']) > 0:
+    if spec['xmlns']:
         get_case_forms_expression['xmlns'] = spec['xmlns']
     if spec['form_filter'] is not None:
         filters.append(spec['form_filter'])
@@ -970,7 +970,7 @@ def get_case_history_by_date(spec, context):
         "case_id_expression": case_id_expression
     }
 
-    if spec['xmlns'] is not None and len(spec['xmlns']) > 0:
+    if spec['xmlns']:
         case_history_spec['xmlns'] = spec['xmlns']
 
     filters = []
