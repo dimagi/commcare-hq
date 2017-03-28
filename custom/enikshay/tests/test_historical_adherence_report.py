@@ -33,7 +33,7 @@ class HistoricalAdherenceReportTests(ENikshayCaseStructureMixin, TestCase):
         date = datetime.date(2017, 1, 1)
         self.create_adherence_case(date, "99DOTS", adherence_value="unobserved_dose")
 
-        self.assert_icon(date, "unobserved_dose_img_dot")
+        self.assert_icon(date, "unobserved_dose_dot")
 
     def test_unobserved_dose_image(self):
         # An unobserved dose was recorded
@@ -45,7 +45,7 @@ class HistoricalAdherenceReportTests(ENikshayCaseStructureMixin, TestCase):
         date = datetime.date(2017, 1, 1)
         self.create_adherence_case(date, "enikshay", adherence_value="unobserved_dose")
 
-        self.assert_icon(date, "unobserved_dose_img")
+        self.assert_icon(date, "unobserved_dose")
 
     def test_self_administered_dose_image(self):
         # Create Person, Occurrence, and Episode Cases.
@@ -121,7 +121,7 @@ class HistoricalAdherenceReportTests(ENikshayCaseStructureMixin, TestCase):
 
         # All enikshay cases take priority over all 99DOTS cases
         # newer cases take priority over older cases
-        self.assert_icon(date, "unobserved_dose_img")
+        self.assert_icon(date, "unobserved_dose")
 
     def test_default_datespan(self):
         date = datetime.date(2000, 1, 1)
