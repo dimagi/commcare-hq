@@ -263,10 +263,14 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             return []
 
     def get_all_values(self, doc):
-        return [
-            self.indicators.get_values(item, EvaluationContext(doc, i))
-            for i, item in enumerate(self.get_items(doc))
-        ]
+        rows = []
+        eval_context = EvaluationContext(doc)
+        for i, item in enumerate(self.get_items(doc)):
+            indicators = self.indicators.get_values(item, eval_context)
+            rows.append(indicators)
+            eval_context.increment_iteration()
+
+        return rows
 
     def get_report_count(self):
         """
