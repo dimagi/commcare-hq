@@ -258,3 +258,12 @@ class TestUserSetupUtils(TestCase):
         user.update_device_id_last_used('palm-pilot', datetime(2017, 1, 1))
         user.save()
         self.assertEqual(user.user_data['id_device_number'], 2)
+
+
+    def test_add_drtb_hiv_to_dto(self):
+        ellaria = self.make_user('esand@martell.biz', 'DRTB-HIV')
+        self.assertEqual(ellaria.location_id, self.locations['DRTB-HIV'].location_id)
+        self.assertItemsEqual(
+            [l.name for l in ellaria.get_sql_locations(self.domain)],
+            [self.locations['DRTB-HIV'].name, self.locations['DTO'].name]
+        )

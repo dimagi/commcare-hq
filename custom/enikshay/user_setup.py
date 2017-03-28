@@ -20,6 +20,7 @@ LOC_TYPES_TO_USER_TYPES = {
     'dto': ['dto', 'deo'],
     'cto': ['cto'],
     'sto': ['sto'],
+    'drtb-hiv': ['drtb-hiv'],
 }
 
 
@@ -55,11 +56,6 @@ def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
 def validate_usertype(domain, location, usertype, custom_data):
     """Restrict choices for custom user data role field based on the chosen
     location's type"""
-    # TODO handle multiple locations.  How are they created?
-    # maybe set secondary loc to 'drtb-hiv' if usertype == 'drtb-hiv'?
-    location_codes = []
-    if location.location_type.code == 'dto' and 'drtb-hiv' in location_codes:
-        return
     allowable_usertypes = LOC_TYPES_TO_USER_TYPES[location.location_type.code]
     if usertype not in allowable_usertypes:
         msg = _("'User Type' must be one of the following: {}").format(', '.join(allowable_usertypes))
@@ -176,8 +172,10 @@ def set_available_tests(location, location_form):
 
 
 def save_user_callback(sender, couch_user, **kwargs):
-    if toggles.ENIKSHAY.enabled(couch_user.domain):
-        set_issuer_id(couch_user.domain, couch_user)
+    commcare_user = couch_user  # django signals enforce param names
+    if toggles.ENIKSHAY.enabled(commcare_user.domain):
+        set_issuer_id(commcare_user.domain, commcare_user)
+        add_drtb_hiv_to_dto(commcare_user.domain, commcare_user)
 
 
 def compress_nikshay_id(serial_id, body_digit_count):
@@ -263,6 +261,15 @@ def set_issuer_id(domain, user):
         # note that this is saving the user a second time 'cause it needs a
         # user id first, but if refactoring, be wary of a loop!
         user.save()
+
+
+def add_drtb_hiv_to_dto(domain, user):
+    location = user.get_sql_location(domain)
+    if location and location.location_type.code == 'drtb-hiv':
+        # also assign user to the parent DTO
+        loc_ids = user.get_location_ids(domain)
+        if location.parent.location_id not in loc_ids:
+            user.add_to_assigned_locations(location.parent)
 
 
 def connect_signals():
