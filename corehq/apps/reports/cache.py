@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.utils.cache import _generate_cache_header_key
-from corehq.util.quickcache import QuickCacheHelper, generic_quickcache
-from corehq.util.quickcache.django_quickcache import tiered_django_cache
+from quickcache import QuickCacheHelper, generic_quickcache
+from quickcache.django_quickcache import tiered_django_cache
 
 
 DEFAULT_EXPIRY = 60 * 60  # an hour
