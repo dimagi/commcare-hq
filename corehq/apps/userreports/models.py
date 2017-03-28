@@ -265,7 +265,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def get_all_values(self, doc):
         rows = []
         eval_context = EvaluationContext(doc)
-        for i, item in enumerate(self.get_items(doc)):
+        for item in self.get_items(doc):
             indicators = self.indicators.get_values(item, eval_context)
             rows.append(indicators)
             eval_context.increment_iteration()
