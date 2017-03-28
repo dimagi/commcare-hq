@@ -1,10 +1,9 @@
 from .quickcache import (
     quickcache,
-    skippable_quickcache,
     QuickCache,
-    SkippableQuickCache,
     TieredCache,
 )
+from .deprecated import SkippableQuickCache, skippable_quickcache
 
 
 __all__ = [

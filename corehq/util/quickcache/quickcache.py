@@ -62,8 +62,8 @@ class TieredCache(object):
 
 
 class QuickCache(object):
+    def __init__(self, fn, vary_on, cache, skip_arg=None):
 
-    def __init__(self, fn, vary_on, cache):
         self.fn = fn
         self.cache = cache
         self.prefix = '{}.{}'.format(
@@ -90,7 +90,27 @@ class QuickCache(object):
 
         self.vary_on = vary_on
 
-    def __call__(self, *args, **kwargs):
+        if skip_arg is None or isinstance(skip_arg, basestring) or isfunction(skip_arg):
+            self.skip_arg = skip_arg
+        else:
+            raise ValueError("skip_arg must be None, a string, or a function")
+
+        arg_spec = inspect.getargspec(self.fn)
+        if isinstance(skip_arg, basestring) and self.skip_arg not in arg_spec.args:
+            raise ValueError(
+                'We cannot use "{}" as the "skip" parameter because the function {} has '
+                'no such argument'.format(self.skip_arg, self.fn.__name__)
+            )
+
+        if not isfunction(self.vary_on):
+            for arg, attrs in self.vary_on:
+                if arg == self.skip_arg:
+                    raise ValueError(
+                        'You cannot use the "{}" argument as a vary on parameter and '
+                        'as the "skip cache" parameter in the function: {}'.format(arg, self.fn.__name__)
+                    )
+
+    def call(self, *args, **kwargs):
         logger.debug('checking caches for {}'.format(self.fn.__name__))
         key = self.get_cache_key(*args, **kwargs)
         logger.debug(key)
@@ -168,77 +188,30 @@ class QuickCache(object):
             args_string = 'H' + self._hash(args_string)
         return 'quickcache.{}/{}'.format(self.prefix, args_string)
 
-
-class SkippableQuickCache(QuickCache):
-    """
-    QuickCache extension that allows skipping the cache base on a function argument.
-    """
-
-    def __init__(self, fn, vary_on, cache, skip_arg=None):
-        super(SkippableQuickCache, self).__init__(fn, vary_on, cache)
-
-        if not skip_arg:
-            raise ValueError('"skip_arg" required')
-
-        self.skip_arg = skip_arg
-
-        arg_spec = inspect.getargspec(self.fn)
-        if not isfunction(skip_arg):
-            if self.skip_arg not in arg_spec.args:
-                raise ValueError(
-                    'We cannot use "{}" as the "skip" parameter because the function {} has '
-                    'no such argument'.format(self.skip_arg, self.fn.__name__)
-                )
-
-        if not isfunction(self.vary_on):
-            for arg, attrs in self.vary_on:
-                if arg == self.skip_arg:
-                    raise ValueError(
-                        'You cannot use the "{}" argument as a vary on parameter and '
-                        'as the "skip cache" parameter in the function: {}'.format(arg, self.fn.__name__)
-                    )
+    def skip(self, *args, **kwargs):
+        if not self.skip_arg:
+            return False
+        elif isinstance(self.skip_arg, basestring):
+            callargs = inspect.getcallargs(self.fn, *args, **kwargs)
+            return callargs[self.skip_arg]
+        elif isfunction(self.skip_arg):
+            return self.skip_arg(*args, **kwargs)
+        else:
+            assert False, "skip_arg must be None, a string, or a function " \
+                          "and this should have been checked in __init__"
 
     def __call__(self, *args, **kwargs):
-        callargs = inspect.getcallargs(self.fn, *args, **kwargs)
-        if not isfunction(self.skip_arg):
-            skip = callargs[self.skip_arg]
-        elif isfunction(self.skip_arg):
-            skip = self.skip_arg(*args, **kwargs)
-
-        if not skip:
-            return super(SkippableQuickCache, self).__call__(*args, **kwargs)
+        if not self.skip(*args, **kwargs):
+            return self.call(*args, **kwargs)
         else:
-            key = self.get_cache_key(*args, **kwargs)
             content = self.fn(*args, **kwargs)
+            key = self.get_cache_key(*args, **kwargs)
             self.cache.set(key, content)
             return content
 
 
-def skippable_quickcache(vary_on, skip_arg, timeout=None, memoize_timeout=None, cache=None):
-    """
-    Alternative to quickcache decorator that allows skipping the cache based on 'skip_arg' argument.
-
-    @skippable_quickcache(['name'], skip_arg='force')
-    def get_by_name(name, force=False):
-        ...
-
-    The skip_arg can also be a function and will receive the save arguments as the function:
-    def skip_fn(name, address):
-        return name == 'Ben' and 'Chicago' not in address
-
-    @skippable_quickcache(['name'], skip_arg=skip_fn)
-    def get_by_name_and_address(name, address):
-        ...
-
-    """
-    skippable_cache = functools.partial(SkippableQuickCache, skip_arg=skip_arg)
-
-    return quickcache(vary_on, timeout=timeout, memoize_timeout=memoize_timeout,
-                      cache=cache, helper_class=skippable_cache)
-
-
-def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
-               helper_class=QuickCache):
+def quickcache(vary_on, skip_arg=None, timeout=None, memoize_timeout=None,
+               cache=None, helper_class=None):
     """
     An easy "all-purpose" cache decorator
 
@@ -258,6 +231,21 @@ def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
 
           now as soon as request.couch_user._rev has changed,
           the function will be recomputed
+
+        - skip the cache based on the value of a particular arg
+
+            @quickcache(['name'], skip_arg='force')
+            def get_by_name(name, force=False):
+                # ...
+
+        - skip_arg can also be a function and will receive the save arguments as the function:
+
+            def skip_fn(name, address):
+                return name == 'Ben' and 'Chicago' not in address
+
+            @quickcache(['name'], skip_arg=skip_fn)
+            def get_by_name_and_address(name, address):
+                # ...
 
     Features:
         - In addition to caching in the default shared cache,
@@ -312,8 +300,14 @@ def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
                     django_caches['default'], timeout=timeout))
         cache = TieredCache(caches)
 
+    return make_quickcache_decorator(vary_on, skip_arg, cache, helper_class=helper_class)
+
+
+def make_quickcache_decorator(vary_on, skip_arg, cache, helper_class=None):
+    helper_class = helper_class or QuickCache
+
     def decorator(fn):
-        helper = helper_class(fn, vary_on=vary_on, cache=cache)
+        helper = helper_class(fn, vary_on=vary_on, cache=cache, skip_arg=skip_arg)
 
         @functools.wraps(fn)
         def inner(*args, **kwargs):

@@ -3,7 +3,7 @@
 from django.core.cache.backends.locmem import LocMemCache
 from django.test import SimpleTestCase
 import time
-from corehq.util.quickcache import quickcache, TieredCache, SkippableQuickCache, skippable_quickcache
+from corehq.util.quickcache import quickcache, TieredCache
 from dimagi.utils import make_uuid
 
 BUFFER = []
@@ -209,7 +209,7 @@ class QuickcacheTest(SimpleTestCase):
         self.assertEqual(self.consume_buffer(), ['local hit'])
 
     def test_skippable(self):
-        @skippable_quickcache(['name'], cache=_cache_with_set, skip_arg='force')
+        @quickcache(['name'], cache=_cache_with_set, skip_arg='force')
         def by_name(name, force=False):
             BUFFER.append('called')
             return 'VALUE'
@@ -226,7 +226,7 @@ class QuickcacheTest(SimpleTestCase):
         self.assertEqual(self.consume_buffer(), ['cache hit'])
 
     def test_skippable_fn(self):
-        @skippable_quickcache(['name'], cache=_cache_with_set, skip_arg=lambda name: name == 'Ben')
+        @quickcache(['name'], cache=_cache_with_set, skip_arg=lambda name: name == 'Ben')
         def by_name(name, force=False):
             BUFFER.append('called')
             return 'VALUE'
@@ -244,7 +244,7 @@ class QuickcacheTest(SimpleTestCase):
         self.assertEqual(self.consume_buffer(), ['called', 'cache set'])
 
     def test_skippable_non_kwarg(self):
-        @skippable_quickcache(['name'], cache=_cache_with_set, skip_arg='skip_cache')
+        @quickcache(['name'], cache=_cache_with_set, skip_arg='skip_cache')
         def by_name(name, skip_cache):
             BUFFER.append('called')
             return 'VALUE'
@@ -262,20 +262,19 @@ class QuickcacheTest(SimpleTestCase):
 
     def test_skippable_validation(self):
         # skip_arg not supplied
-        with self.assertRaises(ValueError):
-            @quickcache(['name'], helper_class=SkippableQuickCache)
-            def by_name(name, skip_cache=False):
-                return 'VALUE'
+        @quickcache(['name'])
+        def by_name(name, skip_cache=False):
+            return 'VALUE'
 
         # skip_arg also in vary_on
         with self.assertRaises(ValueError):
-            @skippable_quickcache(['name', 'skip_cache'], skip_arg='skip_cache')
+            @quickcache(['name', 'skip_cache'], skip_arg='skip_cache')
             def by_name(name, skip_cache=False):
                 return 'VALUE'
 
         # skip_arg not in args
         with self.assertRaises(ValueError):
-            @skippable_quickcache(['name'], skip_arg='missing')
+            @quickcache(['name'], skip_arg='missing')
             def by_name(name):
                 return 'VALUE'
 
