@@ -582,7 +582,7 @@ class StaticReportConfiguration(JsonObject):
     data_source_table = StringProperty()
     config = DictProperty()
     custom_configurable_report = StringProperty()
-    server_environment = ListProperty(default=["production"])
+    server_environment = ListProperty()
 
     @classmethod
     def get_doc_id(cls, domain, report_id, custom_configurable_report):
@@ -611,7 +611,8 @@ class StaticReportConfiguration(JsonObject):
     @classmethod
     def all(cls):
         for wrapped, path in StaticReportConfiguration._all():
-            if settings.SERVER_ENVIRONMENT not in wrapped.server_environment:
+            if (wrapped.server_environment and
+                    settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
                 continue
 
             for domain in wrapped.domains:
