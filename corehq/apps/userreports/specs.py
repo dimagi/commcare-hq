@@ -37,3 +37,6 @@ class EvaluationContext(object):
 
     def set_cache_value(self, key, value):
         self.cache[key] = value
+
+    def increment_iteration(self):
+        self.iteration += 1

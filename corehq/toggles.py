@@ -6,7 +6,7 @@ import math
 
 from django.contrib import messages
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.safestring import mark_safe
 from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
@@ -1045,6 +1045,13 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     always_enabled={
         'ews-ghana', 'ils-gateway', 'ils-gateway-train'
     }
+)
+
+PAGINATED_EXPORTS = StaticToggle(
+    'paginated_exports',
+    'Allows for pagination of exports for very large exports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(

@@ -11,7 +11,6 @@ from django.db.models.query_utils import Q
 from django.utils import html
 
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
-from corehq.apps.accounting.tests import generator
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType, Location
@@ -143,7 +142,6 @@ def prepare_domain(domain_name):
     _make_loc_type(name="Polyclinic", parent_type=district)
     _make_loc_type(name="facility", parent_type=district)
 
-    generator.instantiate_accounting()
     account = BillingAccount.get_or_create_account_by_domain(
         domain.name,
         created_by="automated-test",

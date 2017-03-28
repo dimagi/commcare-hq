@@ -729,7 +729,7 @@ BEGIN
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
 		' (state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, thr_score, thr_eligible_ccs, ' ||
-		'thr_eligible_child, thr_rations_21_plus_distributed_ccs, thr_rations_21_plus_distributed_child, wer_score, pse_score, awc_not_open_no_data, is_launched) ' ||
+		'thr_eligible_child, thr_rations_21_plus_distributed_ccs, thr_rations_21_plus_distributed_child, wer_score, pse_score, awc_not_open_no_data, is_launched, training_phase) ' ||
 		'(SELECT ' ||
 			'state_id, ' ||
 			'district_id, ' ||
@@ -746,7 +746,8 @@ BEGIN
 			'0, ' ||
 			'0, ' ||
 			'25, ' ||
-			quote_literal(_no_text) || ' ' ||
+			quote_literal(_no_text) || ', ' ||
+			'0 ' ||
 		'FROM ' || quote_ident(_awc_location_tablename) ||')';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -856,19 +857,6 @@ BEGIN
 		'(CASE WHEN (thr_eligible_child + thr_eligible_ccs) = 0 THEN 1 ELSE (thr_eligible_child + thr_eligible_ccs) END)) >= 0.5 THEN 10 ' ||
 		'ELSE 1 END';
 
-	-- Pass to calculate awc score and ranks
-	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' SET (' ||
-		'awc_score, ' ||
-		'num_awc_rank_functional, ' ||
-		'num_awc_rank_semi, ' ||
-		'num_awc_rank_non) = ' ||
-	'(' ||
-		'pse_score + thr_score + wer_score, ' ||
-		'CASE WHEN (pse_score + thr_score + wer_score) >= 60 THEN 1 ELSE 0 END, ' ||
-		'CASE WHEN ((pse_score + thr_score + wer_score) >= 40 AND (pse_score + thr_score + wer_score) < 60) THEN 1 ELSE 0 END, ' ||
-		'CASE WHEN (pse_score + thr_score + wer_score) < 40 THEN 1 ELSE 0 END' ||
-	')';
-
 	-- Aggregate data from usage table
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
 		'usage_num_pse = ut.usage_num_pse, ' ||
@@ -876,6 +864,7 @@ BEGIN
 		'usage_num_thr = ut.usage_num_thr, ' ||
 		'usage_num_hh_reg = ut.usage_num_hh_reg, ' ||
 		'is_launched = ut.is_launched, ' ||
+		'training_phase = ut.training_phase, ' ||
 		'usage_num_add_person = ut.usage_num_add_person, ' ||
 		'usage_num_add_pregnancy = ut.usage_num_add_pregnancy, ' ||
 		'usage_num_home_visit = ut.usage_num_home_visit, ' ||
@@ -905,6 +894,7 @@ BEGIN
 		'sum(thr) AS usage_num_thr, ' ||
 		'sum(add_household) AS usage_num_hh_reg, ' ||
 		'CASE WHEN sum(add_household) > 0 THEN ' || quote_literal(_yes_text) || ' ELSE ' || quote_literal(_no_text) || ' END as is_launched, '
+		'CASE WHEN sum(thr) > 0 THEN 4 WHEN sum(gmp) > 0 THEN 3 WHEN sum(add_pregnancy) > 0 THEN 2 WHEN sum(add_household) > 0 THEN 1 ELSE 0 END AS training_phase, '
 		'sum(add_person) AS usage_num_add_person, ' ||
 		'sum(add_pregnancy) AS usage_num_add_pregnancy, ' ||
 		'sum(home_visit) AS usage_num_home_visit, ' ||
@@ -937,6 +927,35 @@ BEGIN
        'FROM agg_awc ' ||
 	'WHERE month = ' || quote_literal(_previous_month_date) || ' AND is_launched = ' || quote_literal(_yes_text) || ' AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
+
+	-- Update training status based on the previous month as well
+	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+	   'training_phase = ut.training_phase ' ||
+    'FROM (SELECT awc_id, training_phase ' ||
+       'FROM agg_awc ' ||
+	'WHERE month = ' || quote_literal(_previous_month_date) || ' AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
+	'WHERE ut.awc_id = agg_awc.awc_id AND agg_awc.training_phase < ut.training_phase';
+
+	-- Pass to calculate awc score and ranks and training status
+	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' SET (' ||
+		'awc_score, ' ||
+		'num_awc_rank_functional, ' ||
+		'num_awc_rank_semi, ' ||
+		'num_awc_rank_non, ' ||
+		'trained_phase_1, ' ||
+		'trained_phase_2, ' ||
+		'trained_phase_3, ' ||
+		'trained_phase_4) = ' ||
+	'(' ||
+		'pse_score + thr_score + wer_score, ' ||
+		'CASE WHEN (pse_score + thr_score + wer_score) >= 60 THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN ((pse_score + thr_score + wer_score) >= 40 AND (pse_score + thr_score + wer_score) < 60) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (pse_score + thr_score + wer_score) < 40 THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN training_phase = 1 THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN training_phase = 2 THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN training_phase = 3 THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN training_phase = 4 THEN 1 ELSE 0 END ' ||
+	')';
 
 	-- Aggregate data from VHND table
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
@@ -1128,7 +1147,13 @@ BEGIN
 		'sum(usage_num_hh_reg), ' ||
 		'sum(usage_num_add_person), ' ||
 		'sum(usage_num_add_pregnancy), ' ||
-		'is_launched ';
+		'is_launched, ' ||
+		quote_nullable(_null_value) || ', ' ||
+		'sum(trained_phase_1), ' ||
+		'sum(trained_phase_2), ' ||
+		'sum(trained_phase_3), ' ||
+		'sum(trained_phase_4) ';
+
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
