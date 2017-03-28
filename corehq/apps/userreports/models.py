@@ -495,7 +495,7 @@ class StaticDataSourceConfiguration(JsonObject):
     """
     _datasource_id_prefix = STATIC_PREFIX
     domains = ListProperty()
-    server_environment = ListProperty(default=["production"])
+    server_environment = ListProperty()
     config = DictProperty()
 
     @classmethod
@@ -526,7 +526,8 @@ class StaticDataSourceConfiguration(JsonObject):
     @classmethod
     def all(cls):
         for wrapped, path in cls._all():
-            if settings.SERVER_ENVIRONMENT not in wrapped.server_environment:
+            if (wrapped.server_environment and
+                    settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
                 continue
 
             for domain in wrapped.domains:
