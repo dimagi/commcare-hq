@@ -237,8 +237,9 @@ class TestUserSetupUtils(TestCase):
 
     def test_issuer_id(self):
         areo = self.make_user('ahotah@martell.biz', 'DTO')
-        self.assertTrue(areo.user_data['issuer_id'])
+        areo_number = areo.user_data['id_issuer_number']
+        self.assertTrue(areo_number)
 
         # the next id should be 1 more than this ID
         arys = self.make_user('aoakheart@kingsguard.gov', 'DTO')
-        self.assertTrue(areo.user_data['issuer_id'] + 1 == arys.user_data['issuer_id'])
+        self.assertTrue(areo_number + 1 == arys.user_data['id_issuer_number'])

@@ -1,4 +1,4 @@
-# TODO Is this going to be translated, or English only?
+import math
 from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
@@ -174,11 +174,71 @@ def save_user_callback(sender, couch_user, **kwargs):
         set_issuer_id(couch_user.domain, couch_user)
 
 
+def compress_issuer_id(issuer_id):
+    return compress_id(
+        serial_id=issuer_id,
+        growth_symbols=list("HLJXYUWMNV"),
+        lead_symbols=list("ACE3459KFPRT"),
+        body_symbols=list("ACDEFHJKLMNPQRTUVWXY3479"),
+        body_digit_count=3,
+    )
+
+
+def compress_id(serial_id, growth_symbols, lead_symbols, body_symbols, body_digit_count):
+    """Accepts an integer ID and compresses it according to the spec here:
+    https://docs.google.com/document/d/11Nxk3XMuae9S4L3JZc4FCVTocLz6bOC-glclrgxnQ5o/"""
+    if not growth_symbols or not lead_symbols:
+        raise AssertionError("We need both growth and lead symbols")
+
+    if set(growth_symbols) & set(lead_symbols):
+        raise AssertionError("You cannot use the same symbol as both a growth and a lead")
+
+    lead_digit_base = len(lead_symbols)
+    growth_digit_base = len(growth_symbols)
+    body_digit_base = len(body_symbols)
+    max_fixed_length_size = (body_digit_base ** body_digit_count) * lead_digit_base
+
+    if serial_id >= max_fixed_length_size:
+        times_over_max = serial_id / max_fixed_length_size
+        growth_digit_count = int(math.log(times_over_max, growth_digit_base)) + 1
+    else:
+        growth_digit_count = 0
+
+    digit_bases = ([growth_digit_base] * growth_digit_count
+                   + [lead_digit_base]
+                   + [body_digit_base] * body_digit_count)
+
+    divisors = [1]
+    for digit_base in reversed(digit_bases[1:]):
+        divisors.insert(0, divisors[0] * digit_base)
+
+    remainder = serial_id
+    counts = []
+    for divisor in divisors:
+        counts.append(remainder / divisor)
+        remainder = remainder % divisor
+
+    if remainder != 0:
+        raise AssertionError("Failure while encoding ID {}!".format(serial_id))
+
+    output = []
+    for i, count in enumerate(counts):
+        if i < growth_digit_count:
+            output.append(growth_symbols[count])
+        elif i == growth_digit_count:
+            output.append(lead_symbols[count])
+        else:
+            output.append(body_symbols[count])
+    return ''.join(output)
+
+
 def set_issuer_id(domain, user):
-    """Add a serially increasing custom user data "Issuer ID" to the user."""
-    if not user.user_data.get('issuer_id', None):
+    """Add a serially increasing custom user data "Issuer ID" to the user, as
+    well as a human-readable compressed form."""
+    if not user.user_data.get('id_issuer_number', None):
         issuer_id, created = IssuerId.objects.get_or_create(domain=domain, user_id=user._id)
-        user.user_data['issuer_id'] = issuer_id.pk
+        user.user_data['id_issuer_number'] = issuer_id.pk
+        user.user_data['id_issuer_body'] = compress_issuer_id(issuer_id.pk)
         # note that this is saving the user a second time 'cause it needs a
         # user id first, but if refactoring, be wary of a loop!
         user.save()
