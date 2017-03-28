@@ -10,7 +10,7 @@ couch_user_post_save = Signal(providing_args=["couch_user"])
 
 # Called after user validation, before save.
 # Used for additional validation or modification.
-clean_commcare_user = Signal(providing_args=["domain", "user", "forms"])
+clean_commcare_user = Signal(providing_args=["domain", "request_user", "user", "forms"])
 
 
 @receiver(user_logged_in)
