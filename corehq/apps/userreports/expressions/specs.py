@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import hashlib
 from simpleeval import InvalidExpression
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.document_stores import get_document_store
@@ -295,12 +294,8 @@ class FormsExpressionSpec(JsonObject):
 
     def _get_forms(self, case_id, context):
         domain = context.root_doc['domain']
-        if self.xmlns:
-            xmlns_hash = hashlib.md5(''.join(self.xmlns)).hexdigest()[:4]
-        else:
-            xmlns_hash = ''
 
-        cache_key = (self.__class__.__name__, case_id, xmlns_hash)
+        cache_key = (self.__class__.__name__, case_id, tuple(self.xmlns))
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 

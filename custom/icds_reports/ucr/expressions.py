@@ -1,4 +1,3 @@
-import hashlib
 from jsonobject.base_properties import DefaultProperty
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.es.forms import FormES
@@ -139,17 +138,9 @@ class FormsInDateExpressionSpec(JsonObject):
 
     def _get_forms(self, case_id, from_date, to_date, context):
         domain = context.root_doc['domain']
-        cache_hash = "{}".format(self.count)
-        if from_date:
-            cache_hash += "{}".format(from_date.toordinal())
-        if to_date:
-            cache_hash += "{}".format(to_date.toordinal())
-        if self.xmlns:
-            cache_hash += ''.join(self.xmlns)
+        cache_key = (self.__class__.__name__, case_id, self.count, from_date,
+                     to_date, tuple(self.xmlns))
 
-        cache_hash = hashlib.md5(cache_hash).hexdigest()[:4]
-
-        cache_key = (self.__class__.__name__, case_id, cache_hash)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
