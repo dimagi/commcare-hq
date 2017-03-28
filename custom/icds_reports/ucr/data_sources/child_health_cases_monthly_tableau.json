@@ -2140,10 +2140,10 @@
           },
           "type": "root_doc"
         },
-        "start_date": {
+        "from_date_expression": {
           "type": "icds_month_start"
         },
-        "end_date": {
+        "to_date_expression": {
           "type": "icds_month_end"
         },
         "xmlns": [

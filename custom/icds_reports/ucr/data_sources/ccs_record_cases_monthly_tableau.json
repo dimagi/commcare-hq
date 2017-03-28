@@ -1992,10 +1992,10 @@
           "xmlns": [
             "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
           ],
-          "start_date": {
+          "from_date_expression": {
             "type": "icds_month_start"
           },
-          "end_date": {
+          "to_date_expression": {
             "type": "icds_month_end"
           },
           "count": true
@@ -2017,11 +2017,11 @@
           "xmlns": [
             "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
           ],
-          "end_date": {
-            "type": "icds_month_end"
-          },
-          "start_date": {
+          "from_date_expression": {
             "type": "icds_month_start"
+          },
+          "to_date_expression": {
+            "type": "icds_month_end"
           },
           "count": true
         }
