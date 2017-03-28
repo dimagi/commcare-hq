@@ -91,3 +91,64 @@ def get_merged_sequence(checkpoints_topics):
             for sub_topic, seq in sequence.items():
                 _merge_seq(sub_topic, seq)
     return merged_sequence
+
+
+def migrate_kafka_sequence(change_feed, checkpoint):
+    int_seq = None
+    try:
+        # optimistically try convert to int
+        int_seq = int(checkpoint.sequence)
+    except ValueError:
+        pass
+
+    if checkpoint.sequence_format == 'text' or int_seq is not None:
+        topics = change_feed.topics
+        assert len(topics) == 1, topics
+        return {(topics[0], 0): int_seq}
+    elif checkpoint.sequence_format == 'json':
+        sequence = json.loads(checkpoint.sequence)
+        if not sequence:
+            # if sequence is an empty dict just return it
+            return sequence
+
+        assert set(change_feed.topics) == set(sequence)
+        return {
+            (topic, 0): offset
+            for topic, offset in sequence.items()
+        }
+    else:
+        raise ValueError("Unknown checkpoint format: {}".format(checkpoint.sequence_format))
+
+
+def migrate_kafka_checkpoints(apps, schema_editor):
+    from pillowtop.utils import get_kafka_pillow_instances
+    DjangoPillowCheckpoint = apps.get_model('pillowtop', 'DjangoPillowCheckpoint')
+
+    for pillow in get_kafka_pillow_instances():
+        try:
+            checkpoint = DjangoPillowCheckpoint.objects.get(checkpoint_id=pillow.checkpoint.checkpoint_id)
+            print("Migrating checkpoint {}: {} - {}".format(
+                checkpoint.checkpoint_id, change_feed.topics, checkpoint.sequence
+            ))
+
+            checkpoint.old_sequence = checkpoint.sequence  # save it so we can roll back
+            checkpoint.sequence = migrate_kafka_sequence(pillow.get_change_feed(), checkpoint)
+            checkpoint.sequence_format = 'json'
+            checkpoint.save()
+        except DjangoPillowCheckpoint.DoesNotExist:
+            if not settings.UNIT_TESTING:
+                print('warning: pillow checkpoint with ID {} not found'.format(pillow.checkpoint.checkpoint_id))
+
+
+def revert_migrate_checkpoints(apps, schema_editor):
+    from pillowtop.utils import get_kafka_pillow_instances
+    DjangoPillowCheckpoint = apps.get_model('pillowtop', 'DjangoPillowCheckpoint')
+    for pillow in get_kafka_pillow_instances():
+        try:
+            checkpoint = DjangoPillowCheckpoint.objects.get(checkpoint_id=pillow.checkpoint.checkpoint_id)
+            checkpoint.sequence = checkpoint.old_sequence
+            checkpoint.old_sequence = None
+            checkpoint.sequence_format = 'json' if '{' in checkpoint.sequence else 'text'
+            checkpoint.save()
+        except DjangoPillowCheckpoint.DoesNotExist:
+            pass
