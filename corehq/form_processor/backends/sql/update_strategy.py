@@ -18,6 +18,7 @@ def _validate_length(length):
     def __inner(value):
         if len(value) > length:
             raise ValueError('Value exceeds allowed length: {}'.format(length))
+        return value
 
     return __inner
 
