@@ -50,15 +50,8 @@ class Command(BaseCommand):
             default=False,
             help='We changed the core v0 plans, wipe all existing plans and start over. USE CAUTION.',
         )
-        parser.add_argument(
-            '--testing',
-            action='store_true',
-            default=False,
-            help='Run this command for tests.',
-        )
 
-    def handle(self, dry_run=False, verbose=False, fresh_start=False, testing=False, **options):
-
+    def handle(self, dry_run=False, verbose=False, fresh_start=False, **options):
         self.verbose = verbose
 
         if fresh_start:

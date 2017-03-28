@@ -37,7 +37,7 @@ from six.moves import range
 
 @unit_testing_only
 def instantiate_accounting():
-    call_command('cchq_prbac_bootstrap', testing=True)
+    call_command('cchq_prbac_bootstrap')
 
     DefaultProductPlan.objects.all().delete()
     SoftwarePlanVersion.objects.all().delete()
