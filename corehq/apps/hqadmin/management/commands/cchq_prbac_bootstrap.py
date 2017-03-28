@@ -192,7 +192,8 @@ class Command(BaseCommand):
         privileges.ALLOW_EXCESS_USERS,
         privileges.LOCATIONS,
         privileges.USER_CASE,
-        privileges.ZAPIER_INTEGRATION
+        privileges.ZAPIER_INTEGRATION,
+        privileges.LOGIN_AS
     ]
 
     pro_plan_features = standard_plan_features + [
