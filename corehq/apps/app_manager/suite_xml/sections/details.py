@@ -72,6 +72,7 @@ class DetailContributor(SectionContributor):
                                                             detail_type, self.build_profile_id)
                                     r.append(helper.build_case_tile_detail())
                                 else:
+                                    print_template_path = detail.print_template['path'] if detail.print_template else None
                                     d = self.build_detail(
                                         module,
                                         detail_type,
@@ -82,7 +83,7 @@ class DetailContributor(SectionContributor):
                                         title=Text(locale_id=id_strings.detail_title_locale(
                                             module, detail_type
                                         )),
-                                        print_template=detail.print_template,
+                                        print_template=print_template_path,
                                     )
                                     if d:
                                         r.append(d)

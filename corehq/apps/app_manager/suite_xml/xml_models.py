@@ -564,7 +564,7 @@ class Field(OrderedXmlObject):
     ORDER = ('header', 'template', 'sort_node')
 
     sort = StringField('@sort')
-    print_id = StringField('@print_id')
+    print_id = StringField('@print-id')
     style = NodeField('style', Style)
     header = NodeField('header', Header)
     template = NodeField('template', Template)
