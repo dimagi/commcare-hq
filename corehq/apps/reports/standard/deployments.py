@@ -32,6 +32,7 @@ from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin, PaginatedReportMixin
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.util import format_datatables_data
+from corehq.util.quickcache import quickcache
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -79,7 +80,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def selected_app_id(self):
         return self.request_params.get(SelectApplicationFilter.slug, None)
 
-    @memoized
+    @quickcache(['app_id'], timeout=10 * 60)
     def get_app_name(self, app_id):
         try:
             app = get_app(self.domain, app_id)
