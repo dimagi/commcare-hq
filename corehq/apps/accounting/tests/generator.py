@@ -6,13 +6,15 @@ import datetime
 import uuid
 import mock
 
+from django.apps import apps
 from django.conf import settings
-from django.core.management import call_command
 
 from nose.tools import nottest
 
 from dimagi.utils.data import generator as data_gen
 
+from corehq.apps.accounting.bootstrap.config.cchq_software_plan_bootstrap import BOOTSTRAP_CONFIG_TESTING
+from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
@@ -46,7 +48,7 @@ def bootstrap_test_plans():
     SoftwareProduct.objects.all().delete()
     FeatureRate.objects.all().delete()
     Feature.objects.all().delete()
-    call_command('cchq_software_plan_bootstrap', testing=True)
+    ensure_plans(BOOTSTRAP_CONFIG_TESTING, verbose=False, apps=apps)
 
 
 @unit_testing_only
