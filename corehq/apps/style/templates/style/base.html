@@ -194,7 +194,7 @@
 
         {% include 'style/includes/analytics_all.html' %}
 
-        {% if is_sass_environment %}
+        {% if is_saas_environment %}
         {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
         {% compress js %}
         <script src="{% static 'style/js/drift.js' %}"></script>

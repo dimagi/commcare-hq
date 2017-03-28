@@ -923,7 +923,7 @@ except ImportError as error:
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
-IS_SASS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
+IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
 
 TEMPLATES = [
     {
