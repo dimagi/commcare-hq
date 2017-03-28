@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import date, datetime
+from datetime import datetime
 
 from django.core.management import call_command
 from django.test import TestCase, override_settings
@@ -8,51 +8,12 @@ from mock import patch
 
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.nikshay_datamigration.models import Outcome, PatientDetail
-from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
+
+from custom.enikshay.nikshay_datamigration.tests.utils import NikshayMigrationMixin
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
-    def setUp(self):
-        self.domain = "enikshay-test-domain"
-        super(TestCreateEnikshayCases, self).setUp()
-        self.patient_detail = PatientDetail.objects.create(
-            PregId='MH-ABD-05-16-0001',
-            scode='MH',
-            Dtocode='ABD',
-            Tbunitcode=1,
-            pname='A B C',
-            pgender='M',
-            page=18,
-            poccupation='4',
-            paadharno=867386000000,
-            paddress='Cambridge MA',
-            pmob='5432109876',
-            pregdate1=date(2016, 12, 13),
-            cname='Secondary name',
-            caddress='Secondary address',
-            cmob='1234567890',
-            dcpulmunory='N',
-            dcexpulmunory='3',
-            dotname='Bubble Bubbles',
-            dotmob='9876543210',
-            dotpType=1,
-            PHI=2,
-            atbtreatment='',
-            Ptype=4,
-            pcategory=1,
-            cvisitedDate1='2016-12-25 00:00:00.000',
-            InitiationDate1='2016-12-22 16:06:47.726',
-            dotmosignDate1='2016-12-23 00:00:00.000',
-        )
-        self.outcome = Outcome.objects.create(
-            PatientId=self.patient_detail,
-            Outcome='NULL',
-            HIVStatus='Neg',
-        )
-        self.case_accessor = CaseAccessors(self.domain)
+class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
 
     @patch('custom.enikshay.nikshay_datamigration.factory.datetime')
     def test_case_creation(self, mock_datetime):
