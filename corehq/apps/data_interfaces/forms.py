@@ -419,3 +419,67 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             return AutomaticUpdateAction.EXACT
         else:
             return self.cleaned_data.get('property_value_type')
+
+
+class AddCaseRuleForm(forms.Form):
+    name = TrimmedCharField(
+        label=ugettext_lazy("Name"),
+        required=True,
+    )
+    case_type = forms.ChoiceField(
+        label=ugettext_lazy("Case Type"),
+        required=True,
+    )
+
+    def remove_quotes(self, value):
+        if isinstance(value, basestring) and len(value) >= 2:
+            for q in ("'", '"'):
+                if value.startswith(q) and value.endswith(q):
+                    return value[1:-1]
+        return value
+
+    def __init__(self, domain, *args, **kwargs):
+        super(AddCaseRuleForm, self).__init__(*args, **kwargs)
+
+        self.domain = domain
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
+        self.helper.field_class = 'col-xs-2'
+        self.helper.form_method = 'POST'
+        self.helper.form_action = '#'
+
+        self.helper.layout = Layout(
+            Fieldset(
+                _("Basic Information"),
+                Field('name', data_bind='name'),
+            ),
+            Fieldset(
+                _("Case Filters"),
+                HTML(
+                    '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
+                    _("The Update Actions will be performed for cases that match all filter criteria below.")
+                ),
+                Field(
+                    'criteria_json',
+                    type='hidden',
+                    data_bind='criteria_json',
+                ),
+                Div(data_bind="template: {name: 'case-filters'}"),
+            ),
+            Fieldset(
+                _("Update Actions"),
+                Field(
+                    'actions_json',
+                    type='hidden',
+                    data_bind='actions_json',
+                ),
+            ),
+            FormActions(
+                StrictButton(
+                    _("Save"),
+                    type='submit',
+                    css_class='btn btn-primary',
+                ),
+            ),
+        )

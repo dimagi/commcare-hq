@@ -28,7 +28,7 @@ from corehq.apps.data_interfaces.tasks import (
     bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
-    AddAutomaticCaseUpdateRuleForm)
+    AddAutomaticCaseUpdateRuleForm, AddCaseRuleForm)
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
                                                 AutomaticUpdateRuleCriteria,
                                                 AutomaticUpdateAction)
@@ -917,3 +917,23 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
             self.update_rule(self.rule)
             return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
         return super(JSONResponseMixin, self).get(request, *args, **kwargs)
+
+
+class AddCaseRuleView(DataInterfaceSection):
+    template_name = "data_interfaces/edit_case_rule.html"
+    urlname = 'add_case_rule'
+    page_title = ugettext_lazy("Add Case Rule")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def form(self):
+        return AddCaseRuleForm(self.domain)
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.form,
+        }

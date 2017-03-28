@@ -1,0 +1,223 @@
+{% extends 'style/base_section.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'style/js/main.js' %}"></script>
+    <script src="{% static 'data_interfaces/js/case_rule.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    $('#rule-definition').koApplyBindings(new CaseRule());
+</script>
+{% endblock %}
+
+{% block page_content %}
+<div id="rule-definition">
+    {% crispy form %}
+</div>
+
+<script type="text/html" id="case-filters">
+    <div data-bind="template: {name: 'case-type-filter'}"></div>
+    <div data-bind="template: {name: getKoTempateId, foreach: criteria}"></div>
+    <div class="form-group">
+        <div class="col-xs-2 col-xs-offset-1">
+            <button class="btn btn-success" data-bind="click: addFilter">
+                <i class="fa fa-plus"></i>
+                {% trans "Add filter for" %}
+            </button>
+        </div>
+        <div class="col-xs-3">
+            <select class="select form-control" data-bind="value: selected_case_filter_id">
+                <option value="case-modified-filter">{% trans "Case not modified since" %}</option>
+                <option value="case-property-filter">{% trans "Case property" %}</option>
+                <option value="date-case-property-filter">{% trans "Date case property" %}</option>
+                <option value="advanced-date-case-property-filter">{% trans "Date case property (advanced)" %}</option>
+                <option value="parent-closed-filter">{% trans "Parent case is closed" %}</option>
+                <option value="custom-filter">{% trans "Custom filter callout" %}</option>
+            </select>
+        </div>
+    </div>
+</script>
+
+<!-- Start templates for filter criteria -->
+
+<script type="text/html" id="case-type-filter">
+    <div class="form-group">
+        <div class="col-xs-offset-1 col-xs-2">
+            <label class="control-label">{% trans "Case Type is" %}</label>
+            <span class="asteriskField">*</span>
+        </div>
+        <div class="controls col-xs-2">
+            <select class="select form-control">
+            </select>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="remove-filter">
+    <div class="col-xs-1">
+        <div class="row">
+            <div class="col-xs-6 text-center">
+                <button type="button" class="btn btn-danger" data-bind="click: $parent.removeFilter">x</button>
+            </div>
+            <div class="col-xs-6 text-center">
+                <label class="control-label">{% trans "AND" %}</label>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="case-modified-filter">
+    <div class="form-group">
+        <div data-bind="template: {name: 'remove-filter'}"></div>
+        <div class="col-xs-2">
+            <label class="control-label">{% trans "Case not modified in" %}</label>
+        </div>
+        <div class="controls col-xs-1">
+            <input type="text" class="textinput form-control"></input>
+        </div>
+        <div class="controls col-xs-1">
+            <label class="control-label">{% trans "days" %}</label>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="case-property-filter">
+    <div class="form-group">
+        <div data-bind="template: {name: 'remove-filter'}"></div>
+        <div class="col-xs-2">
+            <label class="control-label">{% trans "Case property" %}</label>
+        </div>
+        <div class="controls col-xs-2">
+            <input type="text" class="textinput form-control"></input>
+        </div>
+        <div class="controls col-xs-2">
+            <select class="select form-control">
+            </select>
+        </div>
+        <div class="controls col-xs-2">
+            <input type="text" class="textinput form-control"></input>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="date-case-property-filter">
+    <div class="form-group">
+        <div data-bind="template: {name: 'remove-filter'}"></div>
+        <div class="col-xs-2">
+            <label class="control-label">{% trans "When the current date is" %}</label>
+        </div>
+        <div class="controls col-xs-2">
+            <select class="select form-control">
+            </select>
+        </div>
+        <div class="col-xs-2">
+            <label class="control-label">{% trans "the date in case property" %}</label>
+        </div>
+        <div class="controls col-xs-2">
+            <input type="text" class="textinput form-control"></input>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="advanced-date-case-property-filter">
+    <div class="form-group">
+        <div data-bind="template: {name: 'remove-filter'}"></div>
+        <div class="col-xs-2">
+            <label class="control-label">{% trans "When the current date is" %}</label>
+        </div>
+        <div class="controls col-xs-2">
+            <select class="select form-control">
+            </select>
+        </div>
+        <div class="col-xs-2">
+            <label class="control-label">{% trans "the date in case property" %}</label>
+        </div>
+        <div class="controls col-xs-2">
+            <input type="text" class="textinput form-control"></input>
+        </div>
+        <div class="controls col-xs-1">
+            <select class="select form-control">
+            </select>
+        </div>
+        <div class="controls col-xs-1">
+            <input type="text" class="textinput form-control"></input>
+        </div>
+        <div class="controls col-xs-1">
+            <label class="control-label">{% trans "days" %}</label>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="parent-closed-filter">
+    <div class="form-group">
+        <div data-bind="template: {name: 'remove-filter'}"></div>
+        <div class="col-xs-2">
+            <label class="control-label">{% trans "The parent case is closed" %}</label>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="custom-filter">
+    <div class="form-group">
+        <div data-bind="template: {name: 'remove-filter'}"></div>
+        <div class="col-xs-2">
+            <label class="control-label">{% trans "Custom filter callout" %}</label>
+        </div>
+        <div class="controls col-xs-4">
+            <input type="text" class="textinput form-control"></input>
+        </div>
+    </div>
+</script>
+
+<!-- Start templates for rule actions -->
+
+<script type="text/html" id="remove-action">
+    <div class="col-xs-1">
+        <button type="button" class="btn btn-danger">x</button>
+    </div>
+</script>
+
+<script type="text/html" id="close-case-action">
+    <div class="form-group">
+        <div data-bind="template: {name: 'remove-action'}"></div>
+        <div class="col-xs-2">
+            <label class="control-label">{% trans "Close the case" %}</label>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="update-case-property-action">
+    <div class="form-group">
+        <div data-bind="template: {name: 'remove-action'}"></div>
+        <div class="col-xs-2">
+            <label class="control-label">{% trans "Set case property" %}</label>
+        </div>
+        <div class="controls col-xs-2">
+            <input type="text" class="textinput form-control"></input>
+        </div>
+        <div class="controls col-xs-2">
+            <select class="select form-control">
+            </select>
+        </div>
+        <div class="controls col-xs-2">
+            <input type="text" class="textinput form-control"></input>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="custom-action">
+    <div class="form-group">
+        <div data-bind="template: {name: 'remove-action'}"></div>
+        <div class="col-xs-2">
+            <label class="control-label">{% trans "Custom action callout" %}</label>
+        </div>
+        <div class="controls col-xs-4">
+            <input type="text" class="textinput form-control"></input>
+        </div>
+    </div>
+</script>
+{% endblock %}
