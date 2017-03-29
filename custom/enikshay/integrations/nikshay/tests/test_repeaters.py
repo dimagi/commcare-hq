@@ -813,8 +813,8 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         with self.assertRaisesMessage(NikshayRequiredValueMissing,
                                       "Value missing for intervalID, purpose_of_testing: {testing_purpose}, "
                                       "follow_up_test_reason: {follow_up_test_reason}".format(
-                                            testing_purpose="testing",
-                                            follow_up_test_reason="unknown_reason"
+                                          testing_purpose="testing",
+                                          follow_up_test_reason="unknown_reason"
                                       )):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
@@ -838,8 +838,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
                 NikshayRequiredValueMissing,
                 "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
                     lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="scanty")
-                ):
-
+        ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
         self.update_case_with(self.test_id, {"result_grade": "scanty", "max_bacilli_count": "10"})
