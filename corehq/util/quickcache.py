@@ -3,7 +3,16 @@ import warnings
 from quickcache.django_quickcache import get_django_quickcache
 
 
-quickcache = get_django_quickcache(timeout=5 * 60, memoize_timeout=10)
+from corehq.util.soft_assert import soft_assert
+
+quickcache_soft_assert = soft_assert(
+    notify_admins=True,
+    fail_if_debug=False,
+    skip_frames=5,
+)
+
+quickcache = get_django_quickcache(timeout=5 * 60, memoize_timeout=10,
+                                   assert_function=quickcache_soft_assert)
 
 
 def skippable_quickcache(*args, **kwargs):

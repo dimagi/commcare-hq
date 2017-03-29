@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from collections import namedtuple
 
 from django.core.cache import caches
-from .quickcache import ConfigMixin, get_quickcache
+from .quickcache import ConfigMixin, get_quickcache, assert_function
 from .cache_helpers import CacheWithTimeout, TieredCache
 from .quickcache_helper import QuickCacheHelper
 
@@ -13,6 +13,7 @@ class DjangoQuickCache(namedtuple('DjangoQuickCache', [
     'timeout',
     'memoize_timeout',
     'helper_class',
+    'assert_function',
 ]), ConfigMixin):
 
     def call(self):
@@ -22,6 +23,7 @@ class DjangoQuickCache(namedtuple('DjangoQuickCache', [
             vary_on=self.vary_on,
             skip_arg=self.skip_arg,
             helper_class=self.helper_class,
+            assert_function=self.assert_function,
         ).call()
 
 
@@ -38,4 +40,5 @@ get_django_quickcache = DjangoQuickCache(
     timeout=Ellipsis,
     memoize_timeout=Ellipsis,
     helper_class=QuickCacheHelper,
+    assert_function=assert_function,
 ).but_with

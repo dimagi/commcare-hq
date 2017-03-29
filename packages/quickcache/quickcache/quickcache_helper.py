@@ -1,13 +1,12 @@
 import hashlib
 import inspect
 from inspect import isfunction
-from corehq.util.soft_assert import soft_assert
 
 from .logger import logger
 
 
 class QuickCacheHelper(object):
-    def __init__(self, fn, vary_on, cache, skip_arg=None):
+    def __init__(self, fn, vary_on, cache, skip_arg=None, assert_function=None):
 
         self.fn = fn
         self.cache = cache
@@ -27,11 +26,7 @@ class QuickCacheHelper(object):
                         'no such argument'.format(arg, self.fn.__name__)
                     )
 
-        self.encoding_assert = soft_assert(
-            notify_admins=True,
-            fail_if_debug=False,
-            skip_frames=5,
-        )
+        self.encoding_assert = assert_function
 
         self.vary_on = vary_on
 

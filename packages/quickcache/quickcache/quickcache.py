@@ -2,6 +2,7 @@
 from collections import namedtuple
 import functools
 
+from .logger import assert_function
 from .quickcache_helper import QuickCacheHelper
 
 
@@ -53,6 +54,7 @@ class QuickCache(namedtuple('QuickCache', [
     'cache',
     'skip_arg',
     'helper_class',
+    'assert_function'
 ]), ConfigMixin):
     pass
 
@@ -61,4 +63,5 @@ get_quickcache = QuickCache(
     cache=Ellipsis,
     skip_arg=None,
     helper_class=QuickCacheHelper,
+    assert_function=assert_function,
 ).but_with
