@@ -6,10 +6,13 @@ from django.test import SimpleTestCase
 
 from dimagi.utils import make_uuid
 
-from .. import generic_quickcache, quickcache
+from .. import get_django_quickcache, get_quickcache
 from ..cache_helpers import TieredCache
 
 BUFFER = []
+
+quickcache = get_django_quickcache(timeout=5 * 60, memoize_timeout=10)
+generic_quickcache = get_quickcache()
 
 
 class CacheMock(LocMemCache):

@@ -73,23 +73,25 @@ from __future__ import absolute_import
 from collections import namedtuple
 
 from django.core.cache import caches
-from .quickcache import generic_quickcache, ConfigMixin
+from .quickcache import ConfigMixin, get_quickcache, QuickCacheHelper
 from .cache_helpers import CacheWithTimeout, TieredCache
 
 
-class DjangoQuickCacheConfig(namedtuple('DjangoQuickCacheConfig', [
+class DjangoQuickCache(namedtuple('DjangoQuickCache', [
     'vary_on',
     'skip_arg',
     'timeout',
     'memoize_timeout',
+    'helper_class',
 ]), ConfigMixin):
 
     def call(self):
         cache = tiered_django_cache([('locmem', self.memoize_timeout), ('default', self.timeout)])
-        return generic_quickcache.config(
+        return get_quickcache(
             cache=cache,
             vary_on=self.vary_on,
-            skip_arg=self.skip_arg
+            skip_arg=self.skip_arg,
+            helper_class=self.helper_class,
         ).call()
 
 
@@ -100,5 +102,10 @@ def tiered_django_cache(cache_name_timeout_pairs):
         if timeout
     ])
 
-django_quickcache = DjangoQuickCacheConfig(vary_on=Ellipsis, skip_arg=None, timeout=5 * 60, memoize_timeout=10)
-quickcache = django_quickcache
+get_django_quickcache = DjangoQuickCache(
+    vary_on=Ellipsis,
+    skip_arg=None,
+    timeout=Ellipsis,
+    memoize_timeout=Ellipsis,
+    helper_class=QuickCacheHelper,
+).but_with

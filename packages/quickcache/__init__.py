@@ -1,12 +1,9 @@
-from .quickcache import (
-    generic_quickcache,
-    QuickCacheHelper,
-)
-from .django_quickcache import quickcache
+from .quickcache import QuickCacheHelper, get_quickcache
+from .django_quickcache import get_django_quickcache
 
 
 __all__ = [
-    'generic_quickcache',
-    'quickcache'
+    'get_django_quickcache',
+    'get_quickcache',
     'QuickCacheHelper',
 ]

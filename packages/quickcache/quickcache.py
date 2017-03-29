@@ -161,15 +161,17 @@ class QuickCacheHelper(object):
 
 
 class ConfigMixin(object):
-    def config(self, **defaults):
+    def but_with(self, **defaults):
         return self._replace(**defaults)
 
-    def __call__(self, vary_on=Ellipsis, **new_values):
+    def __call__(self, vary_on=Ellipsis, skip_arg=Ellipsis, **new_values):
         if vary_on is not Ellipsis:
             new_values['vary_on'] = vary_on
+        if skip_arg is not Ellipsis:
+            new_values['skip_arg'] = skip_arg
 
         if new_values:
-            return self.config(**new_values).__call__()
+            return self.but_with(**new_values).__call__()
 
         missing_values = [key for key, value in self._asdict().items()
                           if value is Ellipsis]
@@ -201,7 +203,7 @@ class ConfigMixin(object):
         return decorator
 
 
-class QuickCacheConfig(namedtuple('QuickCacheConfig', [
+class QuickCache(namedtuple('QuickCache', [
     'vary_on',
     'cache',
     'skip_arg',
@@ -209,6 +211,9 @@ class QuickCacheConfig(namedtuple('QuickCacheConfig', [
 ]), ConfigMixin):
     pass
 
-quickcache_base = QuickCacheConfig(vary_on=Ellipsis, cache=Ellipsis, skip_arg=Ellipsis, helper_class=Ellipsis)
-
-generic_quickcache = quickcache_base.config(skip_arg=None, helper_class=QuickCacheHelper)
+get_quickcache = QuickCache(
+    vary_on=Ellipsis,
+    cache=Ellipsis,
+    skip_arg=None,
+    helper_class=QuickCacheHelper,
+).but_with
