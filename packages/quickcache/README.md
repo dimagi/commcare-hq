@@ -1,7 +1,7 @@
-quickcache: caching has never been easier
+`quickcache`: caching has never been easier
 
 # Usage
-quickcache has an easy default for Django, but it's just as easy to bring your own backend.
+`quickcache` has an easy default for Django, but it's just as easy to bring your own backend.
 
 BYOB:
 
