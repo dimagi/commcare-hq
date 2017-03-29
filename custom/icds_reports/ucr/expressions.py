@@ -74,12 +74,19 @@ class GetCaseHistorySpec(JsonObject):
         if not case_id:
             return []
 
-        cache_key = (self.__class__.__name__, case_id)
+        forms = self._case_forms_expression(item, context)
+        case_history = self._get_case_history(case_id, forms, context)
+        return case_history
+
+    def _get_case_history(self, case_id, forms, context):
+        form_ids = tuple(f['_id'] for f in forms)
+        cache_key = (self.__class__.__name__, case_id, form_ids)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        forms = self._case_forms_expression(item, context)
-
+        # TODO(Sheel/Emord) looks like this is only used when getting the last
+        # property update. maybe this could be optimized sort by received_on
+        # and stop looking at forms once it finds the update
         case_history = []
         for f in forms:
             case_blocks = extract_case_blocks(f)
