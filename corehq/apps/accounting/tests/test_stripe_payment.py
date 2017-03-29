@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from mock import patch
 
-from django.test import TransactionTestCase
+from django.test import TestCase
 from django.test.client import RequestFactory
 
 import stripe
@@ -20,7 +20,7 @@ class MockFailingStripeObject(object):
         raise Exception
 
 
-class TestCreditStripePaymentHandler(TransactionTestCase):
+class TestCreditStripePaymentHandler(TestCase):
 
     def setUp(self):
         super(TestCreditStripePaymentHandler, self).setUp()
