@@ -5,7 +5,7 @@ from couchdbkit import ResourceNotFound
 from collections import OrderedDict
 
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render

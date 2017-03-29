@@ -122,6 +122,15 @@ def force_seq_int(seq):
         return seq
 
 
+def safe_force_seq_int(seq, default=None):
+    if isinstance(seq, dict):
+        return default
+    try:
+        return force_seq_int(seq)
+    except (AssertionError, ValueError):
+        return default
+
+
 def get_all_pillows_json():
     pillow_configs = get_all_pillow_configs()
     return [get_pillow_json(pillow_config) for pillow_config in pillow_configs]
@@ -147,7 +156,7 @@ def get_pillow_json(pillow_config):
     else:
         time_since_last = ''
         hours_since_last = None
-    offsets = pillow.get_change_feed().get_current_offsets()
+    offsets = pillow.get_change_feed().get_latest_offsets()
 
     def _couch_seq_to_int(checkpoint, seq):
         return force_seq_int(seq) if checkpoint.sequence_format != 'json' else seq

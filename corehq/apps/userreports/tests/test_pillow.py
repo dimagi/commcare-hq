@@ -6,9 +6,12 @@ from django.test import TestCase, SimpleTestCase, override_settings
 from kafka.common import KafkaUnavailableError
 from mock import patch, MagicMock
 from datetime import datetime, timedelta
+from six.moves import range
+
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
@@ -22,10 +25,11 @@ from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
     doc_to_change, domain_lite, run_with_all_ucr_backends, get_data_source_with_related_doc_type
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.elastic import ESError
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.test_utils import softer_assert, trap_extra_setup
 from corehq.util.context_managers import drop_connected_signals
-from six.moves import range
+from pillow_retry.models import PillowError
 
 
 class ConfigurableReportTableManagerTest(SimpleTestCase):
@@ -52,6 +56,36 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         self.assertFalse(table_manager.needs_bootstrap())
         table_manager.last_bootstrapped = before_now - timedelta(seconds=REBUILD_CHECK_INTERVAL)
         self.assertTrue(table_manager.needs_bootstrap())
+
+    def test_get_filtered_configs(self):
+        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider(), filter_missing_domains=True)
+        ds1 = get_sample_data_source()
+        ds1.domain = 'domain1'
+        ds2 = DataSourceConfiguration.wrap(ds1.to_json())
+        ds2.domain = 'domain2'
+
+        with patch('corehq.apps.es.es_query.run_query') as run_query:
+            run_query.return_value = {
+                'hits': {'hits': [
+                    {'_id': 'd1', '_source': {'name': 'domain1'}}
+                ]}
+            }
+            filtered_configs = table_manager.get_filtered_configs([ds1, ds2])
+
+        self.assertEqual(filtered_configs, [ds1])
+
+    def test_get_filtered_configs_es_error(self):
+        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider(), filter_missing_domains=True)
+        ds1 = get_sample_data_source()
+        ds1.domain = 'domain1'
+        ds2 = DataSourceConfiguration.wrap(ds1.to_json())
+        ds2.domain = 'domain2'
+
+        with patch('corehq.apps.es.es_query.run_query') as run_query:
+            run_query.side_effect = ESError
+            filtered_configs = table_manager.get_filtered_configs([ds1, ds2])
+
+        self.assertEqual(filtered_configs, [ds1, ds2])
 
 
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
@@ -159,7 +193,7 @@ class IndicatorPillowTest(TestCase):
             case.save()
 
         # send to kafka
-        since = self.pillow.get_change_feed().get_current_offsets()
+        since = self.pillow.get_change_feed().get_latest_offsets()
         producer.send_change(topics.CASE, doc_to_change(sample_doc).metadata)
 
         # run pillow and check changes
@@ -173,7 +207,7 @@ class IndicatorPillowTest(TestCase):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
 
-        since = self.pillow.get_change_feed().get_current_offsets()
+        since = self.pillow.get_change_feed().get_latest_offsets()
 
         # save case to DB - should also publish to kafka
         case = _save_sql_case(sample_doc)
@@ -190,8 +224,8 @@ class IndicatorPillowTestES(IndicatorPillowTest):
     pass
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class ProcessRelatedDocTypePillowTest(TestCase):
-
     domain = 'bug-domain'
 
     @softer_assert()
@@ -203,13 +237,14 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
         self.pillow.bootstrap(configs=[self.config])
         with trap_extra_setup(KafkaUnavailableError):
-            self.pillow.get_change_feed().get_current_offsets()
+            self.pillow.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
         self.config.delete()
         self.adapter.drop_table()
+        delete_all_cases()
+        delete_all_xforms()
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_process_doc_from_sql_stale(self):
         '''
         Ensures that when you update a case that the changes are reflected in
@@ -219,7 +254,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         '''
 
         for i in range(3):
-            since = self.pillow.get_change_feed().get_current_offsets()
+            since = self.pillow.get_change_feed().get_latest_offsets()
             form, cases = post_case_blocks(
                 [
                     CaseBlock(
@@ -244,6 +279,39 @@ class ProcessRelatedDocTypePillowTest(TestCase):
             self.assertEqual(rows.count(), 1)
             row = rows[0]
             self.assertEqual(int(row.parent_property), i)
+            errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+            self.assertEqual(errors.count(), 0)
+
+    # @patch('corehq.apps.userreports.tasks._get_config_by_id')
+    # def test_async_save_fails(self, config):
+    #     config.return_value = None
+    #     since = self.pillow.get_change_feed().get_current_offsets()
+    #     for i in range(3):
+    #         form, cases = post_case_blocks(
+    #             [
+    #                 CaseBlock(
+    #                     create=i == 0,
+    #                     case_id='parent-id',
+    #                     case_name='parent-name',
+    #                     case_type='bug',
+    #                     update={'update-prop-parent': i},
+    #                 ).as_xml(),
+    #                 CaseBlock(
+    #                     create=i == 0,
+    #                     case_id='child-id',
+    #                     case_name='child-name',
+    #                     case_type='bug-child',
+    #                     index={'parent': ('bug', 'parent-id')},
+    #                     update={'update-prop-child': i}
+    #                 ).as_xml()
+    #             ], domain=self.domain
+    #         )
+    #     self.pillow.process_changes(since=since, forever=False)
+    #     rows = self.adapter.get_query_object()
+    #     self.assertEqual(rows.count(), 0)
+    #     errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+    #     self.assertEqual(errors.count(), 1)
+    #     errors.delete()
 
 
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)

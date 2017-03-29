@@ -6,7 +6,7 @@ import datetime
 from django.conf import settings
 from django.core.exceptions import MiddlewareNotUsed
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib.auth.views import logout as django_logout
 
 from corehq.apps.domain.models import Domain
@@ -110,7 +110,7 @@ class TimeoutMiddleware(object):
                                   for domain in couch_user.get_domains())
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return
 
         secure_session = request.session.get('secure_session')

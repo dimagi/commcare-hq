@@ -4,7 +4,7 @@ import json
 from urllib import urlencode
 import uuid
 from django import forms
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.forms import Widget
 from django.forms.utils import flatatt
 from django.template.loader import render_to_string

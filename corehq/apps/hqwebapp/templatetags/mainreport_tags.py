@@ -1,5 +1,5 @@
 from django import template
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from datetime import datetime, timedelta
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 

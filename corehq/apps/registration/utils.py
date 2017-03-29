@@ -15,7 +15,7 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser, UserRole
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -110,7 +110,7 @@ def request_new_domain(request, form, is_new_user=True):
 
     dom_req.domain = new_domain.name
 
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         if not current_user:
             current_user = WebUser()
             current_user.sync_from_django_user(request.user)

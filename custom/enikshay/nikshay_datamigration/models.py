@@ -306,7 +306,7 @@ class Outcome(models.Model):
             'NULL': None,
             '0': None,
             '1': 'cured',
-            '2': 'treatment_completed',
+            '2': 'treatment_complete',
             '3': 'died',
             '4': 'failure',
             '5': 'loss_to_follow_up',
@@ -318,7 +318,7 @@ class Outcome(models.Model):
     def is_treatment_ended(self):
         return self.treatment_outcome in [
             'cured',
-            'treatment_completed',
+            'treatment_complete',
             'died',
             'failure',
             'loss_to_follow_up',
@@ -339,16 +339,3 @@ class Outcome(models.Model):
                 except ValueError:
                     date_string = self.OutcomeDate[:-2] + '20' + self.OutcomeDate[-2:]
                     return datetime.strptime(date_string, format).date()
-
-
-# class Household(models.Model):
-#     PatientID = models.ForeignKey(APatientDetail)  # have to move to end of excel CSV
-#     Name = models.CharField(max_length=255, null=True)
-#     Dosage = models.CharField(max_length=255, null=True)
-#     Weight = models.CharField(max_length=255, null=True)
-#     M1 = models.CharField(max_length=255, null=True)
-#     M2 = models.CharField(max_length=255, null=True)
-#     M3 = models.CharField(max_length=255, null=True)
-#     M4 = models.CharField(max_length=255, null=True)
-#     M5 = models.CharField(max_length=255, null=True)
-#     M6 = models.CharField(max_length=255, null=True)

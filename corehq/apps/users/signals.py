@@ -8,6 +8,10 @@ from corehq.elastic import send_to_elasticsearch
 commcare_user_post_save = Signal(providing_args=["couch_user"])
 couch_user_post_save = Signal(providing_args=["couch_user"])
 
+# Called after user validation, before save.
+# Used for additional validation or modification.
+clean_commcare_user = Signal(providing_args=["domain", "user", "forms"])
+
 
 @receiver(user_logged_in)
 def set_language(sender, **kwargs):

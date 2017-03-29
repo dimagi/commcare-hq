@@ -167,6 +167,7 @@ class FormattedDetailColumn(object):
 
             sort.order = self.order
             sort.direction = self.sort_element.direction
+            sort.blanks = self.sort_element.blanks
 
             # Flag field as index by making order "-2"
             # this is for the CACHE_AND_INDEX toggle

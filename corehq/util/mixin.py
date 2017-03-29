@@ -1,4 +1,5 @@
 import uuid
+from corehq.util.exceptions import AccessRestricted
 
 
 class UUIDGeneratorException(Exception):
@@ -28,7 +29,10 @@ class UUIDGeneratorMixin(object):
         for field_name in field_names:
             value = getattr(self, field_name)
             if not value:
-                setattr(self, field_name, uuid.uuid4().hex)
+                new_value = uuid.uuid4()
+                if getattr(self, 'CONVERT_UUID_TO_HEX', True):
+                    new_value = new_value.hex
+                setattr(self, field_name, new_value)
 
 
 # https://gist.github.com/glarrain/5448253
@@ -37,3 +41,15 @@ class ValidateModelMixin(object):
     def save(self, *args, **kwargs):
         self.full_clean()
         super(ValidateModelMixin, self).save(*args, **kwargs)
+
+
+class DisabledDbMixin(object):
+
+    def save(self, *args, **kwargs):
+        raise AccessRestricted('Direct object save disabled.')
+
+    def save_base(self, *args, **kwargs):
+        raise AccessRestricted('Direct object save disabled.')
+
+    def delete(self, *args, **kwargs):
+        raise AccessRestricted('Direct object deletion disabled.')
