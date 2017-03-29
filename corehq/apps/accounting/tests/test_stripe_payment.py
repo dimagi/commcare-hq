@@ -13,6 +13,13 @@ from corehq.apps.accounting.tests import generator
 from corehq.apps.domain.models import Domain
 
 
+class MockFailingStripeObject(object):
+
+    @property
+    def id(self):
+        raise Exception
+
+
 class TestCreditStripePaymentHandler(TransactionTestCase):
 
     def setUp(self):
@@ -42,6 +49,16 @@ class TestCreditStripePaymentHandler(TransactionTestCase):
 
         self.assertEqual(PaymentRecord.objects.count(), 1)
         self.assertEqual(PaymentRecord.objects.all()[0].transaction_id, transaction_id)
+        self.assertEqual(mock_create.call_count, 1)
+
+    @patch.object(stripe.Charge, 'create')
+    def test_failure_after_checkpoint(self, mock_create):
+        mock_create.return_value = MockFailingStripeObject()
+
+        self._call_process_request()
+
+        self.assertEqual(PaymentRecord.objects.count(), 1)
+        self.assertEqual(PaymentRecord.objects.all()[0].transaction_id, 'temp')
         self.assertEqual(mock_create.call_count, 1)
 
     @patch.object(stripe.Charge, 'create')
