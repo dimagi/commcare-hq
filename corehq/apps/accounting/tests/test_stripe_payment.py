@@ -9,7 +9,6 @@ from stripe.resource import StripeObject
 
 from corehq.apps.accounting.models import PaymentRecord, PaymentMethod, BillingAccount
 from corehq.apps.accounting.payment_handlers import CreditStripePaymentHandler
-from corehq.apps.accounting.tests import generator
 from corehq.apps.domain.models import Domain
 
 
@@ -24,7 +23,6 @@ class TestCreditStripePaymentHandler(TestCase):
 
     def setUp(self):
         super(TestCreditStripePaymentHandler, self).setUp()
-        generator.instantiate_accounting()
         self.domain = Domain(name='test-domain')
         self.domain.save()
         self.payment_method = PaymentMethod()
@@ -35,9 +33,6 @@ class TestCreditStripePaymentHandler(TestCase):
 
     def tearDown(self):
         self.domain.delete()
-        PaymentRecord.objects.all().delete()
-        self.payment_method.delete()
-        self.account.delete()
         super(TestCreditStripePaymentHandler, self).tearDown()
 
     @patch.object(stripe.Charge, 'create')
@@ -74,10 +69,7 @@ class TestCreditStripePaymentHandler(TestCase):
     def test_when_create_record_fails_stripe_is_not_charged(self, mock_create_record, mock_create):
         mock_create_record.side_effect = Exception
 
-        try:
-            self._call_process_request()
-        except:
-            pass
+        self._call_process_request()
 
         self.assertEqual(PaymentRecord.objects.count(), 0)
         self.assertEqual(mock_create.call_count, 0)
