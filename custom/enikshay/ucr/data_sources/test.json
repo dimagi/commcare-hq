@@ -69,18 +69,67 @@
                 "datatype": "date",
                 "column_id": "sample_receipt_date",
                 "expression": {
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "named",
-                        "name": "test_update_form"
+                    "type": "conditional",
+                    "test": {
+                        "operator": "gt",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_update_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "number_of_samples_accepted"
+                                ]
+                            }
+                        },
+                        "property_value": 0
                     },
-                    "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "record_samples_received",
-                            "sample_receipt_date"
-                        ]
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "record_samples_received",
+                                        "sample_receipt_date"
+                                    ]
+                                },
+                                "property_value": [null, ""]
+                            }
+                        },
+                        "expression_if_true": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_update_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "record_samples_received",
+                                    "sample_receipt_date"
+                                ]
+                            }
+                        },
+                        "expression_if_false": {
+                            "type": "property_name",
+                            "property_name": "date_reported"
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
                     }
                 }
             },
@@ -286,8 +335,19 @@
                 "datatype": "string",
                 "column_id": "referring_facility_type_name",
                 "expression": {
-                    "type": "property_name",
-                    "property_name": "referring_facility_type_name"
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_request_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "ql_referring_facility_details",
+                            "referring_facility_type"
+                        ]
+                    }
                 }
             },
             {
