@@ -125,6 +125,6 @@ class CommCareFeatureSupportMixin(object):
     @property
     def enable_detail_print(self):
         """
-        Ability to control where blanks sort for case list sort properties only supported > 2.35
+        Ability to print case detail screen, based on an HTML template, only supported > 2.35
         """
         return self._require_minimum_version('2.35')
