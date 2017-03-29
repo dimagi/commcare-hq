@@ -6,9 +6,9 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -19,104 +19,111 @@
-     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
-     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
+@@ -22,30 +22,30 @@
+         <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+     {% endif %}
      <script src="{% static 'app_manager/js/module-view.js' %}"></script>
 -    {% include "app_manager/v1/partials/xpathValidator.html" %}
 +    {% include "app_manager/v2/partials/xpathValidator.html" %}
@@ -47,12 +47,17 @@
      {% include 'style/partials/key_value_mapping.html' %}
 -    {% include 'app_manager/v1/partials/graph_configuration_modal.html' %}
 +    {% include 'app_manager/v2/partials/graph_configuration_modal.html' %}
-+{% endblock %}
-+
-+{% block pre_form_content %}
-+  {% include 'app_manager/v2/partials/module_view_heading.html' %}
+ 
+     <script>
+     var print_ref;
+@@ -99,78 +99,85 @@
+     </script>
  {% endblock %}
  
++{% block pre_form_content %}
++  {% include 'app_manager/v2/partials/module_view_heading.html' %}
++{% endblock %}
++
  {% block form-view %}
 -    {% initial_page_data 'module_brief' module_brief %}
 -    {% initial_page_data 'details' details %}
@@ -71,6 +76,31 @@
 -    <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
 -    {% if module.module_type != 'shadow' %}
 -    <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
+-    {% endif %}
+-    {% for detail in details %}
+-    <li>
+-        <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
+-            {{ detail.label }}
+-        </a>
+-    </li>
+-    {% if detail.long %}
+-    <li>
+-        <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
+-            {{ detail.detail_label }}
+-        </a>
+-    </li>
+-    {% endif %}
+-    {% endfor %}
+-    {% if details and app|get_available_modules_for_case_list_configuration:module %}
+-        <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+-    {% endif %}
+-    {% endblock %}{# endblock tab-headers #}
+-</ul>
+-<div class="spacer"></div>
+-<div class="tab-content">
+-    {% block tab-content %}
+-    <div class="tab-pane active" id="module-settings">
+-        {% include "app_manager/v1/partials/module_view_settings.html" %}
 +  {% initial_page_data 'module_brief' module_brief %}
 +  {% initial_page_data 'details' details %}
 +  {% initial_page_data 'js_options' js_options %}
@@ -112,31 +142,7 @@
 +        {% endblock %}{# endblock tab-headers #}
 +      </ul>
 +      <div class="spacer"></div>
-     {% endif %}
--    {% for detail in details %}
--    <li>
--        <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
--            {{ detail.label }}
--        </a>
--    </li>
--    {% if detail.long %}
--    <li>
--        <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
--            {{ detail.detail_label }}
--        </a>
--    </li>
--    {% endif %}
--    {% endfor %}
--    {% if details and app|get_available_modules_for_case_list_configuration:module %}
--        <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
--    {% endif %}
--    {% endblock %}{# endblock tab-headers #}
--</ul>
--<div class="spacer"></div>
--<div class="tab-content">
--    {% block tab-content %}
--    <div class="tab-pane active" id="module-settings">
--        {% include "app_manager/v1/partials/module_view_settings.html" %}
++    {% endif %}
 +
 +    <div class="tab-content">
 +      {% block tab-content %}
@@ -172,8 +178,7 @@
 -            {% include "app_manager/v1/partials/module_view_case_management.html" %}
 -        {% endblock %}
 -    </div>
-+</div>
- 
+-
 -    {% for detail in details %}
 -    <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
 -        {% include 'app_manager/v1/partials/case_list.html' %}
@@ -194,21 +199,26 @@
 -        {% endwith %}
 -    {% endif %}
 -    {% endblock %}{# endblock tab-content #}
+ </div>
 -</div>
--</div>
++
  <script type="text/html" id="module-forms-template">
      <div class="checkbox">
          <label>
-@@ -130,10 +137,10 @@
+@@ -184,7 +191,7 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
 -{% include "app_manager/v1/partials/nav_menu_media_modals.html" %}
 +{% include "app_manager/v2/partials/nav_menu_media_modals.html" %}
- {% endblock modals %}
+ {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
+     {% with print_uploader as uploader %}
+         {% include 'hqmedia/partials/multimedia_uploader.html' %}
+@@ -194,5 +201,5 @@
  
  {% block breadcrumbs %}
      {{ block.super }}
 -    {% include 'app_manager/v1/partials/module_view_breadcrumbs.html' %}
+-{% endblock %}
 +    {% include 'app_manager/v2/partials/module_view_breadcrumbs.html' %}
- {% endblock %}
++{% endblock %}
