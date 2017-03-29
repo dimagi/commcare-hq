@@ -160,18 +160,14 @@ class QuickCacheHelper(object):
             return content
 
 
-class QuickCacheConfig(namedtuple('QuickCacheConfig', [
-    'vary_on',
-    'cache',
-    'skip_arg',
-    'helper_class',
-])):
+class ConfigMixin(object):
     def config(self, **defaults):
         return self._replace(**defaults)
 
     def __call__(self, vary_on=Ellipsis, **new_values):
         if vary_on is not Ellipsis:
             new_values['vary_on'] = vary_on
+
         if new_values:
             return self.config(**new_values).__call__()
 
@@ -182,6 +178,9 @@ class QuickCacheConfig(namedtuple('QuickCacheConfig', [
                 'the quickcache decorator still needs values '
                 'for the following parameters: {}'.format(missing_values))
 
+        return self.call()
+
+    def call(self):
         helper_class_kwargs = self._asdict()
         helper_class = helper_class_kwargs.pop('helper_class')
 
@@ -201,6 +200,14 @@ class QuickCacheConfig(namedtuple('QuickCacheConfig', [
 
         return decorator
 
+
+class QuickCacheConfig(namedtuple('QuickCacheConfig', [
+    'vary_on',
+    'cache',
+    'skip_arg',
+    'helper_class',
+]), ConfigMixin):
+    pass
 
 quickcache_base = QuickCacheConfig(vary_on=Ellipsis, cache=Ellipsis, skip_arg=Ellipsis, helper_class=Ellipsis)
 
