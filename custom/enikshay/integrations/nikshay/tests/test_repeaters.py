@@ -5,10 +5,10 @@ from datetime import datetime
 from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import flag_enabled
 from custom.enikshay.const import TREATMENT_OUTCOME, TREATMENT_OUTCOME_DATE
-from custom.enikshay.exceptions import NikshayLocationNotFound, RequiredValueMissing
+from custom.enikshay.exceptions import NikshayLocationNotFound, NikshayRequiredValueMissing
 from custom.enikshay.integrations.nikshay.repeaters import (
     NikshayRegisterPatientRepeater,
     NikshayHIVTestRepeater,
@@ -374,6 +374,7 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
         self.assertEqual(3, len(self.repeat_records().all()))
 
 
+@use_sql_backend
 class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayHIVTestPayloadGenerator, self).setUp()
@@ -400,7 +401,6 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
             external_id=DUMMY_NIKSHAY_ID,
         )
 
-    @run_with_all_backends
     @patch("socket.gethostbyname", return_value="198.1.1.1")
     def test_payload_properties(self, _):
         update_case(
@@ -600,6 +600,7 @@ class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload['Outcome'], '7')
 
 
+@use_sql_backend
 class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
 
     def setUp(self):
@@ -623,7 +624,6 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
     def test_followup_for_tests(self):
         self.assertEqual(NikshayFollowupRepeater().followup_for_tests, ['end_of_ip', 'end_of_cp'])
 
-    @run_with_all_backends
     def test_trigger(self):
         self.repeat_record_count = 0
 
@@ -702,6 +702,7 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
         self.assertFalse(check_repeat_record_added())
 
 
+@use_sql_backend
 class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayFollowupPayloadGenerator, self).setUp()
@@ -729,7 +730,6 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
             external_id=DUMMY_NIKSHAY_ID,
         )
 
-    @run_with_all_backends
     @patch("socket.gethostbyname", return_value="198.1.1.1")
     def test_payload_properties(self, _):
         payload = (json.loads(
@@ -751,7 +751,6 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         self.assertEqual(payload["DMC"], '123')
         self.assertEqual(payload["PatientID"], DUMMY_NIKSHAY_ID)
 
-    @run_with_all_backends
     def test_intervalId(self):
         update_case(self.domain, self.test_id, {
             "purpose_of_testing": "diagnostic",
@@ -811,7 +810,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
 
         # raises error when purpose_of_testing is not diagnostic and test reason is not known to system
-        with self.assertRaisesMessage(RequiredValueMissing,
+        with self.assertRaisesMessage(NikshayRequiredValueMissing,
                                       "Value missing for intervalID, purpose_of_testing: {testing_purpose}, "
                                       "follow_up_test_reason: {follow_up_test_reason}".format(
                                         testing_purpose="testing",
@@ -836,7 +835,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
 
         with self.assertRaisesMessage(
-                RequiredValueMissing,
+                NikshayRequiredValueMissing,
                 "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
                     lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="scanty")
                 ):
@@ -847,7 +846,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
 
         with self.assertRaisesMessage(
-                RequiredValueMissing,
+                NikshayRequiredValueMissing,
                 "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
                     lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="scanty")
         ):
@@ -857,7 +856,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
 
         with self.assertRaisesMessage(
-                RequiredValueMissing,
+                NikshayRequiredValueMissing,
                 "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
                     lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="5+")
         ):
@@ -879,7 +878,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         self.dmc.metadata['nikshay_code'] = "BARACK-OBAMA"
         self.dmc.save()
         with self.assertRaisesMessage(
-                RequiredValueMissing,
+                NikshayRequiredValueMissing,
                 "InAppt value for dmc, got value: BARACK-OBAMA"
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case)
@@ -894,7 +893,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         self.update_case_with(self.test_id, {'testing_facility_id': ''})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         with self.assertRaisesMessage(
-                RequiredValueMissing,
+                NikshayRequiredValueMissing,
                 "Value missing for dmc_code/testing_facility_id for test case: {test_case_id}"
                 .format(test_case_id=self.test_id)
         ):

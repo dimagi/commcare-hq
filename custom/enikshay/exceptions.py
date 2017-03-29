@@ -14,5 +14,5 @@ class NikshayCodeNotFound(ENikshayException):
     pass
 
 
-class RequiredValueMissing(ENikshayException):
+class NikshayRequiredValueMissing(ENikshayException):
     pass

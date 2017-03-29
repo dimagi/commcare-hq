@@ -163,7 +163,6 @@ class NikshayFollowupRepeater(CaseRepeater):
             test_case_properties = test_case.dynamic_case_properties()
             episode_case_properties = episode_case.dynamic_case_properties()
             return (
-                date_tested_added_for_test(test_case) and
                 test_case_properties.get('nikshay_registered', 'false') == 'false' and
                 test_case_properties.get('test_type_value', '') in ['microscopy-zn', 'microscopy-fluorescent'] and
                 episode_case_properties.get('nikshay_id') and
@@ -171,6 +170,7 @@ class NikshayFollowupRepeater(CaseRepeater):
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
                     test_case_properties.get('follow_up_test_reason') in self.followup_for_tests
                 ) and
+                case_properties_changed(test_case, 'date_tested') and
                 not is_valid_test_submission(test_case)
             )
         else:
@@ -202,19 +202,6 @@ def related_dates_changed(case):
             'art_initiation_date' in action.dynamic_properties or
             'cpt_initiation_date' in action.dynamic_properties
         )
-    )
-    return value_changed
-
-
-def date_tested_added_for_test(case):
-    last_case_action = case.actions[-1]
-    if last_case_action.is_case_create:
-        return False
-
-    last_update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
-    value_changed = any(
-        action for action in last_update_actions
-        if isinstance(action, CaseUpdateAction) and 'date_tested' in action.dynamic_properties
     )
     return value_changed
 

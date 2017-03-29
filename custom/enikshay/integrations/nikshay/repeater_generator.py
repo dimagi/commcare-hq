@@ -30,7 +30,7 @@ from custom.enikshay.integrations.nikshay.repeaters import (
     NikshayFollowupRepeater,
 )
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
-from custom.enikshay.exceptions import NikshayLocationNotFound, RequiredValueMissing
+from custom.enikshay.exceptions import NikshayLocationNotFound, NikshayRequiredValueMissing
 from custom.enikshay.integrations.nikshay.field_mappings import (
     gender_mapping,
     occupation,
@@ -264,13 +264,13 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
                                             test_case_properties.get('follow_up_test_reason'))
 
         dmc_code = self._get_dmc_code(test_case_properties)
-        lab_serial_number = test_case_properties.get('lab_serial_number', None)
-        test_result_grade = test_case_properties.get('result_grade', None)
-        bacilli_count = test_case_properties.get('max_bacilli_count', None)
+        lab_serial_number = test_case_properties.get('lab_serial_number')
+        test_result_grade = test_case_properties.get('result_grade')
+        bacilli_count = test_case_properties.get('max_bacilli_count')
         result_grade = self.get_result_grade(test_result_grade, bacilli_count)
 
-        if any(mandatory_value is None for mandatory_value in [lab_serial_number, result_grade]):
-            raise RequiredValueMissing("Mandatory value missing in one of the following "
+        if not (lab_serial_number and result_grade):
+            raise NikshayRequiredValueMissing("Mandatory value missing in one of the following "
                                        "LabSerialNo: {lab_serial_number}, ResultGrade: {result_grade}"
                                        .format(lab_serial_number=lab_serial_number,
                                                result_grade=test_result_grade))
@@ -289,7 +289,7 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         else:
             interval_id = purpose_of_testing.get(follow_up_test_reason, None)
         if interval_id is None:
-            raise RequiredValueMissing("Value missing for intervalID, purpose_of_testing: {testing_purpose}, "
+            raise NikshayRequiredValueMissing("Value missing for intervalID, purpose_of_testing: {testing_purpose}, "
                                        "follow_up_test_reason: {follow_up_test_reason}".format(
                 testing_purpose=testing_purpose,
                 follow_up_test_reason=follow_up_test_reason)
@@ -303,7 +303,7 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
             lab_referral_case = get_lab_referral_from_test(self.test_case.domain, self.test_case.get_id)
             dmc_location_id = lab_referral_case.owner_id
         if not dmc_location_id:
-            raise RequiredValueMissing("Value missing for dmc_code/testing_facility_id for test case: " +
+            raise NikshayRequiredValueMissing("Value missing for dmc_code/testing_facility_id for test case: " +
                                        self.test_case.get_id)
         dmc = SQLLocation.active_objects.get_or_None(location_id=dmc_location_id)
         if not dmc:
@@ -313,12 +313,11 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
                     .format(location_id=dmc_location_id, test_case_id=self.test_case.get_id)
             )
         nikshay_code = dmc.metadata.get('nikshay_code')
-        if not nikshay_code or (isinstance(nikshay_code, (str, unicode)) and not nikshay_code.isdigit()):
-            raise RequiredValueMissing("InAppt value for dmc, got value: {}".format(nikshay_code))
+        if not nikshay_code or (isinstance(nikshay_code, basestring) and not nikshay_code.isdigit()):
+            raise NikshayRequiredValueMissing("InAppt value for dmc, got value: {}".format(nikshay_code))
         return dmc.metadata.get('nikshay_code')
 
     def handle_success(self, response, payload_doc, repeat_record):
-        # Simple success message that has {"Nikshay_Message": "Success"...}
         update_case(
             payload_doc.domain,
             payload_doc.case_id,
