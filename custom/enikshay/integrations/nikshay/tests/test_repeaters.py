@@ -813,8 +813,8 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         with self.assertRaisesMessage(NikshayRequiredValueMissing,
                                       "Value missing for intervalID, purpose_of_testing: {testing_purpose}, "
                                       "follow_up_test_reason: {follow_up_test_reason}".format(
-                                        testing_purpose="testing",
-                                        follow_up_test_reason="unknown_reason"
+                                            testing_purpose="testing",
+                                            follow_up_test_reason="unknown_reason"
                                       )):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
@@ -907,7 +907,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
                 NikshayLocationNotFound,
                 "Location with id: {location_id} not found."
                 "This is the testing facility id assigned for test: {test_case_id}"
-                        .format(location_id=123,
-                                test_case_id=self.test_id)
+                .format(location_id=123,
+                        test_case_id=self.test_id)
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)

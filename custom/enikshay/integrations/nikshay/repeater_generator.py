@@ -289,10 +289,10 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         else:
             interval_id = purpose_of_testing.get(follow_up_test_reason, None)
         if interval_id is None:
-            raise NikshayRequiredValueMissing("Value missing for intervalID, purpose_of_testing: {testing_purpose}, "
-                                       "follow_up_test_reason: {follow_up_test_reason}".format(
-                testing_purpose=testing_purpose,
-                follow_up_test_reason=follow_up_test_reason)
+            raise NikshayRequiredValueMissing(
+                "Value missing for intervalID, purpose_of_testing: {testing_purpose}, "
+                "follow_up_test_reason: {follow_up_test_reason}".format(
+                    testing_purpose=testing_purpose, follow_up_test_reason=follow_up_test_reason)
             )
         return interval_id
 
@@ -309,8 +309,8 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         if not dmc:
             raise NikshayLocationNotFound(
                 "Location with id: {location_id} not found."
-                "This is the testing facility id assigned for test: {test_case_id}"
-                    .format(location_id=dmc_location_id, test_case_id=self.test_case.get_id)
+                "This is the testing facility id assigned for test: {test_case_id}".format(
+                    location_id=dmc_location_id, test_case_id=self.test_case.get_id)
             )
         nikshay_code = dmc.metadata.get('nikshay_code')
         if not nikshay_code or (isinstance(nikshay_code, basestring) and not nikshay_code.isdigit()):
