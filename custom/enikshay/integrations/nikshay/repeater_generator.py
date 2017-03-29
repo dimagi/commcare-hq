@@ -230,7 +230,6 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
 @RegisterGenerator(NikshayFollowupRepeater, 'case_json', 'JSON', is_default=True)
 class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
     def get_payload(self, repeat_record, test_case):
-        self.test_case = test_case
         occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
         episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
         person_case = get_person_case_from_occurrence(test_case.domain, occurence_case.get_id)
@@ -238,7 +237,8 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         test_case_properties = test_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
 
-        interval_id, lab_serial_number, result_grade, dmc_code = self._get_mandatory_fields(test_case_properties)
+        interval_id, lab_serial_number, result_grade, dmc_code = self._get_mandatory_fields(
+            test_case, test_case_properties)
 
         test_conducted_on = _format_date(test_case_properties, 'date_tested')
         properties_dict = self._base_properties(repeat_record)
@@ -256,14 +256,14 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
 
         return json.dumps(properties_dict)
 
-    def _get_mandatory_fields(self, test_case_properties):
+    def _get_mandatory_fields(self, test_case, test_case_properties):
         # list of fields that we want the case to have and should raise an exception if its missing or not in
         # expected state to highlight missing essentials in repeat records. Check added here instead of
         # allow_to_forward to bring to notice these records instead of silently ignoring them
         interval_id = self._get_interval_id(test_case_properties.get('purpose_of_testing'),
                                             test_case_properties.get('follow_up_test_reason'))
 
-        dmc_code = self._get_dmc_code(test_case_properties)
+        dmc_code = self._get_dmc_code(test_case, test_case_properties)
         lab_serial_number = test_case_properties.get('lab_serial_number')
         test_result_grade = test_case_properties.get('result_grade')
         bacilli_count = test_case_properties.get('max_bacilli_count')
@@ -296,21 +296,21 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
             )
         return interval_id
 
-    def _get_dmc_code(self, test_case_properties):
+    def _get_dmc_code(self, test_case, test_case_properties):
         dmc_location_id = test_case_properties.get("testing_facility_id", None)
         if not dmc_location_id:
             # fallback to lab referral case owner id for older versions of app
-            lab_referral_case = get_lab_referral_from_test(self.test_case.domain, self.test_case.get_id)
+            lab_referral_case = get_lab_referral_from_test(test_case.domain, test_case.get_id)
             dmc_location_id = lab_referral_case.owner_id
         if not dmc_location_id:
             raise NikshayRequiredValueMissing("Value missing for dmc_code/testing_facility_id for test case: " +
-                                       self.test_case.get_id)
+                                              test_case.get_id)
         dmc = SQLLocation.active_objects.get_or_None(location_id=dmc_location_id)
         if not dmc:
             raise NikshayLocationNotFound(
                 "Location with id: {location_id} not found."
                 "This is the testing facility id assigned for test: {test_case_id}".format(
-                    location_id=dmc_location_id, test_case_id=self.test_case.get_id)
+                    location_id=dmc_location_id, test_case_id=test_case.get_id)
             )
         nikshay_code = dmc.metadata.get('nikshay_code')
         if not nikshay_code or (isinstance(nikshay_code, basestring) and not nikshay_code.isdigit()):
