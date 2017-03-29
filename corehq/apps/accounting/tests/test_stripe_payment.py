@@ -5,6 +5,7 @@ from django.test import TransactionTestCase
 from django.test.client import RequestFactory
 
 import stripe
+from stripe.resource import StripeObject
 
 from corehq.apps.accounting.models import PaymentRecord, PaymentMethod, BillingAccount
 from corehq.apps.accounting.payment_handlers import CreditStripePaymentHandler
@@ -34,9 +35,13 @@ class TestCreditStripePaymentHandler(TransactionTestCase):
 
     @patch.object(stripe.Charge, 'create')
     def test_working_process_request(self, mock_create):
+        transaction_id = 'stripe_charge_id'
+        mock_create.return_value = StripeObject(id=transaction_id)
+
         self._call_process_request()
 
         self.assertEqual(PaymentRecord.objects.count(), 1)
+        self.assertEqual(PaymentRecord.objects.all()[0].transaction_id, transaction_id)
         self.assertEqual(mock_create.call_count, 1)
 
     @patch.object(stripe.Charge, 'create')
