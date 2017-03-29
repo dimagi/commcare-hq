@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import warnings
-from quickcache.django_quickcache import get_django_quickcache
+from quickcache import get_django_quickcache
 
 
 from corehq.util.soft_assert import soft_assert
