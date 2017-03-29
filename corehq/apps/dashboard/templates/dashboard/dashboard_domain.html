@@ -37,11 +37,9 @@
 {% block dashboard-content %}
 <div class="page-header">
     <h1>
-        {% if is_icds %}
-            {% trans 'Welcome Back to ICDS-CAS' %}
-        {% else %}
-            {% trans 'Welcome Back to CommCare HQ' %}
-        {% endif %}
+        {% blocktrans with cc_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+            Welcome Back to {{ cc_name }}
+        {% endblocktrans %}
     </h1>
 </div>
 <div data-ng-app="dashboardApp">
@@ -55,9 +53,9 @@
         {% endfor %}
     </div>
     <p class="lead text-center" style="margin-bottom: 5em;">
-        {% if is_icds %}
-            {% blocktrans %}
-                Thanks for using ICDS-CAS!
+        {% if enterprise_mode %}
+            {% blocktrans with cc_name=commcare_hq_names.COMMCARE_NAME %}
+                Thanks for using {{ cc_name }}!
             {% endblocktrans %}
         {% else %}
             {% blocktrans %}

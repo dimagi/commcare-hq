@@ -36,7 +36,6 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment
 )
-from corehq.apps.accounting.tests import generator
 from corehq.apps.api.es import ElasticAPIQuerySet
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api.resources import v0_4, v0_5
@@ -119,7 +118,6 @@ class APIResourceTest(TestCase):
         super(APIResourceTest, cls).setUpClass()
 
         Role.get_cache().clear()
-        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.list_endpoint = cls._get_list_endpoint()
         cls.username = 'rudolph@qwerty.commcarehq.org'
@@ -1501,7 +1499,6 @@ class TestBulkUserAPI(APIResourceTest):
     @classmethod
     def setUpClass(cls):
         Role.get_cache().clear()
-        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'

@@ -1,3 +1,9 @@
+"""
+This uses signals to hook in to user and location forms for custom validation
+and some autogeneration. These additions are turned on by a feature flag, but
+domain and HQ admins are excepted, in case we ever need to violate the
+assumptions laid out here.
+"""
 # TODO Is this going to be translated, or English only?
 from django.utils.translation import ugettext as _
 from corehq import toggles
@@ -17,8 +23,8 @@ LOC_TYPES_TO_USER_TYPES = {
 }
 
 
-def clean_user_callback(sender, domain, user, forms, **kwargs):
-    if not toggles.ENIKSHAY.enabled(domain):
+def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
+    if not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain):
         return
 
     new_user_form = forms.get('NewMobileWorkerForm')
@@ -107,8 +113,8 @@ def validate_location(domain, user_form):
     user_form.add_error('location_id', _("You must select a location."))
 
 
-def clean_location_callback(sender, domain, location, forms, **kwargs):
-    if not toggles.ENIKSHAY.enabled(domain):
+def clean_location_callback(sender, domain, request_user, location, forms, **kwargs):
+    if not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain):
         return
 
     location_form = forms.get('LocationForm')

@@ -38,7 +38,7 @@ class ElasticProcessor(PillowProcessor):
         ensure_document_exists(change)
         ensure_matched_revisions(change)
 
-        if self.doc_filter_fn and self.doc_filter_fn(doc):
+        if doc is None or (self.doc_filter_fn and self.doc_filter_fn(doc)):
             return
 
         # prepare doc for es

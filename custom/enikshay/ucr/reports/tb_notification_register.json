@@ -409,7 +409,7 @@
             {
                 "display": "Date of Treatment Initiation",
                 "type": "field",
-                "field": "ip_initiation_date",
+                "field": "treatment_initiation_date",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,

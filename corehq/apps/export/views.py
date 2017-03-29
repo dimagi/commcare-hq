@@ -10,7 +10,7 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from corehq.toggles import MESSAGE_LOG_METADATA
+from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification
 from corehq.apps.locations.models import SQLLocation
@@ -2201,7 +2201,7 @@ class GenericDownloadNewExportMixin(object):
         count = 0
         for instance in export_instances:
             count += get_export_size(instance, filters)
-        if count > MAX_EXPORTABLE_ROWS:
+        if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(self.domain):
             raise ExportAsyncException(
                 _("This export contains %(row_count)s rows. Please change the "
                   "filters to be less than %(max_rows)s rows.") % {
