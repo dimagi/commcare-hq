@@ -20,12 +20,12 @@ class HubspotClickDeployView(View):
         return HttpResponse()
 
 
-class GreenHouseCandidate(View):
+class GreenhouseCandidateView(View):
     urlname = 'greenhouse_candidate'
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
-        super(GreenHouseCandidate, self).dispatch(request=request, args=args, kwargs=kwargs)
+        super(GreenhouseCandidateView, self).dispatch(request=request, args=args, kwargs=kwargs)
 
     def post(self, request, *args, **kwargs):
         digester = hmac.new(settings.GREENHOUSE_API_KEY, request.body, hashlib.sha256)
