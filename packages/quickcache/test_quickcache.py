@@ -1,52 +1,76 @@
 # -*- coding: utf-8 -*-
 import time
 
-from django.core.cache.backends.locmem import LocMemCache
-from django.test import SimpleTestCase
+from unittest import TestCase
+import datetime
 
 from dimagi.utils import make_uuid
 
-from .. import get_django_quickcache, get_quickcache
-from ..cache_helpers import TieredCache
+from quickcache import get_quickcache
+from quickcache.cache_helpers import TieredCache
 
 BUFFER = []
 
-quickcache = get_django_quickcache(timeout=5 * 60, memoize_timeout=10)
-generic_quickcache = get_quickcache()
+
+class LocMemCache(object):
+
+    def __init__(self, name, timeout):
+        self._cache = {}  # key: (expire-time, value)
+        self.name = name
+        self.default_timeout = timeout  # allow sub-second timeout
+
+    def get(self, key, default=None):
+        try:
+            expire_time, value = self._cache[key]
+        except KeyError:
+            return default
+
+        if datetime.datetime.utcnow() < expire_time:
+            return value
+        else:
+            del self._cache[key]
+            return default
+
+    def set(self, key, value, timeout=None):
+        timeout_td = datetime.timedelta(seconds=self.default_timeout
+                                        if timeout is None else timeout)
+        self._cache[key] = (datetime.datetime.utcnow() + timeout_td, value)
 
 
 class CacheMock(LocMemCache):
 
-    def __init__(self, name, params):
-        self.name = name
-        super(CacheMock, self).__init__(name, params)
-        self.default_timeout = params["timeout"]  # allow sub-second timeout
+    def __init__(self, name, timeout, silent_set=True):
+        self.silent_set = silent_set
+        super(CacheMock, self).__init__(name, timeout=timeout)
 
-    def get(self, key, default=None, version=None):
-        result = super(CacheMock, self).get(key, default, version)
+    def get(self, key, default=None):
+        result = super(CacheMock, self).get(key, default)
         if result is default:
             BUFFER.append('{} miss'.format(self.name))
         else:
             BUFFER.append('{} hit'.format(self.name))
         return result
 
-
-class CacheMockWithSet(CacheMock):
-
-    def set(self, key, value, timeout=None, version=None):
-        super(CacheMockWithSet, self).set(key, value, timeout, version)
-        BUFFER.append('{} set'.format(self.name))
+    def set(self, key, value, timeout=None):
+        super(CacheMock, self).set(key, value, timeout)
+        if not self.silent_set:
+            BUFFER.append('{} set'.format(self.name))
 
 
 SHORT_TIME_UNIT = 0.01
 
-_local_cache = CacheMock('local', {'timeout': SHORT_TIME_UNIT})
-_shared_cache = CacheMock('shared', {'timeout': 2 * SHORT_TIME_UNIT})
+_local_cache = CacheMock('local', timeout=SHORT_TIME_UNIT)
+_shared_cache = CacheMock('shared', timeout=2 * SHORT_TIME_UNIT)
 _cache = TieredCache([_local_cache, _shared_cache])
-_cache_with_set = CacheMockWithSet('cache', {'timeout': SHORT_TIME_UNIT})
+_cache_with_set = CacheMock('cache', timeout=SHORT_TIME_UNIT, silent_set=False)
+
+quickcache = get_quickcache(cache=TieredCache([
+    CacheMock('local', timeout=10),
+    CacheMock('shared', timeout=5 * 60)]
+))
 
 
-class QuickcacheTest(SimpleTestCase):
+class QuickcacheTest(TestCase):
 
     def tearDown(self):
         self.consume_buffer()
@@ -57,7 +81,7 @@ class QuickcacheTest(SimpleTestCase):
         return result
 
     def test_tiered_cache(self):
-        @generic_quickcache([], cache=_cache)
+        @quickcache([], cache=_cache)
         def simple():
             BUFFER.append('called')
             return 'VALUE'
@@ -79,7 +103,7 @@ class QuickcacheTest(SimpleTestCase):
         self.assertEqual(self.consume_buffer(), ['local hit'])
 
     def test_vary_on(self):
-        @generic_quickcache(['n'], cache=_cache)
+        @quickcache(['n'], cache=_cache)
         def fib(n):
             BUFFER.append(n)
             if n < 2:
@@ -109,12 +133,12 @@ class QuickcacheTest(SimpleTestCase):
                 self.id = id
                 self.name = name
 
-            @generic_quickcache(['self.id'], cache=_cache)
+            @quickcache(['self.id'], cache=_cache)
             def get_name(self):
                 BUFFER.append('called method')
                 return self.name
 
-        @generic_quickcache(['item.id'], cache=_cache)
+        @quickcache(['item.id'], cache=_cache)
         def get_name(item):
             BUFFER.append('called function')
             return item.name
@@ -146,7 +170,7 @@ class QuickcacheTest(SimpleTestCase):
 
     def test_bad_vary_on(self):
         with self.assertRaisesRegexp(ValueError, 'cucumber'):
-            @generic_quickcache(['cucumber'], cache=_cache)
+            @quickcache(['cucumber'], cache=_cache)
             def square(number):
                 return number * number
 
@@ -198,7 +222,7 @@ class QuickcacheTest(SimpleTestCase):
         self.assertRegexpMatches(key, 'quickcache.cached_fn.[a-z0-9]{8}/u[a-z0-9]{32}')
 
     def test_unicode_string(self):
-        @generic_quickcache(['name'], cache=_cache)
+        @quickcache(['name'], cache=_cache)
         def by_name(name):
             BUFFER.append('called')
             return 'VALUE'
@@ -215,7 +239,7 @@ class QuickcacheTest(SimpleTestCase):
         self.assertEqual(self.consume_buffer(), ['local hit'])
 
     def test_skippable(self):
-        @generic_quickcache(['name'], cache=_cache_with_set, skip_arg='force')
+        @quickcache(['name'], cache=_cache_with_set, skip_arg='force')
         def by_name(name, force=False):
             BUFFER.append('called')
             return 'VALUE'
@@ -232,7 +256,7 @@ class QuickcacheTest(SimpleTestCase):
         self.assertEqual(self.consume_buffer(), ['cache hit'])
 
     def test_skippable_fn(self):
-        @generic_quickcache(['name'], cache=_cache_with_set, skip_arg=lambda name: name == 'Ben')
+        @quickcache(['name'], cache=_cache_with_set, skip_arg=lambda name: name == 'Ben')
         def by_name(name, force=False):
             BUFFER.append('called')
             return 'VALUE'
@@ -250,7 +274,7 @@ class QuickcacheTest(SimpleTestCase):
         self.assertEqual(self.consume_buffer(), ['called', 'cache set'])
 
     def test_skippable_non_kwarg(self):
-        @generic_quickcache(['name'], cache=_cache_with_set, skip_arg='skip_cache')
+        @quickcache(['name'], cache=_cache_with_set, skip_arg='skip_cache')
         def by_name(name, skip_cache):
             BUFFER.append('called')
             return 'VALUE'
