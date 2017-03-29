@@ -27,7 +27,7 @@ class CommCareCaseSerializer(Serializer):
         the temporary hack of re-parsing it. TODO: expose a direct etree
         encoding in casexml?
         '''
-        return lxml.parse(BytesIO(case.to_xml('2.0'))).getroot()
+        return lxml.parse(BytesIO(case.to_xml('2.0', True))).getroot()
 
     def bundle_to_etree(self, bundle):
         '''
