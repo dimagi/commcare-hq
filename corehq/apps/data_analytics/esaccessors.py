@@ -66,6 +66,10 @@ def active_mobile_users(domain, start, end, *args):
     return set(user_ids), form_users, sms_users
 
 
+def get_forms_for_users(domain, user_ids, start, end):
+    return FormES().domain(domain).submitted(gte=start, lte=end).user_id(user_ids).run()
+
+
 def get_possibly_experienced(domain, start):
 
     user_ids = get_mobile_users(domain.name)
