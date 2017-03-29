@@ -222,7 +222,7 @@
                     "type": "translation",
                     "translations": {
                         "pulmonary": "P",
-                        "extra_pulonary": "EP"
+                        "extra_pulmonary": "EP"
                     }
                 },
                 "calculate_total": false
@@ -241,6 +241,18 @@
                         "microbiological": "Microbiologically confirmed",
                         "clinical": "Clinically Diagnosed"
                     }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Date of Diagnosis",
+                "type": "field",
+                "field": "date_of_diagnosis",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
                 },
                 "calculate_total": false
             },
