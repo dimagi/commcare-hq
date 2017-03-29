@@ -690,7 +690,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         )
         return users_data.combined_users
 
-    @quickcache(['mobile_user_and_group_slugs'], timeout=10)
+    @quickcache(['self.domain', 'mobile_user_and_group_slugs'], timeout=10)
     def is_query_too_big(self, mobile_user_and_group_slugs):
         user_es_query = EMWF.user_es_query(
             self.domain,
