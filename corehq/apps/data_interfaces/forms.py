@@ -1,5 +1,6 @@
 import json
-from corehq.apps.data_interfaces.models import AutomaticUpdateRuleCriteria, AutomaticUpdateAction
+from corehq.apps.data_interfaces.models import (AutomaticUpdateRuleCriteria, AutomaticUpdateAction,
+    MatchPropertyDefinition)
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.style import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
@@ -14,6 +15,23 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from dimagi.utils.django.fields import TrimmedCharField
+
+
+def true_or_false(value):
+    if value == 'true':
+        return True
+    elif value == 'false':
+        return False
+
+    raise ValueError("Expected 'true' or 'false'")
+
+
+def remove_quotes(self, value):
+    if isinstance(value, basestring) and len(value) >= 2:
+        for q in ("'", '"'):
+            if value.startswith(q) and value.endswith(q):
+                return value[1:-1]
+    return value
 
 
 class AddCaseGroupForm(forms.Form):
@@ -421,65 +439,123 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             return self.cleaned_data.get('property_value_type')
 
 
-class AddCaseRuleForm(forms.Form):
+class CaseUpdateRuleForm(forms.Form):
+    # Prefix to avoid name collisions; this means all input
+    # names in the HTML are prefixed with "rule-"
+    prefix = "rule"
+
     name = TrimmedCharField(
         label=ugettext_lazy("Name"),
         required=True,
     )
-    case_type = forms.ChoiceField(
-        label=ugettext_lazy("Case Type"),
-        required=True,
-    )
-
-    def remove_quotes(self, value):
-        if isinstance(value, basestring) and len(value) >= 2:
-            for q in ("'", '"'):
-                if value.startswith(q) and value.endswith(q):
-                    return value[1:-1]
-        return value
 
     def __init__(self, domain, *args, **kwargs):
-        super(AddCaseRuleForm, self).__init__(*args, **kwargs)
+        super(CaseUpdateRuleForm, self).__init__(*args, **kwargs)
 
         self.domain = domain
         self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-xs-2 col-xs-offset-1'
         self.helper.field_class = 'col-xs-2'
-        self.helper.form_method = 'POST'
-        self.helper.form_action = '#'
+        self.helper.form_tag = False
 
         self.helper.layout = Layout(
             Fieldset(
                 _("Basic Information"),
                 Field('name', data_bind='name'),
             ),
+        )
+
+
+class CaseRuleCriteriaForm(forms.Form):
+    # Prefix to avoid name collisions; this means all input
+    # names in the HTML are prefixed with "criteria-"
+    prefix = "criteria"
+
+    case_type = forms.ChoiceField(
+        label=ugettext_lazy("Case Type"),
+        required=True,
+    )
+
+    filter_on_server_modified = forms.CharField(required=True)
+    server_modified_boundary = forms.CharField(required=True)
+    custom_match_defintions = forms.CharField(required=True)
+    property_match_defintions = forms.CharField(required=True)
+    filter_on_closed_parent = forms.CharField(required=True)
+
+    @property
+    def constants(self):
+        return {
+            'MATCH_DAYS_BEFORE': MatchPropertyDefinition.MATCH_DAYS_BEFORE,
+            'MATCH_DAYS_AFTER': MatchPropertyDefinition.MATCH_DAYS_AFTER,
+            'MATCH_EQUAL': MatchPropertyDefinition.MATCH_EQUAL,
+            'MATCH_NOT_EQUAL': MatchPropertyDefinition.MATCH_NOT_EQUAL,
+            'MATCH_HAS_VALUE': MatchPropertyDefinition.MATCH_HAS_VALUE,
+        }
+
+    def __init__(self, domain, *args, **kwargs):
+        super(CaseRuleCriteriaForm, self).__init__(*args, **kwargs)
+
+        self.domain = domain
+        self.set_case_type_choices(self.initial.get('case_type'))
+
+        self.main_helper = FormHelper()
+        self.main_helper.label_class = 'col-xs-2 col-xs-offset-1'
+        self.main_helper.field_class = 'col-xs-2'
+        self.main_helper.form_tag = False
+        self.main_helper.layout = Layout(
             Fieldset(
                 _("Case Filters"),
                 HTML(
                     '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
-                    _("The Update Actions will be performed for cases that match all filter criteria below.")
+                    _("The Rule Actions will be performed for cases that match all filter criteria below.")
                 ),
-                Field(
-                    'criteria_json',
-                    type='hidden',
-                    data_bind='criteria_json',
-                ),
-                Div(data_bind="template: {name: 'case-filters'}"),
-            ),
-            Fieldset(
-                _("Update Actions"),
-                Field(
-                    'actions_json',
-                    type='hidden',
-                    data_bind='actions_json',
-                ),
-            ),
-            FormActions(
-                StrictButton(
-                    _("Save"),
-                    type='submit',
-                    css_class='btn btn-primary',
-                ),
+                self._hidden_bound_field('filter_on_server_modified'),
+                self._hidden_bound_field('server_modified_boundary'),
+                self._hidden_bound_field('custom_match_defintions'),
+                self._hidden_bound_field('property_match_defintions'),
+                self._hidden_bound_field('filter_on_closed_parent'),
+                Div(css_id='rule-criteria', data_bind="template: {name: 'case-filters'}"),
             ),
         )
+
+        self.case_type_helper = FormHelper()
+        self.case_type_helper.label_class = 'col-xs-2 col-xs-offset-1'
+        self.case_type_helper.field_class = 'col-xs-2'
+        self.case_type_helper.form_tag = False
+        self.case_type_helper.layout = Layout(Field('case_type'))
+
+    def _hidden_bound_field(self, field_name):
+        return Field(
+            field_name,
+            type='hidden',
+            data_bind=field_name,
+        )
+
+    def set_case_type_choices(self, initial):
+        case_types = [''] + list(get_case_types_for_domain_es(self.domain))
+        if initial and initial not in case_types:
+            # Include the deleted case type in the list of choices so that
+            # we always allow proper display and edit of rules
+            case_types.append(initial)
+        case_types.sort()
+        self.fields['case_type'].choices = (
+            (case_type, case_type) for case_type in case_types
+        )
+
+    def clean_filter_on_server_modified(self):
+        return true_or_false(self.cleaned_data.get('clean_filter_on_server_modified'))
+
+    def clean_server_modified_boundary(self):
+        if not self.cleaned_data['filter_on_server_modified']:
+            return None
+
+        value = self.cleaned_data.get('server_modified_boundary')
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            raise ValidationError(_("Please enter a number of days greater than zero"))
+
+        if value <= 0:
+            raise ValidationError(_("Please enter a number of days greater than zero"))
+
+        return value

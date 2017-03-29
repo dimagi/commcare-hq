@@ -28,7 +28,7 @@ from corehq.apps.data_interfaces.tasks import (
     bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
-    AddAutomaticCaseUpdateRuleForm, AddCaseRuleForm)
+    AddAutomaticCaseUpdateRuleForm, CaseUpdateRuleForm, CaseRuleCriteriaForm)
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
                                                 AutomaticUpdateRuleCriteria,
                                                 AutomaticUpdateAction)
@@ -929,11 +929,18 @@ class AddCaseRuleView(DataInterfaceSection):
         return reverse(self.urlname, args=[self.domain])
 
     @property
-    def form(self):
-        return AddCaseRuleForm(self.domain)
+    @memoized
+    def rule_form(self):
+        return CaseUpdateRuleForm(self.domain)
+
+    @property
+    @memoized
+    def criteria_form(self):
+        return CaseRuleCriteriaForm(self.domain)
 
     @property
     def page_context(self):
         return {
-            'form': self.form,
+            'rule_form': self.rule_form,
+            'criteria_form': self.criteria_form,
         }

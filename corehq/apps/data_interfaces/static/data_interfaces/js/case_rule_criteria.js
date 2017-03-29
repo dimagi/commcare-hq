@@ -1,0 +1,165 @@
+/* globals ko, $ */
+
+var CaseRuleCriteria = function() {
+    'use strict';
+    var self = this;
+
+    self.case_type = ko.observable();
+    self.criteria = ko.observableArray();
+    self.selected_case_filter_id = ko.observable();
+
+    self.filter_on_server_modified = ko.computed(function() {
+        var result = 'false';
+        $.each(self.criteria(), function(index, value) {
+            if(value.ko_template_id == 'case-modified-filter') {
+                result = 'true';
+            }
+        });
+        return result;
+    });
+
+    self.server_modified_boundary = ko.computed(function() {
+        var result = '';
+        $.each(self.criteria(), function(index, value) {
+            if(value.ko_template_id == 'case-modified-filter') {
+                result = value.days();
+            }
+        });
+        return result;
+    });
+
+    self.custom_match_defintions = ko.computed(function() {
+        var result = [];
+        $.each(self.criteria(), function(index, value) {
+            if(value.ko_template_id == 'custom-filter') {
+                result.push({
+                    'name': value.name(),
+                });
+            }
+        });
+        return result;
+    });
+
+    self.property_match_defintions = ko.computed(function() {
+        var result = [];
+        $.each(self.criteria(), function(index, value) {
+            if(value.ko_template_id == 'case-property-filter') {
+                result.push({
+                    'property_name': value.property_name(),
+                    'property_value': value.property_value(),
+                    'match_type': value.match_type(),
+                });
+            } else if(value.ko_template_id == 'date-case-property-filter') {
+                result.push({
+                    'property_name': value.property_name(),
+                    'property_value': '0',
+                    'match_type': value.match_type(),
+                });
+            } else if(value.ko_template_id == 'advanced-date-case-property-filter') {
+                var property_value = value.property_value();
+                if($.isNumeric(property_value) && value.plus_minus() == '-') {
+                    // The value of plus_minus tells us if we should negate the number
+                    // given in property_value(). We only attempt to do this if it
+                    // actually represents a number. If it doesn't, let the django
+                    // validation catch it.
+                    property_value = -1 * Number.parseInt(property_value);
+                    property_value = property_value.toString();
+                }
+                result.push({
+                    'property_name': value.property_name(),
+                    'property_value': property_value,
+                    'match_type': value.match_type(),
+                });
+            }
+        });
+        return result;
+    });
+
+    self.filter_on_closed_parent = ko.computed(function() {
+        var result = 'false';
+        $.each(self.criteria(), function(index, value) {
+            if(value.ko_template_id == 'parent-closed-filter') {
+                result = 'true';
+            }
+        });
+        return result;
+    });
+
+    self.get_ko_template_id = function(obj) {
+        return obj.ko_template_id;
+    };
+
+    self.filter_already_added = function(ko_template_id) {
+        for(var i = 0; i < self.criteria().length; i++) {
+            if(self.criteria()[i].ko_template_id == ko_template_id) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    self.add_filter = function() {
+        var case_filter_id = self.selected_case_filter_id()
+
+        if(case_filter_id == 'case-modified-filter') {
+            if(!self.filter_already_added(case_filter_id)) {
+                self.criteria.push(new NotModifiedSinceDefinition(case_filter_id));
+            }
+        } else if(
+            case_filter_id == 'case-property-filter' ||
+            case_filter_id == 'date-case-property-filter' ||
+            case_filter_id == 'advanced-date-case-property-filter'
+        ) {
+            self.criteria.push(new MatchPropertyDefinition(case_filter_id));
+        } else if(case_filter_id == 'parent-closed-filter') {
+            if(!self.filter_already_added(case_filter_id)) {
+                self.criteria.push(new ClosedParentDefinition(case_filter_id));
+            }
+        } else if(case_filter_id == 'custom-filter') {
+            self.criteria.push(new CustomMatchDefinition(case_filter_id));
+        } 
+    };
+
+    self.remove_filter = function() {
+        self.criteria.remove(this);
+    };
+};
+
+var NotModifiedSinceDefinition = function(ko_template_id) {
+    'use strict';
+    var self = this;
+    self.ko_template_id = ko_template_id;
+
+    // This model does not match a Django model; the `days` are stored as the `server_modified_boundary` on the rule
+    self.days = ko.observable();
+};
+
+var MatchPropertyDefinition = function(ko_template_id) {
+    'use strict';
+    var self = this;
+    self.ko_template_id = ko_template_id;
+    self.plus_minus = ko.observable();
+
+    // This model matches the Django model with the same name
+    self.property_name = ko.observable();
+    self.property_value = ko.observable();
+    self.match_type = ko.observable();
+};
+
+var CustomMatchDefinition = function(ko_template_id) {
+    'use strict';
+    var self = this;
+    self.ko_template_id = ko_template_id;
+
+    // This model matches the Django model with the same name
+    self.name = ko.observable();
+};
+
+var ClosedParentDefinition = function(ko_template_id) {
+    'use strict';
+    var self = this;
+    self.ko_template_id = ko_template_id;
+
+    // This model matches the Django model with the same name
+};
