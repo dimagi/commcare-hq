@@ -888,7 +888,6 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         # missing location id
         lab_referral_case = CaseAccessors(self.domain).get_case(self.lab_referral_id)
         lab_referral_case.owner_id = ''
-        lab_referral_case.save()
 
         self.update_case_with(self.test_id, {'testing_facility_id': ''})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
@@ -897,7 +896,9 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
                 "Value missing for dmc_code/testing_facility_id for test case: {test_case_id}"
                 .format(test_case_id=self.test_id)
         ):
-            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
+            with patch("custom.enikshay.integrations.nikshay.repeater_generator.get_lab_referral_from_test",
+                       return_value=lab_referral_case):
+                NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
         # missing location
         self.update_case_with(self.test_id, {'testing_facility_id': '123'})
