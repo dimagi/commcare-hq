@@ -5,7 +5,6 @@ from datetime import datetime
 from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import flag_enabled
 from custom.enikshay.const import TREATMENT_OUTCOME, TREATMENT_OUTCOME_DATE
 from custom.enikshay.exceptions import NikshayLocationNotFound, NikshayRequiredValueMissing
@@ -371,7 +370,7 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
         self.assertEqual(3, len(self.repeat_records().all()))
 
 
-@use_sql_backend
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayHIVTestPayloadGenerator, self).setUp()
@@ -597,7 +596,7 @@ class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload['Outcome'], '7')
 
 
-@use_sql_backend
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
 
     def setUp(self):
@@ -699,7 +698,7 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
         self.assertFalse(check_repeat_record_added())
 
 
-@use_sql_backend
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayFollowupPayloadGenerator, self).setUp()
