@@ -13,8 +13,9 @@ from corehq.apps.userreports.const import (
 )
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
+from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.sql import metadata
-from corehq.apps.userreports.tasks import rebuild_indicators, save_document
+from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
@@ -24,7 +25,6 @@ from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
-from pillow_retry.models import PillowError
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 _slow_ucr_assert = soft_assert('{}@{}'.format('jemord', 'dimagi.com'))
@@ -242,11 +242,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
                 table.delete(doc)
 
         if async_tables:
-            future_time = datetime.utcnow() + timedelta(days=1)
-            error = PillowError.get_or_create(change, pillow_instance)
-            error.date_next_attempt = future_time
-            error.save()
-            save_document.delay(async_tables, doc, pillow_instance.pillow_id)
+            AsyncIndicator.update_indicators(change, pillow_instance, async_tables)
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
