@@ -14,7 +14,7 @@ def tiered_django_cache(cache_name_timeout_pairs):
     ])
 
 
-def quickcache(vary_on, skip_arg=None, timeout=None, memoize_timeout=None):
+def quickcache(vary_on, skip_arg=None, timeout=5 * 60, memoize_timeout=10):
     """
     An easy "all-purpose" cache decorator
 
@@ -85,7 +85,6 @@ def quickcache(vary_on, skip_arg=None, timeout=None, memoize_timeout=None):
 
 
     """
-    timeout = timeout if timeout is not None else 5 * 60
-    memoize_timeout = memoize_timeout if memoize_timeout else 10
+
     cache = tiered_django_cache([('locmem', memoize_timeout), ('default', timeout)])
     return generic_quickcache(vary_on, cache=cache, skip_arg=skip_arg)
