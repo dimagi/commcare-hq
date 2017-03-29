@@ -200,7 +200,7 @@ def related_dates_changed(case):
         action for action in last_update_actions
         if isinstance(action, CaseUpdateAction) and (
             'art_initiation_date' in action.dynamic_properties or
-            'cpt_initiation_date' in action.dynamic_properties
+            'cpt_1_date' in action.dynamic_properties
         )
     )
     return value_changed

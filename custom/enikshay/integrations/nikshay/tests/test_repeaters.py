@@ -359,7 +359,7 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
             self.person_id,
             {
                 "hiv_status": "reactive",
-                "cpt_initiation_date": "2016-01-01"
+                "cpt_1_date": "2016-01-01"
             }
         )
         self.assertEqual(2, len(self.repeat_records().all()))
@@ -430,7 +430,7 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         update_case(
             self.domain, self.person_id,
             {
-                "cpt_initiation_date": "2016-01-02",
+                "cpt_1_date": "2016-01-02",
             }
         )
         self.person_case = CaseAccessors(self.domain).get_case(self.person_id)
