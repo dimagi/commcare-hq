@@ -237,6 +237,8 @@ def compress_id(serial_id, growth_symbols, lead_symbols, body_symbols, body_digi
 
 
 def get_last_used_device_number(user):
+    if not user.devices:
+        return None
     _, index = max((device.last_used, i) for i, device in enumerate(user.devices))
     return index + 1
 
