@@ -18,10 +18,12 @@ def check_deep_copy(method):
     When constructing a query the real ES query deep copies all filters.
     This decorator should be used on any method that adds a new filter
     """
-    def _check_deep_copy(*args):
+    def _check_deep_copy(*args, **kwargs):
         for arg in args:
             deepcopy(args)
-        return method(*args)
+        for key, value in kwargs.items():
+            deepcopy(value)
+        return method(*args, **kwargs)
     return _check_deep_copy
 
 
