@@ -218,6 +218,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         self.assertEqual(person_case.dynamic_case_properties()['migration_error_details'], 'MH-ABD-1-2')
 
     def test_outcome_cured(self):
+        self.outcome.HIVStatus = 'Unknown'
         self.outcome.Outcome = '1'
         self.outcome.OutcomeDate = '2/01/2017'
         self.outcome.save()
@@ -242,7 +243,11 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome'], 'cured')
         self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome_date'], '2017-01-02')
 
+        drtb_hiv_referral_case_ids = self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')
+        self.assertEqual(0, len(drtb_hiv_referral_case_ids))
+
     def test_outcome_died(self):
+        self.outcome.HIVStatus = 'Unknown'
         self.outcome.Outcome = '3'
         self.outcome.OutcomeDate = '2-01-2017'
         self.outcome.save()
@@ -266,6 +271,9 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         self.assertTrue(episode_case.closed)
         self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome'], 'died')
         self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome_date'], '2017-01-02')
+
+        drtb_hiv_referral_case_ids = self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')
+        self.assertEqual(0, len(drtb_hiv_referral_case_ids))
 
     def _assertIndexEqual(self, index_1, index_2):
         self.assertEqual(index_1.identifier, index_2.identifier)
