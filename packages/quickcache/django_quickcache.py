@@ -73,8 +73,9 @@ from __future__ import absolute_import
 from collections import namedtuple
 
 from django.core.cache import caches
-from .quickcache import ConfigMixin, get_quickcache, QuickCacheHelper
+from .quickcache import ConfigMixin, get_quickcache
 from .cache_helpers import CacheWithTimeout, TieredCache
+from .quickcache_helper import QuickCacheHelper
 
 
 class DjangoQuickCache(namedtuple('DjangoQuickCache', [

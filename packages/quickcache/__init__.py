@@ -1,5 +1,6 @@
-from .quickcache import QuickCacheHelper, get_quickcache
+from .quickcache import get_quickcache
 from .django_quickcache import get_django_quickcache
+from .quickcache_helper import QuickCacheHelper
 
 
 __all__ = [
