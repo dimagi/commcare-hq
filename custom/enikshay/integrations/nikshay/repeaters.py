@@ -158,8 +158,11 @@ class NikshayFollowupRepeater(CaseRepeater):
         # and episode.nikshay_registered is true
         allowed_case_types_and_users = self._allowed_case_type(test_case) and self._allowed_user(test_case)
         if allowed_case_types_and_users:
-            occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
-            episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
+            try:
+                occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
+                episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
+            except ENikshayCaseNotFound:
+                return False
             test_case_properties = test_case.dynamic_case_properties()
             episode_case_properties = episode_case.dynamic_case_properties()
             return (
