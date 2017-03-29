@@ -162,6 +162,16 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "phi": "PHI",
+                        "dmc": "DMC",
+                        "ictc": "ICTC",
+                        "art": "ART",
+                        "medical_college": "Medical College",
+                        "drtb_centre": "DRTB Centre",
+                        "private_others": "Private Others"
+                    }
                 },
                 "calculate_total": false
             },
