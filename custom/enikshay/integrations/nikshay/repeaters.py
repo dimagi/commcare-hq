@@ -69,7 +69,7 @@ class NikshayHIVTestRepeater(CaseRepeater):
         app_label = 'repeaters'
 
     include_app_id_param = False
-    friendly_name = _("Forward eNikshay Patient's HIV Test to Nikshay")
+    friendly_name = _("Forward eNikshay Patient's HIV Test to Nikshay (person case type)")
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -141,7 +141,7 @@ class NikshayFollowupRepeater(CaseRepeater):
         app_label = 'repeaters'
 
     include_app_id_param = False
-    friendly_name = _("Forward eNikshay Patient's Follow Ups to Nikshay")
+    friendly_name = _("Forward eNikshay Patient's Follow Ups to Nikshay (test case type)")
 
     @classmethod
     def available_for_domain(cls, domain):
