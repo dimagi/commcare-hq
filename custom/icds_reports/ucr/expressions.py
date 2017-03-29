@@ -167,7 +167,7 @@ class FormsInDateExpressionSpec(JsonObject):
         if to_date:
             query = query.completed(lte=to_date)
         if self.xmlns:
-            query = query.xmlns(self.xmlns)
+            query = query.xmlns(list(self.xmlns))
         if self.count:
             count = query.count()
             context.set_cache_value(cache_key, count)
