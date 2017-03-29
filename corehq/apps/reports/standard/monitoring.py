@@ -692,7 +692,11 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
     @quickcache(['mobile_user_and_group_slugs'], timeout=10)
     def is_query_too_big(self, mobile_user_and_group_slugs):
-        return len(self.selected_users) > USER_QUERY_LIMIT
+        user_es_query = EMWF.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+        )
+        return user_es_query.count() > USER_QUERY_LIMIT
 
     @property
     def rows(self):
