@@ -40,7 +40,7 @@ person.add_friend()
 person.look_up_friends.clear(person)
 ```
 
-# Examples (Django)
+# Examples
 
 - cache a singleton function, refresh every 5 minutes
   ```python
@@ -76,12 +76,12 @@ person.look_up_friends.clear(person)
       # ...
   ```
 
-# Features (Django)
+# Features
 
-- In addition to caching in the default shared cache,
-  quickcache caches in memory for 10 seconds
-  (conceptually the length of a single request).
-  This can be overridden to a different number with memoize_timeout.
+- If you're using the Django default,
+  then in addition to caching in the default shared cache,
+  quickcache caches in memory for `memoize_timeout` seconds,
+  (suggested 10 seconds, conceptually the length of a single request).
 
 - In addition to varying on the arguments and the name of the function,
   quickcache will also make sure to vary
@@ -101,6 +101,30 @@ person.look_up_friends.clear(person)
 - Allows you to pass in a function as the vary_on arg which will get called
   with the same args and kwargs as the function. It should return a list of simple
   values to be used for generating the cache key.
+
+# A note on backends
+
+The Django default uses a two-tier caching backend that caches in memory
+as well as in the default shared cache.
+This is optimized for multi-worker web code so that within a single request
+the object is cached in memory, and across requests the object is cached
+in the shared cache.
+
+If you are using your own backend, you can achieve the same effect
+using quickcache's cache helpers, `TieredCache` and `CacheWithTimeout`.
+If you are rolling your own, you may want to work off the source code in
+`quickcache/django_quickcache.py`.
+
+In the examples above, the keyword arguments `timeout` and `memoize_timeout`
+are only available on the Django default; when you bring your own backend,
+and want to override your system-wide default timeout, the equivalent will be
+to override the cache with the `cache` keyword argument. For example,
+
+```python
+@quickcache(..., cache=get_my_cache_backend_with_timeout(timeout=TIMEOUT))
+```
+
+where `get_my_cache_backend_with_timeout` is a function you define.
 
 # Note on unicode and strings in vary_on
 
