@@ -44,7 +44,6 @@ def init_hq_python_path():
     _set_source_root_parent('submodules')
     _set_source_root(os.path.join('corehq', 'ex-submodules'))
     _set_source_root(os.path.join('custom', '_legacy'))
-    _set_source_root_parent(os.path.join('packages'))
 
 
 def _should_patch_gevent(args, gevent_commands):
