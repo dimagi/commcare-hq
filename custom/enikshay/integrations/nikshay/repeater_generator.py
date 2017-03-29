@@ -314,7 +314,7 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
             )
         nikshay_code = dmc.metadata.get('nikshay_code')
         if not nikshay_code or (isinstance(nikshay_code, basestring) and not nikshay_code.isdigit()):
-            raise NikshayRequiredValueMissing("InAppt value for dmc, got value: {}".format(nikshay_code))
+            raise NikshayRequiredValueMissing("Inappropriate value for dmc, got value: {}".format(nikshay_code))
         return dmc.metadata.get('nikshay_code')
 
     def handle_success(self, response, payload_doc, repeat_record):

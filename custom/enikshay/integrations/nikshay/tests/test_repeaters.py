@@ -878,7 +878,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         self.dmc.save()
         with self.assertRaisesMessage(
                 NikshayRequiredValueMissing,
-                "InAppt value for dmc, got value: BARACK-OBAMA"
+                "Inappropriate value for dmc, got value: BARACK-OBAMA"
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case)
 
