@@ -128,7 +128,7 @@ def migrate_kafka_checkpoints(apps, schema_editor):
         try:
             checkpoint = DjangoPillowCheckpoint.objects.get(checkpoint_id=pillow.checkpoint.checkpoint_id)
             print("Migrating checkpoint {}: {} - {}".format(
-                checkpoint.checkpoint_id, change_feed.topics, checkpoint.sequence
+                checkpoint.checkpoint_id, pillow.get_change_feed().topics, checkpoint.sequence
             ))
 
             checkpoint.old_sequence = checkpoint.sequence  # save it so we can roll back
