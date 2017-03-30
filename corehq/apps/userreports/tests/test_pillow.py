@@ -305,7 +305,7 @@ class AsyncIndicatorTest(TestCase):
                 ], domain=self.domain
             )
             # ensure indicator is added
-            indicators = AsyncIndicator.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+            indicators = AsyncIndicator.objects.filter(doc_id='child-id')
             self.assertEqual(indicators.count(), 0)
             self.pillow.process_changes(since=since, forever=False)
             self.assertEqual(indicators.count(), 1)
@@ -320,7 +320,7 @@ class AsyncIndicatorTest(TestCase):
             self.assertEqual(int(row.parent_property), i)
 
             # ensure no errors or anything left in the queue
-            errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+            errors = PillowError.objects.filter(doc_id='child-id')
             self.assertEqual(errors.count(), 0)
             self.assertEqual(indicators.count(), 0)
 
@@ -350,7 +350,7 @@ class AsyncIndicatorTest(TestCase):
         )
 
         # ensure async indicator is added
-        indicators = AsyncIndicator.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+        indicators = AsyncIndicator.objects.filter(doc_id='child-id')
         self.assertEqual(indicators.count(), 0)
         self.pillow.process_changes(since=since, forever=False)
         self.assertEqual(indicators.count(), 1)
