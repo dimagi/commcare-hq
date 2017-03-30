@@ -1157,9 +1157,9 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
 @require_can_edit_commcare_users
 def user_download_job_poll(request, domain, download_id, template="users/mobile/partials/user_download_status.html"):
     try:
-        context = get_download_context(download_id)
-    except TaskFailedError:
-        return HttpResponseServerError()
+        context = get_download_context(download_id, 'Preparing download')
+    except TaskFailedError as e:
+        return HttpResponseServerError(e.errors)
     return render(request, template, context)
 
 
