@@ -91,30 +91,8 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "type": "evaluator",
-          "context_variables": {
-            "age_in_days": {
-              "from_date_expression": {
-                "value_expression": {
-                  "datatype": "date",
-                  "type": "property_name",
-                  "property_name": "dob"
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareCase",
-                "doc_id_expression": {
-                  "type": "named",
-                  "name": "parent_id"
-                }
-              },
-              "type": "diff_days",
-              "to_date_expression": {
-                "type": "named",
-                "name": "month_end"
-              }
-            }
-          },
-          "statement": "age_in_days / 30.4"
+          "type": "named",
+          "name": "age_in_months"
         },
         "column_id": "age_in_months"
       },
@@ -1868,23 +1846,29 @@
         "months_expression": -1
       },
       "age_in_months": {
-        "type": "diff_days",
-        "from_date_expression": {
-          "type": "related_doc",
-          "related_doc_type": "CommCareCase",
-          "doc_id_expression": {
-            "type": "icds_parent_id"
-          },
-          "value_expression": {
-            "datatype": "date",
-            "property_name": "dob",
-            "type": "property_name"
+        "type": "evaluator",
+        "context_variables": {
+          "age_in_days": {
+            "type": "diff_days",
+            "from_date_expression": {
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "type": "icds_parent_id"
+              },
+              "value_expression": {
+                "datatype": "date",
+                "property_name": "dob",
+                "type": "property_name"
+              }
+            },
+            "to_date_expression": {
+              "type": "named",
+              "name": "month_end"
+            }
           }
         },
-        "to_date_expression": {
-          "type": "named",
-          "name": "month_end"
-        }
+        "statement": "age_in_days / 30.4"
       }
     },
     "named_filters": {
