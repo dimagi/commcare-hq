@@ -716,6 +716,7 @@ class AsyncIndicator(models.Model):
         null=False
     )
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
+    date_queued = models.DateTimeField(null=True, db_index=True)
 
     class Meta(object):
         unique_together = ('doc_id', 'pillow',)
