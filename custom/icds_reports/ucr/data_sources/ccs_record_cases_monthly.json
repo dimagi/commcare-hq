@@ -1028,10 +1028,12 @@
               "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
             ],
             "start_date": {
-              "type": "month_start"
+              "type": "named",
+              "name": "month_start"
             },
             "end_date": {
-              "type": "month_end"
+              "type": "named",
+              "name": "month_end"
             },
             "form_filter": {
               "operator": "eq",
