@@ -65,24 +65,10 @@ def _filter_by_hash(configs, ucr_division):
     return filtered_configs
 
 
-def _exclude_missing_domains(configs):
-    from corehq.apps.es import DomainES
-    from corehq.elastic import ESError
-
-    config_domains = {conf.domain for conf in configs}
-    try:
-        domains_present = set(DomainES().in_domains(config_domains).values_list('name', flat=True))
-    except ESError:
-        pillow_logging.exception("Unable to filter configs by domain")
-        return configs
-
-    return [config for config in configs if config.domain in domains_present]
-
-
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_provider, auto_repopulate_tables=False, ucr_division=None,
-                 include_ucrs=None, exclude_ucrs=None, filter_missing_domains=False):
+                 include_ucrs=None, exclude_ucrs=None):
         """Initializes the processor for UCRs
 
         Keyword Arguments:
@@ -99,7 +85,6 @@ class ConfigurableReportTableManagerMixin(object):
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
-        self.filter_missing_domains = filter_missing_domains
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
 
@@ -116,9 +101,6 @@ class ConfigurableReportTableManagerMixin(object):
             configs = [config for config in configs if config.table_id in self.include_ucrs]
         elif self.ucr_division:
             configs = _filter_by_hash(configs, self.ucr_division)
-
-        if self.filter_missing_domains:
-            configs = _exclude_missing_domains(configs)
 
         return configs
 
@@ -312,7 +294,6 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
-            filter_missing_domains=True,
         ),
         pillow_name=pillow_id,
         topics=topics
