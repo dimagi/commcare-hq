@@ -192,10 +192,10 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
         num_days_open = self.get_value_from_fixture(agg_perf.days_open_fixture, 'awc_opened_count')
 
         context = {
-            "visits": "{} / 65".format(visits),
+            "visits": visits,
             "thr_distribution": "{} / {}".format(thr_gte_21, thr_count),
             "children_weighed": "{} / {}".format(num_weigh, num_weigh_avail),
-            "days_open": "{}".format(num_days_open),
+            "days_open": num_days_open,
         }
 
         return [self.render_template(context, language_code=language_code)]
