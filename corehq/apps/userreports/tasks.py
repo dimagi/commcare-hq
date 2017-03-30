@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
@@ -28,6 +28,7 @@ from corehq.util.couch import get_document_or_not_found
 from dimagi.utils.couch import CriticalSection, release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.pagination import DatatablesParams
+from dimagi.utils.logging import notify_exception
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
 
@@ -193,6 +194,14 @@ def queue_async_indicators():
     start = datetime.utcnow()
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME
     time_for_crit_section = ASYNC_INDICATOR_QUEUE_TIME.seconds - 10
+
+    yesterday = datetime.utcnow() - timedelta(day=1)
+    old_indicators = AsyncIndicator.objects.filter(date_queued__lt=yesterday).count()
+    if old_indicators:
+        notify_exception(
+            None,
+            message="{} indicators have been queued but did not complete in the past day".format(old_indicators)
+        )
 
     with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
         redis_client = get_redis_client().client.get_client()
