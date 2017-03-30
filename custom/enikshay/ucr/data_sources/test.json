@@ -379,8 +379,12 @@
                         "name": "episode_case"
                     },
                     "value_expression": {
-                        "type": "property_name",
-                        "property_name": "key_populations"
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "ql_patient_details",
+                            "key_populations"
+                        ]
                     }
                 }
             },

@@ -138,6 +138,18 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "known_patient_contact": "Contact of known TB patient",
+                        "prison_inmate": "Prison inmate",
+                        "miner": "Miner",
+                        "migrant": "Migrant",
+                        "refugee": "Refugee",
+                        "slum_dweller": "Slum dweller",
+                        "health_care_worker": "Health care worker",
+                        "tribal_population": "Tribal population",
+                        "other": "Other"
+                    }
                 },
                 "calculate_total": false
             },
