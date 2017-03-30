@@ -40,3 +40,6 @@ class EvaluationContext(object):
 
     def increment_iteration(self):
         self.iteration += 1
+
+    def reset_iteration(self):
+        self.iteration = 0

@@ -14,6 +14,7 @@ from corehq.apps.userreports.const import (
 )
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
+from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.models import (
     AsyncIndicator,
     DataSourceConfiguration,
@@ -235,10 +236,12 @@ def save_document(async_indicator_id, doc_id):
         doc_store = get_document_store(indicator.domain, indicator.doc_type)
         doc = doc_store.get_document(indicator.doc_id)
 
+        eval_context = EvaluationContext(doc)
         for config_id in indicator.indicator_config_ids:
             config = _get_config_by_id(config_id)
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-            adapter.best_effort_save(doc)
+            adapter.best_effort_save(doc, eval_context)
+            eval_context.reset_iteration()
 
         redis_client = get_redis_client().client.get_client()
         queued_lock_key = _get_indicator_queued_lock_key(indicator)

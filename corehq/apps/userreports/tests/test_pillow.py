@@ -287,7 +287,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         )
 
         # run pillow and check changes
-        with self.assertNumQueries(24):
+        with self.assertNumQueries(19):
             pillow.process_changes(since=since, forever=False)
         rows = self.adapter.get_query_object()
         self.assertEqual(rows.count(), 1)
