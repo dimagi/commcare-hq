@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 
 from django.conf import settings
+from django.contrib import admin
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import ugettext as _
@@ -748,6 +749,9 @@ class AsyncIndicator(models.Model):
                     indicator.save()
 
         return indicator
+
+
+admin.site.register(AsyncIndicator)
 
 
 def get_datasource_config(config_id, domain):
