@@ -4,7 +4,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
 from django.views.generic.base import View
 
-from corehq.apps.users.models import PublicCouchUser
+from corehq.apps.users.models import AnonymousCouchUser
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 
@@ -270,8 +270,6 @@ class ProjectReportDispatcher(ReportDispatcher):
             return False
         if not request.couch_user.is_active:
             return False
-        if isinstance(request.couch_user, PublicCouchUser) and self.prefix != 'custom_project_report':
-            return False
         return request.couch_user.can_view_report(domain, report)
 
 
@@ -294,6 +292,8 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if is_navigation_check and not has_privilege(request, privileges.CUSTOM_REPORTS):
             return False
+        if isinstance(request.couch_user, AnonymousCouchUser) and self.prefix == 'custom_project_report':
+            return True
         return super(CustomProjectReportDispatcher, self).permissions_check(report, request, domain)
 
 

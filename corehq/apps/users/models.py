@@ -2378,13 +2378,17 @@ class UserCache(object):
             return user
 
 
-class PublicCouchUser(CouchUser):
+class AnonymousCouchUser(object):
 
     username = "public_user"
     doc_type = "CommCareUser"
+    _id = 'anonymous_couch_user'
 
     @property
     def is_active(self):
+        return True
+
+    def is_anonymous(self):
         return True
 
     def is_domain_admin(self):
@@ -2397,10 +2401,10 @@ class PublicCouchUser(CouchUser):
         return True
 
     def can_view_report(self, domain, report):
-        return True
+        return False
 
     def can_view_some_reports(self, domain):
-        return True
+        return False
 
     @property
     def analytics_enabled(self):
