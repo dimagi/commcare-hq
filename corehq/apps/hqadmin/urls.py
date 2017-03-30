@@ -29,7 +29,7 @@ from corehq.apps.hqadmin.views import (
     pillow_operation_api,
     web_user_lookup,
     top_five_projects_by_country,
-)
+    ReprocessXFormErrors)
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
@@ -71,6 +71,8 @@ urlpatterns = [
         name='dimagisphere'),
     url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
         name=ReprocessMessagingCaseUpdatesView.urlname),
+    url(r'^reprocess_xform_errors/$', ReprocessXFormErrors.as_view(),
+        name=ReprocessXFormErrors.urlname),
     url(r'^top_five_projects_by_country/$', top_five_projects_by_country, name='top_five_projects_by_country'),
     url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
     AdminReportDispatcher.url_pattern(),

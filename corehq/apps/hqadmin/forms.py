@@ -101,6 +101,31 @@ class ReprocessMessagingCaseUpdatesForm(forms.Form):
         )
 
 
+class ReprocessXFormErrorsForm(forms.Form):
+    xform_id = forms.CharField()
+
+    def __init__(self, *args, **kwargs):
+        super(ReprocessXFormErrorsForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+        self.helper.form_id = 'reprocess-xform-errors'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8'
+        self.helper.layout = crispy.Layout(
+            FieldWithHelpBubble(
+                'xform_id',
+                help_bubble_text=_("Enter the xform ID of the form that needs to be re-processed."),
+            ),
+            FormActions(
+                crispy.Submit(
+                    'submit',
+                    'Submit'
+                )
+            )
+        )
+
+
 class SuperuserManagementForm(forms.Form):
     csv_email_list = forms.CharField(
         label="Comma seperated email addresses",

@@ -10,6 +10,10 @@ from StringIO import StringIO
 
 import dateutil
 from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
+from corehq.form_processor.backends.couch.processor import FormProcessorCouch
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.submission_post import SubmissionPost
+from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import add_months
@@ -44,8 +48,8 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL
+from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch, FormAccessorCouch
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
@@ -86,7 +90,8 @@ from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 
 from . import service_checks, escheck
-from .forms import AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm, ReprocessMessagingCaseUpdatesForm
+from .forms import AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm, ReprocessMessagingCaseUpdatesForm, \
+    ReprocessXFormErrorsForm
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
@@ -1082,6 +1087,92 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
                     .format(','.join(case_ids_not_processed)))
 
         return self.get(request, *args, **kwargs)
+
+
+class ReprocessXFormErrors(BaseAdminSectionView):
+    urlname = 'reprocess_xform_errors'
+    page_title = ugettext_lazy("Reprocess XForm Errors")
+    template_name = 'hqadmin/reprocess_xform_errors.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ReprocessXFormErrors, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return ReprocessXFormErrorsForm(self.request.POST)
+        return ReprocessXFormErrorsForm()
+
+    @property
+    def page_context(self):
+        context = get_hqadmin_base_context(self.request)
+        context.update({
+            'form': self.form,
+        })
+        return context
+
+    def get_form(self, form_id):
+        try:
+            return FormAccessorSQL.get_form(form_id)
+        except XFormNotFound:
+            pass
+
+        try:
+            return FormAccessorCouch.get_form(form_id)
+        except ResourceNotFound:
+            pass
+
+        return None
+
+    def post(self, request, *args, **kwargs):
+        from corehq.apps.couch_sql_migration.couchsqlmigration import _get_case_and_ledger_updates
+
+        if self.form.is_valid():
+            form_id = self.form.cleaned_data['xform_id']
+            form = self.get_form(form_id)
+            if not form:
+                messages.error(self.request, 'Form not found: {}'.format(form_id))
+                return self.get(request, *args, **kwargs)
+
+            if not form.is_error:
+                messages.error(self.request, 'Form was not an error form: {}={}'.format(form_id, form.doc_type))
+                return self.get(request, *args, **kwargs)
+
+            try:
+                cache = FormProcessorInterface(form.domain).casedb_cache(domain=form.domain, lock=True, deleted_ok=True,
+                                                                         xforms=[form])
+                with cache as casedb:
+                    case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
+
+                    if case_stock_result:
+                        stock_result = case_stock_result.stock_result
+                        if stock_result:
+                            assert stock_result.populated
+
+                        cases = case_stock_result.case_models
+                        if should_use_sql_backend(form.domain):
+                            for case in cases:
+                                CaseAccessorSQL.save_case(case)
+
+                            if stock_result:
+                                LedgerAccessorSQL.save_ledger_values(stock_result.models_to_save)
+
+                            form.state = XFormInstanceSQL.NORMAL
+                            form.problem = None
+                            FormAccessorSQL.update_form_problem_and_state(form)
+                        else:
+                            form.doc_type = 'XFormInstance'
+                            form.problem = None
+                            FormProcessorCouch.save_processed_models(form, cases, stock_result)
+            except Exception as e:
+                messages.error(self.request, str(e))
+            else:
+                messages.success(self.request, "Form processed successfully")
+
+        return self.get(request, *args, **kwargs)
+
 
 
 def top_five_projects_by_country(request):
