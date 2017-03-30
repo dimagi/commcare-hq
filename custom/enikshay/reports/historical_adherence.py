@@ -66,6 +66,10 @@ class HistoricalAdherenceReport(EnikshayReport):
         self.episode_properties = self.episode.dynamic_case_properties()
         self.person = get_person_case_from_episode(self.domain, self.episode_case_id)
 
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return False
+
     @property
     def episode_case_id(self):
         return self.request.GET.get("episode_id")
