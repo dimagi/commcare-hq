@@ -221,8 +221,9 @@ def _queue_indicator(redis_client, indicator):
     if not lock.acquire(blocking=False):
         return
 
+    indicator.date_queued = datetime.utcnow()
+    indicator.save()
     save_document.delay(indicator.id, indicator.doc_id, indicator.pillow)
-    indicator.update(date_queued=datetime.utcnow())
 
 
 def _get_indicator_queued_lock_key(indicator):
