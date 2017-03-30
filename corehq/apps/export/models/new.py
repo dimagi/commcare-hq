@@ -183,6 +183,7 @@ class ExportItem(DocumentSchema):
     @classmethod
     def merge(cls, one, two):
         item = one
+        item.label = two.label  # always take the newest label
         item.last_occurrences = _merge_dicts(one.last_occurrences, two.last_occurrences, max)
         item.inferred = one.inferred or two.inferred
         item.inferred_from |= two.inferred_from
