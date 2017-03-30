@@ -21,19 +21,21 @@ class MockFailingStripeObject(object):
 
 class TestCreditStripePaymentHandler(TestCase):
 
-    def setUp(self):
-        super(TestCreditStripePaymentHandler, self).setUp()
-        self.domain = Domain(name='test-domain')
-        self.domain.save()
-        self.payment_method = PaymentMethod()
-        self.payment_method.save()
-        self.account, _ = BillingAccount.get_or_create_account_by_domain(
-            self.domain.name, created_by='webuser@test.com'
+    @classmethod
+    def setUpClass(cls):
+        super(TestCreditStripePaymentHandler, cls).setUpClass()
+        cls.domain = Domain(name='test-domain')
+        cls.domain.save()
+        cls.payment_method = PaymentMethod()
+        cls.payment_method.save()
+        cls.account, _ = BillingAccount.get_or_create_account_by_domain(
+            cls.domain.name, created_by='webuser@test.com'
         )
 
-    def tearDown(self):
-        self.domain.delete()
-        super(TestCreditStripePaymentHandler, self).tearDown()
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        super(TestCreditStripePaymentHandler, cls).tearDownClass()
 
     @patch.object(stripe.Charge, 'create')
     def test_working_process_request(self, mock_create):
