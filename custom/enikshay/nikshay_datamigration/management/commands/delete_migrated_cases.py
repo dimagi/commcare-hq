@@ -38,8 +38,14 @@ def _concatenate_list_of_lists(list_of_lists):
 
 
 def _get_related_case_ids(domain, episode_case_id):
+    case_accessor = CaseAccessors(domain)
+
+    episode_case = case_accessor.get_case(episode_case_id)
+    assert episode_case.dynamic_case_properties().get('migration_created_case') == 'true'
     occurrence_case = _get_parent_case_by_type(domain, episode_case_id, CASE_TYPE_OCCURRENCE)
+    assert occurrence_case.dynamic_case_properties().get('migration_created_case') == 'true'
     person_case = _get_parent_case_by_type(domain, occurrence_case.case_id, CASE_TYPE_PERSON)
+    assert person_case.dynamic_case_properties().get('migration_created_case') == 'true'
 
     all_occurrence_cases = _get_children_cases_by_type(domain, person_case.case_id, CASE_TYPE_OCCURRENCE)
     all_episode_cases = _concatenate_list_of_lists([

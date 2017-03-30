@@ -63,3 +63,13 @@ class TestDeleteMigratedCases(ENikshayCaseStructureMixin, NikshayMigrationMixin,
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='occurrence'), [self.occurrence_id])
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='episode'), [self.episode_id])
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral'), [])
+
+    def test_nonmigrated_case_not_deleted(self):
+        self.create_case_structure()
+
+        with self.assertRaises(AssertionError):
+            call_command('delete_migrated_cases', self.domain, self.episode_id)
+
+        self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='person'), [self.person_id])
+        self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='occurrence'), [self.occurrence_id])
+        self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='episode'), [self.episode_id])
