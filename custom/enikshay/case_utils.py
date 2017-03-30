@@ -23,7 +23,7 @@ CASE_TYPE_LAB_REFERRAL = "lab_referral"
 CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 
 
-def get_parent_of_case(domain, case_id, parent_case_type):
+def get_all_parents_of_case(domain, case_id):
     case_accessor = CaseAccessors(domain)
     try:
         if not isinstance(case_id, basestring):
@@ -39,24 +39,44 @@ def get_parent_of_case(domain, case_id, parent_case_type):
         indexed_case.referenced_id for indexed_case in child_case.indices
     ]
     parent_cases = case_accessor.get_cases(parent_case_ids)
-    open_parent_cases = [
+
+    return parent_cases
+
+
+def get_parent_of_case(domain, case_id, parent_case_type):
+    parent_cases = get_all_parents_of_case(domain, case_id)
+    case_type_open_parent_cases = [
         parent_case for parent_case in parent_cases
         if not parent_case.closed and parent_case.type == parent_case_type
     ]
 
-    if not open_parent_cases:
+    if not case_type_open_parent_cases:
         raise ENikshayCaseNotFound(
             "Couldn't find any open {} cases for id: {}".format(parent_case_type, case_id)
         )
 
-    return open_parent_cases[0]
+    return case_type_open_parent_cases[0]
+
+
+def get_first_parent_of_case(domain, case_id, parent_case_type):
+    parent_cases = get_all_parents_of_case(domain, case_id)
+    case_type_parent_cases = [
+        parent_case for parent_case in parent_cases if parent_case.type == parent_case_type
+    ]
+
+    if not case_type_parent_cases:
+        raise ENikshayCaseNotFound(
+            "Couldn't find any {} cases for id: {}".format(parent_case_type, case_id)
+        )
+
+    return case_type_parent_cases[0]
 
 
 def get_occurrence_case_from_episode(domain, episode_case_id):
     """
     Gets the first open occurrence case for an episode
     """
-    return get_parent_of_case(domain, episode_case_id, CASE_TYPE_OCCURRENCE)
+    return get_first_parent_of_case(domain, episode_case_id, CASE_TYPE_OCCURRENCE)
 
 
 def get_person_case_from_occurrence(domain, occurrence_case_id):

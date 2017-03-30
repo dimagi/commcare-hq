@@ -41,7 +41,9 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCach
 from django.http import HttpResponse
 from soil import MultipleTaskDownload
 
-from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore, handle_401_response
+from .utils import (
+    demo_user_restore_response, get_restore_user, is_permitted_to_restore,
+    handle_401_response, update_device_id)
 
 
 @location_safe
@@ -56,6 +58,7 @@ def restore(request, domain, app_id=None):
     """
     couch_user = CouchUser.from_django_user_include_anonymous(domain, request.user)
     assert couch_user is not None, 'No couch user to use for restore'
+    update_device_id(couch_user, request.GET.get('device_id'))
     response, _ = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
     return response
 

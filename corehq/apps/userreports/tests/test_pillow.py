@@ -57,36 +57,6 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         table_manager.last_bootstrapped = before_now - timedelta(seconds=REBUILD_CHECK_INTERVAL)
         self.assertTrue(table_manager.needs_bootstrap())
 
-    def test_get_filtered_configs(self):
-        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider(), filter_missing_domains=True)
-        ds1 = get_sample_data_source()
-        ds1.domain = 'domain1'
-        ds2 = DataSourceConfiguration.wrap(ds1.to_json())
-        ds2.domain = 'domain2'
-
-        with patch('corehq.apps.es.es_query.run_query') as run_query:
-            run_query.return_value = {
-                'hits': {'hits': [
-                    {'_id': 'd1', '_source': {'name': 'domain1'}}
-                ]}
-            }
-            filtered_configs = table_manager.get_filtered_configs([ds1, ds2])
-
-        self.assertEqual(filtered_configs, [ds1])
-
-    def test_get_filtered_configs_es_error(self):
-        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider(), filter_missing_domains=True)
-        ds1 = get_sample_data_source()
-        ds1.domain = 'domain1'
-        ds2 = DataSourceConfiguration.wrap(ds1.to_json())
-        ds2.domain = 'domain2'
-
-        with patch('corehq.apps.es.es_query.run_query') as run_query:
-            run_query.side_effect = ESError
-            filtered_configs = table_manager.get_filtered_configs([ds1, ds2])
-
-        self.assertEqual(filtered_configs, [ds1, ds2])
-
 
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class IndicatorPillowTest(TestCase):

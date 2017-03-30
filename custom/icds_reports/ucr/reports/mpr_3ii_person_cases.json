@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "report_id": "static-mpr_3ii_person_cases",
   "data_source_table": "static-person_cases",
   "config": {

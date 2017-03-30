@@ -63,6 +63,7 @@ class GetCaseHistorySpec(JsonObject):
     case_id_expression = DefaultProperty(required=True)
     start_date = DefaultProperty(required=False)
     end_date = DefaultProperty(required=False)
+    xmlns = ListProperty(required=False)
 
     def configure(self, case_id_expression, case_forms_expression):
         self._case_id_expression = case_id_expression
@@ -73,12 +74,19 @@ class GetCaseHistorySpec(JsonObject):
         if not case_id:
             return []
 
-        cache_key = (self.__class__.__name__, case_id)
+        forms = self._case_forms_expression(item, context)
+        case_history = self._get_case_history(case_id, forms, context)
+        return case_history
+
+    def _get_case_history(self, case_id, forms, context):
+        form_ids = tuple(f['_id'] for f in forms)
+        cache_key = (self.__class__.__name__, case_id, form_ids)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        forms = self._case_forms_expression(item, context)
-
+        # TODO(Sheel/Emord) looks like this is only used when getting the last
+        # property update. maybe this could be optimized sort by received_on
+        # and stop looking at forms once it finds the update
         case_history = []
         for f in forms:
             case_blocks = extract_case_blocks(f)
@@ -95,6 +103,7 @@ class GetCaseHistoryByDateSpec(JsonObject):
     start_date = DefaultProperty(required=False)
     end_date = DefaultProperty(required=False)
     filter = DefaultProperty(required=False)
+    xmlns = ListProperty(required=False)
 
 
 class GetLastCasePropertyUpdateSpec(JsonObject):
@@ -104,6 +113,7 @@ class GetLastCasePropertyUpdateSpec(JsonObject):
     start_date = DefaultProperty(required=False)
     end_date = DefaultProperty(required=False)
     filter = DefaultProperty(required=False)
+    xmlns = ListProperty(required=False)
 
 
 class FormsInDateExpressionSpec(JsonObject):
@@ -157,7 +167,7 @@ class FormsInDateExpressionSpec(JsonObject):
         if to_date:
             query = query.completed(lte=to_date)
         if self.xmlns:
-            query = query.xmlns(self.xmlns)
+            query = query.xmlns(list(self.xmlns))
         if self.count:
             count = query.count()
             context.set_cache_value(cache_key, count)
@@ -425,7 +435,7 @@ def get_case_forms_by_date(spec, context):
         get_case_forms_expression['from_date_expression'] = spec['start_date']
     if spec['end_date'] is not None:
         get_case_forms_expression['to_date_expression'] = spec['end_date']
-    if spec['xmlns'] is not None and len(spec['xmlns']) > 0:
+    if spec['xmlns']:
         get_case_forms_expression['xmlns'] = spec['xmlns']
     if spec['form_filter'] is not None:
         filters.append(spec['form_filter'])
@@ -934,9 +944,10 @@ def get_case_history(spec, context):
     wrapped = GetCaseHistorySpec.wrap(spec)
     case_forms_expression = {
         'type': 'get_case_forms',
-        'case_id_expression': wrapped.case_id_expression
+        'case_id_expression': wrapped.case_id_expression,
+        'xmlns': wrapped.xmlns,
     }
-    if spec['start_date'] and spec['end_date']:
+    if spec['start_date'] or spec['end_date']:
         case_forms_expression['type'] = 'icds_get_case_forms_in_date'
         case_forms_expression['from_date_expression'] = wrapped.start_date
         case_forms_expression['to_date_expression'] = wrapped.end_date
@@ -965,6 +976,9 @@ def get_case_history_by_date(spec, context):
         "type": "icds_get_case_history",
         "case_id_expression": case_id_expression
     }
+
+    if spec['xmlns']:
+        case_history_spec['xmlns'] = spec['xmlns']
 
     filters = []
     if spec['start_date'] is not None:
@@ -1042,6 +1056,7 @@ def get_last_case_property_update(spec, context):
                     'start_date': spec['start_date'],
                     'end_date': spec['end_date'],
                     'filter': spec['filter'],
+                    'xmlns': spec['xmlns'],
                 },
                 'filter_expression': {
                     'filter': {

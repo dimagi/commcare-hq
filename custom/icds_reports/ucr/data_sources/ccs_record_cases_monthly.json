@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "config": {
     "table_id": "static-ccs_record_cases_monthly",
     "display_name": "Cases - CCS Record (Monthly) (Static)",

@@ -19,9 +19,11 @@ from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
-    is_valid_episode_submission,
     is_valid_test_submission,
+    is_valid_archived_submission,
 )
+
+
 from custom.enikshay.integrations.ninetyninedots.repeaters import case_properties_changed
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
 
@@ -130,7 +132,7 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
             episode_case_properties.get('nikshay_id', False) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
             episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys() and
-            is_valid_episode_submission(episode_case)
+            is_valid_archived_submission(episode_case)
         )
 
 
