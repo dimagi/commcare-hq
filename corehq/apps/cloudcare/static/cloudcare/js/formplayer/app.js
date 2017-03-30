@@ -460,12 +460,12 @@ FormplayerFrontend.on('navigateHome', function() {
  * location.href returns a url encoded string. For example:
  *
  * Chrome:
- * > location.hash
- * > "#{"appId"%3A"db732ce1735229da84b451cbd7cfa7ac"}"
+ * > location.href
+ * > "http://.../#{"appId"%3A"db732ce1735229da84b451cbd7cfa7ac"}"
  *
  * FireFox:
- * > location.hash
- * > "#{%22appId%22%3A%22db732ce1735229da84b451cbd7cfa7ac%22}"
+ * > location.href
+ * > "http://.../#{%22appId%22%3A%22db732ce1735229da84b451cbd7cfa7ac%22}"
  *
  * This is important because BackBone caches the non url encoded fragment when you call `navigate`.
  * Then on the 'onhashchange' event, Backbone compares the cached value with the `getHash`
