@@ -1,6 +1,6 @@
 import json
 from django.db import models
-
+from kafka.common import TopicAndPartition
 
 SEQUENCE_FORMATS = (
     ('text', 'text'),
@@ -24,7 +24,7 @@ class DjangoPillowCheckpoint(models.Model):
             marshaled_seq = {}
             for key, val in seq.items():
                 topic, partition = key.split(',')
-                marshaled_seq[(topic, int(partition))] = val
+                marshaled_seq[TopicAndPartition(topic, int(partition))] = val
             return marshaled_seq
         else:
             return self.sequence
