@@ -1,0 +1,16 @@
+{% extends "style/partials/download_status.html" %}
+{% load i18n %}
+{% block results %}
+    <div class="alert alert-success">
+        <h3>{{ on_complete_long }}</h3>
+        <p>{%  trans "You're download is ready." %} <a href="{% url "retrieve_download" download_id %}?get_file=1">{% trans "Download Users" %}</a></p>
+    </div>
+{% if result.errors %}
+    <div class="alert alert-danger">
+    <h3>{% trans "However, we ran into problems with the following users:" %}</h3>
+        {% for e in result.errors %}
+        <p>{{ e }}</p>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock results %}
