@@ -26,7 +26,12 @@ def uniform_description(test):
     if isinstance(test, type):
         return "%s:%s" % (test.__module__, test.__name__)
     if isinstance(test, FunctionTestCase):
-        return str(test)
+        descriptor = test.descriptor or test.test
+        return "%s:%s args %s" % (
+            descriptor.__module__,
+            descriptor.__name__,
+            test.arg,
+        )
     name = "%s:%s.%s" % (
         test.__module__,
         type(test).__name__,
