@@ -18,7 +18,7 @@ class TestDeleteMigratedCases(ENikshayCaseStructureMixin, NikshayMigrationMixin,
         assert len(episode_case_ids) == 1
         assert len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')) == 1
 
-        call_command('delete_migrated_cases', self.domain, *episode_case_ids)
+        call_command('delete_migrated_cases', self.domain, *episode_case_ids, noinput=True)
 
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='person'), [])
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='occurrence'), [])
@@ -36,7 +36,7 @@ class TestDeleteMigratedCases(ENikshayCaseStructureMixin, NikshayMigrationMixin,
         assert len(episode_case_ids) == 1
         assert len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')) == 0
 
-        call_command('delete_migrated_cases', self.domain, *episode_case_ids)
+        call_command('delete_migrated_cases', self.domain, *episode_case_ids, noinput=True)
 
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='person'), [])
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='occurrence'), [])
@@ -56,7 +56,8 @@ class TestDeleteMigratedCases(ENikshayCaseStructureMixin, NikshayMigrationMixin,
 
         call_command(
             'delete_migrated_cases',
-            self.domain, *filter(lambda episode_id: episode_id != self.episode_id, episode_case_ids)
+            self.domain, *filter(lambda episode_id: episode_id != self.episode_id, episode_case_ids),
+            noinput=True
         )
 
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='person'), [self.person_id])
@@ -68,7 +69,7 @@ class TestDeleteMigratedCases(ENikshayCaseStructureMixin, NikshayMigrationMixin,
         self.create_case_structure()
 
         with self.assertRaises(AssertionError):
-            call_command('delete_migrated_cases', self.domain, self.episode_id)
+            call_command('delete_migrated_cases', self.domain, self.episode_id, noinput=True)
 
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='person'), [self.person_id])
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='occurrence'), [self.occurrence_id])

@@ -73,8 +73,29 @@ class Command(BaseCommand):
             'episode_case_id',
             nargs='+',
         )
+        parser.add_argument(
+            '--noinput',
+            action='store_true',
+            default=False,
+            help='For unit tests only. Skips user confirmation.'
+        )
 
     def handle(self, domain, episode_case_id, **options):
+        if not options.get('noinput'):
+            confirm = raw_input(
+                u"""
+                Are you sure you want to delete all these episodes, and their associated
+                person, occurrence, and drtb-hiv-referral cases?
+
+                Type DELETE and press Enter to confirm.
+                """
+            )
+            if confirm != "DELETE":
+                print("\n\t\tCancelled.")
+                return
+            else:
+                print("\n\t\tDeleting...")
+
         migrated_case_ids = _concatenate_list_of_lists([
             _get_related_case_ids(domain, episode_id) for episode_id in episode_case_id
         ])
