@@ -15,7 +15,6 @@ from django.shortcuts import render, redirect
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic import View, TemplateView
@@ -25,9 +24,7 @@ from couchdbkit import ResourceNotFound
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import re
 
-from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.html import format_html
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from soil.exceptions import TaskFailedError
@@ -53,7 +50,7 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import location_safe, user_can_access_location_id, is_location_safe
+from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
@@ -67,8 +64,6 @@ from corehq.apps.users.bulkupload import (
     check_duplicate_usernames,
     check_existing_usernames,
     check_headers,
-    dump_users_and_groups,
-    GroupNameError,
     UserUploadError,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids
