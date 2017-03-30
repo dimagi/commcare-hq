@@ -5,6 +5,7 @@ from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 
+from casexml.apps.case.exceptions import CaseValueError
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.util import post_case_blocks
@@ -14,6 +15,7 @@ from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
@@ -372,9 +374,10 @@ class FundamentalCaseTestsSQL(FundamentalCaseTests):
             case_name='this is a very long case name that exceeds the 255 char limit' * 5
         )
 
-        message = "Error processing case update: Field: name, Error: Value exceeds allowed length: 255"
-        with self.assertRaisesMessage(ValueError, message):
-            post_case_blocks([case.as_xml()], domain='domain2')
+        post_case_blocks([case.as_xml()], domain='domain2')
+        errors = FormAccessorSQL.get_forms_by_type('domain2', 'XFormError', 10)
+        self.assertEqual(len(errors), 1)
+        self.assertIn('CaseValueError', errors[0].problem)
 
 
 def _submit_case_block(create, case_id, **kwargs):

@@ -28,6 +28,13 @@ class InvalidCaseIndex(CommCareCaseError):
     pass
 
 
+class CaseValueError(CommCareCaseError):
+    """
+    Raise when a case value is invalid e.g. name > 255 chars
+    """
+    pass
+
+
 class UsesReferrals(CommCareCaseError):
     pass
 

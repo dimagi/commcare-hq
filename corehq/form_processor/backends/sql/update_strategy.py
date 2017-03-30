@@ -4,7 +4,7 @@ from iso8601 import iso8601
 
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
-from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
+from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported, CaseValueError
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
@@ -35,7 +35,7 @@ def _convert_type_check_length(property_name, value):
     try:
         return PROPERTY_TYPE_MAPPING.get(property_name, lambda x: x)(value)
     except ValueError as e:
-        raise ValueError('Error processing case update: Field: {}, Error: {}'.format(property_name, e.message))
+        raise CaseValueError('Error processing case update: Field: {}, Error: {}'.format(property_name, e.message))
 
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
