@@ -203,13 +203,17 @@ def queue_async_indicators():
                 now = datetime.utcnow()
                 if now > cutoff:
                     break
+                _queue_indicator(redis_client, indicator)
 
-                lock_key = _get_indicator_queued_lock_key(indicator)
-                lock = redis_client.lock(lock_key, timeout=60 * 60 * 6)
-                if not lock.acquire(blocking=False):
-                    continue
 
-                save_document.delay(indicator.id, indicator.doc_id, indicator.pillow)
+def _queue_indicator(redis_client, indicator):
+    lock_key = _get_indicator_queued_lock_key(indicator)
+    lock = redis_client.lock(lock_key, timeout=60 * 60 * 24)
+    if not lock.acquire(blocking=False):
+        return
+
+    save_document.delay(indicator.id, indicator.doc_id, indicator.pillow)
+    indicator.update(date_queued=datetime.utcnow())
 
 
 def _get_indicator_queued_lock_key(indicator):
