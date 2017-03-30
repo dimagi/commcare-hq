@@ -195,7 +195,7 @@ def queue_async_indicators():
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME
     time_for_crit_section = ASYNC_INDICATOR_QUEUE_TIME.seconds - 10
 
-    yesterday = datetime.utcnow() - timedelta(day=1)
+    yesterday = datetime.utcnow() - timedelta(days=1)
     old_indicators = AsyncIndicator.objects.filter(date_queued__lt=yesterday).count()
     if old_indicators:
         notify_exception(
