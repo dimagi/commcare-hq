@@ -41,6 +41,8 @@ class ENikshayCaseStructureMixin(object):
         self.person_id = u"person"
         self.occurrence_id = u"occurrence"
         self.episode_id = u"episode"
+        self.test_id = u"test"
+        self.lab_referral_id = u"lab_referral"
         self.primary_phone_number = "0123456789"
         self.secondary_phone_number = "0999999999"
         self.treatment_supporter_phone = "066000666"
@@ -166,6 +168,48 @@ class ENikshayCaseStructureMixin(object):
             walk_related=False,
         )
 
+    @property
+    def test(self):
+        return CaseStructure(
+            case_id=self.test_id,
+            attrs={
+                'create': True,
+                'case_type': 'test',
+                "update": dict(
+                    date_tested=datetime(2016, 8, 6).date(),
+                    lab_serial_number=19,
+                    test_type_value="microscopy-zn",
+                    purpose_of_testing="diagnostic",
+                    result_grade="1+",
+                    testing_facility_id=self.dmc.get_id,
+                )
+            },
+            indices=[CaseIndex(
+                self.occurrence,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=self.occurrence.attrs['case_type'],
+            )],
+        )
+
+    @property
+    def lab_referral(self):
+        return CaseStructure(
+            case_id=self.lab_referral_id,
+            attrs={
+                'create': True,
+                'case_type': 'lab_referral',
+                'owner_id': self.dmc.get_id,
+                "update": {}
+            },
+            indices=[CaseIndex(
+                self.test,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=self.test.attrs['case_type'],
+            )],
+        )
+
     def create_adherence_cases(self, adherence_dates, adherence_source='99DOTS'):
         return self.factory.create_or_update_cases([
             self._get_adherence_case_structure(adherence_date, adherence_source, "unobserved_dose")
@@ -212,6 +256,13 @@ class ENikshayLocationStructureMixin(object):
             'is_test': 'no',
         }
         self.phi.save()
+
+        self.dmc = locations['DMC']
+        self.dmc.metadata = {
+            'nikshay_code': '123',
+            'is_test': 'no',
+        }
+        self.dmc.save()
         super(ENikshayLocationStructureMixin, self).setUp()
 
     def tearDown(self):

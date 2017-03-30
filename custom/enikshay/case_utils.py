@@ -19,6 +19,7 @@ CASE_TYPE_ADHERENCE = "adherence"
 CASE_TYPE_OCCURRENCE = "occurrence"
 CASE_TYPE_EPISODE = "episode"
 CASE_TYPE_PERSON = "person"
+CASE_TYPE_LAB_REFERRAL = "lab_referral"
 CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 
 
@@ -174,6 +175,13 @@ def get_episode_case_from_adherence(domain, adherence_case_id):
     return get_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
 
 
+def get_occurrence_case_from_test(domain, test_case_id):
+    """
+        Gets the first open occurrence case for a test
+        """
+    return get_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
+
+
 def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
     case_accessor = CaseAccessors(domain)
     episode = get_open_episode_case_from_person(domain, person_case_id)
@@ -230,6 +238,18 @@ def get_person_locations(person_case):
         )
     except (KeyError, AttributeError) as e:
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
+
+
+def get_lab_referral_from_test(domain, test_case_id):
+    case_accessor = CaseAccessors(domain)
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([test_case_id])
+    lab_referral_cases = [case for case in reverse_indexed_cases if case.type == CASE_TYPE_LAB_REFERRAL]
+    if lab_referral_cases:
+        return lab_referral_cases[0]
+    else:
+        raise ENikshayCaseNotFound(
+            "test with id: {} exists but has no lab referral cases".format(test_case_id)
+        )
 
 
 def get_adherence_cases_by_day(domain, episode_case_id):
