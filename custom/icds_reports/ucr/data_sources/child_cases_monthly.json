@@ -1642,7 +1642,8 @@
               "operator": "gt",
               "type": "boolean_expression",
               "expression": {
-                "type": "age_in_months"
+                "type": "named",
+                "name": "age_in_months"
               },
               "property_value": 36
             },
@@ -1650,7 +1651,8 @@
               "operator": "lte",
               "type": "boolean_expression",
               "expression": {
-                "type": "age_in_months"
+                "type": "named",
+                "name": "age_in_months"
               },
               "property_value": 72
             }
@@ -1689,7 +1691,8 @@
           "operator": "gt",
           "type": "boolean_expression",
           "expression": {
-            "type": "age_in_months"
+            "type": "named",
+            "name": "age_in_months"
           },
           "property_value": 36
         },
