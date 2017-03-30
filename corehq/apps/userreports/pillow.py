@@ -27,6 +27,8 @@ from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
+LONG_UCR_LOGGING_THRESHOLD = 0.2
+LONG_UCR_SOFT_ASSERT_THRESHOLD = 5
 _slow_ucr_assert = soft_assert('{}@{}'.format('jemord', 'dimagi.com'))
 
 
@@ -40,14 +42,14 @@ def time_ucr_process_change(method):
         result = method(*args, **kw)
         te = datetime.now()
         seconds = (te - ts).total_seconds()
-        if seconds > 0.1:
+        if seconds > LONG_UCR_LOGGING_THRESHOLD:
             table = args[1]
             doc = args[2]
             message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
                 table.config._id, doc['_id'], seconds
             )
             pillow_logging.warning(message)
-            _slow_ucr_assert(seconds < 5, message)
+            _slow_ucr_assert(seconds < LONG_UCR_SOFT_ASSERT_THRESHOLD, message)
         return result
     return timed
 
