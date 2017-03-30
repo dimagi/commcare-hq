@@ -320,7 +320,7 @@ class AsyncIndicatorTest(TestCase):
             self.assertEqual(int(row.parent_property), i)
 
             # ensure no errors or anything left in the queue
-            errors = PillowError.objects.filter(doc_id='child-id')
+            errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
             self.assertEqual(errors.count(), 0)
             self.assertEqual(indicators.count(), 0)
 
