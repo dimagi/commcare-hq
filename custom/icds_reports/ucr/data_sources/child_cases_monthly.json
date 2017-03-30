@@ -1666,10 +1666,12 @@
             "type": "root_doc"
           },
           "from_date_expression": {
-            "type": "month_start"
+            "type": "named",
+            "name": "month_start"
           },
           "to_date_expression": {
-            "type": "month_end"
+            "type": "named",
+            "name": "month_end"
           },
           "xmlns": [
             "http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62"
@@ -1758,10 +1760,12 @@
                 "http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62"
               ],
               "start_date": {
-                "type": "month_start"
+                "type": "named",
+                "name": "month_start"
               },
               "end_date": {
-                "type": "month_end"
+                "type": "named",
+                "name": "month_end"
               }
             }
           }
@@ -1780,10 +1784,12 @@
                   "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
                 ],
                 "start_date": {
-                  "type": "month_start"
+                  "type": "named",
+                  "name": "month_start"
                 },
                 "end_date": {
-                  "type": "month_end"
+                  "type": "named",
+                  "name": "month_end"
                 },
                 "form_filter": {
                   "operator": "eq",
