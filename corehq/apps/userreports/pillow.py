@@ -45,11 +45,15 @@ def time_ucr_process_change(method):
         if seconds > LONG_UCR_LOGGING_THRESHOLD:
             table = args[1]
             doc = args[2]
-            message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
+            log_message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
                 table.config._id, doc['_id'], seconds
             )
-            pillow_logging.warning(message)
-            _slow_ucr_assert(seconds < LONG_UCR_SOFT_ASSERT_THRESHOLD, message)
+            pillow_logging.warning(log_message)
+            if seconds > LONG_UCR_SOFT_ASSERT_THRESHOLD:
+                email_message = u"UCR data source {} is taking too long to process".foramt(
+                    table.config._id
+                )
+                _slow_ucr_assert(False, email_message)
         return result
     return timed
 
