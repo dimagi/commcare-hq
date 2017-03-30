@@ -1915,7 +1915,7 @@ def _get_cases_with_other_forms(domain, xform):
     cases_created = {u.id for u in get_case_updates(xform) if u.creates_case()}
     cases = {}
     for case in CaseAccessors(domain).iter_cases(list(cases_created)):
-        if case.xform_ids != [xform.form_id]:
+        if not case.is_deleted and case.xform_ids != [xform.form_id]:
             # case has other forms that need to be archived before this one
             cases[case.case_id] = case.name
     return cases
