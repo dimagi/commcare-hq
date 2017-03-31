@@ -1368,6 +1368,34 @@ class ProjectSettingsTab(UITab):
         if user_is_admin:
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
+        if user_is_admin:
+            def forward_name(repeater_type=None, **context):
+                if repeater_type == 'FormRepeater':
+                    return _("Forward Forms")
+                elif repeater_type == 'ShortFormRepeater':
+                    return _("Forward Form Stubs")
+                elif repeater_type == 'CaseRepeater':
+                    return _("Forward Cases")
+
+            items.append((_('Motech'), [
+                {'title': _('Data Forwarding'),
+                 'url': reverse('domain_forwarding', args=[self.domain]),
+                 'subpages': [
+                     {
+                         'title': forward_name,
+                         'urlname': 'add_repeater',
+                     },
+                     {
+                         'title': forward_name,
+                         'urlname': 'add_form_repeater',
+                     },
+                ]},
+                {
+                    'title': _('Data Forwarding Records'),
+                    'url': reverse('domain_report_dispatcher', args=[self.domain, 'repeat_record_report'])
+                }
+            ]))
+
         feature_flag_items = _get_feature_flag_items(self.domain)
         if feature_flag_items:
             items.append((_('Pre-release Features'), feature_flag_items))
@@ -1474,33 +1502,6 @@ def _get_administration_section(domain):
                 'url': reverse('domain_manage_multimedia', args=[domain])
             }
         ])
-
-    def forward_name(repeater_type=None, **context):
-        if repeater_type == 'FormRepeater':
-            return _("Forward Forms")
-        elif repeater_type == 'ShortFormRepeater':
-            return _("Forward Form Stubs")
-        elif repeater_type == 'CaseRepeater':
-            return _("Forward Cases")
-
-    administration.extend([
-        {'title': _('Data Forwarding'),
-         'url': reverse('domain_forwarding', args=[domain]),
-         'subpages': [
-             {
-                 'title': forward_name,
-                 'urlname': 'add_repeater',
-             },
-             {
-                 'title': forward_name,
-                 'urlname': 'add_form_repeater',
-             },
-        ]},
-        {
-            'title': _('Data Forwarding Records'),
-            'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
-        }
-    ])
 
     administration.append({
         'title': _(FeaturePreviewsView.page_title),
