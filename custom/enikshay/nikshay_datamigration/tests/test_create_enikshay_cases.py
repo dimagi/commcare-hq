@@ -279,18 +279,19 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
     def test_nikshay_case_from_enikshay_not_duplicated(self):
         call_command('create_enikshay_cases', self.domain)
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
-        self.assertEqual(len(person_case_ids), 1)
-        person_case_id = person_case_ids[0]
-        person_case = self.case_accessor.get_case(person_case_id)
+        assert len(person_case_ids) == 1
+        person_case = self.case_accessor.get_case(person_case_ids[0])
         assert person_case.name == ORIGINAL_PERSON_NAME
         assert len(self.case_accessor.get_case_ids_in_domain(type='occurrence')) == 1
-        assert len(self.case_accessor.get_case_ids_in_domain(type='episode')) == 1
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        assert len(episode_case_ids) == 1
+        episode_case_id = episode_case_ids[0]
         assert len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')) == 0
 
         new_nikshay_name = 'PERSON NAME SHOULD NOT BE CHANGED'
         self.patient_detail.pname = new_nikshay_name
         self.patient_detail.save()
-        CaseFactory(self.domain).create_or_update_case(
+        CaseFactory(self.domain).create_or_update_cases([
             CaseStructure(
                 attrs={
                     'create': False,
@@ -298,16 +299,17 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
                         'migration_created_case': 'false',
                     }
                 },
-                case_id=person_case_id,
+                case_id=episode_case_id,
             )
-        )
-        person_case = self.case_accessor.get_case(person_case_id)
-        person_case.dynamic_case_properties()['migration_created_case'] = 'false'
+        ])
+        episode_case = self.case_accessor.get_case(episode_case_id)
+        assert episode_case.dynamic_case_properties()['migration_created_case'] == 'false'
+
         call_command('create_enikshay_cases', self.domain)
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(len(person_case_ids), 1)
-        person_case = self.case_accessor.get_case(person_case_id)
+        person_case = self.case_accessor.get_case(person_case_ids[0])
         self.assertEqual(person_case.name, ORIGINAL_PERSON_NAME)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
