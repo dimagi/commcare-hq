@@ -2,10 +2,12 @@ from datetime import datetime
 
 import iso8601
 import pytz
+from couchdbkit import ResourceNotFound
 
 import xml2json
 from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
-from corehq.form_processor.models import Attachment
+from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.models import Attachment, XFormInstanceSQL
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
 
@@ -159,3 +161,69 @@ def adjust_datetimes(data, parent=None, key=None):
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
     return data
+
+
+def _get_form(form_id):
+    from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+    from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
+    try:
+        return FormAccessorSQL.get_form(form_id)
+    except XFormNotFound:
+        pass
+
+    try:
+        return FormAccessorCouch.get_form(form_id)
+    except ResourceNotFound:
+        pass
+
+    return None
+
+
+def reprocess_xform_error(form_id):
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    from corehq.form_processor.submission_post import SubmissionPost
+    from corehq.form_processor.utils import should_use_sql_backend
+    from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL
+    from corehq.blobs.mixin import bulk_atomic_blobs
+    from couchforms.models import XFormInstance
+
+    form = _get_form(form_id)
+    if not form:
+        raise Exception('Form with ID {} not found'.format(form_id))
+
+    if not form.is_error:
+        raise Exception('Form was not an error form: {}={}'.format(form_id, form.doc_type))
+
+    # reset form state prior to processing
+    if should_use_sql_backend(form.domain):
+        form.state = XFormInstanceSQL.NORMAL
+    else:
+        form.doc_type = 'XFormInstance'
+    form.problem = None
+
+    cache = FormProcessorInterface(form.domain).casedb_cache(
+        domain=form.domain, lock=True, deleted_ok=True, xforms=[form]
+    )
+    with cache as casedb:
+        case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
+
+        if case_stock_result:
+            stock_result = case_stock_result.stock_result
+            if stock_result:
+                assert stock_result.populated
+
+            cases = case_stock_result.case_models
+            if should_use_sql_backend(form.domain):
+                for case in cases:
+                    CaseAccessorSQL.save_case(case)
+
+                if stock_result:
+                    LedgerAccessorSQL.save_ledger_values(stock_result.models_to_save)
+
+                FormAccessorSQL.update_form_problem_and_state(form)
+            else:
+                with bulk_atomic_blobs([form] + cases):
+                    form.save()
+                    XFormInstance.get_db().bulk_save(cases)
+                if stock_result:
+                    stock_result.commit()

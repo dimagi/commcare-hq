@@ -1113,59 +1113,15 @@ class ReprocessXFormErrors(BaseAdminSectionView):
         })
         return context
 
-    def get_form(self, form_id):
-        try:
-            return FormAccessorSQL.get_form(form_id)
-        except XFormNotFound:
-            pass
 
-        try:
-            return FormAccessorCouch.get_form(form_id)
-        except ResourceNotFound:
-            pass
-
-        return None
 
     def post(self, request, *args, **kwargs):
-        from corehq.apps.couch_sql_migration.couchsqlmigration import _get_case_and_ledger_updates
+        from corehq.form_processor.utils.xform import reprocess_xform_error
 
         if self.form.is_valid():
             form_id = self.form.cleaned_data['xform_id']
-            form = self.get_form(form_id)
-            if not form:
-                messages.error(self.request, 'Form not found: {}'.format(form_id))
-                return self.get(request, *args, **kwargs)
-
-            if not form.is_error:
-                messages.error(self.request, 'Form was not an error form: {}={}'.format(form_id, form.doc_type))
-                return self.get(request, *args, **kwargs)
-
             try:
-                cache = FormProcessorInterface(form.domain).casedb_cache(domain=form.domain, lock=True, deleted_ok=True,
-                                                                         xforms=[form])
-                with cache as casedb:
-                    case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
-
-                    if case_stock_result:
-                        stock_result = case_stock_result.stock_result
-                        if stock_result:
-                            assert stock_result.populated
-
-                        cases = case_stock_result.case_models
-                        if should_use_sql_backend(form.domain):
-                            for case in cases:
-                                CaseAccessorSQL.save_case(case)
-
-                            if stock_result:
-                                LedgerAccessorSQL.save_ledger_values(stock_result.models_to_save)
-
-                            form.state = XFormInstanceSQL.NORMAL
-                            form.problem = None
-                            FormAccessorSQL.update_form_problem_and_state(form)
-                        else:
-                            form.doc_type = 'XFormInstance'
-                            form.problem = None
-                            FormProcessorCouch.save_processed_models(form, cases, stock_result)
+                reprocess_xform_error(form_id)
             except Exception as e:
                 messages.error(self.request, str(e))
             else:
