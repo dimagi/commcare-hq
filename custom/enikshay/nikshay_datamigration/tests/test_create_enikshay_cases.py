@@ -52,7 +52,6 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             ]),
             person_case.dynamic_case_properties()
         )
-        self.assertEqual('MH-ABD-05-16-0001', person_case.external_id)
         self.assertEqual('A B C', person_case.name)
         self.assertEqual(self.phi.location_id, person_case.owner_id)
         self.assertFalse(person_case.closed)
@@ -121,6 +120,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             ]),
             episode_case.dynamic_case_properties()
         )
+        self.assertEqual('MH-ABD-05-16-0001', episode_case.external_id)
         self.assertEqual('Episode #1: Confirmed TB (Patient)', episode_case.name)
         self.assertEqual(datetime(2016, 12, 13), episode_case.opened_on)
         self.assertEqual('-', episode_case.owner_id)

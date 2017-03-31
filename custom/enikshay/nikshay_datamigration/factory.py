@@ -126,7 +126,6 @@ class EnikshayCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': PERSON_CASE_TYPE,
-                'external_id': self.nikshay_id,
                 'update': {
                     'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,
@@ -247,6 +246,7 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'case_type': EPISODE_CASE_TYPE,
                 'date_opened': self.patient_detail.pregdate1,
+                'external_id': self.nikshay_id,
                 'owner_id': '-',
                 'update': {
                     'adherence_schedule_date_start': (
