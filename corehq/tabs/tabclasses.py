@@ -1315,10 +1315,7 @@ class ProjectSettingsTab(UITab):
 
     url_prefix_formats = ('/a/{domain}/settings/project/',)
 
-    @property
-    def _is_viewable(self):
-        return (self.domain and self.couch_user and
-                self.couch_user.is_domain_admin(self.domain))
+    _is_viewable = False
 
     @property
     def sidebar_items(self):
