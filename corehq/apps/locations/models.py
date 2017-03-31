@@ -121,6 +121,7 @@ class LocationType(models.Model):
         on_delete=models.SET_NULL,
     )  # include all levels of this type and their ancestors
     last_modified = models.DateTimeField(auto_now=True)
+    has_user = models.BooleanField(default=False)
 
     emergency_level = StockLevelField(default=0.5)
     understock_threshold = StockLevelField(default=1.5)
@@ -391,6 +392,9 @@ class SQLLocation(MPTTModel):
     stocks_all_products = models.BooleanField(default=True)
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True, blank=True)
+
+    # For locations where location_type.has_user == True
+    user_id = models.CharField(max_length=255, blank=True)
 
     objects = _tree_manager = LocationManager()
     # This should really be the default location manager
