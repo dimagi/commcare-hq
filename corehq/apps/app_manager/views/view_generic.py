@@ -170,7 +170,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     else:
         from corehq.apps.dashboard.views import DomainDashboardView, NewUserDashboardView
         if toggles.APP_MANAGER_V2.enabled(domain):
-            template = DomainDashboardView.template_name
+            return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
         else:
             return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
 
