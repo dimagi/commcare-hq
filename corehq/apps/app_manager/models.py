@@ -1018,8 +1018,15 @@ class FormBase(DocumentSchema):
                 logging.error("Failed: _parse_xml(string=%r)" % self.source)
                 raise
 
+        try:
+            questions = self.get_questions(self.get_app().langs, include_triggers=True)
+        except XFormException as e:
+            error = {'type': 'validation error', 'validation_message': unicode(e)}
+            error.update(meta)
+            errors.append(error)
+
         if not errors:
-            if len(self.get_questions(self.get_app().langs, include_triggers=True)) == 0:
+            if len(questions) == 0:
                 errors.append(dict(type="blank form", **meta))
             else:
                 try:
