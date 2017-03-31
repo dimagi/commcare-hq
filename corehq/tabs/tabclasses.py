@@ -785,6 +785,12 @@ class ApplicationsTab(UITab):
     url_prefix_formats = ('/a/{domain}/apps/',)
 
     @property
+    def view(self):
+        if toggles.APP_MANAGER_V2.enabled(self.domain):
+            return "default_new_app"
+        return "default_app"
+
+    @property
     def title(self):
         return _("Applications")
 
