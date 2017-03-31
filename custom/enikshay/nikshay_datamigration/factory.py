@@ -64,10 +64,6 @@ class EnikshayCaseFactory(object):
         return None
 
     @property
-    def creating_person_case(self):
-        return self.existing_person_case is not None
-
-    @property
     @memoized
     def existing_occurrence_case(self):
         """
