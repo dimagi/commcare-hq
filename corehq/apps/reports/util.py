@@ -1,37 +1,35 @@
 # coding: utf-8
-from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
 import math
-import pytz
-import warnings
 
+import pytz
 from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.utils import use_new_exports, should_use_sql_backend
-
+from corehq.util.namedtupledict import namedtupledict
 from couchexport.util import SerializableFunction
 from couchforms.analytics import get_first_form_submission_received
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_request
-
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
-
 from .models import HQUserType, TempCommCareUser
 from .analytics.esaccessors import (
     get_all_user_ids_submitted,
     get_username_in_last_form_user_id_submitted,
 )
+
 
 DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER = 'col-xs-4 col-md-3 col-lg-2 control-label'
 DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER = 'col-xs-8 col-md-8 col-lg-9'
@@ -156,31 +154,6 @@ def get_username_from_forms(domain, user_id):
             return possible_username
     else:
         return HQUserType.human_readable[HQUserType.ADMIN]
-
-
-def namedtupledict(name, fields):
-    cls = namedtuple(name, fields)
-
-    def __getitem__(self, item):
-        if isinstance(item, basestring):
-            warnings.warn(
-                "namedtuple fields should be accessed as attributes",
-                DeprecationWarning,
-            )
-            return getattr(self, item)
-        return cls.__getitem__(self, item)
-
-    def get(self, item, default=None):
-        warnings.warn(
-            "namedtuple fields should be accessed as attributes",
-            DeprecationWarning,
-        )
-        return getattr(self, item, default)
-    # return a subclass of cls that has the above __getitem__
-    return type(name, (cls,), {
-        '__getitem__': __getitem__,
-        'get': get,
-    })
 
 
 class SimplifiedUserInfo(

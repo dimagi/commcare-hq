@@ -6,10 +6,10 @@ from corehq.apps.es import users as user_es, filters
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.dbaccessors import user_ids_at_locations_and_descendants
-from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.util import remove_dups, flatten_list
+from corehq.util.namedtupledict import namedtupledict
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import SQLLocation
 
