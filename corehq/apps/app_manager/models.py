@@ -5605,8 +5605,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if matches(obj):
                 return obj
         if not error:
-            error = _("Could not find module with ID='{unique_id}' in app '{app_id}'.").format(
-                app_id=self.id, unique_id=unique_id)
+            error = _(u"Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
+                app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
     def get_forms(self, bare=True):
