@@ -118,7 +118,7 @@ urlpatterns = [
     url(r'^commcare/upload/poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
         user_upload_job_poll, name='user_upload_job_poll'),
     url(r'^commcare/download/$', download_commcare_users, name='download_commcare_users'),
-url(r'^commcare/download/status/(?P<download_id>[0-9a-fA-Z]{25,32})/$', DownloadUsersStatusView.as_view(),
+    url(r'^commcare/download/status/(?P<download_id>[0-9a-fA-Z]{25,32})/$', DownloadUsersStatusView.as_view(),
         name=DownloadUsersStatusView.urlname),
     url(r'^commcare/download/poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
         user_download_job_poll, name='user_download_job_poll'),
