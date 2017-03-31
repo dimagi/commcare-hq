@@ -390,6 +390,7 @@ class ProjectDataTab(UITab):
     url_prefix_formats = (
         '/a/{domain}/data/',
         '/a/{domain}/fixtures/',
+        '/a/{domain}/data_dictionary/',
     )
 
     @property
