@@ -1425,6 +1425,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
 
+    # This means that this user represents a location, and has a 1-1 relationship
+    # with a location where location.location_type.has_user == True
+    user_location_id = StringProperty()
+
     is_anonymous = BooleanProperty(default=False)
 
     mobile_ucr_sync_interval = IntegerProperty()
