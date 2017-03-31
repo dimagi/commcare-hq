@@ -25,8 +25,8 @@ def datadog_gauge(name, value, enforce_prefix='commcare', tags=None):
     _datadog_record(statsd.gauge, name, value, enforce_prefix, tags)
 
 
-def datadog_counter(name, enforce_prefix='commcare', tags=None):
-    _datadog_record(statsd.increment, name, 1, enforce_prefix, tags)
+def datadog_counter(name, value=1, enforce_prefix='commcare', tags=None):
+    _datadog_record(statsd.increment, name, value, enforce_prefix, tags)
 
 
 def _datadog_record(fn, name, value, enforce_prefix='commcare', tags=None):

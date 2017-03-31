@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from datetime import timedelta
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.change_feed import topics
 
@@ -37,3 +38,5 @@ VALID_REFERENCED_DOC_TYPES = [
     'Location',
     'XFormInstance',
 ]
+
+ASYNC_INDICATOR_QUEUE_TIME = timedelta(minutes=5)

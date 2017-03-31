@@ -34,7 +34,7 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
             # the same effect, an app having has_submissions set to True.
             mark_has_submission(domain, build_id)
 
-        user_id = doc.get('user_id')
+        user_id = doc.get('form', {}).get('meta', {}).get('userID')
         received_on = doc.get('received_on')
         app_id = doc.get('app_id')
         version = doc.get('version')

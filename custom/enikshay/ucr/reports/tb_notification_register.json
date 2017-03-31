@@ -10,6 +10,9 @@
         "enikshay-aks-audit",
         "np-migration-3"
     ],
+    "server_environment": [
+        "softlayer"
+    ],
     "data_source_table": "episode",
     "report_id": "tb_notification_register",
     "config": {
@@ -222,7 +225,7 @@
                     "type": "translation",
                     "translations": {
                         "pulmonary": "P",
-                        "extra_pulonary": "EP"
+                        "extra_pulmonary": "EP"
                     }
                 },
                 "calculate_total": false
@@ -241,6 +244,18 @@
                         "microbiological": "Microbiologically confirmed",
                         "clinical": "Clinically Diagnosed"
                     }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Date of Diagnosis",
+                "type": "field",
+                "field": "date_of_diagnosis",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
                 },
                 "calculate_total": false
             },
@@ -409,7 +424,7 @@
             {
                 "display": "Date of Treatment Initiation",
                 "type": "field",
-                "field": "ip_initiation_date",
+                "field": "treatment_initiation_date",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -445,12 +460,18 @@
             {
                 "display": "Dosage Frequency",
                 "type": "field",
-                "field": "dosage_frequency",
+                "field": "adherence_schedule_id",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "schedule_mwf": "Intermittent (MWF)",
+                        "schedule_trs": "Intermittent (TTS)",
+                        "schedule_daily": "Daily"
+                    }
                 },
                 "calculate_total": false
             },

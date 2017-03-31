@@ -294,6 +294,9 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_fixtures_in_graph(self):
         self._test_generic_suite('app_fixture_graphing', 'suite-fixture-graphing')
 
+    def test_printing(self):
+        self._test_generic_suite('app_print_detail', 'suite-print-detail')
+
     def test_fixture_to_case_selection(self):
         factory = AppFactory(build_version='2.9')
 

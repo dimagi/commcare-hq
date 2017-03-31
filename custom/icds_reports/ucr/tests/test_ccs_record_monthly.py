@@ -2,9 +2,10 @@ import uuid
 from datetime import datetime, date
 from xml.etree import ElementTree
 from django.test import override_settings
-from corehq.apps.receiverwrapper.util import submit_form_locally
+import mock
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
+from corehq.apps.es.fake.forms_fake import FormESFake
 from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element
 
@@ -16,6 +17,7 @@ XMLNS_EBF_FORM = 'http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
+@mock.patch('custom.icds_reports.ucr.expressions.FormES', FormESFake)
 class TestCCSRecordDataSource(BaseICDSDatasourceTest):
     datasource_filename = 'ccs_record_cases_monthly_tableau'
 
@@ -137,7 +139,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         add_element(fp_group, 'counsel_accessible_ppfp', counsel_accessible_postpartum_fp)
         form.append(fp_group)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_thr_rations_form(
             self, form_date, case_id, thr_given_mother='0', rations_distributed=0):
@@ -163,7 +165,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             add_element(mother_thr, 'days_ration_given_mother', rations_distributed)
             form.append(mother_thr)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_pnc_form(self, form_date, case_id, counsel_methods='no'):
 
@@ -183,7 +185,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
 
         add_element(form, 'counsel_methods', counsel_methods)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_ebf_form(self, form_date, case_id, counsel_methods='no'):
 
@@ -203,7 +205,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
 
         add_element(form, 'counsel_methods', counsel_methods)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def test_open_in_month(self):
         case_id = uuid.uuid4().hex

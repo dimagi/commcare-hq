@@ -15,6 +15,11 @@ from corehq.util.dates import get_previous_month_date_range
 
 class TestDomainInvoiceFactory(BaseAccountingTest):
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestDomainInvoiceFactory, cls).setUpClass()
+        generator.instantiate_accounting()
+
     def setUp(self):
         super(TestDomainInvoiceFactory, self).setUp()
         self.invoice_start, self.invoice_end = get_previous_month_date_range()

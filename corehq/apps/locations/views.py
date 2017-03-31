@@ -515,6 +515,7 @@ class NewLocationView(BaseLocationView):
         clean_location.send(
             self.__class__.__name__,
             domain=self.domain,
+            request_user=self.request.user,
             location=self.location,
             forms={self.location_form.__class__.__name__: self.location_form},
         )
