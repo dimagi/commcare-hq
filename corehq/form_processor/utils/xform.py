@@ -179,7 +179,12 @@ def _get_form(form_id):
     return None
 
 
-def reprocess_xform_error(form_id):
+def reprocess_xform_error_by_id(form_id):
+    form = _get_form(form_id)
+    return reprocess_xform_error(form)
+
+
+def reprocess_xform_error(form):
     """
     Attempt to re-process an error form. This was created specifically to address
     the issue of out of order forms and child cases (form creates child case before
@@ -198,12 +203,11 @@ def reprocess_xform_error(form_id):
     from corehq.form_processor.interfaces.processor import ProcessedForms
     from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 
-    form = _get_form(form_id)
     if not form:
-        raise Exception('Form with ID {} not found'.format(form_id))
+        raise Exception('Form with ID {} not found'.format(form.form_id))
 
     if not form.is_error:
-        raise Exception('Form was not an error form: {}={}'.format(form_id, form.doc_type))
+        raise Exception('Form was not an error form: {}={}'.format(form.form_id, form.doc_type))
 
     # reset form state prior to processing
     if should_use_sql_backend(form.domain):

@@ -1112,12 +1112,12 @@ class ReprocessXFormErrors(BaseAdminSectionView):
         return context
 
     def post(self, request, *args, **kwargs):
-        from corehq.form_processor.utils.xform import reprocess_xform_error
+        from corehq.form_processor.utils.xform import reprocess_xform_error_by_id
 
         if self.form.is_valid():
             form_id = self.form.cleaned_data['xform_id']
             try:
-                form = reprocess_xform_error(form_id)
+                form = reprocess_xform_error_by_id(form_id)
             except Exception as e:
                 messages.error(self.request, str(e))
             else:
