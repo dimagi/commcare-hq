@@ -185,3 +185,7 @@ def get_ucr_class_name(id):
     :return: string class name
     """
     return 'corehq.reports.DynamicReport{}'.format(id)
+
+
+def get_async_indicator_modify_lock_key(doc_id, pillow_name):
+    return 'async_indicator_save-{}_{}'.format(doc_id, pillow_name)

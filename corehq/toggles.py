@@ -300,6 +300,13 @@ ADD_USERS_FROM_LOCATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+CASE_DETAIL_PRINT = StaticToggle(
+    'case_detail_print',
+    'Allowing printing of the case detail, based on an HTML template',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',

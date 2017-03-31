@@ -278,6 +278,7 @@ class EvalExpressionSpec(JsonObject):
 class FormsExpressionSpec(JsonObject):
     type = TypeProperty('get_case_forms')
     case_id_expression = DefaultProperty(required=True)
+    xmlns = ListProperty(required=False)
 
     def configure(self, case_id_expression):
         self._case_id_expression = case_id_expression
@@ -294,15 +295,37 @@ class FormsExpressionSpec(JsonObject):
     def _get_forms(self, case_id, context):
         domain = context.root_doc['domain']
 
-        cache_key = (self.__class__.__name__, case_id)
+        cache_key = (self.__class__.__name__, case_id, tuple(self.xmlns))
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        xforms = FormProcessorInterface(domain).get_case_forms(case_id)
-        xforms = [f.to_json() for f in xforms if f.domain == domain]
+        xforms = self._get_case_forms(case_id, context)
+        if self.xmlns:
+            xforms = [f for f in xforms if f.xmlns in self.xmlns]
+
+        xforms = [self._get_form_json(f, context) for f in xforms if f.domain == domain]
 
         context.set_cache_value(cache_key, xforms)
         return xforms
+
+    def _get_case_forms(self, case_id, context):
+        cache_key = (self.__class__.__name__, 'helper', case_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        domain = context.root_doc['domain']
+        xforms = FormProcessorInterface(domain).get_case_forms(case_id)
+        context.set_cache_value(cache_key, xforms)
+        return xforms
+
+    def _get_form_json(self, form, context):
+        cache_key = (self.__class__.__name__, 'xform', form.get_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        form_json = form.to_json()
+        context.set_cache_value(cache_key, form_json)
+        return form_json
 
 
 class SubcasesExpressionSpec(JsonObject):

@@ -10,6 +10,9 @@
         "enikshay-aks-audit",
         "np-migration-3"
     ],
+    "server_environment": [
+        "softlayer"
+    ],
     "data_source_table": "test",
     "report_id": "tb_lab_register",
     "config": {
@@ -138,6 +141,18 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "known_patient_contact": "Contact of known TB patient",
+                        "prison_inmate": "Prison inmate",
+                        "miner": "Miner",
+                        "migrant": "Migrant",
+                        "refugee": "Refugee",
+                        "slum_dweller": "Slum dweller",
+                        "health_care_worker": "Health care worker",
+                        "tribal_population": "Tribal population",
+                        "other": "Other"
+                    }
                 },
                 "calculate_total": false
             },
@@ -162,6 +177,16 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "phi": "PHI",
+                        "dmc": "DMC",
+                        "ictc": "ICTC",
+                        "art": "ART",
+                        "medical_college": "Medical College",
+                        "drtb_centre": "DRTB Centre",
+                        "private_others": "Private Others"
+                    }
                 },
                 "calculate_total": false
             },
