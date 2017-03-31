@@ -1,5 +1,8 @@
 import os
 from base64 import urlsafe_b64encode
+from datetime import datetime, timedelta
+
+from .models import BlobExpiration
 
 
 class ClosingContextProxy(object):
@@ -54,3 +57,16 @@ def random_url_id(nbytes):
     :returns: A URL-safe string.
     """
     return urlsafe_b64encode(os.urandom(nbytes)).decode('ascii').rstrip(u'=')
+
+
+def create_blob_expire_object(bucket, identifier, length, timeout):
+    return BlobExpiration.objects.create(
+        bucket=bucket,
+        identifier=identifier,
+        expires_on=_utcnow() + timedelta(minutes=timeout),
+        length=length,
+    )
+
+
+def _utcnow():
+    return datetime.utcnow()
