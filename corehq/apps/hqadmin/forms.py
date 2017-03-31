@@ -115,7 +115,7 @@ class ReprocessXFormErrorsForm(forms.Form):
         self.helper.layout = crispy.Layout(
             FieldWithHelpBubble(
                 'xform_id',
-                help_bubble_text=_("Enter the xform ID of the form that needs to be re-processed."),
+                help_bubble_text=_("Enter the ID of the form that needs to be re-processed."),
             ),
             FormActions(
                 crispy.Submit(

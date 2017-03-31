@@ -180,6 +180,14 @@ def _get_form(form_id):
 
 
 def reprocess_xform_error(form_id):
+    """
+    Attempt to re-process an error form. This was created specifically to address
+    the issue of out of order forms and child cases (form creates child case before
+    parent case has been created).
+
+    See http://manage.dimagi.com/default.asp?250459
+    :param form_id: ID of the error form to process
+    """
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
     from corehq.form_processor.submission_post import SubmissionPost
     from corehq.form_processor.utils import should_use_sql_backend
@@ -227,3 +235,5 @@ def reprocess_xform_error(form_id):
                     XFormInstance.get_db().bulk_save(cases)
                 if stock_result:
                     stock_result.commit()
+
+    return form

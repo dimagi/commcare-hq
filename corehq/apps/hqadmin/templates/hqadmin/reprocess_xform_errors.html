@@ -4,6 +4,11 @@
 {% block reportcontent %}
 <h2>Reprocess XForm Errors</h2>
 <div class="row">
+    <p>Attempt to re-process an error form. This was created specifically to address
+    the issue of out of order forms and child cases (form creates child case before
+    parent case has been created).
+    <br/>
+    See <a href="http://manage.dimagi.com/default.asp?250459">FB Case 250459</a></p>
     {% crispy form %}
 </div>
 {% endblock %}

@@ -1108,12 +1108,8 @@ class ReprocessXFormErrors(BaseAdminSectionView):
     @property
     def page_context(self):
         context = get_hqadmin_base_context(self.request)
-        context.update({
-            'form': self.form,
-        })
+        context.update({'form': self.form})
         return context
-
-
 
     def post(self, request, *args, **kwargs):
         from corehq.form_processor.utils.xform import reprocess_xform_error
@@ -1121,14 +1117,15 @@ class ReprocessXFormErrors(BaseAdminSectionView):
         if self.form.is_valid():
             form_id = self.form.cleaned_data['xform_id']
             try:
-                reprocess_xform_error(form_id)
+                form = reprocess_xform_error(form_id)
             except Exception as e:
                 messages.error(self.request, str(e))
             else:
-                messages.success(self.request, "Form processed successfully")
+                form_url = reverse('render_form_data', args=[form.domain, form_id])
+                message = 'Form processed successfully: <a href="{}">View Form</a>'.format(form_url)
+                messages.success(self.request, message, extra_tags='html')
 
         return self.get(request, *args, **kwargs)
-
 
 
 def top_five_projects_by_country(request):
