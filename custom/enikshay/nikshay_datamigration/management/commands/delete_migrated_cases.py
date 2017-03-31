@@ -8,21 +8,8 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
     CASE_TYPE_OCCURRENCE,
     CASE_TYPE_PERSON,
+    get_first_parent_of_case,
 )
-
-
-def _get_parent_case_by_type(domain, child_case_id, parent_case_type):
-    case_accessor = CaseAccessors(domain)
-    child_case = case_accessor.get_case(child_case_id)
-    parent_case_ids = [
-        indexed_case.referenced_id for indexed_case in child_case.indices
-    ]
-    parent_cases = [
-        parent_case for parent_case in case_accessor.get_cases(parent_case_ids)
-        if parent_case.type == parent_case_type
-    ]
-    assert len(parent_cases) == 1
-    return parent_cases[0]
 
 
 def _get_children_cases_by_type(domain, parent_case_id, child_case_type):
@@ -42,9 +29,9 @@ def _get_related_case_ids(domain, episode_case_id):
 
     episode_case = case_accessor.get_case(episode_case_id)
     assert episode_case.dynamic_case_properties().get('migration_created_case') == 'true'
-    occurrence_case = _get_parent_case_by_type(domain, episode_case_id, CASE_TYPE_OCCURRENCE)
+    occurrence_case = get_first_parent_of_case(domain, episode_case_id, CASE_TYPE_OCCURRENCE)
     assert occurrence_case.dynamic_case_properties().get('migration_created_case') == 'true'
-    person_case = _get_parent_case_by_type(domain, occurrence_case.case_id, CASE_TYPE_PERSON)
+    person_case = get_first_parent_of_case(domain, occurrence_case.case_id, CASE_TYPE_PERSON)
     assert person_case.dynamic_case_properties().get('migration_created_case') == 'true'
 
     all_occurrence_cases = _get_children_cases_by_type(domain, person_case.case_id, CASE_TYPE_OCCURRENCE)
