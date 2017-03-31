@@ -200,7 +200,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
     @softer_assert()
     def setUp(self):
-        self.pillow = get_kafka_ucr_pillow()
+        self.pillow = get_kafka_ucr_pillow(topics=['case-sql'])
         self.config = get_data_source_with_related_doc_type()
         self.config.save()
         self.adapter = get_indicator_adapter(self.config)
@@ -215,6 +215,27 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         delete_all_cases()
         delete_all_xforms()
 
+    def _post_case_blocks(self, iteration=0):
+        return post_case_blocks(
+            [
+                CaseBlock(
+                    create=iteration == 0,
+                    case_id='parent-id',
+                    case_name='parent-name',
+                    case_type='bug',
+                    update={'update-prop-parent': iteration},
+                ).as_xml(),
+                CaseBlock(
+                    create=iteration == 0,
+                    case_id='child-id',
+                    case_name='child-name',
+                    case_type='bug-child',
+                    index={'parent': ('bug', 'parent-id')},
+                    update={'update-prop-child': iteration}
+                ).as_xml()
+            ], domain=self.domain
+        )
+
     def test_process_doc_from_sql_stale(self):
         '''
         Ensures that when you update a case that the changes are reflected in
@@ -225,26 +246,8 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
         for i in range(3):
             since = self.pillow.get_change_feed().get_latest_offsets()
-            form, cases = post_case_blocks(
-                [
-                    CaseBlock(
-                        create=i == 0,
-                        case_id='parent-id',
-                        case_name='parent-name',
-                        case_type='bug',
-                        update={'update-prop-parent': i},
-                    ).as_xml(),
-                    CaseBlock(
-                        create=i == 0,
-                        case_id='child-id',
-                        case_name='child-name',
-                        case_type='bug-child',
-                        index={'parent': ('bug', 'parent-id')},
-                        update={'update-prop-child': i}
-                    ).as_xml()
-                ], domain=self.domain
-            )
-            with self.assertNumQueries(19):
+            form, cases = self._post_case_blocks(i)
+            with self.assertNumQueries(15):
                 self.pillow.process_changes(since=since, forever=False)
             rows = self.adapter.get_query_object()
             self.assertEqual(rows.count(), 1)
@@ -262,42 +265,19 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         adapter = get_indicator_adapter(config)
         adapter.build_table()
         self.addCleanup(adapter.drop_table)
-        pillow = get_kafka_ucr_pillow()
-        pillow.bootstrap(configs=[self.config, config])
+        self.pillow.bootstrap(configs=[self.config, config])
 
         since = self.pillow.get_change_feed().get_latest_offsets()
-        form, cases = post_case_blocks(
-            [
-                CaseBlock(
-                    create=True,
-                    case_id='parent-id',
-                    case_name='parent-name',
-                    case_type='bug',
-                    update={'update-prop-parent': 0},
-                ).as_xml(),
-                CaseBlock(
-                    create=True,
-                    case_id='child-id',
-                    case_name='child-name',
-                    case_type='bug-child',
-                    index={'parent': ('bug', 'parent-id')},
-                    update={'update-prop-child': 0}
-                ).as_xml()
-            ], domain=self.domain
-        )
+        form, cases = self._post_case_blocks()
 
         # run pillow and check changes
-        with self.assertNumQueries(19):
-            pillow.process_changes(since=since, forever=False)
-        rows = self.adapter.get_query_object()
-        self.assertEqual(rows.count(), 1)
-        row = rows[0]
-        self.assertEqual(int(row.parent_property), 0)
+        with self.assertNumQueries(15):
+            self.pillow.process_changes(since=since, forever=False)
 
-        rows = adapter.get_query_object()
-        self.assertEqual(rows.count(), 1)
-        row = rows[0]
-        self.assertEqual(int(row.parent_property), 0)
+        for a in [adapter, self.adapter]:
+            rows = a.get_query_object()
+            self.assertEqual(rows.count(), 1)
+            self.assertEqual(int(rows[0].parent_property), 0)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
