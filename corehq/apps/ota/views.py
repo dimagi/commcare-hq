@@ -262,7 +262,7 @@ class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
     template_name = "ota/prime_restore_cache.html"
 
     @method_decorator(domain_admin_required)
-    @toggles.PRIME_RESTORE.required_decorator()
+    @method_decorator(toggles.PRIME_RESTORE.required_decorator())
     def dispatch(self, *args, **kwargs):
         return super(PrimeRestoreCacheView, self).dispatch(*args, **kwargs)
 
