@@ -127,6 +127,7 @@ class TestAdherenceUpdater(TestCase):
     def _create_adherence_cases(self, adherence_cases):
         cases = self.factory.create_or_update_cases([
             get_adherence_case_structure(
+                adherence_date.strftime('%Y-%m-%d-%H-%M'),
                 self.episode_id,
                 adherence_date,
                 extra_update={

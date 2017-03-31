@@ -113,7 +113,7 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=No
     )
 
 
-def get_adherence_case_structure(indexed_episode_id, adherence_date, extra_update=None):
+def get_adherence_case_structure(case_id, indexed_episode_id, adherence_date, extra_update=None):
     extra_update = extra_update or {}
     update = {
         "person_name": "Pippin",
@@ -123,7 +123,7 @@ def get_adherence_case_structure(indexed_episode_id, adherence_date, extra_updat
     }
     update.update(extra_update)
     return CaseStructure(
-        case_id=adherence_date.strftime('%Y-%m-%d-%H-%M'),
+        case_id=case_id,
         attrs={
             "case_type": "adherence",
             "create": True,
