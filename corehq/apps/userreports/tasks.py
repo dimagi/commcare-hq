@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
