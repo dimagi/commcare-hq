@@ -1542,9 +1542,7 @@ class MySettingsTab(UITab):
     view = 'default_my_settings'
     url_prefix_formats = ('/account/',)
 
-    @property
-    def _is_viewable(self):
-        return self.couch_user is not None
+    _is_viewable = False
 
     @property
     def sidebar_items(self):
