@@ -70,5 +70,5 @@ class Command(BaseCommand):
         if should_use_sql_backend(domain):
             problem_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, 'XFormError')
         else:
-            problem_ids = get_form_ids_by_type(domain, 'XFormError', start=since)
+            problem_ids = get_form_ids_by_type(domain, 'XFormError')
         return problem_ids
