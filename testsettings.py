@@ -22,11 +22,11 @@ NOSE_PLUGINS = [
     'corehq.tests.noseplugins.dividedwerun.DividedWeRunPlugin',
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
     'corehq.tests.noseplugins.cmdline_params.CmdLineParametersPlugin',
+    'corehq.tests.noseplugins.uniformresult.UniformTestResultPlugin',
 
     # The following are not enabled by default
     'corehq.tests.noseplugins.logfile.LogFilePlugin',
     'corehq.tests.noseplugins.timing.TimingPlugin',
-    'corehq.tests.noseplugins.uniformresult.UniformTestResultPlugin',
 
     # Uncomment to debug tests. Plugins have nice hooks for inspecting state
     # before/after each test or context setup/teardown, etc.
