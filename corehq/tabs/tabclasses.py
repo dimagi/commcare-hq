@@ -1313,7 +1313,10 @@ class ProjectSettingsTab(UITab):
     title = ugettext_noop("Project Settings")
     view = 'domain_settings_default'
 
-    url_prefix_formats = ('/a/{domain}/settings/project/',)
+    url_prefix_formats = (
+        '/a/{domain}/settings/project/',
+        '/a/{domain}/phone/prime_restore/',
+    )
 
     _is_viewable = False
 
