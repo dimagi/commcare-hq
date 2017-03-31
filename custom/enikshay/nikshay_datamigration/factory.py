@@ -7,8 +7,10 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence, \
-    get_open_drtb_hiv_case_from_episode
+from custom.enikshay.case_utils import (
+    get_first_parent_of_case,
+    get_open_drtb_hiv_case_from_episode,
+)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.nikshay_datamigration.models import Outcome
 
@@ -53,11 +55,13 @@ class EnikshayCaseFactory(object):
 
     @property
     @memoized
-    def existing_person_case(self):
+    def existing_episode_case(self):
         """
-        Get the existing person case for this nikshay ID, or None if no person case exists
+        Get the existing episode case for this nikshay ID, or None if no episode case exists
         """
-        matching_external_ids = self.case_accessor.get_cases_by_external_id(self.nikshay_id, case_type='person')
+        matching_external_ids = self.case_accessor.get_cases_by_external_id(
+            self.nikshay_id, case_type=EPISODE_CASE_TYPE
+        )
         if matching_external_ids:
             assert len(matching_external_ids) == 1
             return matching_external_ids[0]
@@ -69,24 +73,24 @@ class EnikshayCaseFactory(object):
         """
         Get the existing occurrence case for this nikshay ID, or None if no occurrence case exists
         """
-        if self.existing_person_case:
+        if self.existing_episode_case:
             try:
-                return get_open_occurrence_case_from_person(
-                    self.domain, self.existing_person_case.case_id
+                return get_first_parent_of_case(
+                    self.domain, self.existing_episode_case.case_id, OCCURRENCE_CASE_TYPE
                 )
             except ENikshayCaseNotFound:
                 return None
 
     @property
     @memoized
-    def existing_episode_case(self):
+    def existing_person_case(self):
         """
-        Get the existing episode case for this nikshay ID, or None if no episode case exists
+        Get the existing person case for this nikshay ID, or None if no episode case exists
         """
         if self.existing_occurrence_case:
             try:
-                return get_open_episode_case_from_occurrence(
-                    self.domain, self.existing_occurrence_case.case_id
+                return get_first_parent_of_case(
+                    self.domain, self.existing_occurrence_case.case_id, PERSON_CASE_TYPE
                 )
             except ENikshayCaseNotFound:
                 return None
