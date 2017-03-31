@@ -47,7 +47,7 @@ BOOTSTRAP_CONFIG = {
             FeatureType.SMS: dict(monthly_limit=0),
         }
     },
-    (SoftwarePlanEdition.ENTERPRISE, False, False): {
+    (SoftwarePlanEdition.ENTERPRISE, False, True): {
         'role': 'enterprise_plan_v0',
         'product_rate': dict(monthly_fee=Decimal('0.00')),
         'feature_rates': {
@@ -98,7 +98,7 @@ BOOTSTRAP_CONFIG_TESTING = {
             FeatureType.SMS: dict(monthly_limit=0),
         }
     },
-    (SoftwarePlanEdition.ENTERPRISE, False, False): {
+    (SoftwarePlanEdition.ENTERPRISE, False, True): {
         'role': 'enterprise_plan_v0',
         'product_rate': dict(monthly_fee=Decimal('0.00')),
         'feature_rates': {
