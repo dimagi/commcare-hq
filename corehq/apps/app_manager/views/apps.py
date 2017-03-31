@@ -27,7 +27,7 @@ from corehq import toggles, privileges
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
-from corehq.apps.dashboard.views import NewUserDashboardView
+from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.tour import tours
@@ -95,7 +95,7 @@ def delete_app(request, domain, app_id):
     clear_app_cache(request, domain)
 
     if toggles.APP_MANAGER_V2.enabled(domain):
-        return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
+        return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
     return back_to_main(request, domain)
 
 
