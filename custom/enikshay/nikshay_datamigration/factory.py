@@ -64,6 +64,8 @@ class EnikshayCaseFactory(object):
         )
         if matching_external_ids:
             assert len(matching_external_ids) == 1
+            existing_episode = matching_external_ids[0]
+            assert existing_episode.dynamic_case_properties().get('migration_created_case') == 'true'
             return matching_external_ids[0]
         return None
 
