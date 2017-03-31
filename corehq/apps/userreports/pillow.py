@@ -230,7 +230,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
                 table.delete(doc)
 
         if async_tables:
-            AsyncIndicator.update_indicators(change, pillow_instance, async_tables)
+            AsyncIndicator.update_indicators(change, async_tables)
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):

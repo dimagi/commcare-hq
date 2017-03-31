@@ -187,5 +187,5 @@ def get_ucr_class_name(id):
     return 'corehq.reports.DynamicReport{}'.format(id)
 
 
-def get_async_indicator_modify_lock_key(doc_id, pillow_name):
-    return 'async_indicator_save-{}_{}'.format(doc_id, pillow_name)
+def get_async_indicator_modify_lock_key(doc_id):
+    return 'async_indicator_save-{}'.format(doc_id)

@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 
 from django.conf import settings
+from django.contrib import admin
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import ugettext as _
@@ -707,27 +708,25 @@ class AsyncIndicator(models.Model):
     These indicators will be picked up by a queue and placed into celery to be
     saved. Once saved to the data sources, this record will be deleted
     """
-    doc_id = models.CharField(max_length=255, null=False, db_index=True)
+    doc_id = models.CharField(max_length=255, null=False, db_index=True, unique=True)
     doc_type = models.CharField(max_length=126, null=False)
     domain = models.CharField(max_length=126, null=False)
-    pillow = models.CharField(max_length=126, null=False)
     indicator_config_ids = ArrayField(
         models.CharField(max_length=126, null=True, blank=True),
         null=False
     )
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
+    date_queued = models.DateTimeField(null=True, db_index=True)
 
     class Meta(object):
-        unique_together = ('doc_id', 'pillow',)
         ordering = ["date_created"]
 
     @classmethod
-    def update_indicators(cls, change, pillow, config_ids):
+    def update_indicators(cls, change, config_ids):
         doc_id = change.id
-        pillow_id = pillow.pillow_id
-        with CriticalSection([get_async_indicator_modify_lock_key(doc_id, pillow_id)]):
+        with CriticalSection([get_async_indicator_modify_lock_key(doc_id)]):
             try:
-                indicator = cls.objects.get(doc_id=doc_id, pillow=pillow_id)
+                indicator = cls.objects.get(doc_id=doc_id)
             except cls.DoesNotExist:
                 doc_type = change.document['doc_type']
                 domain = change.document['domain']
@@ -735,7 +734,6 @@ class AsyncIndicator(models.Model):
                     doc_id=doc_id,
                     doc_type=doc_type,
                     domain=domain,
-                    pillow=pillow_id,
                     indicator_config_ids=config_ids
                 )
             else:
@@ -747,6 +745,9 @@ class AsyncIndicator(models.Model):
                     indicator.save()
 
         return indicator
+
+
+admin.site.register(AsyncIndicator)
 
 
 def get_datasource_config(config_id, domain):

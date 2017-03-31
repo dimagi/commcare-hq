@@ -305,7 +305,7 @@ class AsyncIndicatorTest(TestCase):
                 ], domain=self.domain
             )
             # ensure indicator is added
-            indicators = AsyncIndicator.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+            indicators = AsyncIndicator.objects.filter(doc_id='child-id')
             self.assertEqual(indicators.count(), 0)
             self.pillow.process_changes(since=since, forever=False)
             self.assertEqual(indicators.count(), 1)
@@ -350,7 +350,7 @@ class AsyncIndicatorTest(TestCase):
         )
 
         # ensure async indicator is added
-        indicators = AsyncIndicator.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+        indicators = AsyncIndicator.objects.filter(doc_id='child-id')
         self.assertEqual(indicators.count(), 0)
         self.pillow.process_changes(since=since, forever=False)
         self.assertEqual(indicators.count(), 1)
