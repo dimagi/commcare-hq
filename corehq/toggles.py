@@ -942,7 +942,15 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
 
 VELLUM_BETA = StaticToggle(
     'vellum_beta',
-    'Use Vellum beta version',
+    'Use Vellum beta version. This flag has been deactivated and will be removed soon; all users are on the beta\
+    unless they also have the vellum alpha flag set.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_USER]
+)
+
+VELLUM_ALPHA = StaticToggle(
+    'vellum_alpha',
+    'Use alpha (pre-beta) Vellum',
     TAG_PRODUCT_PATH,
     [NAMESPACE_USER]
 )
