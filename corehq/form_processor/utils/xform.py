@@ -194,6 +194,9 @@ def reprocess_xform_error(form_id):
     from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL
     from corehq.blobs.mixin import bulk_atomic_blobs
     from couchforms.models import XFormInstance
+    from casexml.apps.case.signals import case_post_save
+    from corehq.form_processor.interfaces.processor import ProcessedForms
+    from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 
     form = _get_form(form_id)
     if not form:
@@ -231,11 +234,22 @@ def reprocess_xform_error(form_id):
                     LedgerAccessorSQL.save_ledger_values(stock_result.models_to_save)
 
                 FormAccessorSQL.update_form_problem_and_state(form)
+                FormProcessorSQL._publish_changes(
+                    ProcessedForms(form, None),
+                    cases,
+                    stock_result
+                )
             else:
                 with bulk_atomic_blobs([form] + cases):
                     XFormInstance.save(form)  # use this save to that we don't overwrite the doc_type
                     XFormInstance.get_db().bulk_save(cases)
                 if stock_result:
                     stock_result.commit()
+
+            case_stock_result.stock_result.finalize()
+            case_stock_result.case_result.commit_dirtiness_flags()
+
+            for case in cases:
+                case_post_save.send(case.__class__, case=case)
 
     return form
