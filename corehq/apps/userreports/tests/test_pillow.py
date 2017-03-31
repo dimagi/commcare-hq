@@ -244,13 +244,60 @@ class ProcessRelatedDocTypePillowTest(TestCase):
                     ).as_xml()
                 ], domain=self.domain
             )
-            self.pillow.process_changes(since=since, forever=False)
+            with self.assertNumQueries(19):
+                self.pillow.process_changes(since=since, forever=False)
             rows = self.adapter.get_query_object()
             self.assertEqual(rows.count(), 1)
             row = rows[0]
             self.assertEqual(int(row.parent_property), i)
             errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
             self.assertEqual(errors.count(), 0)
+
+    def test_reuse_cache(self):
+        config = get_data_source_with_related_doc_type()
+        config.table_id = 'other-config'
+        config.save()
+        self.addCleanup(config.delete)
+
+        adapter = get_indicator_adapter(config)
+        adapter.build_table()
+        self.addCleanup(adapter.drop_table)
+        pillow = get_kafka_ucr_pillow()
+        pillow.bootstrap(configs=[self.config, config])
+
+        since = self.pillow.get_change_feed().get_latest_offsets()
+        form, cases = post_case_blocks(
+            [
+                CaseBlock(
+                    create=True,
+                    case_id='parent-id',
+                    case_name='parent-name',
+                    case_type='bug',
+                    update={'update-prop-parent': 0},
+                ).as_xml(),
+                CaseBlock(
+                    create=True,
+                    case_id='child-id',
+                    case_name='child-name',
+                    case_type='bug-child',
+                    index={'parent': ('bug', 'parent-id')},
+                    update={'update-prop-child': 0}
+                ).as_xml()
+            ], domain=self.domain
+        )
+
+        # run pillow and check changes
+        with self.assertNumQueries(24):
+            pillow.process_changes(since=since, forever=False)
+        rows = self.adapter.get_query_object()
+        self.assertEqual(rows.count(), 1)
+        row = rows[0]
+        self.assertEqual(int(row.parent_property), 0)
+
+        rows = adapter.get_query_object()
+        self.assertEqual(rows.count(), 1)
+        row = rows[0]
+        self.assertEqual(int(row.parent_property), 0)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
