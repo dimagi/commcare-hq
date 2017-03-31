@@ -25,10 +25,10 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.util.context_managers import notify_someone
 from corehq.util.couch import get_document_or_not_found
+from corehq.util.datadog.gauges import datadog_gauge
 from dimagi.utils.couch import CriticalSection, release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.pagination import DatatablesParams
-from dimagi.utils.logging import notify_exception
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
 
@@ -195,13 +195,10 @@ def queue_async_indicators():
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME
     time_for_crit_section = ASYNC_INDICATOR_QUEUE_TIME.seconds - 10
 
-    yesterday = datetime.utcnow() - timedelta(days=1)
-    old_indicators = AsyncIndicator.objects.filter(date_queued__lt=yesterday).count()
-    if old_indicators:
-        notify_exception(
-            None,
-            message="{} indicators have been queued but did not complete in the past day".format(old_indicators)
-        )
+    oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
+    if oldest_indicator and oldest_indicator.date_queued:
+        lag = (datetime.utcnow() - oldest_indicator.date_queued).total_seconds
+        datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
 
     with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
         redis_client = get_redis_client().client.get_client()
