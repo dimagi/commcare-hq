@@ -7,9 +7,10 @@ from django.test import TestCase, override_settings
 from mock import patch
 
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
+from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
-from custom.enikshay.nikshay_datamigration.tests.utils import NikshayMigrationMixin
+from custom.enikshay.nikshay_datamigration.tests.utils import NikshayMigrationMixin, ORIGINAL_PERSON_NAME
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -274,6 +275,43 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
 
         drtb_hiv_referral_case_ids = self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')
         self.assertEqual(0, len(drtb_hiv_referral_case_ids))
+
+    def test_nikshay_case_from_enikshay_not_duplicated(self):
+        call_command('create_enikshay_cases', self.domain)
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case_id = person_case_ids[0]
+        person_case = self.case_accessor.get_case(person_case_id)
+        assert person_case.name == ORIGINAL_PERSON_NAME
+        assert len(self.case_accessor.get_case_ids_in_domain(type='occurrence')) == 1
+        assert len(self.case_accessor.get_case_ids_in_domain(type='episode')) == 1
+        assert len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')) == 0
+
+        new_nikshay_name = 'PERSON NAME SHOULD NOT BE CHANGED'
+        self.patient_detail.pname = new_nikshay_name
+        self.patient_detail.save()
+        CaseFactory(self.domain).create_or_update_case(
+            CaseStructure(
+                attrs={
+                    'create': False,
+                    'update': {
+                        'migration_created_case': 'false',
+                    }
+                },
+                case_id=person_case_id,
+            )
+        )
+        person_case = self.case_accessor.get_case(person_case_id)
+        person_case.dynamic_case_properties()['migration_created_case'] = 'false'
+        call_command('create_enikshay_cases', self.domain)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case = self.case_accessor.get_case(person_case_id)
+        self.assertEqual(person_case.name, ORIGINAL_PERSON_NAME)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 0)
 
     def _assertIndexEqual(self, index_1, index_2):
         self.assertEqual(index_1.identifier, index_2.identifier)
