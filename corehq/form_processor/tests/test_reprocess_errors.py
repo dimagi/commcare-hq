@@ -40,11 +40,13 @@ class ReprocessXFormErrorsTest(TestCase):
 
         post_case_blocks([case.as_xml()], domain=self.domain)
 
-        error_forms = FormAccessors(self.domain).get_forms_by_type('XFormError', 10)
+        form_accessors = FormAccessors(self.domain)
+        error_forms = form_accessors.get_forms_by_type('XFormError', 10)
         self.assertEqual(1, len(error_forms))
 
+        form_id = error_forms[0].form_id
         with self.assertRaises(InvalidCaseIndex):
-            reprocess_xform_error(error_forms[0].form_id)
+            reprocess_xform_error(form_id)
 
         case = CaseBlock(
             create=True,
@@ -57,7 +59,13 @@ class ReprocessXFormErrorsTest(TestCase):
 
         post_case_blocks([case.as_xml()], domain=self.domain)
 
-        reprocess_xform_error(error_forms[0].form_id)
+        reprocess_xform_error(form_id)
+
+        form = form_accessors.get_form(form_id)
+        # self.assertTrue(form.initial_processing_complete)  Can't change this with SQL forms at the moment
+        self.assertTrue(form.is_normal)
+        self.assertIsNone(form.problem)
+
         case = CaseAccessors(self.domain).get_case(case_id)
         self.assertEqual(1, len(case.indices))
         self.assertEqual(case.indices[0].referenced_id, parent_case_id)

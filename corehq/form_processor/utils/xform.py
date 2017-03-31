@@ -207,6 +207,8 @@ def reprocess_xform_error(form_id):
         form.state = XFormInstanceSQL.NORMAL
     else:
         form.doc_type = 'XFormInstance'
+
+    form.initial_processing_complete = True
     form.problem = None
 
     cache = FormProcessorInterface(form.domain).casedb_cache(
@@ -231,7 +233,7 @@ def reprocess_xform_error(form_id):
                 FormAccessorSQL.update_form_problem_and_state(form)
             else:
                 with bulk_atomic_blobs([form] + cases):
-                    form.save()
+                    XFormInstance.save(form)  # use this save to that we don't overwrite the doc_type
                     XFormInstance.get_db().bulk_save(cases)
                 if stock_result:
                     stock_result.commit()
