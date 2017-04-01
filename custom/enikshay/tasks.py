@@ -14,24 +14,18 @@ from corehq import toggles
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.apps.reports.analytics.esaccessors import get_reverse_indexed_cases_es
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 
-from .case_utils import CASE_TYPE_ADHERENCE, CASE_TYPE_EPISODE
+from .case_utils import CASE_TYPE_EPISODE
+from .const import (
+    DOSE_TAKEN_INDICATORS,
+    DAILY_SCHEDULE_FIXTURE_NAME,
+    DAILY_SCHEDULE_ID,
+    SCHEDULE_ID_FIXTURE,
+)
+from .data_store import AdherenceDatastore
 
-
-DOSE_TAKEN_INDICATORS = [
-    'directly_observed_dose',
-    'unobserved_dose',
-    'self_administered_dose',
-]
-DOSE_MISSED = 'missed_dose'
-DOSE_UNKNOWN = 'missing_data'
-DOSE_KNOWN_INDICATORS = DOSE_TAKEN_INDICATORS + [DOSE_MISSED]
-DAILY_SCHEDULE_FIXTURE_NAME = 'adherence_schedules'
-DAILY_SCHEDULE_ID = 'schedule_daily'
-SCHEDULE_ID_FIXTURE = 'id'
 logger = get_task_logger(__name__)
 
 
@@ -57,6 +51,7 @@ class EpisodeAdherenceUpdater(object):
     def __init__(self, domain):
         self.domain = domain
         self.purge_date = pytz.UTC.localize(datetime.datetime.today() - datetime.timedelta(days=60))
+        self.adherence_data_store = AdherenceDatastore(domain)
 
     def run(self):
         # iterate over all open 'episode' cases and set 'adherence' properties
@@ -113,31 +108,24 @@ class EpisodeUpdate(object):
 
     @memoized
     def get_valid_adherence_cases(self):
+        # To-update
         # Returns list of 'adherence' cases of which 'adherence_value' is one of DOSE_KNOWN_INDICATORS
-        indexed_cases = get_reverse_indexed_cases_es(self.case_updater.domain, self.episode.case_id)
-        return [
-            case
-            for case in indexed_cases
-            if (not case.closed and case.type == CASE_TYPE_ADHERENCE and
-                case.dynamic_case_properties().get('adherence_value') in DOSE_KNOWN_INDICATORS)
-        ]
+        return self.case_updater.adherence_data_store.dose_known_adherences(
+            self.episode.case_id
+        )
 
-    def get_latest_adherence_case_for_episode(self):
+    def get_latest_adherence_date(self):
+        # To-update
         """
         return open case of type 'adherence' reverse-indexed to episode that
             has the latest 'adherence_date' property of all
         """
-        # sometime far back
-        latest_date = pytz.UTC.localize(datetime.datetime(1990, 1, 1))
-        latest_case = None
-        for case in self.get_valid_adherence_cases():
-            adherence_date = parse_datetime(case.dynamic_case_properties().get('adherence_date'))
-            if adherence_date > latest_date:
-                latest_date = adherence_date
-                latest_case = case
-        return latest_case
+        return self.case_updater.adherence_data_store.latest_adherence_date(
+            self.episode.case_id
+        )
 
     def adherence_cases_between(self, cases, start_date, end_date):
+        # To-update
         """
         Filter given 'adherence' cases between start_date, end_date
 
@@ -148,15 +136,11 @@ class EpisodeUpdate(object):
             List of cases that have 'adherence_date' between start_date and end_date
 
         """
-        open_pertinent_adherence_cases = [
-            case for case in cases
-            if (
-                start_date.astimezone(pytz.UTC) <=
-                parse_datetime(case.dynamic_case_properties().get('adherence_date')).astimezone(pytz.UTC) <=
-                end_date.astimezone(pytz.UTC))
-        ]
-
-        return open_pertinent_adherence_cases
+        return self.case_updater.adherence_data_store.adherences_between(
+            self.episode.case_id,
+            start_date.astimezone(pytz.UTC),
+            end_date.astimezone(pytz.UTC)
+        )
 
     def count_doses_taken(self, adherence_cases):
         """
@@ -169,8 +153,8 @@ class EpisodeUpdate(object):
         """
         by_date = defaultdict(list)
         for case in adherence_cases:
-            adherence_date = parse_datetime(case.dynamic_case_properties().get('adherence_date')).date()
-            adherence_value = case.dynamic_case_properties().get('adherence_value')
+            adherence_date = parse_datetime(case.get('adherence_date')).date()
+            adherence_value = case.get('adherence_value')
             if adherence_value in DOSE_TAKEN_INDICATORS:
                 by_date[adherence_date].append(case)
 
@@ -205,18 +189,17 @@ class EpisodeUpdate(object):
             }
         else:
             update = {}
-            adherence_case = self.get_latest_adherence_case_for_episode()
-            if not adherence_case:
+            latest_adherence_date = self.get_latest_adherence_date()
+            if not latest_adherence_date:
                 update["aggregated_score_date_calculated"] = adherence_schedule_date_start - datetime.timedelta(1)
                 update["aggregated_score_count_taken"] = 0
                 update["adherence_latest_date_recorded"] = adherence_schedule_date_start - datetime.timedelta(1)
                 update["expected_doses_taken"] = 0
                 update["adherence_total_doses_taken"] = 0
             else:
-                adherence_date = parse_datetime(adherence_case.dynamic_case_properties().get('adherence_date'))
-                update["adherence_latest_date_recorded"] = adherence_date
-                if adherence_date < self.case_updater.purge_date:
-                    update["aggregated_score_date_calculated"] = adherence_date
+                update["adherence_latest_date_recorded"] = latest_adherence_date
+                if latest_adherence_date < self.case_updater.purge_date:
+                    update["aggregated_score_date_calculated"] = latest_adherence_date
                 else:
                     update["aggregated_score_date_calculated"] = self.case_updater.purge_date
 

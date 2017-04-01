@@ -1,31 +1,45 @@
 import pytz
-from datetime import date
+from datetime import date, datetime
 from django.test import TestCase
 
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField
-from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from custom.enikshay.tasks import *
-from pillowtop.es_utils import initialize_index_and_mapping
-from .utils import *
+
+from casexml.apps.case.mock import CaseFactory
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
+
+from custom.enikshay.const import (
+    DOSE_MISSED,
+    DOSE_TAKEN_INDICATORS,
+    DOSE_UNKNOWN,
+    DAILY_SCHEDULE_FIXTURE_NAME,
+    SCHEDULE_ID_FIXTURE,
+)
+from custom.enikshay.data_store import AdherenceDatastore
+from custom.enikshay.tasks import EpisodeAdherenceUpdater, EpisodeUpdate
+from custom.enikshay.tests.utils import (
+    get_person_case_structure,
+    get_adherence_case_structure,
+    get_occurrence_case_structure,
+    get_episode_case_structure
+)
 
 
 class TestAdherenceUpdater(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestAdherenceUpdater, cls).setUpClass()
-        cls.domain = 'adherence-enikshay-test'
+        cls.domain = 'enikshay'
         cls.user = CommCareUser.create(
             cls.domain,
             "jon-snow@user",
             "123",
         )
         cls.setupFixtureData()
-        cls.es = get_es_new()
-        initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
+        cls.data_store = AdherenceDatastore(cls.domain)
 
     def setUp(self):
         super(TestAdherenceUpdater, self).setUp()
@@ -35,7 +49,6 @@ class TestAdherenceUpdater(TestCase):
         self.episode_id = u"episode"
         FormProcessorTestUtils.delete_all_cases()
         self.case_updater = EpisodeAdherenceUpdater(self.domain)
-        initialize_index_and_mapping(self.es, CASE_INDEX_INFO)
 
     @classmethod
     def setupFixtureData(cls):
@@ -93,11 +106,11 @@ class TestAdherenceUpdater(TestCase):
         cls.data_type.delete()
         for data_item in cls.data_items:
             data_item.delete()
-        ensure_index_deleted(CASE_INDEX_INFO.index)
+        cls.data_store.adapter.drop_table()
         super(TestAdherenceUpdater, cls).tearDownClass()
 
     def tearDown(self):
-        ensure_index_deleted(CASE_INDEX_INFO.index)
+        self.data_store.adapter.clear_table()
 
     def _create_episode_case(self, adherence_schedule_date_start, adherence_schedule_id):
         person = get_person_case_structure(
@@ -119,13 +132,10 @@ class TestAdherenceUpdater(TestCase):
             }
         )
         cases = {case.case_id: case for case in self.factory.create_or_update_cases([episode_structure])}
-        episode = cases[self.episode_id]
-        send_to_elasticsearch('cases', episode.to_json())
-        self.es.indices.refresh(CASE_INDEX_INFO.index)
         return cases[self.episode_id]
 
     def _create_adherence_cases(self, adherence_cases):
-        cases = self.factory.create_or_update_cases([
+        self.factory.create_or_update_cases([
             get_adherence_case_structure(
                 adherence_date.strftime('%Y-%m-%d-%H-%M'),
                 self.episode_id,
@@ -137,9 +147,6 @@ class TestAdherenceUpdater(TestCase):
             )
             for (adherence_date, adherence_value) in adherence_cases
         ])
-        for case in cases:
-            send_to_elasticsearch('cases', case.to_json())
-        self.es.indices.refresh(CASE_INDEX_INFO.index)
 
     def assert_update(self, input, output):
         update = self.calculate_adherence_update(input)
@@ -155,6 +162,9 @@ class TestAdherenceUpdater(TestCase):
         adherence_cases = input[2]
         episode = self._create_episode_case(adherence_schedule_date_start, adherence_schedule_id)
         self._create_adherence_cases(adherence_cases)
+
+        rebuild_indicators(self.data_store.datasource._id)
+        self.data_store.adapter.refresh_table()
 
         return EpisodeUpdate(episode, self.case_updater)
 

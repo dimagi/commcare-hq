@@ -36,3 +36,15 @@ NINETYNINEDOTS_EPISODE_PROPERTIES = [
     TREATMENT_START_DATE,
     WEIGHT_BAND,
 ]
+
+DOSE_TAKEN_INDICATORS = [
+    'directly_observed_dose',
+    'unobserved_dose',
+    'self_administered_dose',
+]
+DOSE_MISSED = 'missed_dose'
+DOSE_UNKNOWN = 'missing_data'
+DOSE_KNOWN_INDICATORS = DOSE_TAKEN_INDICATORS + [DOSE_MISSED]
+DAILY_SCHEDULE_FIXTURE_NAME = 'adherence_schedules'
+DAILY_SCHEDULE_ID = 'schedule_daily'
+SCHEDULE_ID_FIXTURE = 'id'

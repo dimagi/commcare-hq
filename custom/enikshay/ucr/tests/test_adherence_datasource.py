@@ -9,7 +9,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
 from custom.enikshay.data_store import AdherenceDatastore
-from custom.enikshay.tasks import DOSE_UNKNOWN, DOSE_TAKEN_INDICATORS
+from custom.enikshay.const import DOSE_UNKNOWN, DOSE_TAKEN_INDICATORS
 from custom.enikshay.tests.utils import (
     get_person_case_structure,
     get_adherence_case_structure,

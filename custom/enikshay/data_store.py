@@ -1,10 +1,11 @@
+import pytz
 from django.utils.dateparse import parse_datetime
 
 from corehq.apps.es import filters
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 
-from custom.enikshay.tasks import DOSE_KNOWN_INDICATORS
+from custom.enikshay.const import DOSE_KNOWN_INDICATORS
 
 
 class AdherenceDatastore(object):
@@ -29,7 +30,7 @@ class AdherenceDatastore(object):
         ).sort('adherence_date', desc=True).size(1).run().hits
         print result, "ao89"
         if len(result) > 0:
-            return parse_datetime(result[0].get('adherence_date', None))
+            return pytz.UTC.localize(parse_datetime(result[0].get('adherence_date', None)))
         else:
             return None
 
