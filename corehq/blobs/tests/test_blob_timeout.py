@@ -51,3 +51,28 @@ class BlobExpireTest(TestCase):
             delete_expired_blobs()
 
         self.assertIsNotNone(self.db.get(self.identifier, self.bucket))
+
+    def test_duplicate_identifier_expire(self):
+        now = datetime(2017, 1, 1)
+
+        with patch('corehq.blobs.util._utcnow', return_value=now):
+            self.db.put(StringIO(u'content'), self.identifier, bucket=self.bucket, timeout=60)
+
+        self.assertIsNotNone(self.db.get(self.identifier, self.bucket))
+        with patch('corehq.blobs.tasks._utcnow', return_value=now + timedelta(minutes=61)):
+            delete_expired_blobs()
+
+        with self.assertRaises(NotFound):
+            self.db.get(self.identifier, self.bucket)
+
+        now = datetime(2018, 1, 1)
+        # Put another blob a year later with the same identifier
+        with patch('corehq.blobs.util._utcnow', return_value=now):
+            self.db.put(StringIO(u'content'), self.identifier, bucket=self.bucket, timeout=60)
+
+        # Even though there is an old BlobExpiration record for that bucket/identifier,
+        # we should not delete delete the new blob
+        with patch('corehq.blobs.tasks._utcnow', return_value=now + timedelta(minutes=0)):
+            delete_expired_blobs()
+
+        self.assertIsNotNone(self.db.get(self.identifier, self.bucket))
