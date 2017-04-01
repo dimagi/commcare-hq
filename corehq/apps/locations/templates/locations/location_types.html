@@ -64,10 +64,10 @@
                                     </span>
                                 </th>
                                 <th data-bind="visible: advanced_mode">
-                                    {% trans "Type Code"%}
+                                    {% trans "Type Code" %}
                                 </th>
                                 <th data-bind="visible: advanced_mode">
-                                    {% trans "Level to expand from"%}
+                                    {% trans "Level to expand from" %}
                                     <span class="hq-help-template"
                                           data-title="{% trans "Level to expand from" %}"
                                           data-content="{% blocktrans %}
@@ -77,7 +77,7 @@
                                     </span>
                                 </th>
                                 <th data-bind="visible: advanced_mode">
-                                    {% trans "Level to expand to"%}
+                                    {% trans "Level to expand to" %}
                                     <span class="hq-help-template"
                                           data-title="{% trans "Level to expand to" %}"
                                           data-content="{% blocktrans %}
@@ -88,7 +88,7 @@
                                     </span>
                                 </th>
                                 <th data-bind="visible: advanced_mode">
-                                    {% trans "Include without expanding"%}
+                                    {% trans "Include without expanding" %}
                                     <span class="hq-help-template"
                                           data-title="{% trans "Include without expanding" %}"
                                           data-content="{% blocktrans %}
@@ -96,6 +96,9 @@
                                                         <p>This is useful if you require some high level information in your app, like all the state names, but don't want to sync all the descendants of that location</p>
                                           {% endblocktrans %}">
                                     </span>
+                                </th>
+                                <th data-bind="visible: advanced_mode">
+                                    {% trans "Has Location User" %}
                                 </th>
                                 {% if commtrack_enabled %}
                                 <th>
@@ -194,6 +197,9 @@
                                                    value: include_without_expanding,
                                                    optionsCaption: '\u2013{%trans 'none'%}\u2013'">
                                 </select>
+                            </td>
+                            <td data-bind="visible: $parent.advanced_mode">
+                                <input data-bind="checked: has_user" type="checkbox" />
                             </td>
                             {% if commtrack_enabled %}
                             <td>
