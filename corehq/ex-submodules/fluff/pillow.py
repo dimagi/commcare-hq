@@ -133,10 +133,11 @@ class FluffPillow(ConstructedPillow):
         self.domains = domains or processor.domains
         self.doc_type = doc_type or processor.doc_type
 
-        name = '{}Pillow'.format(indicator_name)
-        checkpoint = PillowCheckpoint('fluff.{}.{}'.format(name, get_machine_id()))
-
         change_feed = KafkaChangeFeed(topics=[self.kafka_topic], group_id=indicator_name)
+
+        name = '{}Pillow'.format(indicator_name)
+        checkpoint = PillowCheckpoint('fluff.{}.{}'.format(name, get_machine_id()), change_feed.sequence_format)
+
         super(FluffPillow, self).__init__(
             name=name,
             checkpoint=checkpoint,

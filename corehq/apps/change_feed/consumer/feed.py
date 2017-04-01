@@ -19,6 +19,7 @@ class KafkaChangeFeed(ChangeFeed):
     """
     Kafka-based implementation of a ChangeFeed
     """
+    sequence_format = 'json'
 
     def __init__(self, topics, group_id, strict=False):
         """
@@ -125,14 +126,6 @@ class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
         super(KafkaCheckpointEventHandler, self).__init__(checkpoint, checkpoint_frequency)
         assert isinstance(change_feed, KafkaChangeFeed)
         self.change_feed = change_feed
-        # todo: do this somewhere smarter?
-        checkpoint_doc = self.checkpoint.get_or_create_wrapped()
-        if checkpoint_doc.sequence_format != 'json' or checkpoint_doc.sequence == DEFAULT_EMPTY_CHECKPOINT_SEQUENCE:
-            checkpoint_doc.sequence_format = 'json'
-            # convert initial default to json default
-            if checkpoint_doc.sequence == DEFAULT_EMPTY_CHECKPOINT_SEQUENCE:
-                checkpoint_doc.sequence = '{}'
-            checkpoint_doc.save()
 
     def fire_change_processed(self, change, context):
         if self.should_update_checkpoint(context):

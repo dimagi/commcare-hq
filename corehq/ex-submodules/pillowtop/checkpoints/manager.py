@@ -12,35 +12,42 @@ from pillowtop.pillow.interface import ChangeEventHandler
 MAX_CHECKPOINT_DELAY = 300
 DELAY_SENTINEL = object()
 
-DEFAULT_EMPTY_CHECKPOINT_SEQUENCE = '0'
+DEFAULT_EMPTY_CHECKPOINT_SEQUENCE = {
+    'text': '0',
+    'json': '{}'
+}
 
 
-def get_or_create_checkpoint(checkpoint_id):
+def get_or_create_checkpoint(checkpoint_id, sequence_format):
     checkpoint, created = DjangoPillowCheckpoint.objects.get_or_create(
         checkpoint_id=checkpoint_id,
         defaults={
-            'sequence': DEFAULT_EMPTY_CHECKPOINT_SEQUENCE,
+            'sequence': DEFAULT_EMPTY_CHECKPOINT_SEQUENCE[sequence_format],
+            'sequence_format': sequence_format,
             'timestamp': datetime.utcnow()
         })
+    assert checkpoint.sequence_format == sequence_format
     return checkpoint
 
 
-def reset_checkpoint(checkpoint_id):
-    checkpoint = get_or_create_checkpoint(checkpoint_id)
+def reset_checkpoint(checkpoint_id, sequence_format):
+    checkpoint = get_or_create_checkpoint(checkpoint_id, sequence_format)
+    assert checkpoint.sequence_format == sequence_format
     checkpoint.old_sequence = checkpoint.sequence
-    checkpoint.sequence = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
+    checkpoint.sequence = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE[sequence_format]
     checkpoint.timestamp = datetime.utcnow()
     checkpoint.save()
 
 
 class PillowCheckpoint(object):
 
-    def __init__(self, checkpoint_id):
+    def __init__(self, checkpoint_id, sequence_format):
         self.checkpoint_id = checkpoint_id
+        self.sequence_format = sequence_format
         self._last_checkpoint = None
 
     def get_or_create_wrapped(self, verify_unchanged=False):
-        checkpoint = get_or_create_checkpoint(self.checkpoint_id)
+        checkpoint = get_or_create_checkpoint(self.checkpoint_id, self.sequence_format)
         if (verify_unchanged and self._last_checkpoint and
                 str(checkpoint.sequence) != str(self._last_checkpoint.sequence)):
             raise PillowtopCheckpointReset(u'Checkpoint {} expected seq {} but found {} in database.'.format(
@@ -51,10 +58,11 @@ class PillowCheckpoint(object):
         return checkpoint
 
     def get_current_sequence_id(self):
-        return get_or_create_checkpoint(self.checkpoint_id).sequence
+        return get_or_create_checkpoint(self.checkpoint_id, self.sequence_format).sequence
 
     def update_to(self, seq):
         if isinstance(seq, dict):
+            assert self.sequence_format == 'json'
             # json doesn't like tuples as keys
             seq = {'{},{}'.format(*key): val for key, val in seq.items()}
             seq = json.dumps(seq)
@@ -71,7 +79,7 @@ class PillowCheckpoint(object):
         self._last_checkpoint = checkpoint
 
     def reset(self):
-        reset_checkpoint(self.checkpoint_id)
+        reset_checkpoint(self.checkpoint_id, self.sequence_format)
 
     def touch(self, min_interval):
         """
@@ -133,9 +141,9 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
 
 
 def get_default_django_checkpoint_for_legacy_pillow_class(pillow_class):
-    return PillowCheckpoint(pillow_class.get_legacy_name())
+    return PillowCheckpoint(pillow_class.get_legacy_name(), 'text')
 
 
 def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info):
     checkpoint_id = u'{}-{}'.format(pillow_id, index_info.index)
-    return PillowCheckpoint(checkpoint_id)
+    return PillowCheckpoint(checkpoint_id, 'json')  # all ES pillows use json checkpoints

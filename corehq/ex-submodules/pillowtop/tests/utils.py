@@ -73,7 +73,7 @@ def make_fake_constructed_pillow(pillow_id, checkpoint_id):
 
     pillow = FakeConstructedPillow(
         name=pillow_id,
-        checkpoint=PillowCheckpoint(checkpoint_id),
+        checkpoint=PillowCheckpoint(checkpoint_id, 'text'),
         change_feed=RandomChangeFeed(10),
         processor=LoggingProcessor(),
     )

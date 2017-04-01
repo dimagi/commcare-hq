@@ -70,7 +70,7 @@ class KafkaCheckpointTest(TestCase):
     def test_checkpoint_with_multiple_topics(self):
         feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed')
         pillow_name = 'test-multi-topic-checkpoints'
-        checkpoint = PillowCheckpoint(pillow_name)
+        checkpoint = PillowCheckpoint(pillow_name, feed.sequence_format)
         processor = CountingProcessor()
         pillow = ConstructedPillow(
             name=pillow_name,

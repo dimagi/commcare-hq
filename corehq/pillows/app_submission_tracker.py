@@ -23,9 +23,9 @@ def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadat
     as having submissions. This could be expanded to be more generic and include
     other processing that needs to happen on each form
     """
-    checkpoint = PillowCheckpoint('form-submission-metadata-tracker')
-    form_processor = FormSubmissionMetadataTrackerProcessor()
     change_feed = KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='form-processsor')
+    checkpoint = PillowCheckpoint('form-submission-metadata-tracker', change_feed.sequence_format)
+    form_processor = FormSubmissionMetadataTrackerProcessor()
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
