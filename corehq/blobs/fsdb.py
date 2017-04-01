@@ -12,6 +12,7 @@ from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath,
 from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB, SAFENAME
+from corehq.blobs.util import create_blob_expire_object
 
 CHUNK_SIZE = 4096
 
@@ -24,7 +25,7 @@ class FilesystemBlobDB(AbstractBlobDB):
         assert isabs(rootdir), rootdir
         self.rootdir = rootdir
 
-    def put(self, content, identifier, bucket=DEFAULT_BUCKET):
+    def put(self, content, identifier, bucket=DEFAULT_BUCKET, timeout=None):
         path = self.get_path(identifier, bucket)
         dirpath = dirname(path)
         if not isdir(dirpath):
@@ -40,6 +41,8 @@ class FilesystemBlobDB(AbstractBlobDB):
                 length += len(chunk)
                 digest.update(chunk)
         b64digest = base64.b64encode(digest.digest())
+        if timeout is not None:
+            create_blob_expire_object(bucket, identifier, length, timeout)
         return BlobInfo(identifier, length, "md5-" + b64digest)
 
     def get(self, identifier, bucket=DEFAULT_BUCKET):
