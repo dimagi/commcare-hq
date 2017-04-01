@@ -140,10 +140,6 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
         return False
 
 
-def get_default_django_checkpoint_for_legacy_pillow_class(pillow_class):
-    return PillowCheckpoint(pillow_class.get_legacy_name(), 'text')
-
-
 def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info):
     checkpoint_id = u'{}-{}'.format(pillow_id, index_info.index)
     return PillowCheckpoint(checkpoint_id, 'json')  # all ES pillows use json checkpoints
