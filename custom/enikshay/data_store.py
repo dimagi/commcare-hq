@@ -20,6 +20,9 @@ class AdherenceDatastore(object):
             filters.term('adherence_value', DOSE_KNOWN_INDICATORS)
         )
 
+    def dose_known_adherences(self, episode_id):
+        return self.es.filter(self._base_filters(episode_id)).run().hits
+
     def latest_adherence_date(self, episode_id):
         result = self.es.filter(
             self._base_filters(episode_id)

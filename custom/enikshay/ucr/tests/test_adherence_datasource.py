@@ -104,4 +104,16 @@ class TestAdherenceUCRSource(TestCase):
             self.episode_id, datetime(2016, 1, 21), datetime(2016, 1, 23)
         )
         # should exclude 1 'DOSE_UNKNOWN' and 1 out of range case
-        self.assertEqual(len(rows), 2)
+        self.assertEqual(
+            {r['doc_id'] for r in rows},
+            {'adherence1', 'adherence3'}
+        )
+
+    def test_dose_known(self):
+        result = self.data_store.dose_known_adherences(self.episode_id)
+
+        # 'adherence2' case has DOSE_UNKNOWN so should be excluded
+        self.assertEqual(
+            {r['doc_id'] for r in result},
+            {'adherence1', 'adherence3', 'adherence4'}
+        )
