@@ -57,13 +57,14 @@
 </script>
 
 {# Template for case not modified since filter #}
+{# An instance of this template is bound to an instance of the js object NotModifiedSinceDefinition #}
 
 <script type="text/html" id="case-modified-filter">
     <div class="form-group">
         <div data-bind="template: {name: 'remove-filter'}"></div>
         <label class="control-label col-xs-2">{% trans "Case not modified in" %}</label>
         <div class="controls col-xs-1">
-            <input required type="number" min="0" step="1" data-bind="value: days" class="textinput form-control"></input>
+            <input required type="number" min="0" step="1" data-bind="value: days" class="textinput form-control" />
         </div>
         <div class="controls col-xs-1">
             <label class="control-label">{% trans "days" %}</label>
@@ -72,13 +73,14 @@
 </script>
 
 {# Template for case property filter #}
+{# An instance of this template is bound to an instance of the js object MatchPropertyDefinition #}
 
 <script type="text/html" id="case-property-filter">
     <div class="form-group">
         <div data-bind="template: {name: 'remove-filter'}"></div>
         <label class="control-label col-xs-2">{% trans "Case property" %}</label>
         <div class="controls col-xs-2">
-            <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}"></input>
+            <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
         </div>
         <div class="controls col-xs-2">
             <select class="select form-control" data-bind="value: match_type">
@@ -88,12 +90,13 @@
             </select>
         </div>
         <div class="controls col-xs-2" data-bind="visible: match_type() !== '{{ form.constants.MATCH_HAS_VALUE }}'">
-            <input type="text" class="textinput form-control" data-bind="value: property_value, attr: {'required': match_type() !== '{{ form.constants.MATCH_HAS_VALUE }}'}"></input>
+            <input type="text" class="textinput form-control" data-bind="value: property_value, attr: {'required': match_type() !== '{{ form.constants.MATCH_HAS_VALUE }}'}" />
         </div>
     </div>
 </script>
 
 {# Template for date case property filter #}
+{# An instance of this template is bound to an instance of the js object MatchPropertyDefinition #}
 
 <script type="text/html" id="date-case-property-filter">
     <div class="form-group">
@@ -109,12 +112,13 @@
             <label class="control-label">{% trans "the date in case property" %}</label>
         </div>
         <div class="controls col-xs-2">
-            <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}"></input>
+            <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
         </div>
     </div>
 </script>
 
 {# Template for advanced date case property filter #}
+{# An instance of this template is bound to an instance of the js object MatchPropertyDefinition #}
 
 <script type="text/html" id="advanced-date-case-property-filter">
     <div class="form-group">
@@ -130,7 +134,7 @@
             <label class="control-label">{% trans "the date in case property" %}</label>
         </div>
         <div class="controls col-xs-2">
-            <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}"></input>
+            <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
         </div>
         <div class="controls col-xs-1">
             <select class="select form-control" data-bind="value: plus_minus">
@@ -139,7 +143,7 @@
             </select>
         </div>
         <div class="controls col-xs-1">
-            <input type="number" min="0" step="1" class="textinput form-control" data-bind="value: property_value" required placeholder="{% trans 'days' %}"></input>
+            <input type="number" min="0" step="1" class="textinput form-control" data-bind="value: property_value" required placeholder="{% trans 'days' %}" />
         </div>
         <div class="controls col-xs-1">
             <label class="control-label">{% trans "days" %}</label>
@@ -148,6 +152,7 @@
 </script>
 
 {# Template for parent case is closed filter #}
+{# An instance of this template is bound to an instance of the js object ClosedParentDefinition #}
 
 <script type="text/html" id="parent-closed-filter">
     <div class="form-group">
@@ -157,13 +162,14 @@
 </script>
 
 {# Template for custom filter #}
+{# An instance of this template is bound to an instance of the js object CustomMatchDefinition #}
 
 <script type="text/html" id="custom-filter">
     <div class="form-group">
         <div data-bind="template: {name: 'remove-filter'}"></div>
         <label class="control-label col-xs-2">{% trans "Custom filter callout" %}</label>
         <div class="controls col-xs-4">
-            <input type="text" data-bind="value: name" required class="textinput form-control"></input>
+            <input type="text" data-bind="value: name" required class="textinput form-control" />
         </div>
     </div>
 </script>
