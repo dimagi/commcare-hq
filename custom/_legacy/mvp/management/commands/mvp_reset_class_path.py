@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from corehq.apps.indicators.utils import get_indicator_config
 from mvp.models import (
@@ -10,9 +11,8 @@ from mvp.models import (
 
 class Command(BaseCommand):
     help = "Resets the class path for the MVP indicator type specified"
-    args = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         indicator_types = [
             MVPDaysSinceLastTransmission,
             MVPActiveCasesIndicatorDefinition,

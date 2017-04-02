@@ -9,7 +9,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import create_real_cases_from_dummy_cases
 from couchforms.models import XFormInstance
 from pillowtop.es_utils import initialize_index_and_mapping
-from testapps.test_pillowtop.utils import process_kafka_changes, process_couch_changes
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 from corehq.apps.hqcase.analytics import (
     get_number_of_cases_in_domain_of_type,
@@ -21,7 +21,6 @@ from corehq.apps.hqcase.dbaccessors import (
     get_case_ids_in_domain,
     get_case_ids_in_domain_by_owner,
     get_case_properties,
-    get_case_types_for_domain,
 )
 from corehq.elastic import get_es_new, EsMeta
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -118,12 +117,6 @@ class DBAccessorsTest(TestCase):
                 and not case.closed and case.user_id == 'XXX'},
         )
 
-    def test_get_case_types_for_domain(self):
-        self.assertEqual(
-            set(get_case_types_for_domain(self.domain)),
-            {case.type for case in self.cases if case.domain == self.domain}
-        )
-
     def test_get_case_ids_in_domain_by_owner(self):
         self.assertEqual(
             set(get_case_ids_in_domain_by_owner(self.domain, owner_id='XXX')),
@@ -206,8 +199,8 @@ class ESAccessorsTest(TestCase):
     def _create_case_and_sync_to_es(self):
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        with process_kafka_changes('CaseToElasticsearchPillow'):
-            with process_couch_changes('DefaultChangeFeedPillow'):
+        with process_pillow_changes('CaseToElasticsearchPillow'):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
                 create_and_save_a_case(self.domain, case_id, case_name)
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
         return case_id, case_name

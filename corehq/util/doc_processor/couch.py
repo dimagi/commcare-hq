@@ -1,3 +1,4 @@
+from __future__ import print_function
 from couchdbkit import ResourceNotFound
 
 from corehq.util.couch_helpers import MultiKeyViewArgsProvider
@@ -88,7 +89,7 @@ class CouchProcessorProgressLogger(ProcessorProgressLogger):
         print("Processing {} documents{}: {}...".format(
             total,
             " (~{} already processed)".format(previously_visited) if previously_visited else "",
-            ", ".join(sorted(self.doc_types))
+            ", ".join(self.doc_types)
         ))
 
 
@@ -118,7 +119,9 @@ class CouchDocumentProvider(DocumentProvider):
             raise ValueError("Invalid (duplicate?) doc types")
 
         self.couchdb = next(iter(self.doc_type_map.values())).get_db()
-        assert all(m.get_db() is self.couchdb for m in self.doc_type_map.values()), \
+        couchid = lambda db: getattr(db, "dbname", id(db))
+        dbid = couchid(self.couchdb)
+        assert all(couchid(m.get_db()) == dbid for m in self.doc_type_map.values()), \
             "documents must live in same couch db: %s" % repr(self.doc_type_map)
 
         if domain:
@@ -171,4 +174,4 @@ def doc_type_tuples_to_dict(doc_types):
 
 
 def doc_type_tuples_to_list(doc_types):
-    return list(doc_type_tuples_to_dict(doc_types))
+    return sorted(doc_type_tuples_to_dict(doc_types))

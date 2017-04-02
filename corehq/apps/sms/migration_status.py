@@ -102,3 +102,13 @@ def assert_phone_number_migration_complete(apps, schema_editor):
             ['migrate_phone_numbers_to_sql']
         )
     )
+
+
+def assert_keyword_migration_complete(apps, schema_editor):
+    assert_messaging_migration_complete(
+        MigrationInfo(
+            [MigrationStatus.MIGRATION_KEYWORDS],
+            'keyword-messaging-migration',
+            ['migrate_keywords']
+        )
+    )

@@ -6,16 +6,18 @@ from corehq.apps.export.models import (
     CaseExportDataSchema,
     FormExportInstance,
     CaseExportInstance,
-    InferredSchema,
+    CaseInferredSchema,
+    FormInferredSchema,
 )
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
     get_form_export_instances,
     get_case_export_instances,
-    get_all_daily_saved_export_instances,
+    get_all_daily_saved_export_instance_ids,
     get_properly_wrapped_export_instance,
-    get_inferred_schema,
+    get_case_inferred_schema,
+    get_form_inferred_schema,
 )
 
 
@@ -159,8 +161,11 @@ class TestExportInstanceDBAccessors(TestCase):
         self.assertEqual(len(instances), 0)
 
     def test_get_daily_saved_exports(self):
-        instances = get_all_daily_saved_export_instances()
-        self.assertEqual(len(instances), 2)
+        instance_ids = get_all_daily_saved_export_instance_ids()
+        self.assertEqual(
+            set(instance_ids),
+            {self.form_instance_daily_saved._id, self.case_instance_daily_saved._id}
+        )
 
     def test_get_properly_wrapped_export_instance(self):
         instance = get_properly_wrapped_export_instance(self.form_instance_daily_saved._id)
@@ -174,21 +179,35 @@ class TestInferredSchemasDBAccessors(TestCase):
 
     domain = 'inferred-domain'
     case_type = 'inferred'
+    xmlns = 'inferred'
+    app_id = 'inferred'
 
     @classmethod
     def setUpClass(cls):
-        cls.inferred_schema = InferredSchema(
+        cls.inferred_schema = CaseInferredSchema(
             domain=cls.domain,
             case_type=cls.case_type,
         )
-        cls.inferred_schema_other = InferredSchema(
+        cls.inferred_schema_other = CaseInferredSchema(
             domain=cls.domain,
             case_type='other',
+        )
+        cls.form_inferred_schema_other = FormInferredSchema(
+            domain=cls.domain,
+            xmlns='other',
+            app_id='other',
+        )
+        cls.form_inferred_schema = FormInferredSchema(
+            domain=cls.domain,
+            xmlns=cls.xmlns,
+            app_id=cls.app_id,
         )
 
         cls.schemas = [
             cls.inferred_schema,
             cls.inferred_schema_other,
+            cls.form_inferred_schema,
+            cls.form_inferred_schema_other,
         ]
         for schema in cls.schemas:
             schema.save()
@@ -198,11 +217,20 @@ class TestInferredSchemasDBAccessors(TestCase):
         for schema in cls.schemas:
             schema.delete()
 
-    def test_get_inferred_schema(self):
-        result = get_inferred_schema(self.domain, self.case_type)
+    def test_get_case_inferred_schema(self):
+        result = get_case_inferred_schema(self.domain, self.case_type)
         self.assertIsNotNone(result)
         self.assertEqual(result._id, self.inferred_schema._id)
 
-    def test_get_inferred_schema_missing(self):
-        result = get_inferred_schema(self.domain, 'not-here')
+    def test_get_case_inferred_schema_missing(self):
+        result = get_case_inferred_schema(self.domain, 'not-here')
+        self.assertIsNone(result)
+
+    def test_get_form_inferred_schema(self):
+        result = get_form_inferred_schema(self.domain, self.app_id, self.xmlns)
+        self.assertIsNotNone(result)
+        self.assertEqual(result._id, self.form_inferred_schema._id)
+
+    def test_get_form_inferred_schema_missing(self):
+        result = get_form_inferred_schema(self.domain, 'not-here', self.xmlns)
         self.assertIsNone(result)

@@ -38,7 +38,7 @@ class BasePayloadGenerator(object):
         raise NotImplementedError()
 
     def get_headers(self):
-        return {'Content-type': self.content_type}
+        return {'Content-Type': self.content_type}
 
     def get_test_payload(self, domain):
         return (
@@ -48,7 +48,7 @@ class BasePayloadGenerator(object):
             "</data>" % datetime.utcnow()
         )
 
-    def handle_success(self, response, payload_doc):
+    def handle_success(self, response, payload_doc, repeat_record):
         """handle a successful post
 
         e.g. could be used to store something to the payload_doc once a
@@ -57,8 +57,13 @@ class BasePayloadGenerator(object):
         """
         return True
 
-    def handle_failure(self, response, payload_doc):
+    def handle_failure(self, response, payload_doc, repeat_record):
         """handle a failed post
+        """
+        return True
+
+    def handle_exception(self, exception, repeat_record):
+        """handle an exception
         """
         return True
 
@@ -175,9 +180,9 @@ class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, form):
         cases = cases_referenced_by_xform(form)
-        return json.dumps({'form_id': form._id,
+        return json.dumps({'form_id': form.form_id,
                            'received_on': json_format_datetime(form.received_on),
-                           'case_ids': [case._id for case in cases]})
+                           'case_ids': [case.case_id for case in cases]})
 
     @property
     def content_type(self):

@@ -33,7 +33,7 @@
 {% block filter_js %}
 <script type="text/javascript">
     $.when(
-        $.getScript("{% static 'reports/ko/report_filter.drilldown_options.js' %}"),
+        $.getScript("{% static 'reports/js/report_filter.drilldown_options.js' %}"),
         $.getScript("{% static 'ewsghana/ko/ews_filter.drilldown_options.js' %}")
     ).done(function () {
        $('#{{ css_id }}').ewsdrilldownOptionFilter({

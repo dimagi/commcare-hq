@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base import DefaultProperty
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -9,11 +10,12 @@ from django.utils.translation import ugettext as _
 
 class BaseFilterSpec(JsonObject):
     _allow_dynamic_properties = False
+    comment = StringProperty()
 
 
 class BooleanExpressionFilterSpec(BaseFilterSpec):
     type = TypeProperty('boolean_expression')
-    operator = StringProperty(choices=OPERATORS.keys(), required=True)
+    operator = StringProperty(choices=list(OPERATORS), required=True)
     property_value = DefaultProperty()
     expression = DefaultProperty(required=True)
 

@@ -1,7 +1,6 @@
-from optparse import make_option
+from __future__ import print_function
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand
-from django.core.management.base import CommandError
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.suite_xml.utils import validate_suite
@@ -73,49 +72,49 @@ CHECK_FUNCTIONS = {
 class Command(BaseCommand):
     help = "Print a list of broken builds"
     args = '<check_function>'
-    option_list = (
-        make_option('--ids',
-                    action='store',
-                    dest='build_ids',
-                    default='',
-                    help='Comma-separated list of Application IDs to check'),
-        make_option('--start',
-                    action='store',
-                    dest='startdate',
-                    default='',
-                    help='Start date'),
-        make_option('--end',
-                    action='store',
-                    dest='enddate',
-                    default='',
-                    help='End date'),
-    )
 
-    def handle(self, *args, **options):
-        args = list(args)
-        valid_functions = ', '.join(CHECK_FUNCTIONS.keys())
-        if not args:
-            raise CommandError('Usage is find_broken_builds %s. Options are: %s' % (
-                self.args,
-                valid_functions
-            ))
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'check_function',
+            choices=list(CHECK_FUNCTIONS),
+            dest='check_fn_name'
+        )
+        parser.add_argument(
+            '--ids',
+            action='store',
+            dest='build_ids',
+            default='',
+            help='Comma-separated list of Application IDs to check',
+        )
+        parser.add_argument(
+            '--start',
+            action='store',
+            dest='startdate',
+            default='',
+            help='Start date',
+        )
+        parser.add_argument(
+            '--end',
+            action='store',
+            dest='enddate',
+            default='',
+            help='End date',
+        )
 
-        check_fn_name = args[0]
-        check_fn = CHECK_FUNCTIONS.get(check_fn_name)
-        if not check_fn:
-            raise CommandError('Unrecognised check function. Options are: %s' % valid_functions)
+    def handle(self, check_fn_name, **options):
+        check_fn = CHECK_FUNCTIONS[check_fn_name]
 
         start = options['startdate']
         end = options['enddate']
         ids = options['build_ids']
 
-        print 'Starting...\n'
+        print('Starting...\n')
         if not ids:
             ids = get_build_ids(start, end)
         else:
             ids = ids.split(',')
 
-        print 'Checking {} builds\n'.format(len(ids))
+        print('Checking {} builds\n'.format(len(ids)))
         for message in find_broken_builds(check_fn, ids):
             self.stderr.write(message)
 

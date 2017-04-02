@@ -5,16 +5,11 @@ from django.forms.utils import flatatt
 from django.forms.widgets import (
     CheckboxInput,
     Input,
-    RadioChoiceInput,
-    RadioSelect,
-    RadioFieldRenderer,
     TextInput,
     MultiWidget,
-    Widget,
 )
 from django.template.loader import render_to_string
 from django.utils.encoding import force_unicode
-from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 import json
 from django.utils.translation import ugettext_noop
@@ -40,32 +35,6 @@ class BootstrapCheckboxInput(CheckboxInput):
             final_attrs['value'] = force_unicode(value)
         return mark_safe(u'<label class="checkbox"><input%s /> %s</label>' %
                          (flatatt(final_attrs), self.inline_label))
-
-
-class BootstrapRadioInput(RadioChoiceInput):
-
-    def __unicode__(self):
-        if 'id' in self.attrs:
-            label_for = ' for="%s_%s"' % (self.attrs['id'], self.index)
-        else:
-            label_for = ''
-        choice_label = conditional_escape(force_unicode(self.choice_label))
-        return mark_safe(u'<label class="radio"%s>%s %s</label>' % (label_for, self.tag(), choice_label))
-
-
-class BootstrapRadioFieldRenderer(RadioFieldRenderer):
-
-    def render(self):
-        return mark_safe(u'\n'.join([u'%s'
-                                      % force_unicode(w) for w in self]))
-
-    def __iter__(self):
-        for i, choice in enumerate(self.choices):
-            yield BootstrapRadioInput(self.name, self.value, self.attrs.copy(), choice, i)
-
-
-class BootstrapRadioSelect(RadioSelect):
-    renderer = BootstrapRadioFieldRenderer
 
 
 class BootstrapAddressField(MultiValueField):
@@ -151,7 +120,7 @@ $(function() {
         return output
 
 
-class Select2MultipleChoiceWidget(forms.SelectMultiple):
+class _Select2Mixin(object):
 
     class Media:
         css = {
@@ -160,16 +129,23 @@ class Select2MultipleChoiceWidget(forms.SelectMultiple):
         js = ('select2-3.4.5-legacy/select2.js',)
 
     def render(self, name, value, attrs=None, choices=()):
-        final_attrs = self.build_attrs(attrs)
-        output = super(Select2MultipleChoiceWidget, self).render(name, value, attrs, choices)
+        output = super(_Select2Mixin, self).render(name, value, attrs)
         output += """
             <script>
                 $(function() {
                     $('#%s').select2({ width: 'resolve' });
                 });
             </script>
-        """ % final_attrs.get('id')
+        """ % attrs.get('id')
         return mark_safe(output)
+
+
+class Select2(_Select2Mixin, forms.Select):
+    pass
+
+
+class Select2MultipleChoiceWidget(_Select2Mixin, forms.SelectMultiple):
+    pass
 
 
 class Select2Ajax(forms.TextInput):
@@ -186,8 +162,9 @@ class Select2Ajax(forms.TextInput):
         }
         js = ('select2-3.5.2-legacy/select2.js',)
 
-    def __init__(self, attrs=None, page_size=20):
+    def __init__(self, attrs=None, page_size=20, multiple=False):
         self.page_size = page_size
+        self.multiple = multiple
         super(Select2Ajax, self).__init__(attrs)
 
     def set_url(self, url):
@@ -195,20 +172,24 @@ class Select2Ajax(forms.TextInput):
 
     def _clean_initial(self, val):
         if isinstance(val, collections.Sequence) and not isinstance(val, (str, unicode)):
+            # if its a tuple or list
             return {"id": val[0], "text": val[1]}
+        elif val is None:
+            return None
         else:
+            # if its a scalar
             return {"id": val, "text": val}
 
     def render(self, name, value, attrs=None):
-        final_attrs = self.build_attrs(attrs)
         output = super(Select2Ajax, self).render(name, value, attrs)
         output += render_to_string(
             'hqstyle/forms/select_2_ajax_widget.html',
             {
-                'id': final_attrs.get('id'),
+                'id': attrs.get('id'),
                 'initial': self._clean_initial(value),
                 'endpoint': self.url,
                 'page_size': self.page_size,
+                'multiple': self.multiple,
             }
         )
         return mark_safe(output)

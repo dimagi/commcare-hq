@@ -1,4 +1,5 @@
-from optparse import make_option
+from __future__ import print_function
+
 import traceback
 from cStringIO import StringIO
 from django.core.management import call_command
@@ -16,24 +17,32 @@ POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 8)
 class Command(BaseCommand):
     help = 'Super preindex management command to do our bidding'
 
-    option_list = (
-        make_option('--mail', help='Mail confirmation', action='store_true',
-                    default=False),
-        make_option('--check', help='Exit with 0 if preindex is complete',
-                    action='store_true', default=False)
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'num_pool',
+            default=POOL_SIZE,
+            nargs='?',
+            type=int,
+        )
+        parser.add_argument(
+            'username',
+            default='unknown',
+            nargs='?',
+        )
+        parser.add_argument(
+            '--mail',
+            help='Mail confirmation',
+            action='store_true',
+            default=False,
+        )
+        parser.add_argument(
+            '--check',
+            help='Exit with 0 if preindex is complete',
+            action='store_true',
+            default=False,
+        )
 
-    def handle(self, *args, **options):
-        if len(args) == 0:
-            num_pool = POOL_SIZE
-        else:
-            num_pool = int(args[0])
-
-        if len(args) > 1:
-            username = args[1]
-        else:
-            username = 'unknown'
-
+    def handle(self, num_pool, username, **options):
         email = options['mail']
 
         root_dir = settings.FILEPATH
@@ -66,13 +75,13 @@ class Command(BaseCommand):
             )
 
         def couch_preindex():
-            call_command('sync_prepare_couchdb_multi', num_pool, username,
+            call_command('sync_prepare_couchdb_multi', str(num_pool), username,
                          **{'no_mail': True})
-            print "Couch preindex done"
+            print("Couch preindex done")
 
         def pillow_preindex():
             call_command('ptop_preindex')
-            print "ptop_preindex_done"
+            print("ptop_preindex_done")
 
         jobs = [gevent.spawn(couch_preindex), gevent.spawn(pillow_preindex)]
 
@@ -97,7 +106,7 @@ class Command(BaseCommand):
         if email:
             mail_admins(subject, message)
         else:
-            print '{}\n\n{}'.format(subject, message)
+            print('{}\n\n{}'.format(subject, message))
 
 rcache = cache.caches['redis']
 PREINDEX_COMPLETE_COMMIT = '#preindex_complete_commit'

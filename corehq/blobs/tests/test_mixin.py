@@ -17,6 +17,7 @@ from corehq.blobs.tests.util import (TemporaryFilesystemBlobDB,
     TemporaryMigratingBlobDB, TemporaryS3BlobDB)
 from corehq.util.test_utils import generate_cases, trap_extra_setup
 from dimagi.ext.couchdbkit import Document
+from mock import patch
 
 
 class BaseTestCase(SimpleTestCase):
@@ -155,11 +156,37 @@ class TestBlobMixin(BaseTestCase):
         with self.assertRaises(mod.ResourceNotFound):
             self.obj.fetch_attachment(name)
 
+    def test_deferred_delete_attachment(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        obj.put_attachment(b"new", name, content_type="text/plain")
+        self.assertTrue(obj.blobs[name].id)
+        obj.deferred_delete_attachment(name)
+        self.assertNotIn(name, obj.blobs)
+        self.assertNotIn(name, obj.persistent_blobs)
+        self.assertIn(name, obj.external_blobs)
+        obj.save()
+        self.assertNotIn(name, obj.blobs)
+        self.assertNotIn(name, obj.persistent_blobs)
+        self.assertNotIn(name, obj.external_blobs)
+
+    def test_fetch_attachment_after_deferred_delete_attachment(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        obj.put_attachment(b"new", name, content_type="text/plain")
+        obj.deferred_delete_attachment(name)
+        with self.assertRaises(mod.ResourceNotFound):
+            obj.fetch_attachment(name)
+        obj.save()
+        self.assertFalse(obj._deferred_blobs)
+        with self.assertRaises(mod.ResourceNotFound):
+            obj.fetch_attachment(name)
+
     def test_persistent_blobs(self):
         content = b"<xml />"
         couch_digest = "md5-" + b64encode(md5(content).digest())
         obj = self.make_doc(DeferredPutBlobDocument)
-        obj.migrating_blobs_from_couch = True
+        obj._migrating_blobs_from_couch = True
         obj._attachments = {"couch": {
             "content_type": None,
             "digest": couch_digest,
@@ -451,6 +478,19 @@ class TestBlobMixin(BaseTestCase):
         # bug caused old blobs (not modifed in atomic context) to be deleted
         self.assertEqual(self.obj.fetch_attachment("file"), "file content")
 
+    def test_migrating_flag_not_in_doc_json(self):
+        obj_type = type(self.obj)
+        self.assertFalse(obj_type._migrating_blobs_from_couch)
+        self.assertFalse(self.obj._migrating_blobs_from_couch)
+        type_path = obj_type.__module__ + "." + obj_type.__name__
+        with patch(type_path + "._migrating_blobs_from_couch", True, create=True):
+            self.assertTrue(self.obj._migrating_blobs_from_couch)
+            self.assertNotIn("_migrating_blobs_from_couch", self.obj.to_json())
+        self.assertFalse(obj_type._migrating_blobs_from_couch)
+
+        self.obj._migrating_blobs_from_couch = True
+        self.assertNotIn("_migrating_blobs_from_couch", self.obj.to_json())
+
 
 class TestBlobMixinWithS3Backend(TestBlobMixin):
 
@@ -535,6 +575,8 @@ class TestBlobHelper(BaseTestCase):
             doc = {}
         if "_id" not in doc:
             doc["_id"] = uuid.uuid4().hex
+        if "doc_type" not in doc:
+            doc["doc_type"] = "FakeDoc"
         if doc.get("_attachments"):
             for name, attach in doc["_attachments"].iteritems():
                 self.couch.put_attachment(doc, name=name, **attach)
@@ -576,20 +618,22 @@ class TestBlobHelper(BaseTestCase):
         couch = FakeCouchDatabase()
         couch.fetch_attachment = fetch_fail
         obj = mod.BlobHelper({
+            "doc_type": "FakeDoc",
             "_id": "fetch-fail",
             "external_blobs": {"not-found.txt": {"id": "hahaha"}},
         }, couch)
-        self.assertFalse(obj.migrating_blobs_from_couch)
+        self.assertFalse(obj._migrating_blobs_from_couch)
         with self.assertRaisesMessage(mod.ResourceNotFound, '{} attachment'.format(obj._id)):
             obj.fetch_attachment("not-found.txt")
 
     def test_fetch_attachment_not_found_while_migrating(self):
         obj = mod.BlobHelper({
+            "doc_type": "FakeDoc",
             "_id": "fetch-fail",
             "_attachments": {"migrating...": {}},
             "external_blobs": {"not-found.txt": {"id": "nope"}},
         }, self.couch)
-        self.assertTrue(obj.migrating_blobs_from_couch)
+        self.assertTrue(obj._migrating_blobs_from_couch)
         with self.assertRaisesMessage(mod.ResourceNotFound, '{} attachment'.format(obj._id)):
             obj.fetch_attachment("not-found.txt")
 
@@ -601,6 +645,7 @@ class TestBlobHelper(BaseTestCase):
         self.assertEqual(obj.fetch_attachment("file.txt"), content)
         self.assertFalse(self.couch.data)
         self.assertEqual(self.couch.save_log, [{
+            "doc_type": "FakeDoc",
             "_id": obj._id,
             "external_blobs": {
                 "file.txt": {
@@ -628,7 +673,7 @@ class TestBlobHelper(BaseTestCase):
                 }
             },
         })
-        self.assertTrue(obj.migrating_blobs_from_couch)
+        self.assertTrue(obj._migrating_blobs_from_couch)
         self.assertEqual(obj.fetch_attachment("couch.txt"), "couch")
         self.assertEqual(obj.fetch_attachment("blob.txt"), "blob")
         self.assertFalse(self.couch.save_log)
@@ -636,10 +681,11 @@ class TestBlobHelper(BaseTestCase):
     def test_atomic_blobs_with_couch_attachments(self):
         obj = self.make_doc(doc={"_attachments": {}})
         self.assertFalse(self.couch.data)
-        self.assertFalse(obj.migrating_blobs_from_couch)
+        self.assertFalse(obj._migrating_blobs_from_couch)
         with obj.atomic_blobs():
             # save before put
             self.assertEqual(self.couch.save_log, [{
+                "doc_type": "FakeDoc",
                 "_id": obj._id,
                 "_attachments": {},
             }])
@@ -651,12 +697,13 @@ class TestBlobHelper(BaseTestCase):
     def test_atomic_blobs_with_external_blobs(self):
         obj = self.make_doc(doc={"_attachments": {}, "external_blobs": {}})
         self.assertFalse(self.couch.data)
-        self.assertFalse(obj.migrating_blobs_from_couch)
+        self.assertFalse(obj._migrating_blobs_from_couch)
         with obj.atomic_blobs():
             # no save before put
             self.assertEqual(self.couch.save_log, [])
             obj.put_attachment("test", "file.txt", content_type="text/plain")
         self.assertEqual(self.couch.save_log, [{
+            "doc_type": "FakeDoc",
             "_id": obj._id,
             "_attachments": {},
             "external_blobs": {
@@ -683,7 +730,7 @@ class TestBlobHelper(BaseTestCase):
             "external_blobs": {},
         })
         self.assertEqual(len(self.couch.data), 1)
-        self.assertTrue(obj.migrating_blobs_from_couch)
+        self.assertTrue(obj._migrating_blobs_from_couch)
         with obj.atomic_blobs():
             # no save before put
             self.assertEqual(self.couch.save_log, [])
@@ -697,6 +744,7 @@ class TestBlobHelper(BaseTestCase):
         # fetch from blob db
         self.assertEqual(obj.fetch_attachment("doc.txt"), "doc")
         self.assertEqual(self.couch.save_log, [{
+            "doc_type": "FakeDoc",
             "_id": obj._id,
             "_attachments": {},
             "external_blobs": {
@@ -721,7 +769,7 @@ class TestBlobHelper(BaseTestCase):
             "external_blobs": {},
         })
         self.assertEqual(len(self.couch.data), 1)
-        self.assertTrue(obj.migrating_blobs_from_couch)
+        self.assertTrue(obj._migrating_blobs_from_couch)
         with self.assertRaises(Exception), obj.atomic_blobs():
             # no save before put
             self.assertEqual(self.couch.save_log, [])
@@ -763,6 +811,20 @@ class TestBulkAtomicBlobs(BaseTestCase):
         self.assertFalse(obj.saved)
         with self.get_blob(ident, obj._blobdb_bucket()).open() as fh:
             self.assertEqual(fh.read(), "data")
+
+    def test_bulk_atomic_blobs_with_deferred_deleted_blobs(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        self.assertNotIn("will_delete", obj.blobs)
+        obj.put_attachment("data", "will_delete")
+        obj.deferred_delete_attachment("will_delete")
+        docs = [obj]
+        meta = obj.external_blobs["will_delete"]
+        with mod.bulk_atomic_blobs(docs):
+            self.assertNotIn("will_delete", obj.external_blobs)
+            self.assertTrue(self.db.exists(meta.id, obj._blobdb_bucket()))
+        self.assertFalse(obj._deferred_blobs)
+        self.assertFalse(self.db.exists(meta.id, obj._blobdb_bucket()))
+        self.assertNotIn("will_delete", obj.external_blobs)
 
     def test_bulk_atomic_blobs_with_non_blob_docs(self):
         noblobs = self.make_doc(BaseFakeDocument)
@@ -847,8 +909,8 @@ class PutInOldBlobDB(TemporaryMigratingBlobDB):
 
 class PutInOldCopyToNewBlobDB(TemporaryMigratingBlobDB):
 
-    def put(self, content, bucket=DEFAULT_BUCKET):
-        info = self.old_db.put(content, bucket=bucket)
+    def put(self, content, identifier=None, bucket=DEFAULT_BUCKET):
+        info = self.old_db.put(content, identifier, bucket=bucket)
         content.seek(0)
         self.copy_blob(content, info, bucket)
         return info
@@ -931,7 +993,7 @@ class FallbackToCouchDocument(mod.BlobMixin, AttachmentFallback, Document):
         app_label = "couch"
 
     doc_type = "FallbackToCouchDocument"
-    migrating_blobs_from_couch = True
+    _migrating_blobs_from_couch = True
 
     @classmethod
     def get_db(cls):

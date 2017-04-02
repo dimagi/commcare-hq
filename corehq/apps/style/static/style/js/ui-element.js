@@ -72,6 +72,9 @@ var uiElement;
         });
         this.setEdit(this.edit);
         this.val(initialValue);
+
+        // Trigger the textchange plugin's logic, so that it gets the correct initialValue set
+        $elem.trigger('keyup');
     };
     Input.prototype = {
         val: function (value) {

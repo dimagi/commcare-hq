@@ -1,13 +1,23 @@
 {
     "domains": [
         "enikshay-test",
-        "enikshay-test-test"
+        "enikshay-test-test",
+        "enikshay",
+        "enikshay-test-2",
+        "enikshay-test-3",
+        "enikshay-nikshay-migration-test",
+        "enikshay-domain-copy-test",
+        "enikshay-aks-audit",
+        "np-migration-3"
+    ],
+    "server_environment": [
+        "softlayer"
     ],
     "data_source_table": "episode",
     "report_id": "case_finding_mobile",
     "config": {
         "description": "",
-        "title": "Case Finding - Mobile Report",
+        "title": "Summary of Case Finding - Mobile",
         "sort_expression": [],
         "visible": false,
         "configured_charts": [],
@@ -17,11 +27,11 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "display": "Case Open Date",
-                "field": "opened_on",
-                "type": "quarter",
+                "display": "Date of Diagnosis",
+                "field": "date_of_diagnosis",
+                "type": "date",
                 "show_all": true,
-                "slug": "patient_registration_date"
+                "slug": "date_of_diagnosis"
             },
             {
                 "compare_as_string": false,
@@ -170,6 +180,18 @@
                 "calculate_total": false
             },
             {
+                "display": "Number of New Transgender Cases",
+                "type": "field",
+                "field": "new_transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Number of New Pulmonary Cases",
                 "type": "field",
                 "field": "new_pulmonary",
@@ -194,19 +216,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Number of New Transgender Cases",
-                "type": "field",
-                "field": "new_transgender",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Number of Retreatment Cases",
+                "display": "Number of All Previously Treated Cases",
                 "type": "field",
                 "field": "retreatment",
                 "aggregation": "sum",
@@ -218,7 +228,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Number of Retreatment Microbiologically Confirmed Cases",
+                "display": "Number of Previously Treated Microbiologically Confirmed Cases",
                 "type": "field",
                 "field": "retreatment_microbiological",
                 "aggregation": "sum",
@@ -230,7 +240,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Number of Retreatment Clinically Diagnosed Cases",
+                "display": "Number of Previously Treated Clinically Diagnosed Cases",
                 "type": "field",
                 "field": "retreatment_clinical",
                 "aggregation": "sum",
@@ -242,7 +252,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Number of Retreatment Cases - pediatric (0-14)",
+                "display": "Number of Previously Treated Cases - pediatric (0-14)",
                 "type": "field",
                 "field": "retreatment_under_15",
                 "aggregation": "sum",
@@ -254,7 +264,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Number of Retreatment Cases - non pediatric (15+)",
+                "display": "Number of Previously Treated Cases - adult (15+)",
                 "type": "field",
                 "field": "retreatment_over_15",
                 "aggregation": "sum",
@@ -266,7 +276,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Number of Retreatment Female Cases",
+                "display": "Number of Previously Treated Female Cases",
                 "type": "field",
                 "field": "retreatment_female",
                 "aggregation": "sum",
@@ -278,7 +288,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Number of Retreatment Male Cases",
+                "display": "Number of Previously Treated Male Cases",
                 "type": "field",
                 "field": "retreatment_male",
                 "aggregation": "sum",
@@ -290,7 +300,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Number of Retreatment Transgender Cases",
+                "display": "Number of Previously Treated Transgender Cases",
                 "type": "field",
                 "field": "retreatment_transgender",
                 "aggregation": "sum",
@@ -302,7 +312,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Number of Retreatment Pulmonary Cases",
+                "display": "Number of Previously Treated Pulmonary Cases",
                 "type": "field",
                 "field": "retreatment_pulmonary",
                 "aggregation": "sum",
@@ -314,7 +324,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Number of Retreatment Extrapulmonary Cases",
+                "display": "Number of Previously Treated Extrapulmonary Cases",
                 "type": "field",
                 "field": "retreatment_extra_pulmonary",
                 "aggregation": "sum",

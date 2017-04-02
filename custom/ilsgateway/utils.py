@@ -4,6 +4,7 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import LocationType, Location, SQLLocation
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, ILSGatewayConfig, GroupSummary, SupplyPointStatusTypes, \
@@ -57,7 +58,7 @@ def supply_points_with_latest_status_by_datespan(locations, status_type, status_
 
 
 def send_translated_message(user, message, **kwargs):
-    verified_number = user.get_verified_number()
+    verified_number = get_two_way_number_for_recipient(user)
     if not verified_number:
         return False
     with localize(user.get_language_code()):

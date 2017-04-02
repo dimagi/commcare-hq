@@ -51,14 +51,15 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
     def _submit_form(self, xmlns, form_name, app_id, build_id):
         xform_source = self.get_xml('xform_template').format(xmlns=xmlns, name=form_name, id=uuid.uuid4().hex)
-        _, xform, __ = submit_form_locally(xform_source, DOMAIN, app_id=app_id, build_id=build_id)
-        send_to_elasticsearch('forms', transform_xform_for_elasticsearch(xform.to_json()))
-        return xform
+        result = submit_form_locally(xform_source, DOMAIN, app_id=app_id, build_id=build_id)
+        send_to_elasticsearch('forms', transform_xform_for_elasticsearch(result.xform.to_json()))
+        return result.xform
 
     def _refresh_pillow(self):
         self.es.indices.refresh(XFORM_INDEX_INFO.index)
 
-    def build_normal_app(self):
+    @patch("corehq.apps.app_manager.models.validate_xform", return_value=None)
+    def build_normal_app(self, mock):
         xmlns = generate_random_xmlns()
         form_name = "Untitled Form"
 
@@ -73,7 +74,8 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         xform = self._submit_form(xmlns, form_name, app._id, build._id)
         return form, xform
 
-    def build_app_with_bad_form(self):
+    @patch("corehq.apps.app_manager.models.validate_xform", side_effect=None)
+    def build_app_with_bad_form(self, mock):
         """
         Generates an app with one normal form, and one form with "undefined" xmlns
         Generates submissions against both forms.
@@ -101,7 +103,8 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
         return good_form, bad_form, good_xform, bad_xforms
 
-    def build_app_with_recently_fixed_form(self):
+    @patch("corehq.apps.app_manager.models.validate_xform", side_effect=None)
+    def build_app_with_recently_fixed_form(self, mock):
         """
         Generates an app with a form that:
         - had an "undefined" xmlns

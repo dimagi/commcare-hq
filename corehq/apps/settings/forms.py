@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 from two_factor.forms import (

@@ -6,7 +6,7 @@ from testil import replattr
 
 import corehq.blobs.migratingdb as mod
 from corehq.blobs import DEFAULT_BUCKET
-from corehq.blobs.tests.util import TemporaryS3BlobDB, TemporaryFilesystemBlobDB
+from corehq.blobs.tests.util import get_id, TemporaryS3BlobDB, TemporaryFilesystemBlobDB
 from corehq.util.test_utils import trap_extra_setup
 
 
@@ -32,13 +32,13 @@ class TestMigratingBlobDB(get_base_class()):
         cls.s3db.close()
 
     def test_fall_back_to_fsdb(self):
-        info = self.fsdb.put(StringIO(b"content"))
+        info = self.fsdb.put(StringIO(b"content"), get_id())
         with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_copy_blob_masks_old_blob(self):
         content = StringIO(b"fs content")
-        info = self.fsdb.put(content)
+        info = self.fsdb.put(content, get_id())
         content.seek(0)
         self.db.copy_blob(content, info, DEFAULT_BUCKET)
         self.assertEndsWith(
@@ -50,7 +50,7 @@ class TestMigratingBlobDB(get_base_class()):
                 self.assertEqual(fh.read(), b"fs content")
 
     def test_delete_from_both_fs_and_s3(self):
-        info = self.fsdb.put(StringIO(b"content"))
+        info = self.fsdb.put(StringIO(b"content"), get_id())
         with self.fsdb.get(info.identifier) as content:
             self.db.copy_blob(content, info, DEFAULT_BUCKET)
         self.assertTrue(self.db.delete(info.identifier))

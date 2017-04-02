@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from django.test import SimpleTestCase
 
@@ -219,6 +220,18 @@ def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
     (
         [1, 2],
         {'type': 'identity'},
+        'min',
+        1
+    ),
+    (
+        [1, 2],
+        {'type': 'identity'},
+        'max',
+        2
+    ),
+    (
+        [1, 2],
+        {'type': 'identity'},
         'first_item',
         1
     ),
@@ -227,6 +240,13 @@ def test_reduce_items_bad_spec(self, items_ex, reduce_ex):
         {'type': 'identity'},
         'last_item',
         2
+    ),
+    # if items can't be compared should return None
+    (
+        [datetime.datetime.now(), datetime.date.today()],
+        {'type': 'identity'},
+        'max',
+        None,
     ),
     # if items_expression returns non-iterable reduce(count) should return 0
     (

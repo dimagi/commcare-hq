@@ -1,5 +1,5 @@
+from __future__ import print_function
 from datetime import datetime
-from optparse import make_option
 from dateutil import parser
 
 from django.core.management.base import BaseCommand
@@ -8,21 +8,24 @@ from corehq.apps.hqadmin.models import HqDeploy
 
 class Command(BaseCommand):
     help = "Print a list of code deploys between dates"
-    args = ''
-    option_list = (
-        make_option('--start',
-                    action='store',
-                    dest='startdate',
-                    default='',
-                    help='Start date'),
-        make_option('--end',
-                    action='store',
-                    dest='enddate',
-                    default='',
-                    help='End date (defaults to now)'),
-    )
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--start',
+            action='store',
+            dest='startdate',
+            default='',
+            help='Start date',
+        )
+        parser.add_argument(
+            '--end',
+            action='store',
+            dest='enddate',
+            default='',
+            help='End date (defaults to now)',
+        )
+
+    def handle(self, **options):
         start = parser.parse(options['startdate'])
         enddate = options['enddate']
         end = parser.parse(enddate) if enddate else datetime.utcnow()
@@ -46,4 +49,4 @@ class Command(BaseCommand):
 def print_row(*args):
     tp = ["{{{}!s:<30}}".format(i) for i, _ in enumerate(args)]
     template = ' | '.join(tp)
-    print template.format(*args)
+    print(template.format(*args))

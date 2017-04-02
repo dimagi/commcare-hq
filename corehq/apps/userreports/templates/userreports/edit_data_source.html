@@ -19,7 +19,7 @@
   {% endif %}
   <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
     {% csrf_token %}
-    <button type="submit" class="btn btn-default disable-on-submit">
+    <button type="submit" class="btn btn-default disable-on-submit pull-right">
       {% trans 'Rebuild Data Source'%}
     </button>
     <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview data' %}</a>
@@ -31,6 +31,12 @@
     {% csrf_token %}
     <button type="submit" class="btn btn-default disable-on-submit">
       {% trans 'Resume Build (Advanced)' %}
+    </button>
+  </form>
+  <form method='post' action="{% url 'build_in_place' domain data_source.get_id %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-default disable-on-submit">
+      {% trans 'Rebuild Tables In Place (Advanced)' %}
     </button>
   </form>
   {% endif %}

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import collections
 import hashlib
 
@@ -67,6 +68,9 @@ def has_report_builder_trial(request):
 
 
 def can_edit_report(request, report):
+    if not request.can_access_all_locations:
+        return False
+
     ucr_toggle = toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
     report_builder_toggle = toggle_enabled(request, toggles.REPORT_BUILDER)
     report_builder_beta_toggle = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
@@ -105,9 +109,7 @@ def allowed_report_builder_reports(request):
 def number_of_report_builder_reports(domain):
     from corehq.apps.userreports.models import ReportConfiguration
     existing_reports = ReportConfiguration.by_domain(domain)
-    builder_reports = filter(
-        lambda report: report.report_meta.created_by_builder, existing_reports
-    )
+    builder_reports = [report for report in existing_reports if report.report_meta.created_by_builder]
     return len(builder_reports)
 
 
@@ -172,3 +174,18 @@ def get_backend_id(config, can_handle_laboratory=False):
     if settings.OVERRIDE_UCR_BACKEND:
         return settings.OVERRIDE_UCR_BACKEND
     return config.backend_id
+
+
+def get_ucr_class_name(id):
+    """
+    This returns the module and class name for a ucr from its id as used in report permissions.
+    It takes an id and returns the string that needed for `user.can_view_report(string)`.
+    The class name comes from corehq.reports._make_report_class, if something breaks, look there first.
+    :param id: the id of the ucr report config
+    :return: string class name
+    """
+    return 'corehq.reports.DynamicReport{}'.format(id)
+
+
+def get_async_indicator_modify_lock_key(doc_id):
+    return 'async_indicator_save-{}'.format(doc_id)

@@ -35,7 +35,7 @@ class TestScript(TestCase):
         commands = self.parse_script(script)
         for command in commands:
             phone_number = command['phone_number']
-            v = PhoneNumber.by_phone(phone_number)
+            v = PhoneNumber.get_two_way_number(phone_number)
             if command['direction'] == '>':
                 incoming(phone_number, command['text'], v.backend_id)
             else:

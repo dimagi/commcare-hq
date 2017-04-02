@@ -4,14 +4,15 @@ from lxml.builder import E
 import HTMLParser
 import json
 import socket
-from datetime import timedelta, date, datetime
+from datetime import timedelta, date
 from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
+from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.csv import UnicodeWriter
-from django.utils.safestring import mark_safe
+from dimagi.utils.dates import add_months
 from django.views.decorators.http import require_POST
 from django.conf import settings
 from django.contrib import messages
@@ -19,7 +20,6 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
 from django.shortcuts import render
-from django.template.loader import render_to_string
 from django.views.generic import FormView, TemplateView, View
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -89,7 +89,7 @@ from . import service_checks, escheck
 from .forms import AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm, ReprocessMessagingCaseUpdatesForm
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
-from .reporting.reports import get_project_spaces, get_stats_data
+from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from .utils import get_celery_stats
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
@@ -312,7 +312,7 @@ def system_ajax(request):
             try:
                 t = cresource.get("api/tasks", params_dict={'limit': task_limit}).body_string()
                 all_tasks = json.loads(t)
-            except Exception, ex:
+            except Exception as ex:
                 return json_response({'error': "Error with getting from celery_flower: %s" % ex}, status_code=500)
 
             for task_id, traw in all_tasks.items():
@@ -535,26 +535,6 @@ class DomainAdminRestoreView(AdminRestoreView):
         return super(DomainAdminRestoreView, self).get(request, *args, **kwargs)
 
 
-class ManagementCommandsView(BaseAdminSectionView):
-    urlname = 'management_commands'
-    page_title = ugettext_lazy("Management Commands")
-    template_name = 'hqadmin/management_commands.html'
-
-    @method_decorator(require_superuser)
-    @use_jquery_ui
-    @use_datatables
-    def dispatch(self, request, *args, **kwargs):
-        return super(ManagementCommandsView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        commands = [(_('Remove Duplicate Domains'), 'remove_duplicate_domains')]
-        context = get_hqadmin_base_context(self.request)
-        context["hide_filters"] = True
-        context["commands"] = commands
-        return context
-
-
 @require_POST
 @require_superuser
 def run_command(request):
@@ -619,13 +599,18 @@ def stats_data(request):
 
     domains = get_project_spaces(facets=domain_params)
 
-    return json_response(get_stats_data(
-        histo_type,
-        domains,
-        request.datespan,
-        interval,
-        **stats_kwargs
-    ))
+    try:
+        return json_response(get_stats_data(
+            histo_type,
+            domains,
+            request.datespan,
+            interval,
+            **stats_kwargs
+        ))
+    except HistoTypeNotFoundException:
+        return HttpResponseBadRequest(
+            'histogram_type param must be one of <ul><li>{}</li></ul>'
+            .format('</li><li>'.join(HISTO_TYPE_TO_FUNC.keys())))
 
 
 @require_superuser
@@ -918,11 +903,13 @@ class DownloadGIRView(BaseAdminSectionView):
 
 def _gir_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
-    prev_month = "{year}-{month}-01".format(year=year, month=month - 1)
-    two_ago = "{year}-{month}-01".format(year=year, month=month - 2)
+    prev_month_year, prev_month = add_months(year, month, -1)
+    prev_month_string = "{year}-{month}-01".format(year=prev_month_year, month=prev_month)
+    two_ago_year, two_ago_month = add_months(year, month, -2)
+    two_ago_string = "{year}-{month}-01".format(year=two_ago_year, month=two_ago_month)
     if not GIRRow.objects.filter(month=query_month).exists():
         return HttpResponse('Sorry, that month is not yet available')
-    queryset = GIRRow.objects.filter(month__in=[query_month, prev_month, two_ago]).order_by('-month')
+    queryset = GIRRow.objects.filter(month__in=[query_month, prev_month_string, two_ago_string]).order_by('-month')
     domain_months = defaultdict(list)
     for item in queryset:
         domain_months[item.domain_name].append(item)

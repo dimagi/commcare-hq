@@ -26,7 +26,7 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id="",
                        xmlns=SYSTEM_FORM_XMLNS, attachments=None,
-                       form_id=None, form_extras=None):
+                       form_id=None, form_extras=None, case_db=None):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
@@ -47,13 +47,14 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
     })
     form_extras = form_extras or {}
 
-    response, xform, cases = submit_form_locally(
+    result = submit_form_locally(
         instance=form_xml,
         domain=domain,
         attachments=attachments,
+        case_db=case_db,
         **form_extras
     )
-    return xform, cases
+    return result.xform, result.cases
 
 
 def get_case_wrapper(data):

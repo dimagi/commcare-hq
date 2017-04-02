@@ -1,11 +1,15 @@
-import uuid
 from datetime import datetime, date
-from dateutil.relativedelta import relativedelta
+import uuid
 from xml.etree import ElementTree
-from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import run_with_all_backends
+
+from dateutil.relativedelta import relativedelta
+from django.test import override_settings
+import mock
+
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
+from corehq.apps.es.fake.forms_fake import FormESFake
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element
 
 XMNLS_BP_FORM = 'http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB'
@@ -24,6 +28,9 @@ NUTRITION_STATUS_MODERATE = "yellow"
 NUTRITION_STATUS_SEVERE = "red"
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
+@mock.patch('custom.icds_reports.ucr.expressions.FormES', FormESFake)
 class TestChildHealthDataSource(BaseICDSDatasourceTest):
     datasource_filename = 'child_health_cases_monthly_tableau'
 
@@ -169,7 +176,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         form.append(case)
         add_element(form, 'zscore_grading_wfa', nutrition_status)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_dailyfeeding_form(
             self, form_date, case_id):
@@ -188,7 +195,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
         form.append(case)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_thr_rations_form(
             self, form_date, case_id, rations_distributed=0, case_id_2=None):
@@ -228,7 +235,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         child_thr.append(child_thr_persons)
         form.append(child_thr)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_delivery_form(
             self, form_date, case_id, nutrition_status=None, case_id_2=None):
@@ -272,7 +279,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             form.append(child_repeat2)
 
         ElementTree.dump(form)
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_ebf_form(
             self, form_date, case_id, is_ebf=None, water_or_milk=None,
@@ -316,7 +323,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             child.append(child_repeat2)
         form.append(child)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_pnc_form(self, form_date, case_id, is_ebf=None, other_milk_to_child=None,
                          counsel_exclusive_bf=None, counsel_increase_food_bf=None,
@@ -357,7 +364,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             child.append(child_repeat2)
         form.append(child)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_cf_form(
             self, form_date, case_id, comp_feeding=None, diet_diversity=None,
@@ -403,7 +410,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             child.append(child_repeat2)
         form.append(child)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_bp_form(
             self, form_date, case_id, counsel_immediate_bf='no'):
@@ -426,9 +433,8 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         add_element(bp2, 'immediate_breastfeeding', counsel_immediate_bf)
         form.append(bp2)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
-    @run_with_all_backends
     def test_demographic_data(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -454,7 +460,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_open_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -474,7 +479,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_alive_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -493,7 +497,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_valid_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -512,7 +515,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_age_in_months(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -530,7 +532,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_age_tranche_0_to_6(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -547,7 +548,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_age_tranche_6_to_12(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -564,7 +564,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_age_tranche_12_to_24(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -580,7 +579,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_age_tranche_24_to_36(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -596,7 +594,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_age_tranche_36_to_48(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -612,7 +609,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_age_tranche_48_to_60(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -628,7 +624,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_age_tranche_60_to_72(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -644,7 +639,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_age_tranche_72_to_null(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -660,7 +654,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_wer_eligible(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -679,7 +672,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_thr_eligible_6mo(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -698,7 +690,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_thr_eligible_36mo(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -717,7 +708,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_ebf_eligible(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -736,7 +726,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_cf_eligible_6mo(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -755,7 +744,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_cf_eligible_24mo(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -774,7 +762,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_pse_eligible_36mo(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -793,7 +780,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_pse_eligible_72mo(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -811,7 +797,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_nutrition_status_delivery(self):
         case_id = uuid.uuid4().hex
         case_id_2 = uuid.uuid4().hex
@@ -876,7 +861,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_nutrition_status_gmp(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -951,7 +935,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_thr_rations(self):
         case_id = uuid.uuid4().hex
         case_id_2 = uuid.uuid4().hex
@@ -995,7 +978,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_pse(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -1030,7 +1012,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_born_in_month_positive(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -1058,7 +1039,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_born_in_month_negative(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -1084,7 +1064,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_ebf_ebf_form(self):
         case_id = uuid.uuid4().hex
         case_id_2 = uuid.uuid4().hex
@@ -1190,7 +1169,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_pnc_form(self):
         case_id = uuid.uuid4().hex
         case_id_2 = uuid.uuid4().hex
@@ -1275,7 +1253,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_ebf_no_ebf_reasons(self):
         case_id = uuid.uuid4().hex
         case_id_2 = uuid.uuid4().hex
@@ -1376,7 +1353,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_cf(self):
         case_id = uuid.uuid4().hex
         case_id_2 = uuid.uuid4().hex
@@ -1468,7 +1444,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_fully_immunized_eligible(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -1485,7 +1460,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_fully_immunized_on_time(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -1509,7 +1483,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_fully_immunized_late(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -1536,7 +1509,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_no_immediate_breastfeeding(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -1557,7 +1529,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
                  ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_yes_immediate_breastfeeding(self):
         case_id = uuid.uuid4().hex
         self._create_case(

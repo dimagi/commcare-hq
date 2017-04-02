@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load reports_core_tags %}
-@@ -7,10 +7,10 @@
+@@ -7,22 +7,22 @@
  {% block js %}{{ block.super }}
      <script src="{% static 'app_manager/js/report-module.js' %}"></script>
      <script src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
@@ -18,11 +18,7 @@
 +    {% include "app_manager/v2/partials/report_configs_js.html" %}
  {% endblock %}
  {% block form-view %}
-     {% if warnings %}
-@@ -20,15 +20,15 @@
-         {% endfor %}
-         </div>
-     {% endif %}
+     {% registerurl "validate_module_for_build" domain app.id module.id %}
 -    {% include 'app_manager/v1/partials/module_view_heading.html' %}
 -    {% include 'app_manager/v1/partials/mobile_report_configs.html' %}
 +    {% include 'app_manager/v2/partials/module_view_heading.html' %}

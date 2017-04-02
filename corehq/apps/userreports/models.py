@@ -1,7 +1,14 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from copy import copy, deepcopy
 import json
 from datetime import datetime
+
+from django.conf import settings
+from django.contrib import admin
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
+from django.utils.translation import ugettext as _
 
 from corehq.sql_db.connections import UCR_ENGINE_ID
 from corehq.util.quickcache import quickcache, skippable_quickcache
@@ -19,7 +26,7 @@ from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
-from corehq.apps.userreports.const import UCR_SQL_BACKEND
+from corehq.apps.userreports.const import UCR_SQL_BACKEND, VALID_REFERENCED_DOC_TYPES
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
     get_report_configs_for_domain, get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -36,16 +43,15 @@ from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, \
     ReportColumnFactory, ReportOrderByFactory
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
-from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
-from django.conf import settings
 
 from dimagi.utils.modules import to_function
 
@@ -65,6 +71,9 @@ class DataSourceBuildInformation(DocumentSchema):
     finished = BooleanProperty(default=False)
     # Start time of the most recent build SQL table celery task.
     initiated = DateTimeProperty()
+    # same as previous attributes but used for rebuilding tables in place
+    finished_in_place = BooleanProperty(default=False)
+    initiated_in_place = DateTimeProperty()
 
 
 class DataSourceMeta(DocumentSchema):
@@ -90,6 +99,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     meta = SchemaProperty(DataSourceMeta)
     is_deactivated = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
+    asynchronous = BooleanProperty(default=False)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -145,7 +155,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 'type': 'and',
                 'filters': built_in_filters + extras,
             },
-            context=self._get_factory_context(),
+            context=self.get_factory_context(),
         )
 
     def _get_domain_filter_spec(self):
@@ -158,8 +168,28 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def named_expression_objects(self):
-        return {name: ExpressionFactory.from_spec(expression, FactoryContext.empty())
-                for name, expression in self.named_expressions.items()}
+        named_expression_specs = deepcopy(self.named_expressions)
+        named_expressions = {}
+        spec_error = None
+        while named_expression_specs:
+            number_generated = 0
+            for name, expression in named_expression_specs.items():
+                try:
+                    named_expressions[name] = ExpressionFactory.from_spec(
+                        expression,
+                        FactoryContext(named_expressions=named_expressions, named_filters={})
+                    )
+                    number_generated += 1
+                    del named_expression_specs[name]
+                except BadSpecError as spec_error:
+                    # maybe a nested name resolution issue, try again on the next pass
+                    pass
+            if number_generated == 0 and named_expression_specs:
+                # we unsuccessfully generated anything on this pass and there are still unresolved
+                # references. we have to fail.
+                assert spec_error is not None
+                raise spec_error
+        return named_expressions
 
     @property
     @memoized
@@ -167,7 +197,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return {name: FilterFactory.from_spec(filter, FactoryContext(self.named_expression_objects, {}))
                 for name, filter in self.named_filters.items()}
 
-    def _get_factory_context(self):
+    def get_factory_context(self):
         return FactoryContext(self.named_expression_objects, self.named_filter_objects)
 
     @property
@@ -187,16 +217,16 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                     "property_name": "_id"
                 }
             }
-        }, self._get_factory_context())]
+        }, self.get_factory_context())]
 
         default_indicators.append(IndicatorFactory.from_spec({
             "type": "inserted_at",
-        }, self._get_factory_context()))
+        }, self.get_factory_context()))
 
         if self.base_item_expression:
             default_indicators.append(IndicatorFactory.from_spec({
                 "type": "repeat_iteration",
-            }, self._get_factory_context()))
+            }, self.get_factory_context()))
 
         return default_indicators
 
@@ -207,7 +237,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return CompoundIndicator(
             self.display_name,
             self.default_indicators + [
-                IndicatorFactory.from_spec(indicator, self._get_factory_context())
+                IndicatorFactory.from_spec(indicator, self.get_factory_context())
                 for indicator in self.configured_indicators
             ]
         )
@@ -216,7 +246,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @memoized
     def parsed_expression(self):
         if self.base_item_expression:
-            return ExpressionFactory.from_spec(self.base_item_expression, context=self._get_factory_context())
+            return ExpressionFactory.from_spec(self.base_item_expression, context=self.get_factory_context())
         return None
 
     def get_columns(self):
@@ -238,10 +268,14 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             return []
 
     def get_all_values(self, doc):
-        return [
-            self.indicators.get_values(item, EvaluationContext(doc, i))
-            for i, item in enumerate(self.get_items(doc))
-        ]
+        rows = []
+        eval_context = EvaluationContext(doc)
+        for item in self.get_items(doc):
+            indicators = self.indicators.get_values(item, eval_context)
+            rows.append(indicators)
+            eval_context.increment_iteration()
+
+        return rows
 
     def get_report_count(self):
         """
@@ -262,6 +296,10 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             for column in set(columns):
                 columns.remove(column)
             raise BadSpecError(_('Report contains duplicate column ids: {}').format(', '.join(set(columns))))
+
+        if self.referenced_doc_type not in VALID_REFERENCED_DOC_TYPES:
+            raise BadSpecError(
+                _('Report contains invalid referenced_doc_type: {}').format(self.referenced_doc_type))
 
         self.parsed_expression
 
@@ -375,7 +413,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
                     'XFormInstance': _('Forms'),
                     'CommCareCase': _('Cases')
                 }.get(self.config.referenced_doc_type, "Layer"),
-                'columns': filter(None, [map_col(col) for col in self.columns])
+                'columns': [x for x in (map_col(col) for col in self.columns) if x]
             }
 
     @property
@@ -466,6 +504,7 @@ class StaticDataSourceConfiguration(JsonObject):
     """
     _datasource_id_prefix = STATIC_PREFIX
     domains = ListProperty()
+    server_environment = ListProperty()
     config = DictProperty()
 
     @classmethod
@@ -496,6 +535,10 @@ class StaticDataSourceConfiguration(JsonObject):
     @classmethod
     def all(cls):
         for wrapped, path in cls._all():
+            if (wrapped.server_environment and
+                    settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
+                continue
+
             for domain in wrapped.domains:
                 yield cls._get_datasource_config(wrapped, domain)
 
@@ -548,6 +591,7 @@ class StaticReportConfiguration(JsonObject):
     data_source_table = StringProperty()
     config = DictProperty()
     custom_configurable_report = StringProperty()
+    server_environment = ListProperty()
 
     @classmethod
     def get_doc_id(cls, domain, report_id, custom_configurable_report):
@@ -576,6 +620,10 @@ class StaticReportConfiguration(JsonObject):
     @classmethod
     def all(cls):
         for wrapped, path in StaticReportConfiguration._all():
+            if (wrapped.server_environment and
+                    settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
+                continue
+
             for domain in wrapped.domains:
                 yield cls._get_report_config(wrapped, domain)
 
@@ -587,9 +635,12 @@ class StaticReportConfiguration(JsonObject):
         return [ds for ds in cls.all() if ds.domain == domain]
 
     @classmethod
-    def by_id(cls, config_id):
+    def by_id(cls, config_id, domain=None):
         """
         Returns a ReportConfiguration object, NOT StaticReportConfigurations.
+
+        :param domain: Optionally specify domain name to validate access.
+                       Raises ``DocumentNotFound`` if domains don't match.
         """
         mapping = cls.by_id_mapping()
         if config_id not in mapping:
@@ -600,7 +651,14 @@ class StaticReportConfiguration(JsonObject):
             raise BadSpecError(_('The report configuration referenced by this report could '
                                  'not be found.'))
 
-        return cls._get_from_metadata(metadata)
+        config = cls._get_from_metadata(metadata)
+        if domain and config.domain != domain:
+            raise DocumentNotFound("Document {} of class {} not in domain {}!".format(
+                config_id,
+                config.__class__.__name__,
+                domain,
+            ))
+        return config
 
     @classmethod
     def by_ids(cls, config_ids):
@@ -642,6 +700,54 @@ class StaticReportConfiguration(JsonObject):
         doc['_id'] = cls.get_doc_id(domain, static_config.report_id, static_config.custom_configurable_report)
         doc['config_id'] = StaticDataSourceConfiguration.get_doc_id(domain, static_config.data_source_table)
         return ReportConfiguration.wrap(doc)
+
+
+class AsyncIndicator(models.Model):
+    """Indicator that has not yet been processed
+
+    These indicators will be picked up by a queue and placed into celery to be
+    saved. Once saved to the data sources, this record will be deleted
+    """
+    doc_id = models.CharField(max_length=255, null=False, db_index=True, unique=True)
+    doc_type = models.CharField(max_length=126, null=False)
+    domain = models.CharField(max_length=126, null=False)
+    indicator_config_ids = ArrayField(
+        models.CharField(max_length=126, null=True, blank=True),
+        null=False
+    )
+    date_created = models.DateTimeField(auto_now_add=True, db_index=True)
+    date_queued = models.DateTimeField(null=True, db_index=True)
+
+    class Meta(object):
+        ordering = ["date_created"]
+
+    @classmethod
+    def update_indicators(cls, change, config_ids):
+        doc_id = change.id
+        with CriticalSection([get_async_indicator_modify_lock_key(doc_id)]):
+            try:
+                indicator = cls.objects.get(doc_id=doc_id)
+            except cls.DoesNotExist:
+                doc_type = change.document['doc_type']
+                domain = change.document['domain']
+                indicator = AsyncIndicator.objects.create(
+                    doc_id=doc_id,
+                    doc_type=doc_type,
+                    domain=domain,
+                    indicator_config_ids=config_ids
+                )
+            else:
+                current_config_ids = set(indicator.indicator_config_ids)
+                config_ids = set(config_ids)
+                if config_ids - current_config_ids:
+                    new_config_ids = list(current_config_ids.union(config_ids))
+                    indicator.indicator_config_ids = new_config_ids
+                    indicator.save()
+
+        return indicator
+
+
+admin.site.register(AsyncIndicator)
 
 
 def get_datasource_config(config_id, domain):

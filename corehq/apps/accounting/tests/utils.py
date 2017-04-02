@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SubscriptionAdjustment, Subscription
 from corehq.apps.accounting.tests import generator
 
@@ -9,7 +10,7 @@ class DomainSubscriptionMixin(object):
 
     @classmethod
     def setup_subscription(cls, domain_name, software_plan):
-        generator.instantiate_accounting()
+        generator.bootstrap_test_plans()
 
         plan = DefaultProductPlan.get_default_plan_version(edition=software_plan)
         cls.account = BillingAccount.get_or_create_account_by_domain(

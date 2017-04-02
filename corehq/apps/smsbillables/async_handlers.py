@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.accounting.utils import fmt_dollar_amount
@@ -77,11 +78,10 @@ class SMSRatesSelect2AsyncHandler(BaseAsyncHandler):
         search_term = self.data.get('searchString')
         if search_term:
             search_term = search_term.lower().replace('+', '')
-            final_codes = filter(
-                lambda x: (str(x[0]).startswith(search_term)
-                           or x[1].lower().startswith(search_term)),
-                final_codes
-            )
+            final_codes = [
+                x for x in final_codes
+                if str(x[0]).startswith(search_term) or x[1].lower().startswith(search_term)
+            ]
         final_codes = [(c[0], "+%s%s" % (c[0], " (%s)" % c[1] if c[1] else '')) for c in final_codes]
         if criteria_query.filter(country_code__exact=None).exists():
             final_codes.append((

@@ -117,7 +117,15 @@ legend .subtext {
     .case-config-select2s(@select2Width);
 
     .wide-select2s {
-        .case-config-select2s(@select2Width * 1.5);
+      .case-config-select2s(@select2Width * 1.5);
+    }
+
+    .property-description {
+      width: @select2Width;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
     }
 }
 

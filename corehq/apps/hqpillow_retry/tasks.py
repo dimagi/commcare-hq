@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from celery.schedules import crontab
 from celery.task.base import periodic_task
 from django.core.mail import mail_admins
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db.models.aggregates import Count
 from django.template.loader import render_to_string
 from dimagi.utils.web import get_url_base

@@ -9,13 +9,12 @@ class Command(BaseCommand):
     Forces a 412 for a given user by creating bad state in the all synclogs
     for the given user after the given date
     """
-    args = "user_id date"
 
-    def handle(self, *args, **options):
-        if len(args) != 2:
-            raise CommandError("Usage is ./manage.py invalidate_sync_heads %s" % self.args)
-        user_id = args[0]
-        date = args[1]
+    def add_arguments(self, parser):
+        parser.add_argument('user_id')
+        parser.add_argument('date')
+
+    def handle(self, user_id, date, **options):
         results = synclog_view(
             "phone/sync_logs_by_user",
             startkey=[user_id, {}],

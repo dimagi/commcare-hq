@@ -1,0 +1,97 @@
+{
+    "backend_id": "SQL", 
+    "base_item_expression": {}, 
+    "configured_filter": {
+        "type": "boolean_expression",
+        "expression": {
+            "type": "property_name",
+            "property_name": "type"
+        },
+        "operator": "eq",
+        "property_value": "bug-child"
+    }, 
+    "configured_indicators": [
+        {
+            "column_id": "property", 
+            "datatype": "string", 
+            "display_name": "property", 
+            "expression": {
+                "datatype": null, 
+                "property_name": "update-prop-child", 
+                "type": "property_name"
+            }, 
+            "is_nullable": true, 
+            "is_primary_key": false, 
+            "transform": {}, 
+            "type": "expression"
+        }, 
+        {
+            "column_id": "parent_property", 
+            "datatype": "string", 
+            "display_name": "parent_property", 
+            "expression": {
+                "name": "parent_property", 
+                "type": "named"
+            }, 
+            "is_nullable": true, 
+            "is_primary_key": false, 
+            "transform": {}, 
+            "type": "expression"
+        }
+    ], 
+    "description": "", 
+    "display_name": "Bug Demo", 
+    "doc_type": "DataSourceConfiguration", 
+    "domain": "bug-domain", 
+    "engine_id": "ucr", 
+    "is_deactivated": false, 
+    "last_modified": "2017-01-09T11:30:01.367764Z", 
+    "meta": {
+        "build": {
+            "app_id": null, 
+            "app_version": null, 
+            "doc_type": "DataSourceBuildInformation", 
+            "finished": true, 
+            "initiated": "2017-01-09T11:30:01.192110Z", 
+            "source_id": null
+        }, 
+        "doc_type": "DataSourceMeta"
+    }, 
+    "named_expressions": {
+        "parent_id": {
+            "argument_expression": {
+                "array_expression": {
+                    "datatype": null, 
+                    "property_name": "indices", 
+                    "type": "property_name"
+                }, 
+                "index_expression": {
+                    "constant": 0, 
+                    "type": "constant"
+                }, 
+                "type": "array_index"
+            }, 
+            "type": "nested", 
+            "value_expression": {
+                "datatype": null, 
+                "property_name": "referenced_id", 
+                "type": "property_name"
+            }
+        },
+        "parent_property": {
+            "doc_id_expression": {
+                "name": "parent_id", 
+                "type": "named"
+            }, 
+            "related_doc_type": "CommCareCase", 
+            "type": "related_doc", 
+            "value_expression": {
+                "property_name": "update-prop-parent", 
+                "type": "property_name"
+            }
+        }
+    }, 
+    "named_filters": {}, 
+    "referenced_doc_type": "CommCareCase", 
+    "table_id": "demo_bug"
+}

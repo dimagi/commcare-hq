@@ -1,22 +1,52 @@
+from datetime import datetime
 from decimal import Decimal
 import functools
 
+from django.test import TestCase
+
 from corehq.apps.commtrack.consumption import recalculate_domain_consumption
-from corehq.apps.commtrack.models import StockState
-from corehq.apps.products.models import SQLProduct
+from corehq.apps.commtrack.models import StockState, CommtrackConfig, ConsumptionConfig
+from corehq.apps.commtrack.tests import util
+from corehq.apps.consumption.models import DefaultConsumption
+from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
+from corehq.apps.products.models import Product, SQLProduct
 from casexml.apps.stock.models import DocDomainMapping
 from casexml.apps.stock.tests.base import _stock_report
-from corehq.apps.commtrack.tests.util import CommTrackTest
-from datetime import datetime
-from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
-from testapps.test_pillowtop.utils import process_kafka_changes
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 
-class StockStateTest(CommTrackTest):
+class StockStateTest(TestCase):
+    domain = 'stock-state-test'
+
+    @classmethod
+    def setUpClass(cls):
+        super(StockStateTest, cls).setUpClass()
+        cls.domain_obj = util.bootstrap_domain(cls.domain)
+        util.bootstrap_location_types(cls.domain)
+        util.bootstrap_products(cls.domain)
+        cls.ct_settings = CommtrackConfig.for_domain(cls.domain)
+        cls.ct_settings.use_auto_consumption = True
+        cls.ct_settings.consumption_config = ConsumptionConfig(
+            min_transactions=0,
+            min_window=0,
+            optimal_window=60,
+            min_periods=0,
+        )
+        cls.ct_settings.save()
+
+        cls.loc = util.make_loc('loc1', domain=cls.domain)
+        cls.sp = cls.loc.linked_supply_point()
+        cls.products = sorted(Product.by_domain(cls.domain), key=lambda p: p._id)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super(StockStateTest, cls).tearDownClass()
+
 
     def report(self, amount, days_ago):
         return _stock_report(
-            self.domain.name,
+            self.domain,
             self.sp.case_id,
             self.products[0]._id,
             amount,
@@ -26,13 +56,8 @@ class StockStateTest(CommTrackTest):
 
 class StockStateBehaviorTest(StockStateTest):
 
-    def setUp(self):
-        super(StockStateBehaviorTest, self).setUp()
-        self.ct_settings.use_auto_consumption = True
-        self.ct_settings.save()
-
     def test_stock_state(self):
-        with process_kafka_changes('LedgerToElasticsearchPillow'):
+        with process_pillow_changes('LedgerToElasticsearchPillow'):
             self.report(25, 5)
             self.report(10, 0)
 
@@ -136,16 +161,22 @@ class StockStateBehaviorTest(StockStateTest):
         ).save()
 
         self.assertEqual(
-            self.domain.name,
+            self.domain,
             DocDomainMapping.objects.get(doc_id=self.sp.case_id).domain_name
         )
 
 
 class StockStateConsumptionTest(StockStateTest):
 
+    def tearDown(self):
+        default = DefaultConsumption.get_domain_default(self.domain)
+        if default:
+            default.delete()
+        super(StockStateConsumptionTest, self).tearDown()
+
     def test_none_with_no_defaults(self):
         # need to submit something to have a state initialized
-        with process_kafka_changes('LedgerToElasticsearchPillow'):
+        with process_pillow_changes('LedgerToElasticsearchPillow'):
             self.report(25, 0)
 
         state = StockState.objects.get(
@@ -157,8 +188,8 @@ class StockStateConsumptionTest(StockStateTest):
         self.assertEqual(None, state.get_daily_consumption())
 
     def test_pre_set_defaults(self):
-        set_default_monthly_consumption_for_domain(self.domain.name, 5 * 30)
-        with process_kafka_changes('LedgerToElasticsearchPillow'):
+        set_default_monthly_consumption_for_domain(self.domain, 5 * 30)
+        with process_pillow_changes('LedgerToElasticsearchPillow'):
             self.report(25, 0)
         state = StockState.objects.get(
             section_id='stock',
@@ -169,9 +200,9 @@ class StockStateConsumptionTest(StockStateTest):
         self.assertEqual(5, float(state.get_daily_consumption()))
 
     def test_defaults_set_after_report(self):
-        with process_kafka_changes('LedgerToElasticsearchPillow'):
+        with process_pillow_changes('LedgerToElasticsearchPillow'):
             self.report(25, 0)
-        set_default_monthly_consumption_for_domain(self.domain.name, 5 * 30)
+        set_default_monthly_consumption_for_domain(self.domain, 5 * 30)
 
         state = StockState.objects.get(
             section_id='stock',
@@ -187,7 +218,7 @@ class StockStateConsumptionTest(StockStateTest):
         self.report(10, 0)
         expected_result = Decimal(3)
 
-        commtrack_settings = self.domain.commtrack_settings
+        commtrack_settings = self.domain_obj.commtrack_settings
 
         def _update_consumption_config(min_transactions, min_window, optimal_window):
             commtrack_settings.consumption_config.min_transactions = min_transactions
@@ -206,7 +237,7 @@ class StockStateConsumptionTest(StockStateTest):
         )
         for consumption_params, test_result in tests:
             _reset()
-            recalculate_domain_consumption(self.domain.name)
+            recalculate_domain_consumption(self.domain)
             state = StockState.objects.get(section_id='stock', case_id=self.sp.case_id, product_id=self.products[0]._id)
             self.assertEqual(
                 expected_result,
@@ -226,7 +257,7 @@ class StockStateConsumptionTest(StockStateTest):
             )
 
             # recalculating should though
-            recalculate_domain_consumption(self.domain.name)
+            recalculate_domain_consumption(self.domain)
             state = StockState.objects.get(section_id='stock', case_id=self.sp.case_id, product_id=self.products[0]._id)
             self.assertEqual(
                 test_result,

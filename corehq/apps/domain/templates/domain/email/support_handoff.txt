@@ -1,0 +1,19 @@
+Hi There! My name is Robin, and I run the support team at Dimagi. I work with {{ contact_name }} and look forward to helping you use CommCare successfully.
+
+Going forward, we have many ways to support you:
+
+* Community Support - We welcome you to sign up at commcare-users google group [1] to stay up to date about CommCare updates. You may pose questions here to our global community of CommCare users.
+
+* Reporting Technical Issues - Once we've agreed that an issue is a bug, please report them using our Report a Problem button at the bottom of your project space on CommCareHQ. Guidelines for How to Report a Bug can be found here: Bug Report Template [2].
+
+* CommCare Helpsite - You will find more resources available at help.commcarehq.org. [3]
+
+Let me and {{ contact_name }} know if you have any questions!
+
+Thanks,
+
+Robin
+
+[1] commcare-users group: http://groups.google.com/group/commcare-users/subscribe
+[2] Bug Report Template: https://wiki.commcarehq.org/display/commcarepublic/Bug+Reports
+[3] CommCare Helpsite: https://wiki.commcarehq.org/display/commcarepublic/Home

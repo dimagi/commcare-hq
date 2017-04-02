@@ -6,73 +6,65 @@ from tempfile import mkdtemp
 from unittest import TestCase
 from StringIO import StringIO
 
-from mock import patch
-
 import corehq.blobs.fsdb as mod
 from corehq.blobs.exceptions import ArgumentError
+from corehq.blobs.tests.util import get_id
 from corehq.util.test_utils import generate_cases
 
 
 class _BlobDBTests(object):
 
     def test_put_and_get(self):
-        name = "test.1"
-        info = self.db.put(StringIO(b"content"))
+        identifier = get_id()
+        info = self.db.put(StringIO(b"content"), identifier)
+        self.assertEqual(identifier, info.identifier)
         with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_and_get_with_unicode_names(self):
-        name = "test.\u4500"
         bucket = "doc.4500"
-        info = self.db.put(StringIO(b"content"), bucket=bucket)
+        info = self.db.put(StringIO(b"content"), get_id(), bucket=bucket)
         with self.db.get(info.identifier, bucket) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_and_get_with_bucket(self):
-        name = "test.2"
         bucket = "doc.2"
-        info = self.db.put(StringIO(b"content"), bucket=bucket)
+        info = self.db.put(StringIO(b"content"), get_id(), bucket=bucket)
         with self.db.get(info.identifier, bucket) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_with_bucket_and_get_without_bucket(self):
-        name = "test.3"
         bucket = "doc.3"
-        info = self.db.put(StringIO(b"content"), bucket=bucket)
+        info = self.db.put(StringIO(b"content"), get_id(), bucket=bucket)
         with self.assertRaises(mod.NotFound):
             self.db.get(info.identifier)
 
     def test_put_with_double_dotted_name(self):
-        name = "nations..mp3"
-        info = self.db.put(StringIO(b"content"))
+        info = self.db.put(StringIO(b"content"), get_id())
         with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_from_get_stream(self):
-        name = "form.xml"
-        old = self.db.put(StringIO(b"content"), bucket="old_bucket")
+        old = self.db.put(StringIO(b"content"), get_id(), bucket="old_bucket")
         with self.db.get(old.identifier, "old_bucket") as fh:
-            new = self.db.put(fh, bucket="new_bucket")
+            new = self.db.put(fh, get_id(), bucket="new_bucket")
         with self.db.get(new.identifier, "new_bucket") as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_exists(self):
-        name = "test.3.0"
         bucket = "doc.3.0"
-        info = self.db.put(StringIO(b"content"), bucket=bucket)
+        info = self.db.put(StringIO(b"content"), get_id(), bucket=bucket)
         self.assertTrue(self.db.exists(info.identifier, bucket), 'not found')
 
     def test_delete_not_exists(self):
-        name = "test.3.1"
         bucket = "doc.3.1"
-        info = self.db.put(StringIO(b"content"), bucket=bucket)
+        info = self.db.put(StringIO(b"content"), get_id(), bucket=bucket)
         self.db.delete(info.identifier, bucket)
         self.assertFalse(self.db.exists(info.identifier, bucket), 'not deleted')
 
     def test_delete(self):
-        name = "test.4"
         bucket = "doc.4"
-        info = self.db.put(StringIO(b"content"), bucket=bucket)
+        info = self.db.put(StringIO(b"content"), get_id(), bucket=bucket)
 
         self.assertTrue(self.db.delete(info.identifier, bucket), 'delete failed')
 
@@ -87,7 +79,7 @@ class _BlobDBTests(object):
             ('test.6', 'doc.6'),
         ]
         infos = [
-            self.db.put(StringIO(b"content-{}".format(blob[0])), bucket=blob[1])
+            self.db.put(StringIO(b"content-{}".format(blob[0])), get_id(), bucket=blob[1])
             for blob in blobs
         ]
 
@@ -103,7 +95,7 @@ class _BlobDBTests(object):
 
     def test_delete_bucket(self):
         bucket = join("doctype", "ys7v136b")
-        info = self.db.put(StringIO(b"content"), bucket=bucket)
+        info = self.db.put(StringIO(b"content"), get_id(), bucket=bucket)
         self.assertTrue(self.db.delete(bucket=bucket))
 
         self.assertTrue(info.identifier)
@@ -111,13 +103,13 @@ class _BlobDBTests(object):
             self.db.get(info.identifier, bucket=bucket)
 
     def test_delete_identifier_in_default_bucket(self):
-        info = self.db.put(StringIO(b"content"))
+        info = self.db.put(StringIO(b"content"), get_id())
         self.assertTrue(self.db.delete(info.identifier), 'delete failed')
         with self.assertRaises(mod.NotFound):
             self.db.get(info.identifier)
 
     def test_delete_no_args(self):
-        info = self.db.put(StringIO(b"content"))
+        info = self.db.put(StringIO(b"content"), get_id())
         with self.assertRaises(ArgumentError):
             self.db.delete()
         # blobs in default bucket should not be deleted
@@ -126,7 +118,7 @@ class _BlobDBTests(object):
         self.assertTrue(self.db.delete(bucket=mod.DEFAULT_BUCKET))
 
     def test_prevent_delete_bucket_by_mistake(self):
-        info = self.db.put(StringIO(b"content"))
+        info = self.db.put(StringIO(b"content"), get_id())
         id_mistake = None
         with self.assertRaises(ArgumentError):
             self.db.delete(id_mistake, mod.DEFAULT_BUCKET)
@@ -136,7 +128,7 @@ class _BlobDBTests(object):
         self.assertTrue(self.db.delete(bucket=mod.DEFAULT_BUCKET))
 
     def test_empty_attachment_name(self):
-        info = self.db.put(StringIO(b"content"))
+        info = self.db.put(StringIO(b"content"), get_id())
         self.assertNotIn(".", info.identifier)
         return info
 
@@ -172,10 +164,10 @@ class TestFilesystemBlobDB(TestCase, _BlobDBTests):
     def test_put_with_colliding_blob_id(self):
         # unfortunately can't do this on S3 because there is no way to
         # reliably check if an object exists before putting it.
-        with patch("corehq.blobs.interface.random_url_id", new=lambda n: 'not-unique'):
-            self.db.put(StringIO(b"bing"))
-            with self.assertRaises(mod.FileExists):
-                self.db.put(StringIO(b"bang"))
+        ident = get_id()
+        self.db.put(StringIO(b"bing"), ident)
+        with self.assertRaises(mod.FileExists):
+            self.db.put(StringIO(b"bang"), ident)
 
     def test_delete(self):
         info, bucket = super(TestFilesystemBlobDB, self).test_delete()
@@ -192,7 +184,7 @@ class TestFilesystemBlobDB(TestCase, _BlobDBTests):
 
     def test_bucket_path(self):
         bucket = join("doctype", "8cd98f0")
-        self.db.put(StringIO(b"content"), bucket=bucket)
+        self.db.put(StringIO(b"content"), get_id(), bucket=bucket)
         path = self.db.get_path(bucket=bucket)
         self.assertTrue(isdir(path), path)
         self.assertTrue(os.listdir(path))

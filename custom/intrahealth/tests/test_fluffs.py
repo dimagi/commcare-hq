@@ -4,7 +4,7 @@ from django.core import management
 
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from custom.intrahealth.models import TauxDeSatisfactionFluff, CouvertureFluff
+from corehq.util.test_utils import softer_assert
 
 import sqlalchemy
 
@@ -17,40 +17,35 @@ DATAPATH = os.path.join(os.path.dirname(__file__), 'data')
 class TestFluffs(IntraHealthTestCase):
 
     @classmethod
+    @softer_assert()
     def setUpClass(cls):
         super(TestFluffs, cls).setUpClass()
-        cls.table = TauxDeSatisfactionFluff._table
-        cls.couverture = CouvertureFluff._table
-        with cls.engine.begin() as connection:
-            cls.table.create(connection, checkfirst=True)
-            cls.couverture.create(connection, checkfirst=True)
+        cls.table = cls.taux_sat_table
+        cls.couverture = cls.couverture_table
         with open(os.path.join(DATAPATH, 'taux.xml')) as f:
             xml = f.read()
             cls.taux = submit_form_locally(
                 xml, TEST_DOMAIN, auth_context=AuthContext(
                     user_id=cls.mobile_worker.get_id, domain=TEST_DOMAIN, authenticated=True
                 )
-            )[1]
+            ).xform
         with open(os.path.join(DATAPATH, 'operateur.xml')) as f:
             xml = f.read()
             cls.couverture_form = submit_form_locally(
                 xml, TEST_DOMAIN, auth_context=AuthContext(
                     user_id=cls.mobile_worker.get_id, domain=TEST_DOMAIN, authenticated=True
                 )
-            )[1]
+            ).xform
 
     @classmethod
     def tearDownClass(cls):
-        with cls.engine.begin() as connection:
-            cls.table.drop(connection, checkfirst=True)
-            cls.couverture.drop(connection, checkfirst=True)
         super(TestFluffs, cls).tearDownClass()
 
     def test_taux_de_satifisfaction_fluff(self):
         with real_pillow_settings():
             management.call_command(
                 'ptop_reindexer_fluff',
-                'TauxDeSatisfactionFluffPillow',
+                'IntraHealthFormFluffPillow',
             )
 
         query = sqlalchemy.select(
@@ -97,7 +92,7 @@ class TestFluffs(IntraHealthTestCase):
         with real_pillow_settings():
             management.call_command(
                 'ptop_reindexer_fluff',
-                'CouvertureFluffPillow',
+                'IntraHealthFormFluffPillow',
             )
 
         query = sqlalchemy.select(

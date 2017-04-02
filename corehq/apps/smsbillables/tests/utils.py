@@ -1,9 +1,13 @@
+from __future__ import absolute_import
+import six
+
+
 class FakeTwilioMessage(object):
     status = 'sent'
 
     def __init__(self, price, num_segments=1):
         self.price = price
-        self.num_segments = unicode(num_segments)
+        self.num_segments = six.text_type(num_segments)
 
 
 class FakeTwilioMessageFactory(object):

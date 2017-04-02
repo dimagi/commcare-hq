@@ -3,7 +3,6 @@ from tempfile import mkdtemp
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
-from django.test.utils import override_settings
 from shutil import rmtree
 
 import settings
@@ -16,19 +15,20 @@ from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import (XFormInstanceSQL, XFormOperationSQL,
-    XFormAttachmentSQL, DisabledDbMixin)
+    XFormAttachmentSQL)
 from corehq.form_processor.parsers.form import apply_deprecation
 from corehq.form_processor.tests.utils import (create_form_for_test,
-    FormProcessorTestUtils, run_with_all_backends)
+    FormProcessorTestUtils, use_sql_backend)
 from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
 from corehq.form_processor.utils.xform import TestFormMetadata
 from corehq.sql_db.routers import db_for_read_write
+from corehq.util.mixin import DisabledDbMixin
 from corehq.util.test_utils import trap_extra_setup
 
 DOMAIN = 'test-form-accessor'
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@use_sql_backend
 class FormAccessorTestsSQL(TestCase):
 
     def tearDown(self):
@@ -265,6 +265,22 @@ class FormAccessorTestsSQL(TestCase):
         attachments = FormAccessorSQL.get_attachments(unsaved_form.form_id)
         self.assertEqual(1, len(attachments))
 
+    def test_save_form_db_error(self):
+        form = create_form_for_test(DOMAIN)
+        dup_form = create_form_for_test(DOMAIN, save=False)
+        dup_form.form_id = form.form_id
+
+        try:
+            FormAccessorSQL.save_new_form(dup_form)
+        except Exception:
+            dup_form.form_id = uuid.uuid4().hex
+            FormAccessorSQL.save_new_form(dup_form)
+        else:
+            self.fail("saving dup form didn't raise an exception")
+
+        attachments = FormAccessorSQL.get_attachments(dup_form.form_id)
+        self.assertEqual(1, len(attachments))
+
     def test_save_form_deprecated(self):
         existing_form, new_form = _simulate_form_edit()
 
@@ -318,7 +334,6 @@ class FormAccessorsTests(TestCase):
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
         super(FormAccessorsTests, self).tearDown()
 
-    @run_with_all_backends
     def test_soft_delete(self):
         meta = TestFormMetadata(domain=DOMAIN)
         get_simple_wrapped_form('f1', metadata=meta)
@@ -346,6 +361,11 @@ class FormAccessorsTests(TestCase):
                 super(DisabledDbMixin, form).delete()
             else:
                 form.delete()
+
+
+@use_sql_backend
+class FormAccessorsTestsSQL(FormAccessorsTests):
+    pass
 
 
 class DeleteAttachmentsFSDBTests(TestCase):

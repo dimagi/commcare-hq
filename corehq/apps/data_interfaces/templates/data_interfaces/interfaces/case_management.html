@@ -8,7 +8,7 @@
     $.when(
         $.getScript("{% static 'case/js/cheapxml.js' %}"),
         $.getScript("{% static 'case/js/casexml.js' %}"),
-        $.getScript("{% static 'data_interfaces/ko/case_management.js' %}")
+        $.getScript("{% static 'data_interfaces/js/case_management.js' %}")
     ).done(function () {
         var OPTIONS = {
             users: {{ users|JSON }},

@@ -37,16 +37,18 @@
                     ">
                 <i class="fa fa-remove"></i>
             </button>
-            <button type="button" class="btn btn-default pull-right"
-                    data-bind="
-                        visible: showDefaultPath,
-                        click: function () {
-                            setCustomPath();
-                            analytics.usage('App Builder', 'Click Show Path for a Form or Module', '{{ type }}');
-                        }">
-                <i class="fa fa-cog"></i>
-                {% trans 'Set Path' %}
-            </button>
+            {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
+                <button type="button" class="btn btn-default pull-right"
+                        data-bind="
+                            visible: showDefaultPath,
+                            click: function () {
+                                setCustomPath();
+                                analytics.usage('App Builder', 'Click Show Path for a Form or Module', '{{ type }}');
+                            }">
+                    <i class="fa fa-cog"></i>
+                    {% trans 'Set Path' %}
+                </button>
+            {% endif %}
             {% if type == "audio" %}
             <p data-bind="visible: isMediaMatched"
                class="help-block">

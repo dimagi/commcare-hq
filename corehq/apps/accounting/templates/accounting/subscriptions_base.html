@@ -4,22 +4,10 @@
 
 {% block js %} {{ block.super }}
     <script src="{% static 'accounting/js/credits-tab.js' %}"></script>
-    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
     <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
     <script src="{% static 'accounting/js/accounting.subscription_info_handler.js' %}"></script>
     <script src="{% static 'accounting/js/invoices.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %} {{ block.super }}
- <script>
-    $( "#id_start_date" ).datepicker({ dateFormat: "yy-mm-dd" });
-    $( "#id_end_date" ).datepicker({ dateFormat: "yy-mm-dd" });
-    $( "#id_delay_invoice_until" ).datepicker({ dateFormat: "yy-mm-dd" });
-</script>
-
-    <script>
-        hqImport('accounting/js/accounting.subscription_info_handler.js').initSubscriptionInfoHandler();
-    </script>
 {% endblock %}
 
 {% block page_content %}

@@ -64,6 +64,18 @@ def get_all_docs_with_doc_types(db, doc_types):
             yield result['doc']
 
 
+def get_doc_ids_by_class(doc_class):
+    """Useful for migrations, but has the potential to be very large"""
+    doc_type = doc_class.__name__
+    return [row['id'] for row in doc_class.get_db().view(
+        'all_docs/by_doc_type',
+        startkey=[doc_type],
+        endkey=[doc_type, {}],
+        include_docs=False,
+        reduce=False,
+    )]
+
+
 def delete_all_docs_by_doc_type(db, doc_types):
     for chunk in chunked(get_all_docs_with_doc_types(db, doc_types), 100):
         db.bulk_delete(chunk)

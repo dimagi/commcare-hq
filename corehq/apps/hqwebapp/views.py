@@ -17,13 +17,11 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import logout as django_logout
 from django.core import cache
 from django.core.mail.message import EmailMessage
-from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
     HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.template import loader
-from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
@@ -37,6 +35,7 @@ from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
+from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
@@ -45,6 +44,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
+from no_exceptions.exceptions import Http403
 from soil import DownloadBase
 from soil import views as soil_views
 
@@ -63,7 +63,6 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
@@ -71,6 +70,7 @@ from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
+from corehq.util.view_utils import reverse
 
 
 def is_deploy_in_progress():
@@ -93,12 +93,15 @@ def server_error(request, template_name='500.html'):
     traceback_key = uuid.uuid4().hex
     cache.cache.set(traceback_key, traceback_text, 60*60)
 
-    return HttpResponseServerError(t.render(RequestContext(request,
-        {'MEDIA_URL': settings.MEDIA_URL,
-         'STATIC_URL': settings.STATIC_URL,
-         'domain': domain,
-         '500traceback': traceback_key,
-        })))
+    return HttpResponseServerError(t.render(
+        context={
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_URL': settings.STATIC_URL,
+            'domain': domain,
+            '500traceback': traceback_key,
+        },
+        request=request,
+    ))
 
 
 def not_found(request, template_name='404.html'):
@@ -106,18 +109,19 @@ def not_found(request, template_name='404.html'):
     404 error handler.
     """
     t = loader.get_template(template_name)
-    return HttpResponseNotFound(t.render(RequestContext(request,
-        {'MEDIA_URL': settings.MEDIA_URL,
-         'STATIC_URL': settings.STATIC_URL
-        })))
+    return HttpResponseNotFound(t.render(
+        context={
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_URL': settings.STATIC_URL,
+        },
+        request=request,
+    ))
 
 
 @require_GET
 @location_safe
 def redirect_to_default(req, domain=None):
-    from corehq.apps.cloudcare.views import FormplayerMain
-
-    if not req.user.is_authenticated():
+    if not req.user.is_authenticated:
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
@@ -142,25 +146,35 @@ def redirect_to_default(req, domain=None):
             domains = [Domain.get_by_name(domain)]
         else:
             domains = Domain.active_for_user(req.user)
+
         if 0 == len(domains) and not req.user.is_superuser:
             return redirect('registration_domain')
         elif 1 == len(domains):
+            from corehq.apps.dashboard.views import dashboard_default
+            from corehq.apps.users.models import DomainMembershipError
             if domains[0]:
                 domain = domains[0].name
                 couch_user = req.couch_user
-
-                if (couch_user.is_commcare_user() and
-                        couch_user.can_view_some_reports(domain)):
-                    if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
-                        url = reverse(FormplayerMain.urlname, args=[domain])
+                try:
+                    role = couch_user.get_role(domain)
+                except DomainMembershipError:
+                    # commcare users without roles should always be denied access
+                    if couch_user.is_commcare_user():
+                        raise Http404()
                     else:
-                        url = reverse("cloudcare_main", args=[domain, ""])
+                        # web users without roles are redirected to the dashboard default
+                        # view since some domains allow web users to request access if they
+                        # don't have it
+                        return dashboard_default(req, domain)
                 else:
-                    from corehq.apps.dashboard.views import dashboard_default
-                    return dashboard_default(req, domain)
-
+                    if role and role.default_landing_page:
+                        url = get_redirect_url(role.default_landing_page, domain)
+                    elif couch_user.is_commcare_user():
+                        url = reverse(get_cloudcare_urlname(domain), args=[domain])
+                    else:
+                        return dashboard_default(req, domain)
             else:
-                raise Http404
+                raise Http404()
         else:
             url = settings.DOMAIN_SELECT_URL
     return HttpResponseRedirect(url)
@@ -255,32 +269,44 @@ def server_up(req):
         return HttpResponse("success")
 
 
+def _no_permissions_message(request, template_name="403.html", message=None):
+    t = loader.get_template(template_name)
+    return t.render(
+        context={
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_URL': settings.STATIC_URL,
+            'message': message,
+        },
+        request=request,
+    )
+
+
 def no_permissions(request, redirect_to=None, template_name="403.html", message=None):
     """
     403 error handler.
     """
-    t = loader.get_template(template_name)
-    return HttpResponseForbidden(t.render(RequestContext(request, {
-        'MEDIA_URL': settings.MEDIA_URL,
-        'STATIC_URL': settings.STATIC_URL,
-        'message': message,
-    })))
+    return HttpResponseForbidden(_no_permissions_message(request, template_name, message))
+
+
+def no_permissions_exception(request, template_name="403.html", message=None):
+    return Http403(_no_permissions_message(request, template_name, message))
 
 
 def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
     t = loader.get_template(template_name)
-    return HttpResponseForbidden(
-        t.render(RequestContext(
-            request,
-            {'MEDIA_URL': settings.MEDIA_URL,
-             'STATIC_URL': settings.STATIC_URL
-             })))
+    return HttpResponseForbidden(t.render(
+        context={
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_URL': settings.STATIC_URL,
+        },
+        request=request,
+    ))
 
 
 @sensitive_post_parameters('auth-password')
 def _login(req, domain_name, template_name):
 
-    if req.user.is_authenticated() and req.method == "GET":
+    if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
         if redirect_to:
             return HttpResponseRedirect(redirect_to)
@@ -487,25 +513,11 @@ def bug_report(req):
         'cc',
         'email',
         '500traceback',
+        'sentry_id',
     )])
-
-    domain_object = Domain.get_by_name(report['domain'])
-    current_project_description = domain_object.project_description
-    new_project_description = req.POST.get('project_description')
-    if (req.couch_user.is_domain_admin(domain=report['domain']) and
-            new_project_description and
-            current_project_description != new_project_description):
-
-        domain_object.project_description = new_project_description
-        domain_object.save()
 
     report['user_agent'] = req.META['HTTP_USER_AGENT']
     report['datetime'] = datetime.utcnow()
-    report['feature_flags'] = toggles.toggles_dict(username=report['username'],
-                                                   domain=report['domain']).keys()
-    report['feature_previews'] = feature_previews.previews_dict(report['domain']).keys()
-    report['scale_backend'] = should_use_sql_backend(report['domain']) if report['domain'] else False
-    report['project_description'] = domain_object.project_description
 
     try:
         couch_user = req.couch_user
@@ -520,32 +532,67 @@ def bug_report(req):
     report['full_name'] = full_name
     report['email'] = email or report['username']
 
-    matching_subscriptions = Subscription.objects.filter(
-        is_active=True,
-        subscriber__domain=report['domain'],
-    )
-
-    if len(matching_subscriptions) >= 1:
-        report['software_plan'] = matching_subscriptions[0].plan_version
+    if report['domain']:
+        domain = report['domain']
+    elif len(couch_user.domains) == 1:
+        # This isn't a domain page, but the user has only one domain, so let's use that
+        domain = couch_user.domains[0]
     else:
-        report['software_plan'] = u'domain has no active subscription'
+        domain = "<no domain>"
 
-    subject = u'{subject} ({domain})'.format(**report)
     message = (
         u"username: {username}\n"
         u"full name: {full_name}\n"
         u"domain: {domain}\n"
-        u"software plan: {software_plan}\n"
         u"url: {url}\n"
         u"datetime: {datetime}\n"
         u"User Agent: {user_agent}\n"
-        u"Feature Flags: {feature_flags}\n"
-        u"Feature Previews: {feature_previews}\n"
-        u"Is scale backend: {scale_backend}\n"
-        u"Project description: {project_description}\n"
-        u"Message:\n\n"
-        u"{message}\n"
-        ).format(**report)
+    ).format(**report)
+
+    domain_object = Domain.get_by_name(domain) if report['domain'] else None
+    if domain_object:
+        current_project_description = domain_object.project_description if domain_object else None
+        new_project_description = req.POST.get('project_description')
+        if (domain_object and
+                req.couch_user.is_domain_admin(domain=domain) and
+                new_project_description and
+                current_project_description != new_project_description):
+
+            domain_object.project_description = new_project_description
+            domain_object.save()
+
+        matching_subscriptions = Subscription.objects.filter(
+            is_active=True,
+            subscriber__domain=domain,
+        )
+        if len(matching_subscriptions) >= 1:
+            software_plan = matching_subscriptions[0].plan_version
+        else:
+            software_plan = u'domain has no active subscription'
+
+        message += ((
+            u"software plan: {software_plan}\n"
+            u"Is self start: {self_started}\n"
+            u"Feature Flags: {feature_flags}\n"
+            u"Feature Previews: {feature_previews}\n"
+            u"Is scale backend: {scale_backend}\n"
+            u"Has Support Hand-off Info: {has_handoff_info}\n"
+            u"Internal Project Information: {internal_info_link}\n"
+            u"Project description: {project_description}\n"
+            u"Sentry Error: {sentry_error}\n"
+        ).format(
+            software_plan=software_plan,
+            self_started=domain_object.internal.self_started,
+            feature_flags=toggles.toggles_dict(username=report['username'], domain=domain).keys(),
+            feature_previews=feature_previews.previews_dict(domain).keys(),
+            scale_backend=should_use_sql_backend(domain),
+            has_handoff_info=bool(domain_object.internal.partner_contact),
+            internal_info_link=reverse('domain_internal_settings', args=[domain], absolute=True),
+            project_description=domain_object.project_description,
+            sentry_error='{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
+        ))
+
+    subject = u'{subject} ({domain})'.format(subject=report['subject'], domain=domain)
     cc = report['cc'].strip().split(",")
     cc = filter(None, cc)
 
@@ -559,6 +606,7 @@ def bug_report(req):
     if settings.HQ_ACCOUNT_ROOT in reply_to:
         reply_to = settings.SERVER_EMAIL
 
+    message += u"Message:\n\n{message}\n".format(message=report['message'])
     if req.POST.get('five-hundred-report'):
         extra_message = ("This messge was reported from a 500 error page! "
                          "Please fix this ASAP (as if you wouldn't anyway)...")

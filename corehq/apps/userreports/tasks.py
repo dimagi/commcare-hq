@@ -1,19 +1,33 @@
-import datetime
+from __future__ import absolute_import
+from datetime import datetime
 
-from celery.task import task
+from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
+from django.conf import settings
+from django.core.paginator import Paginator
 from django.utils.translation import ugettext as _
+
 from corehq import toggles
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE
+from corehq.apps.userreports.const import (
+    UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
+    ASYNC_INDICATOR_QUEUE_TIME,
+)
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.models import (
-    DataSourceConfiguration, StaticDataSourceConfiguration, id_is_static, ReportConfiguration
+    AsyncIndicator,
+    DataSourceConfiguration,
+    StaticDataSourceConfiguration,
+    id_is_static,
+    ReportConfiguration,
 )
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.util.context_managers import notify_someone
 from corehq.util.couch import get_document_or_not_found
+from corehq.util.datadog.gauges import datadog_gauge
+from dimagi.utils.couch import CriticalSection, release_lock
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
@@ -50,12 +64,29 @@ def rebuild_indicators(indicator_config_id, initiated_by=None):
         if not id_is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.
-            config.meta.build.initiated = datetime.datetime.utcnow()
+            config.meta.build.initiated = datetime.utcnow()
             config.meta.build.finished = False
             config.save()
 
         adapter.rebuild_table()
-        _iteratively_build_table(config)
+        iteratively_build_table(config)
+
+
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
+    config = _get_config_by_id(indicator_config_id)
+    success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
+    failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
+    send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
+    with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
+        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+        if not id_is_static(indicator_config_id):
+            config.meta.build.initiated_in_place = datetime.utcnow()
+            config.meta.build.finished_in_place = False
+            config.save()
+
+        adapter.build_table()
+        iteratively_build_table(config, in_place=True)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
@@ -72,10 +103,10 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
             _build_indicators(config, get_document_store(config.domain, config.referenced_doc_type), relevant_ids,
                               resume_helper)
             last_id = relevant_ids[-1]
-            _iteratively_build_table(config, last_id, resume_helper)
+            iteratively_build_table(config, last_id, resume_helper)
 
 
-def _iteratively_build_table(config, last_id=None, resume_helper=None):
+def iteratively_build_table(config, last_id=None, resume_helper=None, in_place=False):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
 
@@ -94,15 +125,24 @@ def _iteratively_build_table(config, last_id=None, resume_helper=None):
 
     if not id_is_static(indicator_config_id):
         resume_helper.clear_ids()
-        config.meta.build.finished = True
+        if in_place:
+            config.meta.build.finished_in_place = True
+        else:
+            config.meta.build.finished = True
         try:
             config.save()
         except ResourceConflict:
             current_config = DataSourceConfiguration.get(config._id)
             # check that a new build has not yet started
-            if config.meta.build.initiated == current_config.meta.build.initiated:
-                current_config.meta.build.finished = True
-                current_config.save()
+            if in_place:
+                if config.meta.build.initiated_in_place == current_config.meta.build.initiated_in_place:
+                    current_config.meta.build.finished_in_place = True
+            else:
+                if config.meta.build.initiated == current_config.meta.build.initiated:
+                    current_config.meta.build.finished = True
+            current_config.save()
+        adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
+        adapter.after_table_build()
 
 
 @task(queue=UCR_CELERY_QUEUE)
@@ -124,10 +164,9 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
             'aaData': page,
             "iTotalRecords": total_records,
         }
-        # these are to be checked after ES supports total rows
-        # total_row = data_source.get_total_row() if data_source.has_total_row else None
-        # if total_row is not None:
-        #     json_response["total_row"] = total_row
+        total_row = data_source.get_total_row() if data_source.has_total_row else None
+        if total_row is not None:
+            json_response["total_row"] = total_row
         return json_response
 
     spec = get_document_or_not_found(ReportConfiguration, domain, report_config_id)
@@ -145,3 +184,64 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
 
     objects = experiment.run()
     return objects
+
+
+@periodic_task(
+    run_every=ASYNC_INDICATOR_QUEUE_TIME,
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
+def queue_async_indicators():
+    start = datetime.utcnow()
+    cutoff = start + ASYNC_INDICATOR_QUEUE_TIME
+    time_for_crit_section = ASYNC_INDICATOR_QUEUE_TIME.seconds - 10
+
+    oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
+    if oldest_indicator and oldest_indicator.date_queued:
+        lag = (datetime.utcnow() - oldest_indicator.date_queued).total_seconds
+        datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
+
+    with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
+        redis_client = get_redis_client().client.get_client()
+        indicators = AsyncIndicator.objects.all()[:10000]
+        paginator = Paginator(indicators, 1000)
+        for page in paginator.page_range:
+            for indicator in paginator.page(page).object_list:
+                now = datetime.utcnow()
+                if now > cutoff:
+                    break
+                _queue_indicator(redis_client, indicator)
+
+
+def _queue_indicator(redis_client, indicator):
+    lock_key = _get_indicator_queued_lock_key(indicator)
+    lock = redis_client.lock(lock_key, timeout=60 * 60 * 24)
+    if not lock.acquire(blocking=False):
+        return
+
+    indicator.date_queued = datetime.utcnow()
+    indicator.save()
+    save_document.delay(indicator.id, indicator.doc_id)
+
+
+def _get_indicator_queued_lock_key(indicator):
+    return 'async_indicator_queued-{}'.format(indicator.id)
+
+
+@task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
+def save_document(async_indicator_id, doc_id):
+    lock_key = get_async_indicator_modify_lock_key(doc_id)
+    with CriticalSection([lock_key]):
+        indicator = AsyncIndicator.objects.get(pk=async_indicator_id)
+        doc_store = get_document_store(indicator.domain, indicator.doc_type)
+        doc = doc_store.get_document(indicator.doc_id)
+
+        for config_id in indicator.indicator_config_ids:
+            config = _get_config_by_id(config_id)
+            adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+            adapter.best_effort_save(doc)
+
+        redis_client = get_redis_client().client.get_client()
+        queued_lock_key = _get_indicator_queued_lock_key(indicator)
+        lock = redis_client.lock(queued_lock_key)
+        release_lock(lock, degrade_gracefully=True)
+        indicator.delete()

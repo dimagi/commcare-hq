@@ -45,6 +45,7 @@ class UserES(HQESQuery):
             primary_location,
             location,
             last_logged_in,
+            analytics_enabled,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -56,25 +57,22 @@ class UserES(HQESQuery):
         query._default_filters['active'] = {"term": {"is_active": False}}
         return query
 
-    def users_at_locations_and_descendants(self, location_ids):
-        from corehq.apps.locations.models import SQLLocation
-        location_ids = SQLLocation.objects.get_locations_and_children_ids(location_ids)
-        return self.location(location_ids)
-
-    def users_at_locations(self, location_ids):
-        return self.location(location_ids)
-
-    def users_at_accessible_locations(self, domain_name, user):
-        from corehq.apps.locations.models import SQLLocation
-        accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(domain_name, user)
-        return self.users_at_locations(accessible_location_ids)
-
 
 def domain(domain):
     return filters.OR(
         filters.term("domain.exact", domain),
         filters.term("domain_memberships.domain.exact", domain)
     )
+
+
+def analytics_enabled(enabled=True):
+    if enabled:
+        return filters.OR(
+            filters.term("analytics_enabled", True),
+            filters.missing("analytics_enabled")
+        )
+    else:
+        return filters.term("analytics_enabled", False)
 
 
 def username(username):
@@ -142,15 +140,3 @@ def location(location_id):
             filters.term('domain_memberships.assigned_location_ids', location_id)
         ),
     )
-
-
-def user_ids_at_locations_and_descendants(location_ids):
-    return UserES().users_at_locations_and_descendants(location_ids).exclude_source().run().hits
-
-
-def user_ids_at_locations(location_ids):
-    return UserES().users_at_locations(location_ids).exclude_source().run().hits
-
-
-def user_ids_at_accessible_locations(domain_name, user):
-    return UserES().users_at_accessible_locations(domain_name, user).exclude_source().run().hits

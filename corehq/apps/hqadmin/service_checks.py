@@ -21,6 +21,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.es import GroupES
 from corehq.blobs import get_blob_db
+from corehq.blobs.util import random_url_id
 from corehq.elastic import send_to_elasticsearch
 from corehq.util.decorators import change_log_level
 from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
@@ -102,7 +103,7 @@ def check_blobdb():
     """Save something to the blobdb and try reading it back."""
     db = get_blob_db()
     contents = "It takes Pluto 248 Earth years to complete one orbit!"
-    info = db.put(StringIO(contents))
+    info = db.put(StringIO(contents), random_url_id(16))
     with db.get(info.identifier) as fh:
         res = fh.read()
     db.delete(info.identifier)

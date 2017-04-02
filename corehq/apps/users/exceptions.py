@@ -5,5 +5,5 @@ class NoAccountException(Exception):
     pass
 
 
-class InvalidLocationConfig(Exception):
+class InvalidMobileWorkerRequest(Exception):
     pass

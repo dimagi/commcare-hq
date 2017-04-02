@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from mock import patch
 from random import choice, randint
 
@@ -18,6 +19,8 @@ from corehq.apps.smsbillables.models import (
 from corehq.apps.smsbillables.tests import generator
 from corehq.apps.smsbillables.tests.utils import FakeTwilioMessageFactory
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
+import six
+from six.moves import range
 
 
 class TestGatewayFee(TestCase):
@@ -186,11 +189,9 @@ class TestGatewayFee(TestCase):
         for phone_number, prefix in generator.arbitrary_phone_numbers_and_prefixes(
             self.country_code_and_prefixes
         ):
+            random_key = choice(list(self.backend_ids))
             messages = generator.arbitrary_messages_by_backend_and_direction(
-                {
-                    random_key: self.backend_ids[random_key]
-                    for random_key in [choice(self.backend_ids.keys())]
-                },
+                {random_key: self.backend_ids[random_key]},
                 phone_number=phone_number,
             )
 
@@ -318,7 +319,7 @@ class TestGatewayFee(TestCase):
         self.other_currency.delete()
         SMS.by_domain(generator.TEST_DOMAIN).delete()
 
-        for api_id, backend_id in self.backend_ids.iteritems():
+        for api_id, backend_id in six.iteritems(self.backend_ids):
             SQLMobileBackend.load(backend_id, is_couch_id=True).delete()
 
         FakeTwilioMessageFactory.backend_message_id_to_price = {}

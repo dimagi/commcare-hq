@@ -1,8 +1,9 @@
-import json
+from __future__ import absolute_import
 from simpleeval import InvalidExpression
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
@@ -13,7 +14,7 @@ from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from .utils import eval_statements
-from corehq.util.quickcache import quickcache
+import six
 
 
 class IdentityExpressionSpec(JsonObject):
@@ -46,17 +47,20 @@ class ConstantGetterSpec(JsonObject):
 
 class PropertyNameGetterSpec(JsonObject):
     type = TypeProperty('property_name')
-    property_name = StringProperty(required=True)
+    property_name = DefaultProperty(required=True)
     datatype = DataTypeProperty(required=False)
 
+    def configure(self, property_name_expression):
+        self._property_name_expression = property_name_expression
+
     def __call__(self, item, context=None):
-        raw_value = item.get(self.property_name, None) if isinstance(item, dict) else None
+        raw_value = item.get(self._property_name_expression(item, context)) if isinstance(item, dict) else None
         return transform_from_datatype(self.datatype)(raw_value)
 
 
 class PropertyPathGetterSpec(JsonObject):
     type = TypeProperty('property_path')
-    property_path = ListProperty(unicode, required=True)
+    property_path = ListProperty(six.text_type, required=True)
     datatype = DataTypeProperty(required=False)
 
     def __call__(self, item, context=None):
@@ -194,20 +198,18 @@ class RelatedDocExpressionSpec(JsonObject):
         if doc_id:
             return self.get_value(doc_id, context)
 
-    def _vary_on(self, doc_id, context):
-        # For caching. Gets called with the same params as get_value.
-        return [
-            context.root_doc['domain'],
-            doc_id,
-            json.dumps(self.value_expression, sort_keys=True)
-        ]
+    def _context_cache_key(self, doc_id):
+        return '{}-{}'.format(self.related_doc_type, doc_id)
 
-    @quickcache(_vary_on)
     def get_value(self, doc_id, context):
         try:
             assert context.root_doc['domain']
             document_store = get_document_store(context.root_doc['domain'], self.related_doc_type)
-            doc = document_store.get_document(doc_id)
+
+            doc = context.get_cache_value(self._context_cache_key(doc_id))
+            if not doc:
+                doc = document_store.get_document(doc_id)
+                context.set_cache_value(self._context_cache_key(doc_id), doc)
             # ensure no cross-domain lookups of different documents
             if context.root_doc['domain'] != doc.get('domain'):
                 return None
@@ -237,7 +239,7 @@ class DictExpressionSpec(JsonObject):
 
     def configure(self, compiled_properties):
         for key in compiled_properties:
-            if not isinstance(key, basestring):
+            if not isinstance(key, six.string_types):
                 raise BadSpecError("Properties in a dict expression must be strings!")
         self._compiled_properties = compiled_properties
 
@@ -276,6 +278,7 @@ class EvalExpressionSpec(JsonObject):
 class FormsExpressionSpec(JsonObject):
     type = TypeProperty('get_case_forms')
     case_id_expression = DefaultProperty(required=True)
+    xmlns = ListProperty(required=False)
 
     def configure(self, case_id_expression):
         self._case_id_expression = case_id_expression
@@ -292,15 +295,37 @@ class FormsExpressionSpec(JsonObject):
     def _get_forms(self, case_id, context):
         domain = context.root_doc['domain']
 
-        cache_key = (self.__class__.__name__, case_id)
+        cache_key = (self.__class__.__name__, case_id, tuple(self.xmlns))
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        xforms = FormProcessorInterface(domain).get_case_forms(case_id)
-        xforms = [f.to_json() for f in xforms if f.domain == domain]
+        xforms = self._get_case_forms(case_id, context)
+        if self.xmlns:
+            xforms = [f for f in xforms if f.xmlns in self.xmlns]
+
+        xforms = [self._get_form_json(f, context) for f in xforms if f.domain == domain]
 
         context.set_cache_value(cache_key, xforms)
         return xforms
+
+    def _get_case_forms(self, case_id, context):
+        cache_key = (self.__class__.__name__, 'helper', case_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        domain = context.root_doc['domain']
+        xforms = FormProcessorInterface(domain).get_case_forms(case_id)
+        context.set_cache_value(cache_key, xforms)
+        return xforms
+
+    def _get_form_json(self, form, context):
+        cache_key = (self.__class__.__name__, 'xform', form.get_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        form_json = form.to_json()
+        context.set_cache_value(cache_key, form_json)
+        return form_json
 
 
 class SubcasesExpressionSpec(JsonObject):
@@ -329,6 +354,53 @@ class SubcasesExpressionSpec(JsonObject):
         return subcases
 
 
+class _GroupsExpressionSpec(JsonObject):
+    user_id_expression = DictProperty(required=True)
+
+    def configure(self, user_id_expression):
+        self._user_id_expression = user_id_expression
+
+    def __call__(self, item, context=None):
+        user_id = self._user_id_expression(item, context)
+        if not user_id:
+            return []
+
+        assert context.root_doc['domain']
+        return self._get_groups(user_id, context)
+
+    def _get_groups(self, user_id, context):
+        domain = context.root_doc['domain']
+        cache_key = (self.__class__.__name__, domain, user_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        user = CommCareUser.get_by_user_id(user_id, domain)
+        if not user:
+            return []
+
+        groups = self._get_groups_from_user(user)
+        groups = [g.to_json() for g in groups]
+        context.set_cache_value(cache_key, groups)
+        return groups
+
+    def _get_groups_from_user(self, user):
+        raise NotImplementedError
+
+
+class CaseSharingGroupsExpressionSpec(_GroupsExpressionSpec):
+    type = TypeProperty('get_case_sharing_groups')
+
+    def _get_groups_from_user(self, user):
+        return user.get_case_sharing_groups()
+
+
+class ReportingGroupsExpressionSpec(_GroupsExpressionSpec):
+    type = TypeProperty('get_reporting_groups')
+
+    def _get_groups_from_user(self, user):
+        return user.get_reporting_groups()
+
+
 class SplitStringExpressionSpec(JsonObject):
     type = TypeProperty('split_string')
     string_expression = DictProperty(required=True)
@@ -341,7 +413,7 @@ class SplitStringExpressionSpec(JsonObject):
 
     def __call__(self, item, context=None):
         string_value = self._string_expression(item, context)
-        if not isinstance(string_value, basestring):
+        if not isinstance(string_value, six.string_types):
             return None
 
         index_value = self._index_expression(item, context)
@@ -352,3 +424,21 @@ class SplitStringExpressionSpec(JsonObject):
             return string_value.split(self.delimiter)[index_value]
         except IndexError:
             return None
+
+
+class CoalesceExpressionSpec(JsonObject):
+    type = TypeProperty('coalesce')
+    expression = DictProperty(required=True)
+    default_expression = DictProperty(required=True)
+
+    def configure(self, expression, default_expression):
+        self._expression = expression
+        self._default_expression = default_expression
+
+    def __call__(self, item, context=None):
+        expression_value = self._expression(item, context)
+        default_value = self._default_expression(item, context)
+        if expression_value is None or expression_value == '':
+            return default_value
+        else:
+            return expression_value

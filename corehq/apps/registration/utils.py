@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, date, timedelta
 from django.template.loader import render_to_string
 from corehq.apps.accounting.models import (
-    SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
+    SoftwarePlanEdition, DefaultProductPlan, BillingAccount, BillingContactInfo,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
     SubscriptionType, PreOrPostPay,
     DEFAULT_ACCOUNT_FORMAT,
@@ -15,7 +15,7 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser, UserRole
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -23,8 +23,6 @@ from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.analytics.tasks import track_created_new_project_space_on_hubspot
 from corehq.apps.analytics.utils import get_meta
-from corehq import toggles
-from toggle.shortcuts import set_toggle
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -51,6 +49,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.last_login = now
     new_user.date_joined = now
     new_user.last_password_set = now
+    new_user.atypical_user = form.cleaned_data.get('atypical_user', False)
     new_user.save()
 
     return new_user
@@ -103,9 +102,15 @@ def request_new_domain(request, form, is_new_user=True):
 
     UserRole.init_domain_with_presets(new_domain.name)
 
+    # add user's email as contact email for billing account for the domain
+    account = BillingAccount.get_account_by_domain(new_domain.name)
+    billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account)
+    billing_contact.email_list = [current_user.email]
+    billing_contact.save()
+
     dom_req.domain = new_domain.name
 
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         if not current_user:
             current_user = WebUser()
             current_user.sync_from_django_user(request.user)
@@ -123,7 +128,6 @@ def request_new_domain(request, form, is_new_user=True):
                                        request.user.get_full_name())
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
 
-    set_toggle(toggles.USE_FORMPLAYER_FRONTEND.slug, new_domain.name, True, namespace=toggles.NAMESPACE_DOMAIN)
     meta = get_meta(request)
     track_created_new_project_space_on_hubspot.delay(current_user, request.COOKIES, meta)
     return new_domain.name
@@ -196,7 +200,8 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
     try:
         send_html_email_async.delay(subject, recipient, message_html,
                                     text_content=message_plaintext,
-                                    email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True)
+                                    email_from=settings.DEFAULT_FROM_EMAIL,
+                                    ga_track=True)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 

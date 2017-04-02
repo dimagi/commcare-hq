@@ -1,5 +1,5 @@
 function(doc){
-    if((doc.doc_type == 'Application' || doc.doc_type == 'RemoteApp') && doc.copy_of == null) {
+    if((doc.doc_type == 'Application' || doc.doc_type == 'RemoteApp' || doc.doc_type == 'LinkedApplication') && doc.copy_of == null) {
         emit([doc.domain, doc.name], {
             doc_type: doc.doc_type,
             application_version: doc.doc_type === 'Application' ? doc.application_version : undefined,

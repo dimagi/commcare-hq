@@ -80,7 +80,7 @@ class TimingContext(object):
             with context('level0'):
                 inner_sleep(context)
     """
-    def __init__(self, name):
+    def __init__(self, name=None):
         self.root = NestableTimer(name, is_root=True)
         self.stack = [self.root]
 
@@ -121,6 +121,10 @@ class TimingContext(object):
         }
         """
         return self.root.to_dict()
+
+    @property
+    def duration(self):
+        return self.to_dict()['duration']
 
     def to_list(self):
         """Get the list of ``NestableTimer`` objects in hierarchy order"""

@@ -7,17 +7,26 @@ from corehq.apps.export.models.new import MAIN_TABLE, \
     PathNode, _question_path_to_path_nodes
 
 from corehq.util.context_managers import drop_connected_signals
+from corehq.util.test_utils import softer_assert
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.models import XForm, Application, OpenSubCaseAction
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.models import (
+    XForm,
+    Application,
+    OpenSubCaseAction,
+    AdvancedModule,
+    Module,
+    AdvancedOpenCaseAction,
+    CaseReferences)
 from corehq.apps.app_manager.signals import app_post_save
-from corehq.apps.export.dbaccessors import delete_all_export_data_schemas, delete_all_inferred_schemas
+from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
     ExportDataSchema,
     InferredExportGroupSchema,
-    InferredSchema,
+    CaseInferredSchema,
     ExportGroupSchema,
     ExportItem,
     LabelItem,
@@ -305,26 +314,6 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         update_items = filter(lambda item: item.tag == PROPERTY_TAG_UPDATE, group_schema.items)
         self.assertEqual(len(update_items), 2 + len(KNOWN_CASE_PROPERTIES))
 
-    def test_get_app_build_ids_to_process(self):
-        from corehq.apps.app_manager.dbaccessors import AppBuildVersion
-        results = [
-            AppBuildVersion(app_id='1', build_id='2', version=3),
-            AppBuildVersion(app_id='1', build_id='4', version=5),
-            AppBuildVersion(app_id='2', build_id='2', version=3),
-        ]
-        last_app_versions = {
-            '1': 3
-        }
-        with patch(
-                'corehq.apps.export.models.new.get_all_built_app_ids_and_versions',
-                return_value=results):
-            build_ids = CaseExportDataSchema._get_app_build_ids_to_process(
-                'dummy',
-                'dummy-app-id',
-                last_app_versions
-            )
-        self.assertEqual(sorted(build_ids), ['2', '4'])
-
 
 class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
     file_path = ['data']
@@ -359,6 +348,7 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         group_schema = merged.group_schemas[0]
         self.assertEqual(len(group_schema.items), 3)
+        self.assertEqual(group_schema.items[0].label, 'question1-new')
         self.assertTrue(all(map(
             lambda item: item.last_occurrences[self.app_id] == 2,
             group_schema.items,
@@ -538,18 +528,39 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         cls.first_build._id = '123'
         cls.first_build.copy_of = cls.current_app.get_id
         cls.first_build.version = 3
+        cls.first_build.has_submissions = True
+
+        cls.advanced_app = Application.new_app('domain', "Untitled Application")
+        module = cls.advanced_app.add_module(AdvancedModule.new_module('Untitled Module', None))
+        form = module.new_form("Untitled Form", cls.get_xml('repeat_group_form'))
+        form.xmlns = 'repeat-xmlns'
+        form.actions.open_cases = [
+            AdvancedOpenCaseAction(
+                case_type="advanced",
+                case_tag="open_case_0",
+                name_path="/data/question3/question4",
+                repeat_context="/data/question3",
+            )
+        ]
 
         cls.apps = [
             cls.current_app,
             cls.first_build,
+            cls.advanced_app,
         ]
         with drop_connected_signals(app_post_save):
             for app in cls.apps:
                 app.save()
 
-        cls.inferred_schema = InferredSchema(
-            domain=cls.domain,
-            case_type=cls.case_type,
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
+            app.delete()
+
+    def setUp(self):
+        self.inferred_schema = CaseInferredSchema(
+            domain=self.domain,
+            case_type=self.case_type,
             group_schemas=[
                 InferredExportGroupSchema(
                     path=MAIN_TABLE,
@@ -569,13 +580,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
                 ),
             ]
         )
-        cls.inferred_schema.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        for app in cls.apps:
-            app.delete()
-        cls.inferred_schema.delete()
+        self.inferred_schema.save()
 
     def tearDown(self):
         delete_all_export_data_schemas()
@@ -591,6 +596,21 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
 
         self.assertEqual(len(schema.group_schemas), 1)
 
+    @softer_assert()
+    def test_process_app_failure(self):
+        '''
+        This ensures that the schema generated will not fail if there is an error processing one of the
+        applications.
+        '''
+        with patch(
+                'corehq.apps.export.models.new.FormExportDataSchema._process_app_build',
+                side_effect=Exception('boom')):
+            FormExportDataSchema.generate_schema_from_builds(
+                self.current_app.domain,
+                self.current_app._id,
+                'my_sweet_xmlns'
+            )
+
     def test_build_from_saved_schema(self):
         app = self.current_app
 
@@ -601,13 +621,14 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(len(schema.group_schemas), 1)
-        self.assertEqual(schema.last_app_versions[app._id], app.version)
+        self.assertEqual(schema.last_app_versions[app._id], self.first_build.version)
 
         # After the first schema has been saved let's add a second app to process
         second_build = Application.wrap(self.get_json('basic_application'))
         second_build._id = '456'
         second_build.copy_of = app.get_id
         second_build.version = 6
+        second_build.has_submissions = True
         second_build.save()
         self.addCleanup(second_build.delete)
 
@@ -618,7 +639,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(new_schema._id, schema._id)
-        self.assertEqual(new_schema.last_app_versions[app._id], app.version)
+        self.assertEqual(new_schema.last_app_versions[app._id], second_build.version)
         self.assertEqual(len(new_schema.group_schemas), 1)
 
     def test_build_with_inferred_schema(self):
@@ -635,6 +656,66 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertTrue(group_schema.inferred)
         inferred_items = filter(lambda item: item.inferred, group_schema.items)
         self.assertEqual(len(inferred_items), 2)
+
+    def test_build_with_advanced_app(self):
+        app = self.advanced_app
+
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            app._id,
+            "repeat-xmlns",
+        )
+
+        group_schema = schema.group_schemas[1]  # The repeat schema
+
+        # Assert that all proper case attributes are added to advanced forms that open
+        # cases with repeats
+        path_suffixes = set(map(lambda item: item.path[-1].name, group_schema.items))
+        self.assertEqual(len(path_suffixes & set(CASE_ATTRIBUTES)), len(CASE_ATTRIBUTES))
+
+
+class TestAppCasePropertyReferences(TestCase, TestXmlMixin):
+    domain = 'case-references'
+    case_type = 'case_references_type'
+    root = os.path.join(os.path.dirname(__file__), 'data')
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestAppCasePropertyReferences, cls).setUpClass()
+        factory = AppFactory(domain=cls.domain)
+        m0 = factory.new_basic_module('save_to_case', cls.case_type, with_form=False)
+        m0f1 = m0.new_form('save to case', 'en', attachment=cls.get_xml('basic_form'))
+        m0f1.case_references = CaseReferences.wrap({
+            'save': {
+                "/data/question1": {
+                    "case_type": cls.case_type,
+                    "properties": [
+                        "save_to_case_p1",
+                        "save_to_case_p2"
+                    ],
+                }
+            }
+        })
+        cls.current_app = factory.app
+        cls.current_app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.current_app.delete()
+        CaseExportDataSchema.get_latest_export_schema(cls.domain, cls.current_app._id, cls.case_type).delete()
+        super(TestAppCasePropertyReferences, cls).tearDownClass()
+
+    def testCaseReferencesMakeItToCaseSchema(self):
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            self.case_type,
+            only_process_current_builds=False
+        )
+        self.assertEqual(
+            {'save_to_case_p1', 'save_to_case_p2'},
+            {item.path[0].name for item in schema.group_schemas[0].items}
+        )
 
 
 class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
@@ -685,6 +766,139 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
         self.assertEqual(rebuilt_schema.version, FORM_DATA_SCHEMA_VERSION + 1)
 
 
+class TestDelayedSchema(TestCase, TestXmlMixin):
+    domain = 'delayed-schemas'
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+    xmlns = 'xmlns'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.current_app = Application.new_app(cls.domain, "Untitled Application")
+        cls.current_app._id = '1234'
+        cls.current_app.version = 10
+        module = cls.current_app.add_module(Module.new_module('Untitled Module', None))
+        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form'))
+        form.xmlns = cls.xmlns
+
+        cls.build = Application.new_app(cls.domain, "Untitled Application")
+        cls.build._id = '5678'
+        cls.build.copy_of = cls.current_app._id
+        cls.build.version = 5
+        cls.build.has_submissions = True
+        module = cls.build.add_module(Module.new_module('Untitled Module', None))
+        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form_version2'))
+        form.xmlns = cls.xmlns
+
+        cls.apps = [
+            cls.current_app,
+            cls.build,
+        ]
+        with drop_connected_signals(app_post_save):
+            for app in cls.apps:
+                app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
+            app.delete()
+
+    def tearDown(self):
+        delete_all_export_data_schemas()
+
+    def test_basic_delayed_schema(self):
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            self.xmlns,
+            only_process_current_builds=True
+        )
+
+        self.assertIsNone(schema.last_app_versions.get(self.current_app._id))
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 2)
+
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            self.xmlns,
+            only_process_current_builds=False
+        )
+
+        self.assertEqual(schema.last_app_versions[self.current_app._id], self.build.version)
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 3)
+
+
+class TestCaseDelayedSchema(TestCase, TestXmlMixin):
+    domain = 'delayed-schemas'
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+    case_type = 'person'
+
+    @classmethod
+    def setUpClass(cls):
+        factory = AppFactory(domain=cls.domain)
+        module1, form1 = factory.new_basic_module('update_case', cls.case_type)
+        factory.form_requires_case(form1, cls.case_type, update={
+            'age': '/data/age',
+            'height': '/data/height',
+        })
+        cls.current_app = factory.app
+        cls.current_app._id = '1234'
+
+        factory = AppFactory(domain=cls.domain)
+        module1, form1 = factory.new_basic_module('update_case', cls.case_type)
+        factory.form_requires_case(form1, cls.case_type, update={
+            'age': '/data/age',
+            'height': '/data/height',
+            'weight': '/data/weight',
+        })
+        cls.build = factory.app
+        cls.build.copy_of = cls.current_app._id
+        cls.build.version = 5
+        cls.build.has_submissions = True
+
+        cls.apps = [
+            cls.current_app,
+            cls.build,
+        ]
+        with drop_connected_signals(app_post_save):
+            for app in cls.apps:
+                app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
+            app.delete()
+
+    def tearDown(self):
+        delete_all_export_data_schemas()
+
+    def test_basic_delayed_schema(self):
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            self.case_type,
+            only_process_current_builds=True
+        )
+
+        self.assertIsNone(schema.last_app_versions.get(self.current_app._id))
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 2)
+
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            self.case_type,
+            only_process_current_builds=False
+        )
+
+        self.assertEqual(schema.last_app_versions[self.current_app._id], self.build.version)
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 3)
+
+
 class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
@@ -699,6 +913,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         cls.first_build._id = '123'
         cls.first_build.copy_of = cls.current_app.get_id
         cls.first_build.version = 3
+        cls.first_build.has_submissions = True
 
         cls.apps = [
             cls.current_app,
@@ -715,7 +930,6 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
     def tearDown(self):
         delete_all_export_data_schemas()
-        delete_all_inferred_schemas()
 
     def test_basic_application_schema(self):
         schema = CaseExportDataSchema.generate_schema_from_builds(
@@ -740,7 +954,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
             self.case_type,
         )
 
-        self.assertEqual(schema.last_app_versions[app._id], app.version)
+        self.assertEqual(schema.last_app_versions[app._id], self.first_build.version)
         # One for case, one for case history
         self.assertEqual(len(schema.group_schemas), 2)
 
@@ -749,6 +963,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         second_build._id = '456'
         second_build.copy_of = app.get_id
         second_build.version = 6
+        second_build.has_submissions = True
         with drop_connected_signals(app_post_save):
             second_build.save()
         self.addCleanup(second_build.delete)
@@ -760,7 +975,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(new_schema._id, schema._id)
-        self.assertEqual(new_schema.last_app_versions[app._id], app.version)
+        self.assertEqual(new_schema.last_app_versions[app._id], second_build.version)
         # One for case, one for case history
         self.assertEqual(len(new_schema.group_schemas), 2)
 
@@ -804,6 +1019,8 @@ class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         cls.current_app = Application.wrap(cls.get_json('basic_case_application'))
+        cls.other_current_app = Application.wrap(cls.get_json('basic_case_application'))
+        cls.other_current_app._id = 'other-app-id'
 
         cls.first_build = Application.wrap(cls.get_json('basic_case_application'))
         cls.first_build._id = '123'
@@ -812,12 +1029,13 @@ class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):
 
         cls.other_build = Application.wrap(cls.get_json('basic_case_application'))
         cls.other_build._id = '456'
-        cls.other_build.copy_of = 'other-app-id'
+        cls.other_build.copy_of = cls.other_current_app._id
         cls.other_build.version = 4
         cls.other_build.has_submissions = True
 
         cls.apps = [
             cls.current_app,
+            cls.other_current_app,
             cls.first_build,
             cls.other_build,
         ]
@@ -912,3 +1130,112 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
         # One for case, one for case history
         self.assertEqual(len(schema.group_schemas), 2)
+
+
+class TestOrderingOfSchemas(SimpleTestCase):
+    case_type = 'ordering'
+    domain = 'ordering'
+
+    def _create_schema(self, items):
+        return CaseExportDataSchema(
+            domain=self.domain,
+            case_type=self.case_type,
+            group_schemas=[
+                ExportGroupSchema(
+                    path=[],
+                    items=[
+                    ]
+                )
+            ]
+        )
+
+    def _assert_item_order(self, schema, path, items):
+        group_schema = filter(lambda gs: gs.path == path, schema.group_schemas)[0]
+
+        for item in group_schema.items:
+            if not items:
+                break
+
+            self.assertEqual(item.path, items.pop(0).path)
+
+    def test_basic_ordering(self):
+        schema = self._create_schema([
+            ExportItem(path=[PathNode(name='two')]),
+            ExportItem(path=[PathNode(name='one')]),
+            ExportItem(path=[PathNode(name='three')]),
+        ])
+
+        ordered_schema = self._create_schema([
+            ExportItem(path=[PathNode(name='one')]),
+            ExportItem(path=[PathNode(name='two')]),
+            ExportItem(path=[PathNode(name='three')]),
+        ])
+
+        schema = CaseExportDataSchema._reorder_schema_from_schema(
+            schema,
+            ordered_schema,
+        )
+        self._assert_item_order(
+            schema,
+            [],
+            [
+                ExportItem(path=[PathNode(name='one')]),
+                ExportItem(path=[PathNode(name='two')]),
+                ExportItem(path=[PathNode(name='three')]),
+            ],
+        )
+
+    def test_no_match_ordering(self):
+        schema = self._create_schema([
+            ExportItem(path=[PathNode(name='two')]),
+            ExportItem(path=[PathNode(name='one')]),
+            ExportItem(path=[PathNode(name='three')]),
+        ])
+
+        ordered_schema = self._create_schema([
+            ExportItem(path=[PathNode(name='four')]),
+            ExportItem(path=[PathNode(name='five')]),
+            ExportItem(path=[PathNode(name='six')]),
+        ])
+
+        schema = CaseExportDataSchema._reorder_schema_from_schema(
+            schema,
+            ordered_schema,
+        )
+        self._assert_item_order(
+            schema,
+            [],
+            [
+                ExportItem(path=[PathNode(name='two')]),
+                ExportItem(path=[PathNode(name='one')]),
+                ExportItem(path=[PathNode(name='three')]),
+            ],
+        )
+
+    def test_partial_match_ordering(self):
+        schema = self._create_schema([
+            ExportItem(path=[PathNode(name='two')]),
+            ExportItem(path=[PathNode(name='one')]),
+            ExportItem(path=[PathNode(name='three')]),
+        ])
+
+        ordered_schema = self._create_schema([
+            ExportItem(path=[PathNode(name='one')]),
+            ExportItem(path=[PathNode(name='four')]),
+            ExportItem(path=[PathNode(name='five')]),
+            ExportItem(path=[PathNode(name='six')]),
+        ])
+
+        schema = CaseExportDataSchema._reorder_schema_from_schema(
+            schema,
+            ordered_schema,
+        )
+        self._assert_item_order(
+            schema,
+            [],
+            [
+                ExportItem(path=[PathNode(name='one')]),
+                ExportItem(path=[PathNode(name='two')]),
+                ExportItem(path=[PathNode(name='three')]),
+            ],
+        )

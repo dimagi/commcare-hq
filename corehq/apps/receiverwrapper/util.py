@@ -1,3 +1,4 @@
+# coding=utf-8
 from collections import namedtuple
 import re
 from couchdbkit import ResourceNotFound
@@ -23,17 +24,17 @@ def get_submit_url(domain, app_id=None):
 def submit_form_locally(instance, domain, **kwargs):
     # intentionally leave these unauth'd for now
     kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
-    response, xform, cases = SubmissionPost(
+    result = SubmissionPost(
         domain=domain,
         instance=instance,
         **kwargs
     ).run()
-    if not 200 <= response.status_code < 300:
+    if not 200 <= result.response.status_code < 300:
         raise LocalSubmissionError('Error submitting (status code %s): %s' % (
-            response.status_code,
-            response.content,
+            result.response.status_code,
+            result.response.content,
         ))
-    return response, xform, cases
+    return result
 
 
 def get_meta_appversion_text(form_metadata):
@@ -113,9 +114,13 @@ def get_commcare_version_from_appversion_text(appversion_text):
     ...     'CommCare Version 2.4. Build 10083, built on: March-12-2013'
     ... )
     '2.4.1'
+    >>> get_commcare_version_from_appversion_text(u'संस्करण "2.27.8" (414593)')
+    '2.27.8'
     """
     patterns = [
         r'version "([\d.]+)"',
+        r'"([\d.]+)"\s+\(\d+\)',
+        r'"([\d.]+)"',
     ]
     return _first_group_match(appversion_text, patterns)
 

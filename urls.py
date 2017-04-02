@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.conf.urls import url, include
 from django.shortcuts import render
@@ -10,6 +11,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
 
 from django.contrib import admin
+from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.views import ProBonoStaticView, logo
 from corehq.apps.hqwebapp.views import eula, apache_license, bsd_license, product_agreement, cda, unsubscribe
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
@@ -76,6 +78,7 @@ domain_specific = [
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     url(r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
+    url(r'^', include('custom.icds.urls')),
     url(r'^', include('custom.icds_reports.urls')),
     url(r'^', include('custom.enikshay.urls')),
     url(r'^', include('custom.rch.urls')),
@@ -88,9 +91,9 @@ domain_specific = [
 
 urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(
-        url=static('hqwebapp/img/favicon2.png'), permanent=True)),
+        url=static('hqwebapp/images/favicon2.png'), permanent=True)),
     url(r'^auditcare/', include('auditcare.urls')),
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', admin.site.urls),
     url(r'^analytics/', include('corehq.apps.analytics.urls')),
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
@@ -152,6 +155,7 @@ urlpatterns = [
     url(r'^unsubscribe_report/(?P<scheduled_report_id>[\w-]+)/'
         r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4})/(?P<scheduled_report_secret>[\w-]+)/',
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
+    url(r'^phone/list_apps', list_apps, name="list_accessible_apps")
 ] + LOCAL_APP_URLS
 
 if settings.ENABLE_PRELOGIN_SITE:

@@ -15,6 +15,7 @@ def get_all_daterange_choices():
         DateRangeChoice('last30', _('Last 30 Days'), True),
         DateRangeChoice('lastn', _('Last N Days'), False),
         DateRangeChoice('lastmonth', _('Last Month'), True),
+        DateRangeChoice('thisyear', _('This Year'), True),
         DateRangeChoice('lastyear', _('Last Year'), True),
         DateRangeChoice('since', _('Since a Date'), False),
         DateRangeChoice('range', _('Date Range'), False),
@@ -56,6 +57,8 @@ def get_daterange_start_end_dates(date_range, start_date=None, end_date=None, da
     elif date_range == 'lastyear':
         last_year = today.year - 1
         return datetime.date(last_year, 1, 1), datetime.date(last_year, 12, 31)
+    elif date_range == 'thisyear':
+        return datetime.date(today.year, 1, 1), datetime.date(today.year, 12, 31)
     else:
         end_date = today
         days = {

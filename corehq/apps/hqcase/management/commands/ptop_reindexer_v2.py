@@ -1,6 +1,3 @@
-from copy import deepcopy
-from optparse import make_option
-
 from django.core.management import BaseCommand, CommandError
 
 from corehq.pillows.app_submission_tracker import (
@@ -44,44 +41,54 @@ REINDEX_FNS = {
 
 
 class Command(BaseCommand):
-    args = 'index'
     help = 'Reindex a pillowtop index'
 
-    option_list = (
-        make_option('--cleanup',
-                    action='store_true',
-                    dest='cleanup',
-                    default=False,
-                    help='Clean index (delete data) before reindexing.'),
-        make_option('--noinput',
-                    action='store_true',
-                    dest='noinput',
-                    default=False,
-                    help='Skip important confirmation warnings.'),
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'index',
+            choices=list(REINDEX_FNS),
+        )
+        parser.add_argument(
+            '--cleanup',
+            action='store_true',
+            dest='cleanup',
+            default=False,
+            help='Clean index (delete data) before reindexing.'
+        )
+        parser.add_argument(
+            '--noinput',
+            action='store_true',
+            dest='noinput',
+            default=False,
+            help='Skip important confirmation warnings.'
+        )
 
         # for resumable reindexers
-        make_option('--reset',
-                    action='store_true',
-                    dest='reset',
-                    help='Reset a resumable reindex'),
-        make_option('--chunksize',
-                    type="int",
-                    action='store',
-                    dest='chunksize',
-                    help='Number of docs to process at a time'),
+        parser.add_argument(
+            '--reset',
+            action='store_true',
+            dest='reset',
+            help='Reset a resumable reindex'
+        )
+        parser.add_argument(
+            '--chunksize',
+            type=int,
+            action='store',
+            dest='chunksize',
+            help='Number of docs to process at a time'
+        )
 
         # for ES reindexers
-        make_option('--in-place',
-                    action='store_true',
-                    dest='in-place',
-                    help='Run the reindex in place - assuming it is against a live index.'),
-    )
+        parser.add_argument(
+            '--in-place',
+            action='store_true',
+            dest='in-place',
+            help='Run the reindex in place - assuming it is against a live index.'
+        )
 
-    def handle(self, index, *args, **options):
+    def handle(self, index, **options):
         cleanup = options.pop('cleanup')
         noinput = options.pop('noinput')
-        if index not in REINDEX_FNS:
-            raise CommandError('Supported indices to reindex are: {}'.format(','.join(REINDEX_FNS.keys())))
 
         def confirm():
             return raw_input("Are you sure you want to delete the current index (if it exists)? y/n\n") == 'y'
@@ -89,7 +96,7 @@ class Command(BaseCommand):
         reindexer = REINDEX_FNS[index]()
         reindexer_options = {
             key: value for key, value in options.items()
-            if value is not None and key in [option.dest for option in self.option_list]
+            if value and key in ['reset', 'chunksize', 'in-place']  # TODO - don't hardcode
         }
         unconsumed = reindexer.consume_options(reindexer_options)
         if unconsumed:

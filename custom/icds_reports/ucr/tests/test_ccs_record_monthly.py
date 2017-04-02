@@ -1,10 +1,12 @@
 import uuid
 from datetime import datetime, date
 from xml.etree import ElementTree
-from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import run_with_all_backends
+from django.test import override_settings
+import mock
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
+from corehq.apps.es.fake.forms_fake import FormESFake
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element
 
 XMNLS_BP_FORM = 'http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB'
@@ -13,6 +15,9 @@ XMLNS_PNC_FORM = 'http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245
 XMLNS_EBF_FORM = 'http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D'
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
+@mock.patch('custom.icds_reports.ucr.expressions.FormES', FormESFake)
 class TestCCSRecordDataSource(BaseICDSDatasourceTest):
     datasource_filename = 'ccs_record_cases_monthly_tableau'
 
@@ -134,7 +139,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         add_element(fp_group, 'counsel_accessible_ppfp', counsel_accessible_postpartum_fp)
         form.append(fp_group)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_thr_rations_form(
             self, form_date, case_id, thr_given_mother='0', rations_distributed=0):
@@ -160,7 +165,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             add_element(mother_thr, 'days_ration_given_mother', rations_distributed)
             form.append(mother_thr)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_pnc_form(self, form_date, case_id, counsel_methods='no'):
 
@@ -180,7 +185,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
 
         add_element(form, 'counsel_methods', counsel_methods)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_ebf_form(self, form_date, case_id, counsel_methods='no'):
 
@@ -200,9 +205,8 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
 
         add_element(form, 'counsel_methods', counsel_methods)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
-    @run_with_all_backends
     def test_open_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -223,7 +227,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_alive_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -243,7 +246,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_demographic_data(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -268,7 +270,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_thr_rations(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -306,7 +307,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_lactating_post(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -326,7 +326,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_preg_to_lactating(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -345,7 +344,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_pre_preg(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -364,7 +362,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_postnatal(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -384,7 +381,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_tt_complete_none(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -402,7 +398,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_tt_complete(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -421,7 +416,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_delivered_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -440,7 +434,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_trimester_1_2(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -459,7 +452,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_trimester_3_none(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -478,7 +470,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_no_anc_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -507,7 +498,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_anc1_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -536,7 +526,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_anc2_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -565,7 +554,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_anc3_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -594,7 +582,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_anc4_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -623,7 +610,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_reg_trimester_3_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -642,7 +628,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_reg_trimester_2_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -662,7 +647,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases, start_date=start_date)
 
-    @run_with_all_backends
     def test_reg_trimester_1_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -682,7 +666,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases, start_date=start_date)
 
-    @run_with_all_backends
     def test_bp_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -705,7 +688,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_pnc_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -729,7 +711,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_bp_last_submitted_form(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -781,7 +762,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_bp_any_submitted_form(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -851,7 +831,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_anemic_unknown(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -874,7 +853,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_anemia_normal(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -920,7 +898,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_anemia_moderate(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -966,7 +943,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_anemia_severe(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -1012,7 +988,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_counsel_methods_pnc(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -1043,7 +1018,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_counsel_methods_ebf(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -1074,7 +1048,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    @run_with_all_backends
     def test_bp_pnc_complete(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(

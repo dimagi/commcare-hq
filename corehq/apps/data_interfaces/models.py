@@ -1,3 +1,4 @@
+import pytz
 import re
 from collections import defaultdict
 
@@ -68,15 +69,35 @@ class AutomaticUpdateRule(models.Model):
 
     @classmethod
     def get_case_ids(cls, domain, case_type, boundary_date=None):
+        """
+        Retrieves the case ids in chunks, yielding a list of case ids each time
+        until there are none left.
+        """
+        chunk_size = 100
+
         query = (CaseES()
                  .domain(domain)
                  .case_type(case_type)
                  .is_closed(closed=False)
-                 .exclude_source())
-        if boundary_date is not None:
+                 .exclude_source()
+                 .size(chunk_size))
+
+        if boundary_date:
             query = query.server_modified_range(lte=boundary_date)
-        results = query.run()
-        return results.doc_ids
+
+        result = []
+
+        for case_id in query.scroll():
+            if not isinstance(case_id, basestring):
+                raise ValueError("Something is wrong with the query, expected ids only")
+
+            result.append(case_id)
+            if len(result) >= chunk_size:
+                yield result
+                result = []
+
+        if result:
+            yield result
 
     def rule_matches_case(self, case, now):
         try:
@@ -159,8 +180,14 @@ class AutomaticUpdateRule(models.Model):
         if not self.active:
             raise Exception("Attempted to call apply_rule on an inactive rule")
 
-        if not isinstance(case, (CommCareCase, CommCareCaseSQL)) or case.domain != self.domain:
-            raise Exception("Invalid case given")
+        if not isinstance(case, (CommCareCase, CommCareCaseSQL)):
+            raise ValueError("Invalid case given")
+
+        if not case.doc_type.startswith('CommCareCase'):
+            raise ValueError("Invalid case given")
+
+        if case.domain != self.domain:
+            raise ValueError("Invalid case given")
 
         if case.is_deleted or case.closed:
             return True
@@ -217,6 +244,16 @@ class AutomaticUpdateRuleCriteria(models.Model):
 
         return date_or_string
 
+    def clean_datetime(self, timestamp):
+        if not isinstance(timestamp, datetime):
+            timestamp = datetime.combine(timestamp, time(0, 0))
+
+        if timestamp.tzinfo:
+            # Convert to UTC and make it a naive datetime for comparison to datetime.utcnow()
+            timestamp = timestamp.astimezone(pytz.utc).replace(tzinfo=None)
+
+        return timestamp
+
     def check_days_before(self, case, now):
         values = self.get_case_values(case)
         for date_to_check in values:
@@ -225,8 +262,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
             if not isinstance(date_to_check, date):
                 continue
 
-            if not isinstance(date_to_check, datetime):
-                date_to_check = datetime.combine(date_to_check, time(0, 0))
+            date_to_check = self.clean_datetime(date_to_check)
 
             days = int(self.property_value)
             if now < (date_to_check - timedelta(days=days)):
@@ -242,8 +278,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
             if not isinstance(date_to_check, date):
                 continue
 
-            if not isinstance(date_to_check, datetime):
-                date_to_check = datetime.combine(date_to_check, time(0, 0))
+            date_to_check = self.clean_datetime(date_to_check)
 
             days = int(self.property_value)
             if now >= (date_to_check + timedelta(days=days)):

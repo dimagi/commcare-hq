@@ -295,7 +295,17 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
         Get the extra attachments for this form. This will not include
         the form itself
         """
-        return {name: meta.to_json()
+        def _meta_to_json(meta):
+            is_image = False
+            if meta.content_type is not None:
+                is_image = True if meta.content_type.startswith('image/') else False
+
+            meta_json = meta.to_json()
+            meta_json['is_image'] = is_image
+
+            return meta_json
+
+        return {name: _meta_to_json(meta)
             for name, meta in self.blobs.iteritems()
             if name != ATTACHMENT_NAME}
 

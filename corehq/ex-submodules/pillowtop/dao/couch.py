@@ -1,7 +1,7 @@
 from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import iter_docs
 from .interface import DocumentStore
-from pillowtop.dao.exceptions import DocumentNotFoundError
+from pillowtop.dao.exceptions import DocumentMissingError, DocumentDeletedError, DocumentNotFoundError
 
 
 ID_CHUNK_SIZE = 10000
@@ -17,8 +17,11 @@ class CouchDocumentStore(DocumentStore):
     def get_document(self, doc_id):
         try:
             return self._couch_db.get(doc_id)
-        except ResourceNotFound:
-            raise DocumentNotFoundError()
+        except ResourceNotFound as e:
+            if e.msg == 'missing':
+                raise DocumentMissingError()
+            else:
+                raise DocumentDeletedError()
 
     def save_document(self, doc_id, document):
         document['_id'] = doc_id

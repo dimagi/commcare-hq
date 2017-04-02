@@ -6,6 +6,8 @@ from corehq.apps.case_importer.tracking.task_status import TaskStatus, \
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import get_task
 
+MAX_COMMENT_LENGTH = 2048
+
 
 class CaseUploadRecord(models.Model):
     domain = models.CharField(max_length=256)
@@ -16,8 +18,9 @@ class CaseUploadRecord(models.Model):
     task_status_json = JSONField(null=True)
     couch_user_id = models.CharField(max_length=256)
     case_type = models.CharField(max_length=256)
+    comment = models.TextField(null=True)
 
-    upload_file_meta = models.ForeignKey('CaseUploadFileMeta', null=True)
+    upload_file_meta = models.ForeignKey('CaseUploadFileMeta', null=True, on_delete=models.CASCADE)
 
     class Meta(object):
         index_together = ('domain', 'created')
@@ -59,3 +62,8 @@ class CaseUploadFileMeta(models.Model):
     identifier = models.CharField(max_length=256, unique=True)
     filename = models.CharField(max_length=256)
     length = models.IntegerField()
+
+
+class CaseUploadFormRecord(models.Model):
+    case_upload_record = models.ForeignKey(CaseUploadRecord, related_name='form_records', on_delete=models.CASCADE)
+    form_id = models.CharField(max_length=256, unique=True)

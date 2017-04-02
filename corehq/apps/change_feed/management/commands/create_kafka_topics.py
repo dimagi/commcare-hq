@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management import BaseCommand
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.connection import get_kafka_client
@@ -5,7 +6,7 @@ from corehq.apps.change_feed.connection import get_kafka_client
 
 class Command(BaseCommand):
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         create_kafka_topics()
 
 

@@ -6,3 +6,7 @@ class DocumentClassNotFound(Exception):
 
 class DatabaseNotFound(Exception):
     pass
+
+
+class AccessRestricted(Exception):
+    pass

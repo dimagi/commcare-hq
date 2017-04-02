@@ -28,7 +28,9 @@ nav.appmanager-content {
   padding: 0;
   box-sizing: border-box;
   font-size: 12px;
-  min-height: @appnav-item-height/2;
+  .appnav-menu {
+    min-height: @appnav-item-height/2;
+  }
 }
 
 .appnav-menu > li > .appnav-item a {
@@ -39,6 +41,19 @@ nav.appmanager-content {
   color: @cc-text;
   .transition(all .5s);
   text-decoration: none !important;
+}
+
+.appnav-primary-icon {
+  font-size: 1.7rem;
+  margin-right: 5px;
+  top: 1px;
+  position: relative;
+  color: lighten(@cc-text, 20);
+}
+
+.appnav-primary-icon-lg {
+  font-size: 2rem;
+  top: 2px;
 }
 
 .appnav-menu > li > .appnav-item a.appnav-delete {
@@ -75,17 +90,6 @@ nav.appmanager-content {
     position: relative;
   }
 
-  > .appnav-primary-icon {
-    font-size: 1.7rem;
-    margin-right: 5px;
-    top: 1px;
-    position: relative;
-    color: lighten(@cc-text, 20);
-  }
-  > .appnav-primary-icon-lg {
-    font-size: 2rem;
-    top: 2px;
-  }
   > .appnav-drag-icon {
     position: absolute;
     top: 0;
@@ -244,6 +248,7 @@ nav.appmanager-content {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    width: 220px;
   }
 }
 
@@ -294,8 +299,25 @@ nav.appmanager-content {
   font-size: 9px;
   margin-top: 15px;
   padding-bottom: 3px;
-  //.transition(all 1s);
-  //&:hover {
-  //  .box-shadow(0 0 5px 2px lighten(@cc-text, 20));
-  //}
+}
+
+.appnav-section-name {
+  background-color: @cc-brand-low;
+  color: white;
+  padding: 10px 15px;
+  margin: 0;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+}
+
+.appnav-link-full {
+  width: 100%;
+}
+
+.appnav-menu .nav-divider {
+  margin: 0;
+}
+
+.appsummary-sidebar {
+  padding-bottom: 50px;
 }

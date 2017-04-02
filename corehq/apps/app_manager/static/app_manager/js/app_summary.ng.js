@@ -40,14 +40,33 @@
                 }
                 return names[firstLang] + (firstLang === target_lang ? '': ' [' + firstLang + ']');
             };
+            self.getModuleName = function (formId, target_lang) {
+                var names = config.formNameMap[formId];
+                if (names) {
+                    return self.translateName(names.module_name, target_lang)
+                }
+                return formId;
+            };
             self.getFormName = function (formId, target_lang) {
                 var names = config.formNameMap[formId];
                 if (names) {
-                    return self.translateName(names.module_name, target_lang) +
-                        ' -> ' +
-                        self.translateName(names.form_name, target_lang);
+                    return self.translateName(names.form_name, target_lang)
                 }
                 return formId;
+            };
+            self.getFormUrl = function (formId, target_lang) {
+                var names = config.formNameMap[formId];
+                if (names) {
+                    return names.form_url
+                }
+                return formId;
+            };
+            self.getModuleUrl = function (FormOrModuleId, target_lang) {
+                var names = config.formNameMap[FormOrModuleId];
+                if (names) {
+                    return names.module_url
+                }
+                return FormOrModuleId;
             };
             self.isActive = function (path) {
                 return $location.path().substr(0, path.length) === path;
@@ -118,8 +137,13 @@
         $scope.showRelevance = false;
         $scope.showComments = false;
         $scope.appLangs = summaryConfig.appLangs;
+        $scope.getFormUrl = utils.getFormUrl;
+        $scope.getModuleUrl = utils.getModuleUrl;
         $scope.formDownloadURL = summaryConfig.formDownloadURL;
         $scope.appDownloadURL = summaryConfig.appDownloadURL;
+        $scope.appSettingsURL = summaryConfig.appSettingsURL;
+        $scope.appHomeURL = summaryConfig.appHomeURL;
+        $scope.appName = summaryConfig.appName;
 
         self.init = function () {
             $scope.loading = true;
@@ -166,6 +190,32 @@
             return utils.translateName(form_module.name, $scope.lang);
         };
 
+        $scope.getModuleFormIcon = function(form_module) {
+            var formIcon = 'fa fa-file-o appnav-primary-icon';
+            if (form_module.action_type === 'open') {
+                formIcon = 'fcc fcc-app-createform appnav-primary-icon appnav-primary-icon-lg';
+            } else if (form_module.action_type === 'close') {
+                formIcon = 'fcc fcc-app-completeform appnav-primary-icon appnav-primary-icon-lg';
+            } else if (form_module.action_type === 'update') {
+                formIcon = 'fcc fcc-app-updateform appnav-primary-icon appnav-primary-icon-lg';
+            }
+            return formIcon;
+        }
+
+        $scope.getModuleIcon = function(form_module) {
+            var moduleIcon = 'fa fa-folder-open';
+            if (form_module.module_type === 'advanced') {
+                moduleIcon = 'fa fa-flask';
+            } else if (form_module.module_type === 'report') {
+                moduleIcon = 'fa fa-bar-chart';
+            } else if (form_module.module_type === 'shadow') {
+                moduleIcon = 'fa fa-folder-open-o';
+            } else if (!form_module.is_surveys) {
+                moduleIcon = 'fa fa-bars';
+            }
+            return moduleIcon;
+        };
+
         self.init();
     };
 
@@ -180,12 +230,18 @@
         $scope.typeSearch = null;
         $scope.isActive = utils.isActive;
         $scope.getFormName = utils.getFormName;
+        $scope.getModuleName = utils.getModuleName;
+        $scope.getFormUrl = utils.getFormUrl;
+        $scope.getModuleUrl = utils.getModuleUrl;
         $scope.showConditions = true;
         $scope.showCalculations = true;
         $scope.showLabels = true;
         $scope.appLangs = summaryConfig.appLangs;
         $scope.caseDownloadURL = summaryConfig.caseDownloadURL;
         $scope.appDownloadURL = summaryConfig.appDownloadURL;
+        $scope.appSettingsURL = summaryConfig.appSettingsURL;
+        $scope.appHomeURL = summaryConfig.appHomeURL;
+        $scope.appName = summaryConfig.appName;
 
         $scope.filterCaseTypes = function (caseType) {
             $scope.typeSearch = caseType ? {'name': caseType} : null;
@@ -257,9 +313,12 @@
             controller: function ($scope) {
                 $scope.getIcon = utils.getIcon;
                 $scope.getQuestionLabel = function(question) {
-                   return utils.translateName(question.translations, $scope.lang, question.label);
+                    return utils.translateName(question.translations, $scope.lang, question.label);
                 };
-            }
+                $scope.getSelectOptionsLabel = function(option){
+                    return utils.translateName(option.translations, $scope.lang, option.label);
+                };
+            },
         };
     }]);
     summaryModule.directive('loading', function () {

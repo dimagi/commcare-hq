@@ -1,25 +1,12 @@
-{% extends "settings/base_template.html" %}
+{% extends "style/base_section.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/ko/select2_handler.js' %}"></script>
-    <script src="{% static 'smsbillables/ko/smsbillables.rate_calc.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-        var smsRateCalculator = new SMSRateCalculator({
-            country_code: {
-                fieldName: 'country_code',
-                currentValue: ''
-            }
-        });
-        $('#sms-rate-calculator').koApplyBindings(smsRateCalculator);
-        smsRateCalculator.init();
-    </script>
+    <script src="{% static 'hqwebapp/js/select2_handler.js' %}"></script>
+    <script src="{% static 'smsbillables/js/smsbillables.rate_calc.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -46,7 +33,7 @@
         </p>
     </div>
     <hr />
-    <div id="sms-rate-calculator">
+    <div class="ko-sms-rate-calculator">
         {% crispy rate_calc_form %}
         <div class="alert alert-success" data-bind="visible: calculatingRate">
             {% blocktrans %}

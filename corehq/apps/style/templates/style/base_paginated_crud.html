@@ -4,7 +4,7 @@
 {% load crispy_forms_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/ko/crud_paginated_list.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/crud_paginated_list.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -37,7 +37,7 @@
 
             <div class="row" data-bind="visible: isLoadingVisible">
                 <div class="col-md-12">
-                   <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading" />
+                   <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading" />
                     {{ pagination.text.loading }}
                 </div>
             </div>

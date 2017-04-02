@@ -7,8 +7,7 @@ from custom.ewsghana.handlers.help import HelpHandler
 from custom.ewsghana.handlers.receipts import ReceiptsHandler
 from custom.ewsghana.handlers.requisition import RequisitionHandler
 from custom.ewsghana.handlers.soh import SOHHandler
-from custom.ewsghana.handlers.start import StartHandler
-from custom.ewsghana.handlers.stop import StopHandler
+from custom.ewsghana.handlers.reminder import ReminderOnOffHandler
 from custom.ewsghana.handlers.undo import UndoHandler
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway.tanzania.handlers.language import LanguageHandler
@@ -31,7 +30,7 @@ def handle(verified_contact, text, msg):
 
     user = verified_contact.owner
 
-    if not verified_contact.verified:
+    if verified_contact.pending_verification:
         if not process_verification(verified_contact, msg, VERIFICATION_KEYWORDS):
             logged_event = MessagingEvent.get_current_verification_event(
                 domain, verified_contact.owner_id, verified_contact.phone_number)
@@ -61,8 +60,7 @@ def handle(verified_contact, text, msg):
 
     handlers = {
         ('help', ): HelpHandler,
-        ('stop', ): StopHandler,
-        ('start', ): StartHandler,
+        ('reminder', ): ReminderOnOffHandler,
         ('language', 'lang', 'lugha'): LanguageHandler,
         ('yes', 'no', 'y', 'n'): RequisitionHandler,
         ('undo', 'replace', 'revoke'): UndoHandler,

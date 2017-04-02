@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from functools import wraps
 import json
 from corehq import privileges

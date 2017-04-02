@@ -14,6 +14,7 @@ from pillowtop.utils import prepare_bulk_payloads, build_bulk_payload, ErrorColl
 
 MAX_TRIES = 3
 RETRY_TIME_DELAY_FACTOR = 15
+MAX_PAYLOAD_SIZE = 10 ** 7  # ~10 MB
 
 
 class Reindexer(six.with_metaclass(ABCMeta)):
@@ -86,7 +87,7 @@ def _prepare_index_for_usage(es, index_info):
 
 
 def _set_checkpoint(pillow):
-    checkpoint_value = pillow.get_change_feed().get_checkpoint_value()
+    checkpoint_value = pillow.get_change_feed().get_latest_offsets_as_checkpoint_value()
     pillow_logging.info('setting checkpoint to {}'.format(checkpoint_value))
     pillow.checkpoint.update_to(checkpoint_value)
 
@@ -142,8 +143,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         for change, exception in error_collector.errors:
             pillow_logging.error("Error procesing doc %s: %s", change.id, exception)
 
-        max_payload_size = pow(10, 8)  # ~ 100Mb
-        payloads = prepare_bulk_payloads(bulk_changes, max_payload_size)
+        payloads = prepare_bulk_payloads(bulk_changes, MAX_PAYLOAD_SIZE)
         if len(payloads) > 1:
             pillow_logging.info("Payload split into %s parts" % len(payloads))
 

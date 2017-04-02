@@ -1,8 +1,9 @@
 from datetime import datetime
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
-from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseReportFilter
+from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseReportFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import QuarterFilter as UCRQuarterFilter
 from corehq.apps.userreports.reports.filters.choice_providers import LocationChoiceProvider
@@ -34,7 +35,7 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         choice_provider = LocationChoiceProvider(StubReport(domain=self.domain), None)
         # We don't include descendants here because they will show up in select box
         choice_provider.configure({'include_descendants': False})
-        choices = choice_provider.get_choices_for_known_values(location_ids)
+        choices = choice_provider.get_choices_for_known_values(location_ids, self.request.couch_user)
         if not choices:
             return self.default_options
         else:
@@ -50,7 +51,7 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         choice_provider.configure({'include_descendants': True})
         return [
             choice.value
-            for choice in choice_provider.get_choices_for_known_values(selected)
+            for choice in choice_provider.get_choices_for_known_values(selected, request.couch_user)
         ]
 
     @property
@@ -62,6 +63,16 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         context = super(EnikshayLocationFilter, self).filter_context
         context['endpoint'] = self.pagination_source
         return context
+
+
+class EnikshayMigrationFilter(BaseSingleOptionFilter):
+    slug = 'is_migrated'
+    label = _('Filter migrated data')
+    default_text = _('Show All')
+    options = (
+        ('1', 'Show only migrated from Nikshay'),
+        ('0', 'Show only eNikshay'),
+    )
 
 
 class QuarterFilter(BaseReportFilter):
@@ -123,3 +134,11 @@ class QuarterFilter(BaseReportFilter):
             )
         except FilterValueException:
             return cls.quarter_filter().default_value()
+
+
+class DateOfDiagnosisFilter(DatespanFilter):
+    label = _('Date of Diagnosis')
+
+
+class TreatmentInitiationDateFilter(DatespanFilter):
+    label = _('Date of Treatment Initiation')

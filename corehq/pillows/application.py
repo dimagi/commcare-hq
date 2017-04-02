@@ -1,4 +1,4 @@
-from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplication
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
@@ -38,7 +38,7 @@ def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'
 
 def get_app_reindexer():
     iteration_key = "ApplicationToElasticsearchPillow_{}_reindexer".format(APP_INDEX_INFO.index)
-    doc_provider = CouchDocumentProvider(iteration_key, [Application, RemoteApp])
+    doc_provider = CouchDocumentProvider(iteration_key, [Application, RemoteApp, LinkedApplication])
     return ResumableBulkElasticPillowReindexer(
         doc_provider,
         elasticsearch=get_es_new(),

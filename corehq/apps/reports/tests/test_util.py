@@ -1,10 +1,10 @@
 # coding: utf-8
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 from mock import Mock
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.reports.util import create_export_filter, safe_for_fs
+from corehq.apps.reports.util import create_export_filter
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -55,12 +55,3 @@ class ReportUtilTests(TestCase):
             filter_.dumps(),
             '[{"function": "corehq.apps.reports.util.case_users_filter", "kwargs": {"users": ["' +
             self.user.user_id + '"], "groups": []}}]')
-
-
-class TestSafeFilename(SimpleTestCase):
-
-    def test_safe_for_fs_bytestring(self):
-        self.assertEqual(safe_for_fs('spam*?: 𐍃𐍀𐌰𐌼-&.txt'), 'spam 𐍃𐍀𐌰𐌼-&.txt')
-
-    def test_safe_for_fs_unicode(self):
-        self.assertEqual(safe_for_fs(u'spam*?: 𐍃𐍀𐌰𐌼-&.txt'), u'spam 𐍃𐍀𐌰𐌼-&.txt')

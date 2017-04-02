@@ -10,12 +10,16 @@ from corehq.apps.export.transforms import (
     case_id_to_case_name,
     user_id_to_username,
     owner_id_to_display,
+    workflow_transform,
+    doc_type_transform,
+    case_or_user_id_to_name
 )
 
 # When fixing a bug that requires existing schemas to be rebuilt,
 # bump the version number.
-FORM_DATA_SCHEMA_VERSION = 8
-CASE_DATA_SCHEMA_VERSION = 7
+FORM_DATA_SCHEMA_VERSION = 9
+CASE_DATA_SCHEMA_VERSION = 8
+SMS_DATA_SCHEMA_VERSION = 1
 
 DEID_ID_TRANSFORM = "deid_id"
 DEID_DATE_TRANSFORM = "deid_date"
@@ -26,10 +30,16 @@ DEID_TRANSFORM_FUNCTIONS = {
 CASE_NAME_TRANSFORM = "case_name_transform"
 USERNAME_TRANSFORM = "username_transform"
 OWNER_ID_TRANSFORM = "owner_id_transform"
+WORKFLOW_TRANSFORM = "workflow_transform"
+DOC_TYPE_TRANSFORM = "doc_type_transform"
+CASE_OR_USER_ID_TRANSFORM = "case_or_user_id_transform"
 TRANSFORM_FUNCTIONS = {
     CASE_NAME_TRANSFORM: case_id_to_case_name,
     USERNAME_TRANSFORM: user_id_to_username,
     OWNER_ID_TRANSFORM: owner_id_to_display,
+    WORKFLOW_TRANSFORM: workflow_transform,
+    DOC_TYPE_TRANSFORM: doc_type_transform,
+    CASE_OR_USER_ID_TRANSFORM: case_or_user_id_to_name,
 }
 PLAIN_USER_DEFINED_SPLIT_TYPE = 'plain'
 MULTISELCT_USER_DEFINED_SPLIT_TYPE = 'multi-select'
@@ -67,6 +77,7 @@ CASE_CREATE_ELEMENTS = ['case_name', 'owner_id', 'case_type']
 
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
+SMS_EXPORT = 'sms'
 MAX_EXPORTABLE_ROWS = 100000
 CASE_SCROLL_SIZE = 10000
 
@@ -76,3 +87,30 @@ MISSING_VALUE = '---'
 EMPTY_VALUE = ''
 
 UNKNOWN_INFERRED_FROM = 'unknown'
+
+SKIPPABLE_PROPERTIES = frozenset([
+    'initial_processing_complete',
+    '_rev',
+    'computed_modified_on_',
+    'server_modified_on',
+    'domain',
+    'form.#type',
+    'form.@uiVersion',
+    'openrosa_headers.HTTP_X_OPENROSA_VERSION',
+    'openrosa_headers.HTTP_ACCEPT_LANGUAGE',
+    'openrosa_headers.HTTP_DATE',
+    'problem',
+    'doc_type',
+    'path',
+    'version',
+    'date_header',
+    'migrating_blobs_from_couch',
+    'orig_id',
+    'edited_on',
+    'deprecated_date',
+    'deprecated_form_id',
+    'auth_context.authenticated',
+    'auth_context.doc_type',
+    'auth_context.domain',
+    'auth_context.user_id',
+])

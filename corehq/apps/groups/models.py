@@ -222,6 +222,13 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
             return [r['id'] for r in results]
 
     @classmethod
+    def get_case_sharing_accessible_locations(cls, domain, user):
+        return [
+            location.case_sharing_group_object() for location in
+            SQLLocation.objects.accessible_to_user(domain, user).filter(location_type__shares_cases=True)
+        ]
+
+    @classmethod
     def get_case_sharing_groups(cls, domain, wrap=True):
         all_groups = cls.by_domain(domain)
         if wrap:

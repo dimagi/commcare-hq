@@ -1,0 +1,46 @@
+{
+   "_id": "a28d333f56bd9df737e75a6844d3d749",
+   "doc_type": "SavedExportSchema",
+   "domain": null,
+   "name": "Skippable Properties",
+   "index": "[\"aspace\", \"my_sweet_xmlns\"]",
+   "transform_dates": true,
+   "filter_function": "[]",
+   "app_id": "58b0156dc3a8420669efb286bc81e048",
+   "schema_id": "a28d333f56bd9df737e75a6844b54b36",
+   "split_multiselects": false,
+   "tables": [
+       {
+           "index": "#",
+           "doc_type": "ExportTable",
+           "order": [
+           ],
+           "columns": [
+               {
+                   "index": "initial_processing_complete",
+                   "show": false,
+                   "is_sensitive": false,
+                   "transform": null,
+                   "doc_type": "ExportColumn",
+                   "tag": null,
+                   "display": "InitialProcessingComplete"
+               },
+               {
+                   "index": "doc_type",
+                   "show": false,
+                   "is_sensitive": false,
+                   "transform": null,
+                   "doc_type": "ExportColumn",
+                   "tag": null,
+                   "display": "DocType"
+               }
+           ],
+           "display": "My Forms"
+       }
+   ],
+   "include_errors": false,
+   "default_format": "csv",
+   "type": "form",
+   "is_safe": false
+}
+

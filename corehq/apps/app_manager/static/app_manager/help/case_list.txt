@@ -1,1 +1,0 @@
-<p>Whether to have an item in the module's menu that lets you browse the case list without moving on to fill out a form.</p>

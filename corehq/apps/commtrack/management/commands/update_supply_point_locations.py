@@ -1,3 +1,4 @@
+from __future__ import print_function
 from xml.etree import ElementTree
 from django.core.management.base import BaseCommand
 
@@ -39,14 +40,14 @@ def update_supply_points(domain):
     if case_blocks:
         for chunk in chunked(case_blocks, 100):
             submit_case_blocks(chunk, domain)
-            print "updated {} cases on domain {}".format(len(chunk), domain)
+            print("updated {} cases on domain {}".format(len(chunk), domain))
 
 
 class Command(BaseCommand):
     help = ("Make sure all supply point cases have their owner_id set "
             "to the location_id")
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         all_domains = Domain.get_all_names()
         total = len(all_domains)
         finished = 0
@@ -54,4 +55,4 @@ class Command(BaseCommand):
             update_supply_points(domain)
             finished += 1
             if finished % 100 == 0:
-                print "Processed {} of {} domains".format(finished, total)
+                print("Processed {} of {} domains".format(finished, total))

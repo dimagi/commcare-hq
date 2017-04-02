@@ -1,0 +1,83 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div id="{{ css_id }}">
+  <div class="form-group">
+    <label class="control-label {{ css_label_class }}">{% trans "Filter Type" %}</label>
+    <div class="{{ css_field_class }}">
+      <select name="filter_type" class="form-control" data-bind="value: filter_type">
+        <option value="phone_number">{% trans "Phone Number" %}</option>
+        <option value="contact">{% trans "Contact" %}</option>
+      </select> </div>
+  </div>
+
+  <div class="form-group" data-bind="visible: show_phone_filter()">
+    <label class="control-label {{ css_label_class }}">{% trans "Phone Number" %}</label>
+    <div class="{{ css_field_class }}">
+      <input name="{{ slug }}"
+             type="text"
+             class="form-control {% block input_css_class %}{% endblock %}"
+             data-bind="value: phone_number_filter">
+    </div>
+  </div>
+
+  <div data-bind="visible: show_contact_filter()">
+    <div class="form-group">
+      <label class="control-label {{ css_label_class }}">{% trans "Contact Type" %}</label>
+      <div class="{{ css_field_class }}">
+        <select name="contact_type" class="form-control" data-bind="value: contact_type">
+          <option value="users">{% trans "Users" %}</option>
+          <option value="cases">{% trans "Cases" %}</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" data-bind="visible: show_group_filter()">
+      <label class="control-label {{ css_label_class }}">{% trans "Groups" %}</label>
+      <div class="{{ css_field_class }}">
+        <select name="selected_group"
+                class="form-control"
+                data-bind="options: groups,
+                           optionsText: 'name',
+                           optionsValue: '_id',
+                           value: selected_group">
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="control-label {{ css_label_class }}">{% trans "Show Contacts" %}</label>
+      <div class="{{ css_field_class }}">
+        <select name="has_phone_number"
+                class="form-control"
+                data-bind="value: has_phone_number,
+                           options: phone_number_options,
+                           optionsText: 'text',
+                           optionsValue: 'id',
+                           disable: can_edit_has_phone_number()">
+        </select>
+      </div>
+    </div>
+    <div class="form-group" data-bind='visible: show_verification_filter()'>
+      <label class="control-label {{ css_label_class }}">{% trans "Verification Status" %}</label>
+      <div class="{{ css_field_class }}">
+        <select name="verification_status" class="form-control" data-bind="value: verification_status">
+          <option value="any">{% trans "Any" %}</option>
+          <option value="not_verified">{% trans "Not Verified or Already In Use" %}</option>
+          <option value="verification_pending">{% trans "Verification Pending" %}</option>
+          <option value="verified">{% trans "Verified" %}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+$.getScript("{% static 'sms/js/phone_number_filter.js' %}", function() {
+  var initial_value = {{ initial_value|JSON }},
+  model = new SMSPhoneNumberFilterViewModel(initial_value, {{ groups|JSON }});
+  $('#{{ css_id }}').koApplyBindings(model);
+  $('[name=selected_group]').select2({
+      allowClear: true,
+      placeholder: '{% trans "Select a group" %}',
+  });
+});
+</script>

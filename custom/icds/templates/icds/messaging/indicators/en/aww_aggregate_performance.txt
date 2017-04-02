@@ -1,0 +1,9 @@
+Performance metrics collected over the last 30 days for your AWC:
+
+Home visits completed / Goal: {{ visits }} / 65
+
+Beneficiaries received adequate THR / Beneficiaries eligible for THR: {{ thr_distribution }}
+
+Children weighed under 3 years / Total children under 3 years: {{ children_weighed }}
+
+Days AWC open / Goal: {{ days_open }} / 25

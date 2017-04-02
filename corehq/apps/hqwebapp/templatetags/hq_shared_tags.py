@@ -11,8 +11,8 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.http import QueryDict
 from django import template
-from django.core.urlresolvers import reverse
-from django.utils.html import format_html
+from django.urls import reverse
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
@@ -25,6 +25,7 @@ from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
 from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
+from corehq import toggles
 
 
 register = template.Library()
@@ -100,6 +101,7 @@ except (ImportError, SyntaxError):
     resource_versions = {}
 
 
+@register.filter
 @register.simple_tag
 def static(url):
     resource_url = url
@@ -205,11 +207,16 @@ def pretty_doc_info(doc_info):
     })
 
 
-def _toggle_enabled(module, request, toggle_or_toggle_name):
+def _get_toggle(module, toggle_or_toggle_name):
     if isinstance(toggle_or_toggle_name, basestring):
         toggle = getattr(module, toggle_or_toggle_name)
     else:
         toggle = toggle_or_toggle_name
+    return toggle
+
+
+def _toggle_enabled(module, request, toggle_or_toggle_name):
+    toggle = _get_toggle(module, toggle_or_toggle_name)
     return toggle.enabled_for_request(request)
 
 
@@ -218,11 +225,25 @@ def toggle_enabled(request, toggle_or_toggle_name):
     import corehq.toggles
     return _toggle_enabled(corehq.toggles, request, toggle_or_toggle_name)
 
-
 @register.filter
-def is_new_cloudcare(request):
-    from corehq import toggles
-    return _toggle_enabled(toggles, request, toggles.USE_FORMPLAYER_FRONTEND)
+def toggle_tag_info(request, toggle_or_toggle_name):
+    """Show Tag Information for feature flags / Toggles,
+    and if not enabled, show where the UI would be.
+    Useful for trying to find out if you have all the flags enabled in a
+    particular location or whether a feature on prod is part of a particular
+    flag. """
+    if not toggles.SHOW_DEV_TOGGLE_INFO.enabled_for_request(request):
+        return ""
+    flag = _get_toggle(toggles, toggle_or_toggle_name)
+    tag = flag.tag
+    is_enabled = flag.enabled_for_request(request)
+    return mark_safe("""<div class="label label-{css_class} label-flag{css_disabled}">{tag_name}: {description}{status}</div>""".format(
+        css_class=tag.css_class,
+        tag_name=tag.name,
+        description=flag.label,
+        status=" <strong>[DISABLED]</strong>" if not is_enabled else "",
+        css_disabled=" label-flag-disabled" if not is_enabled else "",
+    ))
 
 
 @register.filter
@@ -230,10 +251,12 @@ def can_use_restore_as(request):
     if not hasattr(request, 'couch_user'):
         return False
 
+    if request.couch_user.is_superuser:
+        return True
+
     return (
         request.couch_user.can_edit_commcare_users() and
-        has_privilege(request, privileges.DATA_CLEANUP) and
-        has_privilege(request, privileges.CLOUDCARE)
+        has_privilege(request, privileges.LOGIN_AS)
     )
 
 
@@ -416,9 +439,9 @@ def chevron(value):
     Displays a green up chevron if value > 0, and a red down chevron if value < 0
     """
     if value > 0:
-        return '<span class="fa fa-chevron-up" style="color: #006400;"></span>'
+        return format_html('<span class="fa fa-chevron-up" style="color: #006400;"></span>')
     elif value < 0:
-        return '<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>'
+        return format_html('<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>')
     else:
         return ''
 
@@ -429,9 +452,9 @@ def reverse_chevron(value):
     Displays a red up chevron if value > 0, and a green down chevron if value < 0
     """
     if value > 0:
-        return '<span class="fa fa-chevron-up" style="color: #8b0000;"></span>'
+        return format_html('<span class="fa fa-chevron-up" style="color: #8b0000;"></span>')
     elif value < 0:
-        return '<span class="fa fa-chevron-down" style="color: #006400;"> </span>'
+        return format_html('<span class="fa fa-chevron-down" style="color: #006400;"> </span>')
     else:
         return ''
 
@@ -446,7 +469,7 @@ def maintenance_alert():
         return ''
     else:
         return format_html(
-            '<div class="alert alert-warning" style="text-align: center; margin-bottom: 0;">{}</div>',
+            '<div class="alert alert-warning alert-maintenance" style="text-align: center; margin-bottom: 0;">{}</div>',
             mark_safe(alert.html),
         )
 
@@ -605,3 +628,26 @@ def registerurl(parser, token):
     nodelist = NodeList([FakeNode()])
 
     return AddToBlockNode(nodelist, 'js-inline')
+
+
+@register.tag
+def initial_page_data(parser, token):
+    split_contents = token.split_contents()
+    tag = split_contents[0]
+    name = parse_literal(split_contents[1], parser, tag)
+    value = parser.compile_filter(split_contents[2])
+
+    class FakeNode(template.Node):
+
+        def render(self, context):
+            resolved = value.resolve(context)
+            if isinstance(resolved, basestring):
+                resolved = json.dumps(resolved)[1:-1]
+            else:
+                resolved = JSON(resolved)
+            return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
+                    .format(name, escape(resolved)))
+
+    nodelist = NodeList([FakeNode()])
+
+    return AddToBlockNode(nodelist, 'initial_page_data')

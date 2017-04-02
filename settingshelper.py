@@ -1,11 +1,16 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from collections import namedtuple
 import os
 import sys
 import tempfile
 import uuid
 
+import re
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
+import six
+from raven import breadcrumbs
+from raven import fetch_git_sha
 
 
 def is_testing():
@@ -131,7 +136,7 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
         return db_uri
 
     def _make_couchdb_tuple(self, row):
-        if isinstance(row, basestring):
+        if isinstance(row, six.string_types):
             app_label, postfix = row, None
         else:
             app_label, postfix = row
@@ -169,7 +174,7 @@ def celery_failure_handler(task, exc, task_id, args, kwargs, einfo):
 
 def get_allowed_websocket_channels(request, channels):
     from django.core.exceptions import PermissionDenied
-    if request.user and request.user.is_authenticated() and request.user.is_superuser:
+    if request.user and request.user.is_authenticated and request.user.is_superuser:
         return channels
     else:
         # todo: support for non-superusers
@@ -197,3 +202,38 @@ def fix_logger_obfuscation(fix_logger_obfuscation_, logging_config):
                         'logging.StreamHandler'
                     ), file=sys.stderr)
                 handler["class"] = "logging.StreamHandler"
+
+
+def configure_sentry(base_dir, server_env, pub_key, priv_key, project_id):
+    if not (pub_key and priv_key and project_id):
+        return
+
+    release = get_release_name(base_dir, server_env)
+
+    breadcrumbs.ignore_logger('quickcache')
+    breadcrumbs.ignore_logger('django.template')
+
+    return {
+        'dsn': 'https://{pub_key}:{priv_key}@sentry.io/{project_id}'.format(
+            pub_key=pub_key,
+            priv_key=priv_key,
+            project_id=project_id
+        ),
+        'release': release,
+        'environment': server_env,
+        'tags': {},
+        'include_versions': False,  # performance without this is bad
+        'processors': (
+            'raven.processors.SanitizePasswordsProcessor',
+            'raven.processors.RemovePostDataProcessor',
+        )
+    }
+
+
+def get_release_name(base_dir, server_env):
+    release_dir = base_dir.split('/')[-1]
+    if re.match('\d{4}-\d{2}-\d{2}_\d{2}.\d{2}', release_dir):
+        release = "{}-{}-deploy".format(release_dir, server_env)
+    else:
+        release = fetch_git_sha(base_dir)
+    return release

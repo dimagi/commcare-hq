@@ -5,7 +5,9 @@ from uuid import uuid4
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from django.test.utils import override_settings
 from nose.tools import nottest
+from nose.plugins.attrib import attr
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
@@ -165,8 +167,41 @@ run_with_all_backends = functools.partial(
             },
             pre_run=lambda *args, **kwargs: args[0].setUp(),
         ),
-    ]
+    ],
+    nose_tags={'all_backends': True}
 )
+
+
+def partitioned(cls):
+    """
+    Marks a test to be run with the partitioned database settings in
+    addition to the non-partitioned database settings.
+    """
+    return attr(sql_backend=True)(cls)
+
+
+def only_run_with_non_partitioned_database(cls):
+    """
+    Only runs the test with the non-partitioned database settings.
+    """
+    if settings.USE_PARTITIONED_DATABASE:
+        return nottest(cls)
+
+    return cls
+
+
+def only_run_with_partitioned_database(cls):
+    """
+    Only runs the test with the partitioned database settings.
+    """
+    if not settings.USE_PARTITIONED_DATABASE:
+        return nottest(cls)
+
+    return partitioned(cls)
+
+
+def use_sql_backend(cls):
+    return partitioned(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
 
 
 @unit_testing_only

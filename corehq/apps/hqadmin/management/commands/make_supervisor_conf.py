@@ -1,42 +1,43 @@
+from __future__ import print_function
 import json
 import os
 import sys
-from optparse import make_option
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.template import Context, Template
 
 
-def parse_params(option, opt, value, parser):
-    try:
-        args_dict = json.loads(value)
-    except ValueError:
-        print "argument error, %s should be valid JSON" % value
-
-    setattr(parser.values, option.dest, args_dict)
-
-
 class SupervisorConfCommand(BaseCommand):
-    option_list = (
-        make_option('--conf_file', help='Config template file to use', default=False),
-        make_option('--conf_destination', help='Rendered supervisor configuration file path destination', default=None),
-        make_option('--params',
-                    type="string",
-                    action='callback',
-                    callback=parse_params,
-                    dest='params',
-                    default={},
-                    help='template parameters as JSON data'),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--conf_file',
+            help='Config template file to use',
+            default=False,
+        )
+        parser.add_argument(
+            '--conf_destination',
+            help='Rendered supervisor configuration file path destination',
+            default=None,
+        )
+        parser.add_argument(
+            '--params',
+            type=str,
+            dest='params',
+            default=None,
+            help='template parameters as JSON data',
+        )
 
     def render_configuration_file(self, conf_template_string, params):
         return Template(conf_template_string).render(Context(params))
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         self.conf_file_template = options['conf_file']
         self.conf_dest = options['conf_destination']
-        self.params = options['params']
+        self.params = options['params'] or {}
+        if self.params:
+            self.params = self.extend_params(json.loads(self.params))
 
         service_dir = settings.SERVICE_DIR
 
@@ -58,10 +59,17 @@ class SupervisorConfCommand(BaseCommand):
     def write_configuration_file(self, destination_fullpath, rendered_configuration):
         with open(destination_fullpath, 'w') as fout:
             fout.write(rendered_configuration)
-            print "\t[make_supervisor_conf] Wrote supervisor configuration: %s" % destination_fullpath
+            print("\t[make_supervisor_conf] Wrote supervisor configuration: %s" % destination_fullpath)
+
+    def extend_params(self, params):
+        import multiprocessing
+        cpus = multiprocessing.cpu_count()
+        factor = params.get('gunicorn_workers_factor', 1)
+        static_factor = params.get('gunicorn_workers_static_factor', 0)
+        params['gunicorn_workers'] = static_factor + (factor * cpus)
+        return params
 
 
 class Command(SupervisorConfCommand):
     help = "Make a supervisord conf file to deposit into a services path that supervisord knows about"
-    args = ""
 

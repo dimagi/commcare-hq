@@ -2,7 +2,6 @@ import base64
 import json
 from corehq.apps.accounting.models import (BillingAccount, DefaultProductPlan,
     SoftwarePlanEdition, SubscriptionAdjustment, Subscription)
-from corehq.apps.accounting.tests import generator
 from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import incoming
@@ -59,6 +58,8 @@ class RegistrationTestCase(BaseSMSTest):
         SQLMobileBackendMapping.set_default_domain_backend(self.domain, self.backend)
 
         self.app_id = 'app_id'
+
+        self.default_user_data = {'commcare_project': self.domain}
 
     def tearDown(self):
         delete_domain_phone_numbers(self.domain)
@@ -166,8 +167,8 @@ class RegistrationTestCase(BaseSMSTest):
         incoming('+999123', 'JOIN {} WORKER test'.format(self.domain), self.backend.hq_api_id)
         user = CommCareUser.get_by_username(format_username('test', self.domain))
         self.assertIsNotNone(user)
-        self.assertEqual(user.user_data, user_data)
-        self.assertEqual(PhoneNumber.by_phone('999123').owner_id, user.get_id)
+        self.assertEqual(user.user_data, dict(self.default_user_data, **user_data))
+        self.assertEqual(PhoneNumber.get_two_way_number('999123').owner_id, user.get_id)
 
         self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_REGISTRATION_WELCOME_MOBILE_WORKER]])
 
@@ -235,9 +236,9 @@ class RegistrationTestCase(BaseSMSTest):
 
         user = CommCareUser.get_by_username(format_username('new_user', self.domain))
         self.assertIsNotNone(user)
-        self.assertEqual(user.user_data, user_data)
+        self.assertEqual(user.user_data, dict(self.default_user_data, **user_data))
         self.assertEqual(user.email, 'new_user@dimagi.com')
-        self.assertEqual(PhoneNumber.by_phone('999123').owner_id, user.get_id)
+        self.assertEqual(PhoneNumber.get_two_way_number('999123').owner_id, user.get_id)
 
         self.assertRegistrationInvitation(
             status=SelfRegistrationInvitation.STATUS_REGISTERED,
@@ -287,9 +288,9 @@ class RegistrationTestCase(BaseSMSTest):
 
         user = CommCareUser.get_by_username(format_username('new_user', self.domain))
         self.assertIsNotNone(user)
-        self.assertEqual(user.user_data, {})
+        self.assertEqual(user.user_data, self.default_user_data)
         self.assertEqual(user.email, 'new_user@dimagi.com')
-        self.assertEqual(PhoneNumber.by_phone('999123').owner_id, user.get_id)
+        self.assertEqual(PhoneNumber.get_two_way_number('999123').owner_id, user.get_id)
 
         self.assertRegistrationInvitation(
             status=SelfRegistrationInvitation.STATUS_REGISTERED,
@@ -381,7 +382,6 @@ class RegistrationAPITestCase(TestCase):
     def setUpClass(cls):
         super(RegistrationAPITestCase, cls).setUpClass()
         Role.get_cache().clear()
-        generator.instantiate_accounting()
 
         cls.domain1, cls.account1, cls.subscription1 = cls.setup_domain('reg-api-test-1')
         cls.domain2, cls.account2, cls.subscription2 = cls.setup_domain('reg-api-test-2')

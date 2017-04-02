@@ -7,7 +7,7 @@ from base64 import b64decode
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import (
     HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden, JsonResponse,
 )
@@ -19,8 +19,8 @@ from django.utils.translation import ugettext as _
 # External imports
 from django_digest.decorators import httpdigest
 from corehq.apps.domain.auth import (
-    determine_authtype_from_request, basicauth,
-    BASIC, DIGEST, API_KEY
+    determine_authtype_from_request, basicauth, tokenauth,
+    BASIC, DIGEST, API_KEY, TOKEN
 )
 from python_digest import parse_digest_credentials
 
@@ -79,7 +79,7 @@ def login_and_domain_required(view_func):
         user = req.user
         domain_name, domain = load_domain(req, domain)
         if domain:
-            if user.is_authenticated() and user.is_active:
+            if user.is_authenticated and user.is_active:
                 if not domain.is_active:
                     msg = _((
                         'The domain "{domain}" has not yet been activated. '
@@ -125,6 +125,18 @@ def login_and_domain_required(view_func):
     return _inner
 
 
+def domain_required(view_func):
+    @wraps(view_func)
+    def _inner(req, domain, *args, **kwargs):
+        domain_name, domain = load_domain(req, domain)
+        if domain:
+            return view_func(req, domain_name, *args, **kwargs)
+        else:
+            msg = _(('The domain "{domain}" was not found.').format(domain=domain_name))
+            raise Http404(msg)
+    return _inner
+
+
 class LoginAndDomainMixin(object):
 
     @method_decorator(login_and_domain_required)
@@ -160,7 +172,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
     def _outer(fn):
         @wraps(fn)
         def safe_fn(request, domain, *args, **kwargs):
-            if request.user.is_authenticated() and allow_sessions:
+            if request.user.is_authenticated and allow_sessions:
                 return login_and_domain_required(fn)(request, domain, *args, **kwargs)
             else:
                 # if sessions are blocked or user is not already authenticated, check for authentication
@@ -188,6 +200,10 @@ def login_or_basic_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
+def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+
+
 def login_or_digest_or_basic_or_apikey(default=BASIC):
     def decorator(fn):
         @wraps(fn)
@@ -196,6 +212,23 @@ def login_or_digest_or_basic_or_apikey(default=BASIC):
                 BASIC: login_or_basic_ex(allow_cc_users=True),
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True)
+            }[determine_authtype_from_request(request, default=default)]
+            if not function_wrapper:
+                return HttpResponseForbidden()
+            return function_wrapper(fn)(request, *args, **kwargs)
+        return _inner
+    return decorator
+
+
+def login_or_digest_or_basic_or_apikey_or_token(default=BASIC):
+    def decorator(fn):
+        @wraps(fn)
+        def _inner(request, *args, **kwargs):
+            function_wrapper = {
+                BASIC: login_or_basic_ex(allow_cc_users=True),
+                DIGEST: login_or_digest_ex(allow_cc_users=True),
+                API_KEY: login_or_api_key_ex(allow_cc_users=True),
+                TOKEN: login_or_token_ex(allow_cc_users=True),
             }[determine_authtype_from_request(request, default=default)]
             if not function_wrapper:
                 return HttpResponseForbidden()
@@ -274,7 +307,7 @@ def api_domain_view(view):
     @api_key()
     @login_and_domain_required
     def _inner(request, domain, *args, **kwargs):
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             request.couch_user = CouchUser.from_django_user(request.user)
             return view(request, domain, *args, **kwargs)
         else:
@@ -287,7 +320,7 @@ def login_required(view_func):
     def _inner(request, *args, **kwargs):
         login_url = reverse('login')
         user = request.user
-        if not (user.is_authenticated() and user.is_active):
+        if not (user.is_authenticated and user.is_active):
             return _redirect_for_login_or_domain(request,
                     REDIRECT_FIELD_NAME, login_url)
 

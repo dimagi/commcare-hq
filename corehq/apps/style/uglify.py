@@ -54,7 +54,7 @@ class UglifySourcemapFilter(CompilerFilter):
                 command, shell=True, cwd=self.cwd, stdout=self.stdout,
                 stdin=self.stdin, stderr=self.stderr)
             err = proc.communicate()
-        except (IOError, OSError), e:
+        except (IOError, OSError) as e:
             raise FilterError('Unable to apply %s (%r): %s' %
                               (self.__class__.__name__, self.command, e))
         else:

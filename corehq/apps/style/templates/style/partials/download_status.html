@@ -16,7 +16,11 @@
     </div>
 {% else %}
     <legend>
+    {%  if custom_message %}
+        {{ custom_message }}
+    {% else %}
         {% trans "Importing your data. This may take some time..." %}
+    {% endif %}
     </legend>
     {% include 'soil/partials/download_in_progress.html' %}
 {% endif %}

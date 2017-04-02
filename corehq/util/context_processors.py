@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.urlresolvers import resolve, reverse
+from django.urls import resolve, reverse
 from django.http import Http404
 from ws4redis.context_processors import default
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -66,6 +66,8 @@ def current_url_name(request):
 
 
 def js_api_keys(request):
+    if hasattr(request, 'couch_user') and request.couch_user and not request.couch_user.analytics_enabled:
+        return {}  # disable js analytics
     d = {}
     d.update(settings.ANALYTICS_IDS)
     d.update({"ANALYTICS_CONFIG": settings.ANALYTICS_CONFIG})
@@ -89,5 +91,15 @@ def websockets_override(request):
 
 def enterprise_mode(request):
     return {
-        'enterprise_mode': settings.ENTERPRISE_MODE
+        'enterprise_mode': settings.ENTERPRISE_MODE,
+        'is_saas_environment': settings.IS_SAAS_ENVIRONMENT
+    }
+
+
+def commcare_hq_names(request):
+    return {
+        'commcare_hq_names': {
+            'COMMCARE_NAME': settings.COMMCARE_NAME,
+            'COMMCARE_HQ_NAME': settings.COMMCARE_HQ_NAME
+        }
     }

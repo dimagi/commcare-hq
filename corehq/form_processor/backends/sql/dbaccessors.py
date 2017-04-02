@@ -54,6 +54,8 @@ from corehq.sql_db.config import partition_config
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.chunked import chunked
+from uuid import UUID
+
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -93,6 +95,24 @@ class ShardAccessor(object):
             return {row.doc_id: row.hash for row in rows}
 
     @staticmethod
+    def hash_doc_uuid_sql(doc_uuid):
+        """Get the hash for a UUID from PostgreSQL
+
+        This is used to ensure the python version is consistent with what's
+        being used by PL/Proxy
+        """
+        assert settings.USE_PARTITIONED_DATABASE
+
+        if not isinstance(doc_uuid, UUID):
+            raise ValueError("Expected an instance of UUID")
+
+        query = "SELECT hash_string(CAST(%s AS bytea), 'siphash24') AS hash"
+        with get_cursor(XFormInstanceSQL) as cursor:
+            doc_uuid_before_cast = '\\x%s' % doc_uuid.hex
+            cursor.execute(query, [doc_uuid_before_cast])
+            return fetchone_as_namedtuple(cursor).hash
+
+    @staticmethod
     def hash_doc_ids_python(doc_ids):
         return {
             doc_id: ShardAccessor.hash_doc_id_python(doc_id)
@@ -103,6 +123,10 @@ class ShardAccessor(object):
     def hash_doc_id_python(doc_id):
         if isinstance(doc_id, unicode):
             doc_id = doc_id.encode('utf-8')
+        elif isinstance(doc_id, UUID):
+            # Hash the 16-byte string
+            doc_id = doc_id.bytes
+
         digest = csiphash.siphash24(ShardAccessor.hash_key, doc_id)
         hash_long = struct.unpack("<Q", digest)[0]  # convert byte string to long
         # convert 64 bit hash to 32 bit to match Postgres
@@ -139,6 +163,17 @@ class ShardAccessor(object):
 
 
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
+    startkey_min_value = datetime.min
+
+    def is_sharded(self):
+        """
+        :return: True the django model is sharded, otherwise false.
+        """
+        # TODO check for subclass of PartitionedModel when PR merged:
+        # https://github.com/dimagi/commcare-hq/pull/14852
+        from corehq.form_processor.models import RestrictedManager
+        return isinstance(self.model_class.objects, RestrictedManager)
+
     @abstractproperty
     def model_class(self):
         """
@@ -429,14 +464,12 @@ class FormAccessorSQL(AbstractFormAccessor):
         logging.debug('Saving new form: %s', form)
         unsaved_attachments = getattr(form, 'unsaved_attachments', [])
         if unsaved_attachments:
-            del form.unsaved_attachments
             for unsaved_attachment in unsaved_attachments:
                 unsaved_attachment.form = form
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
         for operation in operations:
             operation.form = form
-        form.clear_tracked_models()
 
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
@@ -445,6 +478,13 @@ class FormAccessorSQL(AbstractFormAccessor):
             )
             result = fetchone_as_namedtuple(cursor)
             form.id = result.form_pk
+
+        try:
+            del form.unsaved_attachments
+        except AttributeError:
+            pass
+
+        form.clear_tracked_models()
 
     @staticmethod
     @transaction.atomic
@@ -579,17 +619,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             cases = _order_list(case_ids, cases, 'case_id')
 
         return cases
-
-    @staticmethod
-    def case_modified_since(case_id, server_modified_on):
-        """
-        Return True if a case has been modified since the given modification date.
-        Assumes that the case exists in the DB.
-        """
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_modified FROM case_modified_since(%s, %s)', [case_id, server_modified_on])
-            result = fetchone_as_namedtuple(cursor)
-            return result.case_modified
 
     @staticmethod
     def get_case_xform_ids(case_id):
@@ -759,8 +788,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     def save_case(case):
         transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
 
-        indices_to_save_or_update = case.get_tracked_models_to_create(CommCareCaseIndexSQL)
-        indices_to_save_or_update.extend(case.get_tracked_models_to_update(CommCareCaseIndexSQL))
+        indices_to_save_or_update = case.get_live_tracked_models(CommCareCaseIndexSQL)
         index_ids_to_delete = [index.id for index in case.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
 
         attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
@@ -787,7 +815,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 ])
                 result = fetchone_as_namedtuple(cursor)
                 case.id = result.case_pk
-                case.clear_tracked_models()
             except InternalError as e:
                 if logging.root.isEnabledFor(logging.DEBUG):
                     msg = 'save_case_and_related_models called with args: \n{}, {}, {}, {} ,{} ,{}'.format(
@@ -801,6 +828,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     logging.debug(msg)
                 raise CaseSaveError(e)
             else:
+                case.clear_tracked_models()
                 for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
                     attachment.delete_content()
 
@@ -861,7 +889,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 [domain, case_ids]
             )
             results = fetchall_as_namedtuple(cursor)
-            return dict((result.case_id, result.server_modified_on) for result in results)
+            return {result.case_id: result.server_modified_on for result in results}
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
@@ -876,16 +904,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return CaseAccessorSQL.get_cases_by_external_id(domain, user_id, case_type)[0]
         except IndexError:
             return None
-
-    @staticmethod
-    def get_case_types_for_domain(domain):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_type FROM get_case_types_for_domain(%s)',
-                [domain]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return {result.case_type for result in results}
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):

@@ -2,11 +2,9 @@ from __future__ import absolute_import
 
 import re
 from abc import ABCMeta, abstractmethod
-from uuid import uuid4
 
 from corehq.blobs import DEFAULT_BUCKET
 from corehq.blobs.exceptions import ArgumentError
-from corehq.blobs.util import random_url_id
 
 SAFENAME = re.compile("^[a-z0-9_./{}-]+$", re.IGNORECASE)
 NOT_SET = object()
@@ -18,18 +16,18 @@ class AbstractBlobDB(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def put(self, content, bucket=DEFAULT_BUCKET, identifier=None):
+    def put(self, content, identifier, bucket=DEFAULT_BUCKET):
         """Put a blob in persistent storage
 
         :param content: A file-like object in binary read mode.
+        :param identifier: The blob identifier. This is combined with
+        `bucket` to construct a unique key for the blob. It's recommended
+        to use `identifier=util.random_url_id(16)` to get a new 128-bit
+        key if you don't already have unique identifier for the blob (in
+        the bucket).
         :param bucket: Optional bucket name used to partition blob data
         in the persistent storage medium. This may be delimited with
         slashes (/). It must be a valid relative path.
-        :param identifier: Optional identifier as the blob identifier (key).
-        If not passed, a short identifier is generated that will be collision free
-        only up to about 1000 keys. If more than a handful of objects are going to be
-        in the same bucket, it's recommended to use `identifier=random_url_id(16)`
-        for a 128-bit key.
         :returns: A `BlobInfo` named tuple. The returned object has a
         `identifier` member that must be used to get or delete the blob.
         """
@@ -96,31 +94,6 @@ class AbstractBlobDB(object):
         :param bucket: Bucket name.
         """
         raise NotImplementedError
-
-    @staticmethod
-    def get_short_identifier():
-        """Get an unique random identifier
-
-        The identifier is chosen from a 64 bit key space, which is
-        suitably large for no likely collisions in 1000 concurrent keys.
-        1000 is an arbitrary number chosen as an upper bound of the
-        number of blobs associated with any given object. We may need to
-        change this if we ever expect an object to have significantly
-        more than 1000 blobs (attachments). The probability of a
-        collision with a 64 bit ID is:
-
-        k = 1000
-        N = 2 ** 64
-        (k ** 2) / (2 * 2 ** 64) = 2.7e-14
-
-        which is somewhere near the probability of a meteor landing on
-        your house. For most objects the number of blobs present at any
-        moment in time will be far lower, and therefore the probability
-        of a collision will be much lower as well.
-
-        http://preshing.com/20110504/hash-collision-probabilities/
-        """
-        return random_url_id(8)
 
     @staticmethod
     def get_args_for_delete(identifier=NOT_SET, bucket=NOT_SET):

@@ -1,7 +1,9 @@
 # coding=utf-8
 
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from custom.enikshay.reports.const import AGE_RANGES, PATIENT_TYPES
+from custom.enikshay.reports.filters import DateOfDiagnosisFilter, EnikshayLocationFilter, EnikshayMigrationFilter
 from custom.enikshay.reports.generic import EnikshayReport, EnikshayMultiReport
 from custom.enikshay.reports.sqldata.case_finding_sql_data import CaseFindingSqlData
 
@@ -38,7 +40,7 @@ def get_headers():
 
 
 class CaseFindingAllTBPatientsReport(EnikshayReport):
-    name = ugettext_lazy('Block 1: All TB patients registered in the quarter')
+    name = ugettext_lazy('Block 1: All TB patients notified in the date range')
     slug = 'case_finding_all_tb_patients_report'
 
     @property
@@ -51,7 +53,6 @@ class CaseFindingAllTBPatientsReport(EnikshayReport):
             DataTablesColumn(''),
             DataTablesColumn(_('New')),
             DataTablesColumn(_('Recurrent')),
-            DataTablesColumn(_('Transfer-in')),
             DataTablesColumn(_('After Treatment Failure')),
             DataTablesColumn(_('Treatment After Lost to follow up')),
             DataTablesColumn(_('Other previously treated')),
@@ -128,8 +129,8 @@ class TBHIVCollaboration(EnikshayReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(_('Of all Registered TB cases,'
-                             ' Number known to be tested for HIV before or during the TB treatment (a)')),
+            DataTablesColumn(_('Of all Notified TB cases, '
+                               'Number known to be tested for HIV before or during the TB treatment (a)')),
             DataTablesColumn(_('Of (a) Number known to be HIV infected (b)')),
             DataTablesColumn(_('Of (b) HIV reactive TB patients put on CPT')),
             DataTablesColumn(_('Of (c) HIV reactive TB patients put on ART (d)')),
@@ -153,10 +154,13 @@ class TBHIVCollaboration(EnikshayReport):
         ]
 
 
+@location_safe
 class CaseFindingReport(EnikshayMultiReport):
+    fields = (DateOfDiagnosisFilter, EnikshayLocationFilter, EnikshayMigrationFilter)
 
-    name = ugettext_lazy('Case Finding')
+    name = ugettext_lazy('Summary of Case Finding')
     slug = 'case_finding'
+    exportable = True
 
     @property
     def reports(self):

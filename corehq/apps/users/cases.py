@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from couchdbkit import ResourceNotFound
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 
 
@@ -29,8 +29,8 @@ def get_wrapped_owner(owner_id):
         }.get(doc_type)
 
     try:
-        return Location.get(owner_id)
-    except ResourceNotFound:
+        return SQLLocation.objects.get(location_id=owner_id)
+    except SQLLocation.DoesNotExist:
         pass
 
     try:

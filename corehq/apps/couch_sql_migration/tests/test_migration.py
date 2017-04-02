@@ -457,8 +457,8 @@ class MigrationTestCase(BaseMigrationTestCase):
             form_id=form_id,
             case_id=case_id
         )
-        _, _, cases = submit_form_locally(xml, self.domain_name)
-        case = [case for case in cases if case.case_id == case_id][0]
+        result = submit_form_locally(xml, self.domain_name)
+        case = [case for case in result.cases if case.case_id == case_id][0]
         case.xform_ids.remove(form_id)  # legacy bug that didn't include these form IDs in the case
         case.save()
 
@@ -468,38 +468,6 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(2, len(self._get_form_ids()))
         self.assertEqual(2, len(self._get_case_ids()))
         self._compare_diffs([])
-
-    def test_xform_ids_diff(self):
-        case_id = uuid.uuid4().hex
-        submit_case_blocks(
-            CaseBlock(
-                case_id,
-                case_type='migrate',
-                create=True,
-                update={'p1': 1},
-            ).as_string(),
-            self.domain_name
-        )
-
-        submit_case_blocks(
-            CaseBlock(
-                case_id,
-                update={'p2': 2},
-            ).as_string(),
-            self.domain_name
-        )
-        case = CaseAccessors(self.domain_name).get_case(case_id)
-        removed_form_id = case.xform_ids.pop(1)
-        case.save()
-        self.assertEqual(1, len(self._get_case_ids()))
-        self._do_migration_and_assert_flags(self.domain_name)
-        self.assertEqual(1, len(self._get_case_ids()))
-        self._compare_diffs([
-            (u'CommCareCase', FormJsonDiff(
-                diff_type=u'set_mismatch', path=[u'xform_ids', u'[*]'],
-                old_value=u'', new_value=removed_form_id
-            ))
-        ])
 
     def test_commit(self):
         self._do_migration_and_assert_flags(self.domain_name)
@@ -586,16 +554,16 @@ class LedgerMigrationTests(BaseMigrationTestCase):
     def _submit_ledgers(self, ledger_blocks):
         return submit_case_blocks(ledger_blocks, self.domain_name)[0].form_id
 
-    def _set_balance(self, balance, case_id, product_id):
+    def _set_balance(self, balance, case_id, product_id, type=None):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
         return self._submit_ledgers([
-            get_single_balance_block(case_id, product_id, balance)
+            get_single_balance_block(case_id, product_id, balance, type=type)
         ])
 
     def test_migrate_ledgers(self):
         case_id = uuid.uuid4().hex
         create_and_save_a_case(self.domain_name, case_id=case_id, case_name="Simon's sweet shop")
-        self._set_balance(100, case_id, self.liquorice._id)
+        self._set_balance(100, case_id, self.liquorice._id, type="set_the_liquorice_balance")
         self._set_balance(50, case_id, self.sherbert._id)
         self._set_balance(175, case_id, self.jelly_babies._id)
 

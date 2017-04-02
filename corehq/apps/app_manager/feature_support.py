@@ -114,3 +114,17 @@ class CommCareFeatureSupportMixin(object):
         Markdown in groups only supported > 2.23
         """
         return self._require_minimum_version('2.23')
+
+    @property
+    def enable_case_list_sort_blanks(self):
+        """
+        Ability to control where blanks sort for case list sort properties only supported > 2.35
+        """
+        return self._require_minimum_version('2.35')
+
+    @property
+    def enable_detail_print(self):
+        """
+        Ability to print case detail screen, based on an HTML template, only supported > 2.35
+        """
+        return self._require_minimum_version('2.35')

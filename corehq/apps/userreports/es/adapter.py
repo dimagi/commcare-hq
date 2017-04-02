@@ -1,18 +1,23 @@
+from __future__ import absolute_import
+from copy import deepcopy
 import datetime
-from elasticsearch import NotFoundError
+from elasticsearch import NotFoundError, RequestError
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.es.aggregations import MissingAggregation
 from corehq.elastic import get_es_new, ESError
+from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.es_utils import INDEX_STANDARD_SETTINGS
+from pillowtop.es_utils import (
+    set_index_reindex_settings,
+    set_index_normal_settings,
+)
+import six
 
 
-# todo have different settings for rebuilding and indexing esp. refresh_interval
 # These settings tell ES to not tokenize strings
 UCR_INDEX_SETTINGS = {
-    "settings": INDEX_STANDARD_SETTINGS,
     "mappings": {
         "indicator": {
             "dynamic": "true",
@@ -28,6 +33,16 @@ UCR_INDEX_SETTINGS = {
             }]
         }
     }
+}
+
+DATATYPE_MAP = {
+    'date': 'date',
+    'datetime': 'date',
+    'string': 'string',
+    'integer': 'long',
+    'decimal': 'double',
+    'array': 'string',
+    'boolean': 'long',
 }
 
 
@@ -61,7 +76,7 @@ class ESAlchemy(object):
     def __getitem__(self, sliced_or_int):
         hits = self.es[sliced_or_int]
         hits = [self._hit_to_row(hit) for hit in hits]
-        if isinstance(sliced_or_int, (int, long)):
+        if isinstance(sliced_or_int, six.integer_types):
             return hits[0]
         return hits
 
@@ -123,7 +138,18 @@ class IndicatorESAdapter(IndicatorAdapter):
 
     def rebuild_table(self):
         self.drop_table()
-        self.es.indices.create(index=self.table_name, body=UCR_INDEX_SETTINGS)
+        self.build_table()
+
+    def build_table(self):
+        try:
+            self.es.indices.create(index=self.table_name, body=build_es_mapping(self.config))
+            set_index_reindex_settings(self.es, self.table_name)
+        except RequestError:
+            # table already exists
+            pass
+
+    def after_table_build(self):
+        set_index_normal_settings(self.es, self.table_name)
 
     def drop_table(self):
         try:
@@ -138,6 +164,10 @@ class IndicatorESAdapter(IndicatorAdapter):
 
     def refresh_table(self):
         self.es.indices.refresh(index=self.table_name)
+
+    @unit_testing_only
+    def clear_table(self):
+        self.rebuild_table()
 
     def get_query_object(self):
         return ESAlchemy(self.table_name, self.config)
@@ -158,23 +188,37 @@ class IndicatorESAdapter(IndicatorAdapter):
 
         return distinct_values, too_many_values
 
-    def best_effort_save(self, doc):
+    def _best_effort_save_rows(self, rows, doc):
         try:
-            self.save(doc)
+            self._save_rows(rows, doc)
         except Exception as e:
             self.handle_exception(doc, e)
 
-    def save(self, doc):
-        """
-        Saves the document. Should bubble up known errors.
-        """
-        indicator_rows = self.config.get_all_values(doc)
-        if indicator_rows:
-            es = get_es_new()
-            for indicator_row in indicator_rows:
-                primary_key_values = [str(i.value) for i in indicator_row if i.column.is_primary_key]
-                all_values = {i.column.database_column_name: i.value for i in indicator_row}
-                es.index(
-                    index=self.table_name, body=all_values,
-                    id=normalize_id(primary_key_values), doc_type="indicator"
-                )
+    def _save_rows(self, rows, doc):
+        if not rows:
+            return
+
+        es = get_es_new()
+        for row in rows:
+            primary_key_values = [str(i.value) for i in row if i.column.is_primary_key]
+            all_values = {i.column.database_column_name: i.value for i in row}
+            es.index(
+                index=self.table_name, body=all_values,
+                id=normalize_id(primary_key_values), doc_type="indicator"
+            )
+
+
+def build_es_mapping(data_source_config):
+    properties = {}
+    for indicator in data_source_config.configured_indicators:
+        datatype = indicator.get('type')
+        if datatype not in DATATYPE_MAP:
+            datatype = indicator.get('datatype', 'string')
+        properties[indicator['column_id']] = {
+            "type": DATATYPE_MAP[datatype],
+        }
+        if datatype == 'string':
+            properties[indicator['column_id']]['index'] = 'not_analyzed'
+    mapping = deepcopy(UCR_INDEX_SETTINGS)
+    mapping['mappings']['indicator']['properties'] = properties
+    return mapping

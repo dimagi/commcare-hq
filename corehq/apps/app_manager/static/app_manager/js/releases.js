@@ -193,6 +193,7 @@ hqDefine('app_manager/js/releases.js', function () {
     function ReleasesMain(o) {
         /* {fetchUrl, deleteUrl} */
         var AsyncDownloader = hqImport('app_manager/js/download_async_modal.js').AsyncDownloader;
+        var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body');
         var self = this;
         self.options = o;
         self.recipients = self.options.recipient_contacts;
@@ -205,7 +206,6 @@ hqDefine('app_manager/js/releases.js', function () {
         self.deployAnyway = {};
         self.currentAppVersion = ko.observable(self.options.currentAppVersion);
         self.lastAppVersion = ko.observable();
-        self.selectingVersion = ko.observable("");
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = new AsyncDownloader(self.download_modal);
@@ -257,6 +257,17 @@ hqDefine('app_manager/js/releases.js', function () {
                 }
             }
         });
+
+        self.previousBuildId = function(index) {
+            if (self.savedApps()[index + 1]) {
+                return self.savedApps()[index + 1].id();
+            }
+            return null;
+        };
+
+        self.onViewChanges = function(appIdOne, appIdTwo) {
+            appDiff.renderDiff(appIdOne, appIdTwo);
+        };
 
         self.addSavedApp = function (savedApp, toBeginning) {
             if (toBeginning) {
@@ -333,8 +344,8 @@ hqDefine('app_manager/js/releases.js', function () {
                 });
             }
         };
-        self.reload_message = "Sorry, that didn't go through. " +
-                "Please reload your page and try again";
+        self.reload_message = gettext("Sorry, that didn't go through. " +
+                "Please reload your page and try again");
         self.deleteSavedApp = function (savedApp) {
             savedApp._deleteState('pending');
             $.post({
@@ -368,12 +379,12 @@ hqDefine('app_manager/js/releases.js', function () {
                     if (!data.latestRelease) {
                         self.actuallyMakeBuild();
                     } else if (data.latestRelease !== self.lastAppVersion()) {
-                        window.alert("The versions list has changed since you loaded the page.");
+                        window.alert(gettext("The versions list has changed since you loaded the page."));
                         self.reloadApps();
                     } else if (self.lastAppVersion() !== self.currentAppVersion()) {
                         self.actuallyMakeBuild();
                     } else {
-                        window.alert("No new changes to deploy!");
+                        window.alert(gettext("No new changes to deploy!"));
                     }
                 },
                 error: function () {

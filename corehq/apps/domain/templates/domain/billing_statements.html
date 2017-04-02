@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'accounting/ko/accounting.payment_method_handler.js' %}"></script>
+    <script src="{% static 'accounting/js/accounting.payment_method_handler.js' %}"></script>
     <script src="https://js.stripe.com/v2/"></script>
 {% endblock %}
 
@@ -11,10 +11,10 @@
     <script>
     (function () {
         Stripe.setPublishableKey('{{ stripe_public_key }}');
-        var WireInvoiceHandler = hqImport('accounting/ko/accounting.payment_method_handler.js').WireInvoiceHandler;
-        var PaymentMethodHandler = hqImport('accounting/ko/accounting.payment_method_handler.js').PaymentMethodHandler;
-        var Invoice = hqImport('accounting/ko/accounting.payment_method_handler.js').Invoice;
-        var TotalCostItem = hqImport('accounting/ko/accounting.payment_method_handler.js').TotalCostItem;
+        var WireInvoiceHandler = hqImport('accounting/js/accounting.payment_method_handler.js').WireInvoiceHandler;
+        var PaymentMethodHandler = hqImport('accounting/js/accounting.payment_method_handler.js').PaymentMethodHandler;
+        var Invoice = hqImport('accounting/js/accounting.payment_method_handler.js').Invoice;
+        var TotalCostItem = hqImport('accounting/js/accounting.payment_method_handler.js').TotalCostItem;
         var paginatedListModel = new CRUDPaginatedListModel(
             {{ pagination.total }},
             {{ pagination.limit }},

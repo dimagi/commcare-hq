@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod
 from django.test import SimpleTestCase
 import mock
@@ -11,46 +12,12 @@ from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider, \
-    ChoiceQueryContext, LocationChoiceProvider, UserChoiceProvider, GroupChoiceProvider, \
-    OwnerChoiceProvider
+from corehq.apps.userreports.reports.filters.choice_providers import (
+    ChoiceQueryContext, LocationChoiceProvider, UserChoiceProvider, GroupChoiceProvider,
+    OwnerChoiceProvider, StaticChoiceProvider, SearchableChoice)
 from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership
 from corehq.apps.users.util import normalize_username
-
-
-class SearchableChoice(Choice):
-
-    def __new__(cls, value, display, searchable_text=None):
-        self = super(SearchableChoice, cls).__new__(cls, value, display)
-        self.searchable_text = [text for text in searchable_text or []
-                                if text is not None]
-        return self
-
-
-class StaticChoiceProvider(ChoiceProvider):
-
-    def __init__(self, choices):
-        """
-        choices must be passed in in desired sort order
-        """
-        self.choices = [
-            choice if isinstance(choice, SearchableChoice)
-            else SearchableChoice(
-                choice.value, choice.display,
-                searchable_text=[choice.display]
-            )
-            for choice in choices
-        ]
-        super(StaticChoiceProvider, self).__init__(None, None)
-
-    def query(self, query_context):
-        filtered_set = [choice for choice in self.choices
-                        if any(query_context.query in text for text in choice.searchable_text)]
-        return filtered_set[query_context.offset:query_context.offset + query_context.limit]
-
-    def get_choices_for_known_values(self, values):
-        return {choice for choice in self.choices
-                if choice.value in values}
+import six
 
 
 class StaticChoiceProviderTest(SimpleTestCase):
@@ -68,12 +35,12 @@ class StaticChoiceProviderTest(SimpleTestCase):
 
     def test_get_choices_for_values(self):
         self.assertEqual(
-            set(self.choice_provider.get_choices_for_values(['2', '4', '6'])),
+            set(self.choice_provider.get_choices_for_values(['2', '4', '6'], None)),
             {Choice('2', 'Two'), Choice('4', '4'), Choice('6', '6')}
         )
 
 
-class ChoiceProviderTestMixin(object):
+class ChoiceProviderTestMixin(six.with_metaclass(ABCMeta, object)):
     """
     A mixin for a creating uniform tests for different ChoiceProvider subclasses.
 
@@ -90,7 +57,6 @@ class ChoiceProviderTestMixin(object):
     4. Implement the abstract test methods according to the suggestions in the docstrings
 
     """
-    __metaclass__ = ABCMeta
     choice_provider = None
     static_choice_provider = None
     choice_query_context = ChoiceQueryContext
@@ -100,10 +66,10 @@ class ChoiceProviderTestMixin(object):
             self.choice_provider.query(query_context),
             self.static_choice_provider.query(query_context))
 
-    def _test_get_choices_for_values(self, values):
+    def _test_get_choices_for_values(self, values, user):
         self.assertEqual(
-            self.choice_provider.get_choices_for_values(values),
-            self.static_choice_provider.get_choices_for_values(values),
+            self.choice_provider.get_choices_for_values(values, user),
+            self.static_choice_provider.get_choices_for_values(values, user),
         )
 
     def test_query_no_search_all(self):
@@ -131,7 +97,9 @@ class ChoiceProviderTestMixin(object):
         Suggested implementation:
 
             self._test_get_choices_for_values(
-                [irrelevant_value, relevant_value, relevant_value])
+                [irrelevant_value, relevant_value, relevant_value],
+                web_user,
+            )
         """
         pass
 
@@ -153,28 +121,31 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
 
     @classmethod
     def setUpClass(cls):
-        delete_all_locations()
-        delete_all_users()
         super(LocationChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
-        choices = [
-            SearchableChoice(
+        choice_tuples = [
+            (location.name, SearchableChoice(
                 location.location_id,
-                location.display_name,
+                location.get_path_display(),
                 searchable_text=[location.site_code, location.name]
-            )
-            for location in cls.locations.itervalues()
+            ))
+            for location in six.itervalues(cls.locations)
         ]
-        choices.sort(key=lambda choice: choice.display)
+        choice_tuples.sort()
+        choices = [choice for name, choice in choice_tuples]
         cls.web_user = WebUser.create(cls.domain, 'blah', 'password')
         cls.choice_provider = LocationChoiceProvider(report, None)
+        cls.choice_provider.configure({
+            "include_descendants": False,
+            "show_full_path": True,
+        })
         cls.static_choice_provider = StaticChoiceProvider(choices)
         cls.choice_query_context = partial(ChoiceQueryContext, user=cls.web_user)
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain_obj.delete()
-        delete_all_locations()
+        delete_all_users()
+        super(LocationChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
         # Searching for something common to all locations gets you all locations
@@ -183,7 +154,9 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
 
     def test_get_choices_for_values(self):
         self._test_get_choices_for_values(
-            ['made-up', self.locations['Cambridge'].location_id, self.locations['Middlesex'].location_id])
+            ['made-up', self.locations['Cambridge'].location_id, self.locations['Middlesex'].location_id],
+            self.web_user,
+        )
 
     def test_scoped_to_location_search(self):
         self.web_user.set_location(self.domain, self.locations['Middlesex'])
@@ -191,7 +164,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         scoped_choices = [
             SearchableChoice(
                 location.location_id,
-                location.display_name,
+                location.get_path_display(),
                 searchable_text=[location.site_code, location.name]
             )
             for location in [
@@ -210,6 +183,23 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         self._test_query(self.choice_query_context('Somerville', page=0))
         # When a user searches for something they can't access, it isn't returned
         self._test_query(self.choice_query_context('Boston', page=0))
+
+    def test_cant_circumvent_restrictions(self):
+        # Boston should be inaccessible to this user, if they edit the URL to
+        # search for it anyways, it shouldn't be returned
+        self.web_user.set_location(self.domain, self.locations['Middlesex'])
+        self.restrict_user_to_assigned_locations(self.web_user)
+        loc_ids_by_name = {name: loc.location_id for name, loc in self.locations.items()}
+        choices = self.choice_provider.get_choices_for_known_values([
+            loc_ids_by_name['Cambridge'], loc_ids_by_name['Somerville'], loc_ids_by_name['Bostone'],
+        ], self.web_user)
+        self.assertItemsEqual(
+            [choice.value for choice in choices],
+            [loc_ids_by_name["Cambridge"], loc_ids_by_name["Somerville"]]
+        )
+        self.web_user.set_role(self.domain, 'none')
+        self.web_user.unset_location(self.domain)
+        self.web_user.reset_locations(self.domain, [])
 
 
 @mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
@@ -234,7 +224,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         domain = domain or cls.domain
         domains = [domain]
         user = WebUser(username=email, domains=domains)
-        user.domain_memberships = [DomainMembership(domain=cls.domain)]
+        user.domain_memberships = [DomainMembership(domain=domain)]
         doc = user._doc
         doc['username.exact'] = doc['username']
         doc['base_username'] = email
@@ -243,11 +233,13 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(UserChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
 
+        cls.web_user = cls.make_web_user('candice@example.com')
         cls.users = [
             cls.make_mobile_worker('bernice'),
-            cls.make_web_user('candice@example.com'),
+            cls.web_user,
             cls.make_mobile_worker('dennis'),
             cls.make_mobile_worker('elizabeth'),
             cls.make_mobile_worker('albert'),
@@ -267,13 +259,16 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
+        super(UserChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
         self._test_query(ChoiceQueryContext(query='ni', limit=10, page=0))
 
     def test_get_choices_for_values(self):
         self._test_get_choices_for_values(
-            ['unknown-user'] + [user._id for user in self.users])
+            ['unknown-user'] + [user._id for user in self.users],
+            self.web_user,
+        )
 
 
 @mock.patch('corehq.apps.userreports.reports.filters.choice_providers.GroupES', GroupESFake)
@@ -289,6 +284,7 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(GroupChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
 
         cls.groups = [
@@ -304,17 +300,21 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         choices.sort(key=lambda choice: choice.display)
         cls.choice_provider = GroupChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
+        cls.web_user = UserChoiceProviderTest.make_web_user('web-user@example.com', domain=cls.domain)
 
     @classmethod
     def tearDownClass(cls):
         GroupESFake.reset_docs()
+        super(GroupChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
         self._test_query(ChoiceQueryContext('yes', limit=10, page=0))
 
     def test_get_choices_for_values(self):
         self._test_get_choices_for_values(
-            ['unknown-group'] + [group.get_id for group in self.groups])
+            ['unknown-group'] + [group.get_id for group in self.groups],
+            self.web_user,
+        )
 
 
 @mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
@@ -351,8 +351,7 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
     def tearDownClass(cls):
         UserESFake.reset_docs()
         GroupESFake.reset_docs()
-        cls.domain_obj.delete()
-        delete_all_locations()
+        super(OwnerChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
         self._test_query(self.choice_query_context('o', limit=10, offset=0))
@@ -363,4 +362,6 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
     def test_get_choices_for_values(self):
         self._test_get_choices_for_values(
             ['unknown', self.group._id, self.web_user._id, self.location.location_id,
-             self.mobile_worker._id])
+             self.mobile_worker._id],
+            self.web_user,
+        )

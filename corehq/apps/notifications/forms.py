@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.postgres.forms import SimpleArrayField
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy, ugettext as _
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy

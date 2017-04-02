@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "config": {
     "table_id": "static-daily_feeding_forms",
     "display_name": "Forms - Daily Feeding (Static)",
@@ -89,6 +93,7 @@
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "supervisor_id",
+        "create_index": true,
         "type": "expression"
       },
       {
@@ -473,6 +478,7 @@
         "transform": {},
         "datatype": "date",
         "is_primary_key": false,
+        "create_index": true,
         "is_nullable": true,
         "column_id": "month",
         "type": "expression",
@@ -535,7 +541,7 @@
       {
         "display_name": null,
         "transform": {},
-        "datatype": "integer",
+        "datatype": "decimal",
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "attended_children_percent",
@@ -655,7 +661,7 @@
           },
           "index_expression": {
             "type": "constant",
-            "constant": 0
+            "constant": 1
           }
         },
         "is_primary_key": false,
@@ -908,6 +914,22 @@
             }
           ]
         }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "photo_children_present"
+          ]
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "image_name",
+        "type": "expression"
       }
     ],
     "named_expressions": {
@@ -968,6 +990,7 @@
         ]
       }
     },
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "backend_id": "LABORATORY"
   }
 }

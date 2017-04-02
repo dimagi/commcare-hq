@@ -22,7 +22,7 @@ var mk_translation_ui = function (spec) {
                 this.$delete = $('<button class="btn btn-danger"><i></i></button>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
                     $(this).remove();
                     translation_ui.deleteTranslation(that.key.val());
-                }).css({cursor: 'pointer'}).attr('title', "Delete Translation");
+                }).css({cursor: 'pointer'}).attr('title', gettext("Delete Translation"));
 
                 this.$add = $('<button class="btn btn-default"><i></i></button>').addClass(COMMCAREHQ.icons.ADD).click(function () {
                     // remove any trailing whitespace from the input box
@@ -35,7 +35,7 @@ var mk_translation_ui = function (spec) {
                     } else {
                         that.key.$edit_view.focus();
                     }
-                }).css({cursor: 'pointer'}).attr('title', "Add Translation").hide();
+                }).css({cursor: 'pointer'}).attr('title', gettext("Add Translation")).hide();
                 this.$error = $('<span></span>').addClass('label label-danger');
                 this.ui = $('<div/>').addClass("row").addClass("form-group");
                 $('<div/>').addClass("col-sm-3").append(this.key.ui).appendTo(this.ui);
@@ -105,7 +105,8 @@ var mk_translation_ui = function (spec) {
                         this.$delete.show();
                         this.$add.hide();
                     } else {
-                        this.ui.prepend("<div class='row'><div class='col-sm-12'><legend>Add Translation</legend></div></div>");
+                        this.ui.prepend("<div class='row'><div class='col-sm-12'><legend>"
+                                        + gettext("Add Translation") + "</legend></div></div>");
                         this.key.setEdit(true);
                         this.$delete.hide();
                         this.$add.show();
@@ -117,7 +118,7 @@ var mk_translation_ui = function (spec) {
         $home = $('<div/>'),
         $list = $('<div/>').appendTo($home),
         $adder = $('<div/>').appendTo($home),
-        $autoFill = $('<a/>').attr('href', '').attr('class', 'btn btn-primary').text('Auto fill translations');
+        $autoFill = $('<a/>').attr('href', '').attr('class', 'btn btn-primary').text(gettext('Auto fill translations'));
         $autoFill.click(function (e) {
             e.preventDefault();
             $.ajax({
@@ -139,9 +140,10 @@ var mk_translation_ui = function (spec) {
             });
         });
         var $autoFillHelp = "<span class='auto-fill-help hq-help-template' data-placement='right' " +
-            "data-title='Auto Fill translations' " + 
-            "data-content='This will pick the most common translations for your selected language.  You can then edit them as needed.'" +
-            "></span>";
+            "data-title='" + gettext("Auto Fill translations") + "' " + "data-content='" +
+            gettext("This will pick the most common translations for your selected language. " +
+                    "You can then edit them as needed.") +
+            "'></span>";
 
     for (key in spec.translations) {
         if (spec.translations.hasOwnProperty(key)) {
@@ -150,7 +152,7 @@ var mk_translation_ui = function (spec) {
     }
 
     translation_ui.saveButton = COMMCAREHQ.SaveButton.init({
-        unsavedMessage: "You have unsaved user interface translations.",
+        unsavedMessage: gettext("You have unsaved user interface translations."),
         save: function () {
             translation_ui.save()
         }
@@ -168,7 +170,7 @@ var mk_translation_ui = function (spec) {
         for (key in translation_ui.translations) {
             if (translation_ui.translations.hasOwnProperty(key)) {
                 if (translation_ui.validate_translation(translation_ui.translations[key])) {
-                    translation_ui.translations[key].$error.text('Parameters formatting problem!');
+                    translation_ui.translations[key].$error.text(gettext('Parameters formatting problem!'));
                     translation_ui.translations[key].$error.show();
                     error = true;
                 } else {
@@ -250,8 +252,8 @@ var mk_translation_ui = function (spec) {
 
         if (!translation_ui.allow_autofill) {
             $autoFill.attr('class', 'disabled btn btn-primary');
-            $('.auto-fill-help').attr('data-content', "Autofill is not available in English (en). " +
-                "Please change your language using the dropdown on the left next to 'Languages'");
+            $('.auto-fill-help').attr('data-content', gettext("Autofill is not available in English (en). " +
+                "Please change your language using the dropdown in the top left."));
         }
         COMMCAREHQ.transformHelpTemplate($('.auto-fill-help'), true);
         translation_ui.appendAdder();

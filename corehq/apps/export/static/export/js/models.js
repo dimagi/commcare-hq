@@ -8,6 +8,7 @@
 hqDefine('export/js/models.js', function () {
     var constants = hqImport('export/js/const.js');
     var utils = hqImport('export/js/utils.js');
+    var urls = hqImport('hqwebapp/js/urllib.js');
 
     /**
      * ExportInstance
@@ -20,6 +21,12 @@ hqDefine('export/js/models.js', function () {
         options = options || {};
         var self = this;
         ko.mapping.fromJS(instanceJSON, ExportInstance.mapping, self);
+
+        self.buildSchemaProgress = ko.observable(0);
+        self.showBuildSchemaProgressBar = ko.observable(false);
+        self.errorOnBuildSchema = ko.observable(false);
+        self.schemaProgressText = ko.observable(gettext('Process'));
+        self.numberOfAppsToProcess = options.numberOfAppsToProcess || 0;
 
         // Detetrmines the state of the save. Used for controlling the presentaiton
         // of the Save button.
@@ -37,6 +44,10 @@ hqDefine('export/js/models.js', function () {
         self.saveUrl = options.saveUrl;
         self.hasExcelDashboardAccess = Boolean(options.hasExcelDashboardAccess);
         self.hasDailySavedAccess = Boolean(options.hasDailySavedAccess);
+
+        self.formatOptions = options.formatOptions !== undefined ? options.formatOptions : _.map(constants.EXPORT_FORMATS, function(format){
+            return format;
+        });
 
         // If any column has a deid transform, show deid column
         self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function(table) {
@@ -64,8 +75,101 @@ hqDefine('export/js/models.js', function () {
         });
     };
 
+    ExportInstance.prototype.onBeginSchemaBuild = function(exportInstance, e) {
+        var self = this,
+            $btn = $(e.currentTarget),
+            errorHandler,
+            successHandler,
+            buildSchemaUrl = urls.reverse('build_schema', this.domain()),
+            identifier = ko.utils.unwrapObservable(this.case_type) || ko.utils.unwrapObservable(this.xmlns);
+
+        // We've already built the schema and now the user is clicking the button to refresh the page
+        if (this.buildSchemaProgress() === 100) {
+            window.location.reload(false);
+            return;
+        }
+
+        this.showBuildSchemaProgressBar(true);
+        this.buildSchemaProgress(0);
+
+        self.schemaProgressText(gettext('Processing...'));
+        $btn.attr('disabled', true);
+        $btn.addClass('disabled');
+        $btn.addSpinnerToButton();
+
+        errorHandler = function() {
+            $btn.attr('disabled', false);
+            $btn.removeSpinnerFromButton();
+            $btn.removeClass('disabled');
+            self.errorOnBuildSchema(true);
+            self.schemaProgressText(gettext('Process'));
+        };
+
+        successHandler = function() {
+            $btn.removeSpinnerFromButton();
+            $btn.removeClass('disabled');
+            $btn.attr('disabled', false);
+            $btn.removeClass('btn-primary');
+            $btn.addClass('btn-success');
+            self.schemaProgressText(gettext('Refresh page'));
+        };
+
+        $.ajax({
+            url: buildSchemaUrl,
+            type: 'POST',
+            data: {
+                type: this.type(),
+                app_id: this.app_id(),
+                identifier: identifier,
+            },
+            dataType: 'json',
+            success: function(response) {
+                self.checkBuildSchemaProgress(response.download_id, successHandler, errorHandler);
+            },
+            error: errorHandler,
+        });
+    };
+
+    ExportInstance.prototype.checkBuildSchemaProgress = function(downloadId, successHandler, errorHandler) {
+        var self = this,
+            buildSchemaUrl = urls.reverse('build_schema', this.domain());
+
+        $.ajax({
+            url: buildSchemaUrl,
+            type: 'GET',
+            data: {
+                download_id: downloadId,
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    self.buildSchemaProgress(100);
+                    self.showBuildSchemaProgressBar(false);
+                    successHandler();
+                    return;
+                }
+
+                if (response.failed) {
+                    self.errorOnBuildSchema(true);
+                    return;
+                }
+
+                self.buildSchemaProgress(response.progress.percent || 0);
+                if (response.not_started || response.progress.current !== response.progress.total) {
+                    window.setTimeout(
+                        self.checkBuildSchemaProgress.bind(self, response.download_id, successHandler, errorHandler),
+                        2000
+                    );
+                }
+            },
+            error: errorHandler,
+        });
+    };
+
     ExportInstance.prototype.getFormatOptionValues = function() {
-        return _.map(constants.EXPORT_FORMATS, function(value) { return value; });
+        return _.filter(constants.EXPORT_FORMATS, function(format) {
+            return this.formatOptions.indexOf(format) !== -1;
+        }, this);
     };
 
     ExportInstance.prototype.getFormatOptionText = function(format) {
@@ -154,6 +258,14 @@ hqDefine('export/js/models.js', function () {
         }
     };
 
+    ExportInstance.prototype.toggleShowDeleted = function(table) {
+        table.showDeleted(!table.showDeleted());
+
+        if (this.numberOfAppsToProcess > 0 && table.showDeleted()) {
+            $('#export-process-deleted-applications').modal('show');
+        }
+    };
+
     /**
      * showDeidColumn
      *
@@ -219,6 +331,10 @@ hqDefine('export/js/models.js', function () {
             'transform_dates',
             'include_errors',
             'is_deidentified',
+            'domain',
+            'app_id',
+            'case_type',
+            'xmlns',
             'is_daily_saved_export',
         ],
         tables: {
@@ -243,6 +359,7 @@ hqDefine('export/js/models.js', function () {
         var self = this;
         // Whether or not to show advanced columns in the UI
         self.showAdvanced = ko.observable(false);
+        self.showDeleted = ko.observable(false);
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
     };
 
@@ -379,6 +496,7 @@ hqDefine('export/js/models.js', function () {
         });
 
         self.showAdvanced = ko.observable(false);
+        self.showDeleted = ko.observable(false);
         self.customPathString.subscribe(self.onCustomPathChange.bind(self));
     };
     UserDefinedTableConfiguration.prototype = Object.create(TableConfiguration.prototype);
@@ -498,7 +616,23 @@ hqDefine('export/js/models.js', function () {
      * @returns {Boolean} - True if the column is visible false otherwise.
      */
     ExportColumn.prototype.isVisible = function(table) {
-        return table.showAdvanced() || (!this.is_advanced() || this.selected());
+        if (this.selected()) {
+            return true;
+        }
+
+        if (!this.is_advanced() && !this.is_deleted()) {
+            return true;
+        }
+
+        if (table.showAdvanced() && this.is_advanced()) {
+            return true;
+        }
+
+        if (table.showDeleted() && this.is_deleted()) {
+            return true;
+        }
+
+        return false;
     };
 
     /**
@@ -525,6 +659,7 @@ hqDefine('export/js/models.js', function () {
             'item',
             'label',
             'is_advanced',
+            'is_deleted',
             'selected',
             'tags',
             'deid_transform',

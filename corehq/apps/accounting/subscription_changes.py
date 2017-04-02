@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 import datetime
 import json
 
 from couchdbkit import ResourceConflict
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
 
@@ -14,13 +15,10 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     get_privileges,
 )
-from corehq.apps.app_manager.dbaccessors import get_all_apps
-from corehq.apps.app_manager.models import Application
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
@@ -34,7 +32,7 @@ class BaseModifySubscriptionHandler(object):
         self.date_start = date_start or datetime.date.today()
         self.new_plan_version = new_plan_version
 
-        self.privileges = filter(lambda x: x in self.supported_privileges(), changed_privs)
+        self.privileges = [x for x in changed_privs if x in self.supported_privileges()]
 
     def get_response(self):
         responses = []
@@ -59,14 +57,14 @@ class BaseModifySubscriptionHandler(object):
 
     @classmethod
     def supported_privileges(cls):
-        return cls.privilege_to_response_function().keys()
+        return list(cls.privilege_to_response_function().keys())
 
 
 class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):
 
     def get_response(self):
         response = super(BaseModifySubscriptionActionHandler, self).get_response()
-        return len(filter(lambda x: not x, response)) == 0
+        return all(response)
 
 
 # TODO - cache
@@ -122,10 +120,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         All Reminder rules utilizing "survey" will be deactivated.
         """
         try:
-            surveys = filter(
-                lambda x: x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY],
-                _active_reminders(domain)
-            )
+            surveys = [x for x in _active_reminders(domain) if x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
             for survey in surveys:
                 survey.active = False
                 survey.save()
@@ -187,19 +182,9 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
     def response_commcare_logo_uploader(domain, new_plan_version):
         """Make sure no existing applications are using a logo.
         """
-        try:
-            for app in get_all_apps(domain.name):
-                if isinstance(app, Application):
-                    has_archived = app.archive_logos()
-                    if has_archived:
-                        app.save()
-            return True
-        except Exception:
-            log_accounting_error(
-                "Failed to remove all commcare logos for domain %s."
-                % domain.name
-            )
-            return False
+        from corehq.apps.accounting.tasks import archive_logos
+        archive_logos.delay(domain.name)
+        return True
 
     @staticmethod
     def response_domain_security(domain, new_plan_version):
@@ -263,26 +248,16 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     def response_commcare_logo_uploader(domain, new_plan_version):
         """Make sure no existing applications are using a logo.
         """
-        try:
-            for app in get_all_apps(domain.name):
-                if isinstance(app, HQMediaMixin):
-                    has_restored = app.restore_logos()
-                    if has_restored:
-                        app.save()
-            return True
-        except Exception:
-            log_accounting_error(
-                "Failed to restore all commcare logos for domain %s."
-                % domain.name
-            )
-            return False
+        from corehq.apps.accounting.tasks import restore_logos
+        restore_logos.delay(domain.name)
+        return True
 
     @staticmethod
     def response_report_builder(project, new_plan_version):
         from corehq.apps.userreports.models import ReportConfiguration
         from corehq.apps.userreports.tasks import rebuild_indicators
         reports = ReportConfiguration.by_domain(project.name)
-        builder_reports = filter(lambda report: report.report_meta.created_by_builder, reports)
+        builder_reports = [report for report in reports if report.report_meta.created_by_builder]
         for report in builder_reports:
             try:
                 report.visible = True
@@ -323,10 +298,7 @@ def _has_report_builder_add_on(plan_version):
 def _get_report_builder_reports(project):
     from corehq.apps.userreports.models import ReportConfiguration
     reports = ReportConfiguration.by_domain(project.name)
-    return filter(
-        lambda report: report.report_meta.created_by_builder,
-        reports
-    )
+    return [report for report in reports if report.report_meta.created_by_builder]
 
 
 class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
@@ -357,13 +329,10 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
 
     def get_response(self):
         response = super(DomainDowngradeStatusHandler, self).get_response()
-        response.extend(filter(
-            lambda response: response is not None,
-            [
+        response.extend([response for response in [
                 self.response_later_subscription,
                 self.response_mobile_worker_creation,
-            ]
-        ))
+            ] if response is not None])
         return response
 
     @staticmethod
@@ -444,7 +413,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         All Reminder rules utilizing "survey" will be deactivated.
         """
-        surveys = filter(lambda x: x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY], _active_reminder_methods(domain))
+        surveys = [x for x in _active_reminder_methods(domain) if x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
         num_survey = len(surveys)
         if num_survey > 0:
             return _fmt_alert(
@@ -473,7 +442,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             include_docs=True,
             reduce=False,
         )
-        num_deid_reports = len(filter(lambda r: r.is_safe, reports))
+        num_deid_reports = len([r for r in reports if r.is_safe])
         if num_deid_reports > 0:
             return _fmt_alert(
                 ungettext(

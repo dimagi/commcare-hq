@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from mock import patch
 from random import randint
 
@@ -14,6 +15,7 @@ from corehq.apps.smsbillables.models import (
 from corehq.apps.smsbillables.tests import generator
 from corehq.apps.smsbillables.tests.utils import FakeTwilioMessageFactory
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
+import six
 
 
 class TestUsageFee(TestCase):
@@ -150,7 +152,7 @@ class TestUsageFee(TestCase):
         SmsUsageFeeCriteria.objects.all().delete()
         SmsGatewayFee.objects.all().delete()
         self.currency_usd.delete()
-        for api_id, backend_id in self.backend_ids.iteritems():
+        for api_id, backend_id in six.iteritems(self.backend_ids):
             SQLMobileBackend.load(backend_id, is_couch_id=True).delete()
 
         FakeTwilioMessageFactory.backend_message_id_to_price = {}
