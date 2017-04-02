@@ -1,4 +1,5 @@
 import json
+import re
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRuleCriteria, AutomaticUpdateAction,
     MatchPropertyDefinition)
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
@@ -10,6 +11,7 @@ from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, Field
 from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, HTML, Div, Fieldset
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
@@ -26,11 +28,56 @@ def true_or_false(value):
     raise ValueError("Expected 'true' or 'false'")
 
 
-def remove_quotes(self, value):
+def remove_quotes(value):
     if isinstance(value, basestring) and len(value) >= 2:
         for q in ("'", '"'):
             if value.startswith(q) and value.endswith(q):
                 return value[1:-1]
+    return value
+
+
+def validate_case_property_name(value):
+    if not isinstance(value, basestring):
+        raise ValidationError(_("Please specify a case property name."))
+
+    value = value.strip()
+    property_name = re.sub('^(parent/)+', '', value)
+    if not property_name:
+        raise ValidationError(_("Please specify a case property name."))
+
+    if '/' in property_name:
+        raise ValidationError(
+            _("Case property reference cannot contain '/' unless referencing the parent case with 'parent/'")
+        )
+
+    if not re.match('^[a-zA-Z0-9_-]+$', property_name):
+        raise ValidationError(
+            _("Property names should only contain alphanumeric characters, underscore, or hyphen.")
+        )
+
+    return value
+
+
+def validate_case_property_value(value):
+    if not isinstance(value, basestring):
+        raise ValidationError(_("Please specify a case property value."))
+
+    value = remove_quotes(value.strip()).strip()
+    if not value:
+        raise ValidationError(_("Please specify a case property value."))
+
+    return value
+
+
+def validate_non_negative_days(value):
+    try:
+        value = int(value)
+    except (TypeError, ValueError):
+        raise ValidationError(_("Please enter a number of days greater than or equal to zero"))
+
+    if value < 0:
+        raise ValidationError(_("Please enter a number of days greater than or equal to zero"))
+
     return value
 
 
@@ -476,11 +523,11 @@ class CaseRuleCriteriaForm(forms.Form):
         required=True,
     )
 
-    filter_on_server_modified = forms.CharField(required=True)
-    server_modified_boundary = forms.CharField(required=True)
-    custom_match_defintions = forms.CharField(required=True)
-    property_match_defintions = forms.CharField(required=True)
-    filter_on_closed_parent = forms.CharField(required=True)
+    filter_on_server_modified = forms.CharField(required=False)
+    server_modified_boundary = forms.CharField(required=False)
+    custom_match_definitions = forms.CharField(required=False)
+    property_match_definitions = forms.CharField(required=False)
+    filter_on_closed_parent = forms.CharField(required=False)
 
     @property
     def constants(self):
@@ -498,11 +545,11 @@ class CaseRuleCriteriaForm(forms.Form):
         self.domain = domain
         self.set_case_type_choices(self.initial.get('case_type'))
 
-        self.main_helper = FormHelper()
-        self.main_helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.main_helper.field_class = 'col-xs-2'
-        self.main_helper.form_tag = False
-        self.main_helper.layout = Layout(
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
+        self.helper.field_class = 'col-xs-2'
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
             Fieldset(
                 _("Case Filters"),
                 HTML(
@@ -511,10 +558,11 @@ class CaseRuleCriteriaForm(forms.Form):
                 ),
                 self._hidden_bound_field('filter_on_server_modified'),
                 self._hidden_bound_field('server_modified_boundary'),
-                self._hidden_bound_field('custom_match_defintions'),
-                self._hidden_bound_field('property_match_defintions'),
+                self._hidden_bound_field('custom_match_definitions'),
+                self._hidden_bound_field('property_match_definitions'),
                 self._hidden_bound_field('filter_on_closed_parent'),
-                Div(css_id='rule-criteria', data_bind="template: {name: 'case-filters'}"),
+                Div(data_bind="template: {name: 'case-filters'}"),
+                css_id="rule-criteria",
             ),
         )
 
@@ -528,8 +576,11 @@ class CaseRuleCriteriaForm(forms.Form):
         return Field(
             field_name,
             type='hidden',
-            data_bind=field_name,
+            data_bind='value: %s' % field_name,
         )
+
+    def _json_fail_hard(self):
+        raise ValueError("Invalid JSON object given")
 
     def set_case_type_choices(self, initial):
         case_types = [''] + list(get_case_types_for_domain_es(self.domain))
@@ -543,19 +594,106 @@ class CaseRuleCriteriaForm(forms.Form):
         )
 
     def clean_filter_on_server_modified(self):
-        return true_or_false(self.cleaned_data.get('clean_filter_on_server_modified'))
+        return true_or_false(self.cleaned_data.get('filter_on_server_modified'))
 
     def clean_server_modified_boundary(self):
-        if not self.cleaned_data['filter_on_server_modified']:
+        # Be explicit about this check to prevent any accidents in the future
+        if self.cleaned_data['filter_on_server_modified'] is False:
             return None
 
         value = self.cleaned_data.get('server_modified_boundary')
+        return validate_non_negative_days(value)
+
+    def clean_custom_match_definitions(self):
+        value = self.cleaned_data.get('custom_match_definitions')
         try:
-            value = int(value)
+            value = json.loads(value)
         except (TypeError, ValueError):
-            raise ValidationError(_("Please enter a number of days greater than zero"))
+            self._json_fail_hard()
 
-        if value <= 0:
-            raise ValidationError(_("Please enter a number of days greater than zero"))
+        if not isinstance(value, list):
+            self._json_fail_hard()
 
-        return value
+        result = []
+
+        for obj in value:
+            if not isinstance(obj, dict):
+                self._json_fail_hard()
+
+            if 'name' not in obj:
+                self._json_fail_hard()
+
+            name = obj['name'].strip()
+            if not name or name not in settings.AVAILABLE_CUSTOM_RULE_CRITERIA:
+                raise ValidationError(_("Invalid custom callout reference"))
+
+            result.append({
+                'name': name
+            })
+
+        return result
+
+    def clean_property_match_definitions(self):
+        value = self.cleaned_data.get('property_match_definitions')
+        try:
+            value = json.loads(value)
+        except (TypeError, ValueError):
+            self._json_fail_hard()
+
+        if not isinstance(value, list):
+            self._json_fail_hard()
+
+        result = []
+
+        for obj in value:
+            if not isinstance(obj, dict):
+                self._json_fail_hard()
+
+            if (
+                'property_name' not in obj or
+                'property_value' not in obj or
+                'match_type' not in obj
+            ):
+                self._json_fail_hard()
+
+            property_name = validate_case_property_name(obj['property_name'])
+            match_type = obj['match_type']
+            if match_type not in MatchPropertyDefinition.MATCH_CHOICES:
+                self._json_fail_hard()
+
+            if match_type == MatchPropertyDefinition.MATCH_HAS_VALUE:
+                result.append({
+                    'property_name': property_name,
+                    'property_value': None,
+                    'match_type': match_type,
+                })
+            elif match_type in (
+                MatchPropertyDefinition.MATCH_EQUAL,
+                MatchPropertyDefinition.MATCH_NOT_EQUAL,
+            ):
+                property_value = validate_case_property_value(obj['property_value'])
+                result.append({
+                    'property_name': property_name,
+                    'property_value': property_value,
+                    'match_type': match_type,
+                })
+            elif match_type in (
+                MatchPropertyDefinition.MATCH_DAYS_BEFORE,
+                MatchPropertyDefinition.MATCH_DAYS_AFTER,
+            ):
+                property_value = validate_case_property_value(obj['property_value'])
+                try:
+                    property_value = int(property_value)
+                except (TypeError, ValueError):
+                    raise ValidationError(_("Please enter a number of days"))
+
+                result.append({
+                    'property_name': property_name,
+                    'property_value': property_value,
+                    'match_type': match_type,
+                })
+
+        return result
+
+    def clean_filter_on_closed_parent(self):
+        return true_or_false(self.cleaned_data.get('filter_on_closed_parent'))

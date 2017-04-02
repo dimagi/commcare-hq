@@ -931,11 +931,17 @@ class AddCaseRuleView(DataInterfaceSection):
     @property
     @memoized
     def rule_form(self):
+        if self.request.method == 'POST':
+            return CaseUpdateRuleForm(self.domain, self.request.POST)
+
         return CaseUpdateRuleForm(self.domain)
 
     @property
     @memoized
     def criteria_form(self):
+        if self.request.method == 'POST':
+            return CaseRuleCriteriaForm(self.domain, self.request.POST)
+
         return CaseRuleCriteriaForm(self.domain)
 
     @property
@@ -944,3 +950,9 @@ class AddCaseRuleView(DataInterfaceSection):
             'rule_form': self.rule_form,
             'criteria_form': self.criteria_form,
         }
+
+    def post(self, request, *args, **kwargs):
+        if self.criteria_form.is_valid():
+            pass
+
+        return self.get(request, *args, **kwargs)

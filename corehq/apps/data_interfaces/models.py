@@ -413,6 +413,14 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     MATCH_NOT_EQUAL = 'NOT_EQUAL'
     MATCH_HAS_VALUE = 'HAS_VALUE'
 
+    MATCH_CHOICES = (
+        MATCH_DAYS_BEFORE,
+        MATCH_DAYS_AFTER,
+        MATCH_EQUAL,
+        MATCH_NOT_EQUAL,
+        MATCH_HAS_VALUE,
+    )
+
     property_name = models.CharField(max_length=126)
     property_value = models.CharField(max_length=126, null=True)
     match_type = models.CharField(max_length=15)
