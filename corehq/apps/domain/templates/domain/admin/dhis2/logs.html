@@ -1,0 +1,55 @@
+{% extends "domain/admin/info_base.html" %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+{% block page_content %}
+<form>
+    <fieldset>
+        <legend>{% trans "DHIS2 Logs" %}</legend>
+    {% if logs %}
+        <tbody class="col-sm-10">
+            <table class="table table-striped">
+                <thead>
+                    <th>{% trans "Timestamp" %}</th>
+                    <th>{% trans "Request" %}</th>
+                    <th>{% trans "Status" %}</th>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td><a href="{% url 'dhis2_log_detail_view' domain log.id %}" style="display: block;">
+                            {{ log.timestamp }}
+                        </a></td>
+                        <td><a href="{% url 'dhis2_log_detail_view' domain log.id %}" style="display: block;">
+                            {{ log.request_method }} {{ log.request_url }}
+                        </a></td>
+                        <td><a href="{% url 'dhis2_log_detail_view' domain log.id %}" style="display: block;">
+                            {{ log.response_status }}
+                        </a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        <div class="col-sm-10">
+        {% if is_paginated %}
+        <div>
+            <span>
+                {% if page_obj.has_previous %}
+                [<a href="?page={{ page_obj.previous_page_number }}">Previous</a>]
+                {% endif %}
+                <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                [<a href="?page={{ page_obj.next_page_number }}">Next</a>]
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+    {% else %}
+        <div>
+            <p>No DHIS2 API requests have been logged.</p>
+        </div>
+    {% endif %}
+    </fieldset>
+</form>
+{% endblock %}
