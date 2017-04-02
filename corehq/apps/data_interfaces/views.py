@@ -921,7 +921,7 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
 
 
 class AddCaseRuleView(DataInterfaceSection):
-    template_name = "data_interfaces/edit_case_rule.html"
+    template_name = "data_interfaces/case_rule.html"
     urlname = 'add_case_rule'
     page_title = ugettext_lazy("Add Case Rule")
 
