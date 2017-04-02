@@ -29,6 +29,7 @@
     listExportsApp.config(["$httpProvider", function($httpProvider) {
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        $httpProvider.defaults.headers.common["X-CSRFToken"] = '{{ csrf_token }}';
     }]);
     listExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
