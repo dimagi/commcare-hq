@@ -278,7 +278,6 @@ class ReuseEvaluationContextTest(TestCase):
         self.pillow2.bootstrap(configs=self.configs)
         with trap_extra_setup(KafkaUnavailableError):
             self.pillow1.get_change_feed().get_latest_offsets()
-            self.pillow2.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
         for adapter in self.adapters:
@@ -313,6 +312,8 @@ class ReuseEvaluationContextTest(TestCase):
             pillow.process_changes(since=since, forever=False)
 
     def test_reuse_cache(self):
+        # tests that these two pillows make the same number of DB calls even
+        # though pillow2 has an extra config
         since1 = self.pillow1.get_change_feed().get_latest_offsets()
         since2 = self.pillow2.get_change_feed().get_latest_offsets()
         form, cases = self._post_case_blocks()
