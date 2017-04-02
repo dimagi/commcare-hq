@@ -124,7 +124,7 @@ class EpisodeUpdate(object):
             self.episode.case_id
         )
 
-    def adherence_cases_between(self, cases, start_date, end_date):
+    def adherence_cases_between(self, start_date, end_date):
         # To-update
         """
         Filter given 'adherence' cases between start_date, end_date
@@ -208,7 +208,6 @@ class EpisodeUpdate(object):
                 update["adherence_total_doses_taken"] = self.count_doses_taken(all_adherence_cases)
                 # calculate 'aggregated_score_count_taken'
                 adherence_cases = self.adherence_cases_between(
-                    all_adherence_cases,
                     adherence_schedule_date_start,
                     update["aggregated_score_date_calculated"]
                 )

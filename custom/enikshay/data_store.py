@@ -28,7 +28,6 @@ class AdherenceDatastore(object):
         result = self.es.filter(
             self._base_filters(episode_id)
         ).sort('adherence_date', desc=True).size(1).run().hits
-        print result, "ao89"
         if len(result) > 0:
             return pytz.UTC.localize(parse_datetime(result[0].get('adherence_date', None)))
         else:
