@@ -79,6 +79,7 @@ EXPECTED_PROD_INDICES = [
         "type": "case",
         "meta": {
             "settings": {
+                'number_of_shards': 10,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -281,6 +282,7 @@ EXPECTED_PROD_INDICES = [
         "type": "xform",
         "meta": {
             "settings": {
+                'number_of_shards': 10,
                 "analysis": {
                     "analyzer": {
                         "default": {
