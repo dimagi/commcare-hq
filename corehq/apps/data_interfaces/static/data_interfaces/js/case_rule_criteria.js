@@ -33,7 +33,7 @@ var CaseRuleCriteria = function(initial, constants) {
         $.each(self.criteria(), function(index, value) {
             if(value.ko_template_id === 'custom-filter') {
                 result.push({
-                    name: value.name(),
+                    name: value.name() || '',
                 });
             }
         });
@@ -45,15 +45,15 @@ var CaseRuleCriteria = function(initial, constants) {
         $.each(self.criteria(), function(index, value) {
             if(value.ko_template_id === 'case-property-filter') {
                 result.push({
-                    property_name: value.property_name(),
-                    property_value: value.property_value(),
-                    match_type: value.match_type(),
+                    property_name: value.property_name() || '',
+                    property_value: value.property_value() || '',
+                    match_type: value.match_type() || '',
                 });
             } else if(value.ko_template_id === 'date-case-property-filter') {
                 result.push({
-                    property_name: value.property_name(),
+                    property_name: value.property_name() || '',
                     property_value: '0',
-                    match_type: value.match_type(),
+                    match_type: value.match_type() || '',
                 });
             } else if(value.ko_template_id === 'advanced-date-case-property-filter') {
                 var property_value = value.property_value();
@@ -66,9 +66,9 @@ var CaseRuleCriteria = function(initial, constants) {
                     property_value = property_value.toString();
                 }
                 result.push({
-                    property_name: value.property_name(),
-                    property_value: property_value,
-                    match_type: value.match_type(),
+                    property_name: value.property_name() || '',
+                    property_value: property_value || '',
+                    match_type: value.match_type() || '',
                 });
             }
         });
