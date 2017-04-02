@@ -1,7 +1,7 @@
 import json
 import re
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRuleCriteria, AutomaticUpdateAction,
-    MatchPropertyDefinition)
+    MatchPropertyDefinition, UpdateCaseDefinition)
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.style import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
@@ -56,6 +56,14 @@ def validate_case_property_name(value):
         )
 
     return value
+
+
+def hidden_bound_field(field_name):
+    return Field(
+        field_name,
+        type='hidden',
+        data_bind='value: %s' % field_name,
+    )
 
 
 def validate_case_property_value(value):
@@ -554,13 +562,13 @@ class CaseRuleCriteriaForm(forms.Form):
                 _("Case Filters"),
                 HTML(
                     '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
-                    _("The Rule Actions will be performed for cases that match all filter criteria below.")
+                    _("The Actions will be performed for cases that match all filter criteria below.")
                 ),
-                self._hidden_bound_field('filter_on_server_modified'),
-                self._hidden_bound_field('server_modified_boundary'),
-                self._hidden_bound_field('custom_match_definitions'),
-                self._hidden_bound_field('property_match_definitions'),
-                self._hidden_bound_field('filter_on_closed_parent'),
+                hidden_bound_field('filter_on_server_modified'),
+                hidden_bound_field('server_modified_boundary'),
+                hidden_bound_field('custom_match_definitions'),
+                hidden_bound_field('property_match_definitions'),
+                hidden_bound_field('filter_on_closed_parent'),
                 Div(data_bind="template: {name: 'case-filters'}"),
                 css_id="rule-criteria",
             ),
@@ -571,13 +579,6 @@ class CaseRuleCriteriaForm(forms.Form):
         self.case_type_helper.field_class = 'col-xs-2'
         self.case_type_helper.form_tag = False
         self.case_type_helper.layout = Layout(Field('case_type'))
-
-    def _hidden_bound_field(self, field_name):
-        return Field(
-            field_name,
-            type='hidden',
-            data_bind='value: %s' % field_name,
-        )
 
     def _json_fail_hard(self):
         raise ValueError("Invalid JSON object given")
@@ -697,3 +698,116 @@ class CaseRuleCriteriaForm(forms.Form):
 
     def clean_filter_on_closed_parent(self):
         return true_or_false(self.cleaned_data.get('filter_on_closed_parent'))
+
+
+class CaseRuleActionsForm(forms.Form):
+    # Prefix to avoid name collisions; this means all input
+    # names in the HTML are prefixed with "action-"
+    prefix = "action"
+
+    close_case = forms.CharField(required=False)
+    properties_to_update = forms.CharField(required=False)
+    custom_action_definitions = forms.CharField(required=False)
+
+    def __init__(self, domain, *args, **kwargs):
+        super(CaseRuleActionsForm, self).__init__(*args, **kwargs)
+
+        self.domain = domain
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
+        self.helper.field_class = 'col-xs-2'
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Fieldset(
+                _("Actions"),
+                hidden_bound_field('close_case'),
+                hidden_bound_field('properties_to_update'),
+                hidden_bound_field('custom_action_definitions'),
+                Div(data_bind="template: {name: 'case-actions'}"),
+                css_id="rule-actions",
+            ),
+        )
+
+    @property
+    def constants(self):
+        return {
+            'VALUE_TYPE_EXACT': UpdateCaseDefinition.VALUE_TYPE_EXACT,
+            'VALUE_TYPE_CASE_PROPERTY': UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY,
+        }
+
+    def _json_fail_hard(self):
+        raise ValueError("Invalid JSON object given")
+
+    def clean_close_case(self):
+        return true_or_false(self.cleaned_data.get('close_case'))
+
+    def clean_properties_to_update(self):
+        value = self.cleaned_data.get('properties_to_update')
+        try:
+            value = json.loads(value)
+        except (TypeError, ValueError):
+            self._json_fail_hard()
+
+        if not isinstance(value, list):
+            self._json_fail_hard()
+
+        result = []
+
+        for obj in value:
+            if not isinstance(obj, dict):
+                self._json_fail_hard()
+
+            if (
+                'name' not in obj or
+                'value_type' not in obj or
+                'value' not in obj
+            ):
+                self._json_fail_hard()
+
+            name = validate_case_property_name(obj['name'])
+            value_type = obj['value_type']
+            if value_type not in UpdateCaseDefinition.VALUE_TYPE_CHOICES:
+                self._json_fail_hard()
+
+            if value_type == UpdateCaseDefinition.VALUE_TYPE_EXACT:
+                value = validate_case_property_value(obj['value'])
+            elif value_type == UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY:
+                value = validate_case_property_name(obj['value'])
+
+            result.append({
+                'name': name,
+                'value_type': value_type,
+                'value': value,
+            })
+
+        return result
+
+    def clean_custom_action_definitions(self):
+        value = self.cleaned_data.get('custom_action_definitions')
+        try:
+            value = json.loads(value)
+        except (TypeError, ValueError):
+            self._json_fail_hard()
+
+        if not isinstance(value, list):
+            self._json_fail_hard()
+
+        result = []
+
+        for obj in value:
+            if not isinstance(obj, dict):
+                self._json_fail_hard()
+
+            if 'name' not in obj:
+                self._json_fail_hard()
+
+            name = obj['name'].strip()
+            if not name or name not in settings.AVAILABLE_CUSTOM_RULE_ACTIONS:
+                raise ValidationError(_("Invalid custom callout reference"))
+
+            result.append({
+                'name': name
+            })
+
+        return result

@@ -28,7 +28,8 @@ from corehq.apps.data_interfaces.tasks import (
     bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
-    AddAutomaticCaseUpdateRuleForm, CaseUpdateRuleForm, CaseRuleCriteriaForm)
+    AddAutomaticCaseUpdateRuleForm, CaseUpdateRuleForm, CaseRuleCriteriaForm,
+    CaseRuleActionsForm)
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
                                                 AutomaticUpdateRuleCriteria,
                                                 AutomaticUpdateAction)
@@ -945,14 +946,26 @@ class AddCaseRuleView(DataInterfaceSection):
         return CaseRuleCriteriaForm(self.domain)
 
     @property
+    @memoized
+    def actions_form(self):
+        if self.request.method == 'POST':
+            return CaseRuleActionsForm(self.domain, self.request.POST)
+
+        return CaseRuleActionsForm(self.domain)
+
+    @property
     def page_context(self):
         return {
             'rule_form': self.rule_form,
             'criteria_form': self.criteria_form,
+            'actions_form': self.actions_form,
         }
 
     def post(self, request, *args, **kwargs):
-        if self.criteria_form.is_valid():
+        criteria_form_valid = self.criteria_form.is_valid()
+        actions_form_valid = self.actions_form.is_valid()
+
+        if criteria_form_valid and actions_form_valid:
             pass
 
         return self.get(request, *args, **kwargs)

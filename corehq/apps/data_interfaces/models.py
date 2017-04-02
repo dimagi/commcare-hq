@@ -706,6 +706,11 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
     VALUE_TYPE_EXACT = "EXACT"
     VALUE_TYPE_CASE_PROPERTY = "CASE_PROPERTY"
 
+    VALUE_TYPE_CHOICES = (
+        VALUE_TYPE_EXACT,
+        VALUE_TYPE_CASE_PROPERTY,
+    )
+
     class PropertyDefinition(JsonObject):
         # The case property name
         name = StringProperty()

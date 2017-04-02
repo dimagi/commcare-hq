@@ -6,6 +6,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'style/js/main.js' %}"></script>
     <script src="{% static 'data_interfaces/js/case_rule_criteria.js' %}"></script>
+    <script src="{% static 'data_interfaces/js/case_rule_actions.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -19,6 +20,14 @@
     }, {{ criteria_form.constants|JSON }});
     $('#rule-criteria').koApplyBindings(criteria_model);
     criteria_model.load_initial();
+
+    var actions_model = new CaseRuleActions({
+        close_case: '{{ actions_form.close_case.value|default:"false"|escapejs }}',
+        properties_to_update: {{ actions_form.properties_to_update.value|default:"[]"|safe }},
+        custom_action_definitions: {{ actions_form.custom_action_definitions.value|default:"[]"|safe }},
+    });
+    $('#rule-actions').koApplyBindings(actions_model);
+    actions_model.load_initial();
 </script>
 {% endblock %}
 
@@ -28,6 +37,7 @@
     <form class="form form-horizontal" method="POST" action="#">
         {% crispy rule_form %}
         {% crispy criteria_form %}
+        {% crispy actions_form %}
         <div class="col-xs-1">
             <button type="submit" class="btn btn-primary">Save</button>
         </div>
@@ -35,52 +45,6 @@
 </div>
 
 {% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
+{% include 'data_interfaces/partials/case_rule_actions.html' with form=actions_form %}
 
-<!-- Start templates for rule actions -->
-
-<script type="text/html" id="remove-action">
-    <div class="col-xs-1">
-        <button type="button" class="btn btn-danger">x</button>
-    </div>
-</script>
-
-<script type="text/html" id="close-case-action">
-    <div class="form-group">
-        <div data-bind="template: {name: 'remove-action'}"></div>
-        <div class="col-xs-2">
-            <label class="control-label">{% trans "Close the case" %}</label>
-        </div>
-    </div>
-</script>
-
-<script type="text/html" id="update-case-property-action">
-    <div class="form-group">
-        <div data-bind="template: {name: 'remove-action'}"></div>
-        <div class="col-xs-2">
-            <label class="control-label">{% trans "Set case property" %}</label>
-        </div>
-        <div class="controls col-xs-2">
-            <input type="text" class="textinput form-control"></input>
-        </div>
-        <div class="controls col-xs-2">
-            <select class="select form-control">
-            </select>
-        </div>
-        <div class="controls col-xs-2">
-            <input type="text" class="textinput form-control"></input>
-        </div>
-    </div>
-</script>
-
-<script type="text/html" id="custom-action">
-    <div class="form-group">
-        <div data-bind="template: {name: 'remove-action'}"></div>
-        <div class="col-xs-2">
-            <label class="control-label">{% trans "Custom action callout" %}</label>
-        </div>
-        <div class="controls col-xs-4">
-            <input type="text" class="textinput form-control"></input>
-        </div>
-    </div>
-</script>
 {% endblock %}
