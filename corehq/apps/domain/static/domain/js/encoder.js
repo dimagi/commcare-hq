@@ -1,8 +1,13 @@
 (function() {
     function HexParsr() {
+        function paddingStr() {
+            var s = Math.random().toString(36).slice(2, 8);
+            return s.length == 6 ? s : paddingStr();
+        }
+
         // private property
-        var _paddingLeft = "sha256$" + Math.random().toString(36).slice(2, 8);
-        var _paddingRight = Math.random().toString(36).slice(2, 8) + "=";
+        var _paddingLeft = "sha256$" + paddingStr();
+        var _paddingRight = paddingStr() + "=";
 
         b64EncodeUnicode = function(str){
           return encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
