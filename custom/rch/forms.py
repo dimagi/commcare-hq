@@ -48,6 +48,12 @@ class BeneficiariesFilterForm(forms.Form):
         choices=get_choices_for('Village_name')
     )
 
+    present_in = forms.ChoiceField(
+        label=_("Present In"),
+        required=False,
+        choices=(('both', 'Both'), ('cas', 'ICDS-CAS'), ('rch', 'RCH'))
+    )
+
     def __init__(self, domain, *args, **kwargs):
         from custom.rch.views import BeneficariesList
         super(BeneficiariesFilterForm, self).__init__(*args, **kwargs)
@@ -73,6 +79,9 @@ class BeneficiariesFilterForm(forms.Form):
             ),
             crispy.Field(
                 'village_name'
+            ),
+            crispy.Field(
+                'present_in'
             ),
             ButtonHolder(
                 Submit('submit', 'Submit', css_class='button white pull-left')

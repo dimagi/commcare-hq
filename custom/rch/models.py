@@ -12,7 +12,7 @@ STATE_DISTRICT_MAPPING = {
 
 class RCHRecord(models.Model):
     RCH_Primary_Key = None
-
+    cas_case_id = models.CharField(null=True, max_length=255)
     Caste = models.CharField(null=True, max_length=255)
     Created_On = models.DateTimeField(null=True)
     District_ID = models.PositiveSmallIntegerField(null=True)

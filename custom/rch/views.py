@@ -21,22 +21,15 @@ class BeneficariesList(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         return super(BeneficariesList, self).dispatch(request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs):
-        context = super(BeneficariesList, self).get_context_data(**kwargs)
-
-        context['filter_form'] = BeneficiariesFilterForm(data=self.request.GET, domain=self.request.domain)
-
-        mother_beneficiaries = RCHMother.objects
-        child_beneficiaries = RCHChild.objects
-
+    def get_rch_records(self):
         state = self.request.GET.get('state')
         if state:
-            mother_beneficiaries = mother_beneficiaries.filter(State_Name=state)
-            child_beneficiaries = child_beneficiaries.filter(State_Name=state)
+            self.mother_beneficiaries = self.mother_beneficiaries.filter(State_Name=state)
+            self.child_beneficiaries = self.child_beneficiaries.filter(State_Name=state)
         district = self.request.GET.get('district')
         if district:
-            mother_beneficiaries = mother_beneficiaries.filter(District_Name=district)
-            child_beneficiaries = child_beneficiaries.filter(District_Name=district)
+            self.mother_beneficiaries = self.mother_beneficiaries.filter(District_Name=district)
+            self.child_beneficiaries = self.child_beneficiaries.filter(District_Name=district)
 
         # To be included once mapping is available
         # awcid = self.request.GET.get('awcid')
@@ -46,18 +39,40 @@ class BeneficariesList(TemplateView):
         #     village_ids = village_ids + AreaMapping.fetch_village_ids_for_awcid(awcid)
         #
         # if village_ids:
-        #     mother_beneficiaries = mother_beneficiaries.filter(MDDS_VillageID__in=village_ids)
-        #     child_beneficiaries = child_beneficiaries.filter(MDDS_VillageID__in=village_ids)
+        #     self.mother_beneficiaries = self.mother_beneficiaries.filter(MDDS_VillageID__in=village_ids)
+        #     self.child_beneficiaries = self.child_beneficiaries.filter(MDDS_VillageID__in=village_ids)
 
         village_name = self.request.GET.get('village_name')
         if village_name:
-            mother_beneficiaries = mother_beneficiaries.filter(Village_Name__contains=village_name)
-            child_beneficiaries = child_beneficiaries.filter(VILLAGE_Name__contains=village_name)
+            self.mother_beneficiaries = self.mother_beneficiaries.filter(Village_Name__contains=village_name)
+            self.child_beneficiaries = self.child_beneficiaries.filter(Village_Name__contains=village_name)
 
-        context['mother_beneficiaries_total'] = mother_beneficiaries.count()
-        context['child_beneficiaries_total'] = child_beneficiaries.count()
-        context['mother_beneficiaries'] = mother_beneficiaries.order_by()[:20]
-        context['child_beneficiaries'] = child_beneficiaries.order_by()[:20]
+    def get_cas_records(self):
+        self.mother_beneficiaries = self.mother_beneficiaries.none()
+        self.child_beneficiaries = self.child_beneficiaries.none()
+
+    def get_context_data(self, **kwargs):
+        context = super(BeneficariesList, self).get_context_data(**kwargs)
+
+        context['filter_form'] = BeneficiariesFilterForm(data=self.request.GET, domain=self.request.domain)
+
+        self.mother_beneficiaries = RCHMother.objects
+        self.child_beneficiaries = RCHChild.objects
+
+        beneficiaries_in = self.request.GET.get('present_in')
+        if beneficiaries_in == 'both':
+            self.mother_beneficiaries = self.mother_beneficiaries.exclude(cas_case_id__isnull=True)
+            self.child_beneficiaries = self.child_beneficiaries.exclude(cas_case_id__isnull=True)
+        elif beneficiaries_in == 'rch':
+            self.get_rch_records()
+        elif beneficiaries_in == 'cas':
+            self.get_cas_records()
+
+        context['mother_beneficiaries_total'] = self.mother_beneficiaries.count()
+        context['child_beneficiaries_total'] = self.child_beneficiaries.count()
+        context['mother_beneficiaries'] = self.mother_beneficiaries.order_by()[:20]
+        context['child_beneficiaries'] = self.child_beneficiaries.order_by()[:20]
+
 
         return context
 
