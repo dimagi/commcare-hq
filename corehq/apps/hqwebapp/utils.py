@@ -1,5 +1,4 @@
 import logging
-import uuid
 import re
 import base64
 

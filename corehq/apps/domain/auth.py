@@ -7,7 +7,6 @@ from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
-from django.conf import settings
 
 
 J2ME = 'j2me'
