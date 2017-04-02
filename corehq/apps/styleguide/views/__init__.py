@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.generic import *
@@ -77,6 +77,19 @@ class ClassBasedViewStyleGuideView(BaseStyleGuideArticleView):
         return [
             'views/intro',
             'views/base_classes',
+        ]
+
+
+class CSSStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_css'
+    navigation_name = 'css'
+
+    @property
+    def sections(self):
+        return [
+            'css/overview',
+            'css/hierarchy',
+            'css/z_index',
         ]
 
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 
 from django.conf import settings
@@ -24,6 +25,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
 )
 from corehq.const import USER_DATE_FORMAT
+import six
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
 
@@ -308,6 +310,13 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                           'amount': Decimal(post_data.get(product_type[0], 0))}
                          for product_type in SoftwareProductType.CHOICES
                          if Decimal(post_data.get(product_type[0], 0)) > 0]
+        if Decimal(post_data.get('general_credit', 0)) > 0:
+            self.general_credits = {
+                'type': 'general_credit',
+                'amount': Decimal(post_data.get('general_credit', 0))
+            }
+        else:
+            self.general_credits = None
         self.post_data = post_data
         self.account = account
         self.subscription = subscription
@@ -315,8 +324,8 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
     @property
     def cost_item_name(self):
-        credit_types = [unicode(product['type']) for product in self._humanized_products()]
-        credit_types += [unicode(feature['type']) for feature in self._humanized_features()]
+        credit_types = [six.text_type(product['type']) for product in self._humanized_products()]
+        credit_types += [six.text_type(feature['type']) for feature in self._humanized_features()]
         return _("Credits: {credit_types} for {sub_or_account}").format(
             credit_types=", ".join(credit_types),
             sub_or_account=("Subscription %s" % self.subscription
@@ -388,6 +397,24 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     .format(
                         account=self.account,
                         product=product['type']
+                    )
+                )
+
+        if self.general_credits:
+            amount = self.general_credits['amount']
+            if amount >= 0.5:
+                self.credit_lines.append(CreditLine.add_credit(
+                    amount,
+                    account=self.account,
+                    subscription=self.subscription,
+                    payment_record=payment_record,
+                ))
+            else:
+                log_accounting_error(
+                    "{account} tried to make a payment for Credits for less than $0.5."
+                    "You should follow up with them."
+                    .format(
+                        account=self.account,
                     )
                 )
 

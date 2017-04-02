@@ -13,7 +13,6 @@ module.exports = function(grunt) {
      */
     var apps = [
         'app_manager',
-        'app_manager#b3',
         'app_manager#fields',
         'export',
         'export#ko',
@@ -24,6 +23,7 @@ module.exports = function(grunt) {
         'cloudcare',
         'cloudcare#form_entry',
         'hqwebapp',
+        'case_importer',
     ];
 
     var mochaConfig = {},

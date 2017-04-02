@@ -1,9 +1,10 @@
+import datetime
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.util.couch_helpers import paginate_view
 from corehq.util.test_utils import unit_testing_only
 
-from .const import RECORD_PENDING_STATE, RECORD_FAILURE_STATE, RECORD_SUCCESS_STATE
+from .const import RECORD_PENDING_STATE, RECORD_FAILURE_STATE, RECORD_SUCCESS_STATE, RECORD_CANCELLED_STATE
 
 
 def get_pending_repeat_record_count(domain, repeater_id):
@@ -18,6 +19,10 @@ def get_success_repeat_record_count(domain, repeater_id):
     return get_repeat_record_count(domain, repeater_id, RECORD_SUCCESS_STATE)
 
 
+def get_cancelled_repeat_record_count(domain, repeater_id):
+    return get_repeat_record_count(domain, repeater_id, RECORD_CANCELLED_STATE)
+
+
 def get_repeat_record_count(domain, repeater_id=None, state=None):
     from .models import RepeatRecord
     startkey = [domain]
@@ -28,7 +33,7 @@ def get_repeat_record_count(domain, repeater_id=None, state=None):
         endkey = [domain, repeater_id, {}]
     elif repeater_id and state:
         startkey = [domain, repeater_id, state]
-        endkey = [domain, repeater_id, state]
+        endkey = [domain, repeater_id, state, {}]
     elif not repeater_id and state:
         ids = sorted(_get_repeater_ids_by_domain(domain))
         if not ids:
@@ -46,6 +51,18 @@ def get_repeat_record_count(domain, repeater_id=None, state=None):
     return result['value'] if result else 0
 
 
+def get_overdue_repeat_record_count(overdue_threshold=datetime.timedelta(minutes=10)):
+    from .models import RepeatRecord
+    overdue_datetime = datetime.datetime.utcnow() - overdue_threshold
+    results = RepeatRecord.view(
+        "receiverwrapper/repeat_records_by_next_check",
+        startkey=[None],
+        endkey=[None, json_format_datetime(overdue_datetime)],
+        reduce=True,
+    ).one()
+    return results['value'] if results else 0
+
+
 def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
     from .models import RepeatRecord
     kwargs = {
@@ -53,23 +70,23 @@ def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
         'reduce': False,
         'limit': limit,
         'skip': skip,
+        'descending': True,
     }
 
     if repeater_id and not state:
-        kwargs['startkey'] = [domain, repeater_id]
-        kwargs['endkey'] = [domain, repeater_id, {}]
+        kwargs['endkey'] = [domain, repeater_id]
+        kwargs['startkey'] = [domain, repeater_id, {}]
     elif repeater_id and state:
-        kwargs['startkey'] = [domain, repeater_id, state]
         kwargs['endkey'] = [domain, repeater_id, state]
+        kwargs['startkey'] = [domain, repeater_id, state, {}]
     elif not repeater_id and state:
-        kwargs['key'] = [domain, None, state]
+        kwargs['endkey'] = [domain, None, state]
+        kwargs['startkey'] = [domain, None, state, {}]
     elif not repeater_id and not state:
-        kwargs['startkey'] = [domain]
-        kwargs['endkey'] = [domain, {}]
+        kwargs['endkey'] = [domain]
+        kwargs['startkey'] = [domain, {}]
 
-    results = RepeatRecord.get_db().view('receiverwrapper/repeat_records',
-        **kwargs
-    ).all()
+    results = RepeatRecord.get_db().view('receiverwrapper/repeat_records', **kwargs).all()
 
     return [RepeatRecord.wrap(result['doc']) for result in results]
 

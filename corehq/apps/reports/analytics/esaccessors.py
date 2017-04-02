@@ -161,7 +161,7 @@ def get_last_form_submission_for_xmlns(domain, xmlns):
     return None
 
 
-def get_last_form_submissions_by_user(domain, user_ids, app_id=None):
+def get_last_form_submissions_by_user(domain, user_ids, app_id=None, xmlns=None):
 
     missing_users = None in user_ids
 
@@ -184,6 +184,9 @@ def get_last_form_submissions_by_user(domain, user_ids, app_id=None):
 
     if app_id:
         query = query.app(app_id)
+
+    if xmlns:
+        query = query.xmlns(xmlns)
 
     result = {}
     if missing_users:
@@ -586,3 +589,12 @@ def _get_attachment_dicts_from_form(form):
     if 'external_blobs' in form:
         return form['external_blobs'].values()
     return []
+
+
+@quickcache(['domain'], timeout=24 * 3600)
+def get_case_types_for_domain_es(domain):
+    query = (
+        CaseES().domain(domain).size(0)
+        .terms_aggregation("type.exact", "case_types")
+    )
+    return set(query.run().aggregations.case_types.keys)

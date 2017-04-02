@@ -30,14 +30,14 @@ CASEBLOCK_CHUNKSIZE = 100
 def bulk_import_async(config, domain, excel_id):
     case_upload = CaseUpload.get(excel_id)
     try:
-        case_upload.check_file(config.named_columns)
+        case_upload.check_file()
     except ImporterError as e:
         return {'errors': get_importer_error_message(e)}
 
     try:
-        with case_upload.get_spreadsheet(config.named_columns) as spreadsheet:
-            result = do_import(spreadsheet, config, domain, task=bulk_import_async)
-
+        with case_upload.get_spreadsheet() as spreadsheet:
+            result = do_import(spreadsheet, config, domain, task=bulk_import_async,
+                               record_form_callback=case_upload.record_form)
         # return compatible with soil
         return {
             'messages': result
@@ -54,7 +54,8 @@ def store_task_result(upload_id):
     case_upload.store_task_result()
 
 
-def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE):
+def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE,
+              record_form_callback=None):
     columns = spreadsheet.get_header_columns()
     match_count = created_count = too_many_matches = num_chunks = 0
     errors = importer_util.ImportErrorDetail()
@@ -90,9 +91,11 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 err = True
                 errors.add(
                     error=ImportErrors.ImportErrorMessage,
-                    row_number=caseblocks[0]._id
+                    row_number=caseblocks[0].case_id
                 )
             else:
+                if record_form_callback:
+                    record_form_callback(form.form_id)
                 properties = set().union(*map(lambda c: set(c.dynamic_case_properties().keys()), cases))
                 if case_type and len(properties):
                     add_inferred_export_properties.delay(
@@ -115,8 +118,8 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         if task:
             set_task_progress(task, i, row_count)
 
-        # skip first row if it is a header field
-        if i == 0 and config.named_columns:
+        # skip first row (header row)
+        if i == 0:
             continue
 
         if not is_bigcouch():

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, \
@@ -12,18 +13,18 @@ from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDep
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.form import AppFormSubmissionTrackerProcessor
+from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.reindexer.reindexer import Reindexer
 
 
-def get_app_form_submission_tracker_pillow(pillow_id='AppFormSubmissionTrackerPillow'):
+def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerProcessor'):
     """
     This gets a pillow which iterates through all forms and marks the corresponding app
     as having submissions. This could be expanded to be more generic and include
     other processing that needs to happen on each form
     """
-    checkpoint = PillowCheckpoint('app-form-submission-tracker')
-    form_processor = AppFormSubmissionTrackerProcessor()
+    checkpoint = PillowCheckpoint('form-submission-metadata-tracker')
+    form_processor = FormSubmissionMetadataTrackerProcessor()
     change_feed = KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='form-processsor')
     return ConstructedPillow(
         name=pillow_id,
@@ -52,10 +53,10 @@ class AppFormSubmissionReindexDocProcessor(BaseDocProcessor):
             return True
 
     def handle_skip(self, doc):
-        print 'Unable to process form {} with build {}'.format(
+        print('Unable to process form {} with build {}'.format(
             doc['_id'],
             doc.get('build_id')
-        )
+        ))
         return True
 
     @staticmethod
@@ -84,7 +85,7 @@ class AppFormSubmissionReindexer(Reindexer):
         self.doc_provider = doc_provider
         self.chunk_size = chunk_size
         self.doc_processor = AppFormSubmissionReindexDocProcessor(
-            AppFormSubmissionTrackerProcessor(),
+            FormSubmissionMetadataTrackerProcessor(),
             data_source_type,
             data_source_name,
         )

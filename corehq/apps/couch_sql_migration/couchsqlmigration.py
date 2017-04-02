@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import uuid
 from datetime import datetime
@@ -24,11 +25,12 @@ from corehq.form_processor.utils import adjust_datetimes
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
     clear_local_domain_sql_backend_override
+from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST
 from corehq.util.log import with_progress_bar
+from corehq.util.pagination import PaginationEventHandler
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from fluff.management.commands.ptop_reindexer_fluff import ReindexEventHandler
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
@@ -45,6 +47,7 @@ class CouchSqlDomainMigrator(object):
     def __init__(self, domain, with_progress=True, debug=False):
         from corehq.apps.tzmigration.planning import DiffDB
         assert should_use_sql_backend(domain)
+        assert not COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain)
 
         self.with_progress = with_progress
         self.debug = debug
@@ -57,10 +60,10 @@ class CouchSqlDomainMigrator(object):
 
     def log_debug(self, message):
         if self.debug:
-            print '[DEBUG] {}'.format(message)
+            print('[DEBUG] {}'.format(message))
 
     def log_error(self, message):
-        print '[ERROR] {}'.format(message)
+        print('[ERROR] {}'.format(message))
 
     def migrate(self):
         self._process_main_forms()
@@ -184,7 +187,13 @@ class CouchSqlDomainMigrator(object):
             try:
                 CaseAccessorSQL.save_case(sql_case)
             except IntegrityError as e:
-                self.log_error("Unable to migrate case:\n{}\n{}".format(couch_case.case_id, e))
+                # case re-created by form processing so just mark the case as deleted
+                CaseAccessorSQL.soft_delete_cases(
+                    self.domain,
+                    [sql_case.case_id],
+                    sql_case.deleted_on,
+                    sql_case.deletion_id
+                )
 
     def _calculate_case_diffs(self):
         cases = {}
@@ -207,12 +216,33 @@ class CouchSqlDomainMigrator(object):
             couch_case = couch_cases[sql_case.case_id]
             sql_case_json = sql_case.to_json()
             diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
-            self.diff_db.add_diffs(
-                couch_case['doc_type'], sql_case.case_id,
-                filter_case_diffs(couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions)
+            diffs = filter_case_diffs(
+                couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
             )
+            if diffs and not sql_case.is_deleted:
+                couch_case, diffs = self._rebuild_couch_case_and_re_diff(couch_case, sql_case_json)
+
+            if diffs:
+                self.diff_db.add_diffs(
+                    couch_case['doc_type'], sql_case.case_id,
+                    diffs
+                )
 
         self._diff_ledgers(case_ids)
+
+    def _rebuild_couch_case_and_re_diff(self, couch_case, sql_case_json):
+        from corehq.form_processor.backends.couch.processor import FormProcessorCouch
+        from corehq.apps.tzmigration.timezonemigration import json_diff
+
+        rebuilt_case = FormProcessorCouch.hard_rebuild_case(
+            self.domain, couch_case['_id'], None, save=False
+        )
+        rebuilt_case_json = rebuilt_case.to_json()
+        diffs = json_diff(rebuilt_case_json, sql_case_json, track_list_indices=False)
+        diffs = filter_case_diffs(
+            rebuilt_case_json, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
+        )
+        return rebuilt_case_json, diffs
 
     def _diff_ledgers(self, case_ids):
         from corehq.apps.tzmigration.timezonemigration import json_diff
@@ -460,7 +490,7 @@ def _get_main_form_iterator(domain):
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=['XFormInstance'],
-        event_handler=ReindexEventHandler(u'couch to sql migrator ({})'.format(domain)),
+        event_handler=PaginationEventHandler(),
     )
 
 
@@ -469,7 +499,7 @@ def _get_unprocessed_form_iterator(domain):
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=UNPROCESSED_DOC_TYPES,
-        event_handler=ReindexEventHandler(u'couch to sql migrator ({} unprocessed forms)'.format(domain)),
+        event_handler=PaginationEventHandler(),
     )
 
 
@@ -479,7 +509,7 @@ def _get_case_iterator(domain, doc_types=None):
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=doc_types,
-        event_handler=ReindexEventHandler(u'couch to sql migrator ({})'.format(domain)),
+        event_handler=PaginationEventHandler(),
     )
 
 
@@ -507,8 +537,10 @@ def delete_diff_db(domain):
 
 
 def commit_migration(domain_name):
-    domain = Domain.get_by_name(domain_name)
+    domain = Domain.get_by_name(domain_name, strict=True)
     domain.use_sql_backend = True
     domain.save()
     clear_local_domain_sql_backend_override(domain_name)
-    assert should_use_sql_backend(domain_name)
+    if not should_use_sql_backend(domain_name):
+        Domain.get_by_name.clear(Domain, domain_name)
+        assert should_use_sql_backend(domain_name)

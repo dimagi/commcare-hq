@@ -1,4 +1,4 @@
-<fixture id="locations" user_id="{user_id}">
+<fixture id="locations" indexed="true" user_id="{user_id}">
     <locations>
         <location city_id="{boston_id}" county_id="{suffolk_id}" id="{boston_id}" state_id="{massachusetts_id}" type="city">
             <name>Boston</name>

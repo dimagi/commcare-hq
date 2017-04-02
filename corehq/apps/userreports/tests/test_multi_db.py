@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from django.conf import settings
 from django.test import TestCase
@@ -11,12 +12,14 @@ from corehq.apps.userreports.tests.utils import get_sample_data_source, get_samp
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db import connections
 from corehq.sql_db.tests.utils import temporary_database
+from six.moves import range
 
 
 class UCRMultiDBTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(UCRMultiDBTest, cls).setUpClass()
         cls.db2_name = 'cchq_ucr_tests'
         db_conn_parts = settings.SQL_REPORTING_DATABASE_URL.split('/')
         db_conn_parts[-1] = cls.db2_name
@@ -70,6 +73,7 @@ class UCRMultiDBTest(TestCase):
 
         # drop the secondary database
         cls.db_context.__exit__(None, None, None)
+        super(UCRMultiDBTest, cls).tearDownClass()
 
     def tearDown(self):
         self.ds1_adapter.session_helper.Session.remove()

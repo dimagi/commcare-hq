@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 from cStringIO import StringIO
 from couchdbkit import ResourceNotFound, BadValueError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.csrf import csrf_exempt
@@ -21,6 +22,7 @@ from .utils import get_all_versions, extract_build_info_from_filename
 
 import requests
 import requests.exceptions
+import six
 
 
 @csrf_exempt  # is used by an API
@@ -129,8 +131,8 @@ def import_build(request):
         return json_response({
             'reason': 'Badly formatted version',
             'info': {
-                'error_message': unicode(e),
-                'error_type': unicode(type(e))
+                'error_message': six.text_type(e),
+                'error_type': six.text_type(type(e))
             }
         }, status_code=400)
 

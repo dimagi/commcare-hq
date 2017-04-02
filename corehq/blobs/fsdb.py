@@ -24,9 +24,7 @@ class FilesystemBlobDB(AbstractBlobDB):
         assert isabs(rootdir), rootdir
         self.rootdir = rootdir
 
-    def put(self, content, bucket=DEFAULT_BUCKET, identifier=None):
-        if identifier is None:
-            identifier = self.get_short_identifier()
+    def put(self, content, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
         dirpath = dirname(path)
         if not isdir(dirpath):
@@ -77,7 +75,16 @@ class FilesystemBlobDB(AbstractBlobDB):
         return success
 
     def copy_blob(self, content, info, bucket):
-        raise NotImplementedError
+        path = self.get_path(info.identifier, bucket)
+        dirpath = dirname(path)
+        if not isdir(dirpath):
+            os.makedirs(dirpath)
+        with openfile(path, "xb") as fh:
+            while True:
+                chunk = content.read(CHUNK_SIZE)
+                if not chunk:
+                    break
+                fh.write(chunk)
 
     def get_path(self, identifier=None, bucket=DEFAULT_BUCKET):
         bucket_path = safejoin(self.rootdir, bucket)

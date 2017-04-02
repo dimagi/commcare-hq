@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from dimagi.ext.jsonobject import StringProperty
 from datetime import datetime
@@ -36,3 +37,6 @@ class EvaluationContext(object):
 
     def set_cache_value(self, key, value):
         self.cache[key] = value
+
+    def increment_iteration(self):
+        self.iteration += 1

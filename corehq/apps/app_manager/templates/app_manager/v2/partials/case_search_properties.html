@@ -23,9 +23,9 @@
     </script>
 
     <form>
-        <div class="panel panel-default">
+        <div class="panel panel-appmanager">
             <div class="panel-heading">
-                <h4 class="panel-title">{% trans "Search Properties" %}</h4>
+                <h4 class="panel-title panel-title-nolink">{% trans "Search Properties" %}</h4>
             </div>
             <div class="panel-body">
                 <p>{% trans "Search against the following case properties." %}</p>
@@ -49,9 +49,9 @@
                 </p>
             </div>
         </div>
-        <div class="panel panel-default">
+        <div class="panel panel-appmanager">
             <div class="panel-heading">
-                <h4 class="panel-title">{% trans "Default Search Properties" %}</h4>
+                <h4 class="panel-title panel-title-nolink">{% trans "Default Search Properties" %}</h4>
             </div>
             <div class="panel-body">
                 <p>{% trans "Filter based on a specific value of any case property. These are applied to every search and are hidden from the user." %}</p>
@@ -93,12 +93,28 @@
                 </p>
             </div>
         </div>
-        <div class="panel panel-default">
+        <div class="panel panel-appmanager">
             <div class="panel-heading">
-                <h4 class="panel-title">{% trans "Search and Claim Options" %}</h4>
+                <h4 class="panel-title panel-title-nolink">{% trans "Search and Claim Options" %}</h4>
             </div>
             <div class="panel-body">
                 <div class="form-group">
+                    <label for="search-display-condition" class="control-label">
+                        {% trans "Display condition" %}
+                    </label>
+                    <input type="text"
+                           class="form-control"
+                           id="search-display-condition"
+                           spellcheck="false"
+                           data-bind="value: searchButtonDisplayCondition"
+                    >
+                    <p class="help-block">
+                        {% blocktrans %}
+                        If this xpath expression evaluates to false, the case search button will not be
+                        displayed. If no expression is given, the button will always be displayed.
+                        {% endblocktrans %}
+                    </p>
+
                     <label for="claim-relevant-condition" >
                         {% trans "Only claim cases that fulfill the following condition" %}
                     </label>

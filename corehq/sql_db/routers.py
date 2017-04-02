@@ -6,6 +6,7 @@ PROXY_APP = 'sql_proxy_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
 SQL_ACCESSORS_APP = 'sql_accessors'
 ICDS_REPORTS_APP = 'icds_reports'
+SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
 
 
 class PartitionRouter(object):
@@ -16,8 +17,7 @@ class PartitionRouter(object):
     def db_for_write(self, model, **hints):
         return db_for_read_write(model)
 
-    def allow_migrate(self, db, model):
-        app_label = model._meta.app_label
+    def allow_migrate(self, db, app_label, model=None, **hints):
         return allow_migrate(db, app_label)
 
 
@@ -36,7 +36,7 @@ def allow_migrate(db, app_label):
 
     if app_label == PROXY_APP:
         return db == partition_config.get_proxy_db()
-    elif app_label == FORM_PROCESSOR_APP:
+    elif app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP):
         return (
             db == partition_config.get_proxy_db() or
             db in partition_config.get_form_processing_dbs()

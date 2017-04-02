@@ -4,7 +4,7 @@ from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div
 from django import forms
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.forms.forms import Form
 from django.forms.fields import *
 from crispy_forms import layout as crispy

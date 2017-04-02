@@ -84,6 +84,7 @@ class XFormInstanceSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelS
 
     class Meta:
         model = XFormInstanceSQL
+        fields = '__all__'
 
 
 class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
@@ -118,6 +119,7 @@ class CommCareCaseSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSe
 
     class Meta:
         model = CommCareCaseSQL
+        fields = '__all__'
 
 
 class CaseAttachmentSQLSerializer(serializers.ModelSerializer):

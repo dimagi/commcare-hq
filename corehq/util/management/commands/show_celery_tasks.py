@@ -12,14 +12,13 @@ class Command(BaseCommand):
     Example:
     python manage.py show_celery_tasks celery@hqcelery0.internal-va.commcarehq.org_main active
     """
-    args = '<worker name> <task state>'
-    help = ''
 
-    def handle(self, *args, **options):
-        if len(args) != 2:
-            raise CommandError("usage: python manage.py show_celery_tasks <worker name> <task state>")
+    def add_arguments(self, parser):
+        parser.add_argument('worker_name')
+        parser.add_argument('task_state')
 
+    def handle(self, worker_name, task_state, **options):
         try:
-            print_tasks(args[0], args[1])
+            print_tasks(worker_name, task_state)
         except InvalidTaskTypeError as e:
             raise CommandError(str(e))

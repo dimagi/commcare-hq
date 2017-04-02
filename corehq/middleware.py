@@ -4,8 +4,9 @@ import mimetypes
 import os
 import datetime
 from django.conf import settings
+from django.core.exceptions import MiddlewareNotUsed
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib.auth.views import logout as django_logout
 
 from corehq.apps.domain.models import Domain
@@ -109,7 +110,7 @@ class TimeoutMiddleware(object):
                                   for domain in couch_user.get_domains())
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return
 
         secure_session = request.session.get('secure_session')
@@ -167,3 +168,30 @@ class NoCacheMiddleware(object):
     @staticmethod
     def _explicitly_marked_safe(response):
         return getattr(response, '_always_allow_browser_caching', False)
+
+
+class SentryContextMiddleware(object):
+    """Add details to Sentry context.
+    Should be placed after 'corehq.apps.users.middleware.UsersMiddleware'
+    """
+    def __init__(self):
+        try:
+            from raven.contrib.django.raven_compat.models import client
+        except ImportError:
+            raise MiddlewareNotUsed
+
+        if not getattr(settings, 'SENTRY_CONFIGURED', None):
+            raise MiddlewareNotUsed
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        from raven.contrib.django.raven_compat.models import client
+
+        if getattr(request, 'couch_user', None):
+            client.extra_context({
+                'couch_user_id': request.couch_user.get_id
+            })
+
+        if getattr(request, 'domain', None):
+            client.tags_context({
+                'domain': request.domain
+            })

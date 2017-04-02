@@ -16,7 +16,7 @@ from corehq.pillows.xform import (
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup
 from pillowtop.es_utils import initialize_index_and_mapping
-from testapps.test_pillowtop.utils import process_kafka_changes, process_couch_changes
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 
 class XFormPillowTest(TestCase):
@@ -56,8 +56,8 @@ class XFormPillowTest(TestCase):
         self.assertEqual(1, results.total)
 
         # soft delete the form
-        with process_kafka_changes('XFormToElasticsearchPillow'):
-            with process_couch_changes('DefaultChangeFeedPillow'):
+        with process_pillow_changes('XFormToElasticsearchPillow'):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
                 FormAccessors(self.domain).soft_delete_forms([form.form_id])
         self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
 
@@ -66,8 +66,8 @@ class XFormPillowTest(TestCase):
         self.assertEqual(0, results.total)
 
     def _create_form_and_sync_to_es(self):
-        with process_kafka_changes('XFormToElasticsearchPillow'):
-            with process_couch_changes('DefaultChangeFeedPillow'):
+        with process_pillow_changes('XFormToElasticsearchPillow'):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
                 metadata = TestFormMetadata(domain=self.domain)
                 form = get_form_ready_to_save(metadata, is_db_test=True)
                 form_processor = FormProcessorInterface(domain=self.domain)

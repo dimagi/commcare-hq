@@ -1,6 +1,7 @@
 from collections import namedtuple
 
 from django.test import SimpleTestCase, TestCase
+from mock import MagicMock
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
@@ -193,10 +194,18 @@ class TestTreeUtils(SimpleTestCase):
         self.assertEqual(set(to_validator('c')), set(['c']))
 
 
+class MockLocationStub(LocationStub):
+    def lookup_old_collection_data(self, old_collection):
+        try:
+            return super(MockLocationStub, self).lookup_old_collection_data(old_collection)
+        except AttributeError:
+            # This will happen if the LocationStub is not new and an old_collection is not given
+            self.db_object = MagicMock()
+
 def get_validator(location_types, locations, old_collection=None):
     validator = LocationTreeValidator(
         [LocationTypeStub(*loc_type) for loc_type in location_types],
-        [LocationStub(*loc) for loc in locations],
+        [MockLocationStub(*loc) for loc in locations],
         old_collection=old_collection
     )
     return validator
@@ -220,7 +229,6 @@ def make_collection(types, locations):
         custom_data_validator=None,
         domain_name='location-bulk-management',
     )
-
 
 class TestTreeValidator(SimpleTestCase):
 
@@ -361,6 +369,7 @@ class TestBulkManagement(TestCase):
 
     @classmethod
     def as_pairs(cls, tree):
+        # returns list of (site_code, parent_code) tuples
         pairs = []
         for l in tree:
             code = l[1]
@@ -914,4 +923,47 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(swap_parents))
+        self.assertCouchSync()
+
+    def test_custom_data(self):
+        tree = [
+            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, {}, 0),
+            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'b': u'test'}, {}, 0),
+        ]
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            tree
+        )
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(tree))
+
+        locations = SQLLocation.objects.all()
+        self.assertEqual(locations[0].metadata, {u'a': u'1'})  # test that ints are coerced to strings
+        self.assertEqual(locations[1].metadata, {u'b': u'test'})
+        self.assertCouchSync()
+
+    def test_case_sensitivity(self):
+        upper_case = [
+            ('State 1', 'S1', 'state', '', '', False) + extra_stub_args,
+            ('State 2', 'S2', 'state', '', '', False) + extra_stub_args,
+            ('County 11', 'C1', 'county', 's1', '', False) + extra_stub_args,
+            ('County 21', 'C2', 'county', 's2', '', False) + extra_stub_args,
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            upper_case,
+        )
+
+        lower_case = [
+            ('State 1', 'S1'.lower(), 'state', '', '', False) + extra_stub_args,
+            ('State 2', 'S2'.lower(), 'state', '', '', False) + extra_stub_args,
+            ('County 11', 'C1'.lower(), 'county', 's1', '', False) + extra_stub_args,
+            ('County 21', 'C2'.lower(), 'county', 's2', '', False) + extra_stub_args,
+        ]
+
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(lower_case))
         self.assertCouchSync()

@@ -1,21 +1,24 @@
+from __future__ import print_function
 import json
-from optparse import make_option
+
 from django.core.management import BaseCommand, CommandError
 from pillowtop import get_pillow_by_name
 
 
 class Command(BaseCommand):
-    args = 'filename'
     help = ("Update the pillow sequence IDs based on a passed in file")
-    option_list = (
-        make_option('--noinput',
-                    action='store_true',
-                    dest='noinput',
-                    default=False,
-                    help="Disable interactive mode"),
-    )
 
-    def handle(self, filename, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('filename')
+        parser.add_argument(
+            '--noinput',
+            action='store_true',
+            dest='noinput',
+            default=False,
+            help="Disable interactive mode",
+        )
+
+    def handle(self, filename, **options):
         with open(filename) as f:
             checkpoint_map = json.loads(f.read())
 
@@ -31,6 +34,6 @@ class Command(BaseCommand):
             )
             if not options['noinput'] and \
                     raw_input("{} Type ['y', 'yes'] to continue.\n".format(msg)) not in ['y', 'yes']:
-                print 'skipped'
+                print('skipped')
                 continue
             pillow.checkpoint.update_to(checkpoint_to_set)

@@ -67,7 +67,7 @@ def generate_for_all_outcomes(slug, filters):
             '',
             CountColumn(
                 'doc_id',
-                filters=filters,
+                filters=filters + [RawFilter("treatment_outcome IS NOT NULL")],
                 alias='total_%s' % slug
             )
         )
@@ -88,6 +88,18 @@ def generate_for_all_outcomes(slug, filters):
 
 
 class TreatmentOutcomeSqlData(EnikshaySqlData):
+
+    @property
+    def date_property(self):
+        return 'treatment_initiation_date'
+
+    @property
+    def filters(self):
+        filters = super(TreatmentOutcomeSqlData, self).filters
+        filters.append(
+            RawFilter('episode_type_patient = 1')
+        )
+        return filters
 
     @property
     def columns(self):

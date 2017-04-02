@@ -12,6 +12,7 @@ from custom.ilsgateway.tanzania.reminders import TEST_HANDLER_HELP, TEST_HANDLER
     DELIVERY_REMINDER_FACILITY, DELIVERY_REMINDER_DISTRICT, DELIVERY_LATE_DISTRICT, TEST_HANDLER_CONFIRM, \
     REMINDER_MONTHLY_RANDR_SUMMARY, reports, REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
     SOH_THANK_YOU, LOSS_ADJUST_HELP
+from custom.ilsgateway.utils import send_translated_message
 
 
 class MessageInitiatior(KeywordHandler):
@@ -28,10 +29,7 @@ class MessageInitiatior(KeywordHandler):
 
     def send_message(self, sql_location, message, **kwargs):
         for user in get_users_by_location_id(self.domain, sql_location.location_id):
-            verified_number = user.get_verified_number()
-            if verified_number:
-                with localize(user.get_language_code()):
-                    send_sms_to_verified_number(verified_number, message % kwargs)
+            send_translated_message(user, message, **kwargs)
 
     def handle(self):
         if len(self.args) < 2:

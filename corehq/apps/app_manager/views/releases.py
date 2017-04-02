@@ -6,6 +6,8 @@ from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
 from django.views.generic import View
 from django.utils.decorators import method_decorator
+
+from corehq.apps.app_manager.util import get_app_manager_template
 from django_prbac.decorators import requires_privilege
 from django.contrib import messages
 from django.shortcuts import render
@@ -31,14 +33,14 @@ from corehq.apps.style.decorators import use_angular_js
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.timezones.utils import get_timezone_for_user
 
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, get_latest_build_id
 from corehq.apps.app_manager.models import BuildProfile
 from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
 from corehq.apps.users.models import CommCareUser
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
-from corehq.apps.app_manager.exceptions import ModuleIdMissingException
+from corehq.apps.app_manager.exceptions import ModuleIdMissingException, ModuleNotFoundException
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.download import source_files
@@ -91,20 +93,26 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
-def release_manager(request, domain, app_id):
-    from corehq.apps.app_manager.views.view_generic import view_generic
-    return view_generic(request, domain, app_id=app_id, release_manager=True)
-
-
 @require_deploy_apps
-def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/releases.html'):
+def releases_ajax(request, domain, app_id):
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/partials/releases.html",
+        "app_manager/v2/partials/releases.html",
+    )
+    context = get_releases_context(request, domain, app_id)
+    response = render(request, template, context)
+    response.set_cookie('lang', encode_if_unicode(context['lang']))
+    return response
+
+
+def get_releases_context(request, domain, app_id):
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
 
     context.update({
-        'intro_only': len(app.modules) == 0,
         'release_manager': True,
         'can_send_sms': can_send_sms,
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
@@ -115,8 +123,11 @@ def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/rel
         'build_profile_access': build_profile_access and not toggles.APP_MANAGER_V2.enabled(domain),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
+        'latest_build_id': get_latest_build_id(domain, app_id)
     })
     if not app.is_remote_app():
+        if toggles.APP_MANAGER_V2.enabled(domain) and len(app.modules) == 0:
+            context.update({'intro_only': True})
         # Multimedia is not supported for remote applications at this time.
         try:
             multimedia_state = app.check_media_state()
@@ -125,9 +136,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/rel
             })
         except ReportConfigurationNotFoundError:
             pass
-    response = render(request, template, context)
-    response.set_cookie('lang', encode_if_unicode(context['lang']))
-    return response
+    return context
 
 
 @login_and_domain_required
@@ -208,9 +217,15 @@ def save_copy(request, domain, app_id):
         # Set if build is supported for Java Phones
         j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
         copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
+
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/partials/build_errors.html",
+        "app_manager/v2/partials/build_errors.html",
+    )
     return json_response({
         "saved_app": copy,
-        "error_html": render_to_string('app_manager/v1/partials/build_errors.html', {
+        "error_html": render_to_string(template, {
             'request': request,
             'app': get_app(domain, app_id),
             'build_errors': errors,
@@ -226,10 +241,7 @@ def _track_build_for_app_preview(domain, couch_user, app_id, message):
         'domain': domain,
         'app_id': app_id,
         'is_dimagi': couch_user.is_dimagi,
-        'preview_app_enabled': (
-            toggles.PREVIEW_APP.enabled(domain) or
-            toggles.PREVIEW_APP.enabled(couch_user.username)
-        )
+        'preview_app_enabled': True,
     })
 
 
@@ -282,7 +294,12 @@ def odk_install(request, domain, app_id, with_media=False):
                            params={'profile': build_profile_id}),
         "profile_url": profile_url,
     }
-    return render(request, "app_manager/v1/odk_install.html", context)
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/odk_install.html",
+        "app_manager/v2/odk_install.html",
+    )
+    return render(request, template, context)
 
 
 def odk_qr_code(request, domain, app_id):
@@ -376,6 +393,11 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
+        self.template_name = get_app_manager_template(
+            self.domain,
+            self.template_name,
+            'app_manager/v2/app_diff.html',
+        )
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
 
     @property

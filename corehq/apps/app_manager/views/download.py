@@ -5,18 +5,21 @@ from StringIO import StringIO
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
-from django.core.urlresolvers import RegexURLResolver, Resolver404
+from django.urls import RegexURLResolver, Resolver404
 from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions, get_app
 from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
-from corehq.apps.app_manager.util import add_odk_profile_after_build
+from corehq.apps.app_manager.util import add_odk_profile_after_build, \
+    get_app_manager_template
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
+from corehq.apps.app_manager.tasks import make_async_build
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.soft_assert import soft_assert
@@ -37,6 +40,8 @@ def download_odk_profile(request, domain, app_id):
     See ApplicationBase.create_profile
 
     """
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile(is_odk=True),
         content_type="commcare/profile"
@@ -45,6 +50,8 @@ def download_odk_profile(request, domain, app_id):
 
 @safe_download
 def download_odk_media_profile(request, domain, app_id):
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True),
         content_type="commcare/profile"
@@ -58,7 +65,8 @@ def download_suite(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        request.app.set_form_versions(None)
+        previous_version = request.app.get_latest_app(released_only=False)
+        request.app.set_form_versions(previous_version)
     return HttpResponse(
         request.app.create_suite()
     )
@@ -71,7 +79,8 @@ def download_media_suite(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        request.app.set_media_versions(None)
+        previous_version = request.app.get_latest_app(released_only=False)
+        request.app.set_media_versions(previous_version)
     return HttpResponse(
         request.app.create_media_suite()
     )
@@ -309,6 +318,8 @@ def download_profile(request, domain, app_id):
     See ApplicationBase.create_profile
 
     """
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile()
     )
@@ -316,18 +327,26 @@ def download_profile(request, domain, app_id):
 
 @safe_download
 def download_media_profile(request, domain, app_id):
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile(with_media=True)
     )
 
 
 @safe_download
-def download_index(request, domain, app_id, template="app_manager/v1/download_index.html"):
+def download_index(request, domain, app_id):
     """
     A landing page, mostly for debugging, that has links the jad and jar as well as
     all the resource files that will end up zipped into the jar.
 
     """
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/download_index.html",
+        "app_manager/v2/download_index.html",
+    )
+
     files = []
     try:
         files = source_files(request.app)
@@ -343,10 +362,17 @@ def download_index(request, domain, app_id, template="app_manager/v1/download_in
             ),
             extra_tags='html'
         )
+    built_versions = get_all_built_app_ids_and_versions(domain, request.app.copy_of)
     return render(request, template, {
         'app': request.app,
         'files': [{'name': f[0], 'source': f[1]} for f in files],
         'supports_j2me': request.app.build_spec.supports_j2me(),
+        'built_versions': [{
+            'app_id': app_id,
+            'build_id': build_id,
+            'version': version,
+            'comment': comment,
+        } for app_id, build_id, version, comment in built_versions]
     })
 
 
@@ -361,18 +387,25 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     lang, langs = get_langs(request, app)
 
     if ajax and "blank form" in [error.get('type') for error in errors]:
-        response_html = render_to_string('app_manager/v1/partials/create_form_prompt.html')
+        response_html = ("" if toggles.APP_MANAGER_V2.enabled(domain)
+                         else render_to_string('app_manager/v1/partials/create_form_prompt.html'))
     else:
-        response_html = render_to_string('app_manager/v1/partials/build_errors.html', {
-            'request': request,
-            'app': app,
-            'form': form,
-            'build_errors': errors,
-            'not_actual_build': True,
-            'domain': domain,
-            'langs': langs,
-            'lang': lang
-        })
+        response_html = render_to_string(
+            get_app_manager_template(
+                domain,
+                'app_manager/v1/partials/build_errors.html',
+                'app_manager/v2/partials/build_errors.html',
+            ), {
+                'request': request,
+                'app': app,
+                'form': form,
+                'build_errors': errors,
+                'not_actual_build': True,
+                'domain': domain,
+                'langs': langs,
+                'lang': lang
+            }
+        )
 
     if ajax:
         return json_response({

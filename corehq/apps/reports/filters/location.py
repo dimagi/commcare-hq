@@ -2,9 +2,8 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation
 from .users import ExpandedMobileWorkerFilter
 from .api import EmwfOptionsView
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy
-from corehq import toggles
 
 
 class LocationGroupFilter(ExpandedMobileWorkerFilter):
@@ -53,12 +52,7 @@ class LocationGroupFilterOptions(EmwfOptionsView):
 
     @property
     def data_sources(self):
-        if toggles.LOCATIONS_IN_REPORTS.enabled(self.domain):
-            return [
-                (self.get_groups_size, self.get_groups),
-                (self.get_locations_size, self.get_locations),
-            ]
-        else:
-            return [
-                (self.get_groups_size, self.get_groups),
-            ]
+        return [
+            (self.get_groups_size, self.get_groups),
+            (self.get_locations_size, self.get_locations),
+        ]

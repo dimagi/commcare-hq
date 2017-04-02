@@ -1,4 +1,4 @@
-/* globals django */
+/* globals django, COMMCAREHQ, uploaders */ // global uploaders is not great, should be fixed
 (function () {
 
 /**
@@ -16,20 +16,24 @@ var MapItem = function(item, index, mappingContext){
     this.editing = ko.observable(false);
 
     this.cssId = ko.computed(function(){
-        return makeSafeForCSS(this.key());
+        return makeSafeForCSS(this.key()) || '_blank_';
     }, this);
 
 
     // util function to generate icon-name of the format "module<module_id>_list_icon_<property_name>_<hash_of_item.key>"
     this.generateIconPath = function(){
-        var randomFourDigits = Math.floor(Math.random()*9000) + 1000;;
+        var randomFourDigits = Math.floor(Math.random()*9000) + 1000;
         var iconPrefix =  "jr://file/commcare/image/module" + mappingContext.module_id + "_list_icon_" + mappingContext.property_name.val() + "_";
         return iconPrefix + randomFourDigits + ".png";
     };
 
 
     var app_manager = hqImport('app_manager/js/app_manager_media.js');
-    var uploaders = hqImport('#app_manager/v1/partials/nav_menu_media_js_common.html');
+    if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+        uploaders = hqImport('#app_manager/v2/partials/nav_menu_media_js_common.html');
+    } else {
+        uploaders = hqImport('#app_manager/v1/partials/nav_menu_media_js_common.html');
+    }
     // attach a media-manager if item.value is a file-path to icon
     if (mappingContext.values_are_icons()) {
         var actualPath = item.value[mappingContext.lang];

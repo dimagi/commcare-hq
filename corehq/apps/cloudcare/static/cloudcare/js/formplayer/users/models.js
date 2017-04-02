@@ -11,6 +11,17 @@ FormplayerFrontend.module("Users.Models", function(Models, FormplayerFrontend, B
             }.bind(this));
         },
 
+        isMobileWorker: function() {
+            return this.username.endsWith('commcarehq.org');
+        },
+
+        getDisplayUsername: function() {
+            if (this.isMobileWorker()) {
+                return this.username.split('@')[0];
+            }
+            return this.username;
+        },
+
         trackVersionChange: function(model) {
             window.analytics.workflow(
                 '[app-preview] App version changed',

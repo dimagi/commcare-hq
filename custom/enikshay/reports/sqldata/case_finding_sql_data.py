@@ -64,7 +64,7 @@ def generate_for_all_ranges(slug, filters):
             CountColumn(
                 'doc_id',
                 filters=filters + [
-                    RawFilter('age > %d' % (AGE_RANGES[-1][0] * DAYS_IN_YEARS)), type_filter
+                    RawFilter('age > %d' % AGE_RANGES[-1][0]), type_filter
                 ],
                 alias='%s_age_%d' % (slug, AGE_RANGES[-1][0])
             )
@@ -94,10 +94,22 @@ def diagnosis_filter(diagnosis, classification):
 class CaseFindingSqlData(EnikshaySqlData):
 
     @property
+    def filters(self):
+        filters = super(CaseFindingSqlData, self).filters
+        filters.append(RawFilter("episode_type = 'confirmed_tb'"))
+        return filters
+
+    @property
+    def date_property(self):
+        return 'date_of_diagnosis'
+
+    @property
     def columns(self):
         test_type_filter = [
             RawFilter("bacteriological_examination = 1")
         ]
+
+        filters_without_episode_type = self.filters[:-1]
 
         return (
             generate_for_all_patient_types(
@@ -124,7 +136,9 @@ class CaseFindingSqlData(EnikshaySqlData):
                     '',
                     CountColumn(
                         'doc_id',
-                        filters=self.filters + test_type_filter + [RawFilter("episode_type = 'presumptive_tb'")],
+                        filters=filters_without_episode_type + test_type_filter + [
+                            RawFilter("bacteriological_test_episode_type = 'presumptive_tb'")
+                        ],
                         alias='patients_with_presumptive_tb'
                     )
                 ),
@@ -133,9 +147,9 @@ class CaseFindingSqlData(EnikshaySqlData):
                     CountColumn(
                         'doc_id',
                         filters=(
-                            self.filters + test_type_filter + [
-                                RawFilter("result_of_test = 'tb_detected'"),
-                                RawFilter("episode_type = 'presumptive_tb'")
+                            filters_without_episode_type + test_type_filter + [
+                                RawFilter("result_of_bacteriological_test = 'tb_detected'"),
+                                RawFilter("bacteriological_test_episode_type = 'presumptive_tb'")
                             ]
                         ),
                         alias='patients_with_positive_tb'

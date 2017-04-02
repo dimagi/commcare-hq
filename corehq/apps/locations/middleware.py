@@ -1,4 +1,13 @@
+from django.utils.translation import ugettext_lazy
+from corehq.apps.hqwebapp.views import no_permissions
 from .permissions import is_location_safe, location_restricted_response
+
+RESTRICTED_USER_UNASSIGNED_MSG = ugettext_lazy("""
+Your user role allows you to access data based on your assigned location in the
+organization hierarchy. You do not currently have an assigned location, and
+will be unable to access CommCareHQ until that is corrected. Please contact
+your project administrator to be assigned to a location.
+""")
 
 
 class LocationAccessMiddleware(object):
@@ -25,8 +34,7 @@ class LocationAccessMiddleware(object):
             request.can_access_all_locations = True
         else:
             request.can_access_all_locations = False
-            if (
-                not is_location_safe(view_fn, view_args, view_kwargs)
-                or not user.get_sql_location(domain)
-            ):
+            if not is_location_safe(view_fn, view_args, view_kwargs):
                 return location_restricted_response(request)
+            elif not user.get_sql_location(domain):
+                return no_permissions(request, message=RESTRICTED_USER_UNASSIGNED_MSG)

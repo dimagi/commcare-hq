@@ -1,4 +1,5 @@
 from django.test import TestCase
+
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.case_importer.const import ImportErrors
@@ -41,21 +42,15 @@ class ImporterTest(TestCase):
 
     def _config(self, col_names, search_column=None, case_type=None,
                 search_field='case_id', create_new_cases=True):
-        col_names = col_names
-        case_type = case_type or self.default_case_type
-        search_column = search_column or col_names[0]
         return ImporterConfig(
             couch_user_id=self.couch_user._id,
-            case_type=case_type,
+            case_type=case_type or self.default_case_type,
             excel_fields=col_names,
             case_fields=[''] * len(col_names),
             custom_fields=col_names,
-            search_column=search_column,
+            search_column=search_column or col_names[0],
             search_field=search_field,
-            named_columns=True,
             create_new_cases=create_new_cases,
-            key_column='',
-            value_column='',
         )
 
     @run_with_all_backends
@@ -401,4 +396,4 @@ class ImporterTest(TestCase):
 
 
 def make_worksheet_wrapper(*rows):
-    return WorksheetWrapper(make_worksheet(rows), True)
+    return WorksheetWrapper(make_worksheet(rows))

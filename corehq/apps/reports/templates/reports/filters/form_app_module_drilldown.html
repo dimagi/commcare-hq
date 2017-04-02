@@ -79,8 +79,8 @@
 <script>
 
  $.when(
-     $.getScript("{% static 'reports/ko/report_filter.drilldown_options.js' %}"),
-     $.getScript("{% static 'reports/ko/report_filter.advanced_forms_options.js' %}")
+     $.getScript("{% static 'reports/js/report_filter.drilldown_options.js' %}"),
+     $.getScript("{% static 'reports/js/report_filter.advanced_forms_options.js' %}")
  ).done(function () {
 
      // This is copied from drilldown_options.html because the order matters

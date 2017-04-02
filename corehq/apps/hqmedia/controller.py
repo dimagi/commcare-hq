@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext_noop
 
 
@@ -108,5 +108,27 @@ class MultimediaVideoUploadController(BaseMultimediaFileUploadController):
             {
                 'description': 'Video',
                 'extensions': '*.3gp',
+            },
+        ]
+
+
+class MultimediaHTMLUploadController(BaseMultimediaFileUploadController):
+    media_type = ugettext_noop("text")
+
+    existing_file_template = "hqmedia/uploader/preview_html_single.html"
+
+    @property
+    def upload_params(self):
+        return {
+            'path': 'jr://file/commcare/text/%s.html' % self.slug,
+            'replace_attachment': True,
+        }
+
+    @property
+    def supported_files(self):
+        return [
+            {
+                'description': 'HTML',
+                'extensions': '*.htm;*.html',
             },
         ]

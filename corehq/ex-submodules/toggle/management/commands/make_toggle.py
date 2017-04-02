@@ -1,17 +1,21 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from ...models import Toggle
 
 
 class Command(BaseCommand):
     help = "Makes a toggle."
-    args = "<slug> *<users>"
-    label = ""
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'slug',
+        )
+        parser.add_argument(
+            'usernames',
+            metavar='username',
+            nargs='*',
+        )
      
-    def handle(self, *args, **options):
-        if len(args) < 1:
-            raise CommandError('Have to specify a toggle slug.')
-        slug = args[0]
-        usernames = list(args[1:])
+    def handle(self, slug, usernames, **options):
         toggle = Toggle(slug=slug, enabled_users=usernames)
         toggle.save()
 

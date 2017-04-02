@@ -13,7 +13,6 @@ from corehq.apps.hqcase.dbaccessors import (
     get_open_case_ids,
     get_closed_case_ids,
     get_case_ids_in_domain_by_owner,
-    get_case_types_for_domain,
     get_cases_in_domain_by_external_id,
     get_deleted_case_ids_by_owner,
 )
@@ -188,10 +187,6 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_case_by_domain_hq_user_id(domain, user_id, case_type)
 
     @staticmethod
-    def get_case_types_for_domain(domain):
-        return get_case_types_for_domain(domain)
-
-    @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
         cases = get_cases_in_domain_by_external_id(domain, external_id)
         if case_type:
@@ -271,14 +266,9 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):
     try:
-        if issubclass(doc_class, BlobMixin):
-            doc = doc_class.get(doc_id)
-            resp = doc.fetch_attachment(attachment_id, stream=True)
-            content_type = doc.blobs[attachment_id].content_type
-        else:
-            resp = doc_class.get_db().fetch_attachment(doc_id, attachment_id, stream=True)
-            headers = resp.resp.headers
-            content_type = headers.get('Content-Type', None)
+        doc = doc_class.get(doc_id)
+        resp = doc.fetch_attachment(attachment_id, stream=True)
+        content_type = doc.blobs[attachment_id].content_type
     except ResourceNotFound:
         raise AttachmentNotFound(attachment_id)
 

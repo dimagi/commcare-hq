@@ -1,3 +1,0 @@
-<p>A referral must be tagged with a string representing the type of referral being made.</p>
-<p>In order to do this, you must choose a single- or multi-select question, the answer to which
-dictates which referral(s) will be opened.</p>

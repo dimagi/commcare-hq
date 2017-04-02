@@ -15,7 +15,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
-from corehq.apps.reminders.util import enqueue_reminder_directly, get_verified_number_for_recipient
+from corehq.apps.reminders.util import enqueue_reminder_directly, get_two_way_number_for_recipient
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.smsforms.app import submit_unfinished_form
@@ -27,7 +27,7 @@ from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
 from dimagi.utils.couch.database import iter_docs
-from django.db import models
+from django.db import models, transaction
 from string import Formatter
 
 
@@ -1169,7 +1169,7 @@ class CaseReminderHandler(Document):
         # Retrieve the corresponding verified number entries for all individual recipients
         verified_numbers = {}
         for r in recipients:
-            verified_numbers[r.get_id] = get_verified_number_for_recipient(r)
+            verified_numbers[r.get_id] = get_two_way_number_for_recipient(r)
         
         # Set the event initiation timestamp if we're not on any timeouts
         if reminder.callback_try_count == 0:
@@ -1292,6 +1292,9 @@ class CaseReminderHandler(Document):
             if reminder:
                 reminder.retire()
         else:
+            if self.recipient == RECIPIENT_USER and reminder and reminder.user_id is None:
+                reminder.user_id = case.modified_by
+
             start_condition_reached = case_matches_criteria(case, self.start_match_type, self.start_property, self.start_value)
             start, spawn, used_now = self.get_case_criteria_reminder_start_date_info(case, now)
             if not spawn:
@@ -1885,26 +1888,10 @@ class SurveyKeyword(Document):
 
     def is_structured_sms(self):
         return METHOD_STRUCTURED_SMS in [a.action for a in self.actions]
-
-    def deleted(self):
-        return self.doc_type != 'SurveyKeyword'
-
-    def retire(self):
-        self.doc_type += "-Deleted"
-        self.save()
     
     @property
     def get_id(self):
         return self._id
-    
-    @classmethod
-    def get_all(cls, domain):
-        return cls.view("reminders/survey_keywords",
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=True,
-            reduce=False,
-        ).all()
     
     @classmethod
     def get_keyword(cls, domain, keyword):
@@ -1915,7 +1902,7 @@ class SurveyKeyword(Document):
         ).one()
 
     @classmethod
-    def get_by_domain(cls, domain, limit=None, skip=None, include_docs=True):
+    def get_by_domain(cls, domain, limit=None, skip=None):
         extra_kwargs = {}
         if limit is not None:
             extra_kwargs['limit'] = limit
@@ -1925,7 +1912,7 @@ class SurveyKeyword(Document):
             'reminders/survey_keywords',
             startkey=[domain],
             endkey=[domain, {}],
-            include_docs=include_docs,
+            include_docs=True,
             reduce=False,
             **extra_kwargs
         ).all()
@@ -1933,6 +1920,10 @@ class SurveyKeyword(Document):
     def save(self, *args, **kwargs):
         self.clear_caches()
         return super(SurveyKeyword, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.clear_caches()
+        return super(SurveyKeyword, self).delete(*args, **kwargs)
 
     def clear_caches(self):
         self.domain_has_keywords.clear(SurveyKeyword, self.domain)

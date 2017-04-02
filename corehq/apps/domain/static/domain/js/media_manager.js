@@ -39,7 +39,11 @@ hqDefine('domain/js/media_manager.js', function () {
             }
         });
     };
-    return {
-        MediaManager: MediaManager
-    };
+
+    $(function () {
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
+        $('#update-media-sharing-settings').koApplyBindings(new MediaManager(
+            initial_page_data('media'), initial_page_data('licenses')
+        ));
+    });
 });

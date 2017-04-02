@@ -1,7 +1,8 @@
 from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
 
-from corehq.form_processor.exceptions import AccessRestricted
+from corehq.util.exceptions import AccessRestricted
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, CommCareCaseSQL, \
     CaseTransaction, XFormAttachmentSQL, CommCareCaseIndexSQL, CaseAttachmentSQL
 from corehq.util.test_utils import generate_cases
@@ -9,7 +10,7 @@ from corehq.util.test_utils import generate_cases
 DOMAIN = 'test-form-accessor'
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@use_sql_backend
 class RestrictedSQLAccessTests(SimpleTestCase):
     pass
 

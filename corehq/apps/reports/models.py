@@ -8,6 +8,8 @@ import json
 import logging
 from urllib import urlencode
 
+from django.core.exceptions import ValidationError
+from django.db import models
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
@@ -15,6 +17,7 @@ from django.conf import settings
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from jsonfield import JSONField
 
 from sqlalchemy.util import immutabledict
 
@@ -59,6 +62,7 @@ from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
@@ -682,9 +686,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         `report_slug` instead of `config_ids`.
         """
         if self.config_ids:
-            configs = ReportConfig.view('_all_docs', keys=self.config_ids,
-                include_docs=True).all()
-            configs = [c for c in configs if not hasattr(c, 'deleted')]
+            configs = []
+            for config_doc in iter_docs(ReportConfig.get_db(), self.config_ids):
+                config = ReportConfig.wrap(config_doc)
+                if not hasattr(config, 'deleted'):
+                    configs.append(config)
 
             def _sort_key(config_id):
                 if config_id in self.config_ids:
@@ -791,10 +797,12 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             for email in emails:
                 body = render_full_report_notification(None, content, email, self).content
                 send_html_email_async.delay(
-                    title, email, body, email_from=settings.DEFAULT_FROM_EMAIL,
-                    file_attachments=excel_files, ga_track=True,
-                    ga_tracking_info={'cd4': self.domain,
-                                      'cd10': ', '.join(slugs)})
+                    title, email, body,
+                    email_from=settings.DEFAULT_FROM_EMAIL,
+                    file_attachments=excel_files,
+                    ga_track=True,
+                    ga_tracking_info={'cd4': self.domain, 'cd10': ', '.join(slugs)},
+                )
 
     def remove_recipient(self, email):
         try:
@@ -1097,3 +1105,54 @@ class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfigurat
     def clear_caches(self):
         super(HQGroupExportConfiguration, self).clear_caches()
         self.by_domain.clear(self.__class__, self.domain)
+
+
+def ordering_config_validator(value):
+
+    error = ValidationError(
+        _('The config format is invalid'),
+        params={'value': value}
+    )
+
+    if not isinstance(value, list):
+        raise error
+    for group in value:
+        if not isinstance(group, list) or len(group) != 2:
+            raise error
+        if not isinstance(group[0], basestring):
+            raise error
+        if not isinstance(group[1], list):
+            raise error
+        for report in group[1]:
+            if not isinstance(report, basestring):
+                raise error
+
+
+class ReportsSidebarOrdering(models.Model):
+    domain = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        unique=True
+    )
+    # Example config value:
+    # [
+    #     ["Adherence", [
+    #         "DynamicReport7613ac1402e2c41db782526e9c43e040",
+    #         "DynamicReport1233ac1402e2c41db782526e9c43e040"
+    #     ]],
+    #     ["Test Results", [
+    #         "DynamicReport4563ac1402e2c41db782526e9c43e040",
+    #         "DynamicReportmy-static-ucr-id"
+    #     ]]
+    # ]
+    config = JSONField(
+        validators=[ordering_config_validator],
+        default=list,
+        help_text=(
+            "An array of arrays. Each array represents a heading in the sidebar navigation. "
+            "The first item in each array is a string, which will be the title of the heading. The second item in "
+            "the array is another array, each item of which is the name of a report class. Each of these reports "
+            "will be listed under the given heading in the sidebar nav."
+        )
+    )

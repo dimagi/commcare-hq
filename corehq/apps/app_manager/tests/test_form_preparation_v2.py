@@ -1,6 +1,6 @@
 # coding=utf-8
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
-from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.exceptions import XFormException, XFormValidationError
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
@@ -18,7 +18,7 @@ from corehq.apps.app_manager.models import (
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.util import new_careplan_module
-from corehq.apps.app_manager.xform import XForm, find_missing_instances
+from corehq.apps.app_manager.xform import XForm
 from mock import patch
 
 
@@ -26,7 +26,8 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'form_preparation_v2'
 
     def setUp(self):
-        self.app = Application.new_app('domain', 'New App')
+        self.domain = 'domain'
+        self.app = Application.new_app(self.domain, 'New App')
         self.app.version = 3
         self.module = self.app.add_module(Module.new_module('New Module', lang='en'))
         self.form = self.app.new_form(0, 'New Form', lang='en')
@@ -103,9 +104,11 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
 
     def test_instance_check(self):
         xml = self.get_xml('missing_instances')
-        missing_instances, missing_unknown_instances = find_missing_instances(XForm(xml))
-        self.assertEqual({'ledgerdb'}, missing_instances)
-        self.assertEqual({'casebd', 'custom2'}, missing_unknown_instances)
+        with self.assertRaises(XFormValidationError) as cm:
+            XForm(xml).add_missing_instances(self.domain)
+        exception_message = str(cm.exception)
+        self.assertIn('casebd', exception_message)
+        self.assertIn('custom2', exception_message)
 
 
 class SubcaseRepeatTest(SimpleTestCase, TestXmlMixin):

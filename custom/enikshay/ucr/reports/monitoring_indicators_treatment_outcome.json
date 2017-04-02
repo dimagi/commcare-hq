@@ -1,0 +1,243 @@
+{
+    "domains": [
+        "enikshay-test",
+        "enikshay-test-test",
+        "enikshay",
+        "enikshay-test-2",
+        "enikshay-test-3",
+        "enikshay-nikshay-migration-test",
+        "enikshay-domain-copy-test",
+        "enikshay-aks-audit",
+        "np-migration-3"
+    ],
+    "server_environment": [
+        "softlayer"
+    ],
+    "data_source_table": "episode",
+    "report_id": "monitoring_indicators_treatment_outcome",
+    "config": {
+        "description": "",
+        "title": "Monitoring Indicators - Treatment Outcome",
+        "sort_expression": [],
+        "visible": true,
+        "configured_charts": [],
+        "aggregation_columns": [],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "datetime",
+                "required": false,
+                "display": "Date of Diagnosis",
+                "field": "date_of_diagnosis",
+                "slug": "date_of_diagnosis",
+                "type": "date"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location"
+                },
+                "display": "Location"
+            }
+        ],
+        "columns": [
+            {
+                "display": "Proportion of TB patients declared Cured",
+                "type": "field",
+                "field": "cured",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of TB patients declared Treatment completed",
+                "type": "field",
+                "field": "treatment_complete",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of TB patients declared Successfully treated",
+                "type": "field",
+                "field": "successfully_treated",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of TB patients declared Died",
+                "type": "field",
+                "field": "died",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of TB patients declared Treatment Failure",
+                "type": "field",
+                "field": "failure",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of TB patients declared Lost to follow up",
+                "type": "field",
+                "field": "loss_to_follow_up",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of TB patients declared Regimen changed",
+                "type": "field",
+                "field": "regimen_changed",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of TB patients declared Not evaluated",
+                "type": "field",
+                "field": "not_evaluated",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of HIV-TB patients declared Cured",
+                "type": "field",
+                "field": "hiv_cured",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of HIV-TB patients declared Treatment completed",
+                "type": "field",
+                "field": "hiv_treatment_complete",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of HIV-TB patients declared Successfully treated",
+                "type": "field",
+                "field": "hiv_successfully_treated",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of HIV-TB patients declared Died",
+                "type": "field",
+                "field": "hiv_died",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of HIV-TB patients declared Treatment Failure",
+                "type": "field",
+                "field": "hiv_failure",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of HIV-TB patients declared Lost to follow up",
+                "type": "field",
+                "field": "hiv_loss_to_follow_up",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of HIV-TB patients declared Regimen changed",
+                "type": "field",
+                "field": "hiv_regimen_changed",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Proportion of HIV-TB patients declared Not evaluated",
+                "type": "field",
+                "field": "hiv_not_evaluated",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            }
+        ]
+    }
+}

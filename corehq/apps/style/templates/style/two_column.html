@@ -5,7 +5,7 @@
 {% block content %}
     {% block page_breadcrumbs %}{% endblock %}
     <div class="container-fluid">
-        <div class="row">
+        <div class="row {% block page_row_classes %}{% endblock %}">
             <div id="hq-sidebar" class="{% block page_sidebar_classes %}col-xs-4 col-sm-3 col-lg-2{% endblock %} col-hq-sidebar nav-hq-sidebar">
                 {% block page_navigation %}{% format_sidebar %}{% endblock page_navigation %}
             </div>

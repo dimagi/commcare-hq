@@ -7,13 +7,12 @@
     <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
     <script src="https://js.stripe.com/v2/"></script>
     <script
-            src="{% static 'accounting/ko/accounting.stripe_card_manager.js' %}"></script>
+            src="{% static 'accounting/js/accounting.stripe_card_manager.js' %}"></script>
 {% endblock %}
 
 
 {% block js-inline %}{{ block.super }}
     <script>
-        hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
         $('a.breadcrumb-2').click(function (e) {
             e.preventDefault();
             var url = $(this).attr('href');

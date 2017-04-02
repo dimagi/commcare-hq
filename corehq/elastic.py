@@ -21,23 +21,25 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 
 
-def get_es_new(**kwargs):
+def get_es_new():
     """
     Get a handle to the configured elastic search DB.
     Returns an elasticsearch.Elasticsearch instance.
     """
-    es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
-    if not es_hosts:
-        es_hosts = [settings.ELASTICSEARCH_HOST]
+    if not getattr(get_es_new, '_es_client', None):
+        es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
+        if not es_hosts:
+            es_hosts = [settings.ELASTICSEARCH_HOST]
 
-    hosts = [
-        {
-            'host': host,
-            'port': settings.ELASTICSEARCH_PORT,
-        }
-        for host in es_hosts
-    ]
-    return Elasticsearch(hosts, **kwargs)
+        hosts = [
+            {
+                'host': host,
+                'port': settings.ELASTICSEARCH_PORT,
+            }
+            for host in es_hosts
+        ]
+        get_es_new._es_client = Elasticsearch(hosts)
+    return get_es_new._es_client
 
 
 def doc_exists_in_es(index_info, doc_id_or_dict):
@@ -52,7 +54,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     return get_es_new().exists(index_info.index, index_info.type, doc_id)
 
 
-def send_to_elasticsearch(index_name, doc, delete=False):
+def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
     """
     Utility method to update the doc in elasticsearch.
     Duplicates the functionality of pillowtop but can be called directly.
@@ -73,6 +75,7 @@ def send_to_elasticsearch(index_name, doc, delete=False):
         except_on_failure=True,
         update=doc_exists,
         delete=delete,
+        es_merge_update=es_merge_update,
     )
 
 EsMeta = namedtuple('EsMeta', 'index, type')
@@ -283,6 +286,7 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
 
 
 SIZE_LIMIT = 1000000
+SCROLL_PAGE_SIZE_LIMIT = 1000
 
 
 def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_at=None, size=None, dict_only=False,

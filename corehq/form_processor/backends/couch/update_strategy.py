@@ -14,7 +14,6 @@ from casexml.apps.case.util import primary_actions
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from django.utils.translation import ugettext as _
 from corehq.form_processor.update_strategy_base import UpdateStrategy
-from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import StringProperty
@@ -217,6 +216,10 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
                         }
                     )
 
+        # Clear indices and attachments
+        self.case.indices = []
+        self.case.case_attachments = {}
+
         # already deleted means it was explicitly set to "deleted",
         # as opposed to getting set to that because it has no actions
         already_deleted = self.case.doc_type == 'CommCareCase-Deleted' and primary_actions(self.case)
@@ -354,29 +357,19 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             if v.is_present:
                 update_attachments[k] = v
 
-        if self.case._attachments:
-            attachment_builder = CouchAttachmentsBuilder(
-                self.case['_attachments'])
-        else:
-            attachment_builder = CouchAttachmentsBuilder()
-
         for k, v in attachment_action.attachments.items():
             # grab xform_attachments
             # copy over attachments from form onto case
             update_attachments[k] = v
             if v.is_present:
-                #fetch attachment from xform
+                # add attachment from xform
                 identifier = v.identifier
-                attach = attach_dict[identifier]
-                attachment_builder.add(name=k, content=attach,
-                                       content_type=v.server_mime)
+                content = attach_dict[identifier]
+                self.case.deferred_put_attachment(
+                    content, k, content_type=v.server_mime)
             else:
-                try:
-                    attachment_builder.remove(k)
-                except KeyError:
-                    pass
+                self.case.deferred_delete_attachment(k)
                 del update_attachments[k]
-        self.case._attachments = attachment_builder.to_json()
         self.case.case_attachments = update_attachments
 
     def _apply_close_action(self, close_action):
@@ -393,12 +386,20 @@ def _action_sort_key_function(case):
         else:
             form_ids = list(case.xform_ids)
 
+            if first_action.xform_id and first_action.xform_id == second_action.xform_id:
+                # short circuit if they are from the same form
+                return cmp(
+                    _type_sort(first_action.action_type),
+                    _type_sort(second_action.action_type)
+                )
+
             def _sortkey(action):
                 if not action.server_date or not action.date:
                     raise MissingServerDate()
 
-                form_cmp = lambda form_id: (form_ids.index(form_id)
-                                            if form_id in form_ids else sys.maxint, form_id)
+                def form_cmp(form_id):
+                    return form_ids.index(form_id) if form_id in form_ids else sys.maxint
+
                 # if the user is the same you should compare with the special logic below
                 # if the user is not the same you should compare just using received_on
                 return (

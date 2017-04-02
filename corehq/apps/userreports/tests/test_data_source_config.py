@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from copy import copy
 import datetime
 import time
 from mock import patch
@@ -101,14 +103,16 @@ class DataSourceConfigurationDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        DataSourceConfiguration(domain='foo', table_id='foo1', referenced_doc_type='doc1').save()
-        DataSourceConfiguration(domain='foo', table_id='foo2', referenced_doc_type='doc2').save()
-        DataSourceConfiguration(domain='bar', table_id='bar1', referenced_doc_type='doc3').save()
+        super(DataSourceConfigurationDbTest, cls).setUpClass()
+        DataSourceConfiguration(domain='foo', table_id='foo1', referenced_doc_type='XFormInstance').save()
+        DataSourceConfiguration(domain='foo', table_id='foo2', referenced_doc_type='XFormInstance').save()
+        DataSourceConfiguration(domain='bar', table_id='bar1', referenced_doc_type='XFormInstance').save()
 
     @classmethod
     def tearDownClass(cls):
         for config in DataSourceConfiguration.all():
             config.delete()
+        super(DataSourceConfigurationDbTest, cls).tearDownClass()
 
     def test_get_by_domain(self):
         results = DataSourceConfiguration.by_domain('foo')
@@ -123,7 +127,7 @@ class DataSourceConfigurationDbTest(TestCase):
         start = datetime.datetime.utcnow()
         time.sleep(.01)
         data_source = DataSourceConfiguration(
-            domain='mod-test', table_id='mod-test', referenced_doc_type='mod-test'
+            domain='mod-test', table_id='mod-test', referenced_doc_type='XFormInstance'
         )
         data_source.save()
         self.assertTrue(start < data_source.last_modified)
@@ -142,12 +146,12 @@ class DataSourceConfigurationDbTest(TestCase):
     def test_domain_is_required(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(table_id='table',
-                                    referenced_doc_type='doc').save()
+                                    referenced_doc_type='XFormInstance').save()
 
     def test_table_id_is_required(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(domain='domain',
-                                    referenced_doc_type='doc').save()
+                                    referenced_doc_type='XFormInstance').save()
 
     def test_doc_type_is_required(self):
         with self.assertRaises(BadValueError):
@@ -230,6 +234,10 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
             ]
         })
 
+    def test_named_expressions_serialization(self):
+        # in response to http://manage.dimagi.com/default.asp?244625
+        self.assertNotEqual({}, self.indicator_configuration.to_json()['named_expressions'])
+
     def test_filter_match(self):
         self.assertTrue(self.indicator_configuration.filter({
             'doc_type': 'CommCareCase',
@@ -282,11 +290,24 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
         with self.assertRaises(BadSpecError):
             bad_config.validate()
 
-    def test_missing_no_named_in_named(self):
+    def test_no_self_lookups(self):
         bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
         bad_config.named_expressions['broken'] = {
             "type": "named",
-            "name": "pregnant",
+            "name": "broken",
+        }
+        with self.assertRaises(BadSpecError):
+            bad_config.validate()
+
+    def test_no_recursive_lookups(self):
+        bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
+        bad_config.named_expressions['broken'] = {
+            "type": "named",
+            "name": "also_broken",
+        }
+        bad_config.named_expressions['also_broken'] = {
+            "type": "named",
+            "name": "broken",
         }
         with self.assertRaises(BadSpecError):
             bad_config.validate()

@@ -1,13 +1,13 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from corehq.apps.domain.models import Domain
 
 
 class Command(BaseCommand):
     help = "Migrates wam and pam eligibility from apps to domains"
-    args = ""
 
-    def handle(self, *args, **options):
-        print "Migrating impact annotations"
+    def handle(self, **options):
+        print("Migrating impact annotations")
 
         for domain in Domain.get_all():
             changed = False

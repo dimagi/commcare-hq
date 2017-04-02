@@ -2,9 +2,15 @@ import json
 import os
 import tempfile
 from StringIO import StringIO
+
+from datetime import datetime
+
+import pytz
+
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
+from corehq.apps.reports_core.filters import Choice, PreFilter
 from corehq.apps.style.decorators import (
     use_select2,
     use_daterangepicker,
@@ -14,14 +20,16 @@ from corehq.apps.style.decorators import (
 )
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE, UCR_LABORATORY_BACKEND
+from corehq.util.timezones.utils import get_timezone_for_domain
 from couchexport.shortcuts import export_response
 
-from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
+from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR, INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
-from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.urls import reverse
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
 from corehq.apps.locations.permissions import conditionally_location_safe
@@ -51,8 +59,9 @@ from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.userreports.util import (
     default_language,
     has_report_builder_trial,
+    has_report_builder_access,
     can_edit_report,
-)
+    get_ucr_class_name)
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
 from couchexport.export import export_from_tables
@@ -81,7 +90,7 @@ def get_filter_values(filters, request_dict, user=None):
             filter.css_id: filter.get_value(request_dict, user)
             for filter in filters
         }
-    except FilterException, e:
+    except FilterException as e:
         raise UserReportsFilterError(unicode(e))
 
 
@@ -124,8 +133,16 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @use_nvd3
     @conditionally_location_safe(has_location_filter)
     def dispatch(self, request, *args, **kwargs):
-        original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
-        return original
+        if self.should_redirect_to_paywall(request):
+            from corehq.apps.userreports.views import paywall_home
+            return HttpResponseRedirect(paywall_home(self.domain))
+        else:
+            original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
+            return original
+
+    def should_redirect_to_paywall(self, request):
+        spec = self.get_spec_or_404()
+        return spec.report_meta.created_by_builder and not has_report_builder_access(request)
 
     @property
     def section_url(self):
@@ -144,14 +161,15 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @memoized
     def spec(self):
         if self.is_static:
-            return StaticReportConfiguration.by_id(self.report_config_id)
+            return StaticReportConfiguration.by_id(self.report_config_id, domain=self.domain)
         else:
             return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
 
     def get_spec_or_404(self):
         try:
             return self.spec
-        except DocumentNotFound:
+        except (DocumentNotFound, BadSpecError) as e:
+            messages.error(self.request, e)
             raise Http404()
 
     def has_viable_configuration(self):
@@ -187,18 +205,22 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     @memoized
-    def filter_values(self):
+    def request_user(self):
         try:
-            user = self.request.couch_user
+            return self.request.couch_user
         except AttributeError:
-            user = None
-        return get_filter_values(self.filters, self.request_dict, user=user)
+            return None
+
+    @property
+    @memoized
+    def filter_values(self):
+        return get_filter_values(self.filters, self.request_dict, user=self.request_user)
 
     @property
     @memoized
     def filter_context(self):
         return {
-            filter.css_id: filter.context(self.filter_values[filter.css_id], self.lang)
+            filter.css_id: filter.context(self.request_dict, self.request_user, self.lang)
             for filter in self.filters
         }
 
@@ -274,7 +296,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             raise Http403()
 
     def has_permissions(self, domain, user):
-        return True
+        if domain is None:
+            return False
+        if not user.is_active:
+            return False
+        return user.can_view_report(domain, get_ucr_class_name(self.report_config_id))
 
     def add_warnings(self, request):
         for warning in self.data_source.column_warnings:
@@ -443,6 +469,39 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def url(self):
         return reverse(self.slug, args=[self.domain, self.report_config_id])
 
+    def _get_filter_export_format(self, filter_value):
+        if isinstance(filter_value, list):
+            values = []
+            for value in filter_value:
+                if isinstance(value, Choice):
+                    values.append(value.display)
+                else:
+                    values.append(unicode(value))
+            return ', '.join(values)
+        elif isinstance(filter_value, DateSpan):
+            return filter_value.default_serialization()
+        else:
+            if isinstance(filter_value, Choice):
+                return filter_value.display
+            else:
+                return unicode(filter_value)
+
+    def _get_filter_values(self):
+        slug_to_filter = {
+            ui_filter.name: ui_filter
+            for ui_filter in self.filters
+        }
+
+        filters_without_prefilters = {
+            filter_slug: filter_value
+            for filter_slug, filter_value in self.filter_values.iteritems()
+            if not isinstance(slug_to_filter[filter_slug], PreFilter)
+        }
+
+        for filter_slug, filter_value in filters_without_prefilters.iteritems():
+            label = slug_to_filter[filter_slug].label
+            yield label, self._get_filter_export_format(filter_value)
+
     @property
     @memoized
     def export_table(self):
@@ -465,12 +524,24 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
         rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
         total_rows = [data.get_total_row()] if data.has_total_row else []
-        return [
+
+        export_table = [
             [
                 self.title,
                 [headers] + rows + total_rows
             ]
         ]
+
+        if INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS.enabled(self.domain):
+            time_zone = get_timezone_for_domain(self.domain)
+            export_table.append([
+                'metadata',
+                [
+                    [_('Report Name'), self.title],
+                    [_('Generated On'), datetime.now(time_zone).strftime('%Y-%m-%d %H:%M')],
+                ] + list(self._get_filter_values())
+            ])
+        return export_table
 
     @property
     @memoized

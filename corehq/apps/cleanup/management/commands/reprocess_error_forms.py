@@ -1,3 +1,4 @@
+from __future__ import print_function
 import datetime
 import warnings
 
@@ -10,7 +11,6 @@ from couchforms.models import XFormInstance
 from dimagi.utils.parsing import string_to_datetime
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from optparse import make_option
 
 from corehq.apps.cleanup.xforms import iter_problem_forms
 from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
@@ -64,26 +64,30 @@ def reprocess_form_cases(form):
 
 
 class Command(BaseCommand):
-    args = '<domain> <since>'
     help = ('Reprocesses all documents tagged as errors and tries to '
             'regenerate the appropriate case blocks for them. Can pass in '
             'a domain and date to process forms received after that date or '
             'just a domain to process all problem forms in the domain.')
-    option_list = (
-        make_option('--dryrun', action='store_true', dest='dryrun', default=False,
-            help="Don't do the actual reprocessing, just print the ids that would be affected"),
-    )
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'domain',
+        )
+        parser.add_argument(
+            'since',
+            nargs='?',
+        )
+        parser.add_argument(
+            '--dryrun',
+            action='store_true',
+            dest='dryrun',
+            default=False,
+            help="Don't do the actual reprocessing, just print the ids that would be affected",
+        )
 
-        if len(args) == 1:
-            domain = args[0]
-            since = None
-        elif len(args) == 2:
-            domain = args[0]
-            since = string_to_datetime(args[1])
-        else:
-            raise CommandError('Usage: %s\n%s' % (self.args, self.help))
+    def handle(self, domain, since, **options):
+        if since:
+            since = string_to_datetime(since)
 
         if should_use_sql_backend(domain):
             raise CommandError('This command only works for couch-based domains.')
@@ -92,21 +96,21 @@ class Command(BaseCommand):
         failed = []
         error_messages = defaultdict(lambda: 0)
         for form in iter_problem_forms(domain, since):
-            print "%s\t%s\t%s\t%s\t%s" % (form._id, form.received_on,
+            print("%s\t%s\t%s\t%s\t%s" % (form._id, form.received_on,
                               form.xmlns,
                               form.get_data('form/meta/username'),
-                              form.problem.strip())
+                              form.problem.strip()))
             if not options["dryrun"]:
                 try:
                     reprocess_form_cases(form)
-                except Exception, e:
+                except Exception as e:
                     failed.append(form._id)
                     error_messages[str(e)] += 1
                 else:
                     succeeded.append(form._id)
 
-        print "%s / %s forms successfully processed, %s failures" % \
-              (len(succeeded), len(succeeded) + len(failed), len(failed))
+        print("%s / %s forms successfully processed, %s failures" % \
+              (len(succeeded), len(succeeded) + len(failed), len(failed)))
         if error_messages:
-            print "The following errors were seen: \n%s" % \
-                  ("\n".join("%s: %s" % (v, k) for k, v in error_messages.items()))
+            print("The following errors were seen: \n%s" % \
+                  ("\n".join("%s: %s" % (v, k) for k, v in error_messages.items())))

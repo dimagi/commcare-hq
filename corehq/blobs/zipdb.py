@@ -15,7 +15,7 @@ class ZipBlobDB(AbstractBlobDB):
         self.zipname = get_export_filename(slug, domain)
         self._zipfile = None
 
-    def put(self, content, bucket=DEFAULT_BUCKET, identifier=None):
+    def put(self, content, identifier, bucket=DEFAULT_BUCKET):
         raise NotImplementedError
 
     def get(self, identifier, bucket=DEFAULT_BUCKET):

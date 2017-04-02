@@ -7,19 +7,14 @@ from corehq.apps.sms.api import (
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.logging import notify_exception
 from corehq.apps.smsforms.app import _get_responses, start_session
-from corehq.apps.sms.models import WORKFLOW_KEYWORD, MessagingEvent
+from corehq.apps.sms.models import WORKFLOW_KEYWORD, MessagingEvent, Keyword, KeywordAction
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.handlers.form_session import validate_answer
 from corehq.apps.sms.util import touchforms_error_is_config_error
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reminders.models import (
-    SurveyKeyword,
-    RECIPIENT_SENDER,
-    RECIPIENT_OWNER,
-    RECIPIENT_USER_GROUP,
     METHOD_SMS,
     METHOD_SMS_SURVEY,
-    METHOD_STRUCTURED_SMS,
     REMINDER_TYPE_KEYWORD_INITIATED,
 )
 from corehq.apps.reminders.util import create_immediate_reminder
@@ -120,19 +115,17 @@ def global_keyword_update(v, text, msg, text_words, open_sessions):
 
 
 def global_keyword_start(v, text, msg, text_words, open_sessions):
-    from corehq.apps.reminders.models import SurveyKeyword
-
     outbound_metadata = MessageMetadata(
         workflow=WORKFLOW_KEYWORD,
     )
 
     if len(text_words) > 1:
         keyword = text_words[1]
-        sk = SurveyKeyword.get_keyword(v.domain, keyword)
-        if sk:
-            if not contact_can_use_keyword(v, sk):
+        k = Keyword.get_keyword(v.domain, keyword)
+        if k:
+            if not contact_can_use_keyword(v, k):
                 return False
-            process_survey_keyword_actions(v, sk, text[6:].strip(), msg)
+            process_survey_keyword_actions(v, k, text[6:].strip(), msg)
         else:
             message = get_message(MSG_KEYWORD_NOT_FOUND, v, (keyword,))
             send_sms_to_verified_number(v, message, metadata=outbound_metadata)
@@ -171,7 +164,7 @@ def global_keyword_unknown(v, text, msg, text_words, open_sessions):
 
 def handle_domain_keywords(v, text, msg, text_words, sessions):
     any_session_open = len(sessions) > 0
-    for survey_keyword in SurveyKeyword.get_all(v.domain):
+    for survey_keyword in Keyword.get_by_domain(v.domain):
         args = split_args(text, survey_keyword)
         keyword = args[0].upper()
         if keyword == survey_keyword.keyword.upper():
@@ -372,7 +365,7 @@ def start_session_with_error_handling(domain, contact, app, module, form,
             error_code = MSG_FORM_ERROR
         else:
             notify_exception(None, message=('Could not process structured sms for'
-                'contact %s, domain %s, keyword %s' % (contact._id, domain, keyword)))
+                'contact %s, domain %s, keyword %s' % (contact.get_id, domain, keyword)))
             error_code = MSG_TOUCHFORMS_ERROR
 
         return (None, None, True, error_code)
@@ -496,7 +489,7 @@ def clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
         response_subevent = None
         if logged_event:
             response_subevent = logged_event.create_subevent_for_single_sms(
-                contact.doc_type, contact._id)
+                contact.doc_type, contact.get_id)
             metadata.messaging_subevent_id = response_subevent.pk
 
         send_sms_to_verified_number(verified_number, error_msg, metadata=metadata)
@@ -527,8 +520,8 @@ def is_form_complete(current_question):
 
 
 def keyword_uses_form_that_requires_case(survey_keyword):
-    for action in survey_keyword.actions:
-        if action.action in [METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS]:
+    for action in survey_keyword.keywordaction_set.all():
+        if action.action in [KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS]:
             form = Form.get_form(action.form_unique_id)
             if form.requires_case():
                 return True
@@ -632,8 +625,8 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             args = args[1:]
 
     def cmp_fcn(a1, a2):
-        a1_ss = (a1.action == METHOD_STRUCTURED_SMS)
-        a2_ss = (a2.action == METHOD_STRUCTURED_SMS)
+        a1_ss = (a1.action == KeywordAction.ACTION_STRUCTURED_SMS)
+        a2_ss = (a2.action == KeywordAction.ACTION_STRUCTURED_SMS)
         if a1_ss and a2_ss:
             return 0
         elif a1_ss:
@@ -648,16 +641,16 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
         subevent.save()
 
     # Process structured sms actions first
-    actions = sorted(survey_keyword.actions, cmp=cmp_fcn)
+    actions = sorted(survey_keyword.keywordaction_set.all(), cmp=cmp_fcn)
     for survey_keyword_action in actions:
-        if survey_keyword_action.recipient == RECIPIENT_SENDER:
+        if survey_keyword_action.recipient == KeywordAction.RECIPIENT_SENDER:
             contact = sender
-        elif survey_keyword_action.recipient == RECIPIENT_OWNER:
+        elif survey_keyword_action.recipient == KeywordAction.RECIPIENT_OWNER:
             if is_commcarecase(sender):
                 contact = get_wrapped_owner(get_owner_id(sender))
             else:
                 contact = None
-        elif survey_keyword_action.recipient == RECIPIENT_USER_GROUP:
+        elif survey_keyword_action.recipient == KeywordAction.RECIPIENT_USER_GROUP:
             try:
                 contact = Group.get(survey_keyword_action.recipient_id)
                 assert contact.doc_type == "Group"
@@ -670,17 +663,17 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
         if contact is None:
             continue
 
-        if survey_keyword_action.action == METHOD_SMS:
+        if survey_keyword_action.action == KeywordAction.ACTION_SMS:
             create_immediate_reminder(contact, METHOD_SMS, 
                 reminder_type=REMINDER_TYPE_KEYWORD_INITIATED,
                 message=survey_keyword_action.message_content,
                 case=case, logged_event=logged_event)
-        elif survey_keyword_action.action == METHOD_SMS_SURVEY:
+        elif survey_keyword_action.action == KeywordAction.ACTION_SMS_SURVEY:
             create_immediate_reminder(contact, METHOD_SMS_SURVEY,
                 reminder_type=REMINDER_TYPE_KEYWORD_INITIATED,
                 form_unique_id=survey_keyword_action.form_unique_id,
                 case=case, logged_event=logged_event)
-        elif survey_keyword_action.action == METHOD_STRUCTURED_SMS:
+        elif survey_keyword_action.action == KeywordAction.ACTION_STRUCTURED_SMS:
             res = handle_structured_sms(survey_keyword, survey_keyword_action,
                 sender, verified_number, text, send_response=True, msg=msg,
                 case=case, text_args=args, logged_event=logged_event)

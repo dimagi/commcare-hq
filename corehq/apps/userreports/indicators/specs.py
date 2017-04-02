@@ -29,6 +29,7 @@ class IndicatorSpecBase(JsonObject):
 
     column_id = StringProperty(required=True)
     display_name = StringProperty()
+    comment = StringProperty()
 
     @classmethod
     def wrap(cls, obj):
@@ -63,6 +64,7 @@ class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     datatype = DataTypeProperty(required=True)
     is_nullable = BooleanProperty(default=True)
     is_primary_key = BooleanProperty(default=False)
+    create_index = BooleanProperty(default=False)
 
     @property
     def getter(self):
@@ -76,6 +78,7 @@ class ExpressionIndicatorSpec(IndicatorSpecBase):
     datatype = DataTypeProperty(required=True)
     is_nullable = BooleanProperty(default=True)
     is_primary_key = BooleanProperty(default=False)
+    create_index = BooleanProperty(default=False)
     expression = DefaultProperty(required=True)
     transform = DictProperty(required=False)
 

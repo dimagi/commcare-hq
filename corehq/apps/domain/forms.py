@@ -21,7 +21,7 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import transaction
 from django.db.models import F
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
@@ -242,7 +242,8 @@ class SnapshotSettingsForm(forms.Form):
     old_image = forms.BooleanField(required=False)
 
     video = CharField(label=ugettext_noop("Youtube Video"), required=False,
-        help_text=ugettext_noop("An optional youtube clip to tell users about your app. Please copy and paste a URL to a youtube video"))
+        help_text=ugettext_noop("An optional YouTube clip to tell users about your app. Please copy and paste a "
+                                "URL to a YouTube video"))
     documentation_file = forms.FileField(label=ugettext_noop("Documentation File"), required=False,
         help_text=ugettext_noop("An optional file to tell users more about your app."))
     old_documentation_file = forms.BooleanField(required=False)
@@ -309,7 +310,8 @@ class SnapshotSettingsForm(forms.Form):
         data_cda = self.cleaned_data['cda_confirmed']
         data_publish = self.data.get('publish_on_submit', "no") == "yes"
         if data_publish and data_cda is False:
-            raise forms.ValidationError('You must agree to our Content Distribution Agreement to publish your project.')
+            raise forms.ValidationError('You must agree to our Content Distribution Agreement to publish your '
+                                        'project.')
         return data_cda
 
     def clean_video(self):
@@ -342,7 +344,8 @@ class SnapshotSettingsForm(forms.Form):
 
         v_id = video_id(video)
         if not v_id:
-            raise forms.ValidationError('This is not a correctly formatted youtube URL. Please use a different URL.')
+            raise forms.ValidationError('This is not a correctly formatted YouTube URL. Please use a different '
+                                        'URL.')
         return v_id
 
     def clean(self):
@@ -451,7 +454,8 @@ class SubAreaMixin():
 
         if sub_area:
             if not area:
-                raise forms.ValidationError(_('You may not specify a sub area when the project has no specified area'))
+                raise forms.ValidationError(_('You may not specify a sub area when the project has no specified '
+                                              'area'))
         else:
             return None
 
@@ -559,8 +563,8 @@ class DomainGlobalSettingsForm(forms.Form):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper[3] = twbscrispy.PrependedText('delete_logo', '')
-        self.helper[4] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper[4] = twbscrispy.PrependedText('delete_logo', '')
+        self.helper[5] = twbscrispy.PrependedText('call_center_enabled', '')
         self.helper.all().wrap_together(crispy.Fieldset, 'Edit Basic Information')
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -671,16 +675,15 @@ class DomainGlobalSettingsForm(forms.Form):
 class DomainMetadataForm(DomainGlobalSettingsForm):
 
     cloudcare_releases = ChoiceField(
-        label=ugettext_lazy("CloudCare should use"),
+        label=ugettext_lazy("Web Apps should use"),
         initial=None,
         required=False,
         choices=(
             ('stars', ugettext_lazy('Latest starred version')),
             ('nostars', ugettext_lazy('Highest numbered version (not recommended)')),
         ),
-        help_text=ugettext_lazy("Choose whether CloudCare should use the latest "
-                    "starred build or highest numbered build in your "
-                    "application.")
+        help_text=ugettext_lazy("Choose whether Web Apps should use the latest starred build or highest numbered "
+                                "build in your application.")
     )
 
     def __init__(self, *args, **kwargs):
@@ -703,7 +706,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
                 domain.cloudcare_releases = cloudcare_releases
             domain.save()
             return True
-        except Exception, e:
+        except Exception as e:
             logging.exception("couldn't save project settings - error is %s" % e)
             return False
 
@@ -719,9 +722,9 @@ class PrivacySecurityForm(forms.Form):
     restrict_superusers = BooleanField(
         label=ugettext_lazy("Restrict Dimagi Staff Access"),
         required=False,
-        help_text=ugettext_lazy("Dimagi staff sometimes require access to projects to provide support. " + 
-                                "Checking this box may restrict your ability to receive this support in the event " +
-                                "you report an issue. You may also miss out on important communications and updates.")
+        help_text=ugettext_lazy("Dimagi staff sometimes require access to projects to provide support. Checking "
+                                "this box may restrict your ability to receive this support in the event you "
+                                "report an issue. You may also miss out on important communications and updates.")
     )
     secure_submissions = BooleanField(
         label=ugettext_lazy("Secure submissions"),
@@ -750,7 +753,8 @@ class PrivacySecurityForm(forms.Form):
     two_factor_auth = BooleanField(
         label=ugettext_lazy("Two Factor Authentication"),
         required=False,
-        help_text=ugettext_lazy("All web users on this project will be required to enable two factor authentication")
+        help_text=ugettext_lazy("All web users on this project will be required to enable two factor "
+                                "authentication")
     )
     strong_mobile_passwords = BooleanField(
         label=ugettext_lazy("Require Strong Passwords for Mobile Workers"),
@@ -822,82 +826,82 @@ class PrivacySecurityForm(forms.Form):
 
 
 class DomainInternalForm(forms.Form, SubAreaMixin):
-    sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
-    sf_account_id = CharField(label=ugettext_noop("Salesforce Account ID"), required=False)
-    initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"),
+    sf_contract_id = CharField(label="Salesforce Contract ID", required=False)
+    sf_account_id = CharField(label="Salesforce Account ID", required=False)
+    initiative = forms.MultipleChoiceField(label="Initiative",
                                            widget=forms.CheckboxSelectMultiple(),
                                            choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False),
                                            required=False)
     workshop_region = CharField(
-        label=ugettext_noop("Workshop Region"),
+        label="Workshop Region",
         required=False,
-        help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
+        help_text="e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.")
     self_started = ChoiceField(
-        label=ugettext_noop("Self Started?"),
+        label="Self Started?",
         choices=tf_choices('Yes', 'No'),
         required=False,
-        help_text=ugettext_noop(
+        help_text=(
             "The organization built and deployed their app themselves. Dimagi may have provided indirect support"
         ))
     is_test = ChoiceField(
-        label=ugettext_lazy("Real Project"),
-        choices=(('none', ugettext_lazy('Unknown')),
-                 ('true', ugettext_lazy('Test')),
-                 ('false', ugettext_lazy('Real')),)
+        label="Real Project",
+        choices=(('none', 'Unknown'),
+                 ('true', 'Test'),
+                 ('false', 'Real'),)
     )
     area = ChoiceField(
-        label=ugettext_noop("Sector*"),
+        label="Sector*",
         required=False,
         choices=tuple_of_copies(AREA_CHOICES))
     sub_area = ChoiceField(
-        label=ugettext_noop("Sub-Sector*"),
+        label="Sub-Sector*",
         required=False,
         choices=tuple_of_copies(SUB_AREA_CHOICES))
     organization_name = CharField(
-        label=ugettext_noop("Organization Name*"),
+        label="Organization Name*",
         required=False,
-        help_text=ugettext_lazy("Quick 1-2 sentence summary of the project."),
+        help_text="Quick 1-2 sentence summary of the project.",
     )
-    notes = CharField(label=ugettext_noop("Notes*"), required=False, widget=forms.Textarea)
+    notes = CharField(label="Notes*", required=False, widget=forms.Textarea)
     phone_model = CharField(
-        label=ugettext_noop("Device Model"),
-        help_text=ugettext_lazy("Add CloudCare, if this project is using CloudCare as well"),
+        label="Device Model",
+        help_text="Add Web Apps, if this project is using Web Apps as well",
         required=False,
     )
     business_unit = forms.ChoiceField(
-        label=ugettext_noop('Business Unit'),
+        label='Business Unit',
         choices=tuple_of_copies(BUSINESS_UNITS),
         required=False,
     )
     countries = forms.MultipleChoiceField(
-        label=ugettext_noop("Countries"),
+        label="Countries",
         choices=sorted(COUNTRIES.items(), key=lambda x: x[0]),
         required=False,
     )
     commtrack_domain = ChoiceField(
-        label=ugettext_noop("CommCare Supply Project"),
+        label="CommCare Supply Project",
         choices=tf_choices('Yes', 'No'),
         required=False,
-        help_text=ugettext_lazy("This app aims to improve the supply of goods and materials")
+        help_text="This app aims to improve the supply of goods and materials"
     )
     performance_threshold = IntegerField(
-        label=ugettext_noop("Performance Threshold"),
+        label="Performance Threshold",
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             'The number of forms submitted per month for a user to count as "performing well". '
             'The default value is 15.'
         )
     )
     experienced_threshold = IntegerField(
-        label=ugettext_noop("Experienced Threshold"),
+        label="Experienced Threshold",
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             "The number of different months in which a worker must submit forms to count as experienced. "
             "The default value is 3."
         )
     )
     amplifies_workers = ChoiceField(
-        label=ugettext_noop("Service Delivery App"),
+        label="Service Delivery App",
         choices=[(AMPLIFIES_NOT_SET, '* Not Set'), (AMPLIFIES_YES, 'Yes'), (AMPLIFIES_NO, 'No')],
         required=False,
         help_text=("This application is used for service delivery. Examples: An "
@@ -907,7 +911,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                    )
     )
     amplifies_project = ChoiceField(
-        label=ugettext_noop("Amplifies Project"),
+        label="Amplifies Project",
         choices=[(AMPLIFIES_NOT_SET, '* Not Set'), (AMPLIFIES_YES, 'Yes'), (AMPLIFIES_NO, 'No')],
         required=False,
         help_text=("Amplifies the impact of a Frontline Program (FLP). "
@@ -916,28 +920,120 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                    )
     )
     data_access_threshold = IntegerField(
-        label=ugettext_noop("Minimum Monthly Data Accesses"),
+        label="Minimum Monthly Data Accesses",
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             "Minimum number of times project staff are expected to access CommCare data each month. "
             "The default value is 20."
         )
     )
+    partner_technical_competency = IntegerField(
+        label="Partner Technical Competency",
+        required=False,
+        min_value=1,
+        max_value=5,
+        help_text=(
+            "Please rate the technical competency of the partner on a scale from "
+            "1 to 5. 1 means low-competency, and we should expect LOTS of basic "
+            "hand-holding. 5 means high-competency, so if they report a bug it's "
+            "probably a real issue with CommCareHQ or a really good idea."
+        ),
+    )
+    support_prioritization = IntegerField(
+        label="Support Prioritization",
+        required=False,
+        min_value=1,
+        max_value=3,
+        help_text=(
+            "Based on the impact of this project and how good this partner was "
+            "to work with, how much would you prioritize support for this "
+            'partner? 1 means "Low. Take your time." You might rate a partner '
+            '"1" because they\'ve been absolutely terrible to you and low impact. '
+            '3 means "High priority. Be nice". You might rate a partner "3" '
+            "because even though they can't afford a PRO plan, you know they "
+            "are changing the world. Or they are an unusually high priority "
+            "strategic partner."
+        ),
+    )
+    gs_continued_involvement = ChoiceField(
+        label="GS Continued Involvement",
+        choices=[(AMPLIFIES_NOT_SET, '* Not Set'), (AMPLIFIES_YES, 'Yes'), (AMPLIFIES_NO, 'No')],
+        required=False,
+        help_text=(
+            "Do you want to continue to be involved in this project? No, please "
+            "only reach out if absolutely necessary. Yes. I want to see what "
+            "happens and be kept in the loop."
+        ),
+    )
+    technical_complexity = ChoiceField(
+        label="Technical Complexity",
+        choices=[(AMPLIFIES_NOT_SET, '* Not Set'), (AMPLIFIES_YES, 'Yes'), (AMPLIFIES_NO, 'No')],
+        required=False,
+        help_text=(
+            "Is this an innovation project involving unusual technology which"
+            "we expect will require different support than a typical deployment?"
+        ),
+    )
+    app_design_comments = CharField(
+        label="App Design Comments",
+        widget=forms.Textarea,
+        required=False,
+        help_text=(
+            "Unusual workflows or design decisions for others to watch out for."
+        ),
+    )
+    training_materials = CharField(
+        label="Training materials",
+        required=False,
+        help_text=(
+            "Where to find training materials or other relevant resources."
+        ),
+    )
+    partner_comments = CharField(
+        label="Partner Comments",
+        widget=forms.Textarea,
+        required=False,
+        help_text=(
+            "past or anticipated problems with this partner."
+        ),
+    )
+    partner_contact = CharField(
+        label="Partner contact",
+        required=False,
+        help_text=(
+            "Primary partner point of contact going forward (type email of existing web user)."
+        ),
+    )
+    dimagi_contact = CharField(
+        label="Dimagi contact",
+        required=False,
+        help_text=(
+            "Primary Dimagi point of contact going forward (type email of existing web user)."
+        ),
+    )
+    send_handoff_email = forms.BooleanField(
+        label="Send Hand-off Email",
+        required=False,
+        help_text=(
+            "Check this box to trigger a hand-off email to the partner when this form is submitted."
+        ),
+    )
 
-    def __init__(self, can_edit_eula, *args, **kwargs):
+    def __init__(self, domain, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
+        self.domain = domain
         self.can_edit_eula = can_edit_eula
         additional_fields = []
         if self.can_edit_eula:
             additional_fields = ['custom_eula', 'can_use_data']
             self.fields['custom_eula'] = ChoiceField(
-                label=ugettext_noop("Custom Eula?"),
+                label="Custom Eula?",
                 choices=tf_choices(_('Yes'), _('No')),
                 required=False,
                 help_text='Set to "yes" if this project has a customized EULA as per their contract.'
             )
             self.fields['can_use_data'] = ChoiceField(
-                label=ugettext_noop("Can use project data?"),
+                label="Can use project data?",
                 choices=tf_choices('Yes', 'No'),
                 required=False,
                 help_text='Set to "no" if this project opts out of data usage. Defaults to "yes".'
@@ -970,6 +1066,19 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 crispy.Div(*additional_fields),
             ),
             crispy.Fieldset(
+                _("Support Hand-off information"),
+                'partner_technical_competency',
+                'support_prioritization',
+                'gs_continued_involvement',
+                'technical_complexity',
+                'app_design_comments',
+                'training_materials',
+                'partner_comments',
+                'partner_contact',
+                'send_handoff_email',
+                'dimagi_contact',
+            ),
+            crispy.Fieldset(
                 _("Salesforce Details"),
                 'sf_contract_id',
                 'sf_account_id',
@@ -983,8 +1092,41 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             ),
         )
 
+    def _get_user_or_fail(self, field):
+        username = self.cleaned_data[field]
+        if not username:
+            return None
+        user = WebUser.get_by_username(username)
+        if not user:
+            msg = "Web user with username '{username}' does not exist"
+            self.add_error(field, msg.format(username=username))
+        elif not user.is_member_of(self.domain):
+            msg = "'{username}' is not the username of a web user in '{domain}'"
+            self.add_error(field, msg.format(username=username, domain=self.domain))
+        return user
+
+    def clean(self):
+        send_handoff_email = self.cleaned_data['send_handoff_email']
+
+        partner_user = self._get_user_or_fail('partner_contact')
+        if not partner_user and send_handoff_email:
+            msg = "You can't send a hand-off email without specifying a partner contact."
+            self.add_error('partner_contact', msg)
+
+        dimagi_user = self._get_user_or_fail('dimagi_contact')
+        if send_handoff_email and not dimagi_user:
+            msg = "You can't send a hand-off email without specifying a contact at dimagi."
+            self.add_error('dimagi_contact', msg)
+        elif send_handoff_email and not dimagi_user.full_name:
+            msg = ("The dimagi user '{}' does not have a name configured, please"
+                   "go to your account settings and add a name before attempting "
+                   "to send an email to the partner.").format(dimagi_user.username)
+            self.add_error('dimagi_contact', msg)
+
     def save(self, domain):
-        kwargs = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
+        kwargs = {
+            "workshop_region": self.cleaned_data["workshop_region"]
+        } if self.cleaned_data["workshop_region"] else {}
         if self.can_edit_eula:
             kwargs['custom_eula'] = self.cleaned_data['custom_eula'] == 'true'
             kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
@@ -1010,6 +1152,15 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             amplifies_project=self.cleaned_data['amplifies_project'],
             business_unit=self.cleaned_data['business_unit'],
             data_access_threshold=self.cleaned_data['data_access_threshold'],
+            partner_technical_competency=self.cleaned_data['partner_technical_competency'],
+            support_prioritization=self.cleaned_data['support_prioritization'],
+            gs_continued_involvement=self.cleaned_data['gs_continued_involvement'],
+            technical_complexity=self.cleaned_data['technical_complexity'],
+            app_design_comments=self.cleaned_data['app_design_comments'],
+            training_materials=self.cleaned_data['training_materials'],
+            partner_comments=self.cleaned_data['partner_comments'],
+            partner_contact=self.cleaned_data['partner_contact'],
+            dimagi_contact=self.cleaned_data['dimagi_contact'],
             **kwargs
         )
 
@@ -1089,10 +1240,10 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
     error_messages = {
-        'unknown': ugettext_lazy("That email address doesn't have an associated "
-                     "user account. Are you sure you've registered?"),
-        'unusable': ugettext_lazy("The user account associated with this email "
-                       "address cannot reset the password."),
+        'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
+                                 "registered?"),
+        'unusable': ugettext_lazy("The user account associated with this email address cannot reset the "
+                                  "password."),
     }
 
     def clean_email(self):
@@ -1234,7 +1385,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             'company_name',
             'first_name',
             'last_name',
-            crispy.Field('email_list', css_class='input-xxlarge'),
+            crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
             'phone_number'
         ]
 
@@ -1281,7 +1432,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large",
+                crispy.Field('country', css_class="input-large ko-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.FormActions(
@@ -1327,10 +1478,12 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         widget=forms.HiddenInput,
     )
 
-    def __init__(self, account, domain, creating_user, plan_version, current_subscription, data=None, *args, **kwargs):
+    def __init__(self, account, domain, creating_user, plan_version, current_subscription, data=None,
+                 *args, **kwargs):
         self.plan_version = plan_version
         self.current_subscription = current_subscription
-        super(ConfirmNewSubscriptionForm, self).__init__(account, domain, creating_user, data=data, *args, **kwargs)
+        super(ConfirmNewSubscriptionForm, self).__init__(account, domain, creating_user, data=data,
+                                                         *args, **kwargs)
 
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
 
@@ -1344,7 +1497,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1354,7 +1507,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large",
+                crispy.Field('country', css_class="input-large ko-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
@@ -1453,7 +1606,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1463,7 +1616,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large",
+                crispy.Field('country', css_class="input-large ko-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             crispy.Fieldset(
@@ -1982,24 +2135,10 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
     @transaction.atomic
     def process_subscription_management(self):
-        new_plan_version = None
-        edition = self.cleaned_data['software_plan_edition']
-        for plan_version in SoftwarePlanVersion.objects.filter(plan__edition=edition).order_by('-date_created'):
-            privileges = get_privileges(plan_version)
-            if (
-                REPORT_BUILDER_5 in privileges
-                and not (REPORT_BUILDER_ADD_ON_PRIVS - {REPORT_BUILDER_5, REPORT_BUILDER_TRIAL}) & privileges
-            ):
-                new_plan_version = plan_version
-                break
-        if not new_plan_version:
-            log_accounting_error(
-                "CommCare %s edition with privilege REPORT_BUILDER_5 was not found! Requires manual setup."
-                % edition
-            )
-            new_plan_version = DefaultProductPlan.get_default_plan_version(
-                edition=self.cleaned_data['software_plan_edition'],
-            )
+        new_plan_version = DefaultProductPlan.get_default_plan_version(
+            edition=self.cleaned_data['software_plan_edition'],
+            is_report_builder_enabled=True,
+        )
 
         if (
             self.current_subscription

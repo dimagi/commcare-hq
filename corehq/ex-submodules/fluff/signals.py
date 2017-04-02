@@ -1,3 +1,4 @@
+from __future__ import print_function
 import logging
 from collections import namedtuple
 from functools import partial
@@ -58,14 +59,15 @@ def catch_signal(sender, **kwargs):
     table_pillow_map = {}
     for config in get_fluff_pillow_configs():
         pillow = config.get_instance()
-        doc = pillow.indicator_class()
-        if doc.save_direct_to_sql:
-            table_pillow_map[doc._table.name] = {
-                'doc': doc,
-                'pillow': pillow
-            }
+        for processor in pillow.processors:
+            doc = processor.indicator_class()
+            if doc.save_direct_to_sql:
+                table_pillow_map[doc._table.name] = {
+                    'doc': doc,
+                    'pillow': pillow
+                }
 
-    print '\tchecking fluff SQL tables for schema changes'
+    print('\tchecking fluff SQL tables for schema changes')
     engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
 
     with engine.begin() as connection:

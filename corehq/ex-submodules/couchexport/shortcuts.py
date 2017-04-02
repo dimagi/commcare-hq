@@ -63,13 +63,8 @@ def export_response(file, format, filename, checkpoint=None):
         response = StreamingHttpResponse(FileWrapper(file), content_type=format.mimetype)
 
     if format.download:
-        filename = filename if isinstance(filename, unicode) else filename.decode('utf8')
-        filename = u'{filename}.{format.extension}'.format(
-            filename=filename,
-            format=format
-        )
-        from corehq.apps.reports.util import safe_filename_header
-        response['Content-Disposition'] = safe_filename_header(filename)
+        from corehq.util.files import safe_filename_header
+        response['Content-Disposition'] = safe_filename_header(filename, format.extension)
 
     if checkpoint:
         response['X-CommCareHQ-Export-Token'] = checkpoint.get_id

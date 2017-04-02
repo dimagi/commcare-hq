@@ -26,6 +26,8 @@ function (doc) {
             case "Application-Deleted":
             case "RemoteApp":
             case "RemoteApp-Deleted":
+            case "LinkedApplication":
+            case "LinkedApplication-Deleted":
                 return doc.copy_of ? doc.built_on : null;
             default:
                 return null;

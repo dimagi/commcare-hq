@@ -44,6 +44,17 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             });
         },
 
+        selectDetail: function(caseId, detailIndex) {
+            var urlObject = Util.currentUrlToObject();
+            urlObject.addStep(caseId);
+            var fetchingDetails = FormplayerFrontend.request("entity:get:details", urlObject);
+            $.when(fetchingDetails).done(function (detailResponse) {
+                Menus.Controller.showDetail(detailResponse, detailIndex, caseId);
+            }).fail(function() {
+                FormplayerFrontend.trigger('navigateHome');
+            });
+        },
+
         showMenu: function (menuResponse) {
             var menuListView = Menus.Util.getMenuView(menuResponse);
 
@@ -57,7 +68,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             }
 
             if (menuResponse.breadcrumbs) {
-                Menus.Controller.showBreadcrumbs(menuResponse.breadcrumbs);
+                Menus.Util.showBreadcrumbs(menuResponse.breadcrumbs);
             } else {
                 FormplayerFrontend.regions.breadcrumb.empty();
             }
@@ -71,47 +82,32 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             FormplayerFrontend.regions.persistentCaseTile.show(detailView.render());
         },
 
-        showBreadcrumbs: function (breadcrumbs) {
-            var breadcrumbsModel = [];
-            for (var i = 0; i < breadcrumbs.length; i++) {
-                var obj = {};
-                obj.data = breadcrumbs[i];
-                obj.id = i;
-                breadcrumbsModel.push(obj);
-            }
-            var detailCollection = new Backbone.Collection();
-            detailCollection.reset(breadcrumbsModel);
-            var breadcrumbView = new Menus.Views.BreadcrumbListView({
-                collection: detailCollection,
-            });
-            FormplayerFrontend.regions.breadcrumb.show(breadcrumbView.render());
-        },
-
-        showDetail: function (model, detailTabIndex) {
+        showDetail: function (model, detailTabIndex, caseId) {
             var self = this;
-            var detailObjects = model.options.model.get('details');
+            var detailObjects = model.models;
             // If we have no details, just select the entity
-            if (detailObjects === null || detailObjects === undefined) {
-                FormplayerFrontend.trigger("menu:select", model.model.get('id'));
+            if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
+                FormplayerFrontend.trigger("menu:select", caseId);
                 return;
             }
             var detailObject = detailObjects[detailTabIndex];
             var menuListView = Menus.Controller.getDetailList(detailObject);
 
             var tabModels = _.map(detailObjects, function (detail, index) {
-                return {title: detail.title, id: index};
+                return {title: detail.get('title'), id: index};
             });
             var tabCollection = new Backbone.Collection();
             tabCollection.reset(tabModels);
+
             var tabListView = new Menus.Views.DetailTabListView({
                 collection: tabCollection,
                 showDetail: function (detailTabIndex) {
-                    self.showDetail(model, detailTabIndex);
+                    self.showDetail(model, detailTabIndex, caseId);
                 },
             });
 
             $('#select-case').off('click').click(function () {
-                FormplayerFrontend.trigger("menu:select", model.model.get('id'));
+                FormplayerFrontend.trigger("menu:select", caseId);
             });
             $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
             $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
@@ -119,14 +115,16 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         },
 
         getDetailList: function (detailObject) {
-            var headers = detailObject.headers;
-            var details = detailObject.details;
+            var headers = detailObject.get('headers');
+            var details = detailObject.get('details');
+            var styles = detailObject.get('styles');
             var detailModel = [];
             // we need to map the details and headers JSON to a list for a Backbone Collection
             for (var i = 0; i < headers.length; i++) {
                 var obj = {};
                 obj.data = details[i];
                 obj.header = headers[i];
+                obj.style = styles[i];
                 obj.id = i;
                 detailModel.push(obj);
             }
@@ -139,31 +137,57 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
         // return a case tile from a detail object (for persistent case tile)
         getCaseTile: function (detailObject) {
-            var detailModel = [];
-            var obj = {};
-            obj.data = detailObject.details;
-            obj.id = 0;
-            detailModel.push(obj);
-            var detailCollection = new Backbone.Collection();
-            detailCollection.reset(detailModel);
-            return new Menus.Views.CaseTileListView({
-                collection: detailCollection,
+            var detailModel = new Backbone.Model({
+                data: detailObject.details,
+                id: 0,
+            });
+            var numEntitiesPerRow = detailObject.numEntitiesPerRow || 1;
+            var numRows = detailObject.maxHeight;
+            var numColumns = detailObject.maxWidth;
+            var useUniformUnits = detailObject.useUniformUnits || false;
+            var caseTileStyles = Menus.Views.buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
+                numEntitiesPerRow, useUniformUnits, 'persistent');
+            // Style the positioning of the elements within a tile (IE element 1 at grid position 1 / 2 / 4 / 3
+            $("#persistent-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
+            // Style the grid (IE each tile has 6 rows, 12 columns)
+            $("#persistent-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
+            return new Menus.Views.CaseTileView({
+                model: detailModel,
                 styles: detailObject.styles,
                 tiles: detailObject.tiles,
                 maxWidth: detailObject.maxWidth,
                 maxHeight: detailObject.maxHeight,
+                prefix: 'persistent',
             });
         },
     };
 
     Menus.Util = {
+        showBreadcrumbs: function (breadcrumbs) {
+            var detailCollection,
+                breadcrumbModels;
+
+            breadcrumbModels = _.map(breadcrumbs, function(breadcrumb, idx) {
+                return {
+                    data: breadcrumb,
+                    id: idx,
+                };
+            });
+
+            detailCollection = new Backbone.Collection(breadcrumbModels);
+            var breadcrumbView = new Menus.Views.BreadcrumbListView({
+                collection: detailCollection,
+            });
+            FormplayerFrontend.regions.breadcrumb.show(breadcrumbView.render());
+        },
+
         getMenuView: function (menuResponse) {
             var menuData = {
                 collection: menuResponse,
                 title: menuResponse.title,
                 headers: menuResponse.headers,
                 widthHints: menuResponse.widthHints,
-                action: menuResponse.action,
+                actions: menuResponse.actions,
                 pageCount: menuResponse.pageCount,
                 currentPage: menuResponse.currentPage,
                 styles: menuResponse.styles,

@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 import json
 import itertools
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View, TemplateView
@@ -24,6 +24,8 @@ from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
 
+from corehq import toggles
+from corehq.middleware import always_allow_browser_caching
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
@@ -402,6 +404,50 @@ class ProcessTextFileUploadView(BaseProcessFileUploadView):
         return ['text']
 
 
+class ProcessDetailPrintTemplateUploadView(ProcessTextFileUploadView):
+    name = "hqmedia_uploader_detail_print_template"
+
+    @method_decorator(toggles.CASE_DETAIL_PRINT.required_decorator())
+    def post(self, request, *args, **kwargs):
+        return super(ProcessDetailPrintTemplateUploadView, self).post(request, *args, **kwargs)
+
+    @property
+    def form_path(self):
+        return ("jr://file/commcare/text/module_%s_detail_print%s"
+                % (self.module_unique_id, self.file_ext))
+
+    @property
+    def module_unique_id(self):
+        return self.kwargs.get('module_unique_id')
+
+    def validate_file(self, replace_diff_ext=True):
+        return super(ProcessDetailPrintTemplateUploadView, self).validate_file(replace_diff_ext)
+
+    def process_upload(self):
+        ref = super(
+            ProcessDetailPrintTemplateUploadView, self
+        ).process_upload()
+        self.app.get_module_by_unique_id(self.module_unique_id).case_details.long.print_template = ref['ref']
+        self.app.save()
+        return ref
+
+
+class RemoveDetailPrintTemplateView(BaseMultimediaView):
+    name = "hqmedia_remove_detail_print_template"
+
+    @property
+    def module_unique_id(self):
+        if self.request.method == 'POST':
+            return self.request.POST.get('module_unique_id')
+        return None
+
+    @method_decorator(toggles.CASE_DETAIL_PRINT.required_decorator())
+    def post(self, *args, **kwargs):
+        del self.app.get_module_by_unique_id(self.module_unique_id).case_details.long.print_template
+        self.app.save()
+        return HttpResponse()
+
+
 class RemoveLogoView(BaseMultimediaView):
     name = "hqmedia_remove_logo"
 
@@ -563,6 +609,10 @@ class MultimediaUploadStatusView(View):
 
 class ViewMultimediaFile(View):
     name = "hqmedia_download"
+
+    @always_allow_browser_caching
+    def dispatch(self, request, *args, **kwargs):
+        return super(ViewMultimediaFile, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

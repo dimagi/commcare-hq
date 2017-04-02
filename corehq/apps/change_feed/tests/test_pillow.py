@@ -1,4 +1,5 @@
 # coding=utf-8
+from datetime import datetime
 from mock import patch
 from django.conf import settings
 from django.test import SimpleTestCase
@@ -77,6 +78,17 @@ class ChangeFeedPillowTest(SimpleTestCase):
         message = self.consumer.next()
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(document['domain'], change_meta.domain)
+
+    def test_publish_timestamp(self):
+        document = {
+            'doc_type': 'CommCareCase',
+            'type': 'mother',
+            'domain': None,
+        }
+        self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
+        message = self.consumer.next()
+        change_meta = change_meta_from_kafka_message(message.value)
+        self.assertLessEqual(change_meta.publish_timestamp, datetime.utcnow())
 
 
 class TestElasticProcessorPillows(SimpleTestCase):

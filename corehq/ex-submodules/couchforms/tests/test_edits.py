@@ -13,7 +13,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends, post_xform
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend, post_xform
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -36,7 +36,6 @@ class EditFormTest(TestCase, TestFileMixin):
         UnfinishedSubmissionStub.objects.all().delete()
         super(EditFormTest, self).tearDown()
 
-    @run_with_all_backends
     def test_basic_edit(self):
         original_xml = self.get_xml('original')
         edit_xml = self.get_xml('edit')
@@ -72,7 +71,6 @@ class EditFormTest(TestCase, TestFileMixin):
         )
         self.assertEqual(xform.get_xml(), edit_xml)
 
-    @run_with_all_backends
     def test_edit_an_error(self):
         form_id = uuid.uuid4().hex
         case_block = CaseBlock(
@@ -91,7 +89,6 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertFalse(form.is_error)
         self.assertEqual(None, getattr(form, 'problem', None))
 
-    @run_with_all_backends
     def test_broken_save(self):
         """
         Test that if the second form submission terminates unexpectedly
@@ -102,7 +99,8 @@ class EditFormTest(TestCase, TestFileMixin):
         original_xml = self.get_xml('original')
         edit_xml = self.get_xml('edit')
 
-        _, xform, _ = submit_form_locally(original_xml, self.domain)
+        result = submit_form_locally(original_xml, self.domain)
+        xform = result.xform
         self.assertEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_normal)
         self.assertEqual(self.domain, xform.domain)
@@ -131,7 +129,6 @@ class EditFormTest(TestCase, TestFileMixin):
             1
         )
 
-    @run_with_all_backends
     def test_case_management(self):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
@@ -153,7 +150,7 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual(case.dynamic_case_properties()['property'], 'original value')
         self.assertEqual([form_id], case.xform_ids)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(2, len(case.actions))
             for a in case.actions:
                 self.assertEqual(form_id, a.xform_id)
@@ -175,12 +172,11 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual(case.dynamic_case_properties()['property'], 'edited value')
         self.assertEqual([form_id], case.xform_ids)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(2, len(case.actions))
             for a in case.actions:
                 self.assertEqual(form_id, a.xform_id)
 
-    @run_with_all_backends
     def test_second_edit_fails(self):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
@@ -205,7 +201,6 @@ class EditFormTest(TestCase, TestFileMixin):
         deprecated_xform = self.formdb.get_form(xform.deprecated_form_id)
         self.assertTrue(deprecated_xform.is_deprecated)
 
-    @run_with_all_backends
     def test_case_management_ordering(self):
         case_id = uuid.uuid4().hex
         owner_id = uuid.uuid4().hex
@@ -223,7 +218,7 @@ class EditFormTest(TestCase, TestFileMixin):
         case = self.casedb.get_case(case_id)
         self.assertEqual([create_form_id], case.xform_ids)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertTrue(create_form_id in [a.xform_id for a in case.actions])
             for a in case.actions:
                 self.assertEqual(create_form_id, a.xform_id)
@@ -245,7 +240,7 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual(case.dynamic_case_properties()['property'], 'first value')
         self.assertEqual([create_form_id, edit_form_id], case.xform_ids)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertTrue(all(
                 form_id in [a.xform_id for a in case.actions]
                 for form_id in [create_form_id, edit_form_id]
@@ -266,7 +261,7 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual(case.dynamic_case_properties()['property'], 'final value')
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertTrue(all(
                 form_id in [a.xform_id for a in case.actions]
                 for form_id in [create_form_id, edit_form_id, second_edit_form_id]
@@ -291,8 +286,13 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual(case.dynamic_case_properties()['added_property'], 'added value')
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(
                 [create_form_id, create_form_id, edit_form_id, second_edit_form_id],
                 [a.xform_id for a in case.actions]
             )
+
+
+@use_sql_backend
+class EditFormTestSQL(EditFormTest):
+    pass

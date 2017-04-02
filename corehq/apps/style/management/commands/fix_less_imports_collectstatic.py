@@ -1,3 +1,4 @@
+from __future__ import print_function
 import codecs
 import os
 import re
@@ -13,9 +14,8 @@ class Command(BaseCommand):
             " and replace the variable with the appropriate static file"
             " path once collectstatic is run on production"
             "the variable is necessary for less.js debug mode.")
-    args = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         # all the less files collected during collectstatic
         collectedless = [os.path.join(root, file)
                          for root, dir, files in os.walk(settings.STATIC_ROOT)

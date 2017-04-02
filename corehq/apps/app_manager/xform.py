@@ -16,7 +16,7 @@ from corehq.apps.app_manager.const import (
 from lxml import etree as ET
 
 from corehq.apps.nimbus_api.exceptions import NimbusAPIException
-from corehq.toggles import NIMBUS_FORM_VALIDATION
+from corehq.toggles import FORMTRANSLATE_FORM_VALIDATION
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
@@ -25,7 +25,7 @@ import collections
 import re
 
 
-VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
+VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio', 'markdown')
 
 
 def parse_xml(string):
@@ -35,7 +35,7 @@ def parse_xml(string):
         string = string.encode("utf-8")
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
-    except ET.ParseError, e:
+    except ET.ParseError as e:
         raise XFormException(_(u"Error parsing XML: {}").format(e))
 
 
@@ -550,13 +550,13 @@ def validate_xform(domain, source):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
-    if NIMBUS_FORM_VALIDATION.enabled(domain):
+    if FORMTRANSLATE_FORM_VALIDATION.enabled(domain):
+        validation_results = formtranslate.api.validate(source)
+    else:
         try:
             validation_results = nimbus_api.validate_form(source)
         except NimbusAPIException:
             raise XFormValidationFailed("Unable to validate form")
-    else:
-        validation_results = formtranslate.api.validate(source)
 
     if not validation_results.success:
         raise XFormValidationError(
@@ -642,7 +642,7 @@ class XForm(WrappedNode):
 
     @property
     def audio_references(self):
-        return self.media_references(form="audio")
+        return self.media_references(form="audio") + self.media_references(form="expanded-audio")
 
     @property
     def video_references(self):
@@ -653,7 +653,8 @@ class XForm(WrappedNode):
         video = self.media_references_by_lang(lang=lang, form="video")
         audio = self.media_references_by_lang(lang=lang, form="audio")
         inline_video = self.media_references_by_lang(lang=lang, form="video-inline")
-        return images + video + audio + inline_video
+        expanded_audio = self.media_references_by_lang(lang=lang, form="expanded-audio")
+        return images + video + audio + inline_video + expanded_audio
 
     def get_instance_ids(self):
         def _get_instances():
@@ -767,6 +768,26 @@ class XForm(WrappedNode):
             for key in node.xml.attrib:
                 if key.startswith(vellum_ns):
                     del node.attrib[key]
+
+    def add_missing_instances(self, domain):
+        from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
+        instance_declarations = self.get_instance_ids()
+        missing_unknown_instances = set()
+        instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(domain, [self.render()])
+        for instance_id in unknown_instance_ids:
+            if instance_id not in instance_declarations:
+                missing_unknown_instances.add(instance_id)
+
+        if missing_unknown_instances:
+            instance_ids = "', '".join(missing_unknown_instances)
+            raise XFormValidationError(_(
+                "The form is missing some instance declarations "
+                "that can't be automatically added: '%(instance_ids)s'"
+            ) % {'instance_ids': instance_ids})
+
+        for instance in instances:
+            if instance.id not in instance_declarations:
+                self.add_instance(instance.id, instance.src)
 
     @requires_itext()
     def rename_language(self, old_code, new_code):
@@ -977,6 +998,7 @@ class XForm(WrappedNode):
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
+                    "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
                 }
 
                 # Include meta information about the stock entry
@@ -2055,6 +2077,12 @@ VELLUM_TYPES = {
         'icon': 'icon-retweet',
         'icon_bs3': 'fa fa-retweet',
     },
+    "SaveToCase": {
+        'tag': 'save_to_case',
+        'icon': 'icon-save',
+        'icon_bs3': 'fa fa-save',
+    },
+
     "Secret": {
         'tag': 'secret',
         'type': ('xsd:string', None),
@@ -2151,36 +2179,3 @@ def infer_vellum_type(control, bind):
         })
         return None
     return result['name']
-
-
-def find_missing_instances(wrapped_xform):
-    from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
-    instance_declarations = wrapped_xform.get_instance_ids()
-    missing_instances = set()
-    missing_unknown_instance = set()
-    instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths('', [wrapped_xform.render()])
-    for instance in instances:
-        if instance.id not in instance_declarations:
-            missing_instances.add(instance.id)
-    for instance_id in unknown_instance_ids:
-        if instance_id not in instance_declarations:
-            missing_unknown_instance.add(instance_id)
-
-    return missing_instances, missing_unknown_instance
-
-
-def check_for_missing_instances(wrapped_xform):
-    missing_instances, missing_unknown_instances = find_missing_instances(wrapped_xform)
-    message_parts = []
-    if missing_instances:
-        instance_ids = "','".join(missing_instances)
-        message_parts.append(_("Known instances: '{}'").format(instance_ids))
-    if missing_unknown_instances:
-        instance_ids = "','".join(missing_unknown_instances)
-        message_parts.append(_("Unknown instances: '{}'").format(instance_ids))
-
-    if message_parts:
-        raise XFormValidationError(
-            'The form is missing some instance declarations: {}'.format(', '.join(message_parts)),
-            validation_problems=[]
-        )

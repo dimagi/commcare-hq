@@ -4,8 +4,10 @@ from urllib import urlencode
 import math
 import operator
 from pygooglechart import ScatterChart
+from corehq.util.quickcache import quickcache
 import pytz
 
+from corehq import toggles
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.es.aggregations import (
@@ -28,12 +30,17 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_duration_stats_by_user,
     get_form_duration_stats_for_users)
 from corehq.apps.reports.exceptions import TooMuchDataError
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.filters.case_list import CaseListFilter
+from corehq.apps.reports.const import USER_QUERY_LIMIT
+from corehq.apps.reports.filters.users import (
+    ExpandedMobileWorkerFilter as EMWF, LocationRestrictedMobileWorkerFilter
+)
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter
 from corehq.apps.reports.filters.select import CaseTypeFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
+from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import friendly_timedelta, format_datatables_data
@@ -43,6 +50,7 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
+from django.conf import settings
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
@@ -77,16 +85,9 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
 
 
 class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
-    exportable = True
 
     def get_raw_user_link(self, user):
-        user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
-        user_link = user_link_template % {
-            'link': self.raw_user_link_url,
-            'params': urlencode(EMWF.for_user(user.user_id)),
-            'username': user.username_in_report,
-        }
-        return user_link
+        return _get_raw_user_link(user, self.raw_user_link_url, filter_class=CaseListFilter)
 
     @property
     def raw_user_link_url(self):
@@ -108,7 +109,7 @@ class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
             "enddate": self.request.GET.get("enddate", '')
         }
 
-        params.update(EMWF.for_user(user.user_id))
+        params.update(LocationRestrictedMobileWorkerFilter.for_user(user.user_id))
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 
@@ -689,8 +690,21 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         )
         return users_data.combined_users
 
+    @quickcache(['self.domain', 'mobile_user_and_group_slugs'], timeout=10)
+    def is_query_too_big(self, mobile_user_and_group_slugs):
+        user_es_query = EMWF.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+        )
+        return user_es_query.count() > USER_QUERY_LIMIT
+
     @property
     def rows(self):
+        if self.is_query_too_big(self.request.GET.getlist(EMWF.slug)):
+            raise BadRequestError(
+                _('Query selects too many users. Please modify your filters to select fewer users')
+            )
+
         rows = []
         totals = [0] * (len(self.all_relevant_forms) + 1)
         for user in self.selected_users:
@@ -734,7 +748,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         )
 
 
-class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
+class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
     name = ugettext_noop("Daily Form Activity")
     bad_request_error_text = ugettext_noop("Your search query was invalid. If you're using a large date range, try using a smaller one.")
@@ -820,12 +834,8 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
     @property
     @memoized
     def all_users(self):
-        fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        users = EMWF.user_es_query(self.domain, mobile_user_and_group_slugs).fields(fields)\
-                .run().hits
-        users = map(util._report_user_dict, users)
-        return sorted(users, key=lambda u: u['username_in_report'])
+        user_query = EMWF.user_es_query(self.domain, self.request.GET.getlist(EMWF.slug))
+        return util.get_simplified_users(user_query)
 
     def paginate_list(self, data_list):
         if self.pagination:
@@ -935,10 +945,10 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         first_col = self.get_raw_user_link(user) if user else _("Total")
         return [first_col] + styled_date_cols + [sum(date_cols)]
 
-    @property
-    def raw_user_link_url(self):
+    def get_raw_user_link(self, user):
         from corehq.apps.reports.standard.inspect import SubmitHistory
-        return SubmitHistory.get_url(domain=self.domain)
+        return _get_raw_user_link(user, SubmitHistory.get_url(domain=self.domain),
+                                  filter_class=LocationRestrictedMobileWorkerFilter)
 
     @property
     def template_context(self):
@@ -1071,7 +1081,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
     is_cacheable = True
 
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
-                                "sent to CommCare HQ.")
+                                "sent to {}.".format(settings.COMMCARE_HQ_NAME))
 
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
@@ -1136,7 +1146,10 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 td = submission_time - completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
                 rows.append([
-                    self.get_user_link(user_map.get(row['form']['meta']['userID'])),
+                    self.get_user_link(
+                        row['form']['meta']['username'],
+                        user_map.get(row['form']['meta']['userID'])
+                    ),
                     self._format_date(completion_time),
                     self._format_date(submission_time),
                     form_map[row['xmlns']],
@@ -1152,6 +1165,11 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
         self.total_row = [_("Average"), "-", "-", "-", "-", self._format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
         return rows
+
+    def get_user_link(self, username, user):
+        if not user:
+            return username
+        return super(FormCompletionVsSubmissionTrendsReport, self).get_user_link(user)
 
     def _format_date(self, date):
         """
@@ -1336,16 +1354,25 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     num_avg_intervals = 3  # how many duration intervals we go back to calculate averages
     is_cacheable = True
 
-    fields = [
-        'corehq.apps.reports.filters.select.MultiGroupFilter',
-        'corehq.apps.reports.filters.users.UserOrGroupFilter',
-        'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
-        'corehq.apps.reports.filters.dates.DatespanFilter',
-    ]
     fix_left_col = True
     emailable = True
 
     NO_FORMS_TEXT = ugettext_noop('None')
+
+    @property
+    def fields(self):
+        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
+            return [
+                'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+                'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
+                'corehq.apps.reports.filters.dates.DatespanFilter',
+            ]
+        return [
+            'corehq.apps.reports.filters.select.MultiGroupFilter',
+            'corehq.apps.reports.filters.users.UserOrGroupFilter',
+            'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
+            'corehq.apps.reports.filters.dates.DatespanFilter',
+        ]
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -1357,6 +1384,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def view_by_groups(self):
+        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
+            return False
         return self.request.GET.get('view_by', None) == 'groups'
 
     @property
@@ -1433,7 +1462,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def users_to_iterate(self):
-        if not self.group_ids:
+        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
+            user_query = EMWF.user_es_query(self.domain, self.request.GET.getlist(EMWF.slug))
+            return util.get_simplified_users(user_query)
+        elif not self.group_ids:
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
         else:
@@ -1465,9 +1497,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         """
         base_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
         if self.view_by_groups:
-            params = EMWF.for_reporting_group(owner_id)
+            params = LocationRestrictedMobileWorkerFilter.for_reporting_group(owner_id)
         else:
-            params = EMWF.for_user(owner_id)
+            params = LocationRestrictedMobileWorkerFilter.for_user(owner_id)
 
         start_date, end_date = self._dates_for_linked_reports(self.datespan)
         params.update({
@@ -1500,7 +1532,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     @staticmethod
     def _case_list_url_params(query, owner_id):
         params = {}
-        params.update(EMWF.for_user(owner_id))  # Get user slug for Users or Groups Filter
+        params.update(CaseListFilter.for_user(owner_id))
         params.update({'search_query': query})
         return params
 
@@ -1761,3 +1793,18 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         self.total_row = self._total_row(rows, report_data)
         return rows
+
+
+def _get_raw_user_link(user, url, filter_class):
+    """
+    filter_class is expected to be either ExpandedMobileWorkerFilter or a subclass of it, including
+    - CaseListFilter
+    - LocationRestrictedMobileWorkerFilter
+    """
+    user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
+    user_link = user_link_template % {
+        'link': url,
+        'params': urlencode(filter_class.for_user(user.user_id)),
+        'username': user.username_in_report,
+    }
+    return user_link

@@ -1,4 +1,4 @@
-{% extends 'style/base_section.html' %}
+{% extends 'style/two_column.html' %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
@@ -10,6 +10,7 @@
 appmanager-sidebar
 {% endblock %}
 
+
 {% block page_content_classes %}
 appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% endif %}
 {% endblock %}
@@ -17,43 +18,7 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
 {% block title %}{% trans "Applications" %}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-  {% compress css %}
-  {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
-  <link type="text/css" rel="stylesheet" media="screen" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
-  <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2.css' %}" />
-  <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
-  {% endcompress %}
-
-  {% if less_debug %}
-    <link type="text/less"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'app_manager/less/font-workflow.less' %}" />
-    <link type="text/less"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'app_manager/less/new_appmanager.debug.less' %}" />
-    <link type="text/less"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
-    {% else %}
-    {% compress css %}
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'app_manager/less/font-workflow.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'app_manager/less/new_appmanager.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'app_manager/less/preview_app.less' %}"/>
-    {% endcompress %}
-  {% endif %}
-
+  {% include 'app_manager/v2/partials/apps_stylesheets.html' %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
@@ -81,51 +46,18 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
 
-
-    <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
-
-
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-    $(function () {
-        $('#deleted-app-modal').modal({
-            backdrop: 'static',
-            keyboard: false,
-            show: true
-        }).on('hide.bs.modal', function () {
-            window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
-        });
-
-        var previewApp = hqImport('app_manager/js/preview_app.js');
-        previewApp.initPreviewWindow(hqLayout);
-
-    });
-    $(function () {
-       $('.appmanager-content').fadeIn();
-       $('.appmanager-loading').fadeOut();
-    });
-
-    hqLayout.utils.setIsAppbuilderResizing(true);
-
-    </script>
+    <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
 {% endblock %}
 
 {% block page_breadcrumbs %}{% endblock %}
 
-{% block content %}
-  {{ block.super }}
+{% block content %}{{ block.super }}
+  {% registerurl "default_app" domain %}
   {% include 'app_manager/v2/partials/preview_app.html'%}
 {% endblock %}
 
 {% block page_content %}
-<div class="appmanager-loading-container">
-  <div class="appmanager-loading appmanager-loading-body">
-    <i class="fa fa-spin fa-spinner"></i>
-  </div>
-</div>
-<div class="appmanager-content appmanager-content-animate-preview"
+<div class="appmanager-content appmanager-content-transition-all{% if not formdesigner %} appmanager-settings-content {% endif %}"
      id="js-appmanager-body">
     {% if app %}
         {% if error %}
@@ -184,3 +116,5 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
     </div>
     {% endif %}
 {% endblock modals %}
+
+{% block page_row_classes %}appmanager-content-row{% endblock %}

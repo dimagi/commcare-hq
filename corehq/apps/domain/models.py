@@ -12,6 +12,8 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.apps.users.const import ANONYMOUS_USERNAME
+from corehq.apps.users.util import format_username
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db
 from corehq.util.soft_assert import soft_assert
@@ -21,7 +23,7 @@ from dimagi.ext.couchdbkit import (
     DocumentSchema, SchemaProperty, DictProperty,
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
@@ -33,15 +35,13 @@ from dimagi.utils.couch.database import (
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.html import format_html
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.name_to_url import name_to_url
+from dimagi.utils.logging import log_signal_errors
 from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
 from importlib import import_module
-from corehq import toggles
 
 from .exceptions import InactiveTransferDomainException, NameUnavailableException
 
@@ -180,6 +180,15 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     )
     business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
     data_access_threshold = IntegerProperty()
+    partner_technical_competency = IntegerProperty()
+    support_prioritization = IntegerProperty()
+    gs_continued_involvement = StringProperty()
+    technical_complexity = StringProperty()
+    app_design_comments = StringProperty()
+    training_materials = StringProperty()
+    partner_comments = StringProperty()
+    partner_contact = StringProperty()
+    dimagi_contact = StringProperty()
 
 
 class CaseDisplaySettings(DocumentSchema):
@@ -442,6 +451,13 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         else:
             return []
 
+    def get_anonymous_mobile_worker(self):
+        from corehq.apps.users.models import CouchUser
+
+        return CouchUser.get_by_username(
+            format_username(ANONYMOUS_USERNAME, self.name)
+        )
+
     @classmethod
     def field_by_prefix(cls, field, prefix=''):
         # unichr(0xfff8) is something close to the highest character available
@@ -467,11 +483,11 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return get_brief_apps_in_domain(self.name)
 
     def full_applications(self, include_builds=True):
-        from corehq.apps.app_manager.models import Application, RemoteApp
-        WRAPPERS = {'Application': Application, 'RemoteApp': RemoteApp}
+        from corehq.apps.app_manager.util import get_correct_app_class
+        from corehq.apps.app_manager.models import Application
 
         def wrap_application(a):
-            return WRAPPERS[a['doc']['doc_type']].wrap(a['doc'])
+            return get_correct_app_class(a['doc']).wrap(a['doc'])
 
         if include_builds:
             startkey = [self.name]
@@ -642,14 +658,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
-        for result in results:
-            # Second argument is None if there was no error
-            if result[1]:
-                notify_exception(
-                    None,
-                    message="Error occured during domain post_save %s: %s" %
-                            (self.name, str(result[1]))
-                )
+        log_signal_errors(results, "Error occurred during domain post_save (%s)", {'domain': self.name})
 
     def save_copy(self, new_domain_name=None, new_hr_name=None, user=None,
                   copy_by_id=None, share_reminders=True,
@@ -914,7 +923,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         for result in results:
             response = result[1]
             if isinstance(response, Exception):
-                raise DomainDeleteException(u"Error occurred during domain pre_delete {}: {}".format(self.name, str(response)))
+                message = u"Error occurred during domain pre_delete {}".format(self.name)
+                raise DomainDeleteException(message, response)
             elif response:
                 assert isinstance(response, list)
                 dynamic_deletion_operations.extend(response)
@@ -1049,17 +1059,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return (self.has_privilege(privileges.LOCATIONS)
                 and (self.commtrack_enabled
                      or LocationType.objects.filter(domain=self.name).exists()))
-
-    @property
-    def supports_multiple_locations_per_user(self):
-        """
-        This method is a wrapper around the toggle that
-        enables multiple location functionality. Callers of this
-        method should know that this is special functionality
-        left around for special applications, and not a feature
-        flag that should be set normally.
-        """
-        return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self.name)
 
     @property
     def is_onboarding_domain(self):

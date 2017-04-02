@@ -1,16 +1,44 @@
 from decimal import Decimal
+from django.test import TestCase
+from casexml.apps.case.tests.util import delete_all_xforms
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.commtrack.tests.util import CommTrackTest, FIXED_USER, ROAMING_USER
 from corehq.apps.commtrack.sms import handle
+from corehq.apps.commtrack.tests import util
+from corehq.apps.products.models import Product
+from corehq.apps.reminders.util import get_two_way_number_for_recipient
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER, NAMESPACE_DOMAIN
 from couchforms.dbaccessors import get_commtrack_forms
 
 
-class SMSTests(CommTrackTest):
+class SMSTests(TestCase):
+    user_definitions = []
 
-    def setUp(self):
-        super(SMSTests, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        super(SMSTests, cls).setUpClass()
+        cls.backend, cls.backend_mapping = setup_default_sms_test_backend()
+        cls.domain = util.bootstrap_domain(util.TEST_DOMAIN)
+        util.bootstrap_location_types(cls.domain.name)
+        util.bootstrap_products(cls.domain.name)
+        cls.products = sorted(Product.by_domain(cls.domain.name), key=lambda p: p._id)
+        cls.loc = util.make_loc('loc1')
+        cls.sp = cls.loc.linked_supply_point()
+        cls.users = [util.bootstrap_user(cls, **user_def) for user_def in cls.user_definitions]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()  # domain delete cascades to everything else
+        cls.backend_mapping.delete()
+        cls.backend.delete()
+        delete_all_users()
+        super(SMSTests, cls).tearDownClass()
+
+    def tearDown(self):
+        delete_all_xforms()
+        super(SMSTests, self).tearDown()
 
     def check_stock(self, code, amount, case_id=None, section_id='stock'):
         if not case_id:
@@ -34,7 +62,7 @@ class SMSTests(CommTrackTest):
 
 
 class StockReportTest(SMSTests):
-    user_definitions = [ROAMING_USER, FIXED_USER]
+    user_definitions = [util.ROAMING_USER, util.FIXED_USER]
 
     def testStockReportRoaming(self):
         self.assertEqual(0, len(get_commtrack_forms(self.domain.name)))
@@ -44,7 +72,7 @@ class StockReportTest(SMSTests):
             'pr': 30,
         }
         # soh loc1 pp 10 pq 20...
-        handled = handle(self.users[0].get_verified_number(), 'soh {loc} {report}'.format(
+        handled = handle(get_two_way_number_for_recipient(self.users[0]), 'soh {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ), None)
@@ -75,7 +103,7 @@ class StockReportTest(SMSTests):
             'pr': 30,
         }
         # soh loc1 pp 10 pq 20...
-        handled = handle(self.users[1].get_verified_number(), 'soh {report}'.format(
+        handled = handle(get_two_way_number_for_recipient(self.users[1]), 'soh {report}'.format(
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ), None)
         self.assertTrue(handled)
@@ -112,7 +140,7 @@ class StockReportTest(SMSTests):
 
         # First submit an soh so we can make sure receipts functions
         # differently than soh
-        handle(self.users[0].get_verified_number(), 'soh {loc} {report}'.format(
+        handle(get_two_way_number_for_recipient(self.users[0]), 'soh {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in original_amounts.items())
         ), None)
@@ -123,7 +151,7 @@ class StockReportTest(SMSTests):
             'pr': 3,
         }
 
-        handled = handle(self.users[0].get_verified_number(), 'r {loc} {report}'.format(
+        handled = handle(get_two_way_number_for_recipient(self.users[0]), 'r {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in received_amounts.items())
         ), None)
@@ -144,7 +172,7 @@ class StockReportTest(SMSTests):
         }
 
         # First submit an soh so we can make sure losses functions properly
-        handle(self.users[0].get_verified_number(), 'soh {loc} {report}'.format(
+        handle(get_two_way_number_for_recipient(self.users[0]), 'soh {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in original_amounts.items())
         ), None)
@@ -155,7 +183,7 @@ class StockReportTest(SMSTests):
             'pr': 3,
         }
 
-        handled = handle(self.users[0].get_verified_number(), 'l {loc} {report}'.format(
+        handled = handle(get_two_way_number_for_recipient(self.users[0]), 'l {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in lost_amounts.items())
         ), None)
@@ -176,7 +204,7 @@ class StockReportTest(SMSTests):
         }
 
         # First submit an soh so we can make sure consumption functions properly
-        handle(self.users[0].get_verified_number(), 'soh {loc} {report}'.format(
+        handle(get_two_way_number_for_recipient(self.users[0]), 'soh {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in original_amounts.items())
         ), None)
@@ -187,7 +215,7 @@ class StockReportTest(SMSTests):
             'pr': 3,
         }
 
-        handled = handle(self.users[0].get_verified_number(), 'c {loc} {report}'.format(
+        handled = handle(get_two_way_number_for_recipient(self.users[0]), 'c {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in lost_amounts.items())
         ), None)
@@ -203,14 +231,14 @@ class StockReportTest(SMSTests):
 
 
 class StockAndReceiptTest(SMSTests):
-    user_definitions = [FIXED_USER]
+    user_definitions = [util.FIXED_USER]
 
     def setUp(self):
         super(StockAndReceiptTest, self).setUp()
         STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain.name, True, NAMESPACE_DOMAIN)
 
     def test_soh_and_receipt(self):
-        handled = handle(self.users[0].get_verified_number(), 'pp 20.30', None)
+        handled = handle(get_two_way_number_for_recipient(self.users[0]), 'pp 20.30', None)
         self.assertTrue(handled)
 
         self.check_stock('pp', Decimal(20))

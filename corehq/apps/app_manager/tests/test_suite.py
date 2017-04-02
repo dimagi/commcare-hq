@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 import hashlib
 import re
+
+import mock
 from django.test import SimpleTestCase
+
+from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.util.test_utils import flag_enabled
 
 from corehq.apps.app_manager.exceptions import SuiteValidationError, DuplicateInstanceIdError
@@ -58,12 +62,40 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 field=detail.columns[0].field,
                 type='index',
                 direction='descending',
+                blanks='first',
             )
         )
         self.assertXmlPartialEqual(
             self.get_xml('sort-cache'),
             app.create_suite(),
             "./detail[@id='m0_case_short']"
+        )
+
+    def test_sort_calculation(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        detail = app.modules[0].case_details.short
+        detail.sort_elements.append(
+            SortElement(
+                field=detail.columns[0].field,
+                type='string',
+                direction='descending',
+                blanks='first',
+                sort_calculation='random()'
+            )
+        )
+        sort_node = """
+        <partial>
+            <sort direction="descending" blanks="first" order="1" type="string">
+              <text>
+                <xpath function="random()"/>
+              </text>
+            </sort>
+        </partial>
+        """
+        self.assertXmlPartialEqual(
+            sort_node,
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/field/sort"
         )
 
     def test_callcenter_suite(self):
@@ -262,6 +294,9 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_fixtures_in_graph(self):
         self._test_generic_suite('app_fixture_graphing', 'suite-fixture-graphing')
 
+    def test_printing(self):
+        self._test_generic_suite('app_print_detail', 'suite-print-detail')
+
     def test_fixture_to_case_selection(self):
         factory = AppFactory(build_version='2.9')
 
@@ -354,20 +389,25 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 enum=[
                     MappingItem(key='10', value={'en': 'jr://icons/10-year-old.png'}),
                     MappingItem(key='age > 50', value={'en': 'jr://icons/old-icon.png'}),
+                    MappingItem(key='15%', value={'en': 'jr://icons/percent-icon.png'}),
                 ],
             ),
         ]
 
         key1_varname = '10'
         key2_varname = hashlib.md5('age > 50').hexdigest()[:8]
+        key3_varname = hashlib.md5('15%').hexdigest()[:8]
 
         icon_mapping_spec = """
             <partial>
               <template form="image" width="13%">
                 <text>
-                  <xpath function="if(age = '10', $k{key1_varname}, if(age > 50, $h{key2_varname}, ''))">
+                  <xpath function="if(age = '10', $k{key1_varname}, if(age > 50, $h{key2_varname}, if(age = '15%', $h{key3_varname}, '')))">
                     <variable name="h{key2_varname}">
                       <locale id="m0.case_short.case_age_1.enum.h{key2_varname}"/>
+                    </variable>
+                    <variable name="h{key3_varname}">
+                      <locale id="m0.case_short.case_age_1.enum.h{key3_varname}"/>
                     </variable>
                     <variable name="k{key1_varname}">
                       <locale id="m0.case_short.case_age_1.enum.k{key1_varname}"/>
@@ -379,6 +419,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """.format(
             key1_varname=key1_varname,
             key2_varname=key2_varname,
+            key3_varname=key3_varname,
         )
         # check correct suite is generated
         self.assertXmlPartialEqual(
@@ -388,6 +429,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
         # check icons map correctly
         app_strings = commcare_translations.loads(app.create_app_strings('en'))
+        self.assertEqual(
+            app_strings['m0.case_short.case_age_1.enum.h{key3_varname}'.format(key3_varname=key3_varname,)],
+            'jr://icons/percent-icon.png'
+        )
         self.assertEqual(
             app_strings['m0.case_short.case_age_1.enum.h{key2_varname}'.format(key2_varname=key2_varname,)],
             'jr://icons/old-icon.png'
@@ -727,26 +772,42 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )
 
-        report_app_config._report.columns[0]['transform'] = {
-            'type': 'translation',
-            'translations': {
-                u'एक': [
-                    ['en', 'one'],
-                    ['es', 'uno'],
-                ],
-                '2': [
-                    ['en', 'two'],
-                    ['es', 'dos\''],
-                    ['hin', u'दो'],
-                ],
+        # Tuple mapping translation formats to the expected output of each
+        translation_formats = [
+            ({
+                u'एक': {
+                    'en': 'one',
+                    'es': 'uno',
+                },
+                '2': {
+                    'en': 'two',
+                    'es': 'dos\'',
+                    'hin': u'दो',
+                },
+            }, 'reports_module_data_detail-translated'),
+            ({
+                u'एक': 'one',
+                '2': 'two',
+            }, 'reports_module_data_detail-translated-simple'),
+            ({
+                u'एक': {
+                    'en': 'one',
+                    'es': 'uno',
+                },
+                '2': 'two',
+            }, 'reports_module_data_detail-translated-mixed'),
+        ]
+        for translation_format, expected_output in translation_formats:
+            report_app_config._report.columns[0]['transform'] = {
+                'type': 'translation',
+                'translations': translation_format,
             }
-        }
-        report_app_config._report = ReportConfiguration.wrap(report_app_config._report._doc)
-        self.assertXmlPartialEqual(
-            self.get_xml('reports_module_data_detail-translated'),
-            app.create_suite(),
-            "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
-        )
+            report_app_config._report = ReportConfiguration.wrap(report_app_config._report._doc)
+            self.assertXmlPartialEqual(
+                self.get_xml(expected_output),
+                app.create_suite(),
+                "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
+            )
 
     def test_circular_parent_case_ref(self):
         factory = AppFactory()
@@ -822,7 +883,7 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
             u"""
             <partial>
                 <instance id='casedb' src='jr://instance/casedb' />
-                <instance id='locations' src='jr://fixture/commtrack:locations' />
+                <instance id='locations' src='jr://fixture/locations' />
             </partial>
             """,
             self.factory.app.create_suite(),
@@ -831,33 +892,61 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_location_instances(self):
         self.form.form_filter = "instance('locations')/locations/"
-        with flag_enabled('FLAT_LOCATION_FIXTURE'):
-            self.assertXmlPartialEqual(
-                u"""
-                <partial>
-                    <instance id='locations' src='jr://fixture/locations' />
-                </partial>
-                """,
-                self.factory.app.create_suite(),
-                "entry/instance")
-
         self.assertXmlPartialEqual(
             u"""
+            <partial>
+                <instance id='locations' src='jr://fixture/locations' />
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )
+
+    @mock.patch.object(LocationFixtureConfiguration, 'for_domain')
+    def test_location_instance_during_migration(self, sync_patch):
+        # tests for expectations during migration from hierarchical to flat location fixture
+        # Domains with HIERARCHICAL_LOCATION_FIXTURE enabled and with sync_flat_fixture set to False
+        # should have hierarchical jr://fixture/commtrack:locations fixture format
+        # All other cases to have flat jr://fixture/locations fixture format
+        self.form.form_filter = "instance('locations')/locations/"
+        configuration_mock_obj = mock.MagicMock()
+        sync_patch.return_value = configuration_mock_obj
+
+        hierarchical_fixture_format_xml = u"""
             <partial>
                 <instance id='locations' src='jr://fixture/commtrack:locations' />
             </partial>
-            """,
-            self.factory.app.create_suite(),
-            "entry/instance"
-        )
+        """
 
-        self.form.form_filter = "instance('commtrack:locations')/locations/"
-        self.assertXmlPartialEqual(
-            u"""
+        flat_fixture_format_xml = u"""
             <partial>
-                <instance id='commtrack:locations' src='jr://fixture/commtrack:locations' />
+                <instance id='locations' src='jr://fixture/locations' />
             </partial>
-            """,
-            self.factory.app.create_suite(),
-            "entry/instance"
-        )
+        """
+
+        configuration_mock_obj.sync_flat_fixture = True  # default value
+        # Domains migrating to flat location fixture, will have FF enabled and should successfully be able to
+        # switch between hierarchical and flat fixture
+        with flag_enabled('HIERARCHICAL_LOCATION_FIXTURE'):
+            configuration_mock_obj.sync_hierarchical_fixture = True  # default value
+            self.assertXmlPartialEqual(flat_fixture_format_xml,
+                                       self.factory.app.create_suite(), "entry/instance")
+
+            configuration_mock_obj.sync_hierarchical_fixture = False
+            self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+
+            configuration_mock_obj.sync_flat_fixture = False
+            self.assertXmlPartialEqual(hierarchical_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+
+            configuration_mock_obj.sync_hierarchical_fixture = True
+            self.assertXmlPartialEqual(hierarchical_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+
+        # To ensure for new domains or domains adding locations now come on flat fixture
+        configuration_mock_obj.sync_hierarchical_fixture = True  # default value
+        self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+
+        # This should not happen ideally since the conf can not be set without having HIERARCHICAL_LOCATION_FIXTURE
+        # enabled. Considering that a domain has sync hierarchical fixture set to False without the FF
+        # HIERARCHICAL_LOCATION_FIXTURE. In such case the domain stays on flat fixture format
+        configuration_mock_obj.sync_hierarchical_fixture = False
+        self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")

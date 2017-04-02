@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.users.analytics import get_count_of_active_commcare_users_in_domain, \
     get_count_of_inactive_commcare_users_in_domain, get_active_commcare_users_in_domain, \
     get_inactive_commcare_users_in_domain

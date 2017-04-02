@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from decimal import Decimal
 import itertools
@@ -19,7 +20,6 @@ from django_prbac.models import Role
 import jsonfield
 import stripe
 
-from couchdbkit import ResourceNotFound
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
@@ -67,6 +67,7 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
+import six
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -74,6 +75,8 @@ MAX_INVOICE_COMMUNICATIONS = 5
 SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
+
+CONSISTENT_DATES_CHECK = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
 
 _soft_assert_domain_not_loaded = soft_assert(
     to='{}@{}'.format('npellegrino', 'dimagi.com'),
@@ -459,9 +462,10 @@ class BillingAccount(ValidateModelMixin, models.Model):
         old_user = self.auto_pay_user
         subject = _("Your card is no longer being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
-        try:
-            old_user_name = WebUser.get_by_username(old_user).first_name
-        except ResourceNotFound:
+        old_web_user = WebUser.get_by_username(old_user)
+        if old_web_user:
+            old_user_name = old_web_user.first_name
+        else:
             old_user_name = old_user
 
         context = {
@@ -484,10 +488,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         from corehq.apps.domain.views import EditExistingBillingAccountView
         subject = _("Your card is being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
-        try:
-            new_user_name = WebUser.get_by_username(self.auto_pay_user).first_name
-        except ResourceNotFound:
-            new_user_name = self.auto_pay_user
+        web_user = WebUser.get_by_username(self.auto_pay_user)
+        new_user_name = web_user.first_name if web_user else self.auto_pay_user
         try:
             last_4 = self.autopay_card.last4
         except StripePaymentMethod.DoesNotExist:
@@ -739,7 +741,6 @@ class DefaultProductPlan(models.Model):
     The latest SoftwarePlanVersion that's linked to this plan will be the one used to create a new subscription if
     nothing is found for that domain.
     """
-    product_type = models.CharField(max_length=25, choices=SoftwareProductType.CHOICES)
     edition = models.CharField(
         default=SoftwarePlanEdition.COMMUNITY,
         choices=SoftwarePlanEdition.CHOICES,
@@ -747,22 +748,26 @@ class DefaultProductPlan(models.Model):
     )
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
     is_trial = models.BooleanField(default=False)
+    is_report_builder_enabled = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'accounting'
+        unique_together = ('edition', 'is_trial', 'is_report_builder_enabled')
 
     @classmethod
-    def get_default_plan_version(cls, edition=None, is_trial=False):
+    def get_default_plan_version(cls, edition=None, is_trial=False,
+                                 is_report_builder_enabled=False):
         edition = edition or SoftwarePlanEdition.COMMUNITY
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
-                product_type=SoftwareProductType.COMMCARE, edition=edition, is_trial=is_trial
+                edition=edition, is_trial=is_trial,
+                is_report_builder_enabled=is_report_builder_enabled
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError(
-                "No default product plan was set up, did you forget to run cchq_software_plan_bootstrap?"
+                "No default product plan was set up, did you forget to run migrations?"
             )
 
     @classmethod
@@ -808,31 +813,24 @@ class SoftwarePlanVersion(models.Model):
     @property
     def user_facing_description(self):
         from corehq.apps.accounting.user_text import DESC_BY_EDITION, FEATURE_TYPE_TO_NAME
+
+        def _default_description(plan, monthly_limit):
+            if plan.edition != SoftwarePlanEdition.ENTERPRISE:
+                return DESC_BY_EDITION[plan.edition]['description'] % monthly_limit
+            else:
+                return DESC_BY_EDITION[plan.edition]['description']
+
         desc = {
             'name': self.plan.name,
-            'description': self.plan.description,
         }
-        try:
-            if (
-                self.plan.visibility == SoftwarePlanVisibility.PUBLIC
-                or self.plan.visibility == SoftwarePlanVisibility.TRIAL
-            ):
-                desc['description'] = (
-                    DESC_BY_EDITION[self.plan.edition]['description'] % self.user_feature.monthly_limit
-                    if self.plan.edition != SoftwarePlanEdition.ENTERPRISE
-                    else DESC_BY_EDITION[self.plan.edition]['description']
-                )
-            else:
-                for desc_key in desc:
-                    if not desc[desc_key]:
-                        if desc_key == 'description' and self.plan.edition != SoftwarePlanEdition.ENTERPRISE:
-                            desc[desc_key] = (
-                                DESC_BY_EDITION[self.plan.edition]['description'] % self.user_feature.monthly_limit
-                            )
-                        else:
-                            desc[desc_key] = DESC_BY_EDITION[self.plan.edition][desc_key]
-        except KeyError:
-            pass
+        if (
+            self.plan.visibility == SoftwarePlanVisibility.PUBLIC
+            or self.plan.visibility == SoftwarePlanVisibility.TRIAL
+        ) or not self.plan.description:
+            desc['description'] = _default_description(self.plan, self.user_feature.monthly_limit)
+        else:
+            desc['description'] = self.plan.description
+
         desc.update({
             'monthly_fee': 'USD %s' % self.product_rate.monthly_fee,
             'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type],
@@ -958,7 +956,7 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
-        _soft_assert_domain_not_loaded(isinstance(self.domain, basestring), "domain is object")
+        _soft_assert_domain_not_loaded(isinstance(self.domain, six.string_types), "domain is object")
 
 
         if new_plan_version is None:
@@ -1123,21 +1121,18 @@ class Subscription(models.Model):
         """Raises a subscription Adjustment error if the specified date range
         conflicts with other subscriptions related to this subscriber.
         """
+        assert date_start is not None
         for sub in Subscription.objects.filter(
-            subscriber=self.subscriber
-        ).exclude(id=self.id).all():
+            CONSISTENT_DATES_CHECK,
+            subscriber=self.subscriber,
+        ).exclude(
+            id=self.id,
+        ):
             related_has_no_end = sub.date_end is None
             current_has_no_end = date_end is None
-            start_before_related_end = (
-                date_start is not None and sub.date_end is not None
-                and date_start < sub.date_end
-            )
-            start_before_related_start = (
-                date_start is not None and date_start < sub.date_start
-            )
-            start_after_related_start = (
-                date_start is not None and date_start > sub.date_start
-            )
+            start_before_related_end = sub.date_end is not None and date_start < sub.date_end
+            start_before_related_start = date_start < sub.date_start
+            start_after_related_start = date_start > sub.date_start
             end_before_related_end = (
                 date_end is not None and sub.date_end is not None
                 and date_end < sub.date_end
@@ -1146,9 +1141,7 @@ class Subscription(models.Model):
                 date_end is not None and sub.date_end is not None
                 and date_end > sub.date_end
             )
-            end_after_related_start = (
-                date_end is not None and date_end > sub.date_start
-            )
+            end_after_related_start = date_end is not None and date_end > sub.date_start
 
             if (
                 (start_before_related_end and start_after_related_start)
@@ -1157,6 +1150,7 @@ class Subscription(models.Model):
                 or (end_after_related_start and related_has_no_end)
                 or (start_before_related_start and end_after_related_end)
                 or (start_before_related_end and current_has_no_end)
+                or (current_has_no_end and related_has_no_end)
             ):
                 raise SubscriptionAdjustmentError(
                     "The start date of %(start_date)s conflicts with the "
@@ -1335,7 +1329,7 @@ class Subscription(models.Model):
         self.date_end = date_end
         self.is_active = True
         for allowed_attr in self.allowed_attr_changes:
-            if allowed_attr in kwargs.keys():
+            if allowed_attr in kwargs:
                 setattr(self, allowed_attr, kwargs[allowed_attr])
         self.save()
         self.subscriber.reactivate_subscription(
@@ -1633,7 +1627,7 @@ class Subscription(models.Model):
         if date_end is not None:
             future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
         if future_subscriptions.count() > 0:
-            raise NewSubscriptionError(unicode(
+            raise NewSubscriptionError(six.text_type(
                 _(
                     "There is already a subscription '%(sub)s' that has an end date "
                     "that conflicts with the start and end dates of this "
@@ -1821,7 +1815,7 @@ class Invoice(InvoiceBase):
     @property
     def email_recipients(self):
         if self.subscription.service_type == SubscriptionType.IMPLEMENTATION:
-            return [settings.FINANCE_EMAIL, settings.ACCOUNTS_EMAIL]
+            return [settings.ACCOUNTS_EMAIL]
         else:
             return self.contact_emails
 
@@ -2094,14 +2088,11 @@ class BillingRecordBase(models.Model):
         for email in contact_emails:
             greeting = _("Hello,")
             can_view_statement = False
-            try:
-                web_user = WebUser.get_by_username(email)
-                if web_user is not None:
-                    if web_user.first_name:
-                        greeting = _("Dear %s,") % web_user.first_name
-                    can_view_statement = web_user.is_domain_admin(domain)
-            except ResourceNotFound:
-                pass
+            web_user = WebUser.get_by_username(email)
+            if web_user is not None:
+                if web_user.first_name:
+                    greeting = _("Dear %s,") % web_user.first_name
+                can_view_statement = web_user.is_domain_admin(domain)
             context['greeting'] = greeting
             context['can_view_statement'] = can_view_statement
             email_html = render_to_string(self.html_template, context)
@@ -2433,7 +2424,7 @@ class BillingRecord(BillingRecordBase):
     @staticmethod
     def _get_total_balance(credit_lines):
         return (
-            sum(map(lambda credit_line: credit_line.balance, credit_lines))
+            sum([credit_line.balance for credit_line in credit_lines])
             if credit_lines else Decimal('0.0')
         )
 
@@ -2711,6 +2702,13 @@ class CreditLine(ValidateModelMixin, models.Model):
         ).all()
 
     @classmethod
+    def get_non_general_credits_by_subscription(cls, subscription):
+        return cls.objects.filter(subscription=subscription).filter(
+            Q(product_type__in=[c[0] for c in SoftwareProductType.CHOICES] + [SoftwareProductType.ANY]) |
+            Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
+        ).all()
+
+    @classmethod
     def add_credit(cls, amount, account=None, subscription=None,
                    product_type=None, feature_type=None, payment_record=None,
                    invoice=None, line_item=None, related_credit=None,
@@ -2861,7 +2859,14 @@ class StripePaymentMethod(PaymentMethod):
 
     @property
     def all_cards(self):
-        return filter(lambda card: card is not None, self.customer.cards.data)
+        try:
+            return [card for card in self.customer.cards.data if card is not None]
+        except stripe.error.AuthenticationError:
+            if not settings.STRIPE_PRIVATE_KEY:
+                log_accounting_info("Private key is not defined in settings")
+                return []
+            else:
+                raise
 
     def all_cards_serialized(self, billing_account):
         return [{

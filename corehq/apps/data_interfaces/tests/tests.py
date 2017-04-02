@@ -1,3 +1,4 @@
+from __future__ import print_function
 from os.path import abspath, dirname, join
 
 from django.test import TestCase
@@ -74,7 +75,7 @@ class BulkArchiveForms(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['bulk_upload']['download_url'],
-                         '/static/data_interfaces/files/forms_bulk_example.xlsx')
+                         '/static/data_interfaces/xlsx/forms_bulk_example.xlsx')
 
         grant = Grant.objects.get(
             from_role=self.user_role.role,
@@ -129,7 +130,7 @@ class BulkArchiveFormsUnit(TestCase):
 
         with drop_connected_signals(xform_archived):
             response = archive_forms_old(DOMAIN_NAME, 'user1', self.username, list(uploaded_file.get_worksheet()))
-            print response
+            print(response)
 
         # Need to re-get instance from DB to get updated attributes
         for key, _id in self.XFORMS.iteritems():

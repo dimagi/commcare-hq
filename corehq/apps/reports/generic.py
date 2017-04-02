@@ -113,6 +113,8 @@ class GenericReportView(object):
     base_template_async = None
     base_template_filters = None
 
+    print_override_template = "reports/async/print_report.html"
+
     flush_layout = False
     # Todo: maybe make these a little cleaner?
     show_timezone_notice = False
@@ -123,6 +125,12 @@ class GenericReportView(object):
 
     report_title = None
     report_subtitles = []
+
+    # For drilldown reports, we hide the child reports from navigation.
+    # For those child reports, set the parent's report class here so that we
+    # still include these reports in the list of reports we do access control
+    # against.
+    parent_report_class = None
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
@@ -653,7 +661,7 @@ class GenericReportView(object):
         """
         self.is_rendered_as_email = True
         self.use_datatables = False
-        self.override_template = "reports/async/print_report.html"
+        self.override_template = self.print_override_template
         return HttpResponse(self._async_context()['report'])
 
     @property

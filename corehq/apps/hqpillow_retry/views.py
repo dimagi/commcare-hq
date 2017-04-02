@@ -2,7 +2,7 @@ from datetime import datetime
 import re
 from django.contrib import messages
 from django.core.mail.message import EmailMessage
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import transaction
 from django.db.models.aggregates import Count
 from django.http.response import Http404

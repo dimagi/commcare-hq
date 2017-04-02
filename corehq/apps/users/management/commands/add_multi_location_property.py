@@ -8,10 +8,9 @@ from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
-    args = ""
     help = ("(Migration) Autofill the new field assigned_location_ids to existing users")
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         self.options = options
         user_ids = with_progress_bar(self.get_user_ids())
         iter_update(CouchUser.get_db(), self.migrate_user, user_ids, verbose=True)
@@ -74,8 +73,10 @@ class Command(BaseCommand):
 
 def apply_migration(doc):
     # doc can be a user dict or a domain_membership dict
-    if doc.get('location_id'):
-        if 'assigned_location_ids' in doc:
-            doc['assigned_location_ids'].append(doc['location_id'])
-        else:
-            doc['assigned_location_ids'] = [doc['location_id']]
+    location_id = doc.get('location_id')
+    if location_id:
+        assigned_location_ids = doc.get('assigned_location_ids', [])
+        if location_id not in assigned_location_ids:
+            assigned_location_ids.append(location_id)
+
+        doc['assigned_location_ids'] = assigned_location_ids

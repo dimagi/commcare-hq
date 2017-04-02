@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 import os
+import six
 from django.test import TestCase, SimpleTestCase
 from mock import patch
 
@@ -35,10 +37,10 @@ class ConfigureReportFormsTest(SimpleTestCase):
         """
 
         def get_count_column_columns(configuration_form):
-            return len(filter(
-                lambda x: isinstance(x, CountColumn),
-                configuration_form.report_column_options.values()
-            ))
+            return len([
+                x for x in six.itervalues(configuration_form.report_column_options)
+                if isinstance(x, CountColumn)
+            ])
 
         list_report_form = ConfigureListReportForm(
             "my report",
@@ -61,6 +63,7 @@ class ReportBuilderDBTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ReportBuilderDBTest, cls).setUpClass()
         cls.app = Application.new_app('domain', 'Untitled Application')
         module = cls.app.add_module(Module.new_module('Untitled Module', None))
         cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', read(['data', 'forms', 'simple.xml']))
@@ -72,6 +75,7 @@ class ReportBuilderDBTest(TestCase):
         for config in DataSourceConfiguration.all():
             config.delete()
         delete_all_report_configs()
+        super(ReportBuilderDBTest, cls).tearDownClass()
 
 
 class ReportBuilderTest(ReportBuilderDBTest):

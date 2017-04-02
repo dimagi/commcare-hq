@@ -3,7 +3,7 @@ from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from touchforms.formplayer.api import post_data
 import json
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from corehq.apps.users.models import CouchUser
 from corehq import toggles
 from django.conf import settings
@@ -61,7 +61,10 @@ class BaseSessionDataHelper(object):
         # always tell touchforms to include footprinted cases in its case db
         session_data["additional_filters"] = {"footprint": True}
         session_data.update(session_extras)
-        xform_url = reverse("xform_player_proxy")
+        if toggles.EDIT_FORMPLAYER.enabled(session_data.get('domain')):
+            xform_url = root_extras.get('formplayer_url')
+        else:
+            xform_url = reverse("xform_player_proxy")
         ret = {
             "session_data": session_data,
             "xform_url": xform_url,

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from datetime import date
 from urllib import urlencode
@@ -5,7 +6,7 @@ from urllib import urlencode
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
@@ -27,6 +28,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
+import six
 
 
 SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact', 'is_starter_app']
@@ -62,7 +64,7 @@ def rewrite_url(request, path):
 
 
 def inverse_dict(d):
-    return dict([(v, k) for k, v in d.iteritems()])
+    return dict([(v, k) for k, v in six.iteritems(d)])
 
 
 def can_view_app(req, dom):
@@ -186,6 +188,7 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
     def page_context(self):
         return {
             'apps': self.selected_snapshots,
+            'app_ids': [app.get_id for app in self.selected_snapshots],
             'page': self.page,
             'prev_page': (self.page - 1),
             'next_page': (self.page + 1),

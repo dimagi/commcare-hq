@@ -35,6 +35,7 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
             'year': self.request.GET.get('year'),
             'month': self.request.GET.get('month'),
             'block': self.request.GET.get('hierarchy_block'),
+            'is_checklist': 1
         }
 
     @property

@@ -2,7 +2,6 @@ from __future__ import absolute_import
 import os
 import weakref
 from contextlib import contextmanager
-from threading import Lock
 
 from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
@@ -37,9 +36,7 @@ class S3BlobDB(AbstractBlobDB):
         # https://github.com/boto/boto3/issues/259
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
-    def put(self, content, bucket=DEFAULT_BUCKET, identifier=None):
-        if identifier is None:
-            identifier = self.get_short_identifier()
+    def put(self, content, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
         s3_bucket = self._s3_bucket(create=True)
         if isinstance(content, BlobStream) and content.blob_db is self:
@@ -101,7 +98,6 @@ class S3BlobDB(AbstractBlobDB):
         self._s3_bucket(create=True)
         path = self.get_path(info.identifier, bucket)
         self._s3_bucket().upload_fileobj(content, path)
-
 
     def _s3_bucket(self, create=False):
         if create and not self._s3_bucket_exists:

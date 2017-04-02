@@ -410,7 +410,7 @@ class Entry(OrderedXmlObject, XmlObject):
         for instance_id in instance_ids:
             if instance_id not in covered_ids:
                 raise UnknownInstanceError(
-                    "Instance reference not recognized: {} in xpath \"{}\""
+                    u"Instance reference not recognized: {} in xpath \"{}\""
                     # to get xpath context to show in this error message
                     # make instance_id a unicode subclass with an xpath property
                     .format(instance_id, getattr(instance_id, 'xpath', "(Xpath Unknown)")))
@@ -530,6 +530,7 @@ class Sort(AbstractTemplate):
     type = StringField('@type')
     order = StringField('@order')
     direction = StringField('@direction')
+    blanks = StringField('@blanks')
 
 
 class Style(XmlObject):
@@ -563,6 +564,7 @@ class Field(OrderedXmlObject):
     ORDER = ('header', 'template', 'sort_node')
 
     sort = StringField('@sort')
+    print_id = StringField('@print-id')
     style = NodeField('style', Style)
     header = NodeField('header', Header)
     template = NodeField('template', Template)
@@ -588,6 +590,7 @@ class ActionMixin(OrderedXmlObject):
     ORDER = ('display', 'stack')
 
     stack = NodeField('stack', Stack)
+    relevant = XPathField('@relevant')
 
 
 class Action(ActionMixin):
@@ -642,6 +645,7 @@ class Detail(OrderedXmlObject, IdNode):
     ORDER = ('title', 'lookup', 'details', 'fields')
 
     nodeset = StringField('@nodeset')
+    print_template = StringField('@print-template')
 
     title = NodeField('title/text', Text)
     lookup = NodeField('lookup', Lookup)

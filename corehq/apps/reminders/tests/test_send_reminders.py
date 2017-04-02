@@ -318,7 +318,10 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         self.handler.save()
 
         self.user = CommCareUser.create(self.domain, 'chw.bob3', 'abc', phone_number='14445551234')
-        self.user.save_verified_number(self.domain, '14445551234', True)
+        entry = self.user.get_or_create_phone_entry('14445551234')
+        entry.set_two_way()
+        entry.set_verified()
+        entry.save()
         self.user.user_data['time_zone'] = 'Africa/Nairobi'
         self.user.save()
 

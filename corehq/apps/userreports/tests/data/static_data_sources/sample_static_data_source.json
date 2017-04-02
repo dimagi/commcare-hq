@@ -1,6 +1,7 @@
 {
     "doc_type": "StaticDataSourceConfiguration",
     "domains": ["example", "dimagi"],
+    "server_environment": ["localdev"],
     "config": {
         "doc_type": "DataSourceConfiguration",
         "referenced_doc_type": "CommCareCase",

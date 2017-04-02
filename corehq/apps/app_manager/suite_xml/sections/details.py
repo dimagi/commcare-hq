@@ -65,13 +65,16 @@ class DetailContributor(SectionContributor):
                             detail_column_infos = get_detail_column_infos(
                                 detail,
                                 include_sort=detail_type.endswith('short'),
-                            )
+                            )  # list of DetailColumnInfo named tuples
                             if detail_column_infos:
                                 if detail.use_case_tiles:
                                     helper = CaseTileHelper(self.app, module, detail,
                                                             detail_type, self.build_profile_id)
                                     r.append(helper.build_case_tile_detail())
                                 else:
+                                    print_template_path = None
+                                    if detail.print_template:
+                                        print_template_path = detail.print_template['path']
                                     d = self.build_detail(
                                         module,
                                         detail_type,
@@ -82,6 +85,7 @@ class DetailContributor(SectionContributor):
                                         title=Text(locale_id=id_strings.detail_title_locale(
                                             module, detail_type
                                         )),
+                                        print_template=print_template_path,
                                     )
                                     if d:
                                         r.append(d)
@@ -94,13 +98,13 @@ class DetailContributor(SectionContributor):
         return r
 
     def build_detail(self, module, detail_type, detail, detail_column_infos,
-                     tabs=None, id=None, title=None, nodeset=None, start=0, end=None):
+                     tabs=None, id=None, title=None, nodeset=None, print_template=None, start=0, end=None):
         """
         Recursively builds the Detail object.
         (Details can contain other details for each of their tabs)
         """
         from corehq.apps.app_manager.detail_screen import get_column_generator
-        d = Detail(id=id, title=title, nodeset=nodeset)
+        d = Detail(id=id, title=title, nodeset=nodeset, print_template=print_template)
         self._add_custom_variables(detail, d)
         if tabs:
             tab_spans = detail.get_tab_spans()
@@ -144,6 +148,10 @@ class DetailContributor(SectionContributor):
             if end is None:
                 end = len(detail_column_infos)
             for column_info in detail_column_infos[start:end]:
+                # column_info is an instance of DetailColumnInfo named tuple. It has the following properties:
+                #   column_info.column: an instance of app_manager.models.DetailColumn
+                #   column_info.sort_element: an instance of app_manager.models.SortElement
+                #   column_info.order: an integer
                 fields = get_column_generator(
                     self.app, module, detail,
                     detail_type=detail_type, *column_info
@@ -234,7 +242,9 @@ class DetailContributor(SectionContributor):
         frame.add_command(XPath.string(id_strings.form_command(form)))
 
         target_form_dm = self.entries_helper.get_datums_meta_for_form_generic(form)
-        source_form_dm = self.entries_helper.get_datums_meta_for_form_generic(module.get_form(0))
+        source_form_dm = []
+        if len(module.forms):
+            source_form_dm = self.entries_helper.get_datums_meta_for_form_generic(module.get_form(0))
         for target_meta in target_form_dm:
             if target_meta.requires_selection:
                 # This is true for registration forms where the case being created is a subcase
@@ -260,11 +270,17 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def _get_case_search_action(module):
+        relevant_kwarg = {}
+        if module.search_config.search_button_display_condition:
+            relevant_kwarg = dict(
+                relevant=XPath(module.search_config.search_button_display_condition),
+            )
         action = Action(
             display=Display(
                 text=Text(locale_id=id_strings.case_search_locale(module))
             ),
-            stack=Stack()
+            stack=Stack(),
+            **relevant_kwarg
         )
         frame = PushFrame()
         frame.add_mark()

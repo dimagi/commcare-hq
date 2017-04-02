@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db.models.aggregates import Count
 from corehq.apps.accounting.filters import DateCreatedFilter
 from corehq.apps.reports.datatables import (

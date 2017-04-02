@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import base64
 import json
 import uuid
@@ -6,7 +7,7 @@ from copy import deepcopy
 from datetime import datetime
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import QueryDict
 from django.test import TestCase
 from django.utils.http import urlencode
@@ -35,7 +36,6 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment
 )
-from corehq.apps.accounting.tests import generator
 from corehq.apps.api.es import ElasticAPIQuerySet
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api.resources import v0_4, v0_5
@@ -54,6 +54,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from custom.hope.models import CC_BIHAR_PREGNANCY
+from six.moves import range
 
 
 class FakeXFormES(object):
@@ -80,7 +81,7 @@ class FakeXFormES(object):
         return {
             'hits': {
                 'total': len(self.docs),
-                'hits': [{'_source': doc} for doc in self.docs.values()[start:end]]
+                'hits': [{'_source': doc} for doc in list(self.docs.values())[start:end]]
             }
         }
 
@@ -114,8 +115,9 @@ class APIResourceTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(APIResourceTest, cls).setUpClass()
+
         Role.get_cache().clear()
-        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.list_endpoint = cls._get_list_endpoint()
         cls.username = 'rudolph@qwerty.commcarehq.org'
@@ -148,6 +150,8 @@ class APIResourceTest(TestCase):
 
         for domain in Domain.get_all():
             domain.delete()
+
+        super(APIResourceTest, cls).tearDownClass()
 
     def single_endpoint(self, id):
         return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
@@ -456,7 +460,7 @@ class TestCommCareCaseResource(APIResourceTest):
             200,
             "Status code was not 200. Response content was {}".format(response.content)
         )
-        parent_cases = json.loads(response.content)['parent_cases'].values()
+        parent_cases = list(json.loads(response.content)['parent_cases'].values())
 
         # Confirm that the case appears in the resource
         self.assertEqual(len(parent_cases), 1)
@@ -470,7 +474,7 @@ class TestCommCareCaseResource(APIResourceTest):
             200,
             "Status code was not 200. Response content was {}".format(response.content)
         )
-        child_cases = json.loads(response.content)['child_cases'].values()
+        child_cases = list(json.loads(response.content)['child_cases'].values())
 
         # Confirm that the case appears in the resource
         self.assertEqual(len(child_cases), 1)
@@ -680,6 +684,7 @@ class TestWebUserResource(APIResourceTest):
         "permissions": {
             "edit_apps": True,
             "edit_commcare_users": True,
+            "edit_locations": True,
             "edit_data": True,
             "edit_web_users": True,
             "view_reports": True
@@ -694,8 +699,8 @@ class TestWebUserResource(APIResourceTest):
         role = user.get_role(self.domain.name)
         self.assertEqual(role.name, json_user['role'])
         self.assertEqual(user.is_domain_admin(self.domain.name), json_user['is_admin'])
-        for perm in ['edit_web_users', 'edit_commcare_users', 'edit_data',
-                     'edit_apps', 'view_reports']:
+        for perm in ['edit_web_users', 'edit_commcare_users', 'edit_locations',
+                     'edit_data', 'edit_apps', 'view_reports']:
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])
 
     def test_get_list(self):
@@ -984,7 +989,7 @@ class TestElasticAPIQuerySet(TestCase):
 
     def test_slice(self):
         es = FakeXFormES()
-        for i in xrange(0, 1300):
+        for i in range(0, 1300):
             es.add_doc(i, {'i': i})
         
         queryset = ElasticAPIQuerySet(es_client=es, payload={})
@@ -1010,7 +1015,7 @@ class TestElasticAPIQuerySet(TestCase):
 
     def test_order_by(self):
         es = FakeXFormES()
-        for i in xrange(0, 1300):
+        for i in range(0, 1300):
             es.add_doc(i, {'i': i})
         
         queryset = ElasticAPIQuerySet(es_client=es, payload={})
@@ -1494,7 +1499,6 @@ class TestBulkUserAPI(APIResourceTest):
     @classmethod
     def setUpClass(cls):
         Role.get_cache().clear()
-        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'

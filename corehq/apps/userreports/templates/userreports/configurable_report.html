@@ -3,9 +3,9 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'reports/javascripts/reports.util.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
-    <script src="{% static 'reports/ko/saved_reports.js' %}"></script>
+    <script src="{% static 'reports/js/reports.util.js' %}"></script>
+    <script src="{% static 'reports/js/reports.config.js' %}"></script>
+    <script src="{% static 'reports/js/saved_reports.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -61,7 +61,7 @@
     </script>
     {% endif %}
     <script>
-        var urlSerialize = hqImport('reports/javascripts/reports.util.js').urlSerialize;
+        var urlSerialize = hqImport('reports/js/reports.util.js').urlSerialize;
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',
             urlRoot: '{{ report.url_root }}',

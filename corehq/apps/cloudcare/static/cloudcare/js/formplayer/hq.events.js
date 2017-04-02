@@ -19,14 +19,17 @@ FormplayerFrontend.module("HQ.Events", function(Events, FormplayerFrontend) {
             appId;
 
         if (!origin.endsWith(this.allowedHost)) {
-            throw new Error('Disallowed origin ' + origin);
+            window.console.warn('Disallowed origin ' + origin);
+            return;
         }
 
         if (!data.hasOwnProperty('action')) {
-            throw new Error('Message must have action property');
+            window.console.warn('Message must have action property');
+            return;
         }
         if (!_.contains(_.values(Events.Actions), data.action)) {
-            throw new Error('Invalid action ' + data.action);
+            window.console.warn('Invalid action ' + data.action);
+            return;
         }
 
         switch (data.action) {

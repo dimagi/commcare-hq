@@ -100,6 +100,13 @@ class BaseReportColumn(JsonObject):
         """
         raise NotImplementedError('subclasses must override this')
 
+    def get_fields(self, data_source_config=None, lang=None):
+        """
+        Get database fields associated with this column. Could be one, or more
+        if a column is a function of two values in the DB (e.g. PercentageColumn)
+        """
+        raise NotImplementedError('subclasses must override this')
+
 
 class ReportColumn(BaseReportColumn):
     transform = DictProperty()
@@ -176,14 +183,45 @@ class FieldColumn(ReportColumn):
             )
         ])
 
+    def get_fields(self, data_source_config=None, lang=None):
+        return [self.field]
+
+    def _data_source_col_config(self, data_source_config):
+        return filter(
+            lambda c: c['column_id'] == self.field, data_source_config.configured_indicators
+        )[0]
+
+    def _column_data_type(self, data_source_config):
+        return self._data_source_col_config(data_source_config).get('datatype')
+
+    def _use_terms_aggregation_for_max_min(self, data_source_config):
+        return (
+            self.aggregation in ['max', 'min'] and
+            self._column_data_type(data_source_config) and
+            self._column_data_type(data_source_config) not in ['integer', 'decimal']
+        )
+
     def aggregations(self, data_source_config, lang):
-        return filter(None, [ES_AGG_MAP[self.aggregation](self.column_id, self.field)])
+        # SQL supports max and min on strings so hack it into ES
+        if self._use_terms_aggregation_for_max_min(data_source_config):
+            aggregation = aggregations.TermsAggregation(self.column_id, self.field, size=1)
+            order = "desc" if self.aggregation == 'max' else 'asc'
+            aggregation = aggregation.order('_term', order=order)
+        else:
+            aggregation = ES_AGG_MAP[self.aggregation](self.column_id, self.field)
+        return filter(None, [aggregation])
 
     def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
         if not from_aggregation:
             value = row[self.field]
         elif self.aggregation == 'simple':
             value = row['past_bucket_values'][self.field]
+        elif self._use_terms_aggregation_for_max_min(data_source_config):
+            buckets = row[self.column_id].get('buckets', [])
+            if buckets:
+                value = buckets[0]['key']
+            else:
+                value = ''
         else:
             value = int(row[self.column_id]['value'])
 
@@ -206,7 +244,7 @@ class LocationColumn(ReportColumn):
                     g=GeoPointProperty().wrap(row[column_name])
                 )
             except BadValueError:
-                row[column_name] = '{} ({})'.format(row[column_name], _('Invalid Location'))
+                row[column_name] = u'{} ({})'.format(row[column_name], _('Invalid Location'))
 
     def get_column_config(self, data_source_config, lang):
         return ColumnConfig(columns=[
@@ -235,6 +273,11 @@ class ExpandedColumn(ReportColumn):
 
     def get_column_config(self, data_source_config, lang):
         return get_expanded_column_config(data_source_config, self, lang)
+
+    def get_fields(self, data_source_config, lang):
+        return [self.field] + [
+            c.aggregation.name for c in self.get_column_config(data_source_config, lang).columns
+        ]
 
     def aggregations(self, data_source_config, lang):
         return [c.aggregation for c in self.get_column_config(data_source_config, lang).columns]
@@ -380,6 +423,24 @@ class PercentageColumn(ReportColumn):
         # override this to include the columns for the numerator and denominator as well
         return [self.column_id, self.numerator.column_id, self.denominator.column_id]
 
+    def get_fields(self, data_source_config=None, lang=None):
+        return self.numerator.get_fields() + self.denominator.get_fields()
+
+    def aggregations(self, data_source_config, lang):
+        num_aggs = self.numerator.aggregations(data_source_config, lang)
+        denom_aggs = self.denominator.aggregations(data_source_config, lang)
+        return num_aggs + denom_aggs
+
+    def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
+        num = self.numerator
+        denom = self.denominator
+        num_data = num.get_es_data(row, data_source_config, lang, from_aggregation)
+        denom_data = denom.get_es_data(row, data_source_config, lang, from_aggregation)
+        return {
+            num.column_id: num_data[num.column_id],
+            denom.column_id: denom_data[denom.column_id]
+        }
+
 
 def _add_column_id_if_missing(obj):
     if obj.get('column_id') is None:
@@ -395,6 +456,12 @@ class CalculatedColumn(namedtuple('CalculatedColumn', ['header', 'slug'])):
 
 class ExpressionColumn(BaseReportColumn):
     expression = DefaultProperty(required=True)
+
+    @property
+    def calculate_total(self):
+        """Calculating total not supported"""
+        # Using a function property so that it can't be overridden during wrapping
+        return False
 
     @property
     @memoized

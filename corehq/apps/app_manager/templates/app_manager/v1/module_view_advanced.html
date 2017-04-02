@@ -3,30 +3,12 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js-inline %}{{ block.super }}
+{% block js %}{{ block.super }}
     {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
         <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
         <script src="{% static 'app_manager/js/visit-scheduler.js' %}"></script>
-        <script>
-        var VisitScheduler = hqImport('app_manager/js/visit-scheduler.js');
-        var visitScheduler = new VisitScheduler.ModuleScheduler({
-            home: $('#module-scheduler'),
-            saveUrl: "{% url 'edit_schedule_phases' app.domain app.id module.id %}",
-            hasSchedule: {{ module.has_schedule|JSON }},
-            schedulePhases: {{ schedule_phases|JSON }},
-            caseProperties: {{details|JSON}}[0].properties
-        });
-        visitScheduler.init();
-        </script>
     {% endif %}
-    <script>
-        $(function(){
-            $('#auto-select-case').koApplyBindings({
-                auto_select_case: ko.observable({{ module.auto_select_case|JSON }}),
-            });
-        });
-    </script>
-{% endblock js-inline %}
+{% endblock %}
 
 {% block tab-headers %}{{ block.super }}
     {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
@@ -35,13 +17,20 @@
                 {% trans "Visit Scheduler" %}
             </a>
         </li>
+    {% elif request|toggle_enabled:"SHOW_DEV_TOGGLE_INFO" %}
+      <li>
+          {{ request|toggle_tag_info:"VISIT_SCHEDULER" }}
+      </li>
     {% endif %}
 {% endblock %}
 
 {% block tab-content %}{{ block.super }}
     {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
+        {% initial_page_data 'schedule_phases' schedule_phases %}
+        {% registerurl 'edit_schedule_phases' app.domain app.id module.id %}
         <div class="tab-pane" id="visit-scheduler-module-config-tab">
-            {% include "app_manager/v1/partials/enable_schedule.html" %}
+          {{ request|toggle_tag_info:"VISIT_SCHEDULER" }}
+          {% include "app_manager/v1/partials/enable_schedule.html" %}
         </div>
     {% endif %}
 {% endblock %} 

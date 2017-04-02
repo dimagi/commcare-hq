@@ -305,9 +305,9 @@ class CachedPayload(object):
                 file_reference = copy_payload_and_synclog_and_get_new_file(self.payload)
                 self.payload = file_reference.file
                 self.payload_path = file_reference.path
-            except Exception, e:
+            except Exception as e:
                 # don't fail hard if anything goes wrong since this is an edge case optimization
-                soft_assert(to=['czue' + '@' + 'dimagi.com'])(False, u'Error finalizing cached log: {}'.format(e))
+                soft_assert(notify_admins=True)(False, u'Error finalizing cached log: {}'.format(e))
 
 
 class CachedResponse(object):
@@ -589,7 +589,7 @@ class RestoreConfig(object):
     def validate(self):
         try:
             self.restore_state.validate_state()
-        except InvalidSyncLogException, e:
+        except InvalidSyncLogException as e:
             if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain):
                 # This exception will get caught by the view and a 412 will be returned to the phone for resync
                 raise RestoreException(e)
@@ -692,7 +692,7 @@ class RestoreConfig(object):
             with self.timing_context:
                 payload = self.get_payload()
             return payload.get_http_response()
-        except RestoreException, e:
+        except RestoreException as e:
             logging.exception("%s error during restore submitted by %s: %s" %
                               (type(e).__name__, self.restore_user.username, str(e)))
             response = get_simple_response_xml(

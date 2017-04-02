@@ -42,15 +42,20 @@ CaseStockProcessingResult = namedtuple(
 )
 
 
-class SubmissionPost(object):
+class FormProcessingResult(namedtuple('FormProcessingResult', 'response xform cases ledgers')):
+    @property
+    def case(self):
+        assert len(self.cases) == 1
+        return self.cases[0]
 
-    failed_auth_response = HttpResponseForbidden('Bad auth')
+
+class SubmissionPost(object):
 
     def __init__(self, instance=None, attachments=None, auth_context=None,
                  domain=None, app_id=None, build_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
-                 partial_submission=False):
+                 partial_submission=False, case_db=None):
         assert domain, domain
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
@@ -71,6 +76,9 @@ class SubmissionPost(object):
         self.interface = FormProcessorInterface(domain)
         self.formdb = FormAccessors(domain)
         self.partial_submission = partial_submission
+        # always None except in the case where a system form is being processed as part of another submission
+        # e.g. for closing extension cases
+        self.case_db = case_db
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -108,13 +116,13 @@ class SubmissionPost(object):
         if any_migrations_in_progress(self.domain):
             # keep submissions on the phone
             # until ready to start accepting again
-            return HttpResponse(status=503), None, []
+            return HttpResponse(status=503)
 
         if not self.auth_context.is_valid():
-            return self.failed_auth_response, None, []
+            return HttpResponseForbidden('Bad auth')
 
         if isinstance(self.instance, BadRequest):
-            return HttpResponseBadRequest(self.instance.message), None, []
+            return HttpResponseBadRequest(self.instance.message)
 
     def _post_process_form(self, xform):
         self._set_submission_properties(xform)
@@ -122,9 +130,9 @@ class SubmissionPost(object):
         legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
     def run(self):
-        failure_result = self._handle_basic_failure_modes()
-        if failure_result:
-            return failure_result
+        failure_response = self._handle_basic_failure_modes()
+        if failure_response:
+            return FormProcessingResult(failure_response, None, [], [])
 
         result = process_xform_xml(self.domain, self.instance, self.attachments)
         submitted_form = result.submitted_form
@@ -135,44 +143,57 @@ class SubmissionPost(object):
         if submitted_form.is_submission_error_log:
             self.formdb.save_new_form(submitted_form)
             response = self.get_exception_response_and_log(submitted_form, self.path)
-            return response, None, []
+            return FormProcessingResult(response, None, [], [])
 
         cases = []
+        ledgers = []
         with result.get_locked_forms() as xforms:
-            instance = xforms[0]
-            if instance.xmlns == DEVICE_LOG_XMLNS:
-                try:
-                    process_device_log(self.domain, instance)
-                except Exception:
-                    notify_exception(None, "Error processing device log", details={
-                        'xml': self.instance,
-                        'domain': self.domain
-                    })
-                    raise
+            from casexml.apps.case.xform import get_and_check_xform_domain
+            domain = get_and_check_xform_domain(xforms[0])
+            if self.case_db:
+                assert self.case_db.domain == domain
+                case_db_cache = self.case_db
+                case_db_cache.cached_xforms.extend(xforms)
+            else:
+                case_db_cache = self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms)
 
-            elif instance.is_duplicate:
-                self.interface.save_processed_models([instance])
-            elif not instance.is_error:
-                try:
-                    case_stock_result = self.process_xforms_for_cases(xforms)
-                except (IllegalCaseId, UsesReferrals, MissingProductId,
-                        PhoneDateValueError, InvalidCaseIndex) as e:
-                    self._handle_known_error(e, instance, xforms)
-                except Exception as e:
-                    # handle / log the error and reraise so the phone knows to resubmit
-                    # note that in the case of edit submissions this won't flag the previous
-                    # submission as having been edited. this is intentional, since we should treat
-                    # this use case as if the edit "failed"
-                    handle_unexpected_error(self.interface, instance, e)
-                    raise
-                else:
-                    instance.initial_processing_complete = True
-                    self.save_processed_models(xforms, case_stock_result)
-                    cases = case_stock_result.case_models
+            with case_db_cache as case_db:
+                instance = xforms[0]
+                if instance.xmlns == DEVICE_LOG_XMLNS:
+                    try:
+                        process_device_log(self.domain, instance)
+                    except Exception:
+                        notify_exception(None, "Error processing device log", details={
+                            'xml': self.instance,
+                            'domain': self.domain
+                        })
+                        raise
+
+                elif instance.is_duplicate:
+                    self.interface.save_processed_models([instance])
+                elif not instance.is_error:
+                    try:
+                        case_stock_result = self.process_xforms_for_cases(xforms, case_db)
+                    except (IllegalCaseId, UsesReferrals, MissingProductId,
+                            PhoneDateValueError, InvalidCaseIndex) as e:
+                        self._handle_known_error(e, instance, xforms)
+                    except Exception as e:
+                        # handle / log the error and reraise so the phone knows to resubmit
+                        # note that in the case of edit submissions this won't flag the previous
+                        # submission as having been edited. this is intentional, since we should treat
+                        # this use case as if the edit "failed"
+                        handle_unexpected_error(self.interface, instance, e)
+                        raise
+                    else:
+                        instance.initial_processing_complete = True
+                        self.save_processed_models(xforms, case_stock_result)
+                        case_stock_result.case_result.close_extensions(case_db)
+                        cases = case_stock_result.case_models
+                        ledgers = case_stock_result.stock_result.models_to_save
 
             errors = self.process_signals(instance)
             response = self._get_open_rosa_response(instance, errors)
-            return response, instance, cases
+            return FormProcessingResult(response, instance, cases, ledgers)
 
     @property
     def _cache(self):
@@ -218,22 +239,17 @@ class SubmissionPost(object):
             for case in case_stock_result.case_models:
                 case_post_save.send(case.__class__, case=case)
 
-        case_stock_result.case_result.close_extensions()
-
-    def process_xforms_for_cases(self, xforms):
-        from casexml.apps.case.xform import get_and_check_xform_domain
+    def process_xforms_for_cases(self, xforms, case_db):
         from casexml.apps.case.xform import process_cases_with_casedb
         from corehq.apps.commtrack.processing import process_stock
 
         instance = xforms[0]
 
-        domain = get_and_check_xform_domain(instance)
-        with self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
-            case_result = process_cases_with_casedb(xforms, case_db)
-            stock_result = process_stock(xforms, case_db)
+        case_result = process_cases_with_casedb(xforms, case_db)
+        stock_result = process_stock(xforms, case_db)
 
-            cases = case_db.get_cases_for_saving(instance.received_on)
-            stock_result.populate_models()
+        cases = case_db.get_cases_for_saving(instance.received_on)
+        stock_result.populate_models()
 
         return CaseStockProcessingResult(
             case_result=case_result,
@@ -242,8 +258,7 @@ class SubmissionPost(object):
         )
 
     def get_response(self):
-        response, _, _ = self.run()
-        return response
+        return self.run().response
 
     def process_signals(self, instance):
         feedback = successful_form_received.send_robust(None, xform=instance)
@@ -260,10 +275,6 @@ class SubmissionPost(object):
             self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
             self.formdb.update_form_problem_and_state(instance)
         return errors
-
-    @staticmethod
-    def get_failed_auth_response():
-        return HttpResponseForbidden('Bad auth')
 
     def _get_open_rosa_response(self, instance, errors):
         if instance.is_normal:

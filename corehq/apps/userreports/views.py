@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import datetime
 import functools
@@ -29,13 +30,17 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
+from dimagi.utils.couch.undo import get_deleted_doc_type, is_deleted, undo_delete, soft_delete
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -87,7 +92,9 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tasks import rebuild_indicators, resume_building_indicators
+from corehq.apps.userreports.tasks import (
+    rebuild_indicators, resume_building_indicators, rebuild_indicators_in_place
+)
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
     ConfigurableDataSourceEditForm,
@@ -105,6 +112,8 @@ from corehq.apps.userreports.reports.util import has_location_filter
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
+from pillowtop.dao.exceptions import DocumentNotFoundError
+import six
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -171,10 +180,6 @@ class UserConfigReportsHomeView(BaseUserConfigReportsView):
     urlname = 'configurable_reports_home'
     template_name = 'userreports/configurable_reports_home.html'
     page_title = ugettext_lazy("Reports Home")
-
-    @property
-    def page_context(self):
-        return {}
 
 
 class BaseEditConfigReportView(BaseUserConfigReportsView):
@@ -558,6 +563,10 @@ class ConfigureChartReport(ReportBuilderView):
 
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
+        if not self.existing_report and not (self.request.GET or self.request.POST):
+            return HttpResponseRedirect(
+                reverse('report_builder_select_source', args=[self.domain, self.report_type])
+            )
         return super(ConfigureChartReport, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -574,11 +583,14 @@ class ConfigureChartReport(ReportBuilderView):
         except Exception as e:
             self.template_name = 'userreports/report_error.html'
             error_response = {
-                'report_id': self.existing_report.get_id,
-                'is_static': self.existing_report.is_static,
                 'error_message': '',
-                'details': unicode(e)
+                'details': six.text_type(e)
             }
+            if self.existing_report is not None:
+                error_response.update({
+                    'report_id': self.existing_report.get_id,
+                    'is_static': self.existing_report.is_static,
+                })
             return self._handle_exception(error_response, e)
 
         return {
@@ -782,13 +794,16 @@ class ConfigureMapReport(ConfigureChartReport):
         return ConfigureMapReportForm
 
 
-def delete_report(request, domain, report_id):
+def _assert_report_delete_privileges(request):
     if not (toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
             or toggle_enabled(request, toggles.REPORT_BUILDER)
             or toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
             or has_report_builder_add_on_privilege(request)):
         raise Http404()
 
+
+def delete_report(request, domain, report_id):
+    _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
     # Delete the data source too if it's not being used by any other reports.
@@ -802,10 +817,17 @@ def delete_report(request, domain, report_id):
             # No other reports reference this data source.
             data_source.deactivate()
 
-    config.delete()
+    soft_delete(config)
     did_purge_something = purge_report_from_mobile_ucr(config)
 
-    messages.success(request, _(u'Report "{}" deleted!').format(config.title))
+    messages.success(
+        request,
+        _(u'Report "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
+            name=config.title,
+            url=reverse('undo_delete_configurable_report', args=[domain, config._id]),
+        ),
+        extra_tags='html'
+    )
     if did_purge_something:
         messages.warning(
             request,
@@ -816,6 +838,22 @@ def delete_report(request, domain, report_id):
     if not redirect:
         redirect = reverse('configurable_reports_home', args=[domain])
     return HttpResponseRedirect(redirect)
+
+
+def undelete_report(request, domain, report_id):
+    _assert_report_delete_privileges(request)
+    config = get_document_or_404(ReportConfiguration, domain, report_id, additional_doc_types=[
+        get_deleted_doc_type(ReportConfiguration)
+    ])
+    if config and is_deleted(config):
+        undo_delete(config)
+        messages.success(
+            request,
+            _(u'Successfully restored report "{name}"').format(name=config.title)
+        )
+    else:
+        messages.info(request, _(u'Report "{name}" not deleted.').format(name=config.title))
+    return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
 
 
 class ImportConfigReportView(BaseUserConfigReportsView):
@@ -859,6 +897,68 @@ def report_source_json(request, domain, report_id):
     config, _ = get_report_config_or_404(report_id, domain)
     config._doc.pop('_rev', None)
     return json_response(config)
+
+
+class ExpressionDebuggerView(BaseUserConfigReportsView):
+    urlname = 'expression_debugger'
+    template_name = 'userreports/expression_debugger.html'
+    page_title = ugettext_lazy("Expression Debugger")
+
+
+@login_and_domain_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+def evaluate_expression(request, domain):
+    doc_type = request.POST['doc_type']
+    doc_id = request.POST['doc_id']
+    data_source_id = request.POST['data_source']
+    try:
+        if data_source_id:
+            data_source = get_datasource_config(data_source_id, domain)[0]
+            factory_context = data_source.get_factory_context()
+        else:
+            factory_context = FactoryContext.empty()
+        usable_type = {
+            'form': 'XFormInstance',
+            'case': 'CommCareCase',
+        }.get(doc_type, 'Unknown')
+        document_store = get_document_store(domain, usable_type)
+        doc = document_store.get_document(doc_id)
+        expression_text = request.POST['expression']
+        expression_json = json.loads(expression_text)
+        parsed_expression = ExpressionFactory.from_spec(
+            expression_json,
+            context=factory_context
+        )
+        result = parsed_expression(doc, EvaluationContext(doc))
+        return json_response({
+            "result": result,
+        })
+    except DataSourceConfigurationNotFoundError:
+        return json_response(
+            {"error": _("Data source with id {} not found in domain {}.").format(
+                data_source_id, domain
+            )},
+            status_code=404,
+        )
+    except DocumentNotFoundError:
+        return json_response(
+            {"error": _("{} with id {} not found in domain {}.").format(
+                doc_type, doc_id, domain
+            )},
+            status_code=404,
+        )
+    except BadSpecError as e:
+        return json_response(
+            {"error": _("Problem with expression: {}.").format(
+                e
+            )},
+            status_code=400,
+        )
+    except Exception as e:
+        return json_response(
+            {"error": six.text_type(e)},
+            status_code=500,
+        )
 
 
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):
@@ -996,12 +1096,35 @@ def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     adapter = get_indicator_adapter(config)
     adapter.drop_table()
-    config.delete()
+    soft_delete(config)
     if request:
         messages.success(
             request,
-            _(u'Data source "{}" has been deleted.'.format(config.display_name))
+            _(u'Data source "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
+                name=config.display_name,
+                url=reverse('undo_delete_data_source', args=[domain, config._id]),
+            ),
+            extra_tags='html'
         )
+
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def undelete_data_source(request, domain, config_id):
+    config = get_document_or_404(DataSourceConfiguration, domain, config_id, additional_doc_types=[
+        get_deleted_doc_type(DataSourceConfiguration)
+    ])
+    if config and is_deleted(config):
+        undo_delete(config)
+        messages.success(
+            request,
+            _(u'Successfully restored data source "{name}"').format(name=config.display_name)
+        )
+    else:
+        messages.info(request, _(u'Data source "{name}" not deleted.').format(name=config.display_name))
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config._id]
+    ))
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -1050,6 +1173,27 @@ def resume_building_data_source(request, domain, config_id):
             _(u'Resuming rebuilding table "{}".').format(config.display_name)
         )
         resume_building_indicators.delay(config_id, request.user.username)
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config._id]
+    ))
+
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def build_data_source_in_place(request, domain, config_id):
+    config, is_static = get_datasource_config_or_404(config_id, domain)
+    if config.is_deactivated:
+        config.is_deactivated = False
+        config.save()
+
+    messages.success(
+        request,
+        _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
+            config.display_name
+        )
+    )
+
+    rebuild_indicators_in_place.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1196,7 +1340,7 @@ def export_data_source(request, domain, config_id):
 
     # build export
     def get_table(q):
-        yield table.columns.keys()
+        yield list(table.columns.keys())
         for row in q:
             yield row
 

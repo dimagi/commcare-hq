@@ -5,6 +5,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
             "single_app/:id": "singleApp", // Show app in phone mode (SingleAppView)
+            "home/:id": "landingPageApp", // Show app in landing page mode (LandingPageAppView)
             "sessions": "listSessions", //list all this user's current sessions (incomplete forms)
             "sessions/:id": "getSession",
             "local/:path": "localInstall",
@@ -28,6 +29,9 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             user.previewAppId = appId;
             FormplayerFrontend.Apps.Controller.singleApp(appId);
         },
+        landingPageApp: function(appId) {
+            FormplayerFrontend.Apps.Controller.landingPageApp(appId);
+        },
         selectApp: function (appId) {
             FormplayerFrontend.Menus.Controller.selectMenu({
                 'appId': appId,
@@ -37,7 +41,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
-            if (!urlObject.appId) {
+            if (!urlObject.appId && !urlObject.installReference) {
                 // We can't do any menu navigation without an appId
                 FormplayerFrontend.trigger("apps:list");
             } else {
@@ -55,8 +59,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         listSettings: function() {
             FormplayerFrontend.Apps.Controller.listSettings();
         },
-        showDetail: function (model, detailTabIndex) {
-            FormplayerFrontend.Menus.Controller.showDetail(model, detailTabIndex);
+        showDetail: function (caseId, detailTabIndex) {
+            FormplayerFrontend.Menus.Controller.selectDetail(caseId, detailTabIndex);
         },
         listSessions: function() {
             SessionNavigate.SessionList.Controller.listSessions();
@@ -131,6 +135,11 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.singleApp(appId);
     });
 
+    FormplayerFrontend.on('app:landingPageApp', function(appId) {
+        FormplayerFrontend.navigate("/home/" + appId);
+        API.landingPageApp(appId);
+    });
+
     FormplayerFrontend.on("menu:select", function (index) {
         var urlObject = Util.currentUrlToObject();
         urlObject.addStep(index);
@@ -169,8 +178,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.listSettings();
     });
 
-    FormplayerFrontend.on("menu:show:detail", function (model, detailTabIndex) {
-        API.showDetail(model, detailTabIndex);
+    FormplayerFrontend.on("menu:show:detail", function (caseId, detailTabIndex) {
+        API.showDetail(caseId, detailTabIndex);
     });
 
     FormplayerFrontend.on("sessions", function () {
@@ -187,11 +196,11 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.renderResponse(menuResponse);
     });
 
-    SessionNavigate.on("start", function () {
-        new SessionNavigate.Router({
+    SessionNavigate.start = function () {
+        return new SessionNavigate.Router({
             controller: API,
         });
-    });
+    };
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
         var urlObject = Util.currentUrlToObject();

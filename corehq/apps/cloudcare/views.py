@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
@@ -39,6 +39,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_ids_in_domain,
     get_current_app,
     wrap_app,
+    get_current_app_doc,
 )
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
@@ -56,7 +57,7 @@ from corehq.apps.cloudcare.api import (
     get_open_form_sessions,
     look_up_app_json,
 )
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_app_id_from_hash
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
@@ -67,6 +68,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.style.decorators import (
     use_datatables,
+    use_legacy_jquery,
     use_jquery_ui,
 )
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -84,6 +86,7 @@ def default(request, domain):
     return HttpResponseRedirect(reverse('cloudcare_main', args=[domain, '']))
 
 
+@use_legacy_jquery
 def insufficient_privilege(request, domain, *args, **kwargs):
     context = {
         'domain': domain,
@@ -95,6 +98,7 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 class CloudcareMain(View):
 
     @use_datatables
+    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -138,7 +142,7 @@ class CloudcareMain(View):
 
         else:
             # big TODO: write a new apps view for Formplayer, can likely cut most out now
-            if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+            if not toggles.USE_OLD_CLOUDCARE.enabled(domain):
                 apps = get_cloudcare_apps(domain)
             else:
                 apps = get_brief_apps_in_domain(domain)
@@ -231,7 +235,7 @@ class CloudcareMain(View):
             'use_sqlite_backend': use_sqlite_backend(domain),
         }
         context.update(_url_context())
-        if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+        if not toggles.USE_OLD_CLOUDCARE.enabled(domain):
             return render(request, "cloudcare/formplayer_home.html", context)
         else:
             return render(request, "cloudcare/cloudcare_home.html", context)
@@ -244,6 +248,7 @@ class FormplayerMain(View):
     urlname = 'formplayer_main'
 
     @use_datatables
+    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -286,7 +291,7 @@ class FormplayerMain(View):
             "language": language,
             "apps": apps,
             "maps_api_key": settings.GMAPS_API_KEY,
-            "username": request.user.username,
+            "username": request.couch_user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
@@ -300,8 +305,12 @@ class FormplayerMainPreview(FormplayerMain):
     preview = True
     urlname = 'formplayer_main_preview'
 
+    @use_legacy_jquery
+    def dispatch(self, request, *args, **kwargs):
+        return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
+
     def fetch_app(self, domain, app_id):
-        return get_current_app(domain, app_id)
+        return get_current_app_doc(domain, app_id)
 
 
 class FormplayerPreviewSingleApp(View):
@@ -309,6 +318,7 @@ class FormplayerPreviewSingleApp(View):
     urlname = 'formplayer_single_app'
 
     @use_datatables
+    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -351,6 +361,7 @@ class PreviewAppView(TemplateView):
     template_name = 'preview_app/base.html'
     urlname = 'preview_app'
 
+    @use_legacy_jquery
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
@@ -358,6 +369,40 @@ class PreviewAppView(TemplateView):
             'formplayer_url': settings.FORMPLAYER_URL,
             "maps_api_key": settings.GMAPS_API_KEY,
             "environment": PREVIEW_APP_ENVIRONMENT,
+        })
+
+
+class SingleAppLandingPageView(TemplateView):
+    '''
+    This View renders a landing page for anonymous users to
+    land on and enter Web Apps without a login.
+    '''
+
+    template_name = 'landing_page/base.html'
+    urlname = 'home'
+
+    @use_legacy_jquery
+    def get(self, request, *args, **kwargs):
+        app_id = get_app_id_from_hash(request.domain, kwargs.pop('app_hash'))
+
+        if not app_id:
+            raise Http404()
+
+        app_doc = get_latest_released_app_doc(request.domain, app_id)
+
+        if not app_doc:
+            raise Http404()
+
+        app = Application.wrap(app_doc)
+
+        if not app.anonymous_cloudcare_enabled:
+            raise Http404()
+
+        return self.render_to_response({
+            'app': app,
+            'formplayer_url': settings.FORMPLAYER_URL,
+            "maps_api_key": settings.GMAPS_API_KEY,
+            "environment": WEB_APPS_ENVIRONMENT,
         })
 
 
@@ -390,6 +435,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
     root_context = {
         'form_url': form_url,
+        'formplayer_url': settings.FORMPLAYER_URL,
     }
     if instance_id:
         try:
@@ -435,8 +481,6 @@ def get_cases_skip_arg(request, domain):
     The caching is mainly a hack for touchforms to respond more quickly. Touchforms makes repeated requests to
     get the list of case_ids associated with a user.
     """
-    if not toggles.CLOUDCARE_CACHE.enabled(domain):
-        return True
     request_params = request.GET
     return (not string_to_boolean(request_params.get('use_cache', 'false')) or
         not string_to_boolean(request_params.get('ids_only', 'false')))
@@ -459,17 +503,6 @@ def get_cases(request, domain):
     case_id = request_params.get("case_id", "")
     footprint = string_to_boolean(request_params.get("footprint", "false"))
     accessor = CaseAccessors(domain)
-
-    if toggles.HSPH_HACK.enabled(domain):
-        hsph_case_id = request_params.get('hsph_hack', None)
-        if hsph_case_id != 'None' and hsph_case_id and user_id:
-            case = accessor.get_case(hsph_case_id)
-            usercase_id = CommCareUser.get_by_user_id(user_id).get_usercase_id()
-            usercase = accessor.get_case(usercase_id) if usercase_id else None
-            return json_response(map(
-                lambda case: CaseAPIResult(domain=domain, id=case['_id'], couch_doc=case, id_only=ids_only),
-                filter(None, [case, case.parent, usercase])
-            ))
 
     if case_id and not footprint:
         # short circuit everything else and just return the case
@@ -680,7 +713,7 @@ def sync_db_api(request, domain):
     username = request.GET.get('username')
     try:
         response = sync_db(username, domain, DjangoAuth(auth_cookie))
-    except Exception, e:
+    except Exception as e:
         return json_response(
             {'status': 'error', 'message': unicode(e)},
             status_code=500
@@ -728,7 +761,7 @@ def render_form(request, domain):
 
     try:
         raw_instance = get_raw_instance(session_id, domain)
-    except Exception, e:
+    except Exception as e:
         return HttpResponse(e, status=500, content_type="text/plain")
 
     xmlns = raw_instance["xmlns"]
@@ -760,7 +793,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
 
     @property
     def page_title(self):
-        if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+        if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
             return _("Web Apps Permissions")
         else:
             return _("CloudCare Permissions")

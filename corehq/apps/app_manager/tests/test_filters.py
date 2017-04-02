@@ -272,12 +272,14 @@ class AutoFilterTests(TestCase):
 
     def test_filter_by_location_id(self):
         result = _filter_by_location_id(self.drew, self.ui_filter)
-        self.ui_filter.value.assert_called_with(test_filter=self.nyc.location_id)
+        self.ui_filter.value.assert_called_with(test_filter=self.nyc.location_id,
+                                                request_user=self.drew)
         self.assertEqual(result, 'result')
 
     def test_filter_by_parent_location_id(self):
         result = _filter_by_parent_location_id(self.jon, self.ui_filter)
-        self.ui_filter.value.assert_called_with(test_filter=self.massachusetts.location_id)
+        self.ui_filter.value.assert_called_with(test_filter=self.massachusetts.location_id,
+                                                request_user=self.jon)
         self.assertEqual(result, 'result')
 
     def test_filter_by_username(self):

@@ -7,6 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
 from corehq.util.quickcache import quickcache
+from .privileges import LOOKUP_TABLES
 from .toggles import StaticToggle, NAMESPACE_DOMAIN, TAG_PREVIEW, \
     all_toggles_by_name_in_scope
 
@@ -115,4 +116,5 @@ VELLUM_ADVANCED_ITEMSETS = FeaturePreview(
         "Allows display of custom lists, such as case sharing groups or locations as choices in Single Answer or "
         "Multiple Answer lookup Table questions. Configuring these questions requires specifying advanced logic."
     ),
+    privilege=LOOKUP_TABLES,
 )

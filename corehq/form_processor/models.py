@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import logging
 import mimetypes
@@ -19,6 +20,7 @@ from jsonobject.properties import BooleanProperty
 from lxml import etree
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
+from corehq.blobs.mixin import get_short_identifier
 from corehq.blobs.exceptions import NotFound, BadName
 from corehq.form_processor import signals
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
@@ -26,6 +28,8 @@ from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionTyp
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.routers import db_for_read_write
+from corehq.util.exceptions import AccessRestricted
+from corehq.util.mixin import DisabledDbMixin
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.signals import xform_archived, xform_unarchived
@@ -35,7 +39,7 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
-from .exceptions import AttachmentNotFound, AccessRestricted
+from .exceptions import AttachmentNotFound
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
 XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
@@ -127,18 +131,6 @@ class AttachmentMixin(SaveStateMixin):
 
     def _get_attachments_from_db(self):
         raise NotImplementedError
-
-
-class DisabledDbMixin(object):
-
-    def save(self, *args, **kwargs):
-        raise AccessRestricted('Direct object save disabled.')
-
-    def save_base(self, *args, **kwargs):
-        raise AccessRestricted('Direct object save disabled.')
-
-    def delete(self, *args, **kwargs):
-        raise AccessRestricted('Direct object deletion disabled.')
 
 
 class RestrictedManager(models.Manager):
@@ -423,7 +415,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
 
         db = get_blob_db()
         bucket = self.blobdb_bucket()
-        info = db.put(content, bucket=bucket)
+        info = db.put(content, get_short_identifier(), bucket=bucket)
         self.md5 = info.md5_hash
         self.content_length = info.length
         self.blob_id = info.identifier
@@ -557,13 +549,12 @@ class SupplyPointCaseMixin(object):
     @property
     @memoized
     def location(self):
-        from corehq.apps.locations.models import Location
-        from couchdbkit.exceptions import ResourceNotFound
+        from corehq.apps.locations.models import SQLLocation
         if self.location_id is None:
             return None
         try:
-            return Location.get(self.location_id)
-        except ResourceNotFound:
+            return self.sql_location
+        except SQLLocation.DoesNotExist:
             return None
 
     @property
@@ -673,7 +664,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         return json.dumps(self.to_json(), indent=indent)
 
     def pprint(self):
-        print self.dumps(pretty=True)
+        print(self.dumps(pretty=True))
 
     @property
     @memoized

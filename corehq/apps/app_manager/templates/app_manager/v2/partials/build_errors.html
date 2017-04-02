@@ -1,20 +1,18 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load xforms_extras %}{% if build_errors %}
-    <div class="alert alert-warning alert-block">
-        {% if not_actual_build %}
-            <p>{% trans "Errors making a new version:" %}</p>
-        {% else %}
-            <p>{% trans "Build Failed!" %}</p>
-        {% endif %}
+    <div class="alert alert-warning alert-block alert-build">
+        {# todo make sure this makes sense for cloudcare outside of v2 (advanced build errors) #}
+        <h4 class="alert-heading">
+          <i class="fa fa-exclamation-circle"></i>
+          {% trans "Cannot Create Menus" %}</h4>
         <ul class="list-unstyled" id="build-errors">
             {% for error in build_errors %}
                 <li>
-                    <i class="fa fa-exclamation-circle"></i>
                     <span>
                         {% case error.type "blank form" %}
                             {% if not error.message %}
-                                Blank form
+                                <strong>Add a Question</strong> to the
                             {% endif %}
                             {% include "app_manager/v2/partials/form_error_message.html" %}
                         {% case "invalid xml" %}
@@ -35,6 +33,12 @@
                             Link to other form is selected, but we don't recognize the form you provided.
                             {% endblocktrans %}
                             {% include "app_manager/v2/partials/form_error_message.html" %}
+                        {% case "form link to missing root" %}
+                            {% blocktrans %}
+                            Please check that end of form navigation is correct. It appears to be pointing
+                            to a parent menu form, but the menu doesn't have a parent.
+                            {% endblocktrans %}
+                            {% include "app_manager/v1/partials/form_error_message.html" %}
                         {% case "no ref detail" %}
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             uses referrals but doesn't have
@@ -52,14 +56,29 @@
                             has an incorrectly formatted ID key ({{ error.key }}).
                             Make sure your key has only letters, numbers, space characters, underscores, and dashes.
                         {% case "no modules" %}
-                            This application has no menus.
-                            This application is empty.
+                            No menus are available. <br />
+                            <i class="fa fa-arrow-left"></i>
+                            Please click
+                            <i class="fa fa-plus"></i> <strong>Add...</strong> to create
+                            some menus.
+                        {% case "missing module" %}
+                            {% blocktrans %}
+                            This application is missing a module. If you have deleted any modules recently, make sure that
+                            you have removed all references to them. If you continue to experience problems, please report an issue.
+                            {% endblocktrans %}
+                            {% if error.message %}
+                            <br/>{% trans "Details:" %}<br/>
+                            {{ error.message }}
+                            {% endif %}
                         {% case "no forms" %}
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             has no forms.
                         {% case "no forms or case list" %}
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             has no forms or case list.
+                        {% case "no reports" %}
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            has no reports.
                         {% case "circular case hierarchy" %}
                             {% url "view_module" domain app.id error.module.id as module_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs %}
@@ -199,7 +218,9 @@
                                 {{ lang }}
                             {% endfor %}
                         {% case "duplicate xmlns" %}
-                            You have two forms with the xmlns "{{ error.xmlns }}"
+                            {% if error.xmlns %}
+                              You have two forms with the xmlns "{{ error.xmlns }}"
+                            {% endif %}
                         {% case "update_case uses reserved word" %}
                             Case Update uses reserved word "{{ error.word }}"
                             {% if error.case_tag %} for action "{{ error.case_tag }}"{% endif %}
@@ -209,7 +230,7 @@
                             {% if error.case_tag %} for action "{{ error.case_tag }}"{% endif %}
                             {% if not not_actual_build %}in form {% include "app_manager/v2/partials/form_error_message.html" %}{% endif %}
                         {% case "case_name required" %}
-                            Every case must have a name. Please specify a value for the name property under
+                            <strong>Every case must have a name.</strong> Please specify a value for the name property under
                             "Save data to the following case properties" {% if error.case_tag %} for action "{{ error.case_tag }}"{% endif %}
                             {% if not not_actual_build %}in form {% include "app_manager/v2/partials/form_error_message.html" %}{% endif %}
                         {% case "path error" %}
@@ -267,18 +288,32 @@
                                     must go in a different case list).
                                 {% endblocktrans %}
                             {% endif %}
-                        {% case "invalid user case xpath reference" %}
+                        {% case "invalid user property xpath reference" %}
                             {% if error.form %}
                                 {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
+                              {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+                                {% blocktrans with form_name=error.form.name|trans:langs %}
+                                    Your form display condition for form <a href="{{ form_url }}">{{ form_name }}</a> refers to a user property,
+                                    but your project does not use user properties. Please remove the user property reference.
+                                {% endblocktrans %}
+                              {% else %}
                                 {% blocktrans with form_name=error.form.name|trans:langs %}
                                     Your form display condition for form <a href="{{ form_url }}">{{ form_name }}</a> refers to a user case,
                                     but your project does not use user case management. Please remove the user case reference.
                                 {% endblocktrans %}
+                              {% endif %}
                             {% else %}
+                              {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+                                {% blocktrans %}
+                                    You have a display condition which refers to a user property, but your project does not use user properties.
+                                    Please remove the user property reference.
+                                {% endblocktrans %}
+                              {% else %}
                                 {% blocktrans %}
                                     You have a display condition which refers to a user case, but your project does not use user case management.
                                     Please remove the user case reference.
                                 {% endblocktrans %}
+                              {% endif %}
                             {% endif %}
                         {% case "error" %}
                             Details: {{ error.message }}
@@ -299,14 +334,14 @@
                 </li>
             {% endfor %}
         </ul>
-        <p class="help-block">
-            {% if not_actual_build %}
-                {% trans "Build errors prevent you from building your application in the Release Manager." %}
-            {% endif %}
-            {% trans "For more information on build errors, please see" %}
-            <a href="https://confluence.dimagi.com/display/commcarepublic/Errors+Building+an+Application" target="_blank">
-                {% trans "Errors Building an Application" %}
-            </a>
-        </p>
+{#        <p class="help-block">#}
+{#            {% if not_actual_build %}#}
+{#                {% trans "Build errors prevent you from building your application in the Release Manager." %}#}
+{#            {% endif %}#}
+{#            {% trans "For more information on build errors, please see" %}#}
+{#            <a href="https://confluence.dimagi.com/display/commcarepublic/Errors+Building+an+Application" target="_blank">#}
+{#                {% trans "Errors Building an Application" %}#}
+{#            </a>#}
+{#        </p>#}
     </div>
 {% endif %}

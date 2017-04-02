@@ -55,14 +55,15 @@ def set_cleanliness_flags_for_all_domains(force_full=False):
             notify_exception(None, unicode(e))
 
 
-def set_cleanliness_flags_for_domain(domain, force_full=False):
+def set_cleanliness_flags_for_domain(domain, force_full=False, raise_soft_assertions=True):
     """
     Sets all cleanliness flags for an entire domain.
     """
     for owner_id in get_all_case_owner_ids(domain):
         if owner_id and owner_id not in WEIRD_USER_IDS:
             try:
-                set_cleanliness_flags(domain, owner_id, force_full=force_full)
+                set_cleanliness_flags(domain, owner_id, force_full=force_full,
+                                      raise_soft_assertions=raise_soft_assertions)
             except InvalidOwnerIdError as e:
                 notify_exception(None, unicode(e))
 
@@ -76,7 +77,7 @@ def _is_web_user(owner_id):
     return document.get('doc_type', None) == 'WebUser'
 
 
-def set_cleanliness_flags(domain, owner_id, force_full=False):
+def set_cleanliness_flags(domain, owner_id, force_full=False, raise_soft_assertions=True):
     """
     For a given owner ID, manually sets the cleanliness flag on that ID.
     """
@@ -113,8 +114,8 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
         # flag was turned off for the domain. either way cory probably wants to know.
 
         # filter out docs where we expect this to be broken (currently just web users)
-        if not _is_web_user(owner_id):
-            _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False, fail_if_debug=False)
+        if not _is_web_user(owner_id) and raise_soft_assertions:
+            _assert = soft_assert(notify_admins=True, exponential_backoff=False, fail_if_debug=False)
             _assert(False, 'Cleanliness flags out of sync for user {} in domain {}!'.format(
                 owner_id, domain
             ))
@@ -203,7 +204,14 @@ def _get_info_by_case_id(index_infos, case_id):
 
 
 def get_dependent_case_info(domain, case_ids):
-    """ Fetches all dependent cases of cases passed in"""
+    """
+    Fetches all dependent cases of cases passed in.
+
+    This includes:
+     1. any cases that the passed in cases index (e.g. parent cases)
+     2. any extensions of the passed in cases
+     3. (1) and (2) above, for any dependencies that are pulled in
+    """
     assert not isinstance(case_ids, basestring)
     all_dependencies = set()
     direct_dependencies = _get_direct_dependencies(domain, case_ids)

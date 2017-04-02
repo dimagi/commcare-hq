@@ -13,7 +13,7 @@ from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.contrib import messages
@@ -27,6 +27,7 @@ from corehq import toggles, privileges
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
+from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.tour import tours
@@ -39,6 +40,8 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.util import (
     get_settings_values,
+    app_doc_types,
+    get_app_manager_template,
 )
 from corehq.apps.domain.models import Domain
 from corehq.tabs.tabclasses import ApplicationsTab
@@ -56,7 +59,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
 )
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_current_app_doc, wrap_app
 from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
@@ -66,14 +69,14 @@ from corehq.apps.app_manager.models import (
     Module,
     ModuleNotFoundException,
     load_app_template,
-    str_to_cls,
-)
+    ReportModule)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from django_prbac.utils import has_privilege
 from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot, identify
 from corehq.apps.analytics.utils import get_meta
+from corehq.util.view_utils import reverse as reverse_util
 
 
 @no_conflict_require_POST
@@ -90,6 +93,9 @@ def delete_app(request, domain, app_id):
     )
     app.save()
     clear_app_cache(request, domain)
+
+    if toggles.APP_MANAGER_V2.enabled(domain):
+        return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
     return back_to_main(request, domain)
 
 
@@ -132,6 +138,8 @@ def default_new_app(request, domain):
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
+    if toggles.APP_MANAGER_V2.enabled(request.domain):
+        return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
     return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, 0, 0]))
 
 
@@ -186,9 +194,10 @@ def get_app_view_context(request, app):
         lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
         [setting for section in context['settings_layout']
             for setting in section['settings']]
-    )
-    build_spec_setting['options_map'] = options_map
-    build_spec_setting['default_app_version'] = app.application_version
+    ) if context['settings_layout'] else (None,)
+    if build_spec_setting:
+        build_spec_setting['options_map'] = options_map
+        build_spec_setting['default_app_version'] = app.application_version
 
     context.update({
         'bulk_ui_translation_upload': {
@@ -224,6 +233,8 @@ def get_app_view_context(request, app):
     except ValueError:
         context['fetchLimit'] = DEFAULT_FETCH_LIMIT
 
+    if app.get_doc_type() == 'LinkedApplication':
+        context['master_version'] = get_app(None, app.master, latest=True).version
     return context
 
 
@@ -249,6 +260,12 @@ def get_apps_base_context(request, domain, app):
         'langs': langs,
         'domain': domain,
         'app': app,
+        'app_subset': {
+            'commcare_minor_release': app.commcare_minor_release,
+            'doc_type': app.get_doc_type(),
+            'form_counts_by_module': [len(m.forms) for m in app.modules] if not app.is_remote_app() else [],
+            'version': app.version,
+        } if app else {},
         'timezone': timezone,
     }
 
@@ -280,8 +297,9 @@ def app_source(request, domain, app_id):
 @require_can_edit_apps
 def copy_app(request, domain):
     app_id = request.POST.get('app')
+    app = get_app(domain, app_id)
     form = CopyApplicationForm(
-        domain, app_id, request.POST,
+        domain, app, request.POST,
         export_zipped_apps_enabled=toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
     )
     if form.is_valid():
@@ -298,7 +316,22 @@ def copy_app(request, domain):
             if data['toggles']:
                 for slug in data['toggles'].split(","):
                     set_toggle(slug, domain, True, namespace=toggles.NAMESPACE_DOMAIN)
-            app_copy = import_app_util(app_id_or_source, domain, {'name': data['name']})
+            extra_properties = {'name': data['name']}
+            linked = data.get('linked')
+            if linked:
+                extra_properties['master'] = app_id
+                extra_properties['doc_type'] = 'LinkedApplication'
+                if domain not in app.linked_whitelist:
+                    app.linked_whitelist.append(domain)
+                    app.save()
+            app_copy = import_app_util(app_id_or_source, domain, extra_properties)
+            if linked:
+                for module in app_copy.modules:
+                    if isinstance(module, ReportModule):
+                        messages.error(request, _('This linked application uses mobile UCRs which '
+                                                  'are currently not supported. For this application to '
+                                                  'function correctly, you will need to remove those modules.'))
+                        break
             return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
         return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
@@ -346,7 +379,12 @@ def export_gzip(req, domain, app_id):
 
 
 @require_can_edit_apps
-def import_app(request, domain, template="app_manager/v1/import_app.html"):
+def import_app(request, domain):
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/import_app.html",
+        "app_manager/v2/import_app.html",
+    )
     if request.method == "POST":
         clear_app_cache(request, domain)
         name = request.POST.get('name')
@@ -396,15 +434,22 @@ def import_app(request, domain, template="app_manager/v1/import_app.html"):
         return render(request, template, {
             'domain': domain,
             'app': app,
-            'is_superuser': request.couch_user.is_superuser
         })
+
+
+@require_GET
+@require_deploy_apps
+def app_settings(request, domain, app_id=None):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(request, domain, app_id)
 
 
 @require_GET
 @require_deploy_apps
 def view_app(request, domain, app_id=None):
     from corehq.apps.app_manager.views.view_generic import view_generic
-    return view_generic(request, domain, app_id)
+    return view_generic(request, domain, app_id,
+                        release_manager=toggles.APP_MANAGER_V2.enabled(domain))
 
 
 @no_conflict_require_POST
@@ -413,7 +458,7 @@ def new_app(request, domain):
     "Adds an app to the database"
     lang = 'en'
     type = request.POST["type"]
-    cls = str_to_cls[type]
+    cls = app_doc_types()[type]
     form_args = []
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
@@ -589,6 +634,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'use_j2me_endpoint',
         # Application only
         'cloudcare_enabled',
+        'anonymous_cloudcare_enabled',
         'case_sharing',
         'translation_strategy',
         'auto_gps_capture',
@@ -607,6 +653,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('build_spec', BuildSpec.from_string),
         ('case_sharing', None),
         ('cloudcare_enabled', None),
+        ('anonymous_cloudcare_enabled', None),
         ('commtrack_requisition_mode', lambda m: None if m == 'disabled' else m),
         ('manage_urls', None),
         ('name', None),
@@ -652,6 +699,12 @@ def edit_app_attr(request, domain, app_id, attr):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
         if not has_privilege(request, privileges.CLOUDCARE):
             app.cloudcare_enabled = False
+
+    if should_edit("anonymous_cloudcare_enabled"):
+        if app.get_doc_type() not in ("Application",):
+            raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
+        if not has_privilege(request, privileges.CLOUDCARE):
+            app.anonymous_cloudcare_enabled = False
 
     def require_remote_app():
         if app.get_doc_type() not in ("RemoteApp",):
@@ -699,9 +752,14 @@ def rearrange(request, domain, app_id, key):
         elif "modules" == key:
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException:
-        messages.error(request, _(
-            'The form can not be moved into the desired module.'
-        ))
+        if toggles.APP_MANAGER_V2.enabled(domain):
+            messages.error(request, _(
+                'The form cannot be moved into the desired menu.'
+            ))
+        else:
+            messages.error(request, _(
+                'The form can not be moved into the desired module.'
+            ))
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
         messages.error(request, _(
@@ -790,6 +848,58 @@ def drop_user_case(request, domain, app_id):
     app.save()
     messages.success(
         request,
+        _('You have successfully removed User Properties from this application.')
+        if toggles.APP_MANAGER_V2.enabled(domain) else
         _('You have successfully removed User Case properties from this application.')
     )
     return back_to_main(request, domain, app_id=app_id)
+
+
+@require_GET
+@require_can_edit_apps
+def pull_master_app(request, domain, app_id):
+    app = get_current_app_doc(domain, app_id)
+    master_app = get_app(None, app['master'])
+    latest_master_build = get_app(None, app['master'], latest=True)
+    params = {}
+    if app['domain'] in master_app.linked_whitelist:
+        excluded_fields = set(Application._meta_fields).union(
+            ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
+        )
+        master_json = latest_master_build.to_json()
+        for key, value in master_json.iteritems():
+            if key not in excluded_fields:
+                app[key] = value
+        app['version'] = master_json['version']
+        wrapped_app = wrap_app(app)
+        mobile_ucrs = False
+        for module in wrapped_app.modules:
+            if isinstance(module, ReportModule):
+                mobile_ucrs = True
+                break
+        if mobile_ucrs:
+            messages.error(request, _('This linked application uses mobile UCRs '
+                                      'which are currently not supported. For this application '
+                                      'to function correctly, you will need to remove those modules '
+                                      'or revert to a previous version that did not include them.'))
+        else:
+            messages.success(request,
+                             _('Your linked application was successfully updated to the latest version.'))
+        wrapped_app.copy_attachments(latest_master_build)
+        wrapped_app.save(increment_version=False)
+    else:
+        messages.error(request, _(
+            'This project is not authorized to update from the master application. '
+            'Please contact the maintainer of the master app if you believe this is a mistake. ')
+        )
+    return HttpResponseRedirect(reverse_util('view_app', params=params, args=[domain, app_id]))
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def update_linked_whitelist(request, domain, app_id):
+    app = wrap_app(get_current_app_doc(domain, app_id))
+    new_whitelist = json.loads(request.POST.get('whitelist'))
+    app.linked_whitelist = new_whitelist
+    app.save()
+    return HttpResponse()
