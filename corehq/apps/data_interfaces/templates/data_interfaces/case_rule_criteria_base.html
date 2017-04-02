@@ -1,0 +1,25 @@
+{% extends 'style/base_section.html' %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'style/js/main.js' %}"></script>
+    <script src="{% static 'data_interfaces/js/case_rule_criteria.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    var criteria_model = new CaseRuleCriteria({
+        filter_on_server_modified: '{{ criteria_form.filter_on_server_modified.value|default:"false"|escapejs }}',
+        server_modified_boundary: {{ criteria_form.server_modified_boundary.value|default:"null"|safe }},
+        custom_match_definitions: {{ criteria_form.custom_match_definitions.value|default:"[]"|safe }},
+        property_match_definitions: {{ criteria_form.property_match_definitions.value|default:"[]"|safe }},
+        filter_on_closed_parent: '{{ criteria_form.filter_on_closed_parent.value|default:"false"|escapejs }}',
+    }, {{ criteria_form.constants|JSON }});
+    $('#rule-criteria').koApplyBindings(criteria_model);
+    criteria_model.load_initial();
+</script>
+{% endblock %}
+
+{% block page_content %}
+{% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
+{% endblock %}
