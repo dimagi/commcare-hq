@@ -247,7 +247,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         for i in range(3):
             since = self.pillow.get_change_feed().get_latest_offsets()
             form, cases = self._post_case_blocks(i)
-            with self.assertNumQueries(15):
+            with self.assertNumQueries(12):
                 self.pillow.process_changes(since=since, forever=False)
             rows = self.adapter.get_query_object()
             self.assertEqual(rows.count(), 1)
@@ -308,7 +308,7 @@ class ReuseEvaluationContextTest(TestCase):
         )
 
     def _test_pillow(self, pillow, since):
-        with self.assertNumQueries(15):
+        with self.assertNumQueries(12):
             pillow.process_changes(since=since, forever=False)
 
     def test_reuse_cache(self):
