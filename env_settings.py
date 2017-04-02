@@ -51,40 +51,58 @@ ES_META = {
         }
     },
 
+    'hqusers': {
+        "settings": {
+            "analysis": {
+                "analyzer": {
+                    "default": {
+                        "type": "custom",
+                        "tokenizer": "whitespace",
+                        "filter": ["lowercase"]
+                    },
+                }
+            }
+        }
+    },
+
     # Default settings for aliases per environment (overrides default settings for alias)
     'production': {
         'xforms': {
             'settings': {
                 'number_of_shards': 10,
-                "analyzer": {
-                    "default": {
-                        "type": "custom",
-                        "tokenizer": "whitespace",
-                        "filter": ["lowercase"]
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": ["lowercase"]
+                        },
+                        "sortable_exact": {
+                            "type": "custom",
+                            "tokenizer": "keyword",
+                            "filter": ["lowercase"]
+                        }
                     },
-                    "sortable_exact": {
-                        "type": "custom",
-                        "tokenizer": "keyword",
-                        "filter": ["lowercase"]
-                    }
-                }
+                },
             },
         },
         'hqcases': {
             'settings': {
                 'number_of_shards': 10,
-                "analyzer": {
-                    "default": {
-                        "type": "custom",
-                        "tokenizer": "whitespace",
-                        "filter": ["lowercase"]
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": ["lowercase"]
+                        },
+                        "sortable_exact": {
+                            "type": "custom",
+                            "tokenizer": "keyword",
+                            "filter": ["lowercase"]
+                        },
                     },
-                    "sortable_exact": {
-                        "type": "custom",
-                        "tokenizer": "keyword",
-                        "filter": ["lowercase"]
-                    }
-                }
+                },
             },
         }
     },

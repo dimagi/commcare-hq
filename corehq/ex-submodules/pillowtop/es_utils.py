@@ -40,6 +40,9 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     def meta(self):
         meta_settings = deepcopy(settings.ES_META['default'])
         meta_settings.update(
+            settings.ES_META.get(self.alias, {})
+        )
+        meta_settings.update(
             settings.ES_META.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
         )
         return meta_settings
@@ -68,7 +71,6 @@ def set_index_normal_settings(es, index):
 
 
 def create_index_and_set_settings_normal(es, index, metadata=None):
-    print index_info.meta
     metadata = metadata or {}
     es.indices.create(index=index, body=metadata)
     set_index_normal_settings(es, index)

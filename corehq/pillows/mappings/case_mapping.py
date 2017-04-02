@@ -1,5 +1,3 @@
-from copy import deepcopy
-from django.conf import settings
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
