@@ -53,7 +53,6 @@ from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator
 
 from corehq.const import USER_DATE_FORMAT
-from corehq.tabs.tabclasses import ProjectSettingsTab
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -311,12 +310,6 @@ class BaseProjectSettingsView(BaseDomainView):
     def main_context(self):
         main_context = super(BaseProjectSettingsView, self).main_context
         main_context.update({
-            'active_tab': ProjectSettingsTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-                project=self.request.project
-            ),
             'is_project_settings': True,
         })
         return main_context
@@ -2343,18 +2336,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             {}
         </span>
         '''.format(label_cls, label_text)
-
-    @property
-    def report_context(self):
-        context = super(DomainForwardingRepeatRecords, self).report_context
-        context.update({
-            'active_tab': ProjectSettingsTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-            )
-        })
-        return context
 
     @property
     def total_records(self):

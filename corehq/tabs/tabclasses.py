@@ -390,6 +390,7 @@ class ProjectDataTab(UITab):
     url_prefix_formats = (
         '/a/{domain}/data/',
         '/a/{domain}/fixtures/',
+        '/a/{domain}/data_dictionary/',
     )
 
     @property
@@ -1318,12 +1319,12 @@ class ProjectSettingsTab(UITab):
     title = ugettext_noop("Project Settings")
     view = 'domain_settings_default'
 
-    url_prefix_formats = ('/a/{domain}/settings/project/',)
+    url_prefix_formats = (
+        '/a/{domain}/settings/project/',
+        '/a/{domain}/phone/prime_restore/',
+    )
 
-    @property
-    def _is_viewable(self):
-        return (self.domain and self.couch_user and
-                self.couch_user.is_domain_admin(self.domain))
+    _is_viewable = False
 
     @property
     def sidebar_items(self):
@@ -1547,9 +1548,7 @@ class MySettingsTab(UITab):
     view = 'default_my_settings'
     url_prefix_formats = ('/account/',)
 
-    @property
-    def _is_viewable(self):
-        return self.couch_user is not None
+    _is_viewable = False
 
     @property
     def sidebar_items(self):
