@@ -15,6 +15,7 @@ from corehq.blobs.tests.util import (
     TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB
 )
 from corehq.blobs.util import random_url_id
+from corehq.sql_db.models import PartitionedModel
 from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict
 from corehq.util.test_utils import trap_extra_setup
 
@@ -478,8 +479,7 @@ class TestMigrateBackend(TestCase):
         if rex.is_sharded():
             # HACK why does it have to be so hard to use form_processor
             # even just for testing...
-            from corehq.form_processor.models import DisabledDbMixin
-            super(DisabledDbMixin, obj).save_base()
+            obj.save(using='default')
         else:
             obj.save()
 
@@ -570,14 +570,13 @@ class TestMigrateBackend(TestCase):
         BaseMigrationTest.discard_migration_state(self.slug)
 
     def tearDown(self):
-        from corehq.form_processor.models import DisabledDbMixin
         self.db.close()
         BaseMigrationTest.discard_migration_state(self.slug)
         for doc in self.couch_docs:
             doc.get_db().delete_doc(doc._id)
         for doc in self.sql_docs:
-            if isinstance(doc, DisabledDbMixin):
-                super(DisabledDbMixin, doc).delete()
+            if isinstance(doc, PartitionedModel):
+                doc.delete(using='default')
             else:
                 doc.delete()
 
