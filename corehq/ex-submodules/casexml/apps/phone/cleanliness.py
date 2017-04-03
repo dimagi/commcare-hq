@@ -59,7 +59,7 @@ def set_cleanliness_flags_for_domain(domain, force_full=False, raise_soft_assert
     """
     Sets all cleanliness flags for an entire domain.
     """
-    for owner_id in get_all_case_owner_ids(domain):
+    for owner_id in CaseAccessors(domain).get_case_owner_ids():
         if owner_id and owner_id not in WEIRD_USER_IDS:
             try:
                 set_cleanliness_flags(domain, owner_id, force_full=force_full,

@@ -941,6 +941,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         return affected_count
 
+    @staticmethod
+    def get_case_owner_ids(self, domain):
+        pass
+
 
 class LedgerReindexAccessor(ReindexAccessor):
     @property
