@@ -12,6 +12,7 @@ from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.users.models import CouchUser
+from corehq.apps.hqwebapp.utils import decode_password
 
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
@@ -54,8 +55,15 @@ class HQPasswordChangeForm(PasswordChangeForm):
             ),
         )
 
+    def clean_old_password(self):
+        return decode_password(self.cleaned_data['old_password'])
+
     def clean_new_password1(self):
-        return clean_password(self.cleaned_data.get('new_password1'))
+        new_password = decode_password(self.cleaned_data.get('new_password1'))
+        return clean_password(new_password)
+
+    def clean_new_password2(self):
+        return decode_password(self.cleaned_data.get('new_password2'))
 
     def save(self, commit=True):
         user = super(HQPasswordChangeForm, self).save(commit)
