@@ -179,8 +179,10 @@ def _get_form(form_id):
     return None
 
 
-def reprocess_xform_error_by_id(form_id):
+def reprocess_xform_error_by_id(form_id, domain=None):
     form = _get_form(form_id)
+    if domain and form.domain != domain:
+        raise Exception('Form not found')
     return reprocess_xform_error(form)
 
 

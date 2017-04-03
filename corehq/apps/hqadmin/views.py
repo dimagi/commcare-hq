@@ -85,7 +85,7 @@ from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_co
 from . import service_checks, escheck
 from .forms import (
     AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm,
-    ReprocessMessagingCaseUpdatesForm, ReprocessXFormErrorsForm
+    ReprocessMessagingCaseUpdatesForm
 )
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
@@ -1079,45 +1079,6 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
                 messages.error(self.request,
                     _("Could not find cases belonging to these case ids: {}")
                     .format(','.join(case_ids_not_processed)))
-
-        return self.get(request, *args, **kwargs)
-
-
-class ReprocessXFormErrors(BaseAdminSectionView):
-    urlname = 'reprocess_xform_errors'
-    page_title = ugettext_lazy("Reprocess XForm Errors")
-    template_name = 'hqadmin/reprocess_xform_errors.html'
-
-    @method_decorator(require_superuser)
-    def dispatch(self, request, *args, **kwargs):
-        return super(ReprocessXFormErrors, self).dispatch(request, *args, **kwargs)
-
-    @property
-    @memoized
-    def form(self):
-        if self.request.method == 'POST':
-            return ReprocessXFormErrorsForm(self.request.POST)
-        return ReprocessXFormErrorsForm()
-
-    @property
-    def page_context(self):
-        context = get_hqadmin_base_context(self.request)
-        context.update({'form': self.form})
-        return context
-
-    def post(self, request, *args, **kwargs):
-        from corehq.form_processor.utils.xform import reprocess_xform_error_by_id
-
-        if self.form.is_valid():
-            form_id = self.form.cleaned_data['xform_id']
-            try:
-                form = reprocess_xform_error_by_id(form_id)
-            except Exception as e:
-                messages.error(self.request, str(e))
-            else:
-                form_url = reverse('render_form_data', args=[form.domain, form_id])
-                message = 'Form processed successfully: <a href="{}">View Form</a>'.format(form_url)
-                messages.success(self.request, message, extra_tags='html')
 
         return self.get(request, *args, **kwargs)
 
