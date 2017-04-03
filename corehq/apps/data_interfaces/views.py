@@ -937,7 +937,7 @@ class AddCaseRuleView(DataInterfaceSection):
     @memoized
     def rule_form(self):
         if self.request.method == 'POST':
-            return CaseUpdateRuleForm(self.domain, self.request.POST)
+            return CaseUpdateRuleForm(self.domain, self.request.POST, rule=self.initial_rule)
 
         return CaseUpdateRuleForm(self.domain, rule=self.initial_rule)
 
@@ -945,7 +945,7 @@ class AddCaseRuleView(DataInterfaceSection):
     @memoized
     def criteria_form(self):
         if self.request.method == 'POST':
-            return CaseRuleCriteriaForm(self.domain, self.request.POST)
+            return CaseRuleCriteriaForm(self.domain, self.request.POST, rule=self.initial_rule)
 
         return CaseRuleCriteriaForm(self.domain, rule=self.initial_rule)
 
@@ -953,7 +953,7 @@ class AddCaseRuleView(DataInterfaceSection):
     @memoized
     def actions_form(self):
         if self.request.method == 'POST':
-            return CaseRuleActionsForm(self.domain, self.request.POST)
+            return CaseRuleActionsForm(self.domain, self.request.POST, rule=self.initial_rule)
 
         return CaseRuleActionsForm(self.domain, rule=self.initial_rule)
 
