@@ -374,8 +374,8 @@ class FundamentalCaseTestsSQL(FundamentalCaseTests):
             case_name='this is a very long case name that exceeds the 255 char limit' * 5
         )
 
-        post_case_blocks([case.as_xml()], domain='domain2')
-        errors = FormAccessorSQL.get_forms_by_type('domain2', 'XFormError', 10)
+        post_case_blocks([case.as_xml()], domain=DOMAIN)
+        errors = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormError', 10)
         self.assertEqual(len(errors), 1)
         self.assertIn('CaseValueError', errors[0].problem)
 
