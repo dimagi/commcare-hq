@@ -20,10 +20,10 @@ class BlobExpireTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        BlobExpiration.objects.all().delete()
         cls.db.close()
 
     def tearDown(self):
+        BlobExpiration.objects.all().delete()
         if self.db.exists(self.identifier, self.bucket):
             self.db.delete(self.identifier, self.bucket)
 
@@ -40,6 +40,8 @@ class BlobExpireTest(TestCase):
         with self.assertRaises(NotFound):
             self.db.get(self.identifier, self.bucket)
 
+        self.assertEqual(BlobExpiration.objects.all().count(), 1)
+
     def test_blob_does_not_expire(self):
         now = datetime(2017, 1, 1)
 
@@ -51,6 +53,7 @@ class BlobExpireTest(TestCase):
             delete_expired_blobs()
 
         self.assertIsNotNone(self.db.get(self.identifier, self.bucket))
+        self.assertEqual(BlobExpiration.objects.all().count(), 1)
 
     def test_duplicate_identifier_expire(self):
         now = datetime(2017, 1, 1)
@@ -76,3 +79,4 @@ class BlobExpireTest(TestCase):
             delete_expired_blobs()
 
         self.assertIsNotNone(self.db.get(self.identifier, self.bucket))
+        self.assertEqual(BlobExpiration.objects.all().count(), 2)
