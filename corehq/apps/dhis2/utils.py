@@ -32,12 +32,25 @@ def get_last_month():
     return DateSpan(startdate, enddate)
 
 
+def get_last_month_params(slug):
+    """
+    Mimics date filter request parameters
+    """
+    last_month = get_last_month()
+    startdate = last_month.startdate.strftime('%Y-%m-%d')
+    enddate = last_month.enddate.strftime('%Y-%m-%d')
+    return {
+        slug: "{}+to+{}".format(startdate, enddate),
+        slug + '-start': startdate,
+        slug + '-end': enddate,
+    }
+
+
 def get_ucr_data(report_config, date_filter):
     from corehq.apps.userreports.reports.view import get_filter_values
 
-    data_source = ReportFactory.from_spec(report_config)
-    if date_filter:
-        filter_params = {date_filter['slug']: get_last_month()}
-        filter_values = get_filter_values(report_config.ui_filters, filter_params)
-        data_source.set_filter_values(filter_values)
+    data_source = ReportFactory.from_spec(report_config, include_prefilters=True)
+    filter_params = get_last_month_params(date_filter['slug']) if date_filter else {}
+    filter_values = get_filter_values(report_config.ui_filters, filter_params)
+    data_source.set_filter_values(filter_values)
     return data_source.get_data()
