@@ -14,7 +14,7 @@ class JsonApiRequestTests(SimpleTestCase):
     def setUp(self):
         patcher = patch('corehq.apps.dhis2.api.get_dhis2_connection')
         get_dhis2_connection_mock = patcher.start()
-        get_dhis2_connection_mock.return_value = {'log_level': 99}  # Don't log anything
+        get_dhis2_connection_mock.return_value = Mock(log_level=99)  # Don't log anything
         self.addCleanup(patcher.stop)
 
         self.api = JsonApiRequest(TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD)
