@@ -2025,3 +2025,5 @@ _raven_config = helper.configure_sentry(
 if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
+
+CSRF_COOKIE_HTTPONLY = True
