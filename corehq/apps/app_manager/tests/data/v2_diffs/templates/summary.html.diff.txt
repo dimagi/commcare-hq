@@ -58,7 +58,7 @@
          (function (angular, undefined) {
              'use strict';
  
-@@ -49,7 +60,7 @@
+@@ -50,7 +61,7 @@
                  caseDownloadURL: '{% url 'download_case_summary' domain app_id %}',
                  formDownloadURL: '{% url 'download_form_summary' domain app_id %}',
                  appDownloadURL: '{% url 'download_app_summary' domain app_id %}',
@@ -67,7 +67,7 @@
                  appHomeURL: '{% url "view_app" domain app_id %}',
                  appName: '{{ app_name }}',
              });
-@@ -57,11 +68,11 @@
+@@ -58,11 +69,11 @@
              summaryApp.config(['$routeProvider', function($routeProvider) {
                  $routeProvider.
                      when('/forms', {
@@ -81,7 +81,7 @@
                          controller: 'CaseController'
                      }).
                      otherwise({
-@@ -73,16 +84,7 @@
+@@ -74,16 +85,7 @@
  {% endblock %}
  
  {% block content %}
