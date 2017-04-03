@@ -673,7 +673,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         # check that we made stuff
         def _assert_initial_state():
             if should_use_sql_backend(self.domain):
-                self.assertEqual(3, LedgerTransaction.objects.filter(form_id=form_id).count())
+                self.assertEqual(3, LedgerTransaction.objects.using('default').filter(form_id=form_id).count())
             else:
                 self.assertEqual(1, StockReport.objects.filter(form_id=form_id).count())
                 self.assertEqual(3, StockTransaction.objects.filter(report__form_id=form_id).count())
@@ -690,7 +690,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         form.archive()
         self.assertEqual(0, len(ledger_accessors.get_ledger_values_for_case(self.sp.case_id)))
         if should_use_sql_backend(self.domain):
-            self.assertEqual(0, LedgerTransaction.objects.filter(form_id=form_id).count())
+            self.assertEqual(0, LedgerTransaction.objects.using('default').filter(form_id=form_id).count())
         else:
             self.assertEqual(0, StockReport.objects.filter(form_id=form_id).count())
             self.assertEqual(0, StockTransaction.objects.filter(report__form_id=form_id).count())
