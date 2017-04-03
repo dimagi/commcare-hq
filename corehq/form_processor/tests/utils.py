@@ -8,6 +8,7 @@ from django.conf import settings
 from django.test.utils import override_settings
 from nose.tools import nottest
 from nose.plugins.attrib import attr
+from unittest2 import skipIf, skipUnless
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
@@ -184,20 +185,20 @@ def only_run_with_non_partitioned_database(cls):
     """
     Only runs the test with the non-partitioned database settings.
     """
-    if settings.USE_PARTITIONED_DATABASE:
-        return nottest(cls)
-
-    return cls
+    skip_if = skipIf(
+        settings.USE_PARTITIONED_DATABASE, 'Only applicable when sharding is not setup'
+    )
+    return skip_if(cls)
 
 
 def only_run_with_partitioned_database(cls):
     """
     Only runs the test with the partitioned database settings.
     """
-    if not settings.USE_PARTITIONED_DATABASE:
-        return nottest(cls)
-
-    return partitioned(cls)
+    skip_unless = skipUnless(
+        settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup'
+    )
+    return skip_unless(partitioned(cls))
 
 
 def use_sql_backend(cls):
