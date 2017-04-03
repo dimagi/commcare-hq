@@ -1289,6 +1289,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
                     self.request.user.username),
             },
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
+            "can_edit_data": self.request.couch_user.can_edit_data,
             'is_usercase': self.case_instance.type == USERCASE_TYPE,
         }
 
