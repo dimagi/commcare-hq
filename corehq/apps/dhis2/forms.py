@@ -76,14 +76,15 @@ class DataValueMapForm(forms.Form):
     comment = forms.CharField(label=_('DHIS2 Comment'), required=False)
 
     def append_to(self, datavalue_maps):
-        datavalue_maps.append(
-            DataValueMap(
-                column=self.cleaned_data['column'],
-                data_element_id=self.cleaned_data['data_element_id'],
-                category_option_combo_id=self.cleaned_data['category_option_combo_id'],
-                comment=self.cleaned_data['comment'],
+        if self.cleaned_data:
+            datavalue_maps.append(
+                DataValueMap(
+                    column=self.cleaned_data['column'],
+                    data_element_id=self.cleaned_data['data_element_id'],
+                    category_option_combo_id=self.cleaned_data['category_option_combo_id'],
+                    comment=self.cleaned_data['comment'],
+                )
             )
-        )
 
 
 DataValueMapFormSet = forms.formset_factory(DataValueMapForm, extra=2)
