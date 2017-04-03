@@ -34,7 +34,8 @@ def log_request(func):
         )
 
     def request_wrapper(self, *args, **kwargs):
-        domain_log_level = get_dhis2_connection(self.domain_name).get('log_level', logging.INFO)
+        dhis2_conn = get_dhis2_connection(self.domain_name)
+        domain_log_level = getattr(dhis2_conn, 'log_level', logging.INFO)
         log_level = logging.INFO
         request_error = ''
         response_status = None
