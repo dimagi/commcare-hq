@@ -47,9 +47,11 @@
 <script type="text/html" id="close-case-action">
     <div class="form-group">
         <div data-bind="template: {name: 'remove-action'}"></div>
-        <div class="col-xs-2">
-            <label class="control-label">{% trans "Close the case" %}</label>
-        </div>
+        <label class="control-label col-xs-2">{% trans "Close the case" %}</label>
+        <span class="help-block col-xs-8">
+            <i class="fa fa-info-circle"></i>
+            {% trans "All cases matching the above criteria will be closed" %}
+        </span>
     </div>
 </script>
 
@@ -59,9 +61,7 @@
 <script type="text/html" id="update-case-property-action">
     <div class="form-group">
         <div data-bind="template: {name: 'remove-action'}"></div>
-        <div class="col-xs-2">
-            <label class="control-label">{% trans "Set case property" %}</label>
-        </div>
+        <label class="control-label col-xs-2">{% trans "Set case property" %}</label>
         <div class="controls col-xs-2">
             <input type="text" data-bind="value: name" class="textinput form-control" required placeholder="{% trans 'case property name' %}" />
         </div>
@@ -83,9 +83,7 @@
 <script type="text/html" id="custom-action">
     <div class="form-group">
         <div data-bind="template: {name: 'remove-action'}"></div>
-        <div class="col-xs-2">
-            <label class="control-label">{% trans "Custom action callout" %}</label>
-        </div>
+        <label class="control-label col-xs-2">{% trans "Custom action callout" %}</label>
         <div class="controls col-xs-4">
             <input type="text" class="textinput form-control" data-bind="value: name" required placeholder="{% trans 'custom action id' %}" />
         </div>
