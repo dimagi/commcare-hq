@@ -514,7 +514,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
             'display_name': builder.data_source_name,
             'referenced_doc_type': builder.source_doc_type,
             'configured_filter': builder.filter,
-            'configured_indicators': builder.indicators(),
+            'configured_indicators': builder.all_possible_indicators(),
             'base_item_expression': builder.base_item_expression(False),
             'meta': DataSourceMeta(
                 build=DataSourceBuildInformation(
@@ -636,9 +636,13 @@ class ConfigureReport(ReportBuilderView):
             self.source_id = self.request.GET['source']
 
         self.data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
-        self._properties_by_column = {
-            p.column_id: p for p in self.data_source_builder.data_source_properties.values()
-        }
+        self._properties_by_column_id = {}
+        for p in self.data_source_builder.data_source_properties.values():
+            column = p.to_report_column_option()
+            for agg in column.aggregation_options:
+                indicators = column.get_indicators(agg)
+                for i in indicators:
+                    self._properties_by_column_id[i['column_id']] = p
 
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
@@ -703,9 +707,9 @@ class ConfigureReport(ReportBuilderView):
             configuration dictionary
         :return: A DataSourceProperty property id, e.g. "/data/question1"
         """
-        data_source_property = self._properties_by_column.get(indicator_column_id)
+        data_source_property = self._properties_by_column_id.get(indicator_column_id)
         if data_source_property:
-            return data_source_property.id
+            return data_source_property.get_id()
 
     def _get_initial_location(self, report_form):
         if self.existing_report:
@@ -723,6 +727,16 @@ class ConfigureReport(ReportBuilderView):
                 if type_ == "pie":
                     return "pie"
 
+    def _get_column_options(self, report_form):
+        options = OrderedDict()
+        for option in report_form.report_column_options.values():
+            key = option.get_uniquenss_key()
+            if key in options:
+                options[key].append(option)
+            else:
+                options[key] = [option]
+
+
     @property
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
@@ -735,9 +749,9 @@ class ConfigureReport(ReportBuilderView):
             'report_title': self.page_name,
             'existing_report_type': self._get_existing_report_type(),
 
-            'column_options': [p.to_dict() for p in report_form.report_column_options.values()],
+            'column_options': [p.to_view_model() for p in report_form.report_column_options.values()],
             # TODO: Consider renaming this because it's more like "possible" data source props
-            'data_source_properties': [p._asdict() for p in report_form.data_source_properties.values()],
+            'data_source_properties': [p.to_view_model() for p in report_form.data_source_properties.values()],
             'initial_user_filters': [f._asdict() for f in report_form.initial_user_filters],
             'initial_default_filters': [f._asdict() for f in report_form.initial_default_filters],
             'initial_columns': [c._asdict() for c in report_form.initial_columns],
@@ -818,7 +832,7 @@ class ConfigureReport(ReportBuilderView):
                         'user_filters': getattr(bound_form, 'user_filters', 'Not set'),
                         'default_filters': getattr(bound_form, 'default_filters', 'Not set'),
                     })
-                    return self.get(*args, **kwargs)
+                    return self.get(request, domain, *args, **kwargs)
             self._delete_temp_data_source(report_data)
             return json_response({
                 'report_url': reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id]),
