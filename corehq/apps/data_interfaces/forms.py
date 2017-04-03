@@ -718,6 +718,7 @@ class CaseRuleActionsForm(forms.Form):
         self.helper.label_class = 'col-xs-2 col-xs-offset-1'
         self.helper.field_class = 'col-xs-2'
         self.helper.form_tag = False
+        self.helper.form_show_errors = False
         self.helper.layout = Layout(
             Fieldset(
                 _("Actions"),
@@ -811,3 +812,18 @@ class CaseRuleActionsForm(forms.Form):
             })
 
         return result
+
+    def clean(self):
+        cleaned_data = super(CaseRuleActionsForm, self).clean()
+        if (
+            'close_case' in cleaned_data and
+            'properties_to_update' in cleaned_data and
+            'custom_action_definitions' in cleaned_data
+        ):
+            # All fields passed individual validation
+            if (
+                not cleaned_data['close_case'] and
+                not cleaned_data['properties_to_update'] and
+                not cleaned_data['custom_action_definitions']
+            ):
+                raise ValidationError(_("Please specify at least one action."))
