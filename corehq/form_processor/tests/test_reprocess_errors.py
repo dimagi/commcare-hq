@@ -59,7 +59,7 @@ class ReprocessXFormErrorsTest(TestCase):
 
         post_case_blocks([case.as_xml()], domain=self.domain)
 
-        reprocess_xform_error(form)
+        reprocess_xform_error(form_accessors.get_form(form.form_id))
 
         form = form_accessors.get_form(form.form_id)
         # self.assertTrue(form.initial_processing_complete)  Can't change this with SQL forms at the moment
