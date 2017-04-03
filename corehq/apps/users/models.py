@@ -2398,7 +2398,7 @@ class AnonymousCouchUser(object):
         return True
 
     def has_permission(self, domain, perm=None, data=None):
-        return True
+        return False
 
     def can_view_report(self, domain, report):
         return False

@@ -116,7 +116,10 @@ def login_and_domain_required(view_func):
                     return DomainRequestView.as_view()(req, *args, **kwargs)
                 else:
                     raise Http404
-            elif 'reports/custom/' in req.path and PUBLISH_CUSTOM_REPORTS.enabled(domain_name):
+            elif (
+                req.path.startswith(u'/a/{}/reports/custom'.format(domain_name)) and
+                PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
+            ):
                 return view_func(req, domain_name, *args, **kwargs)
             else:
                 login_url = reverse('domain_login', kwargs={'domain': domain})

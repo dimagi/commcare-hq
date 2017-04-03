@@ -30,7 +30,7 @@ class LocationAccessMiddleware(object):
         if not domain or not user or not user.is_member_of(domain):
             # This is probably some non-domain page or a test, let normal auth handle it
             request.can_access_all_locations = True
-        elif user.has_permission(domain, 'access_all_locations'):
+        elif user.has_permission(domain, 'access_all_locations') or user.is_anonymous():
             request.can_access_all_locations = True
         else:
             request.can_access_all_locations = False
