@@ -4,6 +4,8 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.nikshay_datamigration.models import Outcome, PatientDetail
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
 
+ORIGINAL_PERSON_NAME = 'A B C'
+
 
 class NikshayMigrationMixin(ENikshayLocationStructureMixin):
 
@@ -15,7 +17,7 @@ class NikshayMigrationMixin(ENikshayLocationStructureMixin):
             scode='MH',
             Dtocode='ABD',
             Tbunitcode=1,
-            pname='A B C',
+            pname=ORIGINAL_PERSON_NAME,
             pgender='M',
             page=18,
             poccupation='4',
