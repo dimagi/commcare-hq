@@ -102,8 +102,9 @@ class DataSetMap(Document):
         date_filter = get_date_filter(report_config)
         ucr_data = get_ucr_data(report_config, date_filter)
 
+        datavalues = (self.get_datavalues(row) for row in ucr_data)  # one UCR row may have many DataValues
         dataset = {
-            'dataValues': [dv for dv in chain(self.get_datavalues(row) for row in ucr_data)]
+            'dataValues': [i for l in datavalues for i in l]  # get a single list of DataValues
         }
         if self.data_set_id:
             dataset['dataSet'] = self.data_set_id
