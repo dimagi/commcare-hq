@@ -280,7 +280,7 @@ class BaseEditUserView(BaseUserSettingsView):
                 clean_commcare_user.send(
                     'BaseEditUserView.commtrack',
                     domain=self.domain,
-                    request_user=self.request.user,
+                    request_user=self.request.couch_user,
                     user=self.editable_user,
                     forms={self.commtrack_form.__class__.__name__: self.commtrack_form}
                 )
@@ -296,7 +296,7 @@ class BaseEditUserView(BaseUserSettingsView):
             clean_commcare_user.send(
                 'BaseEditUserView.update_user',
                 domain=self.domain,
-                request_user=self.request.user,
+                request_user=self.request.couch_user,
                 user=self.editable_user,
                 forms=forms
             )
