@@ -158,7 +158,7 @@ class DataDictionaryView(BaseProjectDataView):
 
     @method_decorator(login_and_domain_required)
     @use_jquery_ui
-    @toggles.DATA_DICTIONARY.required_decorator()
+    @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(DataDictionaryView, self).dispatch(request, *args, **kwargs)
 
@@ -189,7 +189,7 @@ class UploadDataDictionaryView(BaseProjectDataView):
 
     @method_decorator(login_and_domain_required)
     @use_jquery_ui
-    @toggles.DATA_DICTIONARY.required_decorator()
+    @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(UploadDataDictionaryView, self).dispatch(request, *args, **kwargs)
 

@@ -36,3 +36,9 @@ NINETYNINEDOTS_EPISODE_PROPERTIES = [
     TREATMENT_START_DATE,
     WEIGHT_BAND,
 ]
+
+DOSE_TAKEN_INDICATORS = [
+    'directly_observed_dose',
+    'unobserved_dose',
+    'self_administered_dose',
+]

@@ -1,23 +1,27 @@
 from __future__ import absolute_import
+import datetime
 import functools
 import json
-import datetime
+
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
+import six
+
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
-    ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
-    IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
-    NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec, \
-    IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec, \
-    CaseSharingGroupsExpressionSpec, ReportingGroupsExpressionSpec, CoalesceExpressionSpec
+from corehq.apps.userreports.expressions.specs import (
+    PropertyNameGetterSpec, PropertyPathGetterSpec,
+    ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec,
+    IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec,
+    NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec,
+    IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec,
+    CaseSharingGroupsExpressionSpec, ReportingGroupsExpressionSpec, CoalesceExpressionSpec,
+)
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
 from corehq.apps.userreports.expressions.list_specs import FilterItemsExpressionSpec, \
     MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec, SortItemsExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler
-import six
 
 
 def _make_filter(spec, context):

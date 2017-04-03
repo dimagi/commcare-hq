@@ -103,9 +103,13 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
             extra_tags='html'
         )
         app.save()
-    return back_to_main(
-        request, domain, app_id=app_id,
-        module_id=app.get_module_by_unique_id(module_unique_id).id)
+    try:
+        module_id = app.get_module_by_unique_id(module_unique_id).id
+    except ModuleNotFoundException as e:
+        messages.error(request, e.message)
+        module_id = None
+
+    return back_to_main(request, domain, app_id=app_id, module_id=module_id)
 
 
 @no_conflict_require_POST

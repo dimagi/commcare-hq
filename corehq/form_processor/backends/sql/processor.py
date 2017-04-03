@@ -36,8 +36,11 @@ class FormProcessorSQL(object):
             )
             xform_attachment.write_content(attachment.content_as_file())
             if xform_attachment.is_image:
-                img_size = Image.open(attachment.content_as_file()).size
-                xform_attachment.properties = dict(width=img_size[0], height=img_size[1])
+                try:
+                    img_size = Image.open(attachment.content_as_file()).size
+                    xform_attachment.properties = dict(width=img_size[0], height=img_size[1])
+                except IOError:
+                    xform_attachment.content_type = 'application/octet-stream'
             xform_attachments.append(xform_attachment)
 
         xform.unsaved_attachments = xform_attachments

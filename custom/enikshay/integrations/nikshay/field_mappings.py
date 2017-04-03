@@ -96,3 +96,25 @@ art_initiated = {
     'no': 0,
     'yes': 1,
 }
+
+purpose_of_testing = {
+    'end_of_ip': 1,
+    'end_of_cp': 4,
+}
+
+smear_result_grade = {
+    '0': 99,  # Negative
+    'SC-0': 98,  # Positive
+    'SC-1': 1,
+    'SC-2': 2,
+    'SC-3': 3,
+    'SC-4': 4,
+    'SC-5': 5,
+    'SC-6': 6,
+    'SC-7': 7,
+    'SC-8': 8,
+    'SC-9': 9,
+    '1+': 11,
+    '2+': 12,
+    '3+': 13,
+}

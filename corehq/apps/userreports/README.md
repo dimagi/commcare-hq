@@ -885,6 +885,7 @@ Property        | Description
 type            | A specified type for the indicator. It must be one of the types listed below.
 column_id       | The database column where the indicator will be saved.
 display_name    | A display name for the indicator (not widely used, currently).
+comment         | A string describing the indicator
 
 Additionally, specific indicator types have other type-specific properties. These are covered below.
 

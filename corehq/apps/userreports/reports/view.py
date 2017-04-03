@@ -147,7 +147,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             return original
 
     def should_redirect_to_paywall(self, request):
-        return self.spec.report_meta.created_by_builder and not has_report_builder_access(request)
+        spec = self.get_spec_or_404()
+        return spec.report_meta.created_by_builder and not has_report_builder_access(request)
 
     @property
     def section_url(self):
@@ -173,7 +174,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def get_spec_or_404(self):
         try:
             return self.spec
-        except DocumentNotFound:
+        except (DocumentNotFound, BadSpecError) as e:
+            messages.error(self.request, e)
             raise Http404()
 
     def has_viable_configuration(self):

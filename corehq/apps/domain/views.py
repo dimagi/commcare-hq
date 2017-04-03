@@ -2162,7 +2162,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/case_search.html'
 
     @method_decorator(domain_admin_required)
-    @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+    @method_decorator(toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -2219,7 +2219,7 @@ class CalendarFixtureConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/calendar_fixture.html'
 
     @method_decorator(domain_admin_required)
-    @toggles.CUSTOM_CALENDAR_FIXTURE.required_decorator()
+    @method_decorator(toggles.CUSTOM_CALENDAR_FIXTURE.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(CalendarFixtureConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -2245,7 +2245,7 @@ class LocationFixtureConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/location_fixture.html'
 
     @method_decorator(domain_admin_required)
-    @toggles.HIERARCHICAL_LOCATION_FIXTURE.required_decorator()
+    @method_decorator(toggles.HIERARCHICAL_LOCATION_FIXTURE.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFixtureConfigView, self).dispatch(request, *args, **kwargs)
 
