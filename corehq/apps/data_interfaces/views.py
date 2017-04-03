@@ -635,7 +635,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
                          .user_time(self.project_timezone)
                          .done()
                          .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
-            'edit_url': reverse(EditAutomaticUpdateRuleView.urlname, args=[self.domain, rule.pk]),
+            'edit_url': reverse(EditCaseRuleView.urlname, args=[self.domain, rule.pk]),
         }
 
     @allow_remote_invocation
@@ -930,12 +930,16 @@ class AddCaseRuleView(DataInterfaceSection):
         return reverse(self.urlname, args=[self.domain])
 
     @property
+    def initial_rule(self):
+        return None
+
+    @property
     @memoized
     def rule_form(self):
         if self.request.method == 'POST':
             return CaseUpdateRuleForm(self.domain, self.request.POST)
 
-        return CaseUpdateRuleForm(self.domain)
+        return CaseUpdateRuleForm(self.domain, rule=self.initial_rule)
 
     @property
     @memoized
@@ -943,7 +947,7 @@ class AddCaseRuleView(DataInterfaceSection):
         if self.request.method == 'POST':
             return CaseRuleCriteriaForm(self.domain, self.request.POST)
 
-        return CaseRuleCriteriaForm(self.domain)
+        return CaseRuleCriteriaForm(self.domain, rule=self.initial_rule)
 
     @property
     @memoized
@@ -951,7 +955,7 @@ class AddCaseRuleView(DataInterfaceSection):
         if self.request.method == 'POST':
             return CaseRuleActionsForm(self.domain, self.request.POST)
 
-        return CaseRuleActionsForm(self.domain)
+        return CaseRuleActionsForm(self.domain, rule=self.initial_rule)
 
     @property
     def page_context(self):
@@ -968,15 +972,48 @@ class AddCaseRuleView(DataInterfaceSection):
 
         if rule_form_valid and criteria_form_valid and actions_form_valid:
             with transaction.atomic():
-                rule = AutomaticUpdateRule(
-                    domain=self.domain,
-                    name=self.rule_form.cleaned_data['name'],
-                    active=True,
-                    migrated=True,
-                )
+                if self.initial_rule:
+                    rule = self.initial_rule
+                else:
+                    rule = AutomaticUpdateRule(
+                        domain=self.domain,
+                        active=True,
+                        migrated=True,
+                    )
 
+                rule.name = self.rule_form.cleaned_data['name']
                 self.criteria_form.save_criteria(rule)
                 self.actions_form.save_actions(rule)
             return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
+
+
+class EditCaseRuleView(AddCaseRuleView):
+    urlname = 'edit_case_rule'
+    page_title = ugettext_lazy("Edit Case Rule")
+
+    @property
+    @memoized
+    def rule_id(self):
+        return self.kwargs.get('rule_id')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.rule_id])
+
+    @property
+    @memoized
+    def initial_rule(self):
+        try:
+            rule = AutomaticUpdateRule.objects.get(pk=self.rule_id)
+        except AutomaticUpdateRule.DoesNotExist:
+            raise Http404()
+
+        if rule.domain != self.domain or rule.deleted:
+            raise Http404()
+
+        if not rule.migrated:
+            raise Http404()
+
+        return rule

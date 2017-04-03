@@ -514,7 +514,19 @@ class CaseUpdateRuleForm(forms.Form):
         required=True,
     )
 
+    def compute_initial(self, rule):
+        return {
+            'name': rule.name,
+        }
+
     def __init__(self, domain, *args, **kwargs):
+        if 'initial' in kwargs:
+            raise ValueError("Initial values are set by the form")
+
+        rule = kwargs.pop('rule', None)
+        if rule:
+            kwargs['initial'] = self.compute_initial(rule)
+
         super(CaseUpdateRuleForm, self).__init__(*args, **kwargs)
 
         self.domain = domain
@@ -541,11 +553,11 @@ class CaseRuleCriteriaForm(forms.Form):
         required=True,
     )
 
-    filter_on_server_modified = forms.CharField(required=False)
-    server_modified_boundary = forms.CharField(required=False)
-    custom_match_definitions = forms.CharField(required=False)
-    property_match_definitions = forms.CharField(required=False)
-    filter_on_closed_parent = forms.CharField(required=False)
+    filter_on_server_modified = forms.CharField(required=False, initial='false')
+    server_modified_boundary = forms.CharField(required=False, initial='')
+    custom_match_definitions = forms.CharField(required=False, initial='[]')
+    property_match_definitions = forms.CharField(required=False, initial='[]')
+    filter_on_closed_parent = forms.CharField(required=False, initial='false')
 
     @property
     def constants(self):
@@ -557,7 +569,43 @@ class CaseRuleCriteriaForm(forms.Form):
             'MATCH_HAS_VALUE': MatchPropertyDefinition.MATCH_HAS_VALUE,
         }
 
+    def compute_initial(self, rule):
+        initial = {
+            'case_type': rule.case_type,
+            'filter_on_server_modified': 'true' if rule.filter_on_server_modified else 'false',
+            'server_modified_boundary': rule.server_modified_boundary,
+        }
+
+        custom_match_definitions = []
+        property_match_definitions = []
+
+        for criteria in rule.memoized_criteria:
+            definition = criteria.definition
+            if isinstance(definition, MatchPropertyDefinition):
+                property_match_definitions.append({
+                    'property_name': definition.property_name,
+                    'property_value': definition.property_value,
+                    'match_type': definition.match_type,
+                })
+            elif isinstance(definition, CustomMatchDefinition):
+                custom_match_definitions.append({
+                    'name': definition.name,
+                })
+            elif isinstance(definition, ClosedParentDefinition):
+                initial['filter_on_closed_parent'] = 'true'
+
+        initial['custom_match_definitions'] = json.dumps(custom_match_definitions)
+        initial['property_match_definitions'] = json.dumps(property_match_definitions)
+        return initial
+
     def __init__(self, domain, *args, **kwargs):
+        if 'initial' in kwargs:
+            raise ValueError("Initial values are set by the form")
+
+        rule = kwargs.pop('rule', None)
+        if rule:
+            kwargs['initial'] = self.compute_initial(rule)
+
         super(CaseRuleCriteriaForm, self).__init__(*args, **kwargs)
 
         self.domain = domain
@@ -751,11 +799,36 @@ class CaseRuleActionsForm(forms.Form):
     # names in the HTML are prefixed with "action-"
     prefix = "action"
 
-    close_case = forms.CharField(required=False)
-    properties_to_update = forms.CharField(required=False)
-    custom_action_definitions = forms.CharField(required=False)
+    close_case = forms.CharField(required=False, initial='false')
+    properties_to_update = forms.CharField(required=False, initial='[]')
+    custom_action_definitions = forms.CharField(required=False, initial='[]')
+
+    def compute_initial(self, rule):
+        initial = {}
+        custom_action_definitions = []
+
+        for action in rule.memoized_actions:
+            definition = action.definition
+            if isinstance(definition, UpdateCaseDefinition):
+                if definition.close_case:
+                    initial['close_case'] = 'true'
+                initial['properties_to_update'] = json.dumps(definition.properties_to_update)
+            elif isinstance(definition, CustomActionDefinition):
+                custom_action_definitions.append({
+                    'name': definition.name,
+                })
+
+        initial['custom_action_definitions'] = json.dumps(custom_action_definitions)
+        return initial
 
     def __init__(self, domain, *args, **kwargs):
+        if 'initial' in kwargs:
+            raise ValueError("Initial values are set by the form")
+
+        rule = kwargs.pop('rule', None)
+        if rule:
+            kwargs['initial'] = self.compute_initial(rule)
+
         super(CaseRuleActionsForm, self).__init__(*args, **kwargs)
 
         self.domain = domain

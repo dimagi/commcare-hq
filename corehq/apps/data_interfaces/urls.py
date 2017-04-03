@@ -7,11 +7,11 @@ from corehq.apps.data_interfaces.views import (
     XFormManagementView,
     XFormManagementStatusView,
     AutomaticUpdateRuleListView,
-    AddAutomaticUpdateRuleView,
     EditAutomaticUpdateRuleView,
     xform_management_job_poll,
     default,
     AddCaseRuleView,
+    EditCaseRuleView,
 )
 from .interfaces import FormManagementMode
 
@@ -36,8 +36,9 @@ edit_data_urls = [
     url(r'^automatic_updates/$', AutomaticUpdateRuleListView.as_view(),
         name=AutomaticUpdateRuleListView.urlname),
     url(r'^automatic_updates/add/$', AddCaseRuleView.as_view(), name=AddCaseRuleView.urlname),
-    url(r'^automatic_updates/edit/(?P<rule_id>\d+)/$', EditAutomaticUpdateRuleView.as_view(),
+    url(r'^automatic_updates/edit_old/(?P<rule_id>\d+)/$', EditAutomaticUpdateRuleView.as_view(),
         name=EditAutomaticUpdateRuleView.urlname),
+    url(r'^automatic_updates/edit/(?P<rule_id>\d+)/$', EditCaseRuleView.as_view(), name=EditCaseRuleView.urlname),
     EditDataInterfaceDispatcher.url_pattern(),
 ]
 

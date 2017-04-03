@@ -10,9 +10,9 @@
 {% block js-inline %}{{ block.super }}
 <script>
     var actions_model = new CaseRuleActions({
-        close_case: '{{ actions_form.close_case.value|default:"false"|escapejs }}',
-        properties_to_update: {{ actions_form.properties_to_update.value|default:"[]"|safe }},
-        custom_action_definitions: {{ actions_form.custom_action_definitions.value|default:"[]"|safe }},
+        close_case: '{{ actions_form.close_case.value|escapejs }}',
+        properties_to_update: {{ actions_form.properties_to_update.value|safe }},
+        custom_action_definitions: {{ actions_form.custom_action_definitions.value|safe }},
     });
     $('#rule-actions').koApplyBindings(actions_model);
     actions_model.load_initial();
