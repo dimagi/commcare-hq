@@ -220,5 +220,6 @@ def build_es_mapping(data_source_config):
         if datatype == 'string':
             properties[indicator['column_id']]['index'] = 'not_analyzed'
     mapping = deepcopy(UCR_INDEX_SETTINGS)
+    mapping.update(data_source_config.get_es_index_settings())
     mapping['mappings']['indicator']['properties'] = properties
     return mapping

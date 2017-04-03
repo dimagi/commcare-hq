@@ -56,6 +56,11 @@ from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.modules import to_function
 
 
+class ElasticSearchIndexSettings(DocumentSchema):
+    refresh_interval = StringProperty(default="5s")
+    number_of_shards = IntegerProperty(default=2)
+
+
 class DataSourceBuildInformation(DocumentSchema):
     """
     A class to encapsulate meta information about the process through which
@@ -87,6 +92,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
     domain = StringProperty(required=True)
     engine_id = StringProperty(default=UCR_ENGINE_ID)
+    es_index_settings = SchemaProperty(ElasticSearchIndexSettings)
     backend_id = StringProperty(default=UCR_SQL_BACKEND)
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
@@ -328,6 +334,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             self.is_deactivated = True
             self.save()
             get_indicator_adapter(self).drop_table()
+
+    def get_es_index_settings(self):
+        es_index_settings = self.es_index_settings.to_json()
+        es_index_settings.pop('doc_type')
+        return {"settings": es_index_settings}
 
 
 class ReportMeta(DocumentSchema):
