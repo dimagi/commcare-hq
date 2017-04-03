@@ -1,13 +1,23 @@
 import json
 import re
-from corehq.apps.data_interfaces.models import (AutomaticUpdateRuleCriteria, AutomaticUpdateAction,
-    MatchPropertyDefinition, UpdateCaseDefinition)
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRuleCriteria,
+    AutomaticUpdateAction,
+    CaseRuleCriteria,
+    MatchPropertyDefinition,
+    ClosedParentDefinition,
+    CustomMatchDefinition,
+    CaseRuleAction,
+    UpdateCaseDefinition,
+    CustomActionDefinition,
+)
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.style import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
 
 from corehq.toggles import AUTO_CASE_UPDATE_ENHANCEMENTS
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
+from django.db import transaction
 from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, HTML, Div, Fieldset
@@ -682,7 +692,7 @@ class CaseRuleCriteriaForm(forms.Form):
                 MatchPropertyDefinition.MATCH_DAYS_BEFORE,
                 MatchPropertyDefinition.MATCH_DAYS_AFTER,
             ):
-                property_value = validate_case_property_value(obj['property_value'])
+                property_value = obj['property_value']
                 try:
                     property_value = int(property_value)
                 except (TypeError, ValueError):
@@ -690,7 +700,7 @@ class CaseRuleCriteriaForm(forms.Form):
 
                 result.append({
                     'property_name': property_name,
-                    'property_value': property_value,
+                    'property_value': str(property_value),
                     'match_type': match_type,
                 })
 
@@ -698,6 +708,42 @@ class CaseRuleCriteriaForm(forms.Form):
 
     def clean_filter_on_closed_parent(self):
         return true_or_false(self.cleaned_data.get('filter_on_closed_parent'))
+
+    def save_criteria(self, rule):
+        with transaction.atomic():
+            rule.case_type = self.cleaned_data['case_type']
+            rule.filter_on_server_modified = self.cleaned_data['filter_on_server_modified']
+            rule.server_modified_boundary = self.cleaned_data['server_modified_boundary']
+            rule.save()
+
+            rule.delete_criteria()
+
+            for item in self.cleaned_data['property_match_definitions']:
+                definition = MatchPropertyDefinition.objects.create(
+                    property_name=item['property_name'],
+                    property_value=item['property_value'],
+                    match_type=item['match_type'],
+                )
+
+                criteria = CaseRuleCriteria(rule=rule)
+                criteria.definition = definition
+                criteria.save()
+
+            for item in self.cleaned_data['custom_match_definitions']:
+                definition = CustomMatchDefinition.objects.create(
+                    name=item['name'],
+                )
+
+                criteria = CaseRuleCriteria(rule=rule)
+                criteria.definition = definition
+                criteria.save()
+
+            if self.cleaned_data['filter_on_closed_parent']:
+                definition = ClosedParentDefinition.objects.create()
+
+                criteria = CaseRuleCriteria(rule=rule)
+                criteria.definition = definition
+                criteria.save()
 
 
 class CaseRuleActionsForm(forms.Form):
@@ -776,11 +822,13 @@ class CaseRuleActionsForm(forms.Form):
             elif value_type == UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY:
                 value = validate_case_property_name(obj['value'])
 
-            result.append({
-                'name': name,
-                'value_type': value_type,
-                'value': value,
-            })
+            result.append(
+                UpdateCaseDefinition.PropertyDefinition(
+                    name=name,
+                    value_type=value_type,
+                    value=value,
+                )
+            )
 
         return result
 
@@ -827,3 +875,25 @@ class CaseRuleActionsForm(forms.Form):
                 not cleaned_data['custom_action_definitions']
             ):
                 raise ValidationError(_("Please specify at least one action."))
+
+    def save_actions(self, rule):
+        with transaction.atomic():
+            rule.delete_actions()
+
+            if self.cleaned_data['close_case'] or self.cleaned_data['properties_to_update']:
+                definition = UpdateCaseDefinition(close_case=self.cleaned_data['close_case'])
+                definition.set_properties_to_update(self.cleaned_data['properties_to_update'])
+                definition.save()
+
+                action = CaseRuleAction(rule=rule)
+                action.definition = definition
+                action.save()
+
+            for item in self.cleaned_data['custom_action_definitions']:
+                definition = CustomActionDefinition.objects.create(
+                    name=item['name'],
+                )
+
+                action = CaseRuleAction(rule=rule)
+                action.definition = definition
+                action.save()

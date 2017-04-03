@@ -962,10 +962,21 @@ class AddCaseRuleView(DataInterfaceSection):
         }
 
     def post(self, request, *args, **kwargs):
+        rule_form_valid = self.rule_form.is_valid()
         criteria_form_valid = self.criteria_form.is_valid()
         actions_form_valid = self.actions_form.is_valid()
 
-        if criteria_form_valid and actions_form_valid:
-            pass
+        if rule_form_valid and criteria_form_valid and actions_form_valid:
+            with transaction.atomic():
+                rule = AutomaticUpdateRule(
+                    domain=self.domain,
+                    name=self.rule_form.cleaned_data['name'],
+                    active=True,
+                    migrated=True,
+                )
+
+                self.criteria_form.save_criteria(rule)
+                self.actions_form.save_actions(rule)
+            return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)

@@ -359,6 +359,18 @@ class AutomaticUpdateRule(models.Model):
 
         return aggregated_result
 
+    def delete_criteria(self):
+        for item in self.caserulecriteria_set.all():
+            item.definition.delete()
+
+        self.caserulecriteria_set.all().delete()
+
+    def delete_actions(self):
+        for item in self.caseruleaction_set.all():
+            item.definition.delete()
+
+        self.caseruleaction_set.all().delete()
+
 
 class CaseRuleCriteria(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
