@@ -82,10 +82,7 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
 
     :return: A generator with the results
     """
-    if settings.USE_PARTITIONED_DATABASE:
-        db_names = partition_config.get_form_processing_dbs()
-    else:
-        db_names = ['default']
+    db_names = get_db_aliases_for_partitioned_query()
 
     if values and not isinstance(values, (list, tuple)):
         raise ValueError("Expected a list or tuple")
@@ -100,3 +97,11 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
 
         for result in qs:
             yield result
+
+
+def get_db_aliases_for_partitioned_query():
+    if settings.USE_PARTITIONED_DATABASE:
+        db_names = partition_config.get_form_processing_dbs()
+    else:
+        db_names = ['default']
+    return db_names

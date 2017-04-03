@@ -248,7 +248,7 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_case_owner_ids(self, domain):
+    def get_case_owner_ids(domain):
         raise NotImplementedError
 
 

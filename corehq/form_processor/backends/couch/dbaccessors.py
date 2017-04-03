@@ -206,7 +206,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_deleted_case_ids_by_owner(owner_id)
 
     @staticmethod
-    def get_case_owner_ids(self, domain):
+    def get_case_owner_ids(domain):
         return get_all_case_owner_ids(domain)
 
 

@@ -1,11 +1,11 @@
+import itertools
 import logging
 import struct
 from abc import ABCMeta, abstractproperty
 from abc import abstractmethod
-from itertools import groupby
 from datetime import datetime
-
-import itertools
+from itertools import groupby
+from uuid import UUID
 
 import csiphash
 import six
@@ -52,10 +52,9 @@ from corehq.form_processor.utils.sql import (
 )
 from corehq.sql_db.config import partition_config
 from corehq.sql_db.routers import db_for_read_write
+from corehq.util.queries import fast_distinct_in_domain
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.chunked import chunked
-from uuid import UUID
-
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -942,8 +941,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return affected_count
 
     @staticmethod
-    def get_case_owner_ids(self, domain):
-        pass
+    def get_case_owner_ids(domain):
+        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+        db_aliases = get_db_aliases_for_partitioned_query()
+        owner_ids = set()
+        for db_alias in db_aliases:
+            owner_ids.update(fast_distinct_in_domain(CommCareCaseSQL, 'owner_id', domain, using=db_alias))
+
+        return owner_ids
 
 
 class LedgerReindexAccessor(ReindexAccessor):
