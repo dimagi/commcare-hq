@@ -104,7 +104,7 @@ class DataSetMap(Document):
 
         datavalues = (self.get_datavalues(row) for row in ucr_data)  # one UCR row may have many DataValues
         dataset = {
-            'dataValues': [i for l in datavalues for i in l]  # get a single list of DataValues
+            'dataValues': list(chain.from_iterable(datavalues))  # get a single list of DataValues
         }
         if self.data_set_id:
             dataset['dataSet'] = self.data_set_id
