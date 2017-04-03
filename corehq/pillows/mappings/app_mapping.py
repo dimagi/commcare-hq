@@ -324,7 +324,6 @@ APP_MAPPING={'_meta': {'created': None},
 
 APP_ES_ALIAS = "hqapps"
 APP_ES_TYPE = "app"
-# TODO has changed
 APP_INDEX_INFO = ElasticsearchIndexInfo(
     index=APP_INDEX,
     alias=APP_ES_ALIAS,
