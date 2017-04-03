@@ -1,5 +1,7 @@
+from base64 import b64decode
 from datetime import datetime
 
+import bz2
 from celery.schedules import crontab
 from celery.task import periodic_task
 
@@ -36,7 +38,7 @@ def send_datavalues(domain_name):
     api = JsonApiRequest(
         dhis2_conn.server_url,
         dhis2_conn.username,
-        dhis2_conn.password,
+        bz2.decompress(b64decode(dhis2_conn.password)),
         domain_name=domain_name,
     )
     for dataset_map in dataset_maps:
