@@ -8,6 +8,7 @@ import logging
 from corehq.apps.change_feed import topics
 from pillowtop.checkpoints.manager import DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.checkpoints.util import construct_checkpoint_doc_id_from_name
+from pillowtop.models import kafka_seq_to_str
 from pillowtop.utils import get_pillow_config_by_name
 
 
@@ -104,7 +105,7 @@ def migrate_kafka_sequence(change_feed, checkpoint):
     if checkpoint.sequence_format == 'text' or int_seq is not None:
         topics = change_feed.topics
         assert len(topics) == 1, topics
-        return {(topics[0], 0): int_seq}
+        return kafka_seq_to_str({(topics[0], 0): int_seq})
     elif checkpoint.sequence_format == 'json':
         sequence = json.loads(checkpoint.sequence)
         if not sequence:
@@ -112,10 +113,10 @@ def migrate_kafka_sequence(change_feed, checkpoint):
             return sequence
 
         assert set(change_feed.topics) == set(sequence)
-        return {
+        return kafka_seq_to_str({
             (topic, 0): offset
             for topic, offset in sequence.items()
-        }
+        })
     else:
         raise ValueError("Unknown checkpoint format: {}".format(checkpoint.sequence_format))
 

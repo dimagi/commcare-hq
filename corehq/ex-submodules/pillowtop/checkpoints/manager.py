@@ -6,7 +6,7 @@ from django.conf import settings
 
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
-from pillowtop.models import DjangoPillowCheckpoint
+from pillowtop.models import DjangoPillowCheckpoint, kafka_seq_to_str
 from pillowtop.pillow.interface import ChangeEventHandler
 
 MAX_CHECKPOINT_DELAY = 300
@@ -63,9 +63,7 @@ class PillowCheckpoint(object):
     def update_to(self, seq):
         if isinstance(seq, dict):
             assert self.sequence_format == 'json'
-            # json doesn't like tuples as keys
-            seq = {'{},{}'.format(*key): val for key, val in seq.items()}
-            seq = json.dumps(seq)
+            seq = kafka_seq_to_str(seq)
         elif isinstance(seq, int):
             seq = str(seq)
 

@@ -15,12 +15,12 @@ class TestMigrateSequence(SimpleTestCase):
 
 
 @generate_cases([
-    ('text', FakeFeed(['t1']), "123", {('t1', 0): 123}),
-    ('json', FakeFeed(['t1']), "123", {('t1', 0): 123}),
+    ('text', FakeFeed(['t1']), "123", '{"t1,0": 123}'),
+    ('json', FakeFeed(['t1']), "123", '{"t1,0": 123}'),
     ('text', FakeFeed(['t1', 't2']), "123", None, AssertionError),
     ('json', FakeFeed(['t1', 't2']), "123", None, AssertionError),
     ('json', FakeFeed(['t1', 't2']), "abc", None, ValueError),
-    ('json', FakeFeed(['t1', 't2']), '{"t1": 123, "t2": 345}', {('t1', 0): 123, ('t2', 0): 345}),
+    ('json', FakeFeed(['t1', 't2']), '{"t1": 123, "t2": 345}', '{"t1,0": 123, "t2,0": 345}'),
 ], TestMigrateSequence)
 def test_migate_sequence(self, format, feed, old_seq, new_seq, error=None):
     checkpoint = DjangoPillowCheckpoint(sequence=old_seq, sequence_format=format)

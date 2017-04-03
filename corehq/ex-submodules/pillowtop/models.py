@@ -8,6 +8,22 @@ SEQUENCE_FORMATS = (
 )
 
 
+def str_to_kafka_seq(seq):
+    seq = json.loads(seq)
+    # deconstruct tuple keys
+    marshaled_seq = {}
+    for key, val in seq.items():
+        topic, partition = key.split(',')
+        marshaled_seq[TopicAndPartition(topic, int(partition))] = val
+    return marshaled_seq
+
+
+def kafka_seq_to_str(seq):
+    # json doesn't like tuples as keys
+    seq = {'{},{}'.format(*key): val for key, val in seq.items()}
+    return json.dumps(seq)
+
+
 class DjangoPillowCheckpoint(models.Model):
 
     checkpoint_id = models.CharField(primary_key=True, max_length=100)
@@ -19,13 +35,7 @@ class DjangoPillowCheckpoint(models.Model):
     @property
     def wrapped_sequence(self):
         if self.sequence_format == 'json':
-            seq = json.loads(self.sequence)
-            # deconstruct tuple keys
-            marshaled_seq = {}
-            for key, val in seq.items():
-                topic, partition = key.split(',')
-                marshaled_seq[TopicAndPartition(topic, int(partition))] = val
-            return marshaled_seq
+            return str_to_kafka_seq(self.sequence)
         else:
             return self.sequence
 
