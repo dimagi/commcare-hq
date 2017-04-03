@@ -620,7 +620,7 @@ class CaseRuleCriteriaForm(forms.Form):
                 _("Case Filters"),
                 HTML(
                     '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
-                    _("The Actions will be performed for cases that match all filter criteria below.")
+                    _("The Actions will be performed for all open cases that match all filter criteria below.")
                 ),
                 hidden_bound_field('filter_on_server_modified'),
                 hidden_bound_field('server_modified_boundary'),
