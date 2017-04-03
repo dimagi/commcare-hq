@@ -267,9 +267,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         else:
             return []
 
-    def get_all_values(self, doc):
+    def get_all_values(self, doc, eval_context=None):
+        if not eval_context:
+            eval_context = EvaluationContext(doc)
+
         rows = []
-        eval_context = EvaluationContext(doc)
         for item in self.get_items(doc):
             indicators = self.indicators.get_values(item, eval_context)
             rows.append(indicators)

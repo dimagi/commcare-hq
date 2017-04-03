@@ -14,6 +14,7 @@ from corehq.apps.userreports.const import (
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
@@ -195,9 +196,9 @@ class ConfigurableReportTableManagerMixin(object):
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
 
     @time_ucr_process_change
-    def _save_doc_to_table(self, table, doc):
+    def _save_doc_to_table(self, table, doc, eval_context):
         # best effort will swallow errors in the table
-        table.best_effort_save(doc)
+        table.best_effort_save(doc, eval_context)
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
@@ -220,12 +221,14 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
         if doc is None:
             return
 
+        eval_context = EvaluationContext(doc)
         for table in self.table_adapters_by_domain[domain]:
             if table.config.filter(doc):
                 if table.run_asynchronous:
                     async_tables.append(table.config._id)
                 else:
-                    self._save_doc_to_table(table, doc)
+                    self._save_doc_to_table(table, doc, eval_context)
+                    eval_context.reset_iteration()
             elif table.config.deleted_filter(doc):
                 table.delete(doc)
 
