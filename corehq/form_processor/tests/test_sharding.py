@@ -15,7 +15,6 @@ DOMAIN = 'sharding-test'
 
 
 @use_sql_backend
-@override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardingTests(TestCase):
 
@@ -110,7 +109,7 @@ PARTITION_DATABASE_CONFIG = {
 
 
 @use_sql_backend
-@override_settings(PARTITION_DATABASE_CONFIG=PARTITION_DATABASE_CONFIG, DATABASES=DATABASES, ALLOW_FORM_PROCESSING_QUERIES=True)
+@override_settings(PARTITION_DATABASE_CONFIG=PARTITION_DATABASE_CONFIG, DATABASES=DATABASES)
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardAccessorTests(TestCase):
 

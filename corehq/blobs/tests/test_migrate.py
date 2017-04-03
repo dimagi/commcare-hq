@@ -548,20 +548,19 @@ class TestMigrateBackend(TestCase):
                 item.save()
             return item, ident
         self.sql_docs = []
-        with mod.allow_form_processing_queries():
-            for rex in (x() for x in self.sql_reindex_accessors):
-                item, ident = create_obj(rex)
-                helper = rex.blob_helper({"_obj_not_json": item})
-                db1.put(StringIO(data), ident, helper._blobdb_bucket())
-                self.sql_docs.append(item)
-                lost, lost_blob_id = create_obj(rex)
-                self.sql_docs.append(lost)
-                self.not_founds.add((
-                    rex.model_class.__name__,
-                    lost.id,
-                    lost_blob_id,
-                    rex.blob_helper({"_obj_not_json": lost})._blobdb_bucket(),
-                ))
+        for rex in (x() for x in self.sql_reindex_accessors):
+            item, ident = create_obj(rex)
+            helper = rex.blob_helper({"_obj_not_json": item})
+            db1.put(StringIO(data), ident, helper._blobdb_bucket())
+            self.sql_docs.append(item)
+            lost, lost_blob_id = create_obj(rex)
+            self.sql_docs.append(lost)
+            self.not_founds.add((
+                rex.model_class.__name__,
+                lost.id,
+                lost_blob_id,
+                rex.blob_helper({"_obj_not_json": lost})._blobdb_bucket(),
+            ))
 
         self.test_size = len(self.couch_docs) + len(self.sql_docs)
         db2 = TemporaryFilesystemBlobDB()

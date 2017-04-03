@@ -44,23 +44,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict([
 ])
 
 
-class allow_form_processing_queries(ContextDecorator):
-    def __enter__(self):
-        from django.conf import UserSettingsHolder
-        override = UserSettingsHolder(settings._wrapped)
-        setattr(override, 'ALLOW_FORM_PROCESSING_QUERIES', True)
-        self.wrapped = settings._wrapped
-        settings._wrapped = override
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        settings._wrapped = self.wrapped
-        del self.wrapped
-
-
 class SqlDataDumper(DataDumper):
     slug = 'sql'
 
-    @allow_form_processing_queries()
     def dump(self, output_stream):
         stats = Counter()
         objects = get_objects_to_dump(self.domain, self.excludes, stats_counter=stats, stdout=self.stdout)

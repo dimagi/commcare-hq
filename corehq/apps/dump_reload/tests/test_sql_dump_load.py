@@ -46,7 +46,6 @@ class BaseDumpLoadTest(TestCase):
         cls.domain.delete()
         super(BaseDumpLoadTest, cls).tearDownClass()
 
-    @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
     def delete_sql_data(self):
         for model_class, queryset in get_querysets_to_dump(self.domain_name, []):
             collector = NestedObjects(using=queryset.db)
@@ -59,7 +58,6 @@ class BaseDumpLoadTest(TestCase):
         self.delete_sql_data()
         super(BaseDumpLoadTest, self).tearDown()
 
-    @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
     def _dump_and_load(self, expected_object_counts):
         expected_object_counts.update(self.default_objects_counts)
 
