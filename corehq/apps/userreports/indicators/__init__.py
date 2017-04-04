@@ -1,11 +1,14 @@
-from datetime import date, timedelta
+from __future__ import absolute_import
+
+import csv
+from datetime import datetime
 
 from fluff import TYPE_DATE, TYPE_INTEGER, TYPE_SMALL_INTEGER
 
 from corehq.apps.userreports.indicators.utils import get_values_by_product
 from corehq.apps.userreports.util import truncate_value
 
-from datetime import datetime
+writer = csv.writer(open('ucr-test.csv', 'w'))
 
 
 def timeit(method):
@@ -14,9 +17,14 @@ def timeit(method):
         result = method(*args, **kw)
         te = datetime.now()
         seconds = (te - ts).total_seconds()
-        if seconds > 0.1:
-            indicator = args[0]
-            print('{} {} ({}, {}) {:.2} sec'.format(indicator.column.id, method.__name__, args, kw, seconds))
+        # if seconds > 0.01:
+        indicator = args[0]
+        try:
+            name = indicator.column.id
+        except:
+            name = ' - '.join([i.id for i in indicator.get_columns()])
+
+        writer.writerow([name, method.__name__, args, kw, seconds])
         return result
     return timed
 
