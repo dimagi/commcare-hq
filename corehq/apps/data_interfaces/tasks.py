@@ -4,6 +4,7 @@ from celery.utils.log import get_task_logger
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseRuleActionResult,
+    DomainCaseRuleRun,
     AUTO_UPDATE_XMLNS,
 )
 from corehq.util.decorators import serial_task
@@ -106,6 +107,14 @@ def run_rules_for_case(case, rules, now):
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
     start_run = datetime.utcnow()
+    run_record = DomainCaseRuleRun.objects.create(
+        domain=domain,
+        started_on=start_run,
+        status=DomainCaseRuleRun.STATUS_RUNNING,
+    )
+    cases_checked = 0
+    case_update_result = CaseRuleActionResult()
+
     all_rules = AutomaticUpdateRule.by_domain(domain)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
 
@@ -117,16 +126,20 @@ def run_case_update_rules_for_domain(domain, now=None):
             for case in CaseAccessors(domain).iter_cases(case_ids):
                 time_elapsed = datetime.utcnow() - start_run
                 if time_elapsed.seconds > HALT_AFTER:
+                    run_record.done(DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result)
                     notify_error(
                         "Halting rule run for domain %s as it's been running for more than a day." % domain
                     )
                     return
 
-                run_rules_for_case(case, rules, now)
+                case_update_result.add_result(run_rules_for_case(case, rules, now))
+                cases_checked += 1
 
         for rule in rules:
             rule.last_run = now
             rule.save()
+
+    run_record.done(DomainCaseRuleRun.STATUS_FINISHED, cases_checked, case_update_result)
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)

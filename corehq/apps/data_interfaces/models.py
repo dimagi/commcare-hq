@@ -923,3 +923,38 @@ class CaseRuleSubmission(models.Model):
         index_together = (
             ('rule', 'created_on'),
         )
+
+
+class DomainCaseRuleRun(models.Model):
+    STATUS_RUNNING = 'R'
+    STATUS_FINISHED = 'F'
+    STATUS_HALTED = 'H'
+
+    domain = models.CharField(max_length=126)
+    started_on = models.DateTimeField(db_index=True)
+    finished_on = models.DateTimeField(null=True)
+    status = models.CharField(max_length=1)
+
+    cases_checked = models.IntegerField(null=True)
+    num_updates = models.IntegerField(null=True)
+    num_closes = models.IntegerField(null=True)
+    num_related_updates = models.IntegerField(null=True)
+    num_related_closes = models.IntegerField(null=True)
+
+    class Meta:
+        index_together = (
+            ('domain', 'started_on'),
+        )
+
+    def done(self, status, cases_checked, result):
+        if not isinstance(result, CaseRuleActionResult):
+            raise TypeError("Expected an instance of CaseRuleActionResult")
+
+        self.status = status
+        self.cases_checked = cases_checked
+        self.num_updates = result.num_updates
+        self.num_closes = result.num_closes
+        self.num_related_updates = result.num_related_updates
+        self.num_related_closes = result.num_related_closes
+        self.finished_on = datetime.utcnow()
+        self.save()
