@@ -95,12 +95,7 @@ class Command(BaseCommand):
                 logger.info('Role already exists: %s', role.name)
         if roles_to_save:
             roles = Role.objects.bulk_create(roles_to_save)
-            if roles[0].id is None:
-                # pre Django 1.10
-                self.roles_by_slug = {role.slug: role for role in Role.objects.all()}
-            else:
-                # Django 1.10 (omit extra query)
-                self.roles_by_slug.update((role.slug, role) for role in roles)
+            self.roles_by_slug.update((role.slug, role) for role in roles)
 
     BOOTSTRAP_PRIVILEGES = [
         Role(slug=privileges.API_ACCESS, name='API Access', description=''),
