@@ -76,7 +76,7 @@ def set_user_role(domain, user, usertype, user_form):
         user_form.add_error(None, msg)
     else:
         role = roles[0]
-        # user.set_role(domain, role.get_qualified_id())
+        user.set_role(domain, role.get_qualified_id())
 
 
 def validate_role_unchanged(domain, user, user_form):
