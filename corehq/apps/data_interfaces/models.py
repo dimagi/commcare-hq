@@ -353,7 +353,7 @@ class AutomaticUpdateRule(models.Model):
         aggregated_result = CaseRuleActionResult()
 
         for action in self.memoized_actions:
-            result = action.definition.run(case)
+            result = action.definition.run(case, self)
             if not isinstance(result, CaseRuleActionResult):
                 raise TypeError("Expected CaseRuleActionResult")
 
@@ -372,6 +372,13 @@ class AutomaticUpdateRule(models.Model):
             item.definition.delete()
 
         self.caseruleaction_set.all().delete()
+
+    def log_submission(self, form_id):
+        CaseRuleSubmission.objects.create(
+            rule=self,
+            created_on=datetime.utcnow(),
+            form_id=form_id,
+        )
 
 
 class CaseRuleCriteria(models.Model):
@@ -734,7 +741,7 @@ class CaseRuleActionDefinition(models.Model):
     class Meta:
         abstract = True
 
-    def run(self, case):
+    def run(self, case, rule):
         """
         Should return an instance of CaseRuleActionResult
         """
@@ -786,7 +793,7 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
 
         self.properties_to_update = result
 
-    def run(self, case):
+    def run(self, case, rule):
         cases_to_update = defaultdict(dict)
 
         def _get_case_property_value(current_case, name):
@@ -828,15 +835,19 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
         for case_id, properties in cases_to_update.items():
             if case_id == case.case_id:
                 continue
-            update_case(case.domain, case_id, case_properties=properties, close=False,
+            result = update_case(case.domain, case_id, case_properties=properties, close=False,
                 xmlns=AUTO_UPDATE_XMLNS)
+
+            rule.log_submission(result[0].form_id)
             num_related_updates += 1
 
         # Update / close the case
         properties = cases_to_update[case.case_id]
         if self.close_case or properties:
-            update_case(case.domain, case.case_id, case_properties=properties, close=self.close_case,
+            result = update_case(case.domain, case.case_id, case_properties=properties, close=self.close_case,
                 xmlns=AUTO_UPDATE_XMLNS)
+
+            rule.log_submission(result[0].form_id)
 
             if properties:
                 num_updates += 1
@@ -854,7 +865,7 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
 class CustomActionDefinition(CaseRuleActionDefinition):
     name = models.CharField(max_length=126)
 
-    def run(self, case):
+    def run(self, case, rule):
         if self.name not in settings.AVAILABLE_CUSTOM_RULE_ACTIONS:
             raise ValueError("%s not found in AVAILABLE_CUSTOM_RULE_ACTIONS" % self.name)
 
@@ -864,7 +875,7 @@ class CustomActionDefinition(CaseRuleActionDefinition):
         except:
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
-        return custom_function(case)
+        return custom_function(case, rule)
 
 
 class AutomaticUpdateAction(models.Model):
@@ -897,3 +908,18 @@ class AutomaticUpdateAction(models.Model):
 
     class Meta:
         app_label = "data_interfaces"
+
+
+class CaseRuleSubmission(models.Model):
+    rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
+
+    # The timestamp that this record was created on
+    created_on = models.DateTimeField(db_index=True)
+
+    # Reference to XFormInstance.form_id or XFormInstanceSQL.form_id
+    form_id = models.CharField(max_length=255)
+
+    class Meta:
+        index_together = (
+            ('rule', 'created_on'),
+        )
