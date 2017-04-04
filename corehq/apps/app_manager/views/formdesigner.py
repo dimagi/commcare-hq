@@ -136,7 +136,8 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
 
     vellum_base = 'corehq/apps/app_manager/static/app_manager/js/'
     vellum_dir = 'vellum'
-    if isdir(join(vellum_base, 'vellum_beta')) and not toggles.VELLUM_ALPHA.enabled(request.user.username):
+    vellum_alpha = toggles.VELLUM_ALPHA.enabled(domain) or toggles.VELLUM_ALPHA.enabled(request.user.username)
+    if isdir(join(vellum_base, 'vellum_beta')) and not vellum_alpha:
         vellum_dir = 'vellum_beta'
 
     context = get_apps_base_context(request, domain, app)

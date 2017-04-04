@@ -952,7 +952,7 @@ VELLUM_ALPHA = StaticToggle(
     'vellum_alpha',
     'Use alpha (pre-beta) Vellum',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER, NAMESPACE_DOMAIN]
 )
 
 APP_MANAGER_V2 = StaticToggle(
