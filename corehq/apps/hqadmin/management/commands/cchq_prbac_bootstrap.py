@@ -149,7 +149,9 @@ class Command(BaseCommand):
         Role(slug=privileges.DAILY_SAVED_EXPORT, name='DAILY_SAVED_EXPORT',
              description="Allows domains to create Daily Saved Exports"),
         Role(slug=privileges.ZAPIER_INTEGRATION, name='Zapier Integration',
-             description='Allows domains to use zapier (zapier.com) integration')
+             description='Allows domains to use zapier (zapier.com) integration'),
+        Role(slug=privileges.LOGIN_AS, name='Login As for App Preview',
+                     description='Allows domains to use the login as feature of app preview')
     ]
 
     BOOTSTRAP_PLANS = [
