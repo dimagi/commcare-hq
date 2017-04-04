@@ -735,6 +735,15 @@ class CaseRuleActionResult(object):
         self.num_related_updates += result.num_related_updates
         self.num_related_closes += result.num_related_closes
 
+    @property
+    def total_updates(self):
+        return (
+            self.num_updates +
+            self.num_closes +
+            self.num_related_updates +
+            self.num_related_closes
+        )
+
 
 class CaseRuleActionDefinition(models.Model):
 
