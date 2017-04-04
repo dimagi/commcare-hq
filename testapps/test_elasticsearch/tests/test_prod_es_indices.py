@@ -75,11 +75,10 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqcases",
-        "index": "test_hqcases_2017-03-28",
+        "index": "test_hqcases_2016-03-04",
         "type": "case",
         "meta": {
             "settings": {
-                'number_of_shards': 10,
                 "analysis": {
                     "analyzer": {
                         "default": {

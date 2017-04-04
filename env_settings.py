@@ -88,7 +88,6 @@ ES_META = {
         },
         'hqcases': {
             'settings': {
-                'number_of_shards': 10,
                 "analysis": {
                     "analyzer": {
                         "default": {
