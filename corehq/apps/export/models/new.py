@@ -252,7 +252,7 @@ class ExportColumn(DocumentSchema):
             if '#text' in value:
                 value = value.get('#text')
             else:
-                return MISSING_VALUE
+                return EMPTY_VALUE
 
         if transform_dates:
             value = couch_to_excel_datetime(value, doc)

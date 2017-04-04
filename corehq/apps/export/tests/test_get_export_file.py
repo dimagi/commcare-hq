@@ -623,7 +623,7 @@ class WriterTest(SimpleTestCase):
                 {
                     u'My table': {
                         u'headers': [u'location'],
-                        u'rows': [[MISSING_VALUE]],
+                        u'rows': [[EMPTY_VALUE]],
 
                     }
                 }
