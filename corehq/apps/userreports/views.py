@@ -26,6 +26,7 @@ from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics.tasks import update_hubspot_properties
+from corehq.apps.app_manager.fields import ApplicationDataSource
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -278,6 +279,64 @@ class ReportBuilderView(BaseDomainView):
     def section_url(self):
         return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
 
+    def _build_temp_data_source(self, app_source, username):
+        data_source_config = DataSourceConfiguration(
+            domain=self.domain,
+            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
+            **self._get_config_kwargs(app_source)
+        )
+        data_source_config.validate()
+        data_source_config.save()
+        self._expire_data_source(data_source_config._id)
+        rebuild_indicators(data_source_config._id, username, limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+        self.filter_data_source_changes(data_source_config._id)
+        return data_source_config._id
+
+    def _expire_data_source(self, data_source_config_id):
+        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
+        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
+        settings.CELERY_ALWAYS_EAGER = False
+        delete_data_source_task.apply_async(
+            (self.domain, data_source_config_id),
+            countdown=TEMP_DATA_SOURCE_LIFESPAN
+        )
+        settings.CELERY_ALWAYS_EAGER = always_eager
+
+    def _get_config_kwargs(self, app_source):
+        app = Application.get(app_source.application)
+        builder = DataSourceBuilder(self.domain, app, app_source.source_type, app_source.source)
+        return {
+            'display_name': builder.data_source_name,
+            'referenced_doc_type': builder.source_doc_type,
+            'configured_filter': builder.filter,
+            'configured_indicators': builder.all_possible_indicators(),
+            'base_item_expression': builder.base_item_expression(False),
+            'meta': DataSourceMeta(
+                build=DataSourceBuildInformation(
+                    source_id=app_source.source,
+                    app_id=app._id,
+                    app_version=app.version,
+                )
+            )
+        }
+
+    @staticmethod
+    def filter_data_source_changes(data_source_config_id):
+        """
+        Add filter to data source to prevent it from being updated by DB changes
+        """
+        # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
+        data_source_config = DataSourceConfiguration.get(data_source_config_id)
+        data_source_config.configured_filter = {
+            # An expression that is always false:
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": 1,
+            "property_value": 2,
+        }
+        data_source_config.validate()
+        data_source_config.save()
+
 
 @quickcache(["domain"], timeout=0, memoize_timeout=4)
 def paywall_home(domain):
@@ -507,68 +566,10 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
             return DataSourceForm(self.domain, max_allowed_reports, self.request.POST)
         return DataSourceForm(self.domain, max_allowed_reports)
 
-    def _get_config_kwargs(self, app_source):
-        app = Application.get(app_source.application)
-        builder = DataSourceBuilder(self.domain, app, app_source.source_type, app_source.source)
-        return {
-            'display_name': builder.data_source_name,
-            'referenced_doc_type': builder.source_doc_type,
-            'configured_filter': builder.filter,
-            'configured_indicators': builder.all_possible_indicators(),
-            'base_item_expression': builder.base_item_expression(False),
-            'meta': DataSourceMeta(
-                build=DataSourceBuildInformation(
-                    source_id=app_source.source,
-                    app_id=app._id,
-                    app_version=app.version,
-                )
-            )
-        }
-
-    def _expire_data_source(self, data_source_config_id):
-        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
-        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
-        settings.CELERY_ALWAYS_EAGER = False
-        delete_data_source_task.apply_async(
-            (self.domain, data_source_config_id),
-            countdown=TEMP_DATA_SOURCE_LIFESPAN
-        )
-        settings.CELERY_ALWAYS_EAGER = always_eager
-
-    def _build_temp_data_source(self, app_source, username):
-        data_source_config = DataSourceConfiguration(
-            domain=self.domain,
-            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
-            **self._get_config_kwargs(app_source)
-        )
-        data_source_config.validate()
-        data_source_config.save()
-        self._expire_data_source(data_source_config._id)
-        rebuild_indicators(data_source_config._id, username, limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
-        return data_source_config._id
-
-    @staticmethod
-    def filter_data_source_changes(data_source_config_id):
-        """
-        Add filter to data source to prevent it from being updated by DB changes
-        """
-        # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
-        data_source_config = DataSourceConfiguration.get(data_source_config_id)
-        data_source_config.configured_filter = {
-            # An expression that is always false:
-            "type": "boolean_expression",
-            "operator": "eq",
-            "expression": 1,
-            "property_value": 2,
-        }
-        data_source_config.validate()
-        data_source_config.save()
-
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             app_source = self.form.get_selected_source()
             data_source_config_id = self._build_temp_data_source(app_source, request.user.username)
-            self.filter_data_source_changes(data_source_config_id)
 
             track_workflow(
                 request.user.email,
@@ -664,15 +665,24 @@ class ConfigureReport(ReportBuilderView):
             request = request or self.request
             return request.GET.get('report_name', '')
 
-    def _get_data_source(self, request=None):
+    @memoized
+    def _get_preview_data_source(self):
         """
         Return the ID of the report's DataSourceConfiguration
         """
+
         if self.existing_report:
-            return self.existing_report.config_id
+            source_type = {
+                "CommCareCase": "case",
+                "XFormInstance": "form"
+            }[self.existing_report.config.referenced_doc_type]
+            source_id = self.existing_report.config.meta.build.source_id
+            app_id = self.existing_report.config.meta.build.app_id
+            app_source = ApplicationDataSource(app_id, source_type, source_id)
+            data_soruce_id = self._build_temp_data_source(app_source, self.request.user.username)
+            return data_soruce_id
         else:
-            request = request or self.request
-            return request.GET['data_source']
+            return self.request.GET['data_source']
 
     def page_context(self):
         try:
@@ -761,7 +771,8 @@ class ConfigureReport(ReportBuilderView):
             'source_id': self.source_id,
             'application': self.app_id,
             'report_preview_url': reverse(ReportPreview.urlname,
-                                       args=[self.domain, self._get_data_source()]),
+                                          args=[self.domain, self._get_preview_data_source()]),
+            'preview_datasource_id': self._get_preview_data_source(),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
         }
@@ -840,8 +851,8 @@ class ConfigureReport(ReportBuilderView):
             })
 
     def _delete_temp_data_source(self, report_data):
-        if report_data.get("delete_temp_data_source", False) and "data_source" in self.request.GET:
-            delete_data_source_shared(self.domain, self.request.GET['data_source'])
+        if report_data.get("delete_temp_data_source", False):
+            delete_data_source_shared(self.domain, report_data["preview_data_source_id"])
 
     def _confirm_report_limit(self):
         """

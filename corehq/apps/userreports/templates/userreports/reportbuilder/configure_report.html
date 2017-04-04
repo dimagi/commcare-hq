@@ -271,6 +271,7 @@
             "sourceId": {{ source_id|JSON }},
             "sourceType": "{{ source_type }}",
             "reportPreviewUrl": "{{ report_preview_url }}",
+            "previewDatasourceId": "{{ preview_datasource_id }}",
             "existingReport": {% if existing_report %}{{ existing_report.get_id|JSON }}{% else %}null{% endif %},
             "existingReportType": {{ existing_report_type|JSON }},
             "dataSourceProperties": {{ data_source_properties|JSON }},

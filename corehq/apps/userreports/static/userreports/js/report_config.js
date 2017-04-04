@@ -95,6 +95,7 @@ var reportBuilder = function () {
 
         self.columnOptions = config["columnOptions"];  // Columns that could be added to the report
         self.reportPreviewUrl = config["reportPreviewUrl"];  // Fetch the preview data asynchronously.
+        self.previewDatasourceId = config["previewDatasourceId"];
 
         self.reportTypeListLabel = (config['sourceType'] === "case") ? "Case List" : "Form List";
         self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
@@ -388,7 +389,10 @@ var reportBuilder = function () {
                 $.ajax({
                     url: window.location.href,
                     type: "POST",
-                    data: JSON.stringify(Object.assign(self.serialize(), {'delete_temp_data_source': true})),
+                    data: JSON.stringify(Object.assign(
+                        self.serialize(),
+                        {'delete_temp_data_source': true, 'preview_data_source_id': self.previewDatasourceId}
+                    )),
                     success: function (data) {
                         // Redirect to the newly-saved report
                         self.saveButton.setState('saved');
