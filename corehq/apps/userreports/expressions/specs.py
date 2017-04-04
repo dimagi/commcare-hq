@@ -79,8 +79,17 @@ class NamedExpressionSpec(JsonObject):
             raise BadSpecError(u'Name {} not found in list of named expressions!'.format(self.name))
         self._context = context
 
+    def _context_cache_key(self):
+        return 'named_expression-{}'.format(self.name)
+
     def __call__(self, item, context=None):
-        return self._context.named_expressions[self.name](item, context)
+        key = self._context_cache_key()
+        if context.exists_in_cache(key):
+            return context.get_cache_value(key)
+
+        result = self._context.named_expressions[self.name](item, context)
+        context.set_iteration_cache_value(key, result)
+        return result
 
 
 class ConditionalExpressionSpec(JsonObject):
