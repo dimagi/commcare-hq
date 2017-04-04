@@ -425,6 +425,31 @@
                     }
                 }
             },
+                        {
+                "display_name": "treatment_initiation_date_month",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "treatment_initiation_date_month",
+                "expression": {
+                    "type": "month_expression",
+                    "month_expression": {
+                        "type": "nested",
+                        "related_doc_type": "CommCareCase",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "episode_case"
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "treatment_initiation_date"
+                        }
+                    }
+                }
+            },
             {
                 "type": "expression",
                 "datatype": "string",
