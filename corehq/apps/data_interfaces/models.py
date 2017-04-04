@@ -12,9 +12,11 @@ from datetime import date, datetime, time, timedelta
 from dateutil.parser import parse
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.modules import to_function
+from django.conf import settings
 from django.db import models, transaction
 from corehq.apps.hqcase.utils import update_case
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
 from django.utils.translation import ugettext_lazy
 from jsonobject.api import JsonObject
 from jsonobject.properties import StringProperty
@@ -527,9 +529,41 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
 class CustomMatchDefinition(CaseRuleCriteriaDefinition):
     name = models.CharField(max_length=126)
 
+    def matches(self, case, now):
+        if self.name not in settings.AVAILABLE_CUSTOM_RULE_CRITERIA:
+            raise ValueError("%s not found in AVAILABLE_CUSTOM_RULE_CRITERIA" % self.name)
+
+        custom_function_path = settings.AVAILABLE_CUSTOM_RULE_CRITERIA[self.name]
+        try:
+            custom_function = to_function(custom_function_path)
+        except:
+            raise ValueError("Unable to resolve '%s'" % custom_function_path)
+
+        return custom_function(case, now)
+
 
 class ClosedParentDefinition(CaseRuleCriteriaDefinition):
-    pass
+    # This matches up to the identifier attribute in a CommCareCaseIndex
+    # (couch backend) or CommCareCaseIndexSQL (postgres backend) record.
+    identifier = models.CharField(max_length=126, default=DEFAULT_PARENT_IDENTIFIER)
+
+    # This matches up to the CommCareCaseIndexSQL.relationship_id field.
+    # The framework will automatically convert it to the string used in
+    # the CommCareCaseIndex (couch backend) model for domains that use
+    # the couch backend.
+    relationship_id = models.PositiveSmallIntegerField(default=CommCareCaseIndexSQL.CHILD)
+
+    def matches(self, case, now):
+        if isinstance(case, CommCareCase):
+            relationship = CommCareCase.convert_sql_relationship_id_to_couch_relationship(self.relationship_id)
+        else:
+            relationship = self.relationship_id
+
+        for parent in case.get_parent(identifier=self.identifier, relationship=relationship):
+            if parent.closed:
+                return True
+
+        return False
 
 
 class AutomaticUpdateRuleCriteria(models.Model):
@@ -819,6 +853,18 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
 
 class CustomActionDefinition(CaseRuleActionDefinition):
     name = models.CharField(max_length=126)
+
+    def run(self, case):
+        if self.name not in settings.AVAILABLE_CUSTOM_RULE_ACTIONS:
+            raise ValueError("%s not found in AVAILABLE_CUSTOM_RULE_ACTIONS" % self.name)
+
+        custom_function_path = settings.AVAILABLE_CUSTOM_RULE_ACTIONS[self.name]
+        try:
+            custom_function = to_function(custom_function_path)
+        except:
+            raise ValueError("Unable to resolve '%s'" % custom_function_path)
+
+        return custom_function(case)
 
 
 class AutomaticUpdateAction(models.Model):
