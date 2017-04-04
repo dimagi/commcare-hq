@@ -319,7 +319,7 @@ class FormsExpressionSpec(JsonObject):
         return xforms
 
     def _get_form_json(self, form, context):
-        cache_key = (self.__class__.__name__, 'xform', form.get_id)
+        cache_key = ('get_case_forms', 'xform', form.get_id)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
