@@ -1,7 +1,11 @@
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from celery.utils.log import get_task_logger
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, AUTO_UPDATE_XMLNS
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    CaseRuleActionResult,
+    AUTO_UPDATE_XMLNS,
+)
 from corehq.util.decorators import serial_task
 from datetime import datetime
 
@@ -74,6 +78,25 @@ def run_case_update_rules(now=None):
             run_case_update_rules_for_domain.delay(domain, now)
 
 
+def run_rules_for_case(case, rules, now):
+    aggregated_result = CaseRuleActionResult()
+    last_result = None
+    for rule in rules:
+        if last_result:
+            if last_result.num_related_updates > 0 or last_result.num_related_closes > 0:
+                case.get_parent.reset_cache(case)
+
+            if last_result.num_updates > 0:
+                case = CaseAccessors(case.domain).get_case(case.case_id)
+
+        last_result = rule.run_rule(case, now)
+        aggregated_result.add_result(last_result)
+        if last_result.num_closes > 0:
+            break
+
+    return aggregated_result
+
+
 @serial_task(
     '{domain}',
     timeout=36 * 60 * 60,
@@ -99,18 +122,7 @@ def run_case_update_rules_for_domain(domain, now=None):
                     )
                     return
 
-                last_result = None
-                for rule in rules:
-                    if last_result:
-                        if last_result.num_related_updates > 0 or last_result.num_related_closes > 0:
-                            case.get_parent.reset_cache(case)
-
-                        if last_result.num_updates > 0:
-                            case = CaseAccessors(domain).get_case(case.case_id)
-
-                    last_result = rule.run_rule(case, now)
-                    if last_result.num_closes > 0:
-                        break
+                run_rules_for_case(case, rules, now)
 
         for rule in rules:
             rule.last_run = now
@@ -128,7 +140,4 @@ def run_case_update_rules_on_save(case):
         if update_case:
             rules = AutomaticUpdateRule.by_domain(case.domain).filter(case_type=case.type)
             now = datetime.utcnow()
-            for rule in rules:
-                stop_processing = rule.apply_rule(case, now)
-                if stop_processing:
-                    break
+            run_rules_for_case(case, rules, now)
