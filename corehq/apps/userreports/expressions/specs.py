@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from simpleeval import InvalidExpression
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
+from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.users.models import CommCareUser
@@ -319,7 +320,7 @@ class FormsExpressionSpec(JsonObject):
         return xforms
 
     def _get_form_json(self, form, context):
-        cache_key = ('get_case_forms', 'xform', form.get_id)
+        cache_key = (XFORM_CACHE_KEY_PREFIX, form.get_id)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 

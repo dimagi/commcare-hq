@@ -1,6 +1,7 @@
 from jsonobject.base_properties import DefaultProperty
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.es.forms import FormES
+from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
@@ -191,7 +192,7 @@ class FormsInDateExpressionSpec(JsonObject):
         return xform_ids
 
     def _get_form_json(self, form, context):
-        cache_key = ('get_case_forms', 'xform', form.get_id)
+        cache_key = (XFORM_CACHE_KEY_PREFIX, form.get_id)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
