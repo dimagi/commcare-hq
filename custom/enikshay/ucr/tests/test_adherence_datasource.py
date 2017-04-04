@@ -1,3 +1,4 @@
+import pytz
 from datetime import datetime
 
 from django.test import TestCase
@@ -16,6 +17,10 @@ from custom.enikshay.tests.utils import (
     get_occurrence_case_structure,
     get_episode_case_structure
 )
+
+
+def _uid(index):
+    return "adherence{}".format(index)
 
 
 class TestAdherenceUCRSource(TestCase):
@@ -56,37 +61,13 @@ class TestAdherenceUCRSource(TestCase):
         cases = {case.case_id: case for case in factory.create_or_update_cases([episode_structure])}
         cls.episode = cases[cls.episode_id]
 
-        def uid(index):
-            return "adherence{}".format(index)
-
-        adherence_data = [
-            (uid(1), datetime(2016, 1, 21, 1), DOSE_TAKEN_INDICATORS[0]),
-            (uid(2), datetime(2016, 1, 21, 3), DOSE_UNKNOWN),
-            (uid(3), datetime(2016, 1, 22), DOSE_TAKEN_INDICATORS[0]),
-            (uid(4), datetime(2016, 1, 24), DOSE_TAKEN_INDICATORS[0]),
+        cls.simple_data = [
+            # (case_id, adherence_date, adherence_value, source, closed, closure_reason)
+            (_uid(1), datetime(2016, 1, 21, 1), DOSE_TAKEN_INDICATORS[0], 'enikshay', False, None),
+            (_uid(2), datetime(2016, 1, 21, 3), DOSE_UNKNOWN, 'enikshay', False, None),
+            (_uid(3), datetime(2016, 1, 22), DOSE_TAKEN_INDICATORS[0], 'enikshay', False, None),
+            (_uid(4), datetime(2016, 1, 24), DOSE_TAKEN_INDICATORS[0], 'enikshay', False, None),
         ]
-        adherence_cases = factory.create_or_update_cases([
-            get_adherence_case_structure(
-                case_id,
-                cls.episode_id,
-                adherence_date,
-                extra_update={
-                    "name": adherence_date,
-                    "adherence_value": adherence_value,
-                }
-            )
-            for (case_id, adherence_date, adherence_value) in adherence_data
-        ])
-
-        by_case_id = {c.case_id: c for c in adherence_cases}
-        cls.latest_adherence_case = by_case_id[uid(4)]
-        cls.valid_adherence_value_cases = [by_case_id[uid(x)] for x in range(1, 4)]
-        cls.data = [
-            cls.latest_adherence_case
-        ] + cls.valid_adherence_value_cases
-
-        rebuild_indicators(cls.data_store.datasource._id)
-        cls.data_store.adapter.refresh_table()
 
     @classmethod
     def tearDownClass(cls):
@@ -95,24 +76,53 @@ class TestAdherenceUCRSource(TestCase):
         cls.data_store.adapter.drop_table()
         super(TestAdherenceUCRSource, cls).tearDownClass()
 
-    def test_max_adherence_date(self):
-        result = self.data_store.latest_adherence_date(self.episode_id)
-        self.assertEqual(result, datetime(2016, 1, 24))
+    def tearDown(self):
+        self.data_store.adapter.clear_table()
+        FormProcessorTestUtils.delete_all_cases()
 
-    def test_daterange(self):
+    def create_adherence_cases(self, data):
+
+        factory = CaseFactory(domain=self.domain)
+        factory.create_or_update_cases([
+            get_adherence_case_structure(
+                case_id,
+                self.episode_id,
+                adherence_date,
+                extra_update={
+                    "name": adherence_date,
+                    "adherence_value": adherence_value,
+                    "source": source,
+                    "closure_reason": closure_reason
+                }
+            )
+            for (case_id, adherence_date, adherence_value, source, _, closure_reason) in data
+        ])
+
+        for (case_id, adherence_date, adherence_value, source, should_close, closure_reason) in data:
+            if should_close:
+                factory.close_case(case_id)
+
+        rebuild_indicators(self.data_store.datasource._id)
+        self.data_store.adapter.refresh_table()
+
+    def test_max_adherence_date(self):
+        self.create_adherence_cases(self.simple_data)
+
+        # test latest adhernece date
+        result = self.data_store.latest_adherence_date(self.episode_id)
+        self.assertEqual(result, pytz.UTC.localize(datetime(2016, 1, 24)))
+
+        # test date range lookup; should exclude 'DOSE_UNKNOWN' and out of range case
         rows = self.data_store.adherences_between(
             self.episode_id, datetime(2016, 1, 21), datetime(2016, 1, 23)
         )
-        # should exclude 1 'DOSE_UNKNOWN' and 1 out of range case
         self.assertEqual(
             {r['doc_id'] for r in rows},
             {'adherence1', 'adherence3'}
         )
 
-    def test_dose_known(self):
-        result = self.data_store.dose_known_adherences(self.episode_id)
-
         # 'adherence2' case has DOSE_UNKNOWN so should be excluded
+        result = self.data_store.dose_known_adherences(self.episode_id)
         self.assertEqual(
             {r['doc_id'] for r in result},
             {'adherence1', 'adherence3', 'adherence4'}
