@@ -40,3 +40,5 @@ VALID_REFERENCED_DOC_TYPES = [
 ]
 
 ASYNC_INDICATOR_QUEUE_TIME = timedelta(minutes=5)
+
+XFORM_CACHE_KEY_PREFIX = 'xform_to_json_cache'
