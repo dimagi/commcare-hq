@@ -14,10 +14,28 @@ TODO:
 
 <table class="table table-editprops">
 
+    <colgroup>
+        <col width="32px">
+        <!--ko if: $data.hasDisplayCol -->
+        <col>
+        <!--/ko-->
+        <!--ko if: $data.hasFormatCol -->
+        <col>
+        <!--/ko-->
+        <!--ko if: $data.hasCalculationCol -->
+        <col>
+        <!--/ko-->
+        <!--ko if: $data.hasFilterValueCol -->
+        <col>
+        <!--/ko-->
+        <col>
+        <col width="50px">
+    </colgroup>
+
     <thead data-bind="visible: columns().length > 0">
         <tr>
             <th></th>
-            <th class="col-sm-4">
+            <th>
                 <!--ko if: $data.propertyHelpText -->
                 <span class="hq-help-template" data-bind="
                     attr: {'data-content': propertyHelpText}
@@ -58,7 +76,7 @@ TODO:
             </th>
             <!--/ko-->
             <!--ko if: $data.hasFilterValueCol -->
-            <th class="table-editprops-filterval>
+            <th class="table-editprops-filterval">
                 {% trans "Filter Value" %}
                 <!--ko if: $data.filterValueHelpText -->
                 <span class="hq-help-template" data-bind="
@@ -80,7 +98,7 @@ TODO:
     {# there must be no whitespace between <tbody> and <tr> #}
     {# the .hide().fadeIn() will fail badly on FireFox #}
     ><tr data-bind="attr: {'data-order': _sortableOrder}">
-        <td class="col-sm-1">
+        <td>
             <i class="grip sortable-handle" style="cursor: move;" data-bind="
                 css: COMMCAREHQ.icons.GRIP + ' hq-icon-full'
             "></i>
@@ -175,7 +193,7 @@ TODO:
         </td>
         <!--/ko-->
 
-        <td class="span1">
+        <td>
           <button
               class="btn btn-danger btn-sm"
               data-bind="click: function(){$parent.columns.remove($data)}"
@@ -190,7 +208,7 @@ TODO:
         <tr>
             {% block add_property_row %}
               <td></td>
-              <td colspan="4">
+              <td>
                   <button class="btn btn-default" data-bind="
                       click: buttonHandler
                   ">
