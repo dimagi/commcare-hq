@@ -919,6 +919,9 @@ class CaseRuleSubmission(models.Model):
     # Reference to XFormInstance.form_id or XFormInstanceSQL.form_id
     form_id = models.CharField(max_length=255)
 
+    # A shortcut to keep track of which forms get archived
+    archived = models.BooleanField(default=False)
+
     class Meta:
         index_together = (
             ('rule', 'created_on'),
