@@ -277,12 +277,14 @@
             {
                 "display": "Month",
                 "type": "field",
-                "field": "treatment_initiation_date",
+                "field": "treatment_initiation_date_month",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "custom",
+                    "custom_type": "month_display"
                 },
                 "calculate_total": false
             },

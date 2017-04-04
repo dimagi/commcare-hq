@@ -200,7 +200,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
     @softer_assert()
     def setUp(self):
-        self.pillow = get_kafka_ucr_pillow()
+        self.pillow = get_kafka_ucr_pillow(topics=['case-sql'])
         self.config = get_data_source_with_related_doc_type()
         self.config.save()
         self.adapter = get_indicator_adapter(self.config)
@@ -215,6 +215,27 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         delete_all_cases()
         delete_all_xforms()
 
+    def _post_case_blocks(self, iteration=0):
+        return post_case_blocks(
+            [
+                CaseBlock(
+                    create=iteration == 0,
+                    case_id='parent-id',
+                    case_name='parent-name',
+                    case_type='bug',
+                    update={'update-prop-parent': iteration},
+                ).as_xml(),
+                CaseBlock(
+                    create=iteration == 0,
+                    case_id='child-id',
+                    case_name='child-name',
+                    case_type='bug-child',
+                    index={'parent': ('bug', 'parent-id')},
+                    update={'update-prop-child': iteration}
+                ).as_xml()
+            ], domain=self.domain
+        )
+
     def test_process_doc_from_sql_stale(self):
         '''
         Ensures that when you update a case that the changes are reflected in
@@ -225,32 +246,85 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
         for i in range(3):
             since = self.pillow.get_change_feed().get_latest_offsets()
-            form, cases = post_case_blocks(
-                [
-                    CaseBlock(
-                        create=i == 0,
-                        case_id='parent-id',
-                        case_name='parent-name',
-                        case_type='bug',
-                        update={'update-prop-parent': i},
-                    ).as_xml(),
-                    CaseBlock(
-                        create=i == 0,
-                        case_id='child-id',
-                        case_name='child-name',
-                        case_type='bug-child',
-                        index={'parent': ('bug', 'parent-id')},
-                        update={'update-prop-child': i}
-                    ).as_xml()
-                ], domain=self.domain
-            )
-            self.pillow.process_changes(since=since, forever=False)
+            form, cases = self._post_case_blocks(i)
+            with self.assertNumQueries(12):
+                self.pillow.process_changes(since=since, forever=False)
             rows = self.adapter.get_query_object()
             self.assertEqual(rows.count(), 1)
             row = rows[0]
             self.assertEqual(int(row.parent_property), i)
             errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
             self.assertEqual(errors.count(), 0)
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class ReuseEvaluationContextTest(TestCase):
+    domain = 'bug-domain'
+
+    @softer_assert()
+    def setUp(self):
+        config1 = get_data_source_with_related_doc_type()
+        config1.save()
+        config2 = get_data_source_with_related_doc_type()
+        config2.table_id = 'other-config'
+        config2.save()
+        self.configs = [config1, config2]
+        self.adapters = [get_indicator_adapter(c) for c in self.configs]
+
+        # one pillow that has one config, the other has both configs
+        self.pillow1 = get_kafka_ucr_pillow(topics=['case-sql'])
+        self.pillow2 = get_kafka_ucr_pillow(topics=['case-sql'])
+        self.pillow1.bootstrap(configs=[config1])
+        self.pillow2.bootstrap(configs=self.configs)
+        with trap_extra_setup(KafkaUnavailableError):
+            self.pillow1.get_change_feed().get_latest_offsets()
+
+    def tearDown(self):
+        for adapter in self.adapters:
+            adapter.drop_table()
+            adapter.config.delete()
+        delete_all_cases()
+        delete_all_xforms()
+
+    def _post_case_blocks(self, iteration=0):
+        return post_case_blocks(
+            [
+                CaseBlock(
+                    create=iteration == 0,
+                    case_id='parent-id',
+                    case_name='parent-name',
+                    case_type='bug',
+                    update={'update-prop-parent': iteration},
+                ).as_xml(),
+                CaseBlock(
+                    create=iteration == 0,
+                    case_id='child-id',
+                    case_name='child-name',
+                    case_type='bug-child',
+                    index={'parent': ('bug', 'parent-id')},
+                    update={'update-prop-child': iteration}
+                ).as_xml()
+            ], domain=self.domain
+        )
+
+    def _test_pillow(self, pillow, since):
+        with self.assertNumQueries(12):
+            pillow.process_changes(since=since, forever=False)
+
+    def test_reuse_cache(self):
+        # tests that these two pillows make the same number of DB calls even
+        # though pillow2 has an extra config
+        since1 = self.pillow1.get_change_feed().get_latest_offsets()
+        since2 = self.pillow2.get_change_feed().get_latest_offsets()
+        form, cases = self._post_case_blocks()
+
+        self._test_pillow(self.pillow1, since1)
+        self._test_pillow(self.pillow2, since2)
+
+        for a in self.adapters:
+            rows = a.get_query_object()
+            self.assertEqual(rows.count(), 1)
+            self.assertEqual(int(rows[0].parent_property), 0)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -305,7 +379,7 @@ class AsyncIndicatorTest(TestCase):
                 ], domain=self.domain
             )
             # ensure indicator is added
-            indicators = AsyncIndicator.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+            indicators = AsyncIndicator.objects.filter(doc_id='child-id')
             self.assertEqual(indicators.count(), 0)
             self.pillow.process_changes(since=since, forever=False)
             self.assertEqual(indicators.count(), 1)
@@ -350,7 +424,7 @@ class AsyncIndicatorTest(TestCase):
         )
 
         # ensure async indicator is added
-        indicators = AsyncIndicator.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+        indicators = AsyncIndicator.objects.filter(doc_id='child-id')
         self.assertEqual(indicators.count(), 0)
         self.pillow.process_changes(since=since, forever=False)
         self.assertEqual(indicators.count(), 1)

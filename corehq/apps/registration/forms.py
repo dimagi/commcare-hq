@@ -38,7 +38,7 @@ class RegisterWebUserForm(forms.Form):
         widget=forms.PasswordInput(),
     )
     phone_number = forms.CharField(
-        label=_("Phone Number (Optional)"),
+        label=_("Include area code or any other prefix"),
         required=False,
     )
     project_name = forms.CharField(label=_("Project Name"))

@@ -12,6 +12,7 @@ from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
 from corehq.apps.userreports.util import get_table_name
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.style.forms.widgets import BootstrapCheckboxInput
 from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
 
 
@@ -160,6 +161,14 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         label=_("Backend"),
         initial=UCR_SQL_BACKEND
     )
+    asynchronous = forms.BooleanField(
+        initial=False,
+        required=False,
+        label="",
+        widget=BootstrapCheckboxInput(
+            inline_label="Asynchronous processing"
+        )
+    )
 
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
@@ -193,6 +202,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 'named_expressions',
                 'named_filters',
                 'backend_id',
+                'asynchronous',
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

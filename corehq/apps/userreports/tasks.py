@@ -14,6 +14,7 @@ from corehq.apps.userreports.const import (
 )
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
+from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.models import (
     AsyncIndicator,
     DataSourceConfiguration,
@@ -25,6 +26,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.util.context_managers import notify_someone
 from corehq.util.couch import get_document_or_not_found
+from corehq.util.datadog.gauges import datadog_gauge
 from dimagi.utils.couch import CriticalSection, release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.pagination import DatatablesParams
@@ -194,6 +196,11 @@ def queue_async_indicators():
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME
     time_for_crit_section = ASYNC_INDICATOR_QUEUE_TIME.seconds - 10
 
+    oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
+    if oldest_indicator and oldest_indicator.date_queued:
+        lag = (datetime.utcnow() - oldest_indicator.date_queued).total_seconds
+        datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
+
     with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
         redis_client = get_redis_client().client.get_client()
         indicators = AsyncIndicator.objects.all()[:10000]
@@ -203,13 +210,18 @@ def queue_async_indicators():
                 now = datetime.utcnow()
                 if now > cutoff:
                     break
+                _queue_indicator(redis_client, indicator)
 
-                lock_key = _get_indicator_queued_lock_key(indicator)
-                lock = redis_client.lock(lock_key, timeout=60 * 60 * 6)
-                if not lock.acquire(blocking=False):
-                    continue
 
-                save_document.delay(indicator.id, indicator.doc_id, indicator.pillow)
+def _queue_indicator(redis_client, indicator):
+    lock_key = _get_indicator_queued_lock_key(indicator)
+    lock = redis_client.lock(lock_key, timeout=60 * 60 * 24)
+    if not lock.acquire(blocking=False):
+        return
+
+    indicator.date_queued = datetime.utcnow()
+    indicator.save()
+    save_document.delay(indicator.id, indicator.doc_id)
 
 
 def _get_indicator_queued_lock_key(indicator):
@@ -217,17 +229,19 @@ def _get_indicator_queued_lock_key(indicator):
 
 
 @task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
-def save_document(async_indicator_id, doc_id, pillow):
-    lock_key = get_async_indicator_modify_lock_key(doc_id, pillow)
+def save_document(async_indicator_id, doc_id):
+    lock_key = get_async_indicator_modify_lock_key(doc_id)
     with CriticalSection([lock_key]):
         indicator = AsyncIndicator.objects.get(pk=async_indicator_id)
         doc_store = get_document_store(indicator.domain, indicator.doc_type)
         doc = doc_store.get_document(indicator.doc_id)
 
+        eval_context = EvaluationContext(doc)
         for config_id in indicator.indicator_config_ids:
             config = _get_config_by_id(config_id)
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-            adapter.best_effort_save(doc)
+            adapter.best_effort_save(doc, eval_context)
+            eval_context.reset_iteration()
 
         redis_client = get_redis_client().client.get_client()
         queued_lock_key = _get_indicator_queued_lock_key(indicator)

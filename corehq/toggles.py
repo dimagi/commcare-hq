@@ -923,7 +923,7 @@ EDIT_FORMPLAYER = PredictablyRandomToggle(
     'Edit forms on Formplayer',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.5,
+    randomness=1.0,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -942,7 +942,15 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
 
 VELLUM_BETA = StaticToggle(
     'vellum_beta',
-    'Use Vellum beta version',
+    'Use Vellum beta version. This flag has been deactivated and will be removed soon; all users are on the beta\
+    unless they also have the vellum alpha flag set.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_USER]
+)
+
+VELLUM_ALPHA = StaticToggle(
+    'vellum_alpha',
+    'Use alpha (pre-beta) Vellum',
     TAG_PRODUCT_PATH,
     [NAMESPACE_USER]
 )

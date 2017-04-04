@@ -232,12 +232,8 @@ class LocationType(models.Model):
             return []
 
         cls._pre_bulk_save(objects)
-        domain = objects[0].domain
-        names = [o.name for o in objects]
         cls.objects.bulk_create(objects)
-        # we can return 'objects' directly without the below extra DB call after django 1.10,
-        # which autosets 'id' attribute of all objects that are bulk created
-        return list(cls.objects.filter(domain=domain, name__in=names))
+        return list(objects)
 
     @classmethod
     def bulk_update(cls, objects):

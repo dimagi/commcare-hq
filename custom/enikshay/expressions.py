@@ -5,6 +5,7 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from dimagi.ext.jsonobject import JsonObject
+from dimagi.utils.dates import force_to_datetime
 
 
 class FirstCaseFormWithXmlns(JsonObject):
@@ -114,5 +115,30 @@ def concatenate_strings_expression(spec, context):
     wrapped = ConcatenateStrings.wrap(spec)
     wrapped.configure(
         [ExpressionFactory.from_spec(e, context) for e in wrapped.expressions],
+    )
+    return wrapped
+
+
+class MonthExpression(JsonObject):
+    type = TypeProperty('month_expression')
+    month_expression = DefaultProperty(required=True)
+
+    def configure(self, month_expression):
+        self._month_expression = month_expression
+
+    def __call__(self, item, context=None):
+        try:
+            date = force_to_datetime(self._month_expression(item, context))
+        except ValueError:
+            return ''
+        if not date:
+            return ''
+        return str(date.month)
+
+
+def month_expression(spec, context):
+    wrapped = MonthExpression.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.month_expression, context)
     )
     return wrapped

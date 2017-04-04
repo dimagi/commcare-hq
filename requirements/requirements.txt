@@ -86,7 +86,7 @@ git+git://github.com/dimagi/pyzxcvbn.git#egg=pyzxcvbn
 django-statici18n==1.3.0
 django-simple-captcha==0.5.1
 httpagentparser==1.7.8
-boto3==1.4.0
+boto3==1.4.4
 simpleeval==0.8.7
 laboratory==0.2.0
 ConcurrentLogHandler==0.9.1

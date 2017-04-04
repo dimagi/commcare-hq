@@ -79,11 +79,6 @@ def set_user_role(domain, user, usertype, user_form):
         user.set_role(domain, role.get_qualified_id())
 
 
-def get_user_data_code(domain, user):
-    """Add a mobile worker code (custom user data) that's unique across all
-    users at that location"""
-
-
 def validate_role_unchanged(domain, user, user_form):
     """Web user role is not editable"""
     existing_role = user.get_domain_membership(domain).role
