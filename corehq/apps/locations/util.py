@@ -1,3 +1,5 @@
+import itertools
+
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
@@ -259,10 +261,10 @@ class LocationExporter(object):
     def get_export_dict(self):
         location_types = self.domain_obj.location_types
         sheets = [self.type_sheet(location_types)]
-        sheets.extend([
+        sheets = itertools.chain(sheets, (
             self._loc_type_dict(loc_type)
             for loc_type in location_types
-        ])
+        ))
         return sheets
 
 
@@ -289,13 +291,13 @@ def write_to_file(locations):
     """
     outfile = StringIO()
     writer = Excel2007ExportWriter()
-    header_table = [(tab_name, [tab['headers']]) for tab_name, tab in locations]
+    header_table = ((tab_name, [tab['headers']]) for tab_name, tab in locations)
     writer.open(header_table=header_table, file=outfile)
     for tab_name, tab in locations:
         headers = tab['headers']
-        tab_rows = [[row.get(header, '') for header in headers]
-                    for row in tab['rows']]
-        writer.write([(tab_name, tab_rows)])
+        tab_rows = ((row.get(header, '') for header in headers)
+                    for row in tab['rows'])
+        writer.write(((tab_name, tab_rows)))
     writer.close()
     return outfile.getvalue()
 
