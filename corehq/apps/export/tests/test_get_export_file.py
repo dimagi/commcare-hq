@@ -581,6 +581,54 @@ class WriterTest(SimpleTestCase):
                 }
             )
 
+    def test_empty_location(self):
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            tables=[
+                TableConfiguration(
+                    label="My table",
+                    selected=True,
+                    columns=[
+                        ExportColumn(
+                            label="location",
+                            item=ScalarItem(
+                                path=[PathNode(name='form'), PathNode(name='meta'), PathNode(name='location')],
+                            ),
+                            selected=True
+                        ),
+                    ]
+                )
+            ]
+        )
+
+        docs = [
+            {
+                'domain': 'my-domain',
+                '_id': '1234',
+                'form': {
+                    'meta': {
+                        'location': {'xmlns': 'abc'},
+                    }
+                }
+            }
+        ]
+
+        writer = _get_writer([export_instance])
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export.read()),
+                {
+                    u'My table': {
+                        u'headers': [u'location'],
+                        u'rows': [[EMPTY_VALUE]],
+
+                    }
+                }
+            )
+
     def test_empty_table_label(self):
         export_instance = FormExportInstance(
             export_format=Format.JSON,
