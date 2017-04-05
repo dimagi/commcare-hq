@@ -52,7 +52,6 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
     get_aggregated_ledger_values,
-    get_reverse_indexed_cases_es,
     get_case_types_for_domain_es,
 )
 from corehq.apps.es.aggregations import MISSING_KEY

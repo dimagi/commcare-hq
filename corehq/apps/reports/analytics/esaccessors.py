@@ -1,7 +1,6 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters, aggregations, LedgerES
 from corehq.apps.es.aggregations import (
     TermsAggregation,
