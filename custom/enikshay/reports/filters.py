@@ -47,6 +47,8 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
     @classmethod
     def get_value(cls, request, domain):
         selected = super(EnikshayLocationFilter, cls).get_value(request, domain)
+        if not request.couch_user.has_permission(domain, 'access_all_locations'):
+            selected += request.couch_user.get_location_ids(domain)
         choice_provider = LocationChoiceProvider(StubReport(domain=domain), None)
         choice_provider.configure({'include_descendants': True})
         return [
