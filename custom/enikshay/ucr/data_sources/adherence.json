@@ -15,7 +15,6 @@
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
-        "engine_id": "ucr",
         "backend_id": "ES",
         "description": "",
         "base_item_expression": {
