@@ -323,13 +323,17 @@ var reportBuilder = function () {
 
         self.validate = function () {
             var isValid = true;
+            if (!self.columnList.validate()) {
+                isValid = false;
+                $("#report-config-columns").collapse('show');
+            }
             if (!self.filterList.validate()) {
                 isValid = false;
-                $("#userFilterAccordion").collapse('show');
+                $("#report-config-userfilter").collapse('show');
             }
             if (!self.defaultFilterList.validate()) {
                 isValid = false;
-                $("#defaultFilterAccordion").collapse('show');
+                $("#report-config-defaultfilters").collapse('show');
             }
             if (!isValid){
                 alert('Invalid report configuration. Please fix the issues and try again.');
