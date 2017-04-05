@@ -96,6 +96,7 @@ class EpisodeUpdate(object):
         """
         self.episode = episode_case
         self.case_updater = case_updater
+        self._cache_dose_taken_by_date = False
 
     def get_property(self, property):
         """
@@ -189,14 +190,20 @@ class EpisodeUpdate(object):
             total count of adherence_cases excluding duplicates on a given day. If there are
             two adherence_cases on one day at different time, it will be counted as one
         """
-        # Todo - cache/memoize this result
-        dose_taken_by_date = self.calculate_doses_taken_by_day(adherence_cases)
+
+        if not self._cache_dose_taken_by_date and self._cache_dose_taken_by_date != {}:
+            # we can't memoize this as the arg is list.
+            dose_taken_by_date = self.calculate_doses_taken_by_day(adherence_cases)
+        else:
+            dose_taken_by_date = self._cache_dose_taken_by_date
+
         if bool(lte) != bool(lte):
             raise Exception("Both of lte and gte should be specified or niether of them")
 
         if not lte:
             return dose_taken_by_date.values().count(True)
         else:
+            # any efficient way to do this - numpy, python bisect?
             return [
                 is_taken
                 for date, is_taken in dose_taken_by_date.iteritems()
