@@ -283,8 +283,6 @@ class BlobDbBackendMigrator(BaseDocMigrator):
             super(BlobDbBackendMigrator, self)._backup_doc({
                 "doc_type": obj.doc_type,
                 "doc_id": obj._id,
-                "blob_identifier": meta.id,
-                "blob_bucket": bucket,
                 "error": "blobs != external_blobs",
             })
         for name, meta in obj.external_blobs.iteritems():
