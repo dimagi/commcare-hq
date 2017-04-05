@@ -32,6 +32,7 @@ class ExportFile(object):
     # This is essentially coppied from couchexport.files.ExportFiles
 
     def __init__(self, path, format):
+        self.path = path
         self.file = Temp(path)
         self.format = format
 
