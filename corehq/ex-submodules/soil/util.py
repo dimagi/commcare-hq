@@ -33,7 +33,7 @@ def expose_blob_download(
         content_disposition=None,
         download_id=None):
     """
-    Expose a file download object that potentially uses the external drive
+    Expose a blob object for download
     """
     ref = BlobDownload.create(
         identifier,
