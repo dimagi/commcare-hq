@@ -9,7 +9,6 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from casexml.apps.case.mock import CaseFactory
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 from custom.enikshay.const import (
     DOSE_MISSED,
