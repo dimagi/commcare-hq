@@ -222,23 +222,21 @@ class EpisodeUpdate(object):
             # adherence schedule hasn't been selected, so no update necessary
             return {}
 
+        default_update = {
+            'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
+            'expected_doses_taken': 0,
+            'aggregated_score_count_taken': 0,
+            'adherence_total_doses_taken': 0,
+            'adherence_latest_date_recorded': adherence_schedule_date_start - datetime.timedelta(days=1)
+        }
+
         if adherence_schedule_date_start > self.case_updater.purge_date:
-            update = {
-                'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
-                'expected_doses_taken': 0,
-                'aggregated_score_count_taken': 0,
-                'adherence_total_doses_taken': 0,
-                'adherence_latest_date_recorded': adherence_schedule_date_start - datetime.timedelta(days=1)
-            }
+            update = default_update
         else:
             update = {}
             latest_adherence_date = self.get_latest_adherence_date()
             if not latest_adherence_date:
-                update["aggregated_score_date_calculated"] = adherence_schedule_date_start - datetime.timedelta(1)
-                update["aggregated_score_count_taken"] = 0
-                update["adherence_latest_date_recorded"] = adherence_schedule_date_start - datetime.timedelta(1)
-                update["expected_doses_taken"] = 0
-                update["adherence_total_doses_taken"] = 0
+                update = default_update
             else:
                 update["adherence_latest_date_recorded"] = latest_adherence_date
                 if latest_adherence_date < self.case_updater.purge_date:
