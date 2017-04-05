@@ -943,6 +943,7 @@ class ConfigureNewReportBase(forms.Form):
             description=self.cleaned_data['report_description'],
             report_meta=ReportMeta(
                 created_by_builder=True,
+                report_builder_version="2.0",
                 builder_report_type=self.report_type
             )
         )
@@ -967,6 +968,7 @@ class ConfigureNewReportBase(forms.Form):
             configured_charts=self._report_charts,
             report_meta=ReportMeta(
                 created_by_builder=True,
+                report_builder_version="2.0",
                 builder_report_type=self.report_type
             )
         )
