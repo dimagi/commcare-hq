@@ -16,6 +16,7 @@ from custom.enikshay.const import (
     DOSE_UNKNOWN,
     DAILY_SCHEDULE_FIXTURE_NAME,
     SCHEDULE_ID_FIXTURE,
+    HISTORICAL_CLOSURE_REASON,
 )
 from custom.enikshay.data_store import AdherenceDatastore
 from custom.enikshay.tasks import EpisodeAdherenceUpdater, EpisodeUpdate
@@ -529,11 +530,11 @@ class TestAdherenceUpdater(TestCase):
             return episode_update.calculate_doses_taken_by_day(
                 [
                     {
-                        'source': source,
+                        'adherence_source': source,
                         'adherence_date': str(dose_date),  # the code expects string format
                         'adherence_value': dose_value,
                         'closed': closed,
-                        'closure_reason': closure_reason,
+                        'adherence_closure_reason': closure_reason,
                         'modified_on': modified_on,
                     }
                     for (_, dose_date, modified_on, dose_value, source, closed, closure_reason) in cases
@@ -587,7 +588,7 @@ class TestAdherenceUpdater(TestCase):
         self.assertDictEqual(
             dose_taken_by_day([
                 ('some_id', datetime(2016, 1, 25), datetime(2016, 2, 22),
-                 DOSE_UNKNOWN, 'enikshay', True, 'historical'),
+                 DOSE_UNKNOWN, 'enikshay', True, HISTORICAL_CLOSURE_REASON),
                 ('some_id', datetime(2016, 1, 25), datetime(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
             ]),
@@ -597,7 +598,7 @@ class TestAdherenceUpdater(TestCase):
         self.assertDictEqual(
             dose_taken_by_day([
                 ('some_id', datetime(2016, 1, 26), datetime(2016, 2, 22),
-                 DTIndicators[0], 'enikshay', True, 'historical'),
+                 DTIndicators[0], 'enikshay', True, HISTORICAL_CLOSURE_REASON),
                 ('some_id', datetime(2016, 1, 26), datetime(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
             ]),
@@ -663,7 +664,7 @@ class TestAdherenceUpdater(TestCase):
                 ('some_id', datetime(2016, 1, 3), datetime(2016, 2, 22),
                  DOSE_UNKNOWN, '99', True, 'a'),
                 ('some_id', datetime(2016, 1, 3), datetime(2016, 2, 21),
-                 DTIndicators[0], 'enikshay', True, 'historical'),
+                 DTIndicators[0], 'enikshay', True, HISTORICAL_CLOSURE_REASON),
             ]),
             {date(2016, 1, 3): True}
         )

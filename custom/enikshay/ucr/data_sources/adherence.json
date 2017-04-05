@@ -99,33 +99,33 @@
                 }
             },
             {
-                "display_name": "closure_reason",
+                "display_name": "adherence_closure_reason",
                 "transform": {
                 },
                 "datatype": "string",
                 "type": "expression",
-                "column_id": "closure_reason",
+                "column_id": "adherence_closure_reason",
                 "is_primary_key": false,
                 "is_nullable": true,
                 "expression": {
                     "datatype": null,
                     "type": "property_name",
-                    "property_name": "closure_reason"
+                    "property_name": "adherence_closure_reason"
                 }
             },
             {
-                "display_name": "source",
+                "display_name": "adherence_source",
                 "transform": {
                 },
                 "datatype": "string",
                 "type": "expression",
-                "column_id": "source",
+                "column_id": "adherence_source",
                 "is_primary_key": false,
                 "is_nullable": true,
                 "expression": {
                     "datatype": null,
                     "type": "property_name",
-                    "property_name": "source"
+                    "property_name": "adherence_source"
                 }
             },
             {

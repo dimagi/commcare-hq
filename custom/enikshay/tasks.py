@@ -23,6 +23,7 @@ from .const import (
     DAILY_SCHEDULE_FIXTURE_NAME,
     DAILY_SCHEDULE_ID,
     SCHEDULE_ID_FIXTURE,
+    HISTORICAL_CLOSURE_REASON,
 )
 from .data_store import AdherenceDatastore
 
@@ -139,7 +140,7 @@ class EpisodeUpdate(object):
                 consider the case with latest_modified - irrespective of case is closed/open
 
             if only enikshay source cases
-                filter by '(closed and closure_reason == 'historical') or open'
+                filter by '(closed and closure_reason == HISTORICAL_CLOSURE_REASON) or open'
                 consider the case with latest modified after above filter
 
             if mix of enikshay and non-enikshay source cases
@@ -148,14 +149,15 @@ class EpisodeUpdate(object):
         """
         def is_dose_taken(cases):
             # runs above discribed calculation and returns whether a dose is taken or not
-            sources = set(map(lambda x: x["source"], cases))
+            sources = set(map(lambda x: x["adherence_source"], cases))
             if 'enikshay' not in sources:
                 valid_cases = cases
             else:
                 valid_cases = filter(
                     lambda case: (
-                        case['source'] is 'enikshay' and
-                        (not case['closed'] or (case['closed'] and case['closure_reason'] == 'historical'))
+                        case['adherence_source'] is 'enikshay' and
+                        (not case['closed'] or (case['closed'] and
+                         case['adherence_closure_reason'] == HISTORICAL_CLOSURE_REASON))
                     ),
                     cases
                 )
@@ -190,7 +192,7 @@ class EpisodeUpdate(object):
         # Todo - cache/memoize this result
         dose_taken_by_date = self.calculate_doses_taken_by_day(adherence_cases)
         if bool(lte) != bool(lte):
-            raise Exception("Both of lte and gte should be specified or None")
+            raise Exception("Both of lte and gte should be specified or niether of them")
 
         if not lte:
             return dose_taken_by_date.values().count(True)
