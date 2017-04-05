@@ -7,6 +7,8 @@ from pygooglechart import ScatterChart
 from corehq.util.quickcache import quickcache
 import pytz
 
+from dimagi.utils.couch.database import iter_docs
+
 from corehq import toggles
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
@@ -682,13 +684,12 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
     @property
     @memoized
-    def selected_users(self):
+    def selected_user_ids(self):
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        users_data = EMWF.pull_users_and_groups(
+        return EMWF.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
-        )
-        return users_data.combined_users
+        ).values_list('_id', flat=True)
 
     @quickcache(['self.domain', 'mobile_user_and_group_slugs'], timeout=10)
     def is_query_too_big(self, mobile_user_and_group_slugs):
@@ -707,7 +708,8 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
         rows = []
         totals = [0] * (len(self.all_relevant_forms) + 1)
-        for user in self.selected_users:
+        for user_doc in iter_docs(CommCareUser.get_db(), self.selected_user_ids):
+            user = CommCareUser.wrap(user_doc)
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
@@ -736,8 +738,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         if EMWF.show_all_mobile_workers(mobile_user_and_group_slugs):
             user_ids = []
         else:
-            # Don't query ALL mobile workers
-            user_ids = [u.user_id for u in self.selected_users]
+            user_ids = self.selected_user_ids
         return get_form_counts_by_user_xmlns(
             domain=self.domain,
             startdate=self.datespan.startdate_utc.replace(tzinfo=pytz.UTC),
