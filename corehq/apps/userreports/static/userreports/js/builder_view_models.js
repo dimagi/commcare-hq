@@ -213,7 +213,9 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         }));
         this.serializedProperties = ko.computed(function(){
             return JSON.stringify(
-                _.map(self.columns(), function(c){return c.toJS();})
+                _.map(
+                    _.filter(self.columns(), function(c){return c.existsInCurrentVersion();}),
+                    function(c){return c.toJS();})
             );
         });
         this.showWarnings = ko.observable(false);
