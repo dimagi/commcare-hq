@@ -210,13 +210,10 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         self.phi.delete()
         call_command('create_enikshay_cases', self.domain)
 
-        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
-        self.assertEqual(1, len(person_case_ids))
-        person_case = self.case_accessor.get_case(person_case_ids[0])
-        self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
-        self.assertEqual(person_case.dynamic_case_properties()['archive_reason'], 'migration_location_not_found')
-        self.assertEqual(person_case.dynamic_case_properties()['migration_error'], 'location_not_found')
-        self.assertEqual(person_case.dynamic_case_properties()['migration_error_details'], 'MH-ABD-1-2')
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 0)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 0)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 0)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 0)
 
     def test_outcome_cured(self):
         self.outcome.HIVStatus = 'Unknown'
