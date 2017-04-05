@@ -158,21 +158,15 @@ class EnikshayCaseFactory(object):
             },
         }
 
-        if self.phi:
-            if self.phi.location_type.code == 'phi':
-                kwargs['attrs']['owner_id'] = self.phi.location_id
-                kwargs['attrs']['update']['phi'] = self.phi.name
-                kwargs['attrs']['update']['phi_assigned_to'] = self.phi.location_id
-                kwargs['attrs']['update']['tu_choice'] = self.tu.location_id
-            else:
-                kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
-                kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
-                kwargs['attrs']['update']['migration_error'] = 'not_phi_location'
-                kwargs['attrs']['update']['migration_error_details'] = self._phi_code
+        if self.phi.location_type.code == 'phi':
+            kwargs['attrs']['owner_id'] = self.phi.location_id
+            kwargs['attrs']['update']['phi'] = self.phi.name
+            kwargs['attrs']['update']['phi_assigned_to'] = self.phi.location_id
+            kwargs['attrs']['update']['tu_choice'] = self.tu.location_id
         else:
             kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
-            kwargs['attrs']['update']['archive_reason'] = 'migration_location_not_found'
-            kwargs['attrs']['update']['migration_error'] = 'location_not_found'
+            kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
+            kwargs['attrs']['update']['migration_error'] = 'not_phi_location'
             kwargs['attrs']['update']['migration_error_details'] = self._phi_code
 
         if self._outcome:
