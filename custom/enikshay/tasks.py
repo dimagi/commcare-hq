@@ -110,14 +110,12 @@ class EpisodeUpdate(object):
 
     @memoized
     def get_valid_adherence_cases(self):
-        # To-update
         # Returns list of 'adherence' cases of which 'adherence_value' is one of DOSE_KNOWN_INDICATORS
         return self.case_updater.adherence_data_store.dose_known_adherences(
             self.episode.case_id
         )
 
     def get_latest_adherence_date(self):
-        # To-update
         """
         return open case of type 'adherence' reverse-indexed to episode that
             has the latest 'adherence_date' property of all
