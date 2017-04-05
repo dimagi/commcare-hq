@@ -387,45 +387,6 @@ class TestAdherenceUpdater(TestCase):
             }
         )
 
-    def test_two_doses_on_same_day_one_missed(self):
-        self.assert_update(
-            (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
-                [
-                    # latest case says no adherence taken
-                    (datetime(2016, 1, 11, 1), DTIndicators[0]),
-                    (datetime(2016, 1, 11, 3), DOSE_MISSED),
-                ]
-            ),
-            {
-                'aggregated_score_date_calculated': date(2016, 1, 11),
-                'expected_doses_taken': (1.0 / 7) * int(self.fixture_data['schedule1']),
-                'aggregated_score_count_taken': 0,
-                'adherence_latest_date_recorded': date(2016, 1, 11),
-                'adherence_total_doses_taken': 0
-            }
-        )
-
-        self.assert_update(
-            (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
-                [
-                    # latest case says adherence taken
-                    (datetime(2016, 1, 11, 1), DOSE_MISSED),
-                    (datetime(2016, 1, 11, 3), DTIndicators[0]),
-                ]
-            ),
-            {
-                'aggregated_score_date_calculated': date(2016, 1, 11),
-                'expected_doses_taken': (1.0 / 7) * int(self.fixture_data['schedule1']),
-                'aggregated_score_count_taken': 1,
-                'adherence_latest_date_recorded': date(2016, 1, 11),
-                'adherence_total_doses_taken': 1
-            }
-        )
-
     def test_two_doses_on_same_day_different_values(self):
         self.assert_update(
             (
