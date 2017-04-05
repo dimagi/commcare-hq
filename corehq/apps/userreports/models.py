@@ -546,9 +546,10 @@ class StaticDataSourceConfiguration(JsonObject):
                 yield wrapped, path
 
     @classmethod
-    def all(cls):
+    def all(cls, use_server_filter=True):
         for wrapped, path in cls._all():
-            if (wrapped.server_environment and
+            if (use_server_filter and
+                    wrapped.server_environment and
                     settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
                 continue
 
