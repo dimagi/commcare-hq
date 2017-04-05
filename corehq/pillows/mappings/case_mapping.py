@@ -31,7 +31,7 @@ CASE_MAPPING = {
                                         'referenced_id': {'type': 'string'},
                                         'referenced_type': {'type': 'string'}
                                     },
-                                    'type': 'nested'},
+                                    'type': 'object'},
                         'server_date': {'format': DATE_FORMATS_STRING,
                                         'type': 'date'},
                         'sync_log_id': {'type': 'string'},
@@ -69,7 +69,7 @@ CASE_MAPPING = {
                                    'identifier': {'type': 'string'},
                                    'referenced_id': {'type': 'string'},
                                    'referenced_type': {'type': 'string'}},
-                    'type': 'nested'},
+                    'type': 'object'},
         'initial_processing_complete': {'type': 'boolean'},
         'location_id': {'type': 'string'},
         'modified_on': {'format': DATE_FORMATS_STRING,

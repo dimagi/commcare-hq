@@ -63,17 +63,6 @@ def get_active_case_counts_by_owner(domain, datespan, case_types=None, owner_ids
     return _get_case_case_counts_by_owner(domain, datespan, case_types, False, owner_ids)
 
 
-def get_reverse_indexed_cases_es(domain, case_id):
-    # return cases that are reverse-indexed to case with case_id
-    result = (
-        CaseES()
-        .domain(domain)
-        .reverse_indexed(case_id)
-        .run().hits
-    )
-    return [CommCareCase.wrap(r) for r in result]
-
-
 def get_total_case_counts_by_owner(domain, datespan, case_types=None, owner_ids=None):
     return _get_case_case_counts_by_owner(domain, datespan, case_types, True, owner_ids)
 

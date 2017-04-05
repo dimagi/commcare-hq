@@ -38,7 +38,6 @@ class CaseES(HQESQuery):
             opened_by,
             case_ids,
             active_in_range,
-            reverse_indexed,
         ] + super(CaseES, self).builtin_filters
 
 
@@ -91,13 +90,6 @@ def active_in_range(gt=None, gte=None, lt=None, lte=None):
     return filters.nested(
         "actions",
         filters.date_range("actions.date", gt, gte, lt, lte)
-    )
-
-
-def reverse_indexed(case_id):
-    return filters.nested(
-        "indices",
-        filters.term('indices.referenced_id', case_id)
     )
 
 
