@@ -6,6 +6,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 
 from custom.enikshay.const import DOSE_KNOWN_INDICATORS
+from dimagi.utils.decorators.memoized import memoized
 
 
 class AdherenceDatastore(object):
@@ -21,14 +22,14 @@ class AdherenceDatastore(object):
             filters.term('adherence_value', DOSE_KNOWN_INDICATORS)
         )
 
+    @memoized
     def dose_known_adherences(self, episode_id):
         return self.es.filter(self._base_filters(episode_id)).run().hits
 
     def latest_adherence_date(self, episode_id):
-        result = self.es.filter(
-            self._base_filters(episode_id)
-        ).sort('adherence_date', desc=True).size(1).run().hits
+        result = self.dose_known_adherences(episode_id)
         if len(result) > 0:
-            return pytz.UTC.localize(parse_datetime(result[0].get('adherence_date', None)))
+            latest = sorted(result, key=lambda x: x['adherence_date'])[-1]
+            return pytz.UTC.localize(parse_datetime(latest.get('adherence_date')))
         else:
             return None
