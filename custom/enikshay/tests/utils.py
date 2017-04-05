@@ -270,7 +270,7 @@ class ENikshayCaseStructureMixin(object):
     def create_adherence_cases(self, adherence_dates, adherence_source='99DOTS'):
         return self.factory.create_or_update_cases([
             get_adherence_case_structure(
-                adherence_date.strftime('%Y-%m-%d')
+                adherence_date.strftime('%Y-%m-%d'),
                 self.episode_id,
                 adherence_date,
                 extra_update={
