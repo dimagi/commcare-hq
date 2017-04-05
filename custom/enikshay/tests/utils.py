@@ -261,7 +261,7 @@ class ENikshayCaseStructureMixin(object):
     def create_adherence_case(self, adherence_date, adherence_source="99DOTS", adherence_value="unobserved_dose",
                               case_id=None):
         return self.factory.create_or_update_cases([
-            self.get_adherence_case_structure(case_id, self.episode_id, adherence_date, extra_update={
+            get_adherence_case_structure(case_id, self.episode_id, adherence_date, extra_update={
                 "adherence_source": adherence_source,
                 "adherence_value": adherence_value,
             })
