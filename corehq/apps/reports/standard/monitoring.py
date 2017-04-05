@@ -7,8 +7,6 @@ from pygooglechart import ScatterChart
 from corehq.util.quickcache import quickcache
 import pytz
 
-from dimagi.utils.couch.database import iter_docs
-
 from corehq import toggles
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
