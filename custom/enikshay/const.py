@@ -42,6 +42,7 @@ DOSE_TAKEN_INDICATORS = [
     'unobserved_dose',
     'self_administered_dose',
 ]
+
 DOSE_MISSED = 'missed_dose'
 DOSE_UNKNOWN = 'missing_data'
 DOSE_KNOWN_INDICATORS = DOSE_TAKEN_INDICATORS + [DOSE_MISSED]

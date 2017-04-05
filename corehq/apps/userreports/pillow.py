@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import hashlib
 
 from alembic.autogenerate.api import compare_metadata
+from kafka.util import kafka_bytestring
 import six
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
@@ -12,8 +13,10 @@ from corehq.apps.userreports.const import (
 )
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
+from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
-from corehq.apps.userreports.tasks import rebuild_indicators, save_document
+from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
@@ -23,9 +26,11 @@ from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
-from pillow_retry.models import PillowError
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
+LONG_UCR_LOGGING_THRESHOLD = 0.2
+LONG_UCR_SOFT_ASSERT_THRESHOLD = 5
+_slow_ucr_assert = soft_assert('{}@{}'.format('jemord', 'dimagi.com'))
 
 
 class PillowConfigError(Exception):
@@ -38,13 +43,18 @@ def time_ucr_process_change(method):
         result = method(*args, **kw)
         te = datetime.now()
         seconds = (te - ts).total_seconds()
-        if seconds > 0.1:
+        if seconds > LONG_UCR_LOGGING_THRESHOLD:
             table = args[1]
             doc = args[2]
-            message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
+            log_message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
                 table.config._id, doc['_id'], seconds
             )
-            pillow_logging.warning(message)
+            pillow_logging.warning(log_message)
+            if seconds > LONG_UCR_SOFT_ASSERT_THRESHOLD:
+                email_message = u"UCR data source {} is taking too long to process".foramt(
+                    table.config._id
+                )
+                _slow_ucr_assert(False, email_message)
         return result
     return timed
 
@@ -60,24 +70,10 @@ def _filter_by_hash(configs, ucr_division):
     return filtered_configs
 
 
-def _exclude_missing_domains(configs):
-    from corehq.apps.es import DomainES
-    from corehq.elastic import ESError
-
-    config_domains = {conf.domain for conf in configs}
-    try:
-        domains_present = set(DomainES().in_domains(config_domains).values_list('name', flat=True))
-    except ESError:
-        pillow_logging.exception("Unable to filter configs by domain")
-        return configs
-
-    return [config for config in configs if config.domain in domains_present]
-
-
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_provider, auto_repopulate_tables=False, ucr_division=None,
-                 include_ucrs=None, exclude_ucrs=None, filter_missing_domains=False):
+                 include_ucrs=None, exclude_ucrs=None):
         """Initializes the processor for UCRs
 
         Keyword Arguments:
@@ -94,7 +90,6 @@ class ConfigurableReportTableManagerMixin(object):
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
-        self.filter_missing_domains = filter_missing_domains
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
 
@@ -111,9 +106,6 @@ class ConfigurableReportTableManagerMixin(object):
             configs = [config for config in configs if config.table_id in self.include_ucrs]
         elif self.ucr_division:
             configs = _filter_by_hash(configs, self.ucr_division)
-
-        if self.filter_missing_domains:
-            configs = _exclude_missing_domains(configs)
 
         return configs
 
@@ -204,9 +196,9 @@ class ConfigurableReportTableManagerMixin(object):
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
 
     @time_ucr_process_change
-    def _save_doc_to_table(self, table, doc):
+    def _save_doc_to_table(self, table, doc, eval_context):
         # best effort will swallow errors in the table
-        table.best_effort_save(doc)
+        table.best_effort_save(doc, eval_context)
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
@@ -226,21 +218,22 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
         ensure_document_exists(change)
         ensure_matched_revisions(change)
 
+        if doc is None:
+            return
+
+        eval_context = EvaluationContext(doc)
         for table in self.table_adapters_by_domain[domain]:
             if table.config.filter(doc):
                 if table.run_asynchronous:
                     async_tables.append(table.config._id)
                 else:
-                    self._save_doc_to_table(table, doc)
+                    self._save_doc_to_table(table, doc, eval_context)
+                    eval_context.reset_iteration()
             elif table.config.deleted_filter(doc):
                 table.delete(doc)
 
         if async_tables:
-            future_time = datetime.utcnow() + timedelta(days=1)
-            error = PillowError.get_or_create(change, pillow_instance)
-            error.date_next_attempt = future_time
-            error.save()
-            save_document.delay(async_tables, doc, pillow_instance.pillow_id)
+            AsyncIndicator.update_indicators(change, async_tables)
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
@@ -283,7 +276,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None):
     topics = topics or KAFKA_TOPICS
-    topics = [str(t) for t in topics]
+    topics = [kafka_bytestring(t) for t in topics]
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
@@ -300,7 +293,7 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 include_ucrs=None, exclude_ucrs=None, topics=None):
     topics = topics or KAFKA_TOPICS
-    topics = [str(t) for t in topics]
+    topics = [kafka_bytestring(t) for t in topics]
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),
@@ -308,7 +301,6 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
-            filter_missing_domains=True,
         ),
         pillow_name=pillow_id,
         topics=topics

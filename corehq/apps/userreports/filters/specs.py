@@ -10,6 +10,7 @@ from django.utils.translation import ugettext as _
 
 class BaseFilterSpec(JsonObject):
     _allow_dynamic_properties = False
+    comment = StringProperty()
 
 
 class BooleanExpressionFilterSpec(BaseFilterSpec):

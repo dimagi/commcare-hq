@@ -11,4 +11,3 @@ class BaseAccountingTest(TestCase):
     def setUpClass(cls):
         super(BaseAccountingTest, cls).setUpClass()
         Role.get_cache().clear()
-        generator.instantiate_accounting()

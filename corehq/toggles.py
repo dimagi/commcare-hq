@@ -310,6 +310,13 @@ ADD_USERS_FROM_LOCATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+CASE_DETAIL_PRINT = StaticToggle(
+    'case_detail_print',
+    'Allowing printing of the case detail, based on an HTML template',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
@@ -926,7 +933,7 @@ EDIT_FORMPLAYER = PredictablyRandomToggle(
     'Edit forms on Formplayer',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.5,
+    randomness=1.0,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -945,9 +952,17 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
 
 VELLUM_BETA = StaticToggle(
     'vellum_beta',
-    'Use Vellum beta version',
+    'Use Vellum beta version. This flag has been deactivated and will be removed soon; all users are on the beta\
+    unless they also have the vellum alpha flag set.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_USER]
+)
+
+VELLUM_ALPHA = StaticToggle(
+    'vellum_alpha',
+    'Use alpha (pre-beta) Vellum',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_USER, NAMESPACE_DOMAIN]
 )
 
 APP_MANAGER_V2 = StaticToggle(
@@ -1062,6 +1077,13 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     always_enabled={
         'ews-ghana', 'ils-gateway', 'ils-gateway-train'
     }
+)
+
+PAGINATED_EXPORTS = StaticToggle(
+    'paginated_exports',
+    'Allows for pagination of exports for very large exports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(

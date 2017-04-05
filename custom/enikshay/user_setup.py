@@ -1,4 +1,10 @@
-# TODO Is this going to be translated, or English only?
+"""
+This uses signals to hook in to user and location forms for custom validation
+and some autogeneration. These additions are turned on by a feature flag, but
+domain and HQ admins are excepted, in case we ever need to violate the
+assumptions laid out here.
+"""
+import math
 from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
@@ -14,11 +20,12 @@ LOC_TYPES_TO_USER_TYPES = {
     'dto': ['dto', 'deo'],
     'cto': ['cto'],
     'sto': ['sto'],
+    'drtb-hiv': ['drtb-hiv'],
 }
 
 
-def clean_user_callback(sender, domain, user, forms, **kwargs):
-    if not toggles.ENIKSHAY.enabled(domain):
+def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
+    if not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain):
         return
 
     new_user_form = forms.get('NewMobileWorkerForm')
@@ -49,11 +56,6 @@ def clean_user_callback(sender, domain, user, forms, **kwargs):
 def validate_usertype(domain, location, usertype, custom_data):
     """Restrict choices for custom user data role field based on the chosen
     location's type"""
-    # TODO handle multiple locations.  How are they created?
-    # maybe set secondary loc to 'drtb-hiv' if usertype == 'drtb-hiv'?
-    location_codes = []
-    if location.location_type.code == 'dto' and 'drtb-hiv' in location_codes:
-        return
     allowable_usertypes = LOC_TYPES_TO_USER_TYPES[location.location_type.code]
     if usertype not in allowable_usertypes:
         msg = _("'User Type' must be one of the following: {}").format(', '.join(allowable_usertypes))
@@ -75,11 +77,6 @@ def set_user_role(domain, user, usertype, user_form):
     else:
         role = roles[0]
         user.set_role(domain, role.get_qualified_id())
-
-
-def get_user_data_code(domain, user):
-    """Add a mobile worker code (custom user data) that's unique across all
-    users at that location"""
 
 
 def validate_role_unchanged(domain, user, user_form):
@@ -107,8 +104,8 @@ def validate_location(domain, user_form):
     user_form.add_error('location_id', _("You must select a location."))
 
 
-def clean_location_callback(sender, domain, location, forms, **kwargs):
-    if not toggles.ENIKSHAY.enabled(domain):
+def clean_location_callback(sender, domain, request_user, location, forms, **kwargs):
+    if not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain):
         return
 
     location_form = forms.get('LocationForm')
@@ -170,18 +167,106 @@ def set_available_tests(location, location_form):
 
 
 def save_user_callback(sender, couch_user, **kwargs):
-    if toggles.ENIKSHAY.enabled(couch_user.domain):
-        set_issuer_id(couch_user.domain, couch_user)
+    commcare_user = couch_user  # django signals enforce param names
+    if toggles.ENIKSHAY.enabled(commcare_user.domain):
+        set_issuer_id(commcare_user.domain, commcare_user)
+        add_drtb_hiv_to_dto(commcare_user.domain, commcare_user)
+
+
+def compress_nikshay_id(serial_id, body_digit_count):
+    return compress_id(
+        serial_id=serial_id,
+        growth_symbols=list("HLJXYUWMNV"),
+        lead_symbols=list("ACE3459KFPRT"),
+        body_symbols=list("ACDEFHJKLMNPQRTUVWXY3479"),
+        body_digit_count=body_digit_count,
+    )
+
+
+def compress_id(serial_id, growth_symbols, lead_symbols, body_symbols, body_digit_count):
+    """Accepts an integer ID and compresses it according to the spec here:
+    https://docs.google.com/document/d/11Nxk3XMuae9S4L3JZc4FCVTocLz6bOC-glclrgxnQ5o/"""
+    if not growth_symbols or not lead_symbols:
+        raise AssertionError("We need both growth and lead symbols")
+
+    if set(growth_symbols) & set(lead_symbols):
+        raise AssertionError("You cannot use the same symbol as both a growth and a lead")
+
+    lead_digit_base = len(lead_symbols)
+    growth_digit_base = len(growth_symbols)
+    body_digit_base = len(body_symbols)
+    max_fixed_length_size = (body_digit_base ** body_digit_count) * lead_digit_base
+
+    if serial_id >= max_fixed_length_size:
+        times_over_max = serial_id / max_fixed_length_size
+        growth_digit_count = int(math.log(times_over_max, growth_digit_base)) + 1
+    else:
+        growth_digit_count = 0
+
+    digit_bases = ([growth_digit_base] * growth_digit_count
+                   + [lead_digit_base]
+                   + [body_digit_base] * body_digit_count)
+
+    divisors = [1]
+    for digit_base in reversed(digit_bases[1:]):
+        divisors.insert(0, divisors[0] * digit_base)
+
+    remainder = serial_id
+    counts = []
+    for divisor in divisors:
+        counts.append(remainder / divisor)
+        remainder = remainder % divisor
+
+    if remainder != 0:
+        raise AssertionError("Failure while encoding ID {}!".format(serial_id))
+
+    output = []
+    for i, count in enumerate(counts):
+        if i < growth_digit_count:
+            output.append(growth_symbols[count])
+        elif i == growth_digit_count:
+            output.append(lead_symbols[count])
+        else:
+            output.append(body_symbols[count])
+    return ''.join(output)
+
+
+def get_last_used_device_number(user):
+    if not user.devices:
+        return None
+    _, index = max((device.last_used, i) for i, device in enumerate(user.devices))
+    return index + 1
 
 
 def set_issuer_id(domain, user):
-    """Add a serially increasing custom user data "Issuer ID" to the user."""
-    if not user.user_data.get('issuer_id', None):
+    """Add a serially increasing custom user data "Issuer ID" to the user, as
+    well as a human-readable compressed form."""
+    changed = False
+    if not user.user_data.get('id_issuer_number', None):
         issuer_id, created = IssuerId.objects.get_or_create(domain=domain, user_id=user._id)
-        user.user_data['issuer_id'] = issuer_id.pk
+        user.user_data['id_issuer_number'] = issuer_id.pk
+        user.user_data['id_issuer_body'] = compress_nikshay_id(issuer_id.pk, 3)
+        changed = True
+
+    device_number = get_last_used_device_number(user)
+    if device_number and user.user_data.get('id_device_number', None) != device_number:
+        user.user_data['id_device_number'] = device_number
+        user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
+        changed = True
+
+    if changed:
         # note that this is saving the user a second time 'cause it needs a
         # user id first, but if refactoring, be wary of a loop!
         user.save()
+
+
+def add_drtb_hiv_to_dto(domain, user):
+    location = user.get_sql_location(domain)
+    if location and location.location_type.code == 'drtb-hiv':
+        # also assign user to the parent DTO
+        loc_ids = user.get_location_ids(domain)
+        if location.parent.location_id not in loc_ids:
+            user.add_to_assigned_locations(location.parent)
 
 
 def connect_signals():

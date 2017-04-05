@@ -390,6 +390,7 @@ class ProjectDataTab(UITab):
     url_prefix_formats = (
         '/a/{domain}/data/',
         '/a/{domain}/fixtures/',
+        '/a/{domain}/data_dictionary/',
     )
 
     @property
@@ -783,6 +784,12 @@ class ApplicationsTab(UITab):
     view = "default_app"
 
     url_prefix_formats = ('/a/{domain}/apps/',)
+
+    @property
+    def view(self):
+        if toggles.APP_MANAGER_V2.enabled(self.domain):
+            return "default_new_app"
+        return "default_app"
 
     @property
     def title(self):
@@ -1312,12 +1319,12 @@ class ProjectSettingsTab(UITab):
     title = ugettext_noop("Project Settings")
     view = 'domain_settings_default'
 
-    url_prefix_formats = ('/a/{domain}/settings/project/',)
+    url_prefix_formats = (
+        '/a/{domain}/settings/project/',
+        '/a/{domain}/phone/prime_restore/',
+    )
 
-    @property
-    def _is_viewable(self):
-        return (self.domain and self.couch_user and
-                self.couch_user.is_domain_admin(self.domain))
+    _is_viewable = False
 
     @property
     def sidebar_items(self):
@@ -1453,7 +1460,13 @@ class ProjectSettingsTab(UITab):
 
 
 def _get_administration_section(domain):
-    from corehq.apps.domain.views import FeaturePreviewsView, TransferDomainView, Dhis2ConnectionView
+    from corehq.apps.domain.views import (
+        FeaturePreviewsView,
+        TransferDomainView,
+        Dhis2ConnectionView,
+        DataSetMapView,
+        Dhis2LogListView,
+    )
 
     administration = []
     if not settings.ENTERPRISE_MODE:
@@ -1507,10 +1520,16 @@ def _get_administration_section(domain):
         })
 
     if toggles.DHIS2_INTEGRATION.enabled(domain):
-        administration.append({
+        administration.extend([{
             'title': _(Dhis2ConnectionView.page_title),
             'url': reverse(Dhis2ConnectionView.urlname, args=[domain])
-        })
+        }, {
+            'title': _(DataSetMapView.page_title),
+            'url': reverse(DataSetMapView.urlname, args=[domain])
+        }, {
+            'title': _(Dhis2LogListView.page_title),
+            'url': reverse(Dhis2LogListView.urlname, args=[domain])
+        }])
 
     return administration
 
@@ -1541,9 +1560,7 @@ class MySettingsTab(UITab):
     view = 'default_my_settings'
     url_prefix_formats = ('/account/',)
 
-    @property
-    def _is_viewable(self):
-        return self.couch_user is not None
+    _is_viewable = False
 
     @property
     def sidebar_items(self):

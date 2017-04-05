@@ -178,7 +178,7 @@
                 <div class="form-group">
                     <label>{% trans "Case Type" %}</label>
                     <select class="form-control" data-bind="
-                        options: config.caseTypes,
+                        options: caseConfig.caseTypes,
                         value: case_type,
                         optionsCaption: 'Choose a Case Type...'
                     "></select>
@@ -241,7 +241,7 @@
 <script type="text/html" id="auto-select:case">
     &nbsp;
     {% trans "Case containing index:" %}
-    <select data-bind="optstr: $parent.config.caseConfigViewModel.getCaseTags('auto-select', $parent),
+    <select data-bind="optstr: $parent.caseConfig.caseConfigViewModel.getCaseTags('auto-select', $parent),
         value: value_source">
     </select>
     {% trans "Index name:" %}
@@ -318,7 +318,7 @@
                 <div class="form-group">
                     <label>{% trans "Case Type" %}</label>
                     <select class="form-control" data-bind="
-                        options: config.caseTypes,
+                        options: caseConfig.caseTypes,
                         value: case_type,
                         optionsCaption: 'Choose a Case Type...'
                     "></select>

@@ -14,6 +14,7 @@ from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
 
 from corehq.blobs.interface import AbstractBlobDB, SAFENAME
+from corehq.blobs.util import set_blob_expire_object
 
 DEFAULT_S3_BUCKET = "blobdb"
 
@@ -36,7 +37,7 @@ class S3BlobDB(AbstractBlobDB):
         # https://github.com/boto/boto3/issues/259
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
-    def put(self, content, identifier, bucket=DEFAULT_BUCKET):
+    def put(self, content, identifier, bucket=DEFAULT_BUCKET, timeout=None):
         path = self.get_path(identifier, bucket)
         s3_bucket = self._s3_bucket(create=True)
         if isinstance(content, BlobStream) and content.blob_db is self:
@@ -49,6 +50,8 @@ class S3BlobDB(AbstractBlobDB):
         content_md5 = get_content_md5(content)
         content_length = get_file_size(content)
         s3_bucket.upload_fileobj(content, path)
+        if timeout is not None:
+            set_blob_expire_object(bucket, identifier, content_length, timeout)
         return BlobInfo(identifier, content_length, "md5-" + content_md5)
 
     def get(self, identifier, bucket=DEFAULT_BUCKET):
