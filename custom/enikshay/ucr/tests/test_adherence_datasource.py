@@ -10,7 +10,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
 from custom.enikshay.data_store import AdherenceDatastore
-from custom.enikshay.const import DOSE_UNKNOWN, DOSE_TAKEN_INDICATORS
+from custom.enikshay.const import DOSE_UNKNOWN, DOSE_TAKEN_INDICATORS as DTIndicators
 from custom.enikshay.tests.utils import (
     get_person_case_structure,
     get_adherence_case_structure,
@@ -61,14 +61,6 @@ class TestAdherenceUCRSource(TestCase):
         cases = {case.case_id: case for case in factory.create_or_update_cases([episode_structure])}
         cls.episode = cases[cls.episode_id]
 
-        cls.simple_data = [
-            # (case_id, adherence_date, adherence_value, source, closed, closure_reason)
-            (_uid(1), datetime(2016, 1, 21, 1), DOSE_TAKEN_INDICATORS[0], 'enikshay', False, None),
-            (_uid(2), datetime(2016, 1, 21, 3), DOSE_UNKNOWN, 'enikshay', False, None),
-            (_uid(3), datetime(2016, 1, 22), DOSE_TAKEN_INDICATORS[0], 'enikshay', False, None),
-            (_uid(4), datetime(2016, 1, 24), DOSE_TAKEN_INDICATORS[0], 'enikshay', False, None),
-        ]
-
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases()
@@ -83,7 +75,7 @@ class TestAdherenceUCRSource(TestCase):
     def create_adherence_cases(self, data):
 
         factory = CaseFactory(domain=self.domain)
-        factory.create_or_update_cases([
+        cases = factory.create_or_update_cases([
             get_adherence_case_structure(
                 case_id,
                 self.episode_id,
@@ -95,18 +87,29 @@ class TestAdherenceUCRSource(TestCase):
                     "closure_reason": closure_reason
                 }
             )
-            for (case_id, adherence_date, adherence_value, source, _, closure_reason) in data
+            for (case_id, adherence_date, adherence_value, source, _, closure_reason, _) in data
         ])
 
-        for (case_id, adherence_date, adherence_value, source, should_close, closure_reason) in data:
+        cases_by_id = {c.case_id: c for c in cases}
+        for (case_id, _, _, _, should_close, _, modified_on) in data:
             if should_close:
                 factory.close_case(case_id)
+            if modified_on:
+                cases_by_id[case_id].modified_on = modified_on
+                cases_by_id[case_id].save()
 
         rebuild_indicators(self.data_store.datasource._id)
         self.data_store.adapter.refresh_table()
 
-    def test_max_adherence_date(self):
-        self.create_adherence_cases(self.simple_data)
+    def test_basic(self):
+        simple_data = [
+            # (case_id, adherence_date, adherence_value, source, closed, closure_reason, modified_on)
+            (_uid(1), datetime(2016, 1, 21), DTIndicators[0], 'enikshay', False, None, None),
+            (_uid(2), datetime(2016, 1, 21), DOSE_UNKNOWN, 'enikshay', False, None, None),
+            (_uid(3), datetime(2016, 1, 22), DTIndicators[0], 'enikshay', False, None, None),
+            (_uid(4), datetime(2016, 1, 24), DTIndicators[0], 'enikshay', False, None, None),
+        ]
+        self.create_adherence_cases(simple_data)
 
         # test latest adhernece date
         result = self.data_store.latest_adherence_date(self.episode_id)
