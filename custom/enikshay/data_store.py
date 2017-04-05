@@ -32,10 +32,3 @@ class AdherenceDatastore(object):
             return pytz.UTC.localize(parse_datetime(result[0].get('adherence_date', None)))
         else:
             return None
-
-    def adherences_between(self, episode_id, start, end):
-        return self.es.filter(
-            self._base_filters(episode_id)
-        ).filter(
-            filters.date_range('adherence_date', gte=start, lte=end)
-        ).run().hits

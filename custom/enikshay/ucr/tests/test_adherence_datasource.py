@@ -115,15 +115,6 @@ class TestAdherenceUCRSource(TestCase):
         result = self.data_store.latest_adherence_date(self.episode_id)
         self.assertEqual(result, pytz.UTC.localize(datetime(2016, 1, 24)))
 
-        # test date range lookup; should exclude 'DOSE_UNKNOWN' and out of range case
-        rows = self.data_store.adherences_between(
-            self.episode_id, datetime(2016, 1, 21), datetime(2016, 1, 23)
-        )
-        self.assertEqual(
-            {r['doc_id'] for r in rows},
-            {'adherence1', 'adherence3'}
-        )
-
         # 'adherence2' case has DOSE_UNKNOWN so should be excluded
         result = self.data_store.dose_known_adherences(self.episode_id)
         self.assertEqual(
