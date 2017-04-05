@@ -199,32 +199,6 @@ class ENikshayCaseStructureMixin(object):
     def create_case_structure(self):
         return {case.case_id: case for case in self.factory.create_or_update_cases([self.episode])}
 
-    def _get_adherence_case_structure(self, adherence_date, adherence_source, adherence_value, case_id=None):
-        return CaseStructure(
-            case_id=case_id or adherence_date.strftime('%Y-%m-%d'),
-            attrs={
-                "case_type": "adherence",
-                "create": True,
-                "update": {
-                    "name": adherence_date,
-                    "adherence_value": adherence_value,
-                    "adherence_source": adherence_source,
-                    "adherence_date": adherence_date,
-                    "person_name": "Pippin",
-                    "adherence_confidence": "medium",
-                    "shared_number_99_dots": False,
-                },
-            },
-            indices=[CaseIndex(
-                CaseStructure(case_id=self.episode_id,
-                              attrs={"create": False}),
-                identifier='host',
-                relationship=CASE_INDEX_EXTENSION,
-                related_type='episode',
-            )],
-            walk_related=False,
-        )
-
     @property
     def test(self):
         return CaseStructure(
@@ -285,7 +259,10 @@ class ENikshayCaseStructureMixin(object):
     def create_adherence_case(self, adherence_date, adherence_source="99DOTS", adherence_value="unobserved_dose",
                               case_id=None):
         return self.factory.create_or_update_cases([
-            self._get_adherence_case_structure(adherence_date, adherence_source, adherence_value, case_id)
+            self.get_adherence_case_structure(case_id, self.episode_id, adherence_date, extra_update={
+                "adherence_source": adherence_source,
+                "adherence_value": adherence_value,
+            })
         ])
 
 
