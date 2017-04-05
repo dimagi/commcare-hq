@@ -167,6 +167,7 @@ class UserRegistrationView(BasePageView):
             ),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'implement_password_hashing': settings.ENABLE_PASSWORD_HASHING,
             'show_number': (self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM),
             'ab_test': self.ab.context,
         }
