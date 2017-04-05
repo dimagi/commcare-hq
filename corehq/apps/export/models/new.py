@@ -248,8 +248,11 @@ class ExportColumn(DocumentSchema):
         # <element>value</element>  -> 'value'
         #
         # This line ensures that we grab the actual value instead of the dictionary
-        if isinstance(value, dict) and '#text' in value:
-            value = value.get('#text')
+        if isinstance(value, dict):
+            if '#text' in value:
+                value = value.get('#text')
+            else:
+                return EMPTY_VALUE
 
         if transform_dates:
             value = couch_to_excel_datetime(value, doc)
