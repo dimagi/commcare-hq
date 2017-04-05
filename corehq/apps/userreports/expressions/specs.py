@@ -84,11 +84,12 @@ class NamedExpressionSpec(JsonObject):
 
     def __call__(self, item, context=None):
         key = self._context_cache_key()
-        if context.exists_in_cache(key):
+        if context and context.exists_in_cache(key):
             return context.get_cache_value(key)
 
         result = self._context.named_expressions[self.name](item, context)
-        context.set_iteration_cache_value(key, result)
+        if context:
+            context.set_iteration_cache_value(key, result)
         return result
 
 
