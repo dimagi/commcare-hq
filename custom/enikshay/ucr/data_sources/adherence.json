@@ -11,7 +11,7 @@
         "np-migration-3"
     ],
     "server_environment": [
-      "softlayer",
+      "softlayer"
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
