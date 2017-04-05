@@ -14,7 +14,7 @@ django-crispy-forms==1.6.0
 jsonfield==1.0.3
 dropbox==7.1.1
 defusedxml==0.4.1
-diff-match-patch==20120106
+diff-match-patch==20121119
 django-tastypie==0.13.3
 djangorestframework==3.5.4
 djtables==0.1.1
