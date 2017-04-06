@@ -303,9 +303,9 @@ class BlobDownload(DownloadBase):
         return response
 
     @classmethod
-    def create(cls, path, **kwargs):
+    def create(cls, identifier, **kwargs):
         """
         Create a BlobDownload object from a payload, plus any
         additional arguments to pass through to the constructor.
         """
-        return cls(identifier=path, **kwargs)
+        return cls(identifier=identifier, **kwargs)
