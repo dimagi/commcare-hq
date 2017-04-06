@@ -154,7 +154,7 @@ def _get_summary_details(config, domain):
                 locale=Locale(id=id_strings.report_description(report_config.uuid))
             )
 
-    detail_id='reports.{}.summary'.format(config.uuid)
+    detail_id = 'reports.{}.summary'.format(config.uuid)
     detail = Detail(
         title=Text(
             locale=Locale(id=id_strings.report_menu()),
