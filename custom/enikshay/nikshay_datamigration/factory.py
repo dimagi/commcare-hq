@@ -11,7 +11,7 @@ from custom.enikshay.case_utils import (
     get_first_parent_of_case,
     get_open_drtb_hiv_case_from_episode,
 )
-from custom.enikshay.exceptions import ENikshayCaseNotFound
+from custom.enikshay.exceptions import ENikshayCaseNotFound, ENikshayLocationNotFound
 from custom.enikshay.nikshay_datamigration.models import Outcome
 
 
@@ -158,21 +158,15 @@ class EnikshayCaseFactory(object):
             },
         }
 
-        if self.phi:
-            if self.phi.location_type.code == 'phi':
-                kwargs['attrs']['owner_id'] = self.phi.location_id
-                kwargs['attrs']['update']['phi'] = self.phi.name
-                kwargs['attrs']['update']['phi_assigned_to'] = self.phi.location_id
-                kwargs['attrs']['update']['tu_choice'] = self.tu.location_id
-            else:
-                kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
-                kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
-                kwargs['attrs']['update']['migration_error'] = 'not_phi_location'
-                kwargs['attrs']['update']['migration_error_details'] = self._phi_code
+        if self.phi.location_type.code == 'phi':
+            kwargs['attrs']['owner_id'] = self.phi.location_id
+            kwargs['attrs']['update']['phi'] = self.phi.name
+            kwargs['attrs']['update']['phi_assigned_to'] = self.phi.location_id
+            kwargs['attrs']['update']['tu_choice'] = self.tu.location_id
         else:
             kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
-            kwargs['attrs']['update']['archive_reason'] = 'migration_location_not_found'
-            kwargs['attrs']['update']['migration_error'] = 'location_not_found'
+            kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
+            kwargs['attrs']['update']['migration_error'] = 'not_phi_location'
             kwargs['attrs']['update']['migration_error_details'] = self._phi_code
 
         if self._outcome:
@@ -354,22 +348,38 @@ class EnikshayCaseFactory(object):
     def tu(self):
         if self.test_phi is not None:
             return MockLocation('FAKETU', 'fake_tu_id', MockLocationType('tu', 'tu'))
-        return self.nikshay_codes_to_location.get('-'.join(self._phi_code.split('-')[:3]))
+
+        tu_code = '-'.join(self._phi_code.split('-')[:3])
+        try:
+            return self.nikshay_codes_to_location[tu_code]
+        except KeyError:
+            raise ENikshayLocationNotFound(tu_code)
 
     @property
     def phi(self):
         if self.test_phi is not None:
             return MockLocation('FAKEPHI', self.test_phi, MockLocationType('phi', 'phi'))
-        return self.nikshay_codes_to_location.get(self._phi_code)
+
+        try:
+            return self.nikshay_codes_to_location[self._phi_code]
+        except KeyError:
+            raise ENikshayLocationNotFound(self._phi_code)
 
     @property
     def drtb_hiv(self):
         if self.test_phi is not None:
             return MockLocation('FAKEDRTBHIV', 'fake_drtb_hiv_id', MockLocationType('drtb_hiv', 'drtb_hiv'))
-        dto = self.nikshay_codes_to_location['-'.join(self._phi_code.split('-')[:2])]
+
+        dto_code = '-'.join(self._phi_code.split('-')[:2])
+        try:
+            dto = self.nikshay_codes_to_location[dto_code]
+        except KeyError:
+            raise ENikshayLocationNotFound(dto_code)
+
         for dto_child in dto.get_children():
             if dto_child.location_type.code == 'drtb-hiv':
                 return dto_child
+        raise ENikshayLocationNotFound('drtb-hiv matching DTO %s' % dto_code)
 
     @property
     def _phi_code(self):

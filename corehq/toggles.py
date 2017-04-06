@@ -940,19 +940,11 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-VELLUM_BETA = StaticToggle(
-    'vellum_beta',
-    'Use Vellum beta version. This flag has been deactivated and will be removed soon; all users are on the beta\
-    unless they also have the vellum alpha flag set.',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
-)
-
 VELLUM_ALPHA = StaticToggle(
     'vellum_alpha',
     'Use alpha (pre-beta) Vellum',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER, NAMESPACE_DOMAIN]
 )
 
 APP_MANAGER_V2 = StaticToggle(
@@ -1081,4 +1073,11 @@ DASHBOARD_GRAPHS = StaticToggle(
     'Show submission graph on dashboard',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+PUBLISH_CUSTOM_REPORTS = StaticToggle(
+    'publish_custom_reports',
+    "Publish custom reports (No needed Authorization)",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )
