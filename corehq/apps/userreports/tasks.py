@@ -4,7 +4,6 @@ from datetime import datetime
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
-from django.core.paginator import Paginator
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
@@ -204,13 +203,11 @@ def queue_async_indicators():
     with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
         redis_client = get_redis_client().client.get_client()
         indicators = AsyncIndicator.objects.all()[:10000]
-        paginator = Paginator(indicators, 1000)
-        for page in paginator.page_range:
-            for indicator in paginator.page(page).object_list:
-                now = datetime.utcnow()
-                if now > cutoff:
-                    break
-                _queue_indicator(redis_client, indicator)
+        for indicator in indicators:
+            now = datetime.utcnow()
+            if now > cutoff:
+                break
+            _queue_indicator(redis_client, indicator)
 
 
 def _queue_indicator(redis_client, indicator):
