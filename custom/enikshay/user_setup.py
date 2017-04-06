@@ -131,9 +131,10 @@ def get_site_code(name, nikshay_code, type_code, parent):
         nikshay_code = "0{}".format(nikshay_code)
 
     parent_site_code = parent.site_code
-    parent_prefix = 'drtbhiv' if parent.location_type.code == 'drtb-hiv' else parent.location_type.code
+    parent_prefix = ('drtbhiv_' if parent.location_type.code == 'drtb-hiv' else
+                     "{}_".format(parent.location_type.code))
     if parent_site_code.startswith(parent_prefix):
-        parent_site_code = parent_site_code[len(parent_prefix)+1:]
+        parent_site_code = parent_site_code[len(parent_prefix):]
 
     name_code = code_ify(name)
 
@@ -142,7 +143,7 @@ def get_site_code(name, nikshay_code, type_code, parent):
     elif type_code == 'cto':
         return '_'.join([type_code, parent_site_code, name_code])
     elif type_code == 'drtb-hiv':
-        return '_'.join(['drtbhiv_', parent_site_code])
+        return '_'.join(['drtbhiv', parent_site_code])
     elif type_code in ['dto', 'tu', 'dmc', 'phi']:
         return '_'.join([type_code, parent_site_code, nikshay_code])
     elif type_code in ['ctd', 'drtb']:
@@ -151,8 +152,6 @@ def get_site_code(name, nikshay_code, type_code, parent):
         raise AssertionError('This eNikshay location has an unrecognized type, {}'.format(type_code))
 
 
-# TODO test!
-# TODO Do we really want drtb-hiv to be drtbhiv?
 def set_site_code(location_form):
     # https://docs.google.com/document/d/1Pr19kp5cQz9412Q1lbVgszeZJTv0XRzizb0bFHDxvoA/edit#heading=h.9v4rs82o0soc
     nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code') or ''
