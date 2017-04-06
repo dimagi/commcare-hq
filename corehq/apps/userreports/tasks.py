@@ -221,7 +221,7 @@ def _queue_indicator(redis_client, indicator):
 
     indicator.date_queued = datetime.utcnow()
     indicator.save()
-    save_document.delay(indicator.id, indicator.doc_id)
+    save_document.delay(indicator.doc_id)
 
 
 def _get_indicator_queued_lock_key(indicator):
@@ -229,10 +229,10 @@ def _get_indicator_queued_lock_key(indicator):
 
 
 @task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
-def save_document(async_indicator_id, doc_id):
+def save_document(doc_id):
     lock_key = get_async_indicator_modify_lock_key(doc_id)
     with CriticalSection([lock_key]):
-        indicator = AsyncIndicator.objects.get(pk=async_indicator_id)
+        indicator = AsyncIndicator.objects.get(doc_id=doc_id)
         doc_store = get_document_store(indicator.domain, indicator.doc_type)
         doc = doc_store.get_document(indicator.doc_id)
 
