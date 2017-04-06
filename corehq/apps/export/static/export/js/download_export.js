@@ -1,5 +1,5 @@
 hqDefine('export/js/download_export.js', function() {
-   'use strict';
+    'use strict';
 
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
     var downloadExportsApp = window.angular.module('downloadExportsApp', ['hq.download_export']);
@@ -19,6 +19,6 @@ hqDefine('export/js/download_export.js', function() {
         },
         user_type: function () {
             return $('#id_user_types');
-        }
+        },
     });
 });
