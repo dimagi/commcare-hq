@@ -190,8 +190,9 @@ class EpisodeUpdate(object):
         """
 
         if not self._cache_dose_taken_by_date and self._cache_dose_taken_by_date != {}:
-            # we can't memoize this as the arg is list.
+            # memoize this, `calculate_doses_taken_by_day` can't be memoized using decorator as it uses list arg
             dose_taken_by_date = self.calculate_doses_taken_by_day(adherence_cases)
+            self._cache_dose_taken_by_date = dose_taken_by_date
         else:
             dose_taken_by_date = self._cache_dose_taken_by_date
 
