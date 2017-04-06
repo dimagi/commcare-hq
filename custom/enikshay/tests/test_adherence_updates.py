@@ -1,4 +1,5 @@
 import pytz
+import mock
 from datetime import date, datetime
 from django.test import TestCase
 
@@ -29,9 +30,14 @@ from custom.enikshay.tests.utils import (
 
 
 class TestAdherenceUpdater(TestCase):
+    _call_center_domain_mock = mock.patch(
+        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+    )
+
     @classmethod
     def setUpClass(cls):
         super(TestAdherenceUpdater, cls).setUpClass()
+        cls._call_center_domain_mock.start()
         cls.domain = 'enikshay'
         cls.user = CommCareUser.create(
             cls.domain,
@@ -107,6 +113,7 @@ class TestAdherenceUpdater(TestCase):
             data_item.delete()
         cls.data_store.adapter.drop_table()
         super(TestAdherenceUpdater, cls).tearDownClass()
+        cls._call_center_domain_mock.stop()
 
     def tearDown(self):
         self.data_store.adapter.clear_table()

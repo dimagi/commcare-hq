@@ -1,3 +1,4 @@
+import mock
 import pytz
 from datetime import datetime
 
@@ -24,10 +25,14 @@ def _uid(index):
 
 
 class TestAdherenceUCRSource(TestCase):
+    _call_center_domain_mock = mock.patch(
+        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+    )
 
     @classmethod
     def setUpClass(cls):
         super(TestAdherenceUCRSource, cls).setUpClass()
+        cls._call_center_domain_mock.start()
         cls.domain = "enikshay"
         cls.data_store = AdherenceDatastore(cls.domain)
         cls.user = CommCareUser.create(
@@ -67,6 +72,7 @@ class TestAdherenceUCRSource(TestCase):
         cls.user.delete()
         cls.data_store.adapter.drop_table()
         super(TestAdherenceUCRSource, cls).tearDownClass()
+        cls._call_center_domain_mock.stop()
 
     def tearDown(self):
         self.data_store.adapter.clear_table()
