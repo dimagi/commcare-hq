@@ -31,7 +31,9 @@
                 <option value="date-case-property-filter">{% trans "Date case property" %}</option>
                 <option value="advanced-date-case-property-filter">{% trans "Date case property (advanced)" %}</option>
                 <option value="parent-closed-filter">{% trans "Parent case is closed" %}</option>
-                <option value="custom-filter">{% trans "Custom filter callout" %}</option>
+                {% if form.is_system_admin %}
+                <option value="custom-filter">{% trans "Custom filter" %}</option>
+                {% endif %}
             </select>
         </div>
     </div>
@@ -163,9 +165,12 @@
 <script type="text/html" id="custom-filter">
     <div class="form-group">
         <div data-bind="template: {name: 'remove-filter'}"></div>
-        <label class="control-label col-xs-2">{% trans "Custom filter callout" %}</label>
+        <label class="control-label col-xs-2">{% trans "Custom filter ID" %}</label>
         <div class="controls col-xs-4">
             <input type="text" data-bind="value: name" required class="textinput form-control" placeholder="{% trans 'custom filter id' %}" />
         </div>
+        <label class="col-xs-1 control-label">
+            <span class="label label-primary">Requires System Admin</span>
+        </label>
     </div>
 </script>

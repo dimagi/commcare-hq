@@ -9,13 +9,18 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
-    var actions_model = new CaseRuleActions({
-        close_case: '{{ actions_form.close_case.value|escapejs }}',
-        properties_to_update: {{ actions_form.properties_to_update.value|safe }},
-        custom_action_definitions: {{ actions_form.custom_action_definitions.value|safe }},
+    $(function() {
+        var actions_model = new CaseRuleActions({
+            close_case: '{{ actions_form.close_case.value|escapejs }}',
+            properties_to_update: {{ actions_form.properties_to_update.value|safe }},
+            custom_action_definitions: {{ actions_form.custom_action_definitions.value|safe }},
+        });
+        $('#rule-actions').koApplyBindings(actions_model);
+        actions_model.load_initial();
+        {% if read_only_mode %}
+            $('#rule-definition :input').prop('disabled', true);
+        {% endif %}
     });
-    $('#rule-actions').koApplyBindings(actions_model);
-    actions_model.load_initial();
 </script>
 {% endblock %}
 
@@ -24,6 +29,11 @@
 {% include 'data_interfaces/partials/case_rule_actions.html' with form=actions_form %}
 
 <div id="rule-definition">
+    {% if read_only_mode %}
+        <p class="alert alert-block alert-warning">
+            {% trans "NOTE: A system administrator is required to edit this rule." %}
+        </p>
+    {% endif %}
     <form class="form form-horizontal" method="POST" action="#">
         {% crispy rule_form %}
         {% crispy criteria_form %}

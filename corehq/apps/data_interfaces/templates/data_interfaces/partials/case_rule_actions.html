@@ -27,7 +27,9 @@
             <select class="select form-control" data-bind="value: selected_case_action_id">
                 <option value="close-case-action">{% trans "Close the case" %}</option>
                 <option value="update-case-property-action">{% trans "Update case property" %}</option>
-                <option value="custom-action">{% trans "Custom action callout" %}</option>
+                {% if form.is_system_admin %}
+                <option value="custom-action">{% trans "Custom action" %}</option>
+                {% endif %}
             </select>
         </div>
     </div>
@@ -83,9 +85,12 @@
 <script type="text/html" id="custom-action">
     <div class="form-group">
         <div data-bind="template: {name: 'remove-action'}"></div>
-        <label class="control-label col-xs-2">{% trans "Custom action callout" %}</label>
+        <label class="control-label col-xs-2">{% trans "Custom action ID" %}</label>
         <div class="controls col-xs-4">
             <input type="text" class="textinput form-control" data-bind="value: name" required placeholder="{% trans 'custom action id' %}" />
         </div>
+        <label class="col-xs-1 control-label">
+            <span class="label label-primary">Requires System Admin</span>
+        </label>
     </div>
 </script>

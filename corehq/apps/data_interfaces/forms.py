@@ -17,6 +17,7 @@ from couchdbkit import ResourceNotFound
 
 from corehq.toggles import AUTO_CASE_UPDATE_ENHANCEMENTS
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
+from dimagi.utils.decorators.memoized import memoized
 from django.db import transaction
 from django import forms
 from crispy_forms.helper import FormHelper
@@ -523,6 +524,8 @@ class CaseUpdateRuleForm(forms.Form):
         if 'initial' in kwargs:
             raise ValueError("Initial values are set by the form")
 
+        self.is_system_admin = kwargs.pop('is_system_admin', False)
+
         rule = kwargs.pop('rule', None)
         if rule:
             kwargs['initial'] = self.compute_initial(rule)
@@ -602,6 +605,8 @@ class CaseRuleCriteriaForm(forms.Form):
         if 'initial' in kwargs:
             raise ValueError("Initial values are set by the form")
 
+        self.is_system_admin = kwargs.pop('is_system_admin', False)
+
         rule = kwargs.pop('rule', None)
         if rule:
             kwargs['initial'] = self.compute_initial(rule)
@@ -637,6 +642,20 @@ class CaseRuleCriteriaForm(forms.Form):
         self.case_type_helper.field_class = 'col-xs-2'
         self.case_type_helper.form_tag = False
         self.case_type_helper.layout = Layout(Field('case_type'))
+
+    @property
+    @memoized
+    def requires_system_admin_to_edit(self):
+        if 'custom_match_definitions' not in self.initial:
+            return False
+
+        custom_criteria = json.loads(self.initial['custom_match_definitions'])
+        return len(custom_criteria) > 0
+
+    @property
+    @memoized
+    def requires_system_admin_to_save(self):
+        return len(self.cleaned_data['custom_match_definitions']) > 0
 
     def _json_fail_hard(self):
         raise ValueError("Invalid JSON object given")
@@ -684,7 +703,7 @@ class CaseRuleCriteriaForm(forms.Form):
 
             name = obj['name'].strip()
             if not name or name not in settings.AVAILABLE_CUSTOM_RULE_CRITERIA:
-                raise ValidationError(_("Invalid custom callout reference"))
+                raise ValidationError(_("Invalid custom filter id reference"))
 
             result.append({
                 'name': name
@@ -825,6 +844,8 @@ class CaseRuleActionsForm(forms.Form):
         if 'initial' in kwargs:
             raise ValueError("Initial values are set by the form")
 
+        self.is_system_admin = kwargs.pop('is_system_admin', False)
+
         rule = kwargs.pop('rule', None)
         if rule:
             kwargs['initial'] = self.compute_initial(rule)
@@ -855,6 +876,20 @@ class CaseRuleActionsForm(forms.Form):
             'VALUE_TYPE_EXACT': UpdateCaseDefinition.VALUE_TYPE_EXACT,
             'VALUE_TYPE_CASE_PROPERTY': UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY,
         }
+
+    @property
+    @memoized
+    def requires_system_admin_to_edit(self):
+        if 'custom_action_definitions' not in self.initial:
+            return False
+
+        custom_actions = json.loads(self.initial['custom_action_definitions'])
+        return len(custom_actions) > 0
+
+    @property
+    @memoized
+    def requires_system_admin_to_save(self):
+        return len(self.cleaned_data['custom_action_definitions']) > 0
 
     def _json_fail_hard(self):
         raise ValueError("Invalid JSON object given")
@@ -926,7 +961,7 @@ class CaseRuleActionsForm(forms.Form):
 
             name = obj['name'].strip()
             if not name or name not in settings.AVAILABLE_CUSTOM_RULE_ACTIONS:
-                raise ValidationError(_("Invalid custom callout reference"))
+                raise ValidationError(_("Invalid custom action id reference"))
 
             result.append({
                 'name': name

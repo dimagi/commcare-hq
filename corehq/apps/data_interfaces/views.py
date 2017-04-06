@@ -5,7 +5,6 @@ import uuid
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import HttpResponseBadRequest
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -48,7 +47,7 @@ from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from django.db import transaction
 from django.urls import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseServerError
+from django.http import HttpResponseRedirect, Http404, HttpResponseServerError, HttpResponseBadRequest
 from django.shortcuts import render
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from dimagi.utils.decorators.memoized import memoized
@@ -935,27 +934,46 @@ class AddCaseRuleView(DataInterfaceSection):
 
     @property
     @memoized
+    def is_system_admin(self):
+        return self.request.couch_user.is_superuser
+
+    @property
+    @memoized
+    def read_only_mode(self):
+        return (
+            not self.is_system_admin and
+            (
+                self.criteria_form.requires_system_admin_to_edit or
+                self.actions_form.requires_system_admin_to_edit
+            )
+        )
+
+    @property
+    @memoized
     def rule_form(self):
         if self.request.method == 'POST':
-            return CaseUpdateRuleForm(self.domain, self.request.POST, rule=self.initial_rule)
+            return CaseUpdateRuleForm(self.domain, self.request.POST, rule=self.initial_rule,
+                is_system_admin=self.is_system_admin)
 
-        return CaseUpdateRuleForm(self.domain, rule=self.initial_rule)
+        return CaseUpdateRuleForm(self.domain, rule=self.initial_rule, is_system_admin=self.is_system_admin)
 
     @property
     @memoized
     def criteria_form(self):
         if self.request.method == 'POST':
-            return CaseRuleCriteriaForm(self.domain, self.request.POST, rule=self.initial_rule)
+            return CaseRuleCriteriaForm(self.domain, self.request.POST, rule=self.initial_rule,
+                is_system_admin=self.is_system_admin)
 
-        return CaseRuleCriteriaForm(self.domain, rule=self.initial_rule)
+        return CaseRuleCriteriaForm(self.domain, rule=self.initial_rule, is_system_admin=self.is_system_admin)
 
     @property
     @memoized
     def actions_form(self):
         if self.request.method == 'POST':
-            return CaseRuleActionsForm(self.domain, self.request.POST, rule=self.initial_rule)
+            return CaseRuleActionsForm(self.domain, self.request.POST, rule=self.initial_rule,
+                is_system_admin=self.is_system_admin)
 
-        return CaseRuleActionsForm(self.domain, rule=self.initial_rule)
+        return CaseRuleActionsForm(self.domain, rule=self.initial_rule, is_system_admin=self.is_system_admin)
 
     @property
     def page_context(self):
@@ -963,6 +981,7 @@ class AddCaseRuleView(DataInterfaceSection):
             'rule_form': self.rule_form,
             'criteria_form': self.criteria_form,
             'actions_form': self.actions_form,
+            'read_only_mode': self.read_only_mode,
         }
 
     def post(self, request, *args, **kwargs):
@@ -970,7 +989,20 @@ class AddCaseRuleView(DataInterfaceSection):
         criteria_form_valid = self.criteria_form.is_valid()
         actions_form_valid = self.actions_form.is_valid()
 
+        if self.read_only_mode:
+            # Don't allow making changes to rules that have custom
+            # criteria/actions unless the user has permission to
+            return HttpResponseBadRequest()
+
         if rule_form_valid and criteria_form_valid and actions_form_valid:
+            if not self.is_system_admin and (
+                self.criteria_form.requires_system_admin_to_save or
+                self.actions_form.requires_system_admin_to_save
+            ):
+                # Don't allow adding custom criteria/actions to rules
+                # unless the user has permission to
+                return HttpResponseBadRequest()
+
             with transaction.atomic():
                 if self.initial_rule:
                     rule = self.initial_rule
