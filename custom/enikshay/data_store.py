@@ -24,12 +24,10 @@ class AdherenceDatastore(object):
 
     @memoized
     def dose_known_adherences(self, episode_id):
-        return self.es.filter(self._base_filters(episode_id)).run().hits
+        # return sorted adherences, so self.latest_adherence_date can reuse the result of this query
+        return self.es.filter(self._base_filters(episode_id)).sort('adherence_date', desc=True).run().hits
 
     def latest_adherence_date(self, episode_id):
         result = self.dose_known_adherences(episode_id)
-        if len(result) > 0:
-            latest = sorted(result, key=lambda x: x['adherence_date'])[-1]
-            return pytz.UTC.localize(parse_datetime(latest.get('adherence_date')))
-        else:
-            return None
+        if result:
+            return pytz.UTC.localize(parse_datetime(result[0].get('adherence_date')))
