@@ -287,13 +287,7 @@ class BlobDownload(DownloadBase):
         return self.identifier
 
     def get_content(self):
-        file_obj = None
-        try:
-            file_obj = self.blobdb.get(self.identifier, self.bucket).read()
-            return file_obj.read()
-        finally:
-            if file_obj is not None:
-                file_obj.close()
+        raise NotImplementedError
 
     def toHttpResponse(self):
         file_obj = self.blobdb.get(self.identifier, self.bucket)
