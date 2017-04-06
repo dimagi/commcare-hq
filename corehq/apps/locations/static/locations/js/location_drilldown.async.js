@@ -22,13 +22,6 @@ function LocationSelectViewModel(options) {
     this.root = ko.observable();
     this.selected_path = ko.observableArray();
 
-    var initialData = null;
-
-    this.reset = function() {
-        this.selected_path([]);
-        this.load(initialData.locs, initialData.selected);
-    };
-
     this.location_types = $.map(options.hierarchy, function(e) {
         return {type: e[0], allowed_parents: e[1]};
     });
@@ -87,13 +80,6 @@ function LocationSelectViewModel(options) {
 
     // load location hierarchy and set initial path
     this.load = function(locs, selected) {
-        if (!initialData) {
-            initialData = {
-                locs: locs,
-                selected: selected,
-            };
-        }
-
         this.root(new model.func({name: '_root', children: locs, auto_drill: model.auto_drill}, this));
         this.path_push(this.root());
 
