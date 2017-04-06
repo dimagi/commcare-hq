@@ -196,7 +196,7 @@ class EpisodeUpdate(object):
         else:
             dose_taken_by_date = self._cache_dose_taken_by_date
 
-        if bool(lte) != bool(lte):
+        if bool(lte) != bool(gte):
             raise Exception("Both of lte and gte should be specified or niether of them")
 
         if not lte:
