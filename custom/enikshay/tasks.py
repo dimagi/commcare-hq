@@ -257,9 +257,9 @@ class EpisodeUpdate(object):
                 adherence_schedule_id = self.get_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
                 doses_per_week = dose_data.get(adherence_schedule_id)
                 if doses_per_week:
-                    update['expected_doses_taken'] = ((
+                    update['expected_doses_taken'] = int(((
                         (update['aggregated_score_date_calculated'] - adherence_schedule_date_start)).days / 7.0
-                    ) * doses_per_week
+                    ) * doses_per_week)
                 else:
                     update['expected_doses_taken'] = 0
                     soft_assert(notify_admins=True)(
