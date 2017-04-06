@@ -570,6 +570,15 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
 
         return context
 
+    # Add the output of djng_current_rmi to view context, which requires having
+    # the rest of the context, specifically context['view'], available.
+    # See https://github.com/jrief/django-angular/blob/master/djng/templatetags/djng_tags.py
+    def get_context_data(self, **kwargs):
+        context = super(BaseDownloadExportView, self).get_context_data(**kwargs)
+        from djangular.templatetags.djangular_tags import djng_current_rmi
+        context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
+        return context
+
     @property
     def export_list_url(self):
         """Should return a the URL for the export list view"""
