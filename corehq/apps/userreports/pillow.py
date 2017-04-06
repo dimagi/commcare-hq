@@ -51,7 +51,7 @@ def time_ucr_process_change(method):
             )
             pillow_logging.warning(log_message)
             if seconds > LONG_UCR_SOFT_ASSERT_THRESHOLD:
-                email_message = u"UCR data source {} is taking too long to process".foramt(
+                email_message = u"UCR data source {} is taking too long to process".format(
                     table.config._id
                 )
                 _slow_ucr_assert(False, email_message)
