@@ -47,7 +47,6 @@ class TestAdherenceUpdater(TestCase):
         self.person_id = u"person"
         self.occurrence_id = u"occurrence"
         self.episode_id = u"episode"
-        FormProcessorTestUtils.delete_all_cases()
         self.case_updater = EpisodeAdherenceUpdater(self.domain)
 
     @classmethod
@@ -111,6 +110,7 @@ class TestAdherenceUpdater(TestCase):
 
     def tearDown(self):
         self.data_store.adapter.clear_table()
+        FormProcessorTestUtils.delete_all_cases()
 
     def _create_episode_case(self, adherence_schedule_date_start, adherence_schedule_id):
         person = get_person_case_structure(
