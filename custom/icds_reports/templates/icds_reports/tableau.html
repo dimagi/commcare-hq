@@ -10,9 +10,29 @@
         .filter {
             margin-bottom: 10px;
         }
+
+        .navbar-hq-main-menu .navbar-brand {
+            padding: 11px;
+        }
+
+        .navbar {
+            min-height: 60px;
+        }
+
+        div.logo {
+            background-image: url(/static/hqstyle/images/commcare-flower.png);
+            background-size: contain;
+            width: 38px;
+            height: 38px;
+        }
+
+        @media only screen and (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            div.logo {
+                background-image: url(/static/hqstyle/images/commcare-flower-lg.png);
+                width: 51px;
+            }
+        }
     </style>
-
-
     <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'tableau.min.js' %}"></script>
@@ -25,6 +45,16 @@
 <body>
     <nav class="navbar navbar-default">
         <div class="container-fluid">
+            <div class="navbar-header hq-header navbar-hq-main-menu">
+                <a href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}" class="navbar-brand">
+                    {% if CUSTOM_LOGO_URL %}
+                        <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
+                    {% else %}
+                        <!-- navbar.less supplies the default logo -->
+                        <div class="logo"></div>
+                    {% endif %}
+                </a>
+            </div>
             <div class="nav navbar-nav">
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Reports<span class="caret"></span></a>
