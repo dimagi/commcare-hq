@@ -26,6 +26,7 @@ from corehq.apps.userreports.util import get_indicator_adapter, get_async_indica
 from corehq.util.context_managers import notify_someone
 from corehq.util.couch import get_document_or_not_found
 from corehq.util.datadog.gauges import datadog_gauge
+from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection, release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.pagination import DatatablesParams
@@ -225,6 +226,12 @@ def _get_indicator_queued_lock_key(indicator):
     return 'async_indicator_queued-{}'.format(indicator.id)
 
 
+@quickcache(['config_id'])
+def _get_config(config_id):
+    # performance optimization for save_document.  don't use elsewhere
+    return _get_config_by_id(config_id)
+
+
 @task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def save_document(doc_id):
     lock_key = get_async_indicator_modify_lock_key(doc_id)
@@ -235,7 +242,7 @@ def save_document(doc_id):
 
         eval_context = EvaluationContext(doc)
         for config_id in indicator.indicator_config_ids:
-            config = _get_config_by_id(config_id)
+            config = _get_config(config_id)
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.best_effort_save(doc, eval_context)
             eval_context.reset_iteration()
