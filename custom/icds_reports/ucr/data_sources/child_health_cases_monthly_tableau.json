@@ -603,19 +603,8 @@
         "transform": {},
         "display_name": null,
         "expression": {
-          "type": "conditional",
-          "test": {
-            "type": "named",
-            "name": "wer_eligible"
-          },
-          "expression_if_true": {
-            "type": "named",
-            "name": "nutrition_status_last_recorded"
-          },
-          "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
-          }
+          "type": "named",
+          "name": "nutrition_status_last_recorded"
         }
       },
       {
@@ -627,19 +616,8 @@
         "transform": {},
         "display_name": null,
         "expression": {
-          "type": "conditional",
-          "test": {
-            "type": "named",
-            "name": "wer_eligible"
-          },
-          "expression_if_true": {
-            "type": "named",
-            "name": "current_month_nutrition_status"
-          },
-          "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
-          }
+          "type": "named",
+          "name": "current_month_nutrition_status"
         }
       },
       {
@@ -656,10 +634,6 @@
                 "type": "named",
                 "name": "nutrition_status_last_recorded"
               }
-            },
-            {
-              "type": "named",
-              "name": "wer_eligible"
             }
           ]
         },
@@ -679,10 +653,6 @@
                 "type": "named",
                 "name": "nutrition_status_last_recorded"
               }
-            },
-            {
-              "type": "named",
-              "name": "wer_eligible"
             }
           ]
         },
@@ -702,10 +672,6 @@
                 "type": "named",
                 "name": "nutrition_status_last_recorded"
               }
-            },
-            {
-              "type": "named",
-              "name": "wer_eligible"
             }
           ]
         },
