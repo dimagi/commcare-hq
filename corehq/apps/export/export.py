@@ -375,8 +375,8 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
                 DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
 
             datadog_gauge('export_iteration', context.duration, tags=[
-                'iteration:{}'.format(row_number / 500),
-                'domain:{}'.format(domain),
+                u'iteration:{}'.format(row_number / 500),
+                u'domain:{}'.format(domain),
             ])
 
 
