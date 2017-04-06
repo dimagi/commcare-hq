@@ -123,7 +123,10 @@ BEGIN
 		'counsel_skin_to_skin, ' ||
 		'counsel_immediate_breastfeeding, ' ||
 		'weight_recorded_in_month, ' ||
-		'height_recorded_in_month FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'height_recorded_in_month, ' ||
+		'has_aadhar_id, ' ||
+		'thr_eligible, ' ||
+		'pnc_eligible FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
 
@@ -186,7 +189,9 @@ BEGIN
 		'bp2_complete, ' ||
 		'bp3_complete, ' ||
 		'pnc_complete, ' ||
-		'postnatal FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'postnatal, ' ||
+		'has_aadhar_id, ' ||
+		'counsel_fp_methods FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
 		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
         -- There may be better indexes to put here. Should investigate what tableau queries
