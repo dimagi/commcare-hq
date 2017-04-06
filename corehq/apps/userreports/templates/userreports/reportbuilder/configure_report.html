@@ -24,6 +24,10 @@
 {% block pre_page_content %}{% endblock %}{# Avoid the spacer #}
 
 {% block page_content %}
+  {% if not has_report_builder_access %}
+    <div class="spacer"></div>
+    {% include "userreports/partials/preview_warning.html" %}
+  {% endif %}
   <div id="reportConfig" class="ko-template">
     <div class="pull-right page-actions-toolbar">
       {% if existing_report %}
@@ -35,7 +39,9 @@
           Delete Report
         </a>&nbsp;
       {% endif %}
-      <button id="btnSaveView" class="btn btn-info">Save &amp; View</button>
+      {% if has_report_builder_access %}
+        <button id="btnSaveView" class="btn btn-info">Save &amp; View</button>
+      {% endif %}
       &nbsp;<span id="saveButtonHolder"></span>
     </div>
 
@@ -285,6 +291,7 @@
             "initialLocation": {{ initial_location|JSON }},
             "initialChartType": {{ initial_chart_type|JSON }},
             "mapboxAccessToken": {{ MAPBOX_ACCESS_TOKEN|JSON }},
+            "hasReportBuilderAccess": {{ has_report_builder_access|JSON }},
         });
         $("#reportConfig").koApplyBindings(reportConfig)
         window._bindingsApplied = true;

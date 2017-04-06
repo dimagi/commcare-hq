@@ -400,7 +400,10 @@ var reportBuilder = function () {
                 }
             },
         });
-        self.saveButton.ui.appendTo($("#saveButtonHolder"));
+        if (config['hasReportBuilderAccess']) {
+            self.saveButton.ui.appendTo($("#saveButtonHolder"));
+        }
+
 
         $("#btnSaveView").click(function () {
             var isValid = self.validate();

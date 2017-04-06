@@ -266,10 +266,16 @@ class ReportBuilderView(BaseDomainView):
     @use_daterangepicker
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
-        if has_report_builder_access(request):
-            return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
-        else:
-            raise Http404
+        return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def main_context(self):
+        main_context = super(ReportBuilderView, self).main_context
+        main_context.update({
+            'has_report_builder_access': has_report_builder_access(self.request),
+            'paywall_url': paywall_home(self.domain),
+        })
+        return main_context
 
     @property
     def section_name(self):
@@ -746,7 +752,6 @@ class ConfigureReport(ReportBuilderView):
             else:
                 options[key] = [option]
 
-
     @property
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
@@ -816,6 +821,9 @@ class ConfigureReport(ReportBuilderView):
         )
 
     def post(self, request, domain, *args, **kwargs):
+        if not has_report_builder_access(request):
+            raise Http404
+
         report_data = json.loads(request.body)
         if report_data['existing_report'] and not self.existing_report:
             # This is the case if the user has clicked "Save" for a second time from the new report page

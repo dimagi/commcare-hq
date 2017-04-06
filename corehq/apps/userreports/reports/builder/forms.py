@@ -51,6 +51,7 @@ from corehq.apps.userreports.reports.builder import (
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
+from corehq.apps.userreports.util import has_report_builder_access
 from dimagi.utils.decorators.memoized import memoized
 
 # This dict maps filter types from the report builder frontend to UCR filter types
@@ -676,7 +677,9 @@ class DataSourceForm(forms.Form):
 
         existing_reports = ReportConfiguration.by_domain(self.domain)
         builder_reports = filter(lambda report: report.report_meta.created_by_builder, existing_reports)
-        if len(builder_reports) >= self.max_allowed_reports:
+        if has_report_builder_access(self.domain) and len(builder_reports) >= self.max_allowed_reports:
+            # Don't show the warning when domain does not have report buidler access, because this is just a
+            # preview and the report will not be saved.
             raise forms.ValidationError(_(
                 "Too many reports!\n"
                 "Creating this report would cause you to go over the maximum "
