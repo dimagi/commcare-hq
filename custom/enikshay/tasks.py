@@ -179,23 +179,14 @@ class EpisodeUpdate(object):
 
         return dose_taken_by_date
 
-    def count_doses_taken(self, adherence_cases, lte=None, gte=None):
+    def count_doses_taken(self, dose_taken_by_date, lte=None, gte=None):
         """
         Args:
-            adherence_cases: list of 'adherence_cases' with its 'adherence_value' as one of DOSE_KNOWN_INDICATORS
-
+            dose_taken_by_date: result of self.calculate_doses_taken_by_day
         Returns:
             total count of adherence_cases excluding duplicates on a given day. If there are
             two adherence_cases on one day at different time, it will be counted as one
         """
-
-        if not self._cache_dose_taken_by_date and self._cache_dose_taken_by_date != {}:
-            # memoize this, `calculate_doses_taken_by_day` can't be memoized using decorator as it uses list arg
-            dose_taken_by_date = self.calculate_doses_taken_by_day(adherence_cases)
-            self._cache_dose_taken_by_date = dose_taken_by_date
-        else:
-            dose_taken_by_date = self._cache_dose_taken_by_date
-
         if bool(lte) != bool(gte):
             raise Exception("Both of lte and gte should be specified or niether of them")
 
@@ -252,10 +243,11 @@ class EpisodeUpdate(object):
 
                 # calculate 'adherence_total_doses_taken'
                 adherence_cases = self.get_valid_adherence_cases()
-                update["adherence_total_doses_taken"] = self.count_doses_taken(adherence_cases)
+                dose_taken_by_date = self.calculate_doses_taken_by_day(adherence_cases)
+                update["adherence_total_doses_taken"] = self.count_doses_taken(dose_taken_by_date)
                 # calculate 'aggregated_score_count_taken'
                 update["aggregated_score_count_taken"] = self.count_doses_taken(
-                    adherence_cases,
+                    dose_taken_by_date,
                     lte=adherence_schedule_date_start,
                     gte=update["aggregated_score_date_calculated"]
                 )
