@@ -1,3 +1,4 @@
+/* global _, nv, d3 */
 hqDefine('reports_core/js/charts.js', function() {
     var fn = {};
     var renderPie = function (config, data, svgSelector) {
@@ -163,7 +164,11 @@ hqDefine('reports_core/js/charts.js', function() {
                 console.error("Bad chart configuration: " + config.type);
             } else {
                 if (config.title) {
-                    $('<h2 />').text(config.title).appendTo(chartContainer);
+                    var el = '<h2 />';
+                    if (config.titleClass) {
+                        el = '<div class="' + config.titleClass + '"/>'
+                    }
+                    $(el).text(config.title).appendTo(chartContainer);
                 }
                 var $svg = d3.select(chartContainer[0]).append("svg");
                 var id = 'chart-' + i;
