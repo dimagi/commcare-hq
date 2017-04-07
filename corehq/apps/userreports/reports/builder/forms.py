@@ -1097,6 +1097,17 @@ class ConfigureNewReportBase(forms.Form):
         """
         return column_id in self._report_columns_by_column_id
 
+    def _convert_v1_column_id_to_current_format(self, column_id):
+        """
+        Assuming column_id does not exist, assume it's from version 1 of the report builder, and attempt to convert
+        it to the current version.
+
+        This is needed because previously hidden value questions and case property columns didn't have a datatype
+        in their ids, but the builder now expects that, so this attempts to just append a datatype.
+        """
+        return column_id + "_string"
+
+
     def _get_multiselect_indicator_id(self, column_field, indicators):
         """
         If this column_field corresponds to a multiselect data source indicator, then return the id of the
@@ -1217,6 +1228,11 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 indicator_id = mselect_indicator_id or c['field']
                 display = c['display']
                 exists = self._column_exists(indicator_id)
+                if not exists:
+                    possibly_corrected_column_id = self._convert_v1_column_id_to_current_format(indicator_id)
+                    if self._column_exists(possibly_corrected_column_id):
+                        exists = True
+                        indicator_id = possibly_corrected_column_id
 
                 if mselect_indicator_id:
                     if mselect_indicator_id not in added_multiselect_columns:
