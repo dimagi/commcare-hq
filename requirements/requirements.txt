@@ -39,7 +39,7 @@ python-dateutil==1.5
 python-magic==0.4.10
 pytz==2015.6
 PyYAML==3.11
-requests==2.10.0
+requests==2.13.0
 suds-jurko==0.6
 tropo-webapi-python==0.1.3
 xlutils==1.4.1
