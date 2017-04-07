@@ -226,6 +226,7 @@ def _queue_indicator(redis_client, indicator):
 
     indicator.date_queued = datetime.utcnow()
     indicator.save()
+    release_lock(lock, degrade_gracefully=True)
     save_document.delay([indicator.doc_id])
 
 
@@ -252,16 +253,20 @@ def save_document(doc_ids):
         first_indicator = indicators[0]
         doc_store = get_document_store(first_indicator.domain, first_indicator.doc_type)
         for doc in doc_store.iter_documents(doc_ids):
-            eval_context = EvaluationContext(doc)
             indicator = next(i for i in indicators if doc['_id'] == i.doc_id)
+
+            redis_client = get_redis_client().client.get_client()
+            lock_key = _get_indicator_queued_lock_key([indicator])
+            lock = redis_client.lock(lock_key, timeout=60 * 60 * 24)
+            if not lock.acquire(blocking=False):
+                continue
+
+            eval_context = EvaluationContext(doc)
             for config_id in indicator.indicator_config_ids:
                 config = _get_config(config_id)
                 adapter = get_indicator_adapter(config, can_handle_laboratory=True)
                 adapter.best_effort_save(doc, eval_context)
                 eval_context.reset_iteration()
 
-            redis_client = get_redis_client().client.get_client()
-            queued_lock_key = _get_indicator_queued_lock_key([indicator])
-            lock = redis_client.lock(queued_lock_key)
             release_lock(lock, degrade_gracefully=True)
             indicator.delete()
