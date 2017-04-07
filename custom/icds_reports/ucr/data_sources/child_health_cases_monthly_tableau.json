@@ -603,8 +603,23 @@
         "transform": {},
         "display_name": null,
         "expression": {
-          "type": "named",
-          "name": "nutrition_status_last_recorded"
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "icds_child_valid_in_month"
+            }
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "nutrition_status_last_recorded"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
         }
       },
       {
@@ -616,8 +631,23 @@
         "transform": {},
         "display_name": null,
         "expression": {
-          "type": "named",
-          "name": "current_month_nutrition_status"
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "icds_child_valid_in_month"
+            }
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "current_month_nutrition_status"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
         }
       },
       {
@@ -626,6 +656,14 @@
         "filter": {
           "type": "and",
           "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "icds_child_valid_in_month"
+              }
+            },
             {
               "type": "boolean_expression",
               "operator": "eq",
@@ -648,6 +686,14 @@
             {
               "type": "boolean_expression",
               "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "icds_child_valid_in_month"
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
               "property_value": "moderately_underweight",
               "expression": {
                 "type": "named",
@@ -664,6 +710,14 @@
         "filter": {
           "type": "and",
           "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "icds_child_valid_in_month"
+              }
+            },
             {
               "type": "boolean_expression",
               "operator": "eq",
