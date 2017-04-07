@@ -50,7 +50,7 @@
  
      <script>
      var print_ref;
-@@ -99,78 +99,85 @@
+@@ -99,78 +99,83 @@
      </script>
  {% endblock %}
  
@@ -113,31 +113,29 @@
 +  {% registerurl "validate_module_for_build" domain app.id module.id %}
 +  <div class="tabbable appmanager-tabs-container">
 +
-+    {% if module.case_type != "" %}
++    {% if not module.is_surveys %}
 +      <ul class="nav nav-tabs" id="module-view-tabs">
 +        {% block tab-headers %}
 +          <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
 +          {% if module.module_type == 'shadow' %}
 +            <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
 +          {% endif %}
-+          {% if module.case_type != "" %}
-+            {% for detail in details %}
++          {% for detail in details %}
++            <li>
++              <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
++                {{ detail.label }}
++              </a>
++            </li>
++            {% if detail.long %}
 +              <li>
-+                <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
-+                  {{ detail.label }}
++                <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
++                  {{ detail.detail_label }}
 +                </a>
 +              </li>
-+              {% if detail.long %}
-+                <li>
-+                  <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
-+                    {{ detail.detail_label }}
-+                  </a>
-+                </li>
-+              {% endif %}
-+            {% endfor %}
-+            {% if details and app.advanced_app_builder and app|get_available_modules_for_case_list_configuration:module %}
-+                <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
 +            {% endif %}
++          {% endfor %}
++          {% if details and app.advanced_app_builder and app|get_available_modules_for_case_list_configuration:module %}
++              <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
 +          {% endif %}
 +        {% endblock %}{# endblock tab-headers #}
 +      </ul>
@@ -150,7 +148,7 @@
 +          {% include "app_manager/v2/partials/module_view_settings.html" %}
 +        </div>
 +
-+        {% if module.case_type != "" %}
++        {% if not module.is_surveys %}
 +          {% for detail in details %}
 +            <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
 +              {% include 'app_manager/v2/partials/case_list.html' %}
@@ -205,7 +203,7 @@
  <script type="text/html" id="module-forms-template">
      <div class="checkbox">
          <label>
-@@ -184,7 +191,7 @@
+@@ -184,7 +189,7 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
@@ -214,7 +212,7 @@
  {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
      {% with print_uploader as uploader %}
          {% include 'hqmedia/partials/multimedia_uploader.html' %}
-@@ -194,5 +201,5 @@
+@@ -194,5 +199,5 @@
  
  {% block breadcrumbs %}
      {{ block.super }}

@@ -3069,6 +3069,10 @@ class AdvancedModule(ModuleBase):
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
     search_config = SchemaProperty(CaseSearch)
 
+    @property
+    def is_surveys(self):
+        return False
+
     @classmethod
     def wrap(cls, data):
         # lazy migration to accommodate search_config as empty list
