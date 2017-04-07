@@ -4038,6 +4038,7 @@ class ReportAppConfig(DocumentSchema):
     localized_description = DictProperty()
     xpath_description = StringProperty()
     use_xpath_description = BooleanProperty(default=False)
+    show_data_table = BooleanProperty(default=True)
     graph_configs = DictProperty(ReportGraphConfig)
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
