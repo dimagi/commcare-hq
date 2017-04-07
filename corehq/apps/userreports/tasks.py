@@ -225,7 +225,7 @@ def _queue_indicator(redis_client, indicator):
 
     indicator.date_queued = datetime.utcnow()
     indicator.save()
-    save_document.delay(indicator.doc_id)
+    save_document.delay([indicator.doc_id])
 
 
 def _get_indicator_queued_lock_key(indicator):
@@ -239,22 +239,26 @@ def _get_config(config_id):
 
 
 @task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
-def save_document(doc_id):
-    lock_key = get_async_indicator_modify_lock_key(doc_id)
-    with CriticalSection([lock_key]):
-        indicator = AsyncIndicator.objects.get(doc_id=doc_id)
-        doc_store = get_document_store(indicator.domain, indicator.doc_type)
-        doc = doc_store.get_document(indicator.doc_id)
+def save_document(doc_ids):
+    lock_keys = []
+    for doc_id in doc_ids:
+        lock_keys.append(get_async_indicator_modify_lock_key(doc_id))
 
-        eval_context = EvaluationContext(doc)
-        for config_id in indicator.indicator_config_ids:
-            config = _get_config(config_id)
-            adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-            adapter.best_effort_save(doc, eval_context)
-            eval_context.reset_iteration()
+    with CriticalSection(lock_keys):
+        indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids)
+        first_indicator = indicators[0]
+        doc_store = get_document_store(first_indicator.domain, first_indicator.doc_type)
+        for doc in doc_store.iter_documents(doc_ids):
+            eval_context = EvaluationContext(doc)
+            indicator = next(i for i in indicators if doc['_id'] == i.doc_id)
+            for config_id in indicator.indicator_config_ids:
+                config = _get_config(config_id)
+                adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+                adapter.best_effort_save(doc, eval_context)
+                eval_context.reset_iteration()
 
-        redis_client = get_redis_client().client.get_client()
-        queued_lock_key = _get_indicator_queued_lock_key(indicator)
-        lock = redis_client.lock(queued_lock_key)
-        release_lock(lock, degrade_gracefully=True)
-        indicator.delete()
+            redis_client = get_redis_client().client.get_client()
+            queued_lock_key = _get_indicator_queued_lock_key(indicator)
+            lock = redis_client.lock(queued_lock_key)
+            release_lock(lock, degrade_gracefully=True)
+            indicator.delete()
