@@ -190,7 +190,7 @@ class Select2Ajax(forms.TextInput):
             'hqstyle/forms/select_2_ajax_widget.html',
             {
                 'id': attrs.get('id'),
-                'initial': self._initial or self._clean_initial(value),
+                'initial': self._initial if self._initial is not None else self._clean_initial(value),
                 'endpoint': self.url,
                 'page_size': self.page_size,
                 'multiple': self.multiple,
