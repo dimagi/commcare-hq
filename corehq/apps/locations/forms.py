@@ -1,4 +1,3 @@
-import json
 import re
 
 from crispy_forms.layout import Submit
@@ -22,10 +21,9 @@ from corehq.apps.commtrack.util import generate_code
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.custom_data_fields.edit_entity import get_prefixed
 from corehq.apps.es import UserES
-from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import raw_username, user_display_string
+from corehq.apps.users.util import user_display_string
 from corehq.apps.style import crispy as hqcrispy
 
 from .models import SQLLocation, LocationType, LocationFixtureConfiguration
