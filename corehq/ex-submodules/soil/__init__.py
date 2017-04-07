@@ -281,7 +281,6 @@ class BlobDownload(DownloadBase):
         )
         self.identifier = identifier
         self.bucket = bucket
-        self.blobdb = get_blob_db()
 
     def get_filename(self):
         return self.identifier
@@ -290,7 +289,7 @@ class BlobDownload(DownloadBase):
         raise NotImplementedError
 
     def toHttpResponse(self):
-        file_obj = self.blobdb.get(self.identifier, self.bucket)
+        file_obj = get_blob_db().get(self.identifier, self.bucket)
 
         response = StreamingHttpResponse(
             FileWrapper(file_obj, CHUNK_SIZE),
