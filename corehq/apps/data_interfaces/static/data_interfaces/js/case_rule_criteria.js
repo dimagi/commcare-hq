@@ -132,9 +132,10 @@ var CaseRuleCriteria = function(initial, constants) {
     };
 
     self.load_initial = function() {
+        var obj = null;
         if(initial.filter_on_server_modified !== 'false') {
             // check for not false in order to help prevent accidents in the future
-            var obj = new NotModifiedSinceDefinition('case-modified-filter');
+            obj = new NotModifiedSinceDefinition('case-modified-filter');
             obj.days(initial.server_modified_boundary);
             self.criteria.push(obj);
         }
@@ -145,7 +146,7 @@ var CaseRuleCriteria = function(initial, constants) {
                 value.match_type === constants.MATCH_NOT_EQUAL ||
                 value.match_type === constants.MATCH_HAS_VALUE
             ) {
-                var obj = new MatchPropertyDefinition('case-property-filter');
+                obj = new MatchPropertyDefinition('case-property-filter');
                 obj.property_name(value.property_name);
                 obj.property_value(value.property_value);
                 obj.match_type(value.match_type);
@@ -155,7 +156,6 @@ var CaseRuleCriteria = function(initial, constants) {
                 value.match_type === constants.MATCH_DAYS_AFTER
             ) {
                 var days = Number.parseInt(value.property_value);
-                var obj;
                 if(days === 0) {
                     obj = new MatchPropertyDefinition('date-case-property-filter');
                     obj.property_value(value.property_value);
@@ -171,7 +171,7 @@ var CaseRuleCriteria = function(initial, constants) {
         });
 
         $.each(initial.custom_match_definitions, function(index, value) {
-            var obj = new CustomMatchDefinition('custom-filter');
+            obj = new CustomMatchDefinition('custom-filter');
             obj.name(value.name);
             self.criteria.push(obj);
         });
