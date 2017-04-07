@@ -255,8 +255,12 @@ def save_document(doc_ids):
 
     with CriticalSection(lock_keys):
         indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids)
-
         first_indicator = indicators[0]
+
+        for i in indicators:
+            assert i.domain == first_indicator.domain
+            assert i.doc_type == first_indicator.doc_type
+
         doc_store = get_document_store(first_indicator.domain, first_indicator.doc_type)
         for doc in doc_store.iter_documents(doc_ids):
             indicator = next(i for i in indicators if doc['_id'] == i.doc_id)
