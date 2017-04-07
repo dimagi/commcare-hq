@@ -15,6 +15,8 @@ from couchexport.files import Temp
 from couchexport.models import Format
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename
+from corehq.util.timer import TimingContext
+from corehq.util.datadog.gauges import datadog_gauge
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -355,20 +357,28 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
     if progress_tracker:
         DownloadBase.set_progress(progress_tracker, 0, documents.count)
 
+    domain = export_instance.domain
+
     for row_number, doc in enumerate(documents):
-        for table in export_instance.selected_tables:
-            rows = table.get_rows(
-                doc,
-                row_number,
-                split_columns=export_instance.split_multiselects,
-                transform_dates=export_instance.transform_dates,
-            )
-            for row in rows:
-                # It might be bad to write one row at a time when you can do more (from a performance perspective)
-                # Regardless, we should handle the batching of rows in the _Writer class, not here.
-                writer.write(table, row)
-        if progress_tracker:
-            DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
+        with TimingContext('write_export') as context:
+            for table in export_instance.selected_tables:
+                rows = table.get_rows(
+                    doc,
+                    row_number,
+                    split_columns=export_instance.split_multiselects,
+                    transform_dates=export_instance.transform_dates,
+                )
+                for row in rows:
+                    # It might be bad to write one row at a time when you can do more (from a performance perspective)
+                    # Regardless, we should handle the batching of rows in the _Writer class, not here.
+                    writer.write(table, row)
+            if progress_tracker:
+                DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
+
+            datadog_gauge('commcare.export_iteration', context.duration, tags=[
+                u'iteration:{}'.format(row_number / 500),
+                u'domain:{}'.format(domain),
+            ])
 
 
 def _get_base_query(export_instance):
