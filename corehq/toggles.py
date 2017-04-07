@@ -6,6 +6,7 @@ import math
 
 from django.contrib import messages
 from django.conf import settings
+from couchdbkit import ResourceNotFound
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from corehq.util.quickcache import quickcache
@@ -107,6 +108,15 @@ class StaticToggle(object):
                 raise Http404()
             return wrapped_view
         return decorator
+
+    def get_enabled_domains(self):
+        from toggle.models import Toggle
+        try:
+            toggle = Toggle.get(self.slug)
+            enabled_users = toggle.enabled_users
+            return [user.split('domain:')[1] for user in enabled_users if 'domain:' in user]
+        except ResourceNotFound:
+            return []
 
 
 def deterministic_random(input_string):
@@ -1033,6 +1043,13 @@ INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     'include_metadata_in_ucr_excel_exports',
     'Include metadata in UCR excel exports',
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+UATBC_ADHERENCE_TASK = StaticToggle(
+    'uatbc_adherence_calculations',
+    'This runs backend adherence calculations for enikshay domains',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 
