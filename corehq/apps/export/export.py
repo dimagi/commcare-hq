@@ -6,13 +6,17 @@ from collections import Counter
 import datetime
 
 from couchdbkit import ResourceConflict
+from collections import Counter
 
 from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
 from couchexport.files import Temp
 from couchexport.models import Format
+from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename
+from corehq.util.timer import TimingContext
+from corehq.util.datadog.gauges import datadog_gauge
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -23,12 +27,14 @@ from corehq.apps.export.models.new import (
     FormExportInstance,
     SMSExportInstance,
 )
+from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
 
 
 class ExportFile(object):
     # This is essentially coppied from couchexport.files.ExportFiles
 
     def __init__(self, path, format):
+        self.path = path
         self.file = Temp(path)
         self.format = format
 
@@ -92,8 +98,10 @@ class _Writer(object):
                         )
                     table_titles[table] = sheet_name
             self.writer.open(headers, file, table_titles=table_titles, archive_basepath=name)
-            yield
-            self.writer.close()
+            try:
+                yield
+            finally:
+                self.writer.close()
 
     def write(self, table, row):
         """
@@ -115,6 +123,166 @@ class _Writer(object):
         return self._path
 
 
+class _PaginatedWriter(object):
+
+    def __init__(self, writer, page_length=None):
+        self.format = writer.format
+        self._path = None
+        self.page_length = page_length or MAX_EXPORTABLE_ROWS
+        self.pages = Counter()
+        self.rows_written = Counter()
+        # An instance of a couchexport.ExportWriter
+        self.writer = writer
+        self.file_handle = None
+
+    @contextlib.contextmanager
+    def open(self, export_instances):
+        """
+        Open the _PaginatedWriter for writing. This must be called before using _PaginatedWriter.write().
+        A _PaginatedWriter can only be opened once.
+        """
+
+        assert self._path is None
+
+        self.name = self._get_name(export_instances)
+        self.headers = self._get_headers(export_instances)
+        self.table_names = self._get_table_names(export_instances)
+
+        # Create and open a temp file
+        fd, self._path = tempfile.mkstemp()
+        with os.fdopen(fd, 'wb') as file_handle:
+            self.writer.open(
+                self._get_paginated_headers().iteritems(),
+                file_handle,
+                table_titles=self._get_paginated_table_titles(),
+                archive_basepath=self.name
+            )
+            try:
+                yield
+            finally:
+                self.writer.close()
+
+    def _get_name(self, export_instances):
+        if len(export_instances) == 1:
+            name = export_instances[0].name or 'Export'
+        else:
+            name = 'BulkExport'
+        return safe_filename(name)
+
+    def _get_headers(self, export_instances):
+        '''
+        Returns a dictionary that maps all TableConfigurations in the list of ExportInstances to an
+        array of headers
+        {
+            TableConfiguration(): ['Column1', 'Column2']
+            ...
+        }
+
+        :export_instances: - A list of ExportInstances
+        '''
+        headers = {}
+        for instance_index, instance in enumerate(export_instances):
+            for table in instance.selected_tables:
+                headers[table] = table.get_headers(
+                    split_columns=instance.split_multiselects
+                )
+
+        return headers
+
+    def _get_table_names(self, export_instances):
+        '''
+        Returns a dictionary that maps all TableConfigurations in the list of ExportInstances to a
+        table name. If the table name is a duplicate from another ExportInstance, it will automatically
+        prefix the table name with the export name to prevent duplicate table names.
+
+        {
+            TableConfiguration(): 'Table Name'
+        }
+        '''
+        table_names = {}
+        for instance_index, instance in enumerate(export_instances):
+            for table_index, table in enumerate(instance.selected_tables):
+                table_name = table.label or "Sheet{}".format(table_index + 1)
+                if len(export_instances) > 1:
+                    table_name = u"{}-{}".format(
+                        instance.name or "Export{}".format(instance_index + 1),
+                        table_name
+                    )
+                table_names[table] = table_name
+        return table_names
+
+    def _paged_table_index(self, table):
+        '''
+        Returns an index of the paged table. Relies on the internal state of self.pages
+        ((PathNode(), PathNode()), 3)
+        '''
+        return (tuple(table.path), self.pages[table])
+
+    def _get_paginated_headers(self):
+        '''
+        Maps the headers in self.headers to
+        1) Match the data structure that couchexport.writers.ExportWriter expects
+        2) Map the key in the headers dictionary to the paged table index
+
+        {
+            TableConfiguration(): ['Column1', 'Column2']
+        }
+
+        Becomes
+
+        {
+            (<table.path>, <page>): (['Column1', 'Column2'],)
+        }
+        '''
+        return {self._paged_table_index(table): (headers,) for table, headers in self.headers.iteritems()}
+
+    def _get_paginated_table_titles(self):
+        '''
+        Maps the table titles to tables titles with their page count
+
+        {
+            TableConfiguration(): 'Table Name'
+        }
+
+        Becomes
+        {
+            (<table.path>, <page>: 'Table Name_<page>'
+        }
+        '''
+        paginated_table_titles = {}
+        for table, table_name in self.table_names.iteritems():
+            paginated_table_titles[self._paged_table_index(table)] = '{}_{}'.format(
+                table_name, format(self.pages[table], '03')
+            )
+        return paginated_table_titles
+
+    def write(self, table, row):
+        """
+        Write the given row to the given table of the export.
+        Will automatically open a new table and write to that if it
+        has exceeded the number of rows written in the first table.
+        :param table: A TableConfiguration
+        :param row: An ExportRow
+        """
+        if self.rows_written[table] >= self.page_length * (self.pages[table] + 1):
+            self.pages[table] += 1
+            self.writer.add_table(
+                self._paged_table_index(table),
+                self._get_paginated_headers()[self._paged_table_index(table)][0],
+                table_title=self._get_paginated_table_titles()[self._paged_table_index(table)],
+            )
+
+        self.writer.write([(self._paged_table_index(table), [FormattedRow(data=row.data)])])
+        self.rows_written[table] += 1
+
+    @property
+    def path(self):
+        """
+        The path to the file that this object writes to.
+        """
+        return self._path
+
+
 def _get_writer(export_instances):
     """
     Return a new _Writer
@@ -124,7 +292,10 @@ def _get_writer(export_instances):
         format = export_instances[0].export_format
 
     legacy_writer = get_writer(format)
-    writer = _Writer(legacy_writer)
+    if PAGINATED_EXPORTS.enabled(export_instances[0].domain):
+        writer = _PaginatedWriter(legacy_writer)
+    else:
+        writer = _Writer(legacy_writer)
     return writer
 
 
@@ -186,20 +357,28 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
     if progress_tracker:
         DownloadBase.set_progress(progress_tracker, 0, documents.count)
 
+    domain = export_instance.domain
+
     for row_number, doc in enumerate(documents):
-        for table in export_instance.selected_tables:
-            rows = table.get_rows(
-                doc,
-                row_number,
-                split_columns=export_instance.split_multiselects,
-                transform_dates=export_instance.transform_dates,
-            )
-            for row in rows:
-                # It might be bad to write one row at a time when you can do more (from a performance perspective)
-                # Regardless, we should handle the batching of rows in the _Writer class, not here.
-                writer.write(table, row)
-        if progress_tracker:
-            DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
+        with TimingContext('write_export') as context:
+            for table in export_instance.selected_tables:
+                rows = table.get_rows(
+                    doc,
+                    row_number,
+                    split_columns=export_instance.split_multiselects,
+                    transform_dates=export_instance.transform_dates,
+                )
+                for row in rows:
+                    # It might be bad to write one row at a time when you can do more (from a performance perspective)
+                    # Regardless, we should handle the batching of rows in the _Writer class, not here.
+                    writer.write(table, row)
+            if progress_tracker:
+                DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
+
+            datadog_gauge('commcare.export_iteration', context.duration, tags=[
+                u'iteration:{}'.format(row_number / 500),
+                u'domain:{}'.format(domain),
+            ])
 
 
 def _get_base_query(export_instance):

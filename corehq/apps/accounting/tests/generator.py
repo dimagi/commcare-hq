@@ -6,11 +6,15 @@ import datetime
 import uuid
 import mock
 
+from django.apps import apps
 from django.conf import settings
-from django.core.management import call_command
+
+from nose.tools import nottest
 
 from dimagi.utils.data import generator as data_gen
 
+from corehq.apps.accounting.bootstrap.config.testing import BOOTSTRAP_CONFIG_TESTING
+from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
@@ -20,25 +24,23 @@ from corehq.apps.accounting.models import (
     FeatureRate,
     SoftwarePlan,
     SoftwarePlanEdition,
-    Subscriber,
-    Subscription,
-    SubscriptionAdjustment,
-    SubscriptionType,
     SoftwarePlanVersion,
     SoftwareProduct,
     SoftwareProductRate,
+    Subscriber,
+    Subscription,
+    SubscriptionType,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import unit_testing_only
 import six
 from six.moves import range
 
 
 @unit_testing_only
-def instantiate_accounting():
-    call_command('cchq_prbac_bootstrap', testing=True)
-
+@nottest
+def bootstrap_test_plans():
     DefaultProductPlan.objects.all().delete()
     SoftwarePlanVersion.objects.all().delete()
     SoftwarePlan.objects.all().delete()
@@ -46,7 +48,7 @@ def instantiate_accounting():
     SoftwareProduct.objects.all().delete()
     FeatureRate.objects.all().delete()
     Feature.objects.all().delete()
-    call_command('cchq_software_plan_bootstrap', testing=True)
+    ensure_plans(BOOTSTRAP_CONFIG_TESTING, verbose=False, apps=apps)
 
 
 @unit_testing_only

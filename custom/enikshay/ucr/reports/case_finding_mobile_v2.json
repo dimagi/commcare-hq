@@ -10,6 +10,9 @@
         "enikshay-aks-audit",
         "np-migration-3"
     ],
+    "server_environment": [
+        "softlayer"
+    ],
     "data_source_table": "episode",
     "report_id": "case_finding_mobile",
     "config": {
@@ -41,13 +44,6 @@
                     "type": "location"
                 },
                 "display": "Location"
-            },
-            {
-                "type": "pre",
-                "field": "closed",
-                "slug": "closed",
-                "datatype": "integer",
-                "pre_value": 0
             }
         ],
         "columns": [

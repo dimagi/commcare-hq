@@ -897,6 +897,8 @@ SENTRY_PROJECT_ID = None
 SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
 SENTRY_API_KEY = None
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -920,6 +922,8 @@ except ImportError as error:
     from dev_settings import *
 
 _location = lambda x: os.path.join(FILEPATH, x)
+
+IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
 
 TEMPLATES = [
     {
@@ -1122,7 +1126,7 @@ LOGGING = {
         },
         'pillowtop': {
             'handlers': ['pillowtop'],
-            'level': 'ERROR',
+            'level': 'INFO',
             'propagate': False,
         },
         'smsbillables': {
@@ -1184,7 +1188,7 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
-        }
+        },
     }
 }
 
@@ -1705,6 +1709,7 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
@@ -1825,6 +1830,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
 
@@ -1894,6 +1900,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression'),
     ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
     ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
+    ('month_expression', 'custom.enikshay.expressions.month_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [

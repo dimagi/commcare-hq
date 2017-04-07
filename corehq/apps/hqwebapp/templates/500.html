@@ -20,13 +20,13 @@
 {% block page_name %}<h2>{% trans "Sorry, something unexpected just went wrong, and we're very sorry about it." %}</h2>{% endblock %}
 {% block page_content %}
     <div class="row">
-        {% if not is_icds %}
+        {% if not enterprise_mode %}
         <div class="col-sm-4">
             <p><img id="sad-danny" src="{% static 'hqwebapp/images/sad_danny.jpg' %}" alt="{% trans "Sad Danny is Sad" %}" /></p>
         </div>
         {% endif %}
 
-        {% if not is_icds %}
+        {% if not enterprise_mode %}
         <div class="col-sm-8">
         {% else %}
         <div class="col-sm-12">

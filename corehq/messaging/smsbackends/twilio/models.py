@@ -1,7 +1,11 @@
-from corehq.apps.sms.models import SQLSMSBackend, PhoneLoadBalancingMixin
+from corehq.apps.sms.models import SQLSMSBackend, PhoneLoadBalancingMixin, SMS
 from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
+from twilio import TwilioRestException
 from twilio.rest import TwilioRestClient
 from django.conf import settings
+
+#https://www.twilio.com/docs/api/errors/reference
+ERROR_INVALID_TO_PHONE_NUMBER = 21211
 
 
 class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
@@ -47,12 +51,20 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
             timeout=settings.SMS_GATEWAY_TIMEOUT)
         to = msg.phone_number
         from_ = orig_phone_number
-        body = msg.text
-        message = client.messages.create(
-            body=body,
-            to=to,
-            from_=from_
-        )
         msg.system_phone_number = from_
+        body = msg.text
+        try:
+            message = client.messages.create(
+                body=body,
+                to=to,
+                from_=from_
+            )
+        except TwilioRestException as e:
+            if e.code == ERROR_INVALID_TO_PHONE_NUMBER:
+                msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
+                return
+            else:
+                raise
+
         msg.backend_message_id = message.sid
         msg.save()

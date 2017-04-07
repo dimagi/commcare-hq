@@ -18,13 +18,14 @@ from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator
 from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
     ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow, get_kafka_ucr_static_pillow
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators, queue_async_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
-    doc_to_change, domain_lite, run_with_all_ucr_backends, get_data_source_with_related_doc_type
+    doc_to_change, get_data_source_with_related_doc_type
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.elastic import ESError
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.test_utils import softer_assert, trap_extra_setup
 from corehq.util.context_managers import drop_connected_signals
@@ -199,7 +200,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
     @softer_assert()
     def setUp(self):
-        self.pillow = get_kafka_ucr_pillow()
+        self.pillow = get_kafka_ucr_pillow(topics=['case-sql'])
         self.config = get_data_source_with_related_doc_type()
         self.config.save()
         self.adapter = get_indicator_adapter(self.config)
@@ -214,6 +215,27 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         delete_all_cases()
         delete_all_xforms()
 
+    def _post_case_blocks(self, iteration=0):
+        return post_case_blocks(
+            [
+                CaseBlock(
+                    create=iteration == 0,
+                    case_id='parent-id',
+                    case_name='parent-name',
+                    case_type='bug',
+                    update={'update-prop-parent': iteration},
+                ).as_xml(),
+                CaseBlock(
+                    create=iteration == 0,
+                    case_id='child-id',
+                    case_name='child-name',
+                    case_type='bug-child',
+                    index={'parent': ('bug', 'parent-id')},
+                    update={'update-prop-child': iteration}
+                ).as_xml()
+            ], domain=self.domain
+        )
+
     def test_process_doc_from_sql_stale(self):
         '''
         Ensures that when you update a case that the changes are reflected in
@@ -222,6 +244,119 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         http://manage.dimagi.com/default.asp?245341
         '''
 
+        for i in range(3):
+            since = self.pillow.get_change_feed().get_latest_offsets()
+            form, cases = self._post_case_blocks(i)
+            with self.assertNumQueries(12):
+                self.pillow.process_changes(since=since, forever=False)
+            rows = self.adapter.get_query_object()
+            self.assertEqual(rows.count(), 1)
+            row = rows[0]
+            self.assertEqual(int(row.parent_property), i)
+            errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+            self.assertEqual(errors.count(), 0)
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class ReuseEvaluationContextTest(TestCase):
+    domain = 'bug-domain'
+
+    @softer_assert()
+    def setUp(self):
+        config1 = get_data_source_with_related_doc_type()
+        config1.save()
+        config2 = get_data_source_with_related_doc_type()
+        config2.table_id = 'other-config'
+        config2.save()
+        self.configs = [config1, config2]
+        self.adapters = [get_indicator_adapter(c) for c in self.configs]
+
+        # one pillow that has one config, the other has both configs
+        self.pillow1 = get_kafka_ucr_pillow(topics=['case-sql'])
+        self.pillow2 = get_kafka_ucr_pillow(topics=['case-sql'])
+        self.pillow1.bootstrap(configs=[config1])
+        self.pillow2.bootstrap(configs=self.configs)
+        with trap_extra_setup(KafkaUnavailableError):
+            self.pillow1.get_change_feed().get_latest_offsets()
+
+    def tearDown(self):
+        for adapter in self.adapters:
+            adapter.drop_table()
+            adapter.config.delete()
+        delete_all_cases()
+        delete_all_xforms()
+
+    def _post_case_blocks(self, iteration=0):
+        return post_case_blocks(
+            [
+                CaseBlock(
+                    create=iteration == 0,
+                    case_id='parent-id',
+                    case_name='parent-name',
+                    case_type='bug',
+                    update={'update-prop-parent': iteration},
+                ).as_xml(),
+                CaseBlock(
+                    create=iteration == 0,
+                    case_id='child-id',
+                    case_name='child-name',
+                    case_type='bug-child',
+                    index={'parent': ('bug', 'parent-id')},
+                    update={'update-prop-child': iteration}
+                ).as_xml()
+            ], domain=self.domain
+        )
+
+    def _test_pillow(self, pillow, since):
+        with self.assertNumQueries(12):
+            pillow.process_changes(since=since, forever=False)
+
+    def test_reuse_cache(self):
+        # tests that these two pillows make the same number of DB calls even
+        # though pillow2 has an extra config
+        since1 = self.pillow1.get_change_feed().get_latest_offsets()
+        since2 = self.pillow2.get_change_feed().get_latest_offsets()
+        form, cases = self._post_case_blocks()
+
+        self._test_pillow(self.pillow1, since1)
+        self._test_pillow(self.pillow2, since2)
+
+        for a in self.adapters:
+            rows = a.get_query_object()
+            self.assertEqual(rows.count(), 1)
+            self.assertEqual(int(rows[0].parent_property), 0)
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class AsyncIndicatorTest(TestCase):
+    domain = 'bug-domain'
+
+    @classmethod
+    @softer_assert()
+    def setUpClass(cls):
+        super(AsyncIndicatorTest, cls).setUpClass()
+        cls.pillow = get_kafka_ucr_pillow()
+        cls.config = get_data_source_with_related_doc_type()
+        cls.config.asynchronous = True
+        cls.config.save()
+        cls.adapter = get_indicator_adapter(cls.config)
+
+        cls.pillow.bootstrap(configs=[cls.config])
+        with trap_extra_setup(KafkaUnavailableError):
+            cls.pillow.get_change_feed().get_latest_offsets()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.config.delete()
+        cls.adapter.drop_table()
+        delete_all_cases()
+        delete_all_xforms()
+        super(AsyncIndicatorTest, cls).tearDownClass()
+
+    def tearDown(self):
+        AsyncIndicator.objects.all().delete()
+
+    def test_async_save_success(self):
         for i in range(3):
             since = self.pillow.get_change_feed().get_latest_offsets()
             form, cases = post_case_blocks(
@@ -243,44 +378,67 @@ class ProcessRelatedDocTypePillowTest(TestCase):
                     ).as_xml()
                 ], domain=self.domain
             )
+            # ensure indicator is added
+            indicators = AsyncIndicator.objects.filter(doc_id='child-id')
+            self.assertEqual(indicators.count(), 0)
             self.pillow.process_changes(since=since, forever=False)
+            self.assertEqual(indicators.count(), 1)
+
+            # ensure saving document produces a row
+            queue_async_indicators()
             rows = self.adapter.get_query_object()
             self.assertEqual(rows.count(), 1)
+
+            # ensure row is correct
             row = rows[0]
             self.assertEqual(int(row.parent_property), i)
+
+            # ensure no errors or anything left in the queue
             errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
             self.assertEqual(errors.count(), 0)
+            self.assertEqual(indicators.count(), 0)
 
-    # @patch('corehq.apps.userreports.tasks._get_config_by_id')
-    # def test_async_save_fails(self, config):
-    #     config.return_value = None
-    #     since = self.pillow.get_change_feed().get_current_offsets()
-    #     for i in range(3):
-    #         form, cases = post_case_blocks(
-    #             [
-    #                 CaseBlock(
-    #                     create=i == 0,
-    #                     case_id='parent-id',
-    #                     case_name='parent-name',
-    #                     case_type='bug',
-    #                     update={'update-prop-parent': i},
-    #                 ).as_xml(),
-    #                 CaseBlock(
-    #                     create=i == 0,
-    #                     case_id='child-id',
-    #                     case_name='child-name',
-    #                     case_type='bug-child',
-    #                     index={'parent': ('bug', 'parent-id')},
-    #                     update={'update-prop-child': i}
-    #                 ).as_xml()
-    #             ], domain=self.domain
-    #         )
-    #     self.pillow.process_changes(since=since, forever=False)
-    #     rows = self.adapter.get_query_object()
-    #     self.assertEqual(rows.count(), 0)
-    #     errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
-    #     self.assertEqual(errors.count(), 1)
-    #     errors.delete()
+    @patch('corehq.apps.userreports.tasks._get_config_by_id')
+    def test_async_save_fails(self, config):
+        # process_changes will generate an exception when trying to use this config
+        config.return_value = None
+        since = self.pillow.get_change_feed().get_latest_offsets()
+        form, cases = post_case_blocks(
+            [
+                CaseBlock(
+                    create=True,
+                    case_id='parent-id',
+                    case_name='parent-name',
+                    case_type='bug',
+                    update={'update-prop-parent': 0},
+                ).as_xml(),
+                CaseBlock(
+                    create=True,
+                    case_id='child-id',
+                    case_name='child-name',
+                    case_type='bug-child',
+                    index={'parent': ('bug', 'parent-id')},
+                    update={'update-prop-child': 0}
+                ).as_xml()
+            ], domain=self.domain
+        )
+
+        # ensure async indicator is added
+        indicators = AsyncIndicator.objects.filter(doc_id='child-id')
+        self.assertEqual(indicators.count(), 0)
+        self.pillow.process_changes(since=since, forever=False)
+        self.assertEqual(indicators.count(), 1)
+
+        # ensure the save errors and fails to produce a row
+        with self.assertRaises(AttributeError):
+            queue_async_indicators()
+        rows = self.adapter.get_query_object()
+        self.assertEqual(rows.count(), 0)
+
+        # ensure there is not a pillow error and the async indicator is still there
+        errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+        self.assertEqual(errors.count(), 0)
+        self.assertEqual(indicators.count(), 1)
 
 
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)

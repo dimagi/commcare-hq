@@ -137,7 +137,6 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
                 'slug': d.slug,
                 'ng_directive': d.ng_directive,
             } for d in self.tile_configs],
-            'is_icds': settings.SERVER_ENVIRONMENT == 'icds',
         }
 
     def make_tile(self, slug, in_data):
