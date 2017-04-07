@@ -899,7 +899,7 @@ BEGIN
 		'sum(thr) AS usage_num_thr, ' ||
 		'sum(add_household) AS usage_num_hh_reg, ' ||
 		'CASE WHEN sum(add_household) > 0 THEN ' || quote_literal(_yes_text) || ' ELSE ' || quote_literal(_no_text) || ' END as is_launched, '
-		'CASE WHEN sum(thr) > 0 THEN 4 WHEN sum(gmp) > 0 THEN 3 WHEN sum(add_pregnancy) > 0 THEN 2 WHEN sum(add_household) > 0 THEN 1 ELSE 0 END AS training_phase, '
+		'CASE WHEN sum(thr) > 0 THEN 4 WHEN (sum(due_list_ccs) + sum(due_list_child)) > 0 THEN 3 WHEN sum(add_pregnancy) > 0 THEN 2 WHEN sum(add_household) > 0 THEN 1 ELSE 0 END AS training_phase, '
 		'sum(add_person) AS usage_num_add_person, ' ||
 		'sum(add_pregnancy) AS usage_num_add_pregnancy, ' ||
 		'sum(home_visit) AS usage_num_home_visit, ' ||
@@ -910,7 +910,7 @@ BEGIN
 		'sum(ebf) AS usage_num_ebf, ' ||
 		'sum(cf) AS usage_num_cf, ' ||
 		'sum(delivery) AS usage_num_delivery, ' ||
-		'CASE WHEN (sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active, ' ||
+		'CASE WHEN (sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active, ' ||
 		'sum(due_list_ccs) AS usage_num_due_list_ccs, ' ||
 		'sum(due_list_child) AS usage_num_due_list_child_health, ' ||
 		'avg(pse_time) AS usage_time_pse, ' ||
