@@ -32,6 +32,6 @@ class LocationsView(View):
                     {'id': location.value, 'text': location.display}
                     for location in location_choice_provider.query(query_context)
                 ],
-                'total': location_choice_provider.query_count(query_context, user)
+                'total': location_choice_provider.query_count(query_context.query, user)
             }
         )
