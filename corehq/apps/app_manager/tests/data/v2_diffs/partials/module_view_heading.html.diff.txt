@@ -15,9 +15,9 @@
 +</div>
 +<div class="appmanager-edit-title">
 +  {% if module.is_surveys %}
-+      {% inline_edit_trans_v2 module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-bars' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
-+  {% else %}
 +      {% inline_edit_trans_v2 module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-folder-open' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
++  {% else %}
++      {% inline_edit_trans_v2 module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-bars' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
 +  {% endif %}
 +</div>
 +
