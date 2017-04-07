@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from collections import defaultdict
 from datetime import datetime
 
 from celery.task import task, periodic_task
@@ -204,11 +205,16 @@ def queue_async_indicators():
     with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
         redis_client = get_redis_client().client.get_client()
         indicators = AsyncIndicator.objects.all()[:10000]
+        indicators_by_domain_doc_type = defaultdict(list)
         for indicator in indicators:
+            indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
+
+        for k, indicators in indicators_by_domain_doc_type.items():
             now = datetime.utcnow()
             if now > cutoff:
                 break
-            _queue_indicator(redis_client, indicator)
+            for indicator in indicators:
+                _queue_indicator(redis_client, indicator)
 
 
 def _queue_indicator(redis_client, indicator):
