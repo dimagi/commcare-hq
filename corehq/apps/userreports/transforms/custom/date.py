@@ -6,7 +6,7 @@ from dimagi.utils.dates import force_to_datetime
 def get_month_display(month_index):
     try:
         return calendar.month_name[int(month_index)]
-    except Exception as e:
+    except (KeyError, ValueError):
         return ""
 
 
