@@ -1788,7 +1788,7 @@ class CaseExportDataSchema(ExportDataSchema):
             app.copy_of or app._id,  # If not copy, must be current app
             app.version,
         ))
-        if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
+        if any(map(lambda relationship_tuple: relationship_tuple[1] in ['parent', 'host'], parent_types)):
             case_schemas.append(cls._generate_schema_for_parent_case(
                 app.copy_of or app._id,
                 app.version,
