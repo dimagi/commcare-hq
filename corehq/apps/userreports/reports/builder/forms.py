@@ -49,6 +49,9 @@ from corehq.apps.userreports.reports.builder import (
     get_filter_format_from_question_type,
 )
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
+from corehq.apps.userreports.reports.builder.const import COMPUTED_USER_NAME_PROPERTY_ID, \
+    COMPUTED_OWNER_NAME_PROPERTY_ID, PROPERTY_TYPE_QUESTION, PROPERTY_TYPE_CASE_PROP, PROPERTY_TYPE_META, \
+    COUNT_PER_CHOICE
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
@@ -196,17 +199,17 @@ class DataSourceProperty(object):
         return self._source
 
     def to_report_column_option(self):
-        if self._type == "question":
+        if self._type == PROPERTY_TYPE_QUESTION:
             if self._source['type'] == "MSelect":
                 return MultiselectQuestionColumnOption(self._id, self._text, self._source)
             else:
                 return QuestionColumnOption(self._id, self._data_types, self._text, self._source)
-        elif self._type == "meta":
+        elif self._type == PROPERTY_TYPE_META:
             return FormMetaColumnOption(self._id, self._data_types, self._text, self._source)
-        else:  # self._type == "case_property"
-            if self._id == "computed/owner_name":
+        else:  # self._type == PROPERTY_TYPE_CASE_PROP
+            if self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
                 return OwnernameComputedCasePropertyOption(self._id, self._data_types, self._text)
-            elif self._id == "computed/user_name":
+            elif self._id == COMPUTED_USER_NAME_PROPERTY_ID:
                 return UsernameComputedCasePropertyOption(self._id, self._data_types, self._text)
             else:
                 return CasePropertyColumnOption(self._id, self._data_types, self._text)
@@ -482,14 +485,14 @@ class DataSourceBuilder(object):
                 data_types = ["string", "decimal", "datetime"]
 
             properties[property] = DataSourceProperty(
-                type='case_property',
+                type=PROPERTY_TYPE_CASE_PROP,
                 id=property,
                 text=property_map.get(property, property.replace('_', ' ')),
                 source=property,
                 data_types=data_types,
             )
-        properties['computed/owner_name'] = cls._get_owner_name_pseudo_property()
-        properties['computed/user_name'] = cls._get_user_name_pseudo_property()
+        properties[COMPUTED_OWNER_NAME_PROPERTY_ID] = cls._get_owner_name_pseudo_property()
+        properties[COMPUTED_USER_NAME_PROPERTY_ID] = cls._get_user_name_pseudo_property()
         return properties
 
     @staticmethod
@@ -498,10 +501,10 @@ class DataSourceBuilder(object):
         # the report builder will create a related_doc indicator based
         # on the owner_id of the case.
         return DataSourceProperty(
-            type='case_property',
-            id='computed/owner_name',
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_NAME_PROPERTY_ID,
             text=_('Case Owner'),
-            source='computed/owner_name',
+            source=COMPUTED_OWNER_NAME_PROPERTY_ID,
             data_types=["string"],
         )
 
@@ -511,10 +514,10 @@ class DataSourceBuilder(object):
         # the report builder will create a related_doc indicator based on the
         # user_id of the case
         return DataSourceProperty(
-            type='case_property',
-            id='computed/user_name',
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_USER_NAME_PROPERTY_ID,
             text=_('Mobile Worker Last Updating Case'),
-            source='computed/user_name',
+            source=COMPUTED_USER_NAME_PROPERTY_ID,
             data_types=["string"],
         )
 
@@ -535,7 +538,7 @@ class DataSourceBuilder(object):
                 "Text": "string",
             }[question_type]
             properties[prop[0]] = DataSourceProperty(
-                type="meta",
+                type=PROPERTY_TYPE_META,
                 id=prop[0],
                 text=property_map.get(prop[0], prop[0]),
                 source=prop,
@@ -549,7 +552,7 @@ class DataSourceBuilder(object):
             else:
                 data_types = ["string"]
             properties[question['value']] = DataSourceProperty(
-                type="question",
+                type=PROPERTY_TYPE_QUESTION,
                 id=question['value'],
                 text=question['label'],
                 source=question,
@@ -557,7 +560,7 @@ class DataSourceBuilder(object):
             )
         if form.get_app().auto_gps_capture:
             properties['location'] = DataSourceProperty(
-                type="meta",
+                type=PROPERTY_TYPE_META,
                 id='location',
                 text='location',
                 source=(['location', '#text'], 'Text'),
@@ -1008,7 +1011,7 @@ class ConfigureNewReportBase(forms.Form):
             ),
             UserFilterViewModel(
                 exists_in_current_version=True,
-                property='computed/owner_name',
+                property=COMPUTED_OWNER_NAME_PROPERTY_ID,
                 data_source_field=None,
                 display_text=_('Case Owner'),
                 format='Choice',
@@ -1217,7 +1220,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 'simple': 'Group By',
                 'avg': 'Average',
                 'sum': 'Sum',
-                'expand': 'Count per Choice'
+                'expand': COUNT_PER_CHOICE,
             }
             added_multiselect_columns = set()
             cols = []
@@ -1249,7 +1252,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                         exists_in_current_version=exists,
                         property=self._get_column_option_by_indicator_id(indicator_id).get_property() if exists else None,
                         data_source_field=indicator_id if not exists else None,
-                        calculation=reverse_agg_map.get(c.get('aggregation'), 'Count per Choice')
+                        calculation=reverse_agg_map.get(c.get('aggregation'), COUNT_PER_CHOICE)
                     )
                 )
             return cols
@@ -1268,28 +1271,28 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             display_text="Name",
             exists_in_current_version=True,
             property="name",
-            data_source_field=self.data_source_properties['name'].to_report_column_option().get_indicator("Count per Choice")['column_id'],
-            calculation="Count per Choice"
+            data_source_field=self.data_source_properties['name'].to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
+            calculation=COUNT_PER_CHOICE
         ))
         cols.append(ColumnViewModel(
             display_text="Owner",
             exists_in_current_version=True,
-            property="computed/owner_name",
-            data_source_field=self.data_source_properties['computed/owner_name'].to_report_column_option().get_indicator("Count per Choice")['column_id'],
-            calculation="Count per Choice"
+            property=COMPUTED_OWNER_NAME_PROPERTY_ID,
+            data_source_field=self.data_source_properties[COMPUTED_OWNER_NAME_PROPERTY_ID].to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
+            calculation=COUNT_PER_CHOICE
         ))
         case_props_found = 0
 
-        skip_list = set(["computed/owner_name", "computed/user_name"] + STATIC_CASE_PROPS)
+        skip_list = set([COMPUTED_OWNER_NAME_PROPERTY_ID, COMPUTED_USER_NAME_PROPERTY_ID] + STATIC_CASE_PROPS)
         for prop in self.data_source_properties.values():
-            if prop.get_type() == "case_property" and prop.get_id() not in skip_list:
+            if prop.get_type() == PROPERTY_TYPE_CASE_PROP and prop.get_id() not in skip_list:
                 case_props_found += 1
                 cols.append(ColumnViewModel(
                     display_text=prop.get_text(),
                     exists_in_current_version=True,
                     property=prop.get_id(),
-                    data_source_field=prop.to_report_column_option().get_indicator("Count per Choice")['column_id'],
-                    calculation="Count per Choice",
+                    data_source_field=prop.to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
+                    calculation=COUNT_PER_CHOICE,
                 ))
                 if case_props_found == 3:
                     break
@@ -1302,19 +1305,19 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             display_text=prop.get_text(),
             exists_in_current_version=True,
             property=prop.get_id(),
-            data_source_field=prop.to_report_column_option().get_indicator("Count per Choice")['column_id'],
-            calculation="Count per Choice"
+            data_source_field=prop.to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
+            calculation=COUNT_PER_CHOICE
         ))
         for prop in self.data_source_properties.values():
             questions_found = 0
-            if prop.get_type() == "question":
+            if prop.get_type() == PROPERTY_TYPE_QUESTION:
                 questions_found += 1
                 cols.append(ColumnViewModel(
                     display_text=prop.get_text(),
                     exists_in_current_version=True,
                     property=prop.get_id(),
                     data_source_field=prop.get_id(),
-                    calculation="Count per Choice",
+                    calculation=COUNT_PER_CHOICE,
                 ))
                 if questions_found == 4:
                     break
@@ -1465,7 +1468,7 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
         if self.source_type == "form":
             return "username"
         if self.source_type == "case":
-            return "computed/user_name"
+            return COMPUTED_USER_NAME_PROPERTY_ID
 
     @property
     @memoized
@@ -1480,7 +1483,7 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
             ),
             UserFilterViewModel(
                 exists_in_current_version=True,
-                property='computed/user_name',
+                property=COMPUTED_USER_NAME_PROPERTY_ID,
                 data_source_field=None,
                 display_text='user name',
                 format='Choice',

@@ -4,6 +4,7 @@ var reportBuilder = function () {
 
     var PropertyList = hqImport('userreports/js/builder_view_models.js').PropertyList;
     var PropertyListItem = hqImport('userreports/js/builder_view_models.js').PropertyListItem;
+    var constants = hqImport('userreports/js/constants.js');
 
     var ColumnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
         PropertyListItem.call(this, getDefaultDisplayText, getPropertyObject, hasDisplayText);
@@ -59,7 +60,7 @@ var reportBuilder = function () {
             });
 
             var isGroupBy = function (column) {
-                return column.calculation() === "Group By";
+                return column.calculation() === constants.GROUP_BY;
             };
             var index = function (column) {
                 return items[[column.property(), column.calculation(), column.displayText()]];
@@ -99,16 +100,16 @@ var reportBuilder = function () {
 
         self.reportTypeListLabel = (config['sourceType'] === "case") ? "Case List" : "Form List";
         self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
-        self.reportType = ko.observable(config['existingReportType'] || 'list');
+        self.reportType = ko.observable(config['existingReportType'] || constants.REPORT_TYPE_LIST);
         self.reportType.subscribe(function (newValue) {
             self._suspendPreviewRefresh = true;
             var wasAggregationEnabled = self.isAggregationEnabled();
-            self.isAggregationEnabled(newValue === "table");
-            self.previewChart(newValue === "table" && self.selectedChart() !== "none");
+            self.isAggregationEnabled(newValue === constants.REPORT_TYPE_TABLE);
+            self.previewChart(newValue === constants.REPORT_TYPE_TABLE && self.selectedChart() !== "none");
             if (self.isAggregationEnabled() && !wasAggregationEnabled) {
                 self.columnList.columns().forEach(function(val, index) {
                     if (index === 0) {
-                        val.calculation("Group By");
+                        val.calculation(constants.GROUP_BY);
                     } else {
                         if (val.property() === "deviceID") {
                             console.log(val.property());
@@ -123,7 +124,7 @@ var reportBuilder = function () {
             self.saveButton.fire('change');
         });
 
-        self.isAggregationEnabled = ko.observable(self.reportType() === "table");
+        self.isAggregationEnabled = ko.observable(self.reportType() === constants.REPORT_TYPE_TABLE);
 
         self.selectedChart = ko.observable('none');
         self.selectedChart.subscribe(function (newValue) {
@@ -207,9 +208,9 @@ var reportBuilder = function () {
         });
 
         var _isMissingAggColumn = function() {
-            return (self.reportType() === "table") && (
+            return (self.reportType() === constants.REPORT_TYPE_TABLE) && (
                 ! _.some(self.columnList.columns(), function (c) {
-                    return c.calculation() === "Group By";
+                    return c.calculation() === constants.GROUP_BY;
                 })
             );
         };

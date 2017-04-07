@@ -6,6 +6,7 @@ from corehq.apps.userreports.reports.builder import (
     make_form_question_indicator,
     make_multiselect_question_indicator,
 )
+from corehq.apps.userreports.reports.builder.const import COUNT_PER_CHOICE
 from corehq.apps.userreports.sql import get_column_name
 from dimagi.utils.decorators.memoized import memoized
 
@@ -42,9 +43,9 @@ class ColumnOption(object):
     @memoized
     def aggregation_options(self):
         if "decimal" in self._data_types:
-            return ("Group By", "Count per Choice", "Sum", "Average")
+            return ("Group By", COUNT_PER_CHOICE, "Sum", "Average")
         else:
-            return ("Group By", "Count per Choice")
+            return ("Group By", COUNT_PER_CHOICE)
 
     def _get_aggregation_config(self, agg):
         """
@@ -55,7 +56,7 @@ class ColumnOption(object):
         """
         aggregation_map = {
             'simple': 'simple',
-            'Count per Choice': 'expand',
+            COUNT_PER_CHOICE: 'expand',
             'Sum': 'sum',
             'Average': 'avg',
             'Group By': 'simple',
@@ -152,7 +153,7 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         super(MultiselectQuestionColumnOption, self).__init__(property, ["string"], default_display, question_source)
 
     def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
-        assert aggregation in ["Count per Choice", "simple"]
+        assert aggregation in [COUNT_PER_CHOICE, "simple"]
 
         if is_aggregated_on:
             return super(MultiselectQuestionColumnOption, self).to_column_dicts(index, aggregation, display_text)

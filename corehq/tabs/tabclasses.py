@@ -94,7 +94,6 @@ class ProjectReportsTab(UITab):
             )]
         return user_reports
 
-
     @staticmethod
     def _filter_sidebar_items(sidebar_items):
         """

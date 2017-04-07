@@ -284,6 +284,9 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             reportColumnOptions,
             dateRangeOptions
     ) {
+
+        var constants = hqImport('userreports/js/constants.js');
+
         this.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
             return o.type === 'question';
         });
@@ -342,7 +345,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         });
         this.columnsList = new PropertyList({
             hasFormatCol: false,
-            hasCalculationCol: reportType === "table" || reportType === "worker",
+            hasCalculationCol: reportType === constants.REPORT_TYPE_TABLE,
             initialCols: columns,
             buttonText: 'Add Column',
             analyticsAction: 'Add Column',
