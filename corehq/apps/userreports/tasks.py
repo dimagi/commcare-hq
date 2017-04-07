@@ -30,7 +30,6 @@ from corehq.util.couch import get_document_or_not_found
 from corehq.util.datadog.gauges import datadog_gauge
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
@@ -205,7 +204,6 @@ def queue_async_indicators():
 
     with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
         day_ago = datetime.utcnow() - timedelta(days=1)
-        redis_client = get_redis_client().client.get_client()
         indicators = AsyncIndicator.objects.all()[:10000]
         indicators_by_domain_doc_type = defaultdict(list)
         for indicator in indicators:
@@ -217,10 +215,10 @@ def queue_async_indicators():
             now = datetime.utcnow()
             if now > cutoff:
                 break
-            _queue_indicators(redis_client, indicators)
+            _queue_indicators(indicators)
 
 
-def _queue_indicators(redis_client, indicators):
+def _queue_indicators(indicators):
     def _queue_chunk(indicators):
         now = datetime.utcnow()
 
