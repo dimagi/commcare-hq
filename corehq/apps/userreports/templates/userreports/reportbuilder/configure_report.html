@@ -185,6 +185,15 @@
           <div class="panel-heading">
             <h4 class="panel-title panel-title-nolink">
               {% trans 'Preview Report' %}
+              <div>
+                <small>
+                  {% if source_type == "case" %}
+                      {% trans "Preview includes at most 100 cases" %}
+                  {% else %}
+                      {% trans "Preview includes at most 100 forms" %}
+                  {% endif %}
+                </small>
+              </div>
             </h4>
           </div>
           <div class="panel-body">
