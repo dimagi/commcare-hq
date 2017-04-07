@@ -7,6 +7,7 @@ var CaseRuleCriteria = function(initial, constants) {
     self.case_type = ko.observable();
     self.criteria = ko.observableArray();
     self.selected_case_filter_id = ko.observable();
+    self.show_add_filter_warning = ko.observable(false);
 
     self.filter_on_server_modified = ko.computed(function() {
         var result = 'false';
@@ -100,7 +101,10 @@ var CaseRuleCriteria = function(initial, constants) {
     };
 
     self.add_filter = function() {
-        var case_filter_id = self.selected_case_filter_id()
+        var case_filter_id = self.selected_case_filter_id();
+        if(case_filter_id === 'select-one') {
+            return;
+        }
 
         if(case_filter_id === 'case-modified-filter') {
             if(!self.filter_already_added(case_filter_id)) {
@@ -118,7 +122,9 @@ var CaseRuleCriteria = function(initial, constants) {
             }
         } else if(case_filter_id === 'custom-filter') {
             self.criteria.push(new CustomMatchDefinition(case_filter_id));
-        } 
+        }
+        self.selected_case_filter_id('select-one');
+        self.show_add_filter_warning(false);
     };
 
     self.remove_filter = function() {

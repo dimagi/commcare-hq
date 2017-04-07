@@ -6,6 +6,7 @@ var CaseRuleActions = function(initial) {
 
     self.actions = ko.observableArray();
     self.selected_case_action_id = ko.observable();
+    self.show_add_action_warning = ko.observable(false);
 
     self.get_ko_template_id = function(obj) {
         if(obj instanceof CloseCaseDefinition) {
@@ -75,6 +76,9 @@ var CaseRuleActions = function(initial) {
 
     self.add_action = function() {
         var ko_template_id = self.selected_case_action_id();
+        if(ko_template_id === 'select-one') {
+            return;
+        }
         var js_class = self.get_js_class(ko_template_id);
 
         if(js_class === CloseCaseDefinition && self.action_already_added(CloseCaseDefinition)) {
@@ -82,6 +86,8 @@ var CaseRuleActions = function(initial) {
         }
 
         self.actions.push(new js_class());
+        self.selected_case_action_id('select-one');
+        self.show_add_action_warning(false);
     };
 
     self.remove_action = function() {

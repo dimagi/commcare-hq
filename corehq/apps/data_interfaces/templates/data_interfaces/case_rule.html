@@ -9,8 +9,9 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
+    var actions_model = null;
     $(function() {
-        var actions_model = new CaseRuleActions({
+        actions_model = new CaseRuleActions({
             close_case: '{{ actions_form.close_case.value|escapejs }}',
             properties_to_update: {{ actions_form.properties_to_update.value|safe }},
             custom_action_definitions: {{ actions_form.custom_action_definitions.value|safe }},
@@ -20,6 +21,26 @@
         {% if read_only_mode %}
             $('#rule-definition :input').prop('disabled', true);
         {% endif %}
+
+        $("#rule-definition-form").submit(function(event) {
+            var result = true;
+
+            if(criteria_model.selected_case_filter_id() !== 'select-one') {
+                criteria_model.show_add_filter_warning(true);
+                result = false;
+            } else {
+                criteria_model.show_add_filter_warning(false);
+            }
+
+            if(actions_model.selected_case_action_id() !== 'select-one') {
+                actions_model.show_add_action_warning(true);
+                result = false;
+            } else {
+                actions_model.show_add_action_warning(false);
+            }
+
+            return result;
+        });
     });
 </script>
 {% endblock %}
@@ -34,7 +55,7 @@
             {% trans "NOTE: A system administrator is required to edit this rule." %}
         </p>
     {% endif %}
-    <form class="form form-horizontal" method="POST" action="#">
+    <form id="rule-definition-form" class="form form-horizontal" method="POST" action="#">
         {% crispy rule_form %}
         {% crispy criteria_form %}
         {% crispy actions_form %}

@@ -8,15 +8,18 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
-    var criteria_model = new CaseRuleCriteria({
-        filter_on_server_modified: '{{ criteria_form.filter_on_server_modified.value|escapejs }}',
-        server_modified_boundary: '{{ criteria_form.server_modified_boundary.value|escapejs }}',
-        custom_match_definitions: {{ criteria_form.custom_match_definitions.value|safe }},
-        property_match_definitions: {{ criteria_form.property_match_definitions.value|safe }},
-        filter_on_closed_parent: '{{ criteria_form.filter_on_closed_parent.value|escapejs }}',
-    }, {{ criteria_form.constants|JSON }});
-    $('#rule-criteria').koApplyBindings(criteria_model);
-    criteria_model.load_initial();
+    var criteria_model = null;
+    $(function() {
+        criteria_model = new CaseRuleCriteria({
+            filter_on_server_modified: '{{ criteria_form.filter_on_server_modified.value|escapejs }}',
+            server_modified_boundary: '{{ criteria_form.server_modified_boundary.value|escapejs }}',
+            custom_match_definitions: {{ criteria_form.custom_match_definitions.value|safe }},
+            property_match_definitions: {{ criteria_form.property_match_definitions.value|safe }},
+            filter_on_closed_parent: '{{ criteria_form.filter_on_closed_parent.value|escapejs }}',
+        }, {{ criteria_form.constants|JSON }});
+        $('#rule-criteria').koApplyBindings(criteria_model);
+        criteria_model.load_initial();
+    });
 </script>
 {% endblock %}
 

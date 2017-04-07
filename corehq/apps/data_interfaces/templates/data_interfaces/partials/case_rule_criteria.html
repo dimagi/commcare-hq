@@ -18,6 +18,9 @@
     {% crispy criteria_form criteria_form.case_type_helper %}
     <div data-bind="template: {name: get_ko_template_id, foreach: criteria}"></div>
     <div class="form-group">
+        <div class="alert alert-block alert-danger" data-bind="visible: show_add_filter_warning() && selected_case_filter_id() !== 'select-one'">
+            <span class="help-block"><strong>{% trans "Please click Add filter or clear the dropdown" %}</strong></span>
+        </div>
         <div class="col-xs-2 col-xs-offset-1 text-right">
             <button class="btn btn-success" data-bind="click: add_filter">
                 <i class="fa fa-plus"></i>
@@ -26,6 +29,7 @@
         </div>
         <div class="col-xs-3">
             <select class="select form-control" data-bind="value: selected_case_filter_id">
+                <option value="select-one">{% trans "(Select one and click Add filter)" %}</option>
                 <option value="case-modified-filter">{% trans "Case not modified since" %}</option>
                 <option value="case-property-filter">{% trans "Case property" %}</option>
                 <option value="date-case-property-filter">{% trans "Date case property" %}</option>
