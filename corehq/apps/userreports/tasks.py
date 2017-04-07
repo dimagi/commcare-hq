@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from collections import defaultdict
 from datetime import datetime
+import hashlib
 
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
@@ -218,7 +219,7 @@ def queue_async_indicators():
 
 
 def _queue_indicator(redis_client, indicator):
-    lock_key = _get_indicator_queued_lock_key(indicator)
+    lock_key = _get_indicator_queued_lock_key([indicator])
     lock = redis_client.lock(lock_key, timeout=60 * 60 * 24)
     if not lock.acquire(blocking=False):
         return
@@ -228,8 +229,10 @@ def _queue_indicator(redis_client, indicator):
     save_document.delay([indicator.doc_id])
 
 
-def _get_indicator_queued_lock_key(indicator):
-    return 'async_indicator_queued-{}'.format(indicator.id)
+def _get_indicator_queued_lock_key(indicators):
+    indicator_doc_ids = [i.doc_id for i in indicators]
+    key_hash = hashlib.md5(','.join(indicator_doc_ids)).hexdigest()[:5]
+    return 'async_indicator_queued-{}'.format(key_hash)
 
 
 @quickcache(['config_id'])
@@ -258,7 +261,7 @@ def save_document(doc_ids):
                 eval_context.reset_iteration()
 
             redis_client = get_redis_client().client.get_client()
-            queued_lock_key = _get_indicator_queued_lock_key(indicator)
+            queued_lock_key = _get_indicator_queued_lock_key([indicator])
             lock = redis_client.lock(queued_lock_key)
             release_lock(lock, degrade_gracefully=True)
             indicator.delete()
