@@ -323,8 +323,10 @@ class UserRole(QuickCachedDocumentMixin, Document):
                                     }}, "fields": []}
         query_results = UserES(self.domain).run_query(es_query=query, security_check=False)
         assigned_user_ids = []
+        '''
         for user in query_results['hits'].get('hits', []):
             assigned_user_ids.append(user['_id'])
+        '''
 
         return assigned_user_ids
 
