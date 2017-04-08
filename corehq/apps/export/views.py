@@ -13,6 +13,7 @@ from django.views.decorators.http import require_GET
 from corehq.toggles import MESSAGE_LOG_METADATA
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification
+from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -501,7 +502,7 @@ def create_basic_form_checkpoint(index):
     return checkpoint
 
 
-class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BaseProjectDataView):
+class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
     show_sync_to_dropbox = False  # remove when DBox issue is resolved.
