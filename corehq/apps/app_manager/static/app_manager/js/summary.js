@@ -1,3 +1,4 @@
+/* globals COMMCAREHQ, hqLayout */
 hqDefine("app_manager/js/summary.js", function() {
     $(function() {
         'use strict';
@@ -47,6 +48,6 @@ hqDefine("app_manager/js/summary.js", function() {
                 });
         }]);
 
-        angular.bootstrap(document.getElementById("summary-app"), ["summaryApp"]);
+        window.angular.bootstrap(document.getElementById("summary-app"), ["summaryApp"]);
     });
 });
