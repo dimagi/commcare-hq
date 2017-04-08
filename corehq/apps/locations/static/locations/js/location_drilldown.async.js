@@ -173,26 +173,6 @@ function LocationModel(data, root, depth, func, withAllOption) {
         }
     };
 
-    this.toPlainJS = function() {
-        var children = [];
-        if (this.children().length > 0) {
-            this.children().forEach(function(child) {
-                if (child.name() !== '_all') {
-                    children.push(child.toPlainJS());
-                }
-            });
-        } else {
-            children = null;
-        }
-        return {
-            name: this.name(),
-            type: this.type(),
-            uuid: this.uuid(),
-            can_edit: this.can_edit(),
-            children: children,
-        };
-    };
-
     this.set_children = function(data) {
         var children = [];
         if (data) {

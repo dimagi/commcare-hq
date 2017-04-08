@@ -16,10 +16,30 @@ var initialParams = {};
 var initialLocationData = {};
 var awcOnlySheets = [];
 
+function toPlainJS(location) {
+    var children = [];
+    if (location.children().length > 0) {
+        location.children().forEach(function(child) {
+            if (child.name() !== '_all') {
+                children.push(toPlainJS(child));
+            }
+        });
+    } else {
+        children = null;
+    }
+    return {
+        name: location.name(),
+        type: location.type(),
+        uuid: location.uuid(),
+        can_edit: location.can_edit(),
+        children: children,
+    };
+}
+
 function getLocationData() {
     var locationKOContext = ko.dataFor($('#group_location_async')[0]);
     return {
-        locations: locationKOContext.root().toPlainJS().children,
+        locations: toPlainJS(locationKOContext.root()).children,
         selected: locationKOContext.selected_locid(),
     };
 }
@@ -285,7 +305,7 @@ function processAndApplyParams(navigationContext) {
     to the browser history.  sheetName is optional
 */
 function pushParams(params, sheetName) {
-    if (!sheetName) {
+    if (!sheetName && history.state) {
         sheetName = history.state.sheetName;
     }
 
