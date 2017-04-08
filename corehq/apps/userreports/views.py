@@ -19,7 +19,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djangular.views.mixins import allow_remote_invocation
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
@@ -27,6 +27,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
@@ -346,7 +347,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
         return self.get(request, domain, *args, **kwargs)
 
 
-class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
+class ReportBuilderTypeSelect(HQJSONResponseMixin, ReportBuilderView):
     template_name = "userreports/reportbuilder/report_type_select.html"
     urlname = 'report_builder_select_type'
     page_title = ugettext_lazy('Select Report Type')
