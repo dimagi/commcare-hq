@@ -1208,5 +1208,3 @@ class HQJSONResponseMixin(JSONResponseMixin):
         from djangular.templatetags.djangular_tags import djng_current_rmi
         context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
         return context
-
-
