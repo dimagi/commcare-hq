@@ -45,6 +45,35 @@ hqDefine("userreports/js/configurable_report.js", function() {
             })();
         }
 
+        // Bind the ReportConfigsViewModel to the save button.
+        var defaultConfig = initial_page_data("default_config");
+        if (initial_page_data("has_datespan")) {
+            if(!defaultConfig.date_range) {
+                defaultConfig.date_range = 'last7';
+            }
+            defaultConfig.has_ucr_datespan = true;
+            defaultConfig.datespan_filters = initial_page_data("datespan_filters");
+        } else {
+            defaultConfig.date_range = null;
+            defaultConfig.has_ucr_datespan = false;
+            defaultConfig.datespan_filters = [];
+        }
+        if(!defaultConfig.datespan_slug) {
+            defaultConfig.datespan_slug = null;
+        }
+        $("#savedReports").reportUserConfigurableConfigEditor({
+            filterForm: $("#paramSelectorForm"),
+            items: initial_page_data("report_configs"),
+            defaultItem: defaultConfig,
+            saveUrl: hqImport("hqwebapp/js/urllib.js").reverse("add_report_config"),
+        });
+
+        $('#email-enabled').tooltip({
+            placement: 'right',
+            html: true,
+            title: gettext("You can email a saved version<br />of this report."),
+        });
+
         if (initial_page_data("created_by_builder")) {
             window.analytics.usage(
                     'Report Builder',

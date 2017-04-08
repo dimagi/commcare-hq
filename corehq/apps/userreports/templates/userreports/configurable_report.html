@@ -11,6 +11,8 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+
         var urlSerialize = hqImport('reports/js/reports.util.js').urlSerialize;
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',
@@ -45,34 +47,6 @@
         });
         standardHQReport.init();
 
-        // Bind the ReportConfigsViewModel to the save button.
-        var defaultConfig = {{ default_config|JSON }};
-        {% if report.has_datespan %}
-            if(!defaultConfig.date_range) {
-                defaultConfig.date_range = 'last7';
-            }
-            defaultConfig.has_ucr_datespan = true;
-            defaultConfig.datespan_filters = {{ datespan_filters|JSON }};
-        {% else %}
-            defaultConfig.date_range = null;
-            defaultConfig.has_ucr_datespan = false;
-            defaultConfig.datespan_filters = [];
-        {% endif %}
-        if(!defaultConfig.datespan_slug) {
-            defaultConfig.datespan_slug = null;
-        }
-        $("#savedReports").reportUserConfigurableConfigEditor({
-            filterForm: $("#paramSelectorForm"),
-            items: {{ report_configs|JSON }},
-            defaultItem: defaultConfig,
-            saveUrl: '{% url "add_report_config" domain %}'
-        });
-
-        $('#email-enabled').tooltip({
-            placement: 'right',
-            html: true,
-            title: '{% trans "You can email a saved version<br />of this report." %}'
-        });
     </script>
 {% endblock %}
 
@@ -91,10 +65,15 @@
 
 {% block page_actions %}
     {% registerurl 'configurable_data_source_status' domain report.spec.config_id %}
+    {% registerurl 'add_report_config' domain %}
     {% initial_page_data 'created_by_builder' report.spec.report_meta.created_by_builder %}
     {% initial_page_data 'builder_report_type' report.spec.report_meta.builder_report_type %}
     {% initial_page_data 'report_builder_events' report_builder_events %}
     {% initial_page_data 'is_static' report.is_static %}
+    {% initial_page_data 'default_config' default_config %}
+    {% initial_page_data 'report_configs' report_configs %}
+    {% initial_page_data 'has_datespan' report.has_datespan %}
+    {% initial_page_data 'datespan_filters' datespan_filters %}
 
     {% if has_report_builder_trial %}
     <a class="btn btn-success" href="{% url 'report_builder_paywall_pricing' domain %}">
