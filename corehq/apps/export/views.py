@@ -29,7 +29,7 @@ import re
 from django.utils.safestring import mark_safe
 from django.views.generic import View
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djangular.views.mixins import allow_remote_invocation
 import pytz
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -965,7 +965,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
         return filter_form
 
 
-class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProjectDataView):
+class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/export_list.html'
     allow_bulk_export = True
     is_deid = False
