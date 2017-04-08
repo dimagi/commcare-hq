@@ -6,7 +6,7 @@ hqDefine('dashboard/js/dashboard_domain.js', function() {
         'ngResource',
         'ngRoute',
         'ng.django.rmi',
-        'hq.dashboard'
+        'hq.dashboard',
     ]);
     dashboardApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
