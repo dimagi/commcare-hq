@@ -25,22 +25,23 @@
 <script>
 (function (angular, undefined) {
    'use strict';
-    var listExportsApp = angular.module('listExportsApp', ['hq.list_exports', 'hq.app_data_drilldown']);
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
+        listExportsApp = angular.module('listExportsApp', ['hq.list_exports', 'hq.app_data_drilldown']);
     listExportsApp.config(["$httpProvider", function($httpProvider) {
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
     }]);
     listExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
-        djangoRMIProvider.configure({% djng_current_rmi %});
+        djangoRMIProvider.configure(initial_page_data("djng_current_rmi"));
     }]);
     listExportsApp.constant('formModalSelector', '#createExportOptionsModal');
     listExportsApp.constant('processApplicationDataFormSuccessCallback', function (data) {
         window.location = data.url;
     });
-    listExportsApp.constant('bulk_download_url', "{{ bulk_download_url }}");
-    listExportsApp.constant('legacy_bulk_download_url', "{{ legacy_bulk_download_url }}");
-    listExportsApp.constant('modelType', {{ model_type|JSON }});
-    listExportsApp.constant('staticModelType', {{ static_model_type|JSON }});
+    listExportsApp.constant('bulk_download_url', initial_page_data("bulk_download_url"));
+    listExportsApp.constant('legacy_bulk_download_url', initial_page_data("legacy_bulk_download_url"));
+    listExportsApp.constant('modelType', initial_page_data("model_type"));
+    listExportsApp.constant('staticModelType', initial_page_data("static_model_type"));
     listExportsApp.constant('filterFormElements', {
         emwf_form_filter: function () {
             return $('#id_emwf_form_filter');
@@ -57,6 +58,12 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
+    {% initial_page_data 'bulk_download_url' bulk_download_url %}
+    {% initial_page_data 'legacy_bulk_download_url' legacy_bulk_download_url %}
+    {% initial_page_data 'model_type' model_type %}
+    {% initial_page_data 'static_model_type' static_model_type %}
+
     <div ng-app="listExportsApp">
         {% include 'export/partial/export_list_controller.html' %}
         {% include 'export/partial/export_list_create_export_modal.html' %}
