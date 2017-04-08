@@ -90,10 +90,10 @@ class BaseFilter(object):
             'css_id': self.css_id,
             'value': self.get_value(request_params, request_user),
         }
-        context.update(self.filter_context())
+        context.update(self.filter_context(request_user))
         return context
 
-    def filter_context(self):
+    def filter_context(self, request_user):
         """
         Override to supply additional context.
         """
@@ -150,7 +150,7 @@ class DatespanFilter(BaseFilter):
         # default to "Show All Dates"
         return None
 
-    def filter_context(self):
+    def filter_context(self, request_user):
         return {
             'timezone': None
         }
@@ -186,7 +186,7 @@ class QuarterFilter(BaseFilter):
             years += [(SHOW_ALL_CHOICE, _('Show all'))]
         return years
 
-    def filter_context(self):
+    def filter_context(self, request_user):
         return {
             'years': self.years
         }
@@ -413,12 +413,12 @@ class LocationDrilldownFilter(BaseFilter):
                                                     'resource_name': 'location_internal',
                                                     'api_name': 'v0.5'})
 
-    def filter_context(self):
+    def filter_context(self, request_user):
         return {
             'input_name': self.name,
             'loc_id': None,
             'hierarchy': location_hierarchy_config(self.domain),
-            'locations': load_locs_json(self.domain),
+            'locations': load_locs_json(self.domain, user=request_user),
             'loc_url': self.api_root
         }
 
