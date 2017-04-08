@@ -12,7 +12,8 @@
 <script>
 (function (angular, undefined) {
     'use strict';
-    var dashboardApp = angular.module('dashboardApp', [
+    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+        dashboardApp = window.angular.module('dashboardApp', [
         'ui.bootstrap',
         'ngResource',
         'ngRoute',
@@ -25,16 +26,19 @@
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
     }]);
     dashboardApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
-        djangoRMIProvider.configure({% djng_current_rmi %});
+        djangoRMIProvider.configure(initial_page_data('djng_current_rmi'));
     }]);
     dashboardApp.constant('dashboardConfig', {
-        staticRoot: '{{ STATIC_URL }}'
+        staticRoot: initial_page_data('static_url'),
     });
 }(window.angular));
 </script>
 {% endblock %}
 
 {% block dashboard-content %}
+{% initial_page_data 'djng_current_rmi' djng_current_rmi %}
+{% initial_page_data 'static_url' STATIC_URL %}
+
 <div class="page-header">
     <h1>
         {% blocktrans with cc_name=commcare_hq_names.COMMCARE_HQ_NAME %}
