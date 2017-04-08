@@ -10,34 +10,6 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% if not report.is_static %}
-    <script>
-        $(function(){
-            // Poll the status of the data source
-            var retrying = false;
-            (function poll() {
-                $.ajax({
-                    url: "{% url 'configurable_data_source_status' domain report.spec.config_id %}",
-                    dataType: 'json',
-                    success: function(data) {
-                        if (data.isBuilt){
-                            $('#built-warning').addClass('hide');
-                            if (retrying){
-                                location.reload();
-                            } else if ($('#report-filters').find('.control-label').length === 0) {
-                                $('#report-filters').submit();
-                            }
-                        } else {
-                            retrying = true;
-                            $('#built-warning').removeClass('hide');
-                            setTimeout(poll, 5000);
-                        }
-                    }
-                });
-            })();
-        });
-    </script>
-    {% endif %}
     <script>
         var urlSerialize = hqImport('reports/js/reports.util.js').urlSerialize;
         var standardHQReport = new HQReport({
@@ -102,15 +74,6 @@
             title: '{% trans "You can email a saved version<br />of this report." %}'
         });
     </script>
-    {% if report.spec.report_meta.created_by_builder %}
-        <script>
-            window.analytics.usage(
-                    'Report Builder',
-                    '{{ report.spec.report_meta.builder_report_type }}',
-                    'Load a report that was built in report builder'
-            )
-        </script>
-    {% endif %}
 {% endblock %}
 
 {% block report_alerts %}
@@ -127,8 +90,11 @@
 {% endblock %}
 
 {% block page_actions %}
+    {% registerurl 'configurable_data_source_status' domain report.spec.config_id %}
     {% initial_page_data 'created_by_builder' report.spec.report_meta.created_by_builder %}
+    {% initial_page_data 'builder_report_type' report.spec.report_meta.builder_report_type %}
     {% initial_page_data 'report_builder_events' report_builder_events %}
+    {% initial_page_data 'is_static' report.is_static %}
 
     {% if has_report_builder_trial %}
     <a class="btn btn-success" href="{% url 'report_builder_paywall_pricing' domain %}">
