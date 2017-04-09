@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
 import importlib
+import json
 from collections import defaultdict
 
 import os
@@ -370,6 +371,7 @@ HQ_APPS = (
     'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
+    'custom.rch'
 )
 
 ENIKSHAY_APPS = (
@@ -2029,3 +2031,9 @@ _raven_config = helper.configure_sentry(
 if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
+
+RCH_CREDENTIALS = {}
+RCH_PERMITTED_FIELDS = {
+    'mother': (json.load(open(os.path.join('custom', 'rch', 'all_fields', 'mother.json')))['fields']),
+    'child': (json.load(open(os.path.join('custom', 'rch', 'all_fields', 'child.json')))['fields']),
+}
