@@ -1,4 +1,6 @@
 import logging
+import re
+import base64
 
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -81,3 +83,51 @@ def aliased_language_name(lang_code):
             if code == lang_code:
                 return name
         raise KeyError('Unknown language code %s' % lang_code)
+
+
+def extract_password(password):
+    # Passwords set with expected salts length and padding would respect this regex
+    reg_exp = r"^sha256\$([a-z|0-9|A-Z]{6})(.*)([a-z|0-9|A-Z]{6})=$"
+    match_result = re.match(reg_exp, password)
+    # strip out outer level padding of salts/keys and ensure three matches
+    if match_result and len(match_result.groups()) == 3:
+        match_groups = re.match(reg_exp, password).groups()
+        hash_left = match_groups[0]
+        hash_right = match_groups[2]
+        stripped_password = match_groups[1]
+        # decode the stripped password to get internal block
+        # decoded(salt1 + encoded_password + salt2)
+        try:
+            decoded_password = base64.b64decode(stripped_password)
+        except TypeError:
+            return ''
+        match_result_2 = re.match(reg_exp, decoded_password)
+        # strip out hashes from the internal block and ensure 3 matches
+        if match_result_2 and len(match_result_2.groups()) == 3:
+            match_groups = match_result_2.groups()
+            # ensure the same hashes were used in the internal block as the outer
+            if match_groups[0] == hash_left and match_groups[2] == hash_right:
+                # decode to get the real password
+                password_hash = re.match(reg_exp, decoded_password).groups()[1]
+                # return password decoded for UTF-8 support
+                try:
+                    return base64.b64decode(password_hash).decode('utf-8')
+                except TypeError:
+                    return ''
+            else:
+                # this sounds like someone tried to hash something but failed so ignore the password submitted
+                # completely
+                return ''
+        else:
+            # this sounds like someone tried to hash something but failed so ignore the password submitted
+            # completely
+            return ''
+    else:
+        # return the password received AS-IS
+        return password
+
+
+def decode_password(password):
+    if settings.ENABLE_PASSWORD_HASHING:
+        return extract_password(password)
+    return password
