@@ -209,7 +209,7 @@ class ENikshayCaseStructureMixin(object):
                 'create': True,
                 'case_type': 'test',
                 "update": dict(
-                    date_tested=datetime(2016, 8, 6).date(),
+                    date_reported=datetime(2016, 8, 6).date(),
                     lab_serial_number=19,
                     test_type_value="microscopy-zn",
                     purpose_of_testing="diagnostic",
