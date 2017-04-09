@@ -83,7 +83,7 @@ def get_person_case_from_occurrence(domain, occurrence_case_id):
     """
     Gets the first open person case for an occurrence
     """
-    return get_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
+    return get_first_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
 
 
 def get_person_case_from_episode(domain, episode_case_id):
