@@ -74,14 +74,14 @@ def get_first_parent_of_case(domain, case_id, parent_case_type):
 
 def get_occurrence_case_from_episode(domain, episode_case_id):
     """
-    Gets the first open occurrence case for an episode
+    Gets the first occurrence case for an episode
     """
     return get_first_parent_of_case(domain, episode_case_id, CASE_TYPE_OCCURRENCE)
 
 
 def get_person_case_from_occurrence(domain, occurrence_case_id):
     """
-    Gets the first open person case for an occurrence
+    Gets the first person case for an occurrence
     """
     return get_first_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
 
