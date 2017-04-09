@@ -45,6 +45,40 @@ hqDefine("userreports/js/configurable_report.js", function() {
             })();
         }
 
+        var urlSerialize = hqImport('reports/js/reports.util.js').urlSerialize;
+        var reportOptions = {
+            domain: initial_page_data('domain'),
+            urlRoot: initial_page_data('url_root'),
+            slug: initial_page_data('slug'),
+            subReportSlug: initial_page_data('sub_slug'),
+            type: initial_page_data('type'),
+            filterSet: initial_page_data('filter_set'),
+            needsFilters: initial_page_data('needs_filters'),
+            isExportable: initial_page_data('is_exportable'),
+            checkExportSize: true,
+            isExportAll: initial_page_data('is_export_all'),
+            isEmailable: initial_page_data('is_emailable'),
+            emailDefaultSubject: initial_page_data('title'),
+            emailSuccessMessage: gettext('Report successfully emailed'),
+            emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
+            getReportRenderUrl: function(renderType, additionalParams) {
+                var params = urlSerialize($('#paramSelectorForm'), ['format']);
+                return window.location.pathname + "?format=" + renderType + "&" + params;
+            },
+            getExportSizeCheckUrl: function() {
+                var params = urlSerialize($('#paramSelectorForm'), ['format']);
+                return window.location.pathname + "?format=export_size_check" + "&" + params;
+            },
+        };
+        if (initial_page_data('startdate')) {
+            reportOptions.datespan = {
+                startdate: initial_page_data('startdate'),
+                enddate: initial_page_data('enddate'),
+            };
+        }
+        var standardHQReport = new HQReport(reportOptions);
+        standardHQReport.init();
+
         // Bind the ReportConfigsViewModel to the save button.
         var defaultConfig = initial_page_data("default_config");
         if (initial_page_data("has_datespan")) {
