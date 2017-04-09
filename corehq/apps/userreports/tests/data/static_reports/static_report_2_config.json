@@ -1,5 +1,6 @@
 {
     "domains": ["example", "dimagi"],
+    "server_environment": ["localdev"],
     "data_source_table": "all_candidates",
     "report_id": "another-custom-report",
     "config": {

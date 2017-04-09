@@ -20,7 +20,6 @@ from corehq.apps.zapier.views import SubscribeView, UnsubscribeView, ZapierCreat
 from corehq.apps.zapier.api.v0_5 import ZapierCustomFieldCaseResource
 from corehq.apps.zapier.models import ZapierSubscription
 
-from corehq.apps.accounting.tests import generator
 from corehq.apps.zapier.util import remove_advanced_fields
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -93,7 +92,6 @@ class TestZapierIntegration(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestZapierIntegration, cls).setUpClass()
-        generator.instantiate_accounting()
 
         cls.domain_object = Domain.get_or_create_with_name(TEST_DOMAIN, is_active=True)
         cls.domain = cls.domain_object.name
@@ -405,7 +403,6 @@ class TestZapierCreateCaseAction(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestZapierCreateCaseAction, cls).setUpClass()
-        generator.instantiate_accounting()
         cls.domain_object = Domain.get_or_create_with_name('fruit', is_active=True)
         cls.domain = cls.domain_object.name
         account = BillingAccount.get_or_create_account_by_domain(cls.domain, created_by="automated-test")[0]

@@ -725,6 +725,8 @@ ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
+GREENHOUSE_API_KEY = ''
+
 MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
@@ -923,6 +925,8 @@ except ImportError as error:
     from dev_settings import *
 
 _location = lambda x: os.path.join(FILEPATH, x)
+
+IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
 
 TEMPLATES = [
     {
@@ -1187,7 +1191,7 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
-        }
+        },
     }
 }
 
@@ -1708,6 +1712,7 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
@@ -1828,6 +1833,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
 
@@ -1897,6 +1903,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression'),
     ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
     ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
+    ('month_expression', 'custom.enikshay.expressions.month_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [

@@ -563,6 +563,10 @@ class ConfigureChartReport(ReportBuilderView):
 
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
+        if not self.existing_report and not (self.request.GET or self.request.POST):
+            return HttpResponseRedirect(
+                reverse('report_builder_select_source', args=[self.domain, self.report_type])
+            )
         return super(ConfigureChartReport, self).dispatch(request, *args, **kwargs)
 
     @property

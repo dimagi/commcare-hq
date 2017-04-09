@@ -10,7 +10,7 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from corehq.toggles import MESSAGE_LOG_METADATA
+from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification
 from corehq.apps.locations.models import SQLLocation
@@ -568,6 +568,15 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
                 'show_no_submissions_warning': True,
             })
 
+        return context
+
+    # Add the output of djng_current_rmi to view context, which requires having
+    # the rest of the context, specifically context['view'], available.
+    # See https://github.com/jrief/django-angular/blob/master/djng/templatetags/djng_tags.py
+    def get_context_data(self, **kwargs):
+        context = super(BaseDownloadExportView, self).get_context_data(**kwargs)
+        from djangular.templatetags.djangular_tags import djng_current_rmi
+        context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
         return context
 
     @property
@@ -2201,7 +2210,7 @@ class GenericDownloadNewExportMixin(object):
         count = 0
         for instance in export_instances:
             count += get_export_size(instance, filters)
-        if count > MAX_EXPORTABLE_ROWS:
+        if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(self.domain):
             raise ExportAsyncException(
                 _("This export contains %(row_count)s rows. Please change the "
                   "filters to be less than %(max_rows)s rows.") % {

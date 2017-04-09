@@ -1750,6 +1750,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.assigned_location_ids.append(self.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(self.location_id)
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
+        self.get_sql_location.reset_cache(self)
         self.save()
 
     def unset_location(self, fall_back_to_next=False):
@@ -1783,6 +1784,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.clear_location_delegates()
             self.update_fixture_status(UserFixtureType.LOCATION)
             self.get_domain_membership(self.domain).location_id = None
+            self.get_sql_location.reset_cache(self)
             self.save()
 
     def unset_location_by_id(self, location_id, fall_back_to_next=False):
@@ -2135,6 +2137,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         membership.location_id = location_id
         if self.location_id not in membership.assigned_location_ids:
             membership.assigned_location_ids.append(location_id)
+        self.get_sql_location.reset_cache(self)
         self.save()
 
     def unset_location(self, domain, fall_back_to_next=False):
@@ -2150,6 +2153,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             membership.location_id = membership.assigned_location_ids[0]
         else:
             membership.location_id = None
+        self.get_sql_location.reset_cache(self)
         self.save()
 
     def unset_location_by_id(self, domain, location_id, fall_back_to_next=False):
@@ -2376,3 +2380,64 @@ class UserCache(object):
             user = CouchUser.get_by_user_id(user_id)
             self.cache[user_id] = user
             return user
+
+
+class AnonymousCouchUser(object):
+
+    username = "public_user"
+    doc_type = "CommCareUser"
+    _id = 'anonymous_couch_user'
+
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return True
+
+    def is_domain_admin(self):
+        return False
+
+    def is_member_of(self, domain):
+        return True
+
+    def has_permission(self, domain, perm=None, data=None):
+        return False
+
+    def can_view_report(self, domain, report):
+        return False
+
+    def can_view_some_reports(self, domain):
+        return False
+
+    @property
+    def analytics_enabled(self):
+        return False
+
+    def can_edit_data(self):
+        return False
+
+    def can_edit_apps(self):
+        return False
+
+    def is_eula_signed(self, version=None):
+        return True
+
+    def is_commcare_user(self):
+        return True
+
+    def is_web_user(self):
+        return False
+
+    def can_access_any_exports(self, domain):
+        return False
+
+    def can_edit_commcare_users(self):
+        return False
+
+    def can_edit_locations(self):
+        return False
+
+    def can_edit_web_users(self):
+        return False

@@ -11,11 +11,10 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic import View, TemplateView
@@ -25,9 +24,7 @@ from couchdbkit import ResourceNotFound
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import re
 
-from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.html import format_html
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from soil.exceptions import TaskFailedError
@@ -53,7 +50,7 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import location_safe, user_can_access_location_id, is_location_safe
+from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
@@ -67,8 +64,6 @@ from corehq.apps.users.bulkupload import (
     check_duplicate_usernames,
     check_existing_usernames,
     check_headers,
-    dump_users_and_groups,
-    GroupNameError,
     UserUploadError,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids
@@ -81,7 +76,8 @@ from corehq.apps.users.forms import (
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.const import ANONYMOUS_USERNAME, ANONYMOUS_FIRSTNAME, ANONYMOUS_LASTNAME
 from corehq.apps.users.signals import clean_commcare_user
-from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task
+from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task, \
+    bulk_download_users_async
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
@@ -285,6 +281,7 @@ class EditCommCareUserView(BaseEditUserView):
                 clean_commcare_user.send(
                     'EditCommCareUserView.phone_number',
                     domain=self.domain,
+                    request_user=self.request.couch_user,
                     user=self.editable_user,
                     forms={'phone_number': phone_number},
                 )
@@ -780,27 +777,22 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         self.request.POST = form_data
 
-        self._mobile_worker_form.is_valid()
-        self.custom_data.is_valid()
-        clean_commcare_user.send(
-            'MobileWorkerListView.create_mobile_worker',
-            domain=self.domain,
-            user=None,
-            forms={
-                self._mobile_worker_form.__class__.__name__: self._mobile_worker_form,
-                self.custom_data.__class__.__name__: self.custom_data,
-            }
-        )
-
-        if not self._mobile_worker_form.is_valid() or not self.custom_data.is_valid():
-            return {
-                'error': _("Forms did not validate"),
-            }
-
+        is_valid = lambda: self._mobile_worker_form.is_valid() and self.custom_data.is_valid()
         if form_data.get('is_anonymous') and ANONYMOUS_WEB_APPS_USAGE.enabled(self.domain):
+            if not is_valid():
+                return {'error': _("Forms did not validate")}
             couch_user = self._build_anonymous_commcare_user()
         else:
+            is_valid()
             couch_user = self._build_commcare_user()
+            self.send_clean_commcare_user_signal(couch_user)
+            if not is_valid():
+                return {'error': _("Forms did not validate")}
+
+            couch_user.save()
+            location_id = self.new_mobile_worker_form.cleaned_data['location_id']
+            if location_id:
+                couch_user.set_location(SQLLocation.objects.get(location_id=location_id))
 
         return {
             'success': True,
@@ -809,6 +801,18 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 args=[self.domain, couch_user.userID]
             )
         }
+
+    def send_clean_commcare_user_signal(self, couch_user):
+        clean_commcare_user.send(
+            'MobileWorkerListView.create_mobile_worker',
+            domain=self.domain,
+            request_user=self.request.couch_user,
+            user=couch_user,
+            forms={
+                self._mobile_worker_form.__class__.__name__: self._mobile_worker_form,
+                self.custom_data.__class__.__name__: self.custom_data,
+            }
+        )
 
     def _build_anonymous_commcare_user(self):
         username = ANONYMOUS_USERNAME
@@ -836,9 +840,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         password = self.new_mobile_worker_form.cleaned_data['password']
         first_name = self.new_mobile_worker_form.cleaned_data['first_name']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
-        location_id = self.new_mobile_worker_form.cleaned_data['location_id']
 
-        couch_user = CommCareUser.create(
+        return CommCareUser.create(
             self.domain,
             format_username(username, self.domain),
             password,
@@ -846,10 +849,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             first_name=first_name,
             last_name=last_name,
             user_data=self.custom_data.get_data_to_save(),
+            commit=False,
         )
-        if location_id:
-            couch_user.set_location(SQLLocation.objects.get(location_id=location_id))
-        return couch_user
 
     def _ensure_proper_request(self, in_data):
         if not self.can_add_extra_users:
@@ -1151,43 +1152,44 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
     return render(request, template, context)
 
 
+
+@require_can_edit_commcare_users
+def user_download_job_poll(request, domain, download_id, template="users/mobile/partials/user_download_status.html"):
+    try:
+        context = get_download_context(download_id, 'Preparing download')
+    except TaskFailedError as e:
+        return HttpResponseServerError(e.errors)
+    return render(request, template, context)
+
+
+class DownloadUsersStatusView(BaseManageCommCareUserView):
+    urlname = 'download_users_status'
+    page_title = ugettext_noop('Download Users Status')
+
+    def get(self, request, *args, **kwargs):
+        context = super(DownloadUsersStatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('user_download_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("Download Users Status"),
+            'progress_text': _("Preparing user download."),
+            'error_text': _("There was an unexpected error! Please try again or report an issue."),
+            'next_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
+            'next_url_text': _("Go back to Mobile Workers"),
+        })
+        return render(request, 'style/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
 @require_can_edit_commcare_users
 def download_commcare_users(request, domain):
-    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
-    response['Content-Disposition'] = 'attachment; filename="%s_users.xlsx"' % domain
-
-    try:
-        dump_users_and_groups(response, domain)
-    except GroupNameError as e:
-        group_urls = [
-            reverse('group_members', args=[domain, group.get_id])
-            for group in e.blank_groups
-        ]
-
-        def make_link(url, i):
-            return format_html(
-                '<a href="{}" target="_blank">{}</a>',
-                url,
-                _('Blank Group %s') % i
-            )
-
-        group_links = [
-            make_link(url, i + 1)
-            for i, url in enumerate(group_urls)
-        ]
-        msg = format_html(
-            _(
-                'The following groups have no name. '
-                'Please name them before continuing: {}'
-            ),
-            mark_safe(', '.join(group_links))
-        )
-        messages.error(request, msg, extra_tags='html')
-        return HttpResponseRedirect(
-            reverse('upload_commcare_users', args=[domain])
-        )
-
-    return response
+    download = DownloadBase()
+    res = bulk_download_users_async.delay(domain, download.download_id)
+    download.set_task(res)
+    return redirect(DownloadUsersStatusView.urlname, domain, download.download_id)
 
 
 class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):

@@ -49,10 +49,16 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         selected = super(EnikshayLocationFilter, cls).get_value(request, domain)
         choice_provider = LocationChoiceProvider(StubReport(domain=domain), None)
         choice_provider.configure({'include_descendants': True})
-        return [
+        selected_locations = [
             choice.value
             for choice in choice_provider.get_choices_for_known_values(selected, request.couch_user)
         ]
+        if len(selected_locations) == 0 and not request.couch_user.has_permission(domain, 'access_all_locations'):
+            # Force the user to select their assigned locations, otherwise selecting no locations will result in
+            # all results being returned.
+            return request.couch_user.get_location_ids(domain)
+        return selected_locations
+
 
     @property
     def pagination_source(self):

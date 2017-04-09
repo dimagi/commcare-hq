@@ -19,6 +19,9 @@ class UtilitiesTestCase(SimpleTestCase):
     def test_table_name(self):
         self.assertEqual('config_report_domain_table_7a7a33ec', get_table_name('domain', 'table'))
 
+    def test_table_name_unicode(self):
+        self.assertEqual(u"config_report_domain_unicode\x08_459d1f97", get_table_name('domain', u'unicode\u0008'))
+
     def test_table_trickery(self):
         tricky_one = get_table_name('domain_trick', 'table')
         tricky_two = get_table_name('domain', 'trick_table')
@@ -27,6 +30,11 @@ class UtilitiesTestCase(SimpleTestCase):
     def test_long_table_name(self):
         name = get_table_name('this_is_a_long_domain', 'and_a_long_table_name')
         name_expected = 'config_report_this_is_a_long_domain_and_a_long_table_n_6ac28759'
+        self.assertEqual(name, name_expected)
+
+    def test_column_unicode(self):
+        name = get_column_name(u"Zouti_pou_travay_t\u00e8")
+        name_expected = u'Zouti_pou_travay_t\xe8_488e6086'
         self.assertEqual(name, name_expected)
 
     def test_column_trickery(self):

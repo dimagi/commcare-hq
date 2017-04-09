@@ -4,6 +4,12 @@ from copy import copy, deepcopy
 import json
 from datetime import datetime
 
+from django.conf import settings
+from django.contrib import admin
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
+from django.utils.translation import ugettext as _
+
 from corehq.sql_db.connections import UCR_ENGINE_ID
 from corehq.util.quickcache import quickcache, skippable_quickcache
 from dimagi.ext.couchdbkit import (
@@ -37,18 +43,22 @@ from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, \
     ReportColumnFactory, ReportOrderByFactory
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
-from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
-from django.conf import settings
 
 from dimagi.utils.modules import to_function
+
+
+class ElasticSearchIndexSettings(DocumentSchema):
+    refresh_interval = StringProperty(default="5s")
+    number_of_shards = IntegerProperty(default=2)
 
 
 class DataSourceBuildInformation(DocumentSchema):
@@ -82,6 +92,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
     domain = StringProperty(required=True)
     engine_id = StringProperty(default=UCR_ENGINE_ID)
+    es_index_settings = SchemaProperty(ElasticSearchIndexSettings)
     backend_id = StringProperty(default=UCR_SQL_BACKEND)
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
@@ -262,11 +273,17 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         else:
             return []
 
-    def get_all_values(self, doc):
-        return [
-            self.indicators.get_values(item, EvaluationContext(doc, i))
-            for i, item in enumerate(self.get_items(doc))
-        ]
+    def get_all_values(self, doc, eval_context=None):
+        if not eval_context:
+            eval_context = EvaluationContext(doc)
+
+        rows = []
+        for item in self.get_items(doc):
+            indicators = self.indicators.get_values(item, eval_context)
+            rows.append(indicators)
+            eval_context.increment_iteration()
+
+        return rows
 
     def get_report_count(self):
         """
@@ -317,6 +334,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             self.is_deactivated = True
             self.save()
             get_indicator_adapter(self).drop_table()
+
+    def get_es_index_settings(self):
+        es_index_settings = self.es_index_settings.to_json()
+        es_index_settings.pop('doc_type')
+        return {"settings": es_index_settings}
 
 
 class ReportMeta(DocumentSchema):
@@ -495,6 +517,7 @@ class StaticDataSourceConfiguration(JsonObject):
     """
     _datasource_id_prefix = STATIC_PREFIX
     domains = ListProperty()
+    server_environment = ListProperty()
     config = DictProperty()
 
     @classmethod
@@ -523,8 +546,13 @@ class StaticDataSourceConfiguration(JsonObject):
                 yield wrapped, path
 
     @classmethod
-    def all(cls):
+    def all(cls, use_server_filter=True):
         for wrapped, path in cls._all():
+            if (use_server_filter and
+                    wrapped.server_environment and
+                    settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
+                continue
+
             for domain in wrapped.domains:
                 yield cls._get_datasource_config(wrapped, domain)
 
@@ -577,6 +605,7 @@ class StaticReportConfiguration(JsonObject):
     data_source_table = StringProperty()
     config = DictProperty()
     custom_configurable_report = StringProperty()
+    server_environment = ListProperty()
 
     @classmethod
     def get_doc_id(cls, domain, report_id, custom_configurable_report):
@@ -605,6 +634,10 @@ class StaticReportConfiguration(JsonObject):
     @classmethod
     def all(cls):
         for wrapped, path in StaticReportConfiguration._all():
+            if (wrapped.server_environment and
+                    settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
+                continue
+
             for domain in wrapped.domains:
                 yield cls._get_report_config(wrapped, domain)
 
@@ -681,6 +714,54 @@ class StaticReportConfiguration(JsonObject):
         doc['_id'] = cls.get_doc_id(domain, static_config.report_id, static_config.custom_configurable_report)
         doc['config_id'] = StaticDataSourceConfiguration.get_doc_id(domain, static_config.data_source_table)
         return ReportConfiguration.wrap(doc)
+
+
+class AsyncIndicator(models.Model):
+    """Indicator that has not yet been processed
+
+    These indicators will be picked up by a queue and placed into celery to be
+    saved. Once saved to the data sources, this record will be deleted
+    """
+    doc_id = models.CharField(max_length=255, null=False, db_index=True, unique=True)
+    doc_type = models.CharField(max_length=126, null=False)
+    domain = models.CharField(max_length=126, null=False)
+    indicator_config_ids = ArrayField(
+        models.CharField(max_length=126, null=True, blank=True),
+        null=False
+    )
+    date_created = models.DateTimeField(auto_now_add=True, db_index=True)
+    date_queued = models.DateTimeField(null=True, db_index=True)
+
+    class Meta(object):
+        ordering = ["date_created"]
+
+    @classmethod
+    def update_indicators(cls, change, config_ids):
+        doc_id = change.id
+        with CriticalSection([get_async_indicator_modify_lock_key(doc_id)]):
+            try:
+                indicator = cls.objects.get(doc_id=doc_id)
+            except cls.DoesNotExist:
+                doc_type = change.document['doc_type']
+                domain = change.document['domain']
+                indicator = AsyncIndicator.objects.create(
+                    doc_id=doc_id,
+                    doc_type=doc_type,
+                    domain=domain,
+                    indicator_config_ids=config_ids
+                )
+            else:
+                current_config_ids = set(indicator.indicator_config_ids)
+                config_ids = set(config_ids)
+                if config_ids - current_config_ids:
+                    new_config_ids = list(current_config_ids.union(config_ids))
+                    indicator.indicator_config_ids = new_config_ids
+                    indicator.save()
+
+        return indicator
+
+
+admin.site.register(AsyncIndicator)
 
 
 def get_datasource_config(config_id, domain):

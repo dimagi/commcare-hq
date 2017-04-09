@@ -134,6 +134,7 @@ def get_table_name(domain, table_id):
     def _hash(domain, table_id):
         return hashlib.sha1('{}_{}'.format(hashlib.sha1(domain).hexdigest(), table_id)).hexdigest()[:8]
 
+    domain = domain.encode('unicode-escape')
     return truncate_value(
         'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
         from_left=False
@@ -157,6 +158,7 @@ def truncate_value(value, max_length=63, from_left=True):
         truncated_value = value[:truncated_length]
 
     if len(value) > max_length:
+        value = value.encode('unicode-escape')
         short_hash = hashlib.sha1(value).hexdigest()[:hash_length]
         return '{}_{}'.format(truncated_value, short_hash)
     return value
@@ -185,3 +187,7 @@ def get_ucr_class_name(id):
     :return: string class name
     """
     return 'corehq.reports.DynamicReport{}'.format(id)
+
+
+def get_async_indicator_modify_lock_key(doc_id):
+    return 'async_indicator_save-{}'.format(doc_id)

@@ -17,7 +17,7 @@ from django.core.validators import validate_email
 from django.template import RequestContext
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET
-from django.views.generic import View
+from django.views.generic import DetailView, ListView, View
 from django.db.models import Sum
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -45,15 +45,20 @@ from corehq.apps.case_search.models import (
     enable_case_search,
     disable_case_search,
 )
-from corehq.apps.dhis2.dbaccessors import get_dhis2_connection
-from corehq.apps.dhis2.forms import Dhis2ConnectionForm
+from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
+from corehq.apps.dhis2.forms import (
+    Dhis2ConnectionForm,
+    DataSetMapForm,
+    DataValueMapFormSet,
+    DataValueMapFormSetHelper,
+)
+from corehq.apps.dhis2.models import JsonApiLog
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator
 
 from corehq.const import USER_DATE_FORMAT
-from corehq.tabs.tabclasses import ProjectSettingsTab
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -311,12 +316,6 @@ class BaseProjectSettingsView(BaseDomainView):
     def main_context(self):
         main_context = super(BaseProjectSettingsView, self).main_context
         main_context.update({
-            'active_tab': ProjectSettingsTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-                project=self.request.project
-            ),
             'is_project_settings': True,
         })
         return main_context
@@ -2162,7 +2161,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/case_search.html'
 
     @method_decorator(domain_admin_required)
-    @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+    @method_decorator(toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -2219,7 +2218,7 @@ class CalendarFixtureConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/calendar_fixture.html'
 
     @method_decorator(domain_admin_required)
-    @toggles.CUSTOM_CALENDAR_FIXTURE.required_decorator()
+    @method_decorator(toggles.CUSTOM_CALENDAR_FIXTURE.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(CalendarFixtureConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -2245,7 +2244,7 @@ class LocationFixtureConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/location_fixture.html'
 
     @method_decorator(domain_admin_required)
-    @toggles.HIERARCHICAL_LOCATION_FIXTURE.required_decorator()
+    @method_decorator(toggles.HIERARCHICAL_LOCATION_FIXTURE.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFixtureConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -2343,18 +2342,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             {}
         </span>
         '''.format(label_cls, label_text)
-
-    @property
-    def report_context(self):
-        context = super(DomainForwardingRepeatRecords, self).report_context
-        context.update({
-            'active_tab': ProjectSettingsTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-            )
-        })
-        return context
 
     @property
     def total_records(self):
@@ -3091,6 +3078,15 @@ class Dhis2ConnectionView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/dhis2/connection_settings.html'
 
     @method_decorator(domain_admin_required)
+    def post(self, request, *args, **kwargs):
+        form = self.dhis2_connection_form
+        if form.is_valid():
+            form.save(self.domain)
+            return HttpResponseRedirect(self.page_url)
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
             raise Http404()
@@ -3108,6 +3104,117 @@ class Dhis2ConnectionView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         return {'dhis2_connection_form': self.dhis2_connection_form}
+
+
+class DataSetMapView(BaseAdminProjectSettingsView):
+    urlname = 'dataset_map_view'
+    page_title = ugettext_lazy("DHIS2 DataSet Map")
+    template_name = 'domain/admin/dhis2/dataset_map.html'
+
+    @method_decorator(domain_admin_required)
+    def post(self, request, *args, **kwargs):
+        datavalue_maps = []
+        formset = self.datavalue_map_formset
+        if formset.is_valid():
+            for form in formset:
+                form.append_to(datavalue_maps)
+
+        form = self.dataset_map_form
+        if form.is_valid():
+            form.save(self.domain, datavalue_maps)
+            return HttpResponseRedirect(self.page_url)
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
+            raise Http404()
+        return super(DataSetMapView, self).dispatch(request, *args, **kwargs)
+
+    @memoized
+    def get_initial(self):
+        try:
+            dataset_map = get_dataset_maps(self.request.domain)[0]
+        except IndexError:
+            dataset_map = None
+        initial = dict(dataset_map) if dataset_map else {}
+        return initial
+
+    @property
+    def dataset_map_form(self):
+        initial = self.get_initial()
+        if self.request.method == 'POST':
+            return DataSetMapForm(self.request.POST, initial=initial)
+        return DataSetMapForm(initial=initial)
+
+    @property
+    def datavalue_map_formset(self):
+        initial = self.get_initial()
+        datavalue_maps = [dict(m) for m in initial.get('datavalue_maps', [])]
+        if self.request.method == 'POST':
+            return DataValueMapFormSet(self.request.POST, initial=datavalue_maps)
+        return DataValueMapFormSet(initial=datavalue_maps)
+
+    @property
+    def page_context(self):
+        return {
+            'dataset_map_form': self.dataset_map_form,
+            'datavalue_map_formset': self.datavalue_map_formset,
+            'datavalue_map_formset_helper': DataValueMapFormSetHelper(),
+        }
+
+
+class Dhis2LogListView(BaseAdminProjectSettingsView, ListView):
+    urlname = 'dhis2_log_list_view'
+    page_title = ugettext_lazy("DHIS2 Logs")
+    template_name = 'domain/admin/dhis2/logs.html'
+    context_object_name = 'logs'
+    paginate_by = 100
+
+    def get_queryset(self):
+        return JsonApiLog.objects.filter(domain=self.domain).order_by('-timestamp').only(
+            'timestamp',
+            'request_method',
+            'request_url',
+            'response_status',
+        )
+
+    @property
+    def object_list(self):
+        return self.get_queryset()
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
+            raise Http404()
+        return super(Dhis2LogListView, self).dispatch(request, *args, **kwargs)
+
+
+class Dhis2LogDetailView(BaseAdminProjectSettingsView, DetailView):
+    urlname = 'dhis2_log_detail_view'
+    page_title = ugettext_lazy("DHIS2 Logs")
+    template_name = 'domain/admin/dhis2/log_detail.html'
+    context_object_name = 'log'
+
+    def get_queryset(self):
+        return JsonApiLog.objects.filter(domain=self.domain)
+
+    @property
+    def object(self):
+        return self.get_object()
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
+            raise Http404()
+        return super(Dhis2LogDetailView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def page_url(self):
+        pk = self.kwargs['pk']
+        return reverse(self.urlname, args=[self.domain, pk])
 
 
 from corehq.apps.smsbillables.forms import PublicSMSRateCalculatorForm

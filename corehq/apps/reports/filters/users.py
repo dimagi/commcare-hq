@@ -173,6 +173,16 @@ class EmwfUtils(object):
         else:
             raise Exception("Unexpcted id: {}".format(id_))
 
+
+class UsersUtils(EmwfUtils):
+
+    def user_tuple(self, u):
+        user = util._report_user_dict(u)
+        uid = "%s" % user['user_id']
+        name = "%s" % user['username_in_report']
+        return (uid, name)
+
+
 _UserData = namedtupledict('_UserData', (
     'users',
     'admin_and_demo_users',
