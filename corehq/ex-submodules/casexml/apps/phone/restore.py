@@ -159,6 +159,13 @@ class RestoreResponse(object):
 
     @classmethod
     def get_payload(cls, filename):
+        '''
+        Given a filename (or identifier) returns the associated payload as
+        a filelike object. If it doesn't exist, return None.
+
+        :filename: Identifier to lookup payload
+        :returns: Filelike object or None
+        '''
         raise NotImplemented()
 
     def __str__(self):
