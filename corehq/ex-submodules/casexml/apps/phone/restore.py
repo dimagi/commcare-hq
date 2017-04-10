@@ -55,6 +55,7 @@ from casexml.apps.phone.const import (
 )
 from casexml.apps.phone.xml import get_sync_element, get_progress_element
 from corehq.blobs import get_blob_db
+from corehq.blobs.exceptions import NotFound
 
 from wsgiref.util import FileWrapper
 from xml.etree import ElementTree
@@ -156,6 +157,10 @@ class RestoreResponse(object):
     def as_string(self):
         raise NotImplemented()
 
+    @classmethod
+    def get_payload(cls, filename):
+        raise NotImplemented()
+
     def __str__(self):
         return self.as_string()
 
@@ -221,6 +226,12 @@ class FileRestoreResponse(RestoreResponse):
 
     def as_file(self):
         return open(self.get_filename(), 'r')
+
+    @classmethod
+    def get_payload(cls, filename):
+        if os.path.exists(filename):
+            return open(filename, 'r')
+        return None
 
     def as_string(self):
         with open(self.get_filename(), 'r') as f:
@@ -296,6 +307,13 @@ class BlobRestoreResponse(RestoreResponse):
     def as_file(self):
         return self.blobdb.get(self.get_filename())
 
+    @classmethod
+    def get_payload(cls, identifier):
+        try:
+            return get_blob_db().get(identifier)
+        except NotFound:
+            return None
+
     def as_string(self):
         try:
             blob = self.blobdb.get(self.get_filename())
@@ -343,16 +361,15 @@ class AsyncRestoreResponse(object):
 
 class CachedPayload(object):
 
-    def __init__(self, payload, is_initial):
+    def __init__(self, domain, payload, is_initial):
         self.is_initial = is_initial
         self.payload = payload
         self.payload_path = None
+        self.restore_class = _get_restore_class(domain)
         if isinstance(payload, dict):
             self.payload_path = payload['data']
-            if os.path.exists(self.payload_path):
-                self.payload = open(self.payload_path, 'r')
-            else:
-                self.payload = None
+            self.payload = self.restore_class.get_payload(self.payload_path)
+
         elif payload:
             assert hasattr(payload, 'read'), 'expected file like object'
 
@@ -463,10 +480,7 @@ class RestoreState(object):
 
     @property
     def restore_class(self):
-        return BlobRestoreResponse
-        if BLOBDB_RESTORE.enabled(self.domain) or BLOBDB_RESTORE.enabled(self.restore_user.username):
-            return BlobRestoreResponse
-        return FileRestoreResponse
+        return _get_restore_class(self.domain)
 
     def __init__(self, project, restore_user, params, async=False):
         if not project or not project.name:
@@ -708,9 +722,13 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            payload = CachedPayload(self.sync_log.get_cached_payload(self.version, stream=True), is_initial=False)
+            payload = CachedPayload(
+                self.domain,
+                self.sync_log.get_cached_payload(self.version, stream=True),
+                is_initial=False
+            )
         else:
-            payload = CachedPayload(self.cache.get(self._initial_cache_key), is_initial=True)
+            payload = CachedPayload(self.domain, self.cache.get(self._initial_cache_key), is_initial=True)
 
         payload.finalize()
         return CachedResponse(payload)
@@ -819,3 +837,10 @@ class RestoreConfig(object):
     def delete_cached_payload_if_necessary(self):
         if self.overwrite_cache and self.cache.get(self._initial_cache_key):
             self.cache.delete(self._initial_cache_key)
+
+
+def _get_restore_class(domain):
+    return BlobRestoreResponse
+    if BLOBDB_RESTORE.enabled(self.domain):
+        return BlobRestoreResponse
+    return FileRestoreResponse
