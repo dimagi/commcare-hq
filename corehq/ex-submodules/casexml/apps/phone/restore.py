@@ -18,7 +18,7 @@ from casexml.apps.phone.exceptions import (
     BadStateException, RestoreException, DateOpenedBugException,
 )
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED, BLOBDB_RESTORE
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 from dimagi.utils.decorators.memoized import memoized
@@ -460,7 +460,12 @@ class RestoreState(object):
     This allows the providers to set values on the state, for either logging or performance
     reasons.
     """
-    restore_class = FileRestoreResponse
+
+    @property
+    def restore_class(self):
+        if BLOBDB_RESTORE.enabled(self.domain) or BLOBDB_RESTORE.enabled(self.restore_user.username):
+            return BlobRestoreResponse
+        return FileRestoreResponse
 
     def __init__(self, project, restore_user, params, async=False):
         if not project or not project.name:
