@@ -1,3 +1,4 @@
+/* globals CodeMirror */
 hqDefine('userreports/js/base.js', function() {
     $(function () {
         if (!hqImport('hqwebapp/js/initial_page_data.js').get("code_mirror_off")) {
@@ -8,7 +9,7 @@ hqDefine('userreports/js/base.js', function() {
                     mode: {name: "javascript", json: true},
                     viewportMargin: Infinity,
                     foldGutter: true,
-                    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+                    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
                 });
  
                 var toggleLabel = $('label[for="' + this.id + '"]').click(function (e) {

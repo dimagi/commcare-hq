@@ -1,3 +1,4 @@
+/* globals gaTrackLink, HQReport */
 hqDefine("userreports/js/configurable_report.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
 
@@ -40,7 +41,7 @@ hqDefine("userreports/js/configurable_report.js", function() {
                             $('#built-warning').removeClass('hide');
                             setTimeout(poll, 5000);
                         }
-                    }
+                    },
                 });
             })();
         }
@@ -113,7 +114,7 @@ hqDefine("userreports/js/configurable_report.js", function() {
                     'Report Builder',
                     initial_page_data("builder_report_type"),
                     'Load a report that was built in report builder'
-            )
+            );
         }
     });
 });

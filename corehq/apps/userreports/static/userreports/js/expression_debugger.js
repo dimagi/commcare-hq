@@ -5,7 +5,7 @@ hqDefine('userreports/js/expression_debugger.js', function() {
         var expressionEditor = $('.CodeMirror')[0].CodeMirror;  // http://stackoverflow.com/a/24987585/8207
         var sampleExpression = {
             "type": "property_name",
-            "property_name": "name"
+            "property_name": "name",
         };
         var sampleText = JSON.stringify(sampleExpression, null, 2);
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;

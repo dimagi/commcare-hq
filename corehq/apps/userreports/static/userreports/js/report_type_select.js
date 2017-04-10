@@ -2,12 +2,12 @@ hqDefine("userreports/js/report_type_select.js", function() {
     'use strict';
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
         dashboardApp = window.angular.module('dashboardApp', [
-        'ui.bootstrap',
-        'ngResource',
-        'ngRoute',
-        'ng.django.rmi',
-        'hq.dashboard'
-    ]);
+            'ui.bootstrap',
+            'ngResource',
+            'ngRoute',
+            'ng.django.rmi',
+            'hq.dashboard'
+        ]);
     dashboardApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
