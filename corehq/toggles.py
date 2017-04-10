@@ -1076,7 +1076,7 @@ BLOBDB_EXPORTS = PredictablyRandomToggle(
     'Use the blobdb to do exports',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
-    randomness=0,
+    randomness=0.3,
 )
 
 PAGINATED_EXPORTS = StaticToggle(
