@@ -145,7 +145,7 @@ def get_tables_with_index_changes(diffs, table_names):
     }
 
 
-def get_indexes_to_change(raw_diffs, table_names):
+def _get_indexes_to_change(raw_diffs, table_names):
     # raw diffs come in as a list of (action, index)
     indexes = [diff for diff in raw_diffs if diff[0] in DiffTypes.INDEX_TYPES]
     indexes_by_table_and_col = defaultdict(list)
@@ -170,6 +170,18 @@ def get_indexes_to_change(raw_diffs, table_names):
             assert DiffTypes.REMOVE_INDEX in actions
 
     return indexes_to_change
+
+
+def apply_index_changes(engine, raw_diffs, table_names):
+    indexes = _get_indexes_to_change(raw_diffs, table_names)
+    remove_indexes = [index[1] for index in indexes if index[0] == DiffTypes.REMOVE_INDEX]
+    add_indexes = [index[1] for index in indexes if index[0] == DiffTypes.ADD_INDEX]
+
+    with engine.begin() as conn:
+        for index in add_indexes:
+            index.create(conn)
+        for index in remove_indexes:
+            index.drop(conn)
 
 
 def rebuild_table(engine, pillow, indicator_doc):
