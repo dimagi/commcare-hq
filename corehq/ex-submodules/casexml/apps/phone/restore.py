@@ -463,6 +463,7 @@ class RestoreState(object):
 
     @property
     def restore_class(self):
+        return BlobRestoreResponse
         if BLOBDB_RESTORE.enabled(self.domain) or BLOBDB_RESTORE.enabled(self.restore_user.username):
             return BlobRestoreResponse
         return FileRestoreResponse
