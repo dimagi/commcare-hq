@@ -994,7 +994,7 @@ def new_module(request, domain, app_id):
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
                 # make case type unique across app
-                app_case_types = [module.case_type for module in app.modules if module.case_type]
+                app_case_types = [m.case_type for m in app.modules if m.case_type]
                 if len(app_case_types):
                     module.case_type = app_case_types[0]
                 else:
