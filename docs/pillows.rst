@@ -22,7 +22,7 @@ All pillows inherit from `ConstructedPillow` class. A pillow consists of a few p
 Change Feed
 -----------
 
-Change feeds are documented `here <change_feed>`_.
+Change feeds are documented `here <Change Feeds>`_.
 
 The 10,000 foot view is a change feed publishes changes which you can subscribe to.
 
@@ -107,3 +107,21 @@ to process changes that have already been processed. This usually happens when
 a couch node fails over to another. If this occurs, stop the pillow, wait for
 confirmation that the couch nodes are up, and fix the checkpoint using:
 `./manage.py fix_checkpoint_after_rewind <pillow_name>`
+
+Problem with checkpoint for pillow name: First available topic offset for topic is num1 but needed num2
+--------------------------------------------------------------------------------------------------------
+
+This happens when the earliest checkpoint that kafka knows about for a topic is
+after the checkpoint the pillow wants to start at. This often happens if a
+pillow has been stopped for a month and has not been removed from the settings.
+
+To fix this you should verify that the pillow is no longer needed in the
+environment. If it isn't, you can delete the checkpoint and re-deploy. This
+should eventually be followed up by removing the pillow from the settings.
+
+If the pillow is needed and should be running you're in a bit of a pickle. This
+means that the pillow is not able to get the required document ids from kafka.
+It also won't be clear what documents the pillows has and has not processed. To
+fix this the safest thing will be to force the pillow to go through all relevant
+docs. Once this process is started you can move the checkpoint for that pillow
+to the most recent offset for its topic.
