@@ -25,6 +25,8 @@ class BaseFilter(object):
     """
     template = None
     javascript_template = None
+    # setting this to True makes the report using the filter a location_safe report (has_location_filter())
+    location_filter = False
 
     def __init__(self, name, params=None):
         self.name = name
@@ -395,6 +397,7 @@ class DynamicChoiceListFilter(BaseFilter):
 class LocationDrilldownFilter(BaseFilter):
     template = 'reports_core/filters/location_async/location_async.html'
     javascript_template = 'reports_core/filters/location_async/location_async.js'
+    location_filter = True
 
     def __init__(self, name, field, datatype, label, domain, css_id=None):
         params = [
