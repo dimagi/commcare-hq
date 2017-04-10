@@ -137,6 +137,14 @@ def get_tables_to_rebuild(diffs, table_names):
     }
 
 
+def get_tables_with_index_changes(diffs, table_names):
+    return {
+        diff.table_name
+        for diff in diffs
+        if diff.table_name in table_names and diff.type in DiffTypes.INDEX_TYPES
+    }
+
+
 def get_indexes_to_change(raw_diffs, table_names):
     # raw diffs come in as a list of (action, index)
     indexes = [diff for diff in raw_diffs if diff[0] in DiffTypes.INDEX_TYPES]
