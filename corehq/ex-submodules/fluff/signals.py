@@ -1,14 +1,14 @@
 from __future__ import print_function
-import logging
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from functools import partial
+import logging
 
-import sqlalchemy
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
+import sqlalchemy
 
 from fluff.util import metadata as fluff_metadata
 
@@ -39,8 +39,9 @@ class DiffTypes(object):
 
     ADD_INDEX = 'add_index'
     REMOVE_INDEX = 'remove_index'
+    INDEX_TYPES = (ADD_INDEX, REMOVE_INDEX)
 
-    CONSTRAINT_TYPES = (ADD_CONSTRAINT, REMOVE_CONSTRAINT, ADD_INDEX, REMOVE_INDEX)
+    CONSTRAINT_TYPES = (ADD_CONSTRAINT, REMOVE_CONSTRAINT) + INDEX_TYPES
 
     ALL = TABLE_TYPES + COLUMN_TYPES + MODIFY_TYPES + CONSTRAINT_TYPES
 
@@ -134,6 +135,33 @@ def get_tables_to_rebuild(diffs, table_names):
         for diff in diffs
         if diff.table_name in table_names and diff.type in DiffTypes.TYPES_FOR_REBUILD
     }
+
+
+def get_indexes_to_change(raw_diffs, table_names):
+    # raw diffs come in as a list of (action, index)
+    indexes = [diff for diff in raw_diffs if diff[0] in DiffTypes.INDEX_TYPES]
+    indexes_by_table_and_col = defaultdict(list)
+
+    for action, index in indexes:
+        if index.table.name not in table_names:
+            continue
+
+        column_names = tuple(index.columns.keys())
+        indexes_by_table_and_col[(index.table.name, column_names)].append((action, index))
+
+    indexes_to_change = []
+
+    for indexes in indexes_by_table_and_col.values():
+        if len(indexes) == 1:
+            indexes_to_change.append(indexes[0])
+        else:
+            # tests when alembic tries to remove/add the same index
+            assert len(indexes) == 2
+            actions = [action for action, index in indexes]
+            assert DiffTypes.ADD_INDEX in actions
+            assert DiffTypes.REMOVE_INDEX in actions
+
+    return indexes_to_change
 
 
 def rebuild_table(engine, pillow, indicator_doc):
