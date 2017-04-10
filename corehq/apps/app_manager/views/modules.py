@@ -983,11 +983,6 @@ def new_module(request, domain, app_id):
                 register.actions.update_case = UpdateCaseAction(
                     condition=FormActionCondition(type='always'))
 
-                # set up reg from case list
-                module.case_list_form.form_id = register.unique_id
-                module.case_list_form.label = register.name
-                register.form_filter = "false()"
-
                 # one followup form
                 followup = app.new_form(module_id, "Followup", lang)
                 followup.requires = "case"
