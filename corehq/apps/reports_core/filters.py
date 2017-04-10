@@ -416,12 +416,17 @@ class LocationDrilldownFilter(BaseFilter):
                                                     'resource_name': 'location_internal',
                                                     'api_name': 'v0.5'})
 
+    def user_location_id(self, user):
+        domain_membership = user.get_domain_membership(self.domain)
+        return domain_membership.location_id if domain_membership else None
+
     def filter_context(self, request_user):
+        loc_id = self.user_location_id(request_user)
         return {
             'input_name': self.name,
-            'loc_id': None,
+            'loc_id': loc_id,
             'hierarchy': location_hierarchy_config(self.domain),
-            'locations': load_locs_json(self.domain, user=request_user),
+            'locations': load_locs_json(self.domain, selected_loc_id=loc_id, user=request_user),
             'loc_url': self.api_root
         }
 
