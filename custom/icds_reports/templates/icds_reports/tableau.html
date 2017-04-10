@@ -1,12 +1,22 @@
+{% load menu_tags %}
 {% load compress %}
 {% load hq_shared_tags %}
+{% load i18n %}
 <!DOCTYPE html>
 <html>
 <head>
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}"/>
 
+    <link type="text/css"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'font-awesome/css/font-awesome.min.css' %}" />
+
     <style>
+        .responsive-label {
+            display: none;
+        }
         .filter {
             margin-bottom: 10px;
         }
@@ -32,6 +42,20 @@
                 width: 51px;
             }
         }
+
+        .nav-main-icon {
+            font-size: 1.7em;
+            line-height: 0.7em;
+        }
+
+        .dropdown-menu .login-container {
+            padding: 2px 20px 5px;
+        }
+
+        .navbar-nav > li > a {
+            padding-top: 21px;
+            padding-bottom: 21px;
+        }
     </style>
     <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
@@ -55,12 +79,58 @@
                     {% endif %}
                 </a>
             </div>
-            <div class="nav navbar-nav">
+            <div class="nav navbar-nav tableau-reports">
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Reports<span class="caret"></span></a>
                     <ul class="dropdown-menu"></ul>
                 </li>
             </div>
+            <nav class="navbar-menus fullmenu" id="hq-full-menu" role="navigation">
+                <div class="nav-settings-bar pull-right">
+                    <ul class="nav navbar-nav" role="menu">
+                        <li class="dropdown">
+                            <a href="#" id="settingsmenu-projectSettings" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
+                                <i class="fa fa-cog nav-main-icon"></i> <span class="responsive-label">{% trans "Manage" %}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>
+                                <li class="nav-login-header">
+                                    <div class="login-container">
+                                        <p>
+                                            {% if user.first_name %}
+                                                {{ user.first_name }} {{ user.last_name }}
+                                                <br />{{ user.username }}
+                                            {% else %}
+                                                {{ user.username }}
+                                            {% endif %}
+                                        </p>
+                                        {% with request.couch_user.role_label.strip as role %}
+                                            {% if role %}
+                                                <div class="label label-default">
+                                                    {{ role }}
+                                                </div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                </li>
+                                <li class="nav-divider divider"></li>
+                                <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
+                                <li>
+                                    <a href="{% url "my_account_settings" %}" id="menuitem-accountsettings">
+                                        <i class="fa fa-user icon-user dropdown-icon"></i> {% trans 'My Account Settings' %}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url "logout" %}" id="menuitem-signout">
+                                        <i class="icon-signout fa fa-sign-out"></i>
+                                        {% trans 'Sign Out' %}
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
         </div>
 
     </nav>
