@@ -86,6 +86,7 @@ def catch_signal(sender, **kwargs):
 
 
 SimpleDiff = namedtuple('SimpleDiff', 'type table_name item_name')
+SimpleIndexDiff = namedtuple('SimpleIndexDiff', 'action index')
 
 
 def reformat_alembic_diffs(raw_diffs):
@@ -147,25 +148,29 @@ def get_tables_with_index_changes(diffs, table_names):
 
 def _get_indexes_to_change(raw_diffs, table_names):
     # raw diffs come in as a list of (action, index)
-    indexes = [diff for diff in raw_diffs if diff[0] in DiffTypes.INDEX_TYPES]
-    indexes_by_table_and_col = defaultdict(list)
+    index_diffs = [
+        SimpleIndexDiff(action=diff[0], index=diff[1])
+        for diff in raw_diffs if diff[0] in DiffTypes.INDEX_TYPES
+    ]
+    index_diffs_by_table_and_col = defaultdict(list)
 
-    for action, index in indexes:
+    for index_diff in index_diffs:
+        index = index_diff.index
         if index.table.name not in table_names:
             continue
 
         column_names = tuple(index.columns.keys())
-        indexes_by_table_and_col[(index.table.name, column_names)].append((action, index))
+        index_diffs_by_table_and_col[(index.table.name, column_names)].append(index_diff)
 
     indexes_to_change = []
 
-    for indexes in indexes_by_table_and_col.values():
-        if len(indexes) == 1:
-            indexes_to_change.append(indexes[0])
+    for index_diffs in index_diffs_by_table_and_col.values():
+        if len(index_diffs) == 1:
+            indexes_to_change.append(index_diffs[0])
         else:
             # tests when alembic tries to remove/add the same index
-            assert len(indexes) == 2
-            actions = [action for action, index in indexes]
+            assert len(index_diffs) == 2
+            actions = [diff.action for diff in index_diffs]
             assert DiffTypes.ADD_INDEX in actions
             assert DiffTypes.REMOVE_INDEX in actions
 
@@ -174,8 +179,8 @@ def _get_indexes_to_change(raw_diffs, table_names):
 
 def apply_index_changes(engine, raw_diffs, table_names):
     indexes = _get_indexes_to_change(raw_diffs, table_names)
-    remove_indexes = [index[1] for index in indexes if index[0] == DiffTypes.REMOVE_INDEX]
-    add_indexes = [index[1] for index in indexes if index[0] == DiffTypes.ADD_INDEX]
+    remove_indexes = [index.index for index in indexes if index.action == DiffTypes.REMOVE_INDEX]
+    add_indexes = [index.index for index in indexes if index.action == DiffTypes.ADD_INDEX]
 
     with engine.begin() as conn:
         for index in add_indexes:
