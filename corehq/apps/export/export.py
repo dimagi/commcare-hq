@@ -3,6 +3,7 @@ import os
 import tempfile
 from collections import Counter
 
+import time
 import datetime
 
 from couchdbkit import ResourceConflict
@@ -360,25 +361,25 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
     domain = export_instance.domain
 
     for row_number, doc in enumerate(documents):
-        with TimingContext('write_export') as context:
-            for table in export_instance.selected_tables:
-                rows = table.get_rows(
-                    doc,
-                    row_number,
-                    split_columns=export_instance.split_multiselects,
-                    transform_dates=export_instance.transform_dates,
-                )
-                for row in rows:
-                    # It might be bad to write one row at a time when you can do more (from a performance perspective)
-                    # Regardless, we should handle the batching of rows in the _Writer class, not here.
-                    writer.write(table, row)
-            if progress_tracker:
-                DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
+        start = int(time.time() * 1000)
+        for table in export_instance.selected_tables:
+            rows = table.get_rows(
+                doc,
+                row_number,
+                split_columns=export_instance.split_multiselects,
+                transform_dates=export_instance.transform_dates,
+            )
+            for row in rows:
+                # It might be bad to write one row at a time when you can do more (from a performance perspective)
+                # Regardless, we should handle the batching of rows in the _Writer class, not here.
+                writer.write(table, row)
+        if progress_tracker:
+            DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
 
-            datadog_gauge('commcare.export_iteration', context.duration, tags=[
-                u'iteration:{}'.format(row_number / 500),
-                u'domain:{}'.format(domain),
-            ])
+        datadog_gauge('commcare.export_iteration', (time.time() * 1000) - start, tags=[
+            u'iteration:{}'.format(row_number / 500),
+            u'domain:{}'.format(domain),
+        ])
 
 
 def _get_base_query(export_instance):
