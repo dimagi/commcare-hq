@@ -6,7 +6,7 @@ hqDefine("userreports/js/report_type_select.js", function() {
             'ngResource',
             'ngRoute',
             'ng.django.rmi',
-            'hq.dashboard'
+            'hq.dashboard',
         ]);
     dashboardApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
