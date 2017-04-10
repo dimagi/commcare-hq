@@ -5,6 +5,7 @@ from cStringIO import StringIO
 import os
 from uuid import uuid4
 import shutil
+import tempfile
 import hashlib
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
@@ -53,6 +54,7 @@ from casexml.apps.phone.const import (
     RESTORE_CACHE_KEY_PREFIX,
 )
 from casexml.apps.phone.xml import get_sync_element, get_progress_element
+from corehq.blobs import get_blob_db
 
 from wsgiref.util import FileWrapper
 from xml.etree import ElementTree
@@ -227,6 +229,82 @@ class FileRestoreResponse(RestoreResponse):
     def get_http_response(self):
         headers = {'Content-Length': os.path.getsize(self.get_filename())}
         return stream_response(open(self.get_filename(), 'r'), headers)
+
+
+class BlobRestoreResponse(RestoreResponse):
+
+    BODY_TAG_SUFFIX = '-body'
+    EXTENSION = 'xml'
+
+    def __init__(self, username=None, items=False):
+        super(BlobRestoreResponse, self).__init__(username, items)
+        self.identifier = 'restore-response-{}'.format(uuid4().hex)
+
+        self.response_body = tempfile.TemporaryFile('w+')
+        self.blobdb = get_blob_db()
+
+    def get_filename(self, suffix=None):
+        return "{identifier}{suffix}.{ext}".format(
+            identifier=self.identifier,
+            suffix=suffix or '',
+            ext=self.EXTENSION
+        )
+
+    def __add__(self, other):
+        if not isinstance(other, BlobRestoreResponse):
+            raise NotImplementedError
+
+        response = BlobRestoreResponse(self.username, self.items)
+        response.num_items = self.num_items + other.num_items
+
+        self.response_body.seek(0)
+        other.response_body.seek(0)
+
+        shutil.copyfileobj(self.response_body, response.response_body)
+        shutil.copyfileobj(other.response_body, response.response_body)
+
+        return response
+
+    def finalize(self):
+        """
+        Creates the final file with start and ending tag
+        """
+        with tempfile.TemporaryFile('w+') as response:
+            # Add 1 to num_items to account for message element
+            items = self.items_template.format(self.num_items + 1) if self.items else ''
+            response.write(self.start_tag_template.format(
+                items=items,
+                username=self.username,
+                nature=ResponseNature.OTA_RESTORE_SUCCESS
+            ))
+
+            self.response_body.seek(0)
+            shutil.copyfileobj(self.response_body, response)
+
+            response.write(self.closing_tag)
+            response.seek(0)
+            self.blobdb.put(response, self.get_filename(), timeout=60)
+
+        self.finalized = True
+        self.close()
+
+    def get_cache_payload(self, full=False):
+        return {
+            'data': self.get_filename() if not full else self.blobdb.get(self.get_filename())
+        }
+
+    def as_file(self):
+        return self.blobdb.get(self.get_filename())
+
+    def as_string(self):
+        try:
+            blob = self.blobdb.get(self.get_filename())
+            return blob.read()
+        finally:
+            blob.close()
+
+    def get_http_response(self):
+        return stream_response(self.blobdb.get(self.get_filename()))
 
 
 class AsyncRestoreResponse(object):
