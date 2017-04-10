@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
-from django.db import transaction
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
@@ -221,14 +220,8 @@ def queue_async_indicators():
 def _queue_indicators(indicators):
     def _queue_chunk(indicators):
         now = datetime.utcnow()
-
-        # batch saves to one query
-        with transaction.atomic():
-            for indicator in indicators:
-                indicator.date_queued = now
-                indicator.save()
-
         indicator_doc_ids = [i.doc_id for i in indicators]
+        AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
         save_document.delay(indicator_doc_ids)
 
     to_queue = []
@@ -261,9 +254,10 @@ def save_document(doc_ids):
             assert i.domain == first_indicator.domain
             assert i.doc_type == first_indicator.doc_type
 
+        indicator_by_doc_id = {i.doc_id: i for i in indicators}
         doc_store = get_document_store(first_indicator.domain, first_indicator.doc_type)
         for doc in doc_store.iter_documents(doc_ids):
-            indicator = next(i for i in indicators if doc['_id'] == i.doc_id)
+            indicator = indicator_by_doc_id[doc['_id']]
 
             eval_context = EvaluationContext(doc)
             for config_id in indicator.indicator_config_ids:
