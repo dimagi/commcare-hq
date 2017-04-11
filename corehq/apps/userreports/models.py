@@ -11,7 +11,7 @@ from django.db import models
 from django.utils.translation import ugettext as _
 
 from corehq.sql_db.connections import UCR_ENGINE_ID
-from corehq.util.quickcache import quickcache, skippable_quickcache
+from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -525,7 +525,7 @@ class StaticDataSourceConfiguration(JsonObject):
         return '{}{}-{}'.format(cls._datasource_id_prefix, domain, table_id)
 
     @classmethod
-    @skippable_quickcache([], skip_arg='rebuild')
+    @quickcache([], skip_arg='rebuild')
     def by_id_mapping(cls, rebuild=False):
         mapping = {}
         for wrapped, path in cls._all():
@@ -622,7 +622,7 @@ class StaticReportConfiguration(JsonObject):
                 yield cls.wrap(json.load(f)), path
 
     @classmethod
-    @skippable_quickcache([], skip_arg='rebuild')
+    @quickcache([], skip_arg='rebuild')
     def by_id_mapping(cls, rebuild=False):
         mapping = {}
         for wrapped, path in StaticReportConfiguration._all():
