@@ -111,11 +111,6 @@ class LocationForm(forms.Form):
         kwargs['initial']['coordinates'] = ('%s, %s' % (lat, lon)
                                             if lat is not None else '')
 
-        self.custom_data = self.get_custom_data(bound_data, is_new)
-
-        self.custom_data.form.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.custom_data.form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
-
         super(LocationForm, self).__init__(bound_data, *args, **kwargs)
         self.fields['parent_id'].widget.domain = self.domain
         self.fields['parent_id'].widget.user = user
@@ -149,36 +144,6 @@ class LocationForm(forms.Form):
                 'site_code',
                 'external_id',
             ]
-
-    def get_custom_data(self, bound_data, is_new):
-        from .views import LocationFieldsView
-
-        existing = self.location.metadata
-
-        # Don't show validation error preemptively on new user creation
-        if is_new and bound_data is None:
-            existing = None
-
-        return CustomDataEditor(
-            field_view=LocationFieldsView,
-            domain=self.domain,
-            # For new locations, only display required fields
-            required_only=is_new,
-            existing_custom_data=existing,
-            post_dict=bound_data,
-        )
-
-    def is_valid(self):
-        return all([
-            super(LocationForm, self).is_valid(),
-            self.custom_data.is_valid(),
-        ])
-
-    @property
-    def errors(self):
-        errors = super(LocationForm, self).errors
-        errors.update(self.custom_data.errors)
-        return errors
 
     def clean_parent_id(self):
         if self.is_new_location:
@@ -305,17 +270,17 @@ class LocationForm(forms.Form):
 
         return [lat, lon]
 
-    def save(self, instance=None, commit=True):
+    def save(self, metadata=None):
         if self.errors:
             raise ValueError('form does not validate')
 
-        location = instance or self.location
+        location = self.location
         is_new = location.location_id is None
 
         location.name = self.cleaned_data['name']
         location.site_code = self.cleaned_data['site_code']
         location.location_type = self.cleaned_data['location_type_object']
-        location.metadata = self.custom_data.get_data_to_save()
+        location.metadata = metadata or {}
         location.parent = self.cleaned_data['parent']
 
         coords = self.cleaned_data['coordinates']
@@ -325,8 +290,7 @@ class LocationForm(forms.Form):
 
         location.metadata.update(get_prefixed(self.data))
 
-        if commit:
-            location.save()
+        location.save()
 
         if not is_new:
             orig_parent_id = self.cleaned_data.get('orig_parent_id')
@@ -335,6 +299,54 @@ class LocationForm(forms.Form):
                                  moved=reparented, previous_parent=orig_parent_id)
 
         return location
+
+
+class LocationFormSet(object):
+    def __init__(self, location, user, is_new, bound_data=None, *args, **kwargs):
+        from .views import LocationFieldsView
+        self.location = location
+        self.domain = location.domain
+        self.location_form = LocationForm(location, bound_data, is_new=is_new)
+        self.custom_location_data = self.get_custom_location_data(bound_data, is_new)
+
+    @property
+    def errors(self):
+        errors = self.location_form.errors
+        errors.update(self.custom_location_data.errors)
+        return errors
+
+    def is_valid(self):
+        return all([
+            self.location_form.is_valid(),
+            self.custom_location_data.is_valid(),
+        ])
+
+    def save(self):
+        if not self.is_valid():
+            raise ValueError('Form is not valid')
+        metadata = self.custom_location_data.get_data_to_save()
+        self.location_form.save(metadata=metadata)
+
+    def get_custom_location_data(self, bound_data, is_new):
+        from .views import LocationFieldsView
+
+        existing = self.location.metadata
+
+        # Don't show validation error preemptively on new user creation
+        if is_new and bound_data is None:
+            existing = None
+
+        custom_data = CustomDataEditor(
+            field_view=LocationFieldsView,
+            domain=self.domain,
+            # For new locations, only display required fields
+            required_only=is_new,
+            existing_custom_data=existing,
+            post_dict=bound_data,
+        )
+        custom_data.form.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        custom_data.form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+        return custom_data
 
 
 class UsersAtLocationForm(forms.Form):

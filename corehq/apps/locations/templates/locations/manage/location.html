@@ -139,9 +139,9 @@
         <div class="tab-pane {% if form_tab == "basic" %}active{% endif %}" id="basic-info">
           <form id="loc_form" class="form form-horizontal" name="product" method="post">
             {% bootstrap_form_errors form %}
-            {% crispy form %}
+            {% crispy form.location_form %}
 
-            {% crispy form.custom_data.form %}
+            {% crispy form.custom_location_data.form %}
             <input type="hidden" name="form_type" value="location-settings" />
 
             {% if consumption %}
