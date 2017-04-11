@@ -1,5 +1,5 @@
 hqDefine("export/js/export_list.js", function() {
-    'use strict';
+   'use strict';
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
         listExportsApp = window.angular.module('listExportsApp', ['hq.list_exports', 'hq.app_data_drilldown']);
     listExportsApp.config(["$httpProvider", function($httpProvider) {
@@ -23,7 +23,7 @@ hqDefine("export/js/export_list.js", function() {
         },
         emwf_case_filter: function () {
             return $('#id_emwf_case_filter');
-        },
+        }
     });
     listExportsApp.constant('filterFormModalElement', function () {
         return $('#setFeedFiltersModal');
