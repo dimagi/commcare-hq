@@ -2374,6 +2374,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         return map(
             lambda record: [
                 self._make_state_label(record),
+                record.payload_id,
                 record.url if record.url else _(u'Unable to generate url for record'),
                 self._format_date(record.last_checked) if record.last_checked else '---',
                 self._format_date(record.next_check) if record.next_check else '---',
@@ -2393,6 +2394,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn(_('Status')),
+            DataTablesColumn(_('Payload ID')),
             DataTablesColumn(_('URL')),
             DataTablesColumn(_('Last sent date')),
             DataTablesColumn(_('Retry Date')),
