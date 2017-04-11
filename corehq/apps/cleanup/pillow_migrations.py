@@ -112,7 +112,7 @@ def migrate_kafka_sequence(change_feed, checkpoint):
             # if sequence is an empty dict just return it
             return sequence
 
-        assert set(change_feed.topics) == set(sequence)
+        assert set(change_feed.topics) <= set(sequence)
         return kafka_seq_to_str({
             (topic, 0): offset
             for topic, offset in sequence.items()
