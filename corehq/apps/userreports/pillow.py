@@ -20,7 +20,13 @@ from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
-from fluff.signals import get_migration_context, get_tables_to_rebuild, reformat_alembic_diffs
+from fluff.signals import (
+    apply_index_changes,
+    get_migration_context,
+    get_tables_with_index_changes,
+    get_tables_to_rebuild,
+    reformat_alembic_diffs
+)
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
@@ -161,12 +167,13 @@ class ConfigurableReportTableManagerMixin(object):
 
         for engine_id, table_map in tables_by_engine.items():
             engine = connection_manager.get_engine(engine_id)
+            table_names = list(table_map)
             with engine.begin() as connection:
-                migration_context = get_migration_context(connection, list(table_map))
+                migration_context = get_migration_context(connection, table_names)
                 raw_diffs = compare_metadata(migration_context, metadata)
                 diffs = reformat_alembic_diffs(raw_diffs)
 
-            tables_to_rebuild = get_tables_to_rebuild(diffs, list(table_map))
+            tables_to_rebuild = get_tables_to_rebuild(diffs, table_names)
             for table_name in tables_to_rebuild:
                 sql_adapter = table_map[table_name]
                 if not sql_adapter.config.is_static:
@@ -176,6 +183,10 @@ class ConfigurableReportTableManagerMixin(object):
                         _notify_rebuild(six.text_type(e), sql_adapter.config.to_json())
                 else:
                     self.rebuild_table(sql_adapter)
+
+            tables_with_index_changes = get_tables_with_index_changes(diffs, table_names)
+            tables_with_index_changes -= tables_to_rebuild
+            apply_index_changes(engine, raw_diffs, tables_with_index_changes)
 
     def _rebuild_es_tables(self, adapters):
         # note unlike sql rebuilds this doesn't rebuild the indicators

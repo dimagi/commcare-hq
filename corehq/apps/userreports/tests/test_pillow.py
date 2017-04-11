@@ -7,12 +7,14 @@ from kafka.common import KafkaUnavailableError
 from mock import patch, MagicMock
 from datetime import datetime, timedelta
 from six.moves import range
+from sqlalchemy.engine import reflection
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
+
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
@@ -24,8 +26,7 @@ from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
 from corehq.apps.userreports.tasks import rebuild_indicators, queue_async_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
     doc_to_change, get_data_source_with_related_doc_type
-from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.elastic import ESError
+from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.test_utils import softer_assert, trap_extra_setup
 from corehq.util.context_managers import drop_connected_signals
@@ -520,3 +521,43 @@ def _save_sql_case(doc):
             ], domain=doc['domain']
         )
     return cases[0]
+
+
+class RebuildTableTest(TestCase):
+
+    def teardown(self):
+        # we need to get the config multiple times in the test for it to properly
+        # recalculate the schema, so we can't have a class wide config variable
+        config = get_sample_data_source()
+        adapter = get_indicator_adapter(config)
+        adapter.drop_table()
+
+    def test_add_index(self):
+        # build the table without an index
+        config = get_sample_data_source()
+        config.save()
+        self.addCleanup(config.delete)
+        pillow = get_kafka_ucr_pillow()
+        pillow.bootstrap([config])
+
+        adapter = get_indicator_adapter(config)
+        engine = adapter.engine
+        insp = reflection.Inspector.from_engine(engine)
+        table_name = get_table_name(config.domain, config.table_id)
+        self.assertEqual(len(insp.get_indexes(table_name)), 0)
+
+        # add the index to the config
+        config = get_sample_data_source()
+        self.addCleanup(config.delete)
+        config.configured_indicators[0]['create_index'] = True
+        config.save()
+        adapter = get_indicator_adapter(config)
+
+        # mock rebuild table to ensure the table isn't rebuilt when adding index
+        pillow = get_kafka_ucr_pillow()
+        pillow.processors[0].rebuild_table = MagicMock()
+        pillow.bootstrap([config])
+        self.assertFalse(pillow.processors[0].rebuild_table.called)
+        engine = adapter.engine
+        insp = reflection.Inspector.from_engine(engine)
+        self.assertEqual(len(insp.get_indexes(table_name)), 1)
