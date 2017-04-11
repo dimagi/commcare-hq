@@ -54,7 +54,7 @@ from .permissions import (
     can_edit_any_location,
 )
 from .models import LocationType, SQLLocation, filter_for_archived
-from .forms import LocationForm, UsersAtLocationForm
+from .forms import LocationFormSet, UsersAtLocationForm
 from .signals import clean_location
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
@@ -487,7 +487,7 @@ class NewLocationView(BaseLocationView):
     @memoized
     def location_form(self):
         data = self.request.POST if self.request.method == 'POST' else None
-        return LocationForm(
+        return LocationFormSet(
             self.location,
             bound_data=data,
             user=self.request.couch_user,
