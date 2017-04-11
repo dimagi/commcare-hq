@@ -3,7 +3,7 @@ from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-XFORM_INDEX = es_index("xforms_2017-03-28")
+XFORM_INDEX = es_index("xforms_2016-07-07")
 
 XFORM_MAPPING = {
     "date_detection": False,

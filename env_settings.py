@@ -69,7 +69,6 @@ ES_META = {
     'production': {
         'xforms': {
             'settings': {
-                'number_of_shards': 10,
                 "analysis": {
                     "analyzer": {
                         "default": {

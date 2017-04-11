@@ -277,11 +277,10 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "xforms",
-        "index": "test_xforms_2017-03-28",
+        "index": "test_xforms_2016-07-07",
         "type": "xform",
         "meta": {
             "settings": {
-                'number_of_shards': 10,
                 "analysis": {
                     "analyzer": {
                         "default": {
