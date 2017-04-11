@@ -961,7 +961,7 @@ APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_USER]
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
