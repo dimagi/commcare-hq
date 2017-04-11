@@ -258,12 +258,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def get_columns(self):
         return self.indicators.get_columns()
 
-    def get_items(self, document):
+    def get_items(self, document, eval_context=None):
         if self.filter(document):
             if not self.base_item_expression:
                 return [document]
             else:
-                result = self.parsed_expression(document)
+                result = self.parsed_expression(document, eval_context)
                 if result is None:
                     return []
                 elif isinstance(result, list):
@@ -278,7 +278,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             eval_context = EvaluationContext(doc)
 
         rows = []
-        for item in self.get_items(doc):
+        for item in self.get_items(doc, eval_context):
             indicators = self.indicators.get_values(item, eval_context)
             rows.append(indicators)
             eval_context.increment_iteration()
