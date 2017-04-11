@@ -75,7 +75,7 @@
     <div data-bind="template: 'case-config:refresh-form-questions'"></div>
 
     <div data-bind="with: caseConfigViewModel">
-        {% if app.advanced_app_builder %}
+        {% if app.advanced_app_builder or form.actions.subcases %}
             <div class="form-inline container-fluid">
                 {% trans "This form " %}
                 {% trans "Does not use cases" as no_cases %}
@@ -103,7 +103,7 @@
                      data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
                 </div>
             </div>
-                {% if app.advanced_app_builder %}
+                {% if app.advanced_app_builder or form.actions.subcases %}
                 <!--ko if: actionType() !== 'none'-->
                 <header class="clearfix" data-bind="visible: actionType() !== 'open-other'">
                     <h5 class="pull-left">{% trans "Child Cases" %}</h5>
@@ -127,7 +127,7 @@
                             <span class="help-block" data-bind="visible: !case_type()">{% trans "Required" %}</span>
                             {% if show_custom_ref %}
                                 <label>{% trans "Override reference id: " %}</label>
-                                <input type="text" data-bind="value: reference_id"/>
+                                <input type="text" class="form-control" data-bind="value: reference_id"/>
                             {% endif %}
                         </span>
                         <a href="#" data-bind="openModal: 'remove-subcase-modal-template'" class="pull-right">
