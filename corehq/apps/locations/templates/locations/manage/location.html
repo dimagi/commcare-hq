@@ -38,6 +38,7 @@
           var location_url = '{{ api_root }}';
           var loc_id = {{ location.get_id|JSON }};
           var hierarchy = {{ hierarchy|JSON }};
+          var loc_types_with_users = {{ loc_types_with_users|JSON }};
 
           model = new LocationSelectViewModel({
               "hierarchy": hierarchy,
@@ -63,6 +64,10 @@
                   $e[loc_type == val ? 'show' : 'hide']();
                 });
             });
+
+          model.has_user = ko.computed(function() {
+              return loc_types_with_users.indexOf(model.loc_type()) !== -1;
+          });
 
           var locs = {{ locations|JSON }};
           var selected_parent = '{{ location.parent.get_id }}';
@@ -144,8 +149,10 @@
             {% crispy form.custom_location_data.form %}
 
             {% if creates_new_location %}
+            <div data-bind="visible: has_user">
             {% crispy form.user_form %}
             {% crispy form.custom_user_data.form %}
+            </div>
             {% endif %}
 
             <input type="hidden" name="form_type" value="location-settings" />
