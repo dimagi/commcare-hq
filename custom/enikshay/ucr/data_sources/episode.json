@@ -5566,19 +5566,6 @@
                     "type": "boolean_expression",
                     "expression": {
                         "type": "property_name",
-                        "property_name": "case_definition"
-                    },
-                    "property_value": "microbiological"
-                },
-                "type": "boolean",
-                "column_id": "microbiological"
-            },
-            {
-                "filter": {
-                    "operator": "eq",
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
                         "property_name": "episode_type"
                     },
                     "property_value": "confirmed_tb"
@@ -5756,6 +5743,29 @@
                                 }
                             },
                             "property_value": "diabetic"
+                        }
+                    ]
+                }
+            },
+            {
+                "display_name": "hiv_positive_patient",
+                "column_id": "hiv_positive_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
                         }
                     ]
                 }
