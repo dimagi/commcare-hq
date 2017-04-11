@@ -6,6 +6,7 @@
 {% load djangular_tags %}
 
 {% block page_content %}
+    {% include 'export/partial/export_list_initial_page_data.html' %}
     <div ng-app="listExportsApp">
         {% include 'export/partial/dashboard_list_controller.html' %}
         {% include 'export/partial/export_list_create_export_modal.html' %}
