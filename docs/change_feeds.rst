@@ -20,9 +20,9 @@ This document refers to pillows and subscribers interchangeably.
 Common use cases for change subscribers:
 
 * ETL (our main use case)
-  * Saving docs to ElasticSearch
-  * Custom report tables
-  * UCR data sources
+    - Saving docs to ElasticSearch
+    - Custom report tables
+    - UCR data sources
 * Cache invalidation
 * Real-time visualizations (e.g. dimagisphere)
 

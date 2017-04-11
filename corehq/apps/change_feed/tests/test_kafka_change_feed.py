@@ -1,6 +1,6 @@
 import uuid
 from django.test import SimpleTestCase, TestCase
-from kafka import KeyedProducer
+from kafka import SimpleProducer
 from kafka.common import KafkaUnavailableError
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
@@ -105,7 +105,7 @@ class KafkaCheckpointTest(TestCase):
 
 @memoized
 def _get_producer():
-    return KeyedProducer(get_kafka_client_or_none())
+    return SimpleProducer(get_kafka_client_or_none())
 
 
 def publish_stub_change(topic):

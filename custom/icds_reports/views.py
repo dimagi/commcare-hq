@@ -1,48 +1,72 @@
 import requests
 
-from django.http import HttpResponse
-from django.template.loader import render_to_string
+from django.utils.decorators import method_decorator
+from django.views.generic.base import TemplateView
+
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
+    ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
+    TableauLocationFilter, ICDSYearFilter
 from . import const
 from .exceptions import TableauTokenException
 
 
 @location_safe
-@toggles.ICDS_REPORTS.required_decorator()
-@login_and_domain_required
-def tableau(request, domain, workbook, worksheet):
-    # TODO: In production we should limit this to only the actual workbook, but this makes iteration much easier
-    context = {
-        'report_workbook': workbook,
-        'report_worksheet': worksheet,
-        'debug': request.GET.get('debug', False),
-    }
+@method_decorator([toggles.ICDS_REPORTS.required_decorator(), login_and_domain_required], name='dispatch')
+class TableauView(TemplateView):
 
-    # set report view-by level based on user's location level
-    couch_user = getattr(request, 'couch_user', None)
-    location_type_code, user_location_id, state_id, district_id, block_id = \
-        _get_user_location(couch_user, domain)
-    context.update({
-        'view_by': location_type_code,
-        'view_by_value': user_location_id,
-        'state_id': state_id,
-        'district_id': district_id,
-        'block_id': block_id,
-    })
+    template_name = 'icds_reports/tableau.html'
 
-    # the header is added by nginx
-    client_ip = request.META.get('X-Forwarded-For', '')
-    tableau_access_url = get_tableau_trusted_url(client_ip)
+    filters = [
+        ICDSMonthFilter,
+        ICDSYearFilter,
+        TableauLocationFilter,
+        CasteFilter,
+        MinorityFilter,
+        DisabledFilter,
+        ResidentFilter,
+        MaternalStatusFilter,
+        ChildAgeFilter,
+        THRBeneficiaryType
+    ]
 
-    context.update({
-        'tableau_access_url': tableau_access_url,
-    })
+    @property
+    def domain(self):
+        return self.kwargs['domain']
 
-    response = render_to_string('icds_reports/tableau.html', context)
-    return HttpResponse(response)
+    @property
+    def couch_user(self):
+        return self.request.couch_user
+
+    def get_context_data(self, **kwargs):
+        location_type_code, user_location_id, state_id, district_id, block_id = _get_user_location(
+            self.couch_user, self.domain
+        )
+        client_ip = self.request.META.get('X-Forwarded-For', '')
+        tableau_access_url = get_tableau_trusted_url(client_ip)
+
+        kwargs.update({
+            'report_workbook': self.kwargs.get('workbook'),
+            'report_worksheet': self.kwargs.get('worksheet'),
+            'debug': self.request.GET.get('debug', False),
+            'view_by': location_type_code,
+            'view_by_value': user_location_id,
+            'state_id': state_id,
+            'district_id': district_id,
+            'block_id': block_id,
+            'tableau_access_url': tableau_access_url,
+            'filters': [
+                {
+                    'html': view_filter(request=self.request, domain=self.domain).render(),
+                    'slug': view_filter(request=self.request, domain=self.domain).slug
+                }
+                for view_filter in self.filters
+            ]
+        })
+        return super(TableauView, self).get_context_data(**kwargs)
 
 
 def _get_user_location(user, domain):

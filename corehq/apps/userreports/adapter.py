@@ -29,7 +29,7 @@ class IndicatorAdapter(object):
     def get_query_object(self):
         raise NotImplementedError
 
-    def best_effort_save(self, doc):
+    def best_effort_save(self, doc, eval_context=None):
         """
         Does a best-effort save of the document. Will fail silently if the save is not successful.
 
@@ -37,7 +37,7 @@ class IndicatorAdapter(object):
         For unexpected errors it will log them.
         """
         try:
-            indicator_rows = self.get_all_values(doc)
+            indicator_rows = self.get_all_values(doc, eval_context)
         except Exception as e:
             self.handle_exception(doc, e)
         else:
@@ -60,16 +60,16 @@ class IndicatorAdapter(object):
             }
         )
 
-    def save(self, doc):
+    def save(self, doc, eval_context=None):
         """
         Saves the document. Should bubble up known errors.
         """
-        indicator_rows = self.get_all_values(doc)
+        indicator_rows = self.get_all_values(doc, eval_context)
         self._save_rows(indicator_rows, doc)
 
-    def get_all_values(self, doc):
+    def get_all_values(self, doc, eval_context=None):
         "Gets all the values from a document to save"
-        return self.config.get_all_values(doc)
+        return self.config.get_all_values(doc, eval_context)
 
     def _save_rows(self, rows, doc):
         "Saves rows to a data source"

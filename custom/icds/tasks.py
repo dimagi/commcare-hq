@@ -5,6 +5,7 @@ from corehq.apps.locations.dbaccessors import (
     generate_user_ids_from_primary_location_ids,
     get_location_ids_with_location_type,
 )
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.tasks import CELERY_REMINDERS_QUEUE
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
 from corehq.apps.sms.api import send_sms
@@ -23,9 +24,16 @@ from django.conf import settings
 AWC_LOCATION_TYPE_CODE = 'awc'
 SUPERVISOR_LOCATION_TYPE_CODE = 'supervisor'
 
+ANDHRA_PRADESH_SITE_CODE = '28'
+MAHARASHTRA_SITE_CODE = ''
+
+HINDI = 'hin'
+TELUGU = 'tel'
+MARATHI = 'mar'
+
 
 @task(queue=CELERY_REMINDERS_QUEUE, ignore_result=True)
-def run_indicator(domain, user_id, indicator_class):
+def run_indicator(domain, user_id, indicator_class, language_code=None):
     """
     Runs the given indicator for the given user and sends the SMS if needed.
 
@@ -37,7 +45,10 @@ def run_indicator(domain, user_id, indicator_class):
     indicator = indicator_class(domain, user)
     # The user's phone number and preferred language is stored on the usercase
     usercase = user.get_usercase()
-    messages = indicator.get_messages(language_code=usercase.get_language_code())
+    if not language_code:
+        language_code = usercase.get_language_code()
+
+    messages = indicator.get_messages(language_code=language_code)
 
     if not isinstance(messages, list):
         raise ValueError("Expected a list of messages")
@@ -64,6 +75,24 @@ def is_first_week_of_month():
     return day <= 7
 
 
+def get_user_ids_under_location(domain, site_code):
+    if not site_code:
+        return set([])
+
+    location = SQLLocation.objects.get(domain=domain, site_code=site_code)
+    location_ids = list(location.get_descendants(include_self=False).filter(is_archived=False).location_ids())
+    return set(generate_user_ids_from_primary_location_ids(domain, location_ids))
+
+
+def get_language_code(user_id, telugu_user_ids, marathi_user_ids):
+    if user_id in telugu_user_ids:
+        return TELUGU
+    elif user_id in marathi_user_ids:
+        return MARATHI
+    else:
+        return HINDI
+
+
 @periodic_task(
     run_every=crontab(hour=3, minute=30, day_of_week='mon'),
     queue=settings.CELERY_PERIODIC_QUEUE,
@@ -71,21 +100,28 @@ def is_first_week_of_month():
 )
 def run_weekly_indicators():
     """
-    Runs the weekly SMS indicators at 9am IST.
+    Runs the weekly SMS indicators Monday at 9am IST.
     If it's the first week of the month, also run the monthly indicators.
     """
     first_week_of_month_result = is_first_week_of_month()
 
     for domain in settings.ICDS_SMS_INDICATOR_DOMAINS:
-        for user_id in generate_user_ids_from_primary_location_ids(domain, get_awc_location_ids(domain)):
-            if first_week_of_month_result:
-                run_indicator.delay(domain, user_id, AWWAggregatePerformanceIndicator)
+        telugu_user_ids = get_user_ids_under_location(domain, ANDHRA_PRADESH_SITE_CODE)
+        marathi_user_ids = get_user_ids_under_location(domain, MAHARASHTRA_SITE_CODE)
 
-            run_indicator.delay(domain, user_id, AWWSubmissionPerformanceIndicator)
+        for user_id in generate_user_ids_from_primary_location_ids(domain, get_awc_location_ids(domain)):
+            language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
+
+            if first_week_of_month_result:
+                run_indicator.delay(domain, user_id, AWWAggregatePerformanceIndicator, language_code)
+
+            run_indicator.delay(domain, user_id, AWWSubmissionPerformanceIndicator, language_code)
 
         for user_id in generate_user_ids_from_primary_location_ids(domain, get_supervisor_location_ids(domain)):
-            if first_week_of_month_result:
-                run_indicator.delay(domain, user_id, LSAggregatePerformanceIndicator)
+            language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
 
-            run_indicator.delay(domain, user_id, LSSubmissionPerformanceIndicator)
-            run_indicator.delay(domain, user_id, LSVHNDSurveyIndicator)
+            if first_week_of_month_result:
+                run_indicator.delay(domain, user_id, LSAggregatePerformanceIndicator, language_code)
+
+            run_indicator.delay(domain, user_id, LSSubmissionPerformanceIndicator, language_code)
+            run_indicator.delay(domain, user_id, LSVHNDSurveyIndicator, language_code)

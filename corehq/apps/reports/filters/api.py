@@ -14,7 +14,7 @@ from corehq.elastic import ESError
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.reports.filters.users import EmwfUtils
+from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils
 from corehq.apps.es import UserES, GroupES, groups
 from corehq.apps.locations.models import SQLLocation
 
@@ -186,6 +186,24 @@ class LocationRestrictedEmwfOptionsMixin(object):
         # locations, groups etc in the list on pagination
         sources.append((self.get_users_size, self.get_users))
         return sources
+
+
+class MobileWorkersOptionsView(EmwfOptionsView):
+    """
+    Paginated Options for the Mobile Workers selection tool
+    """
+    urlname = 'users_select2_options'
+
+    @property
+    @memoized
+    def utils(self):
+        return UsersUtils(self.domain)
+
+    @property
+    def data_sources(self):
+        return [
+            (self.get_users_size, self.get_users),
+        ]
 
 
 @location_safe

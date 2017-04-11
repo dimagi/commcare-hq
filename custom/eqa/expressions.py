@@ -18,14 +18,14 @@ STATUSES = {
 }
 
 
-def get_val(form, path, default=0):
+def get_val(form, path, default=0, data_type=None):
     if not form:
-        return default
+        return data_type(default)
     question_value = form.get_data(path)
     try:
-        return int(question_value)
+        return data_type(question_value)
     except (ValueError, TypeError):
-        return default
+        return data_type(default)
 
 
 def get_yes_no(val):
@@ -37,7 +37,7 @@ def get_yes_no(val):
         return 'N/A'
 
 
-@quickcache(['item'])
+@quickcache(['item', 'xmlns'])
 def get_two_last_forms(item, xmlns):
     xforms_ids = CaseAccessors(item['domain']).get_case_xform_ids(item['_id'])
     forms = FormAccessors(item['domain']).get_forms(xforms_ids)
@@ -68,8 +68,8 @@ class EQAExpressionSpec(JsonObject):
 
         path_question = 'form/%s' % self.question_id
 
-        curr_ques = get_val(curr_form, path_question, 99)
-        prev_ques = get_val(prev_form, path_question, 99)
+        curr_ques = get_val(curr_form, path_question, 99, int)
+        prev_ques = get_val(prev_form, path_question, 99, int)
 
         return {
             'question_id': self.question_id,
@@ -148,8 +148,8 @@ class EQAPercentExpression(JsonObject):
 
         path_question = 'form/%s' % self.question_id
 
-        curr_ques = get_val(curr_form, path_question, -1)
-        prev_ques = get_val(prev_form, path_question, -1)
+        curr_ques = get_val(curr_form, path_question, -1, float)
+        prev_ques = get_val(prev_form, path_question, -1, float)
 
         if curr_ques == -1 or prev_ques == -1:
             status = "N/A"
@@ -163,8 +163,8 @@ class EQAPercentExpression(JsonObject):
         return {
             'question_id': self.question_id,
             'display_text': self.display_text,
-            'current_submission': "%d%%" % curr_ques if curr_ques != -1 else "N/A",
-            'previous_submission': "%d%%" % prev_ques if prev_ques != -1 else "N/A",
+            'current_submission': "%.2f%%" % curr_ques if curr_ques != -1 else "N/A",
+            'previous_submission': "%.2f%%" % prev_ques if prev_ques != -1 else "N/A",
             'status': status
         }
 

@@ -154,6 +154,7 @@ def change_from_kafka_message(message):
         deleted=change_meta.is_deletion,
         metadata=change_meta,
         document_store=document_store,
+        topic=message.topic,
     )
 
 
