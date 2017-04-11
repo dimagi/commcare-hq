@@ -4,7 +4,7 @@ var hqLayout = {};
 hqLayout.selector = {
     navigation: '#hq-navigation',
     content: '#hq-content',
-    appmanager: '#js-appmanager-body.appmanager-settings-content',
+    appmanager: '#js-appmanager-body.appmanager-content',
     footer: '#hq-footer',
     sidebar: '#hq-sidebar',
     breadcrumbs: '#hq-breadcrumbs',
@@ -37,7 +37,10 @@ hqLayout.utils = {
             $breadcrumbs = $(hqLayout.selector.breadcrumbs),
             $messages = $(hqLayout.selector.messages);
 
-        var absorbedHeight = $navigation.outerHeight() + $footer.outerHeight();
+        var absorbedHeight = $navigation.outerHeight();
+        if ($footer.length) {
+            absorbedHeight += $footer.outerHeight();
+        }
         if ($breadcrumbs.length) {
             absorbedHeight += $breadcrumbs.outerHeight();
         }
