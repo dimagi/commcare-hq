@@ -24,10 +24,12 @@
 </script>
 
 <script type="text/html" id="case-config:case-transaction">
+    {% if app.advanced_app_builder or form.actions.open_case.condition.type == 'if' %}
     <div data-bind="template: {
         name: 'case-config:condition',
         data: {condition: condition, config: $data}
     }, visible: allow.condition()"></div>
+    {% endif %}
     <div data-bind="if: allow.case_preload()">
         <div class="panel panel-appmanager case-properties wide-select2s"
              data-bind="template: 'case-config:case-transaction:case-properties'"></div>
@@ -37,19 +39,19 @@
              data-bind="template: 'case-config:case-transaction:case-properties'"></div>
     </div>
     {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
-    {% if app.advanced_app_builder or form.get_action_type != 'open' %}
         <div class="panel panel-appmanager">
             <label class="panel-body">
                 <input type="checkbox" data-bind="checked: close_case"/>
                 {% trans "Close this case when the form is complete" %}
             </label>
+            {% if app.advanced_app_builder or form.actions.close_case.condition.type == 'if' %}
             <div data-bind="template: {
                 name: 'case-config:condition',
                 data: {condition: $data.close_condition, config: $data},
                 if: $data.close_condition
             }"></div>
+            {% endif %}
         </div>
-    {% endif %}
     {% endif %}
 </script>
 
