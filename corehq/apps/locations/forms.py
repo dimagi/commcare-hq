@@ -312,7 +312,15 @@ class LocationFormSet(object):
         self.location_form = LocationForm(location, bound_data, is_new=is_new)
         self.custom_location_data = self.get_custom_location_data(bound_data, is_new)
 
-        if is_new:
+        make_user = bound_data and (LocationType.objects
+                                   .get(domain=self.domain, name=bound_data['location_type'])
+                                   .has_user)
+        self.include_user_forms = is_new and (
+            (bound_data is None) or
+            make_user
+        )
+
+        if self.include_user_forms:
             self.user_form = self.get_user_form(bound_data, user)
             self.custom_user_data = self.get_custom_user_data(bound_data)
 
@@ -320,13 +328,13 @@ class LocationFormSet(object):
     def errors(self):
         errors = self.location_form.errors
         errors.update(self.custom_location_data.errors)
-        if self.is_new:
+        if self.include_user_forms:
             errors.update(self.user_form.errors)
             errors.update(self.custom_user_data.errors)
         return errors
 
     def is_valid(self):
-        if self.is_new:
+        if self.include_user_forms:
             return all([
                 self.location_form.is_valid(),
                 self.custom_location_data.is_valid(),
