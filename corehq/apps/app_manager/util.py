@@ -739,7 +739,8 @@ def module_offers_search(module):
     return (
         isinstance(module, (Module, AdvancedModule, ShadowModule)) and
         module.search_config and
-        module.search_config.properties
+        module.search_config.properties or
+        module.search_config.default_properties
     )
 
 
