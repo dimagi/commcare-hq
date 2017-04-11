@@ -329,7 +329,8 @@ class BlobRestoreResponse(RestoreResponse):
             blob.close()
 
     def get_http_response(self):
-        return stream_response(self.blobdb.get(self.get_filename()))
+        headers = {'Content-Length': self.blobdb.size(self.get_filename())}
+        return stream_response(self.blobdb.get(self.get_filename()), headers)
 
 
 class AsyncRestoreResponse(object):
