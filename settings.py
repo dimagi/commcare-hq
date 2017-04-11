@@ -377,6 +377,7 @@ ENIKSHAY_APPS = (
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
     'custom.enikshay.nikshay_datamigration',
+    'custom.enikshay.private_sector_datamigration',
     'custom.enikshay.integrations.nikshay'
 )
 
