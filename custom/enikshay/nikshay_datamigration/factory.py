@@ -130,7 +130,10 @@ class EnikshayCaseFactory(object):
         ):
             drtb_hiv_referral_structure = self.get_drtb_hiv_referral_case_structure(episode_structure)
             case_structures_to_create.append(drtb_hiv_referral_structure)
-        case_structures_to_create.extend([self.get_test_case_structure(followup, episode_structure) for followup in self._followups])
+        case_structures_to_create.extend([
+            self.get_test_case_structure(followup, episode_structure)
+            for followup in self._followups
+        ])
         if case_structures_to_create:
             return case_structures_to_create
         else:
