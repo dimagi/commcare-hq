@@ -20,8 +20,10 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.util import generate_code
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.custom_data_fields.edit_entity import get_prefixed
+from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
+from corehq.apps.users.forms import NewMobileWorkerForm
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
 from corehq.apps.style import crispy as hqcrispy
@@ -306,16 +308,31 @@ class LocationFormSet(object):
         from .views import LocationFieldsView
         self.location = location
         self.domain = location.domain
+        self.is_new = is_new
         self.location_form = LocationForm(location, bound_data, is_new=is_new)
         self.custom_location_data = self.get_custom_location_data(bound_data, is_new)
+
+        if is_new:
+            self.user_form = self.get_user_form(bound_data, user)
+            self.custom_user_data = self.get_custom_user_data(bound_data)
 
     @property
     def errors(self):
         errors = self.location_form.errors
         errors.update(self.custom_location_data.errors)
+        if self.is_new:
+            errors.update(self.user_form.errors)
+            errors.update(self.custom_user_data.errors)
         return errors
 
     def is_valid(self):
+        if self.is_new:
+            return all([
+                self.location_form.is_valid(),
+                self.custom_location_data.is_valid(),
+                self.user_form.is_valid(),
+                self.custom_user_data.is_valid(),
+            ])
         return all([
             self.location_form.is_valid(),
             self.custom_location_data.is_valid(),
@@ -326,6 +343,7 @@ class LocationFormSet(object):
             raise ValueError('Form is not valid')
         metadata = self.custom_location_data.get_data_to_save()
         self.location_form.save(metadata=metadata)
+        # TODO add user forms here
 
     def get_custom_location_data(self, bound_data, is_new):
         from .views import LocationFieldsView
@@ -347,6 +365,39 @@ class LocationFormSet(object):
         custom_data.form.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         custom_data.form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
         return custom_data
+
+    def get_user_form(self, bound_data, user):
+        domain_obj = Domain.get_by_name(self.domain)
+        form = NewMobileWorkerForm(
+            project=domain_obj,
+            data=bound_data,
+            user=user,
+            prefix='location_user',
+        )
+        form.fields['username'].help_text = None
+        form.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+        form.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Location User"),
+                'username',
+                'first_name',
+                'last_name',
+                'password',
+            )
+        )
+        return form
+
+    def get_custom_user_data(self, bound_data):
+        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+        user_data = CustomDataEditor(
+            field_view=UserFieldsView,
+            domain=self.domain,
+            post_dict=bound_data,
+            required_only=True,
+        )
+        user_data.form.prefix = 'user_data'
+        return user_data
 
 
 class UsersAtLocationForm(forms.Form):
