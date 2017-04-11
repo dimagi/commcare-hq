@@ -2389,6 +2389,10 @@ class AnonymousCouchUser(object):
     _id = 'anonymous_couch_user'
 
     @property
+    def get_id(self):
+        return self._id
+
+    @property
     def is_active(self):
         return True
 
