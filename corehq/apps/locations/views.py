@@ -503,6 +503,7 @@ class NewLocationView(BaseLocationView):
             'locations': load_locs_json(self.domain, self.location.parent_location_id,
                                         user=self.request.couch_user),
             'form_tab': self.form_tab,
+            'creates_new_location': self.creates_new_location,
         }
 
     def form_valid(self):
