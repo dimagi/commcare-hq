@@ -112,10 +112,12 @@ def migrate_kafka_sequence(change_feed, checkpoint):
             # if sequence is an empty dict just return it
             return sequence
 
-        assert set(change_feed.topics) <= set(sequence)
+        change_feed_topics = set(change_feed.topics)
+        assert change_feed_topics <= set(sequence)
         return kafka_seq_to_str({
             (topic, 0): offset
             for topic, offset in sequence.items()
+            if topic in change_feed_topics
         })
     else:
         raise ValueError("Unknown checkpoint format: {}".format(checkpoint.sequence_format))
