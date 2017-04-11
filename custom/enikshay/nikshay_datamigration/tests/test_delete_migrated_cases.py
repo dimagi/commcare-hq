@@ -18,7 +18,7 @@ class TestDeleteMigratedCases(ENikshayCaseStructureMixin, NikshayMigrationMixin,
         assert len(episode_case_ids) == 1
         assert len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')) == 1
 
-        call_command('delete_migrated_cases', self.domain, 'episode', *episode_case_ids, noinput=True)
+        call_command('delete_migrated_cases', self.domain, 'episode', episode_case_ids[0], noinput=True)
 
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='person'), [])
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='occurrence'), [])
@@ -36,7 +36,7 @@ class TestDeleteMigratedCases(ENikshayCaseStructureMixin, NikshayMigrationMixin,
         assert len(episode_case_ids) == 1
         assert len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')) == 0
 
-        call_command('delete_migrated_cases', self.domain, 'episode', *episode_case_ids, noinput=True)
+        call_command('delete_migrated_cases', self.domain, 'episode', episode_case_ids[0], noinput=True)
 
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='person'), [])
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='occurrence'), [])
@@ -73,7 +73,8 @@ class TestDeleteMigratedCases(ENikshayCaseStructureMixin, NikshayMigrationMixin,
 
         call_command(
             'delete_migrated_cases',
-            self.domain, 'episode', *filter(lambda episode_id: episode_id != self.episode_id, episode_case_ids),
+            self.domain, 'episode',
+            [episode_id for episode_id in episode_case_ids if episode_id != self.episode_id][0],
             noinput=True
         )
 
