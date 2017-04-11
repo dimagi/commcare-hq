@@ -43,6 +43,23 @@ class TestDeleteMigratedCases(ENikshayCaseStructureMixin, NikshayMigrationMixin,
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='episode'), [])
         self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral'), [])
 
+    def test_deletion_by_person_case_id(self):
+        self.outcome.HIVStatus = None
+        self.outcome.save()
+        call_command('create_enikshay_cases', self.domain)
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        assert len(person_case_ids) == 1
+        assert len(self.case_accessor.get_case_ids_in_domain(type='occurrence')) == 1
+        assert len(self.case_accessor.get_case_ids_in_domain(type='episode')) == 1
+        assert len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')) == 1
+
+        call_command('delete_migrated_cases', self.domain, 'person', person_case_ids[0], noinput=True)
+
+        self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='person'), [])
+        self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='occurrence'), [])
+        self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='episode'), [])
+        self.assertListEqual(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral'), [])
+
     def test_other_cases_not_deleted(self):
         self.outcome.HIVStatus = None
         self.outcome.save()
