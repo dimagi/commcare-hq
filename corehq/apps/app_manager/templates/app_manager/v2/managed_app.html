@@ -65,6 +65,12 @@
           </div>
         {% endif %}
 
+        {% if app.advanced_app_builder %}
+          <div class="appnav-advanced-label">
+            {% trans "Advanced App Builder" %}
+          </div>
+        {% endif %}
+
         {% include 'app_manager/v2/partials/appnav_menu.html' %}
       {% endif %}
     </nav>
