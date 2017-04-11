@@ -4,6 +4,8 @@ from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from couchdbkit import ResourceConflict, BulkSaveError
 from casexml.apps.case.mock import CaseBlock
@@ -12,6 +14,7 @@ from corehq.form_processor.models import UserArchivedRebuild
 from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
+from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -33,6 +36,47 @@ def bulk_upload_async(domain, user_specs, group_specs):
     DownloadBase.set_progress(task, 100, 100)
     return {
         'messages': results
+    }
+
+
+@task()
+def bulk_download_users_async(domain, download_id):
+    from corehq.apps.users.bulkupload import dump_users_and_groups, GroupNameError
+    DownloadBase.set_progress(bulk_download_users_async, 0, 100)
+    errors = []
+    try:
+        dump_users_and_groups(
+            domain,
+            download_id,
+        )
+    except GroupNameError as e:
+        group_urls = [
+            reverse('group_members', args=[domain, group.get_id])
+            for group in e.blank_groups
+        ]
+
+        def make_link(url, i):
+            return format_html(
+                '<a href="{}" target="_blank">{}</a>',
+                url,
+                _('Blank Group %s') % i
+            )
+
+        group_links = [
+            make_link(url, i + 1)
+            for i, url in enumerate(group_urls)
+        ]
+        errors.append(format_html(
+            _(
+                'The following groups have no name. '
+                'Please name them before continuing: {}'
+            ),
+            mark_safe(', '.join(group_links))
+        ))
+
+    DownloadBase.set_progress(bulk_download_users_async, 100, 100)
+    return {
+        'errors': errors
     }
 
 

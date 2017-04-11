@@ -29,6 +29,7 @@ class IndicatorSpecBase(JsonObject):
 
     column_id = StringProperty(required=True)
     display_name = StringProperty()
+    comment = StringProperty()
 
     @classmethod
     def wrap(cls, obj):

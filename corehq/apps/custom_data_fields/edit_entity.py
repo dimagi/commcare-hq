@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django import forms
 
@@ -80,7 +80,7 @@ class CustomDataEditor(object):
         return definition or CustomDataFieldsDefinition()
 
     def is_valid(self):
-        return self.form.is_valid()
+        return not self.errors
 
     @property
     def errors(self):

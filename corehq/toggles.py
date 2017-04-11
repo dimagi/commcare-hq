@@ -4,7 +4,11 @@ import hashlib
 from django.http import Http404
 import math
 
+from django.contrib import messages
 from django.conf import settings
+from couchdbkit import ResourceNotFound
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
 
@@ -94,9 +98,25 @@ class StaticToggle(object):
                     or (hasattr(request, 'domain') and self.enabled(request.domain))
                 ):
                     return view_func(request, *args, **kwargs)
+                if request.user.is_superuser:
+                    from corehq.apps.toggle_ui.views import ToggleEditView
+                    toggle_url = reverse(ToggleEditView.urlname, args=[self.slug])
+                    messages.warning(request, mark_safe((
+                        'This <a href="{}">feature flag</a> should be enabled '
+                        'to access this URL'
+                    ).format(toggle_url)))
                 raise Http404()
             return wrapped_view
         return decorator
+
+    def get_enabled_domains(self):
+        from toggle.models import Toggle
+        try:
+            toggle = Toggle.get(self.slug)
+            enabled_users = toggle.enabled_users
+            return [user.split('domain:')[1] for user in enabled_users if 'domain:' in user]
+        except ResourceNotFound:
+            return []
 
 
 def deterministic_random(input_string):
@@ -288,6 +308,13 @@ ADD_USERS_FROM_LOCATION = StaticToggle(
     "Allow users to add new mobile workers from the locations page",
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
+)
+
+CASE_DETAIL_PRINT = StaticToggle(
+    'case_detail_print',
+    'Allowing printing of the case detail, based on an HTML template',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
@@ -906,7 +933,7 @@ EDIT_FORMPLAYER = PredictablyRandomToggle(
     'Edit forms on Formplayer',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.5,
+    randomness=1.0,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -923,11 +950,11 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-VELLUM_BETA = StaticToggle(
-    'vellum_beta',
-    'Use Vellum beta version',
+VELLUM_ALPHA = StaticToggle(
+    'vellum_alpha',
+    'Use alpha (pre-beta) Vellum',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER, NAMESPACE_DOMAIN]
 )
 
 APP_MANAGER_V2 = StaticToggle(
@@ -961,6 +988,13 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
         "other reports - by individual user, group, or location.  Note that this "
         "will also force the report to always display by user."
     ),
+)
+
+ENIKSHAY = StaticToggle(
+    'enikshay',
+    "Enable custom enikshay functionality: additional user and location validation",
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DATA_DICTIONARY = StaticToggle(
@@ -1012,6 +1046,13 @@ INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+UATBC_ADHERENCE_TASK = StaticToggle(
+    'uatbc_adherence_calculations',
+    'This runs backend adherence calculations for enikshay domains',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 VIEW_APP_CHANGES = StaticToggle(
     'app-changes-with-improved-diff',
     'Improved app changes view',
@@ -1030,6 +1071,21 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     }
 )
 
+BLOBDB_EXPORTS = PredictablyRandomToggle(
+    'blobdb_exports',
+    'Use the blobdb to do exports',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+    randomness=0.3,
+)
+
+PAGINATED_EXPORTS = StaticToggle(
+    'paginated_exports',
+    'Allows for pagination of exports for very large exports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
     'highlight_feature_flags',
     'Highlight / Mark Feature Flags in the UI',
@@ -1042,4 +1098,11 @@ DASHBOARD_GRAPHS = StaticToggle(
     'Show submission graph on dashboard',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+PUBLISH_CUSTOM_REPORTS = StaticToggle(
+    'publish_custom_reports',
+    "Publish custom reports (No needed Authorization)",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )

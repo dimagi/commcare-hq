@@ -84,7 +84,7 @@ class DividedWeRunPlugin(Plugin):
                         skip.__name__ = "*"
                     skip.__module__ = name
             else:
-                desc = test.test
+                desc = test.test.descriptor
             return Test(
                 FunctionTestCase(skip, descriptor=desc),
                 getattr(test, 'config', None),

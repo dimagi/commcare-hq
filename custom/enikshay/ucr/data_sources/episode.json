@@ -10,6 +10,9 @@
         "enikshay-aks-audit",
         "np-migration-3"
     ],
+    "server_environment": [
+        "softlayer"
+    ],
     "config": {
         "referenced_doc_type": "CommCareCase",
         "engine_id": "ucr",
@@ -115,7 +118,6 @@
                 "is_nullable": true,
                 "column_id": "treatment_initiation_date",
                 "expression": {
-                    "datatype": null,
                     "type": "property_name",
                     "property_name": "treatment_initiation_date"
                 }
@@ -372,7 +374,7 @@
                     "value_expression": {
                         "datatype": "string",
                         "type": "property_name",
-                        "property_name": "contact_phone_number"
+                        "property_name": "phone_number"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
@@ -496,9 +498,26 @@
                 "datatype": "string",
                 "type": "expression",
                 "expression": {
-                    "datatype": "string",
-                    "type": "property_name",
-                    "property_name": "key_populations"
+                    "type": "conditional",
+                    "test": {
+                        "operator": "not_eq",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "key_populations"
+                        },
+                        "property_value": ""
+                    },
+                    "expression_if_true": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "key_populations"
+                    },
+                    "expression_if_false": {
+                        "constant": "none",
+                        "type": "constant"
+                    }
                 },
                 "column_id": "key_populations"
             },
@@ -668,6 +687,21 @@
                     "property_name": "case_definition"
                 },
                 "column_id": "basis_of_diagnosis"
+            },
+            {
+                "display_name": "adherence_schedule_id",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "adherence_schedule_id"
+                },
+                "column_id": "adherence_schedule_id"
             },
             {
                 "display_name": "not_microbiological_basis_of_diagnosis",
@@ -935,7 +969,7 @@
             {
                 "display_name": "microbiological_test_facility_referred_to",
                 "column_id": "microbiological_test_facility_referred_to",
-                "datatype": "date",
+                "datatype": "string",
                 "type": "expression",
                 "expression": {
                     "type": "nested",
@@ -957,29 +991,12 @@
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "first_case_form_with_xmlns",
-                        "reverse": true,
-                        "xmlns": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3",
-                        "case_id_expression": {
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "latest_microbiological_test_case"
-                            },
-                            "value_expression": {
-                                "type": "property_name",
-                                "property_name": "_id"
-                            }
-                        }
+                        "type": "named",
+                        "name": "latest_microbiological_test_case"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "microscopy",
-                            "ql_microscopy",
-                            "lab_serial_number"
-                        ]
+                        "type": "property_name",
+                        "property_name": "lab_serial_number"
                     }
                 }
             },
@@ -1037,7 +1054,7 @@
             {
                 "display_name": "endofip_test_facility_referred_to",
                 "column_id": "endofip_test_facility_referred_to",
-                "datatype": "date",
+                "datatype": "string",
                 "type": "expression",
                 "expression": {
                     "type": "nested",
@@ -1088,7 +1105,7 @@
             {
                 "display_name": "endofcp_test_facility_referred_to",
                 "column_id": "endofcp_test_facility_referred_to",
-                "datatype": "date",
+                "datatype": "string",
                 "type": "expression",
                 "expression": {
                     "type": "nested",
@@ -1215,13 +1232,66 @@
                 }
             },
             {
+                "display_name": "dosage_frequency",
+                "column_id": "dosage_frequency",
+                "datatype": "string",
+                "type": "expression",
+                "expression":{
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "complete_treatment_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "ql_weight_band_and_dosage",
+                            "dosage_frequency"
+                        ]
+                    }
+                }
+            },
+            {
                 "display_name": "type_of_regimen",
                 "column_id": "type_of_regimen",
                 "datatype": "string",
                 "type": "expression",
-                "expression":{
-                    "type": "property_name",
-                    "property_name": "regimen"
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "patient_type_choice"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "new"
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": "New"
+                    },
+                    "expression_if_false": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_initiated"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes_private"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": "Outside RNTCP"
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": "Previously Treated"
+                        }
+                    }
                 }
             },
             {
@@ -1422,29 +1492,6 @@
                     "property_name": "ip_initiation_date"
                 },
                 "column_id": "ip_initiation_date"
-            },
-            {
-                "display_name": "dosage_frequency",
-                "datatype": "string",
-                "type": "expression",
-                "is_primary_key": false,
-                "transform": {
-                },
-                "is_nullable": true,
-                "expression": {
-                    "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "dosage_frequency"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "type": "named",
-                        "name": "person_id"
-                    }
-                },
-                "column_id": "dosage_frequency"
             },
             {
                 "display_name": "treatment_outcome_date",
@@ -7957,8 +8004,12 @@
             "key_populations": {
                 "value_expression": {
                     "datatype": "string",
-                    "type": "property_name",
-                    "property_name": "key_populations"
+                    "type": "property_path",
+                    "property_path": [
+                        "form",
+                        "ql_patient_details",
+                        "key_populations"
+                    ]
                 },
                 "type": "related_doc",
                 "related_doc_type": "CommCareCase",

@@ -69,15 +69,35 @@ class AutomaticUpdateRule(models.Model):
 
     @classmethod
     def get_case_ids(cls, domain, case_type, boundary_date=None):
+        """
+        Retrieves the case ids in chunks, yielding a list of case ids each time
+        until there are none left.
+        """
+        chunk_size = 100
+
         query = (CaseES()
                  .domain(domain)
                  .case_type(case_type)
                  .is_closed(closed=False)
-                 .exclude_source())
-        if boundary_date is not None:
+                 .exclude_source()
+                 .size(chunk_size))
+
+        if boundary_date:
             query = query.server_modified_range(lte=boundary_date)
-        results = query.run()
-        return results.doc_ids
+
+        result = []
+
+        for case_id in query.scroll():
+            if not isinstance(case_id, basestring):
+                raise ValueError("Something is wrong with the query, expected ids only")
+
+            result.append(case_id)
+            if len(result) >= chunk_size:
+                yield result
+                result = []
+
+        if result:
+            yield result
 
     def rule_matches_case(self, case, now):
         try:
@@ -160,8 +180,14 @@ class AutomaticUpdateRule(models.Model):
         if not self.active:
             raise Exception("Attempted to call apply_rule on an inactive rule")
 
-        if not isinstance(case, (CommCareCase, CommCareCaseSQL)) or case.domain != self.domain:
-            raise Exception("Invalid case given")
+        if not isinstance(case, (CommCareCase, CommCareCaseSQL)):
+            raise ValueError("Invalid case given")
+
+        if not case.doc_type.startswith('CommCareCase'):
+            raise ValueError("Invalid case given")
+
+        if case.domain != self.domain:
+            raise ValueError("Invalid case given")
 
         if case.is_deleted or case.closed:
             return True

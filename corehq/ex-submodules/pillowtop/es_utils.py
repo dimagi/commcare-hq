@@ -17,7 +17,7 @@ INDEX_REINDEX_SETTINGS = {
 
 INDEX_STANDARD_SETTINGS = {
     "index": {
-        "refresh_interval": "1s",
+        "refresh_interval": "5s",
         "merge.policy.merge_factor": 10,
         "store.throttle.max_bytes_per_sec": "5mb",
         "store.throttle.type": "node",

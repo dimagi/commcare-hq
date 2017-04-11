@@ -1,6 +1,6 @@
 from django.http import Http404
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.shortcuts import render
 from corehq.apps.app_manager.const import APP_V1
 
@@ -168,11 +168,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             'is_app_settings_page': not release_manager,
         })
     else:
-        from corehq.apps.dashboard.views import NewUserDashboardView
         if toggles.APP_MANAGER_V2.enabled(domain):
-            context.update(NewUserDashboardView.get_page_context(domain))
-            template = NewUserDashboardView.template_name
+            from corehq.apps.dashboard.views import DomainDashboardView
+            return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
         else:
+            from corehq.apps.dashboard.views import NewUserDashboardView
             return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.

@@ -28,6 +28,8 @@ from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionTyp
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.routers import db_for_read_write
+from corehq.util.exceptions import AccessRestricted
+from corehq.util.mixin import DisabledDbMixin
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.signals import xform_archived, xform_unarchived
@@ -37,7 +39,7 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
-from .exceptions import AttachmentNotFound, AccessRestricted
+from .exceptions import AttachmentNotFound
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
 XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
@@ -129,18 +131,6 @@ class AttachmentMixin(SaveStateMixin):
 
     def _get_attachments_from_db(self):
         raise NotImplementedError
-
-
-class DisabledDbMixin(object):
-
-    def save(self, *args, **kwargs):
-        raise AccessRestricted('Direct object save disabled.')
-
-    def save_base(self, *args, **kwargs):
-        raise AccessRestricted('Direct object save disabled.')
-
-    def delete(self, *args, **kwargs):
-        raise AccessRestricted('Direct object deletion disabled.')
 
 
 class RestrictedManager(models.Manager):
@@ -627,11 +617,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def xform_ids(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        if self.is_saved():
-            return CaseAccessorSQL.get_case_xform_ids(self.case_id)
-        else:
-            return [t.form_id for t in self.transactions if not t.revoked and t.is_form_transaction]
+        return [t.form_id for t in self.transactions if not t.revoked and t.is_form_transaction]
 
     @property
     def user_id(self):

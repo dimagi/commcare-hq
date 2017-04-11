@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.http import QueryDict
 from django import template
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from dimagi.utils.decorators.memoized import memoized
@@ -256,8 +256,7 @@ def can_use_restore_as(request):
 
     return (
         request.couch_user.can_edit_commcare_users() and
-        has_privilege(request, privileges.DATA_CLEANUP) and
-        has_privilege(request, privileges.CLOUDCARE)
+        has_privilege(request, privileges.LOGIN_AS)
     )
 
 

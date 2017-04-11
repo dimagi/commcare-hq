@@ -1,6 +1,6 @@
 import json
 
-from django.core.urlresolvers import NoReverseMatch
+from django.urls import NoReverseMatch
 from django.http import HttpResponse
 from tastypie import http
 from tastypie.resources import Resource

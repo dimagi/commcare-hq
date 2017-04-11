@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
 
@@ -172,6 +172,16 @@ class EmwfUtils(object):
             return None
         else:
             raise Exception("Unexpcted id: {}".format(id_))
+
+
+class UsersUtils(EmwfUtils):
+
+    def user_tuple(self, u):
+        user = util._report_user_dict(u)
+        uid = "%s" % user['user_id']
+        name = "%s" % user['username_in_report']
+        return (uid, name)
+
 
 _UserData = namedtupledict('_UserData', (
     'users',

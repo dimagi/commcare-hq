@@ -1,5 +1,5 @@
 from distutils.version import LooseVersion
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
@@ -34,14 +34,15 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
-from corehq.tabs.tabclasses import ProjectSettingsTab
 from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
 from soil import MultipleTaskDownload
 
-from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore, handle_401_response
+from .utils import (
+    demo_user_restore_response, get_restore_user, is_permitted_to_restore,
+    handle_401_response, update_device_id)
 
 
 @location_safe
@@ -56,6 +57,7 @@ def restore(request, domain, app_id=None):
     """
     couch_user = CouchUser.from_django_user_include_anonymous(domain, request.user)
     assert couch_user is not None, 'No couch user to use for restore'
+    update_device_id(couch_user, request.GET.get('device_id'))
     response, _ = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
     return response
 
@@ -259,7 +261,7 @@ class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
     template_name = "ota/prime_restore_cache.html"
 
     @method_decorator(domain_admin_required)
-    @toggles.PRIME_RESTORE.required_decorator()
+    @method_decorator(toggles.PRIME_RESTORE.required_decorator())
     def dispatch(self, *args, **kwargs):
         return super(PrimeRestoreCacheView, self).dispatch(*args, **kwargs)
 
@@ -270,12 +272,6 @@ class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
             'domain': self.domain,
         })
         main_context.update({
-            'active_tab': ProjectSettingsTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-                project=self.request.project
-            ),
             'is_project_settings': True,
         })
         return main_context

@@ -29,7 +29,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         start_date, end_date = get_first_last_days(self.year, self.month)
         month_before = start_date - relativedelta(months=1)
         new_start_date = month_before.replace(day=21)
-        new_end_date = month_before.replace(day=20)
+        new_end_date = start_date.replace(day=20)
         self.datespan.startdate = new_start_date
         self.datespan.enddate = new_end_date
         state = self.request.GET.get('icds_state_id', None)

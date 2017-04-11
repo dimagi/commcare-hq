@@ -5,7 +5,9 @@ from dateutil.relativedelta import relativedelta
 from xml.etree import ElementTree
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory
+from corehq.apps.es.fake.forms_fake import FormESFake
 from corehq.util.test_utils import TestFileMixin
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import iteratively_build_table
@@ -28,6 +30,7 @@ def add_element(element, element_name, value):
         element.append(elem)
 
 
+@mock.patch('custom.icds_reports.ucr.expressions.FormES', FormESFake)
 class BaseICDSDatasourceTest(TestCase, TestFileMixin):
     dependent_apps = ['corehq.apps.domain', 'corehq.apps.case']
     file_path = ('data_sources', )
@@ -62,6 +65,7 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.adapter.clear_table()
+        FormESFake.reset_docs()
 
     def _get_query_object(self):
         return self.adapter.get_query_object()
@@ -78,3 +82,7 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
             for key, exp_value in test_values:
                 self.assertEqual(exp_value, row[key],
                                  str(index) + ":" + key + ' ' + str(exp_value) + ' != ' + str(row[key]))
+
+    def _submit_form(self, form):
+        submitted_form = submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        FormESFake.save_doc(submitted_form.xform.to_json())

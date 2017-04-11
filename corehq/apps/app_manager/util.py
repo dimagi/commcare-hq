@@ -6,7 +6,7 @@ import json
 import os
 import uuid
 import yaml
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_case_sharing_apps_in_domain

@@ -8,7 +8,7 @@ from collections import defaultdict, OrderedDict, namedtuple
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import models
 from django.http import Http404
 
@@ -183,6 +183,7 @@ class ExportItem(DocumentSchema):
     @classmethod
     def merge(cls, one, two):
         item = one
+        item.label = two.label  # always take the newest label
         item.last_occurrences = _merge_dicts(one.last_occurrences, two.last_occurrences, max)
         item.inferred = one.inferred or two.inferred
         item.inferred_from |= two.inferred_from
@@ -247,8 +248,11 @@ class ExportColumn(DocumentSchema):
         # <element>value</element>  -> 'value'
         #
         # This line ensures that we grab the actual value instead of the dictionary
-        if isinstance(value, dict) and '#text' in value:
-            value = value.get('#text')
+        if isinstance(value, dict):
+            if '#text' in value:
+                value = value.get('#text')
+            else:
+                return EMPTY_VALUE
 
         if transform_dates:
             value = couch_to_excel_datetime(value, doc)
@@ -854,7 +858,7 @@ class ExportInstance(BlobMixin, Document):
     def copy_export(self):
         export_json = self.to_json()
         del export_json['_id']
-        export_json['name'] = '{} - Copy'.format(self.name)
+        export_json['name'] = u'{} - Copy'.format(self.name)
         new_export = self.__class__.wrap(export_json)
         return new_export
 
@@ -1784,7 +1788,7 @@ class CaseExportDataSchema(ExportDataSchema):
             app.copy_of or app._id,  # If not copy, must be current app
             app.version,
         ))
-        if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
+        if any(map(lambda relationship_tuple: relationship_tuple[1] in ['parent', 'host'], parent_types)):
             case_schemas.append(cls._generate_schema_for_parent_case(
                 app.copy_of or app._id,
                 app.version,
@@ -2098,8 +2102,8 @@ class SplitGPSExportColumn(ExportColumn):
             return super(SplitGPSExportColumn, self).get_headers()
         header = self.label
         header_templates = [
-            _(u'{}: latitude (meters)'),
-            _(u'{}: longitude (meters)'),
+            _(u'{}: latitude (degrees)'),
+            _(u'{}: longitude (degrees)'),
             _(u'{}: altitude (meters)'),
             _(u'{}: accuracy (meters)'),
         ]

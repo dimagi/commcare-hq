@@ -66,7 +66,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             "form_meta": meta,
         }
         log_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, details)
-        notify_exception(None, "Received a submission with POST.keys()", details)
+        notify_exception(request, "Received a submission with POST.keys()", details)
         return HttpResponseBadRequest(e.message)
 
     app_id, build_id = get_app_and_build_ids(domain, app_id)
@@ -111,8 +111,8 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         # normalize over number of items (form or case) saved
         normalized_time = timer.duration / (1 + len(result.cases))
         datadog_gauge('commcare.xform_submissions.normalized_timings', normalized_time, tags=tags)
-        datadog_gauge('commcare.xform_submissions.case_count', len(result.cases), tags=tags)
-        datadog_gauge('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=tags)
+        datadog_counter('commcare.xform_submissions.case_count', len(result.cases), tags=tags)
+        datadog_counter('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=tags)
 
     return response
 

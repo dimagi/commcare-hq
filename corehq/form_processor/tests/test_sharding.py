@@ -1,6 +1,6 @@
 from collections import defaultdict
 from unittest import skipUnless, SkipTest
-from uuid import uuid4
+from uuid import uuid4, UUID
 
 from django.conf import settings
 from django.test import TestCase
@@ -174,3 +174,8 @@ class ShardAccessorTests(TestCase):
         python_shards = {doc_id: hash_ & part_mask for doc_id, hash_ in sql_hashes.items()}
 
         self.assertEqual(python_shards, sql_shards)
+
+    def test_hash_uuid(self):
+        uuid = UUID('403724ef9fe141f2908363918c62c2ff')
+        self.assertEqual(ShardAccessor.hash_doc_id_python(uuid), 1415444857)
+        self.assertEqual(ShardAccessor.hash_doc_uuid_sql(uuid), 1415444857)

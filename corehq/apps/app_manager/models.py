@@ -58,7 +58,7 @@ from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
@@ -1018,8 +1018,15 @@ class FormBase(DocumentSchema):
                 logging.error("Failed: _parse_xml(string=%r)" % self.source)
                 raise
 
+        try:
+            questions = self.get_questions(self.get_app().langs, include_triggers=True)
+        except XFormException as e:
+            error = {'type': 'validation error', 'validation_message': unicode(e)}
+            error.update(meta)
+            errors.append(error)
+
         if not errors:
-            if len(self.get_questions(self.get_app().langs, include_triggers=True)) == 0:
+            if len(questions) == 0:
                 errors.append(dict(type="blank form", **meta))
             else:
                 try:
@@ -2062,6 +2069,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
+    print_template = DictProperty()
+
     def get_tab_spans(self):
         '''
         Return the starting and ending indices into self.columns deliminating
@@ -2658,6 +2667,18 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                           "that there are no issues with this form.".format(error=e, form_id=self.unique_id))
             pass
 
+    def get_action_type(self):
+        actions = self.actions.actions_meta_by_tag
+        by_type = defaultdict(list)
+        action_type = []
+        for action_tag, action_meta in actions.iteritems():
+            by_type[action_meta.get('type')].append(action_tag)
+
+        for type, tag_list in by_type.iteritems():
+            action_type.append(u'{} ({})'.format(type, ', '.join(filter(None, tag_list))))
+
+        return ' '.join(action_type)
+
     def pre_move_hook(self, from_module, to_module):
         if from_module != to_module:
             try:
@@ -3047,6 +3068,10 @@ class AdvancedModule(ModuleBase):
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
     search_config = SchemaProperty(CaseSearch)
+
+    @property
+    def is_surveys(self):
+        return False
 
     @classmethod
     def wrap(cls, data):
@@ -4017,6 +4042,7 @@ class ReportAppConfig(DocumentSchema):
     localized_description = DictProperty()
     xpath_description = StringProperty()
     use_xpath_description = BooleanProperty(default=False)
+    show_data_table = BooleanProperty(default=True)
     graph_configs = DictProperty(ReportGraphConfig)
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
@@ -5584,8 +5610,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if matches(obj):
                 return obj
         if not error:
-            error = _("Could not find module with ID='{unique_id}' in app '{app_id}'.").format(
-                app_id=self.id, unique_id=unique_id)
+            error = _(u"Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
+                app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
     def get_forms(self, bare=True):

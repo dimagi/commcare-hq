@@ -129,7 +129,7 @@ class _Select2Mixin(object):
         js = ('select2-3.4.5-legacy/select2.js',)
 
     def render(self, name, value, attrs=None, choices=()):
-        output = super(_Select2Mixin, self).render(name, value, attrs, choices)
+        output = super(_Select2Mixin, self).render(name, value, attrs)
         output += """
             <script>
                 $(function() {
@@ -165,10 +165,14 @@ class Select2Ajax(forms.TextInput):
     def __init__(self, attrs=None, page_size=20, multiple=False):
         self.page_size = page_size
         self.multiple = multiple
+        self._initial = None
         super(Select2Ajax, self).__init__(attrs)
 
     def set_url(self, url):
         self.url = url
+
+    def set_initial(self, val):
+        self._initial = val
 
     def _clean_initial(self, val):
         if isinstance(val, collections.Sequence) and not isinstance(val, (str, unicode)):
@@ -186,7 +190,7 @@ class Select2Ajax(forms.TextInput):
             'hqstyle/forms/select_2_ajax_widget.html',
             {
                 'id': attrs.get('id'),
-                'initial': self._clean_initial(value),
+                'initial': self._initial if self._initial is not None else self._clean_initial(value),
                 'endpoint': self.url,
                 'page_size': self.page_size,
                 'multiple': self.multiple,

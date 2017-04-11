@@ -54,14 +54,8 @@ def delete_all_report_configs():
     delete_all_docs_by_doc_type(ReportConfiguration.get_db(), ('ReportConfiguration',))
 
 
-def _get_all_data_sources():
-    from corehq.apps.userreports.models import DataSourceConfiguration
-    return DataSourceConfiguration.view(
-        'userreports/data_sources_by_build_info',
-        reduce=False,
-        include_docs=True
-    )
-
-
 def get_all_es_data_sources():
-    return [s for s in _get_all_data_sources() if s.backend_id in [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND]]
+    from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
+    data_sources = DynamicDataSourceProvider().get_data_sources()
+    data_sources.extend(StaticDataSourceProvider().get_data_sources())
+    return [s for s in data_sources if s.backend_id in [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND]]

@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "report_id": "static-mpr_6ac_child_health_cases",
   "data_source_table": "static-child_cases_monthly",
   "config": {

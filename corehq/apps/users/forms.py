@@ -9,7 +9,7 @@ from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, validate_email
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.forms.widgets import PasswordInput
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, string_concat
@@ -200,8 +200,8 @@ class UpdateUserPermissionForm(forms.Form):
 
 
 class BaseUserInfoForm(forms.Form):
-    first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=50, required=False)
-    last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=50, required=False)
+    first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=30, required=False)
+    last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=30, required=False)
     email = forms.EmailField(label=ugettext_lazy("E-Mail"), max_length=75, required=False)
     language = forms.ChoiceField(
         choices=(),
@@ -512,12 +512,12 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Username"),
     )
     first_name = forms.CharField(
-        max_length=50,
+        max_length=30,
         required=False,
         label=ugettext_noop("First Name")
     )
     last_name = forms.CharField(
-        max_length=50,
+        max_length=30,
         required=False,
         label=ugettext_noop("Last Name")
     )
@@ -598,13 +598,13 @@ class NewMobileWorkerForm(forms.Form):
                     'first_name',
                     ng_required="false",
                     ng_model='mobileWorker.first_name',
-                    ng_maxlength="50",
+                    ng_maxlength="30",
                 ),
                 crispy.Field(
                     'last_name',
                     ng_required="false",
                     ng_model='mobileWorker.last_name',
-                    ng_maxlength="50",
+                    ng_maxlength="30",
                 ),
                 location_field,
                 crispy.Field(

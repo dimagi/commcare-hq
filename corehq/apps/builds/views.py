@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from cStringIO import StringIO
 from couchdbkit import ResourceNotFound, BadValueError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.csrf import csrf_exempt
