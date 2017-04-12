@@ -51,7 +51,7 @@ class ApplicationStatusReport(DeploymentsReport):
     emailable = True
     exportable = True
     fields = [
-        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
     ]
 
