@@ -55,8 +55,7 @@ submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - commcare_2.33 # WSP 2/8
+    branches: []
   submodules/formtranslate-src:
     branches:
       - commcare_2.33 # WSP 2/8
