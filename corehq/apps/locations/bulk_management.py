@@ -298,6 +298,15 @@ class LocationCollection(object):
 
     @property
     @memoized
+    def locations_by_parent_code(self):
+        locs_by_parent = defaultdict(list)
+        for loc in self.locations:
+            parent_code = loc.parent.site_code if loc.parent else ''
+            locs_by_parent[parent_code].append(loc)
+        return locs_by_parent
+
+    @property
+    @memoized
     def types_by_code(self):
         return {lt.code: lt for lt in self.types}
 
@@ -495,8 +504,7 @@ class LocationTreeValidator(object):
         unknown_or_missing_errors = []
         if self.old_collection:
             # all old types/locations should be listed in excel
-            unknown_or_missing_errors = (self._check_unlisted_type_codes() +
-                                         self._check_unlisted_location_ids())
+            unknown_or_missing_errors = self._check_unlisted_type_codes()
 
         uniqueness_errors = (self._check_unique_type_codes() +
                              self._check_unique_location_codes() +
@@ -519,7 +527,7 @@ class LocationTreeValidator(object):
             return type_errors
 
         # Check each location's position in the tree
-        errors = self._validate_location_tree()
+        errors = self._validate_location_tree() + self._check_required_locations_missing()
 
         # Location names must be unique among siblings
         errors.extend(self._check_location_names())
@@ -545,6 +553,24 @@ class LocationTreeValidator(object):
               "at index {index} should be valid decimal numbers.")
             .format(type=l.location_type, index=l.index, lat=l.latitude, lng=l.longitude)
             for l in errors
+        ]
+
+    @memoized
+    def _check_required_locations_missing(self):
+        if not self.old_collection:
+            return []
+
+        old_locs_by_parent = self.old_collection.locations_by_parent_code
+
+        required_locations = []
+        for l in self.locations_to_be_deleted:
+            required_locations.append((old_locs_by_parent[l.parent_code], l))
+        print required_locations, 'loiou'
+        return [
+            _(u"Location in sheet '{type}' at index {index} is being deleted, so all its "
+              "child locations must be present in the upload, but child locations '{locs}' are missing")
+            .format(type=l.location_type, index=l.index, locs=', '.join([o.site_code for o in old_locs]))
+            for (old_locs, parent) in required_locations
         ]
 
     @memoized
