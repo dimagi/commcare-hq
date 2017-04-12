@@ -11,7 +11,6 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.modules import to_function
 
 from pillowtop.exceptions import PillowNotFoundError
-from pillowtop.models import kafka_seq_to_str
 from pillowtop.logger import pillow_logging
 from pillowtop.dao.exceptions import DocumentMismatchError, DocumentMissingError
 
@@ -171,6 +170,7 @@ def get_pillow_json(pillow_config):
         return force_seq_int(seq) if checkpoint.sequence_format != 'json' else seq
 
     def _kafka_seq_to_json(checkpoint, seq):
+        from pillowtop.models import kafka_seq_to_str
         if checkpoint.sequence_format == 'json':
             return json.loads(kafka_seq_to_str(seq))
         return seq
