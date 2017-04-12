@@ -84,11 +84,11 @@
                 <td><%= user.first_name + ' ' + user.last_name %></td>
             </tr>
             <tr>
-                <th>{% trans "Location" %}</th>
+                <th>{% trans "Organization" %}</th>
                 <td><%= user.location ? user.location.name : gettext('No location') %></td>
             </tr>
             <tr>
-                <th>{% trans "Location Type" %}</th>
+                <th>{% trans "Organization Type" %}</th>
                 <td><%= user.location ? user.location.location_type : gettext('No location') %></td>
             </tr>
             <tr>
