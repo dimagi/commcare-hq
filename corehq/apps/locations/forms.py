@@ -25,7 +25,7 @@ from corehq.apps.es import UserES
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.users.forms import NewMobileWorkerForm
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import user_display_string
+from corehq.apps.users.util import user_display_string, format_username
 from corehq.apps.style import crispy as hqcrispy
 
 from .models import SQLLocation, LocationType, LocationFixtureConfiguration
@@ -304,13 +304,15 @@ class LocationForm(forms.Form):
 
 
 class LocationFormSet(object):
+    """Ties together the forms for location, location data, user, and user data."""
+
     def __init__(self, location, user, is_new, bound_data=None, *args, **kwargs):
         from .views import LocationFieldsView
         self.location = location
         self.domain = location.domain
         self.is_new = is_new
         self.location_form = LocationForm(location, bound_data, is_new=is_new)
-        self.custom_location_data = self.get_custom_location_data(bound_data, is_new)
+        self.custom_location_data = self._get_custom_location_data(bound_data, is_new)
 
         make_user = bound_data and (LocationType.objects
                                    .get(domain=self.domain, name=bound_data['location_type'])
@@ -321,8 +323,8 @@ class LocationFormSet(object):
         )
 
         if self.include_user_forms:
-            self.user_form = self.get_user_form(bound_data, user)
-            self.custom_user_data = self.get_custom_user_data(bound_data)
+            self.user_form = self._get_user_form(bound_data, user)
+            self.custom_user_data = self._get_custom_user_data(bound_data)
 
     @property
     def errors(self):
@@ -349,11 +351,34 @@ class LocationFormSet(object):
     def save(self):
         if not self.is_valid():
             raise ValueError('Form is not valid')
-        metadata = self.custom_location_data.get_data_to_save()
-        self.location_form.save(metadata=metadata)
-        # TODO add user forms here
 
-    def get_custom_location_data(self, bound_data, is_new):
+        user_data = self.custom_user_data.get_data_to_save()
+        user = self._make_user(user_data, self.location_form.location)
+
+        self.location_form.location.user_id = user._id
+        location_data = self.custom_location_data.get_data_to_save()
+        location = self.location_form.save(metadata=location_data)
+
+        user.user_location_id = location.location_id
+        user.set_location(location)
+
+    def _make_user(self, user_data, location):
+        username = self.user_form.cleaned_data['username']
+        password = self.user_form.cleaned_data['password']
+        first_name = self.user_form.cleaned_data['first_name']
+        last_name = self.user_form.cleaned_data['last_name']
+
+        return CommCareUser.create(
+            self.domain,
+            format_username(username, self.domain),
+            password,
+            device_id="Generated from HQ",
+            first_name=first_name,
+            last_name=last_name,
+            user_data=user_data,
+        )
+
+    def _get_custom_location_data(self, bound_data, is_new):
         from .views import LocationFieldsView
 
         existing = self.location.metadata
@@ -374,7 +399,7 @@ class LocationFormSet(object):
         custom_data.form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
         return custom_data
 
-    def get_user_form(self, bound_data, user):
+    def _get_user_form(self, bound_data, user):
         domain_obj = Domain.get_by_name(self.domain)
         form = NewMobileWorkerForm(
             project=domain_obj,
@@ -396,7 +421,7 @@ class LocationFormSet(object):
         )
         return form
 
-    def get_custom_user_data(self, bound_data):
+    def _get_custom_user_data(self, bound_data):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         user_data = CustomDataEditor(
             field_view=UserFieldsView,
@@ -404,6 +429,7 @@ class LocationFormSet(object):
             post_dict=bound_data,
             required_only=True,
         )
+        # Set a different prefix so it's not confused with custom location datA
         user_data.form.prefix = 'user_data'
         return user_data
 
