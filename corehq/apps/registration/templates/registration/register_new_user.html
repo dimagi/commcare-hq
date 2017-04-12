@@ -15,6 +15,9 @@
         <script src="{% static 'intl-tel-input/build/js/intlTelInput.min.js' %}"></script>
         <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
         <script src="{% static 'registration/js/register_new_user.js' %}"></script>
+        {% if implement_password_hashing %}
+            <script src="{% static 'domain/js/encoder.js' %}"></script>
+        {% endif %}
     {% endcompress %}
 {% endblock %}
 
