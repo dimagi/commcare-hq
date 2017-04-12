@@ -113,6 +113,8 @@ class ChangeFeed(object):
     """
     __metaclass__ = ABCMeta
 
+    sequence_format = 'text'
+
     @abstractmethod
     def iter_changes(self, since, forever):
         """

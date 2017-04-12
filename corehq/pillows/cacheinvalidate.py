@@ -13,7 +13,7 @@ pillow_logging = logging.getLogger("pillowtop")
 
 class FakeCheckpoint(PillowCheckpoint):
     def __init__(self, checkpoint_id, couch_db):
-        super(FakeCheckpoint, self).__init__("{}_{}".format(checkpoint_id, couch_db.dbname))
+        super(FakeCheckpoint, self).__init__("{}_{}".format(checkpoint_id, couch_db.dbname), 'text')
         self.couch_db = couch_db
 
     def get_or_create_wrapped(self, verify_unchanged=False):
