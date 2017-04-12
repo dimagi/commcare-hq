@@ -4,6 +4,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.util import format_username
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.users.models import CouchUser
@@ -204,3 +205,10 @@ def handle_401_response(f):
 
         return response
     return _inner
+
+
+def update_device_id(user, device_id):
+    if device_id and isinstance(user, CommCareUser):
+        if not user.is_demo_user:
+            user.update_device_id_last_used(device_id)
+            user.save()

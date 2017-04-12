@@ -1,6 +1,7 @@
 import datetime
 
-from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper, TermsAggregation
+from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper, TermsAggregation, \
+    TopHitsAggregation
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.hqadmin.reporting.reports import (
@@ -64,6 +65,28 @@ def active_mobile_users(domain, start, end, *args):
     )
 
     return set(user_ids), form_users, sms_users
+
+
+def get_forms_for_users(domain, user_ids, start, end):
+    query = (
+        FormES()
+        .domain(domain)
+        .submitted(gte=start, lte=end)
+        .user_id(user_ids)
+        .aggregation(
+            TermsAggregation('user_id', 'form.meta.userID').aggregation(
+                TopHitsAggregation(
+                    name='top_hits_user_submissions',
+                    size=1000000,
+                    include=['form.case', 'form.@xmlns']
+                )
+            )
+        )
+        .size(0)
+    )
+
+    aggregations = query.run().aggregations
+    return aggregations.user_id.buckets_dict
 
 
 def get_possibly_experienced(domain, start):

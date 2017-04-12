@@ -37,6 +37,9 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     module_case_hierarchy_has_circular_reference, get_app_manager_template)
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
+from corehq.apps.hqmedia.models import ApplicationMediaReference, CommCareMultimedia
+from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration
 from dimagi.utils.web import json_response, json_request
@@ -137,7 +140,7 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
     Get context items that are used by both basic and advanced modules.
     '''
     case_type = module.case_type
-    return {
+    context = {
         'details': _get_module_details_context(app, module, case_property_builder, case_type),
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
         'valid_parent_modules': _get_valid_parent_modules(app, module),
@@ -151,6 +154,28 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
         }
     }
+    if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
+        slug = 'module_%s_detail_print' % module.unique_id
+        print_template = module.case_details.long.print_template
+        if not print_template:
+            print_template = {
+                'path': 'jr://file/commcare/text/%s.html' % slug,
+            }
+        context.update({
+            'print_uploader': MultimediaHTMLUploadController(
+                slug,
+                reverse(
+                    ProcessDetailPrintTemplateUploadView.name,
+                    args=[app.domain, app.id, module.unique_id],
+                )
+            ),
+            'print_ref': ApplicationMediaReference(
+                print_template.get('path'),
+                media_class=CommCareMultimedia,
+            ).as_dict(),
+            'print_media_info': print_template,
+        })
+    return context
 
 
 def _get_careplan_module_view_context(app, module, case_property_builder):
@@ -743,6 +768,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     pull_down_tile = params.get("enableTilePullDown", None)
+    print_template = params.get('printTemplate', None)
     case_list_lookup = params.get("case_list_lookup", None)
     search_properties = params.get("search_properties")
     custom_variables = {
@@ -784,6 +810,8 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         detail.long.columns = map(DetailColumn.from_json, long)
         if tabs is not None:
             detail.long.tabs = map(DetailTab.wrap, tabs)
+        if print_template is not None:
+            detail.long.print_template = print_template
     if filter != ():
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
@@ -955,25 +983,17 @@ def new_module(request, domain, app_id):
                 register.actions.update_case = UpdateCaseAction(
                     condition=FormActionCondition(type='always'))
 
-                # set up reg from case list
-                module.case_list_form.form_id = register.unique_id
-                module.case_list_form.label = register.name
-                register.form_filter = "false()"
-
                 # one followup form
                 followup = app.new_form(module_id, "Followup", lang)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
                 # make case type unique across app
-                app_case_types = set(
-                    [module.case_type for module in app.modules if
-                     module.case_type])
-                module.case_type = 'case'
-                suffix = 0
-                while module.case_type in app_case_types:
-                    suffix = suffix + 1
-                    module.case_type = 'case-{}'.format(suffix)
+                app_case_types = [m.case_type for m in app.modules if m.case_type]
+                if len(app_case_types):
+                    module.case_type = app_case_types[0]
+                else:
+                    module.case_type = 'case'
             else:
                 app.new_form(module_id, "Survey", lang)
             form_id = 0

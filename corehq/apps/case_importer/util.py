@@ -245,7 +245,7 @@ def parse_search_id(config, columns, row):
         # float(x) is more lenient in conversion from string so both
         # are used
         search_id = int(float(search_id))
-    except ValueError:
+    except (ValueError, TypeError):
         # if it's not a number that's okay too
         pass
 

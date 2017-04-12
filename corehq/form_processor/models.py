@@ -617,11 +617,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def xform_ids(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        if self.is_saved():
-            return CaseAccessorSQL.get_case_xform_ids(self.case_id)
-        else:
-            return [t.form_id for t in self.transactions if not t.revoked and t.is_form_transaction]
+        return [t.form_id for t in self.transactions if not t.revoked and t.is_form_transaction]
 
     @property
     def user_id(self):

@@ -348,6 +348,7 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         group_schema = merged.group_schemas[0]
         self.assertEqual(len(group_schema.items), 3)
+        self.assertEqual(group_schema.items[0].label, 'question1-new')
         self.assertTrue(all(map(
             lambda item: item.last_occurrences[self.app_id] == 2,
             group_schema.items,

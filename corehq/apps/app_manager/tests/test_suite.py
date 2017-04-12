@@ -294,6 +294,9 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_fixtures_in_graph(self):
         self._test_generic_suite('app_fixture_graphing', 'suite-fixture-graphing')
 
+    def test_printing(self):
+        self._test_generic_suite('app_print_detail', 'suite-print-detail')
+
     def test_fixture_to_case_selection(self):
         factory = AppFactory(build_version='2.9')
 
@@ -752,6 +755,15 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             app.create_suite(),
             "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
         )
+
+        report_app_config.show_data_table = False
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_summary_detail_hide_data_table'),
+            app.create_suite(),
+            "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
+        )
+        report_app_config.show_data_table = True
+
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_entry'),
             app.create_suite(),
