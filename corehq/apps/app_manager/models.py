@@ -3069,6 +3069,10 @@ class AdvancedModule(ModuleBase):
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
     search_config = SchemaProperty(CaseSearch)
 
+    @property
+    def is_surveys(self):
+        return False
+
     @classmethod
     def wrap(cls, data):
         # lazy migration to accommodate search_config as empty list
@@ -4038,6 +4042,7 @@ class ReportAppConfig(DocumentSchema):
     localized_description = DictProperty()
     xpath_description = StringProperty()
     use_xpath_description = BooleanProperty(default=False)
+    show_data_table = BooleanProperty(default=True)
     graph_configs = DictProperty(ReportGraphConfig)
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)

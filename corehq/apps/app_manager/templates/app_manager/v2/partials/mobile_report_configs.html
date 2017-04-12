@@ -1,6 +1,14 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block stylesheets %}
+<style type="text/css">
+    #report-list th .hq-help {
+        line-height: 13px;
+    }
+</style>
+{% endblock %}
+
 <ul class="nav nav-tabs">
     <li class="active"><a href="#settings" data-toggle="tab">{% trans "Settings" %}</a></li>
     <li><a href="#reports" data-toggle="tab">{% trans "Reports" %}</a></li>
@@ -31,6 +39,14 @@
                         <th>{% trans "Report" %}</th>
                         <th>{% trans "Display Text" %}</th>
                         <th>{% trans "Description" %}</th>
+                        <th>
+                            {% trans "Data Table" %}
+                            <span class="hq-help-template"
+                                data-title="Data Table"
+                                data-content="If checked, the phone will show a tab with a summary table containing the data for this report."
+                                data-placement="left"
+                            ></span>
+                        </th>
                         <th></th>
                     </tr>
                 </thead>
@@ -69,6 +85,11 @@
                                     {% trans "Not localizable." %}
                                 </p>
                             </div>
+                        </td>
+                        <td>
+                            <label>
+                                <input type="checkbox" data-bind="checked: showDataTable">
+                            </label>
                         </td>
                         <td>
                             <i title="{% trans 'Delete' %}" style="cursor: pointer;"

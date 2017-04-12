@@ -38,36 +38,15 @@
 {% block js %}
 <script src="{% static 'reports/js/reports.util.js' %}"></script>
 <script src="{% static 'export/js/download_export.ng.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}
-<script>
-(function (angular, undefined) {
-   'use strict';
-    var downloadExportsApp = angular.module('downloadExportsApp', ['hq.download_export']);
-    downloadExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
-        djangoRMIProvider.configure({% djng_current_rmi %});
-    }]);
-    downloadExportsApp.constant('exportList', {{ export_list|JSON }});
-    downloadExportsApp.constant('maxColumnSize', {{ max_column_size|JSON }});
-    downloadExportsApp.constant('defaultDateRange', '{{ default_date_range }}');
-    downloadExportsApp.constant('checkForMultimedia', {{ check_for_multimedia|BOOL }});
-    downloadExportsApp.constant('formElement', {
-        progress: function () {
-            return $('#download-progress-bar');
-        },
-        group: function () {
-            return $('#id_group');
-        },
-        user_type: function () {
-            return $('#id_user_types');
-        }
-    });
-}(window.angular));
-</script>
+<script src="{% static 'export/js/download_export.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
+    {% initial_page_data 'export_list' export_list %}
+    {% initial_page_data 'max_column_size' max_column_size %}
+    {% initial_page_data 'default_date_range' default_date_range %}
+    {% initial_page_data 'check_for_multimedia' check_for_multimedia %}
     <div ng-app="downloadExportsApp">
         <div ng-controller="DownloadExportFormController"
              ng-cloak>

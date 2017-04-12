@@ -34,7 +34,6 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
-from corehq.tabs.tabclasses import ProjectSettingsTab
 from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
@@ -273,12 +272,6 @@ class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
             'domain': self.domain,
         })
         main_context.update({
-            'active_tab': ProjectSettingsTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-                project=self.request.project
-            ),
             'is_project_settings': True,
         })
         return main_context

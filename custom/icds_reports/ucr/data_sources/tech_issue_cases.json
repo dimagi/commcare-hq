@@ -54,6 +54,7 @@
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "supervisor_id",
+        "create_index": true,
         "expression": {
           "type": "named",
           "name": "supervisor_id"
@@ -417,6 +418,9 @@
       }
     },
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY"
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

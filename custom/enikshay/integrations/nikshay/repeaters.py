@@ -155,7 +155,7 @@ class NikshayFollowupRepeater(CaseRepeater):
         return reverse(NikshayPatientFollowupRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, test_case):
-        # test.date_tested populates and test.nikshay_registered is false
+        # test.date_reported populates and test.nikshay_registered is false
         # test.test_type_value = microscopy-zn or test.test_type_value = microscopy-fluorescent
         # and episode.nikshay_registered is true
         allowed_case_types_and_users = self._allowed_case_type(test_case) and self._allowed_user(test_case)
@@ -175,7 +175,7 @@ class NikshayFollowupRepeater(CaseRepeater):
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
                     test_case_properties.get('follow_up_test_reason') in self.followup_for_tests
                 ) and
-                case_properties_changed(test_case, 'date_tested') and
+                case_properties_changed(test_case, 'date_reported') and
                 not is_valid_test_submission(test_case)
             )
         else:
