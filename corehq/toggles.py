@@ -1106,3 +1106,10 @@ PUBLISH_CUSTOM_REPORTS = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
+
+MOTECH = StaticToggle(
+    'motech',
+    "Show Motech tab",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
