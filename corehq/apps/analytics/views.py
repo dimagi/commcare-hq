@@ -31,7 +31,7 @@ class GreenhouseCandidateView(View):
         digester = hmac.new(settings.GREENHOUSE_API_KEY, request.body, hashlib.sha256)
         calculated_signature = digester.hexdigest()
 
-        if hmac.compare_digest(calculated_signature, request.headers.get('HTTP_SIGNATURE', '')):
+        if str(calculated_signature) == str(request.headers.get('HTTP_SIGNATURE', '')):
             body_unicode = request.body.decode('utf-8')
             data = json.loads(body_unicode)
             try:

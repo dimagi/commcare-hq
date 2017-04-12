@@ -5,19 +5,6 @@ from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.es_utils import ElasticsearchIndexInfo
 from pillowtop.pillow.interface import ConstructedPillow
 
-TEST_ES_META = {
-    "settings": {
-        "analysis": {
-            "analyzer": {
-                "default": {
-                    "type": "custom",
-                    "tokenizer": "whitespace",
-                    "filter": ["lowercase"]
-                },
-            }
-        }
-    }
-}
 
 TEST_ES_MAPPING = {
     '_meta': {
@@ -38,7 +25,6 @@ TEST_INDEX_INFO = ElasticsearchIndexInfo(
     index=TEST_ES_INDEX,
     alias=TEST_ES_ALIAS,
     type=TEST_ES_TYPE,
-    meta=TEST_ES_META,
     mapping=TEST_ES_MAPPING
 )
 

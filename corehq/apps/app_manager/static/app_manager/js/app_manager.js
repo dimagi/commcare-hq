@@ -289,9 +289,11 @@ hqDefine('app_manager/js/app_manager.js', function () {
         }
 
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-            $('.appnav-responsive').on('click', function () {
-                // TODO doesn't handle vellum with saved changes.
-                $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
+            $('.appnav-responsive').on('click', function (e) {
+                if (!e || (!e.metaKey && !e.ctrlKey && !e.which !== 2)) {
+                    // TODO doesn't handle vellum with saved changes.
+                    $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
+                }
             });
         }
 

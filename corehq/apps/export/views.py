@@ -13,6 +13,7 @@ from django.views.decorators.http import require_GET
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification
+from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -501,7 +502,7 @@ def create_basic_form_checkpoint(index):
     return checkpoint
 
 
-class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BaseProjectDataView):
+class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
     show_sync_to_dropbox = False  # remove when DBox issue is resolved.
@@ -568,15 +569,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
                 'show_no_submissions_warning': True,
             })
 
-        return context
-
-    # Add the output of djng_current_rmi to view context, which requires having
-    # the rest of the context, specifically context['view'], available.
-    # See https://github.com/jrief/django-angular/blob/master/djng/templatetags/djng_tags.py
-    def get_context_data(self, **kwargs):
-        context = super(BaseDownloadExportView, self).get_context_data(**kwargs)
-        from djangular.templatetags.djangular_tags import djng_current_rmi
-        context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
         return context
 
     @property

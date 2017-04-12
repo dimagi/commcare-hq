@@ -1752,7 +1752,9 @@ class AdminTab(UITab):
         admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views import (AuthenticateAs, ReprocessMessagingCaseUpdatesView)
+            from corehq.apps.hqadmin.views import (
+                AuthenticateAs, ReprocessMessagingCaseUpdatesView
+            )
             admin_operations.extend([
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',

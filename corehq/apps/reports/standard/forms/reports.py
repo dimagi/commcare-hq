@@ -1,4 +1,7 @@
 from django.urls import reverse, NoReverseMatch
+from django.views import View
+
+from corehq import toggles
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard.forms.filters import SubmissionTypeFilter, SubmissionErrorType
@@ -11,6 +14,8 @@ from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.apps.reports.display import xmlns_to_name
 from django.utils.translation import ugettext_noop, ugettext as _
 
+from dimagi.utils.web import json_response
+
 
 def _compare_submissions(x, y):
     # these are backwards because we want most recent to come first
@@ -22,6 +27,7 @@ class SubmissionErrorReport(DeploymentsReport):
     slug = "submit_errors"
     ajax_pagination = True
     asynchronous = False
+    base_template = 'reports/standard/submission_error_report.html'
 
     fields = ['corehq.apps.reports.standard.forms.filters.SubmissionTypeFilter']
 
@@ -33,6 +39,8 @@ class SubmissionErrorReport(DeploymentsReport):
                                    DataTablesColumn(_("Form Type")),
                                    DataTablesColumn(_("Error Type")),
                                    DataTablesColumn(_("Error Message")))
+        if self.support_toggle_enabled:
+            headers.add_column(DataTablesColumn(_("Re-process Form")))
         headers.no_sort = True
         return headers
 
@@ -70,6 +78,21 @@ class SubmissionErrorReport(DeploymentsReport):
     @property
     def total_records(self):
         return self.paged_result.total
+
+    @property
+    def support_toggle_enabled(self):
+        return toggles.SUPPORT.enabled_for_request(self.request)
+
+    def _make_reproces_button(self, xform_dict):
+        if not xform_dict['doc_type'] == 'XFormError':
+            return ''
+        return '''
+        <button
+            class="btn btn-default reprocess-error"
+            data-form-id={}>
+            Re-process Form
+        </button>
+        '''.format(xform_dict['_id'])
 
     @property
     def rows(self):
@@ -116,6 +139,34 @@ class SubmissionErrorReport(DeploymentsReport):
                 form_name,
                 SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type']),
                 xform_dict.get('problem', EMPTY_ERROR),
+                self._make_reproces_button(xform_dict) if self.support_toggle_enabled else '',
             ]
 
         return [_to_row(xform_dict) for xform_dict in self.paged_result.hits]
+
+
+class ReprocessXFormErrorView(View):
+    urlname = 'reprocess_xform_errors'
+    http_method_names = ['post']
+
+    def post(self, request, domain):
+        from corehq.form_processor.utils.xform import reprocess_xform_error_by_id
+
+        form_id = request.POST['form_id']
+        if not form_id:
+            return json_response({
+                'success': False,
+                'failure_reason': 'Missing "form_id"'
+            })
+
+        try:
+            reprocess_xform_error_by_id(form_id, domain=domain)
+        except Exception as e:
+            return json_response({
+                'success': False,
+                'failure_reason': str(e),
+            })
+        else:
+            return json_response({
+                'success': True,
+            })
