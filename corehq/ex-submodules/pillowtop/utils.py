@@ -1,7 +1,7 @@
 from __future__ import division
 from collections import namedtuple
 from datetime import datetime
-
+import json
 import sys
 
 import simplejson
@@ -169,7 +169,7 @@ def get_pillow_json(pillow_config):
     def _seq_to_int(checkpoint, seq):
         from pillowtop.models import kafka_seq_to_str
         if checkpoint.sequence_format == 'json':
-            return kafka_seq_to_str(seq)
+            return json.loads(kafka_seq_to_str(seq))
         else:
             return force_seq_int(seq)
 
