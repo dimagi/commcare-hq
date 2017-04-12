@@ -20,7 +20,7 @@ class ProdIndexManagementTest(SimpleTestCase):
     def test_prod_config(self):
         found_prod_indices = [info.to_json() for info in get_all_expected_es_indices()]
         for info in found_prod_indices:
-            # for now don't test these two properties, just ensure they exist
+            # for now don't test this property, just ensure it exist
             self.assertTrue(info['mapping'])
             del info['mapping']
         found_prod_indices = sorted(found_prod_indices, key=lambda info: info['index'])

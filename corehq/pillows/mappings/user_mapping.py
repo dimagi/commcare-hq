@@ -114,25 +114,9 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                                                                 'type': 'string'}},
                                   'type': 'multi_field'}}}
 
-USER_META = {
-    "settings": {
-        "analysis": {
-            "analyzer": {
-                "default": {
-                    "type": "custom",
-                    "tokenizer": "whitespace",
-                    "filter": ["lowercase"]
-                },
-            }
-        }
-    }
-}
-
-
 USER_INDEX_INFO = ElasticsearchIndexInfo(
     index=USER_INDEX,
     alias='hqusers',
     type='user',
-    meta=USER_META,
     mapping=USER_MAPPING,
 )
