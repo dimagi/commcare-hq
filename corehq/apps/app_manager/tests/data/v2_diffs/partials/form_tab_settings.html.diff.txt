@@ -164,11 +164,6 @@
 +
 +                    </div>
 +
-+                    {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
-+                    {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
-+                        {% include "app_manager/v2/partials/custom_instances.html" %}
-+                    {% endif %}
-+
 +                    {% if request|toggle_enabled:'NO_VELLUM' %}
 +                    <div class="form-group">
 +                        <label class="control-label col-sm-2">
@@ -185,7 +180,12 @@
 +                             <input type="hidden" name="no_vellum" data-bind="value: no_vellum"/>
 +                        </div>
 +                    </div>
-+                  {% endif %}
++                    {% endif %}
++
++                    {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
++                    {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
++                        {% include "app_manager/v2/partials/custom_instances.html" %}
++                    {% endif %}
 +                  </div>
 +              </div>
 +            </div>

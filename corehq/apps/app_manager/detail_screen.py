@@ -221,25 +221,33 @@ class FormattedDetailColumn(object):
 
     @property
     def fields(self):
+        print_id = None
+        if self.detail.print_template:
+            print_id = self.column.field
+
         if self.app.enable_multi_sort:
             yield sx.Field(
                 header=self.header,
                 template=self.template,
                 sort_node=self.sort_node,
+                print_id=print_id,
             )
         elif self.sort_xpath_function and self.detail.display == 'short':
             yield sx.Field(
                 header=self.header,
                 template=self.hidden_template,
+                print_id=print_id,
             )
             yield sx.Field(
                 header=self.hidden_header,
                 template=self.template,
+                print_id=print_id,
             )
         else:
             yield sx.Field(
                 header=self.header,
                 template=self.template,
+                print_id=print_id,
             )
 
 

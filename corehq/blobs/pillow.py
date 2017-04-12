@@ -35,11 +35,12 @@ def get_main_blob_deletion_pillow(pillow_id):
 
     Using the KafkaChangeFeed ties this to the main couch database.
     """
+    change_feed = KafkaChangeFeed(topics=[topics.META], group_id='blob-deletion-group')
     return _get_blob_deletion_pillow(
         pillow_id,
         get_db(None),
-        PillowCheckpoint('kafka-blob-deletion-pillow-checkpoint'),
-        KafkaChangeFeed(topics=[topics.META], group_id='blob-deletion-group'),
+        PillowCheckpoint('kafka-blob-deletion-pillow-checkpoint', change_feed.sequence_format),
+        change_feed,
     )
 
 
@@ -50,10 +51,10 @@ def get_application_blob_deletion_pillow(pillow_id):
 
 
 def _get_blob_deletion_pillow(pillow_id, couch_db, checkpoint=None, change_feed=None):
-    if checkpoint is None:
-        checkpoint = PillowCheckpoint(pillow_id)
     if change_feed is None:
         change_feed = CouchChangeFeed(couch_db, include_docs=False)
+    if checkpoint is None:
+        checkpoint = PillowCheckpoint(pillow_id, change_feed.sequence_format)
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

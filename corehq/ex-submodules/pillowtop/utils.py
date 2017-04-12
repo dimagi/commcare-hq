@@ -42,6 +42,14 @@ def get_couch_pillow_instances():
     ]
 
 
+def get_kafka_pillow_instances():
+    from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+    return [
+        pillow for pillow in get_all_pillow_instances()
+        if isinstance(pillow.get_change_feed(), KafkaChangeFeed)
+    ]
+
+
 def get_all_pillow_configs():
     return get_pillow_configs_from_settings_dict(getattr(settings, 'PILLOWTOPS', {}))
 

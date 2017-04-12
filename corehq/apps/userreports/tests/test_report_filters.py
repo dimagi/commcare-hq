@@ -11,6 +11,7 @@ from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
     NumericFilter, DynamicChoiceListFilter, Choice, PreFilter, LocationDrilldownFilter
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.userreports.const import UCR_BACKENDS, UCR_SQL_BACKEND
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
@@ -702,6 +703,11 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         ])
     ]
 
+    @classmethod
+    def setUpClass(cls):
+        cls.user = CommCareUser.create(cls.domain, 'test1', 'test123')
+        super(LocationDrilldownFilterTest, cls).setUpClass()
+
     def test_filter(self):
         report = ReportConfiguration(domain=self.domain)
         filter = ReportFilterFactory.from_spec({
@@ -721,7 +727,7 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
             'loc_url': '/a/{}/api/v0.5/location_internal/'.format(self.domain)
         }
 
-        self.assertDictEqual(filter.filter_context(), filter_context_expected)
+        self.assertDictEqual(filter.filter_context(self.user), filter_context_expected)
 
     def test_filter_value(self):
         filter = ReportFilter.wrap({

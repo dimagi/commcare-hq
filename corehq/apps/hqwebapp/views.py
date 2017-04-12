@@ -29,6 +29,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
+from djangular.views.mixins import JSONResponseMixin
 
 import httpagentparser
 from couchdbkit import ResourceNotFound
@@ -44,6 +45,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
+from no_exceptions.exceptions import Http403
 from soil import DownloadBase
 from soil import views as soil_views
 
@@ -268,19 +270,27 @@ def server_up(req):
         return HttpResponse("success")
 
 
-def no_permissions(request, redirect_to=None, template_name="403.html", message=None):
-    """
-    403 error handler.
-    """
+def _no_permissions_message(request, template_name="403.html", message=None):
     t = loader.get_template(template_name)
-    return HttpResponseForbidden(t.render(
+    return t.render(
         context={
             'MEDIA_URL': settings.MEDIA_URL,
             'STATIC_URL': settings.STATIC_URL,
             'message': message,
         },
         request=request,
-    ))
+    )
+
+
+def no_permissions(request, redirect_to=None, template_name="403.html", message=None):
+    """
+    403 error handler.
+    """
+    return HttpResponseForbidden(_no_permissions_message(request, template_name, message))
+
+
+def no_permissions_exception(request, template_name="403.html", message=None):
+    return Http403(_no_permissions_message(request, template_name, message))
 
 
 def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
@@ -1185,3 +1195,16 @@ def couch_doc_counts(request, domain):
         cls.__name__: get_doc_count_in_domain_by_class(domain, cls, start, end)
         for cls in [CommCareCase, XFormInstance]
     })
+
+
+# Use instead of djangular's base JSONResponseMixin
+# Adds djng_current_rmi to view context
+class HQJSONResponseMixin(JSONResponseMixin):
+    # Add the output of djng_current_rmi to view context, which requires having
+    # the rest of the context, specifically context['view'], available.
+    # See https://github.com/jrief/django-angular/blob/master/djng/templatetags/djng_tags.py
+    def get_context_data(self, **kwargs):
+        context = super(HQJSONResponseMixin, self).get_context_data(**kwargs)
+        from djangular.templatetags.djangular_tags import djng_current_rmi
+        context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
+        return context
