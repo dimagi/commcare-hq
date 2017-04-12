@@ -358,29 +358,30 @@ class AsyncIndicatorTest(TestCase):
         AsyncIndicator.objects.all().delete()
 
     def test_async_save_success(self):
+        parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         for i in range(3):
             since = self.pillow.get_change_feed().get_latest_offsets()
             form, cases = post_case_blocks(
                 [
                     CaseBlock(
                         create=i == 0,
-                        case_id='parent-id',
+                        case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
                     ).as_xml(),
                     CaseBlock(
                         create=i == 0,
-                        case_id='child-id',
+                        case_id=child_id,
                         case_name='child-name',
                         case_type='bug-child',
-                        index={'parent': ('bug', 'parent-id')},
+                        index={'parent': ('bug', parent_id)},
                         update={'update-prop-child': i}
                     ).as_xml()
                 ], domain=self.domain
             )
             # ensure indicator is added
-            indicators = AsyncIndicator.objects.filter(doc_id='child-id')
+            indicators = AsyncIndicator.objects.filter(doc_id=child_id)
             self.assertEqual(indicators.count(), 0)
             self.pillow.process_changes(since=since, forever=False)
             self.assertEqual(indicators.count(), 1)
@@ -395,37 +396,38 @@ class AsyncIndicatorTest(TestCase):
             self.assertEqual(int(row.parent_property), i)
 
             # ensure no errors or anything left in the queue
-            errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+            errors = PillowError.objects.filter(doc_id=child_id, pillow=self.pillow.pillow_id)
             self.assertEqual(errors.count(), 0)
             self.assertEqual(indicators.count(), 0)
 
-    @patch('corehq.apps.userreports.tasks._get_config_by_id')
+    @patch('corehq.apps.userreports.tasks._get_config')
     def test_async_save_fails(self, config):
         # process_changes will generate an exception when trying to use this config
         config.return_value = None
         since = self.pillow.get_change_feed().get_latest_offsets()
+        parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         form, cases = post_case_blocks(
             [
                 CaseBlock(
                     create=True,
-                    case_id='parent-id',
+                    case_id=parent_id,
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': 0},
                 ).as_xml(),
                 CaseBlock(
                     create=True,
-                    case_id='child-id',
+                    case_id=child_id,
                     case_name='child-name',
                     case_type='bug-child',
-                    index={'parent': ('bug', 'parent-id')},
+                    index={'parent': ('bug', parent_id)},
                     update={'update-prop-child': 0}
                 ).as_xml()
             ], domain=self.domain
         )
 
         # ensure async indicator is added
-        indicators = AsyncIndicator.objects.filter(doc_id='child-id')
+        indicators = AsyncIndicator.objects.filter(doc_id=child_id)
         self.assertEqual(indicators.count(), 0)
         self.pillow.process_changes(since=since, forever=False)
         self.assertEqual(indicators.count(), 1)
@@ -433,11 +435,12 @@ class AsyncIndicatorTest(TestCase):
         # ensure the save errors and fails to produce a row
         with self.assertRaises(AttributeError):
             queue_async_indicators()
+
         rows = self.adapter.get_query_object()
         self.assertEqual(rows.count(), 0)
 
         # ensure there is not a pillow error and the async indicator is still there
-        errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+        errors = PillowError.objects.filter(doc_id=child_id, pillow=self.pillow.pillow_id)
         self.assertEqual(errors.count(), 0)
         self.assertEqual(indicators.count(), 1)
 
