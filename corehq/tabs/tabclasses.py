@@ -1753,7 +1753,7 @@ class AdminTab(UITab):
 
         if self.couch_user and self.couch_user.is_staff:
             from corehq.apps.hqadmin.views import (
-                AuthenticateAs, ReprocessMessagingCaseUpdatesView, ReprocessXFormErrors
+                AuthenticateAs, ReprocessMessagingCaseUpdatesView
             )
             admin_operations.extend([
                 {'title': _('PillowTop Errors'),
@@ -1771,8 +1771,6 @@ class AdminTab(UITab):
                  'url': reverse('superuser_management')},
                 {'title': _('Reprocess Messaging Case Updates'),
                  'url': reverse(ReprocessMessagingCaseUpdatesView.urlname)},
-                {'title': _('Reprocess XForm Errors'),
-                 'url': reverse(ReprocessXFormErrors.urlname)},
             ])
         return [
             (_('Administrative Reports'), [
