@@ -80,12 +80,8 @@
     <table class="table module-table module-table-casedetail">
         <tbody>
             <tr>
-                <th>{% trans "First Name" %}</th>
-                <td><%= user.first_name %></td>
-            </tr>
-            <tr>
-                <th>{% trans "Last Name" %}</th>
-                <td><%= user.last_name %></td>
+                <th>{% trans "Name" %}</th>
+                <td><%= user.first_name + ' ' + user.last_name %></td>
             </tr>
             <tr>
                 <th>{% trans "Location" %}</th>
