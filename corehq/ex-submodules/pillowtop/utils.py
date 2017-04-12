@@ -1,7 +1,7 @@
 from __future__ import division
 from collections import namedtuple
 from datetime import datetime
-
+import json
 import sys
 
 import simplejson
@@ -169,12 +169,18 @@ def get_pillow_json(pillow_config):
     def _couch_seq_to_int(checkpoint, seq):
         return force_seq_int(seq) if checkpoint.sequence_format != 'json' else seq
 
+    def _convert_couch_or_kafka_seq(checkpoint, seq):
+        from pillowtop.models import kafka_seq_to_str
+        if checkpoint.sequence_format == 'json':
+            return json.loads(kafka_seq_to_str(seq))
+        return _couch_seq_to_int(checkpoint, seq)
+
     return {
         'name': pillow_config.name,
         'seq_format': checkpoint.sequence_format,
-        'seq': _couch_seq_to_int(checkpoint, checkpoint.wrapped_sequence),
-        'old_seq': _couch_seq_to_int(checkpoint, checkpoint.old_sequence) or 0,
-        'offsets': offsets,
+        'seq': _convert_couch_or_kafka_seq(checkpoint, checkpoint.wrapped_sequence),
+        'old_seq': _convert_couch_or_kafka_seq(checkpoint, checkpoint.old_sequence) or 0,
+        'offsets': _convert_couch_or_kafka_seq(checkpoint, offsets),
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
     }
