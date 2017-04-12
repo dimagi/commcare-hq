@@ -899,6 +899,7 @@ SENTRY_PROJECT_ID = None
 SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
 SENTRY_API_KEY = None
 
+ENABLE_PASSWORD_HASHING = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 
 from env_settings import *
