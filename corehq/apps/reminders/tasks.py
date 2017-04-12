@@ -47,9 +47,21 @@ def case_changed(self, domain, case_id):
         self.retry(exc=e)
 
 
+@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
+      default_retry_delay=CASE_CHANGED_RETRY_INTERVAL * 60, max_retries=CASE_CHANGED_RETRY_MAX,
+      bind=True)
+def process_handlers_for_case_changed(self, domain, case_id, handler_ids):
+    try:
+        _case_changed(domain, case_id, handler_ids)
+    except Exception as e:
+        self.retry(exc=e)
+
+
 def _case_changed(domain, case_id, handler_ids):
     case = CaseAccessors(domain).get_case(case_id)
     for handler in CaseReminderHandler.get_handlers_from_ids(handler_ids):
+        if handler.domain != domain:
+            raise ValueError("Unexpected domain mismatch: %s, %s" % (handler.domain, domain))
         if handler.start_condition_type == CASE_CRITERIA:
             kwargs = {}
             if handler.uses_time_case_property:
