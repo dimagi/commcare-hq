@@ -103,7 +103,7 @@ class KafkaChangeFeed(ChangeFeed):
         return get_multi_topic_offset(self.topics)
 
     def get_latest_offsets_json(self):
-        return kafka_seq_to_str(self.get_latest_offsets())
+        return json.loads(kafka_seq_to_str(self.get_latest_offsets()))
 
     def get_latest_offsets_as_checkpoint_value(self):
         return self.get_latest_offsets()
