@@ -60,6 +60,7 @@
  {% initial_page_data 'form_name_map' form_name_map %}
  {% initial_page_data 'app_langs' langs %}
  {% initial_page_data 'app_name' app_name %}
+ {% initial_page_data 'csrf_token' csrf_token %}
 -
 -<ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
 -    <li><a href="{{ section.url }}"><strong>{{ section.page_name }}</strong></a></li>

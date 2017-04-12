@@ -1,10 +1,12 @@
 hqDefine("users/js/web_users.js", function() {
     'use strict';
-    var usersApp = window.angular.module('usersApp', ['hq.web_users']);
+    var usersApp = window.angular.module('usersApp', ['hq.web_users']),
+        initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
     usersApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        $httpProvider.defaults.headers.common["X-CSRFToken"] = initial_page_data('csrf_token');
     }]);
     usersApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure(hqImport("hqwebapp/js/initial_page_data.js").get("djng_current_rmi"));
