@@ -113,6 +113,12 @@
           </a>
           {% endif %}
 
+          {% if location.user_id %}
+          <a class="btn btn-default" href="{% url "edit_commcare_user" domain location.user_id %}">
+            <i class="fa fa-external-link"></i> {% trans "Location User" %}
+          </a>
+          {% endif %}
+
           {% if location.supply_point_id %}
           <a class="btn btn-default" href="{% url "case_details" domain location.supply_point_id %}">
             <i class="fa fa-external-link"></i> {% trans "View Location Case" %}
