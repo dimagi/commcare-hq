@@ -153,18 +153,17 @@ def save_xform(app, form, xml):
 
     form.source = xml
 
-    # For registration forms, assume that the first question is the case name
+    # Assume that the first question is the case name
     # unless something else has been specified
-    if toggles.APP_MANAGER_V2.enabled(app.domain):
-        if form.is_registration_form():
-            questions = form.get_questions([app.default_language])
-            path = form.actions.open_case.name_path
-            if path:
-                name_questions = [q for q in questions if q['value'] == path]
-                if not len(name_questions):
-                    path = None
-            if not path and len(questions):
-                form.actions.open_case.name_path = questions[0]['value']
+    if form.is_registration_form():
+        questions = form.get_questions([app.default_language])
+        path = form.actions.open_case.name_path
+        if path:
+            name_questions = [q for q in questions if q['value'] == path]
+            if not len(name_questions):
+                path = None
+        if not path and len(questions):
+            form.actions.open_case.name_path = questions[0]['value']
 
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
@@ -864,17 +863,17 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
     return sort_only_elements, sort_columns
 
 
-def get_app_manager_template(domain, v1, v2):
+def get_app_manager_template(user, v1, v2):
     """
-    Given the name of the domain, a template string v1, and a template string v2,
+    Given the user, a template string v1, and a template string v2,
     return the template for V2 if the APP_MANAGER_V2 toggle is enabled.
 
-    :param domain: String, domain name
+    :param user: WebUser
     :param v1: String, template name for V1
     :param v2: String, template name for V2
     :return: String, either v1 or v2 depending on toggle
     """
-    if domain is not None and toggles.APP_MANAGER_V2.enabled(domain):
+    if user is not None and toggles.APP_MANAGER_V2.enabled(user.username):
         return v2
     return v1
 

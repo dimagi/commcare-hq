@@ -101,7 +101,7 @@ def direct_ccz(request, domain):
     if errors:
         lang, langs = get_langs(request, app)
         template = get_app_manager_template(
-            domain,
+            request.user,
             'app_manager/v1/partials/build_errors.html',
             'app_manager/v2/partials/build_errors.html'
         )

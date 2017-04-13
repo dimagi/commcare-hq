@@ -381,7 +381,7 @@ def new_form(request, domain, app_id, module_id):
     name = request.POST.get('name')
     form = app.new_form(module_id, name, lang)
 
-    if toggles.APP_MANAGER_V2.enabled(domain):
+    if toggles.APP_MANAGER_V2.enabled(request.user.username):
         case_action = request.POST.get('case_action', 'none')
         if case_action == 'update':
             form.requires = 'case'
@@ -582,7 +582,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     }
 
-    if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(domain):
+    if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(request.user.username):
         request.guided_tour = tours.NEW_APP.get_tour_data()
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
@@ -624,7 +624,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             ],
         })
         template = get_app_manager_template(
-            domain,
+            request.user,
             "app_manager/v1/form_view_careplan.html",
             "app_manager/v2/form_view_careplan.html",
         )
@@ -644,7 +644,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         })
         context.update(get_schedule_context(form))
         template = get_app_manager_template(
-            domain,
+            request.user,
             "app_manager/v1/form_view_advanced.html",
             "app_manager/v2/form_view_advanced.html",
         )
@@ -654,7 +654,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
         })
         template = get_app_manager_template(
-            domain,
+            request.user,
             "app_manager/v1/form_view.html",
             "app_manager/v2/form_view.html",
         )
@@ -725,7 +725,7 @@ def xform_display(request, domain, form_unique_id):
     if request.GET.get('format') == 'html':
         questions = [FormQuestionResponse(q) for q in questions]
         template = get_app_manager_template(
-            domain,
+            request.user,
             'app_manager/v1/xform_display.html',
             'app_manager/v2/xform_display.html',
         )
