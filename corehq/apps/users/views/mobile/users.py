@@ -638,7 +638,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     def query(self):
         return self.request.GET.get('query')
 
-    def _format_user(self, user_json):
+    def _format_user(self, user_json, include_location=False):
         user = CouchUser.wrap_correctly(user_json)
         user_data = {}
         for field in self.custom_data.fields:
@@ -650,6 +650,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,
             'user_id': user.user_id,
+            'location': user.sql_location.to_json() if include_location and user.sql_location else None,
             'mark_activated': False,
             'mark_deactivated': False,
             'dateRegistered': user.created_on.strftime(USER_DATE_FORMAT) if user.created_on else '',
@@ -685,6 +686,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         # front end pages start at one
         page = in_data.get('page', 1)
         query = in_data.get('query')
+        include_location = in_data.get('include_location', False)
 
         # backend pages start at 0
         users_query = self._user_query(query, page - 1, limit)
@@ -696,7 +698,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         users_data = users_query.run()
         return {
             'response': {
-                'itemList': map(self._format_user, users_data.hits),
+                'itemList': map(lambda user: self._format_user(user, include_location), users_data.hits),
                 'total': users_data.total,
                 'page': page,
                 'query': query,
