@@ -15,7 +15,10 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
             });
             $modal.on('click', '.flag-enable', function() {
                 $.post({
-                    url: hqImport("hqwebapp/js/urllib.js").reverse("enable_vellum_beta"),
+                    url: hqImport("hqwebapp/js/urllib.js").reverse("toggle_" + slug),
+                    data: {
+                        on_or_off: "on",
+                    },
                     success: function() {
                         window.location.reload(true);
                     },
@@ -33,5 +36,22 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
                 window.analytics.usage("Soft Rollout", "snooze", slug);
             });
         }
+
+        $("#rollout-revert").click(function() {
+            var slug = $(this).data("slug");
+            $.post({
+                url: hqImport("hqwebapp/js/urllib.js").reverse("toggle_" + slug),
+                data: {
+                    on_or_off: "off",
+                },
+                success: function() {
+                    window.location.reload(true);
+                },
+                error: function() {
+                    alert_user(gettext('We could not turn off the new feature. Please try again later.'), 'danger');
+                },
+            });
+            window.analytics.usage("Soft Rollout", "disable", slug);
+        });
     });
 });
