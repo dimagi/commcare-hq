@@ -1,11 +1,15 @@
 from collections import OrderedDict
+from datetime import datetime
 
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.private_sector_datamigration.models import Beneficiary
+from custom.enikshay.private_sector_datamigration.models import (
+    Adherence,
+    Beneficiary,
+)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -77,6 +81,70 @@ class TestCreateCasesByBeneficiary(TestCase):
             )
         )
         self.assertEqual(len(episode_case.xform_ids), 1)
+
+    def test_adherence(self):
+        Adherence.objects.create(
+            id=1,
+            beneficiaryId=self.beneficiary,
+            dosageStatusId=2,
+            doseDate=datetime.utcnow(),
+            doseReasonId=3,
+            reportingMechanismId=4,
+        )
+
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+
+        adherence_case_ids = self.case_accessor.get_case_ids_in_domain(type='adherence')
+        self.assertEqual(len(adherence_case_ids), 1)
+        adherence_case = self.case_accessor.get_case(adherence_case_ids[0])
+        self.assertFalse(adherence_case.closed)  # TODO
+        self.assertIsNone(adherence_case.external_id)  # TODO - update with nikshay ID
+        self.assertEqual(adherence_case.name, None)  # TODO
+        # self.assertEqual(adherence_case.opened_on, '')  # TODO
+        self.assertEqual(adherence_case.owner_id, '')
+        self.assertEqual(adherence_case.dynamic_case_properties(), OrderedDict([]))
+        self.assertEqual(len(adherence_case.indices), 1)
+        self._assertIndexEqual(
+            adherence_case.indices[0],
+            CommCareCaseIndex(
+                identifier='host',
+                referenced_type='episode',
+                referenced_id=episode_case.get_id,
+                relationship='extension',
+            )
+        )
+        self.assertEqual(len(adherence_case.xform_ids), 1)
+
+    def test_multiple_adherences(self):
+        Adherence.objects.create(
+            id=1,
+            beneficiaryId=self.beneficiary,
+            dosageStatusId=2,
+            doseDate=datetime.utcnow(),
+            doseReasonId=3,
+            reportingMechanismId=4,
+        )
+        Adherence.objects.create(
+            id=2,
+            beneficiaryId=self.beneficiary,
+            dosageStatusId=2,
+            doseDate=datetime.utcnow(),
+            doseReasonId=3,
+            reportingMechanismId=4,
+        )
+
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='adherence')), 2)
 
     def _assertIndexEqual(self, index_1, index_2):
         self.assertEqual(index_1.identifier, index_2.identifier)
