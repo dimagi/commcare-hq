@@ -1,5 +1,6 @@
 from __future__ import division
 from collections import namedtuple
+from copy import deepcopy
 from datetime import datetime
 import json
 import sys
@@ -74,10 +75,12 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
     def get_class(self):
         return _import_class_or_function(self.class_name)
 
-    def get_instance(self):
+    def get_instance(self, num_processes=1):
+        params = deepcopy(self.params)
+        params.update({'num_processes': num_processes})
         if self.instance_generator:
             instance_generator_fn = _import_class_or_function(self.instance_generator)
-            return instance_generator_fn(self.name, **self.params)
+            return instance_generator_fn(self.name, **params)
         else:
             return _get_pillow_instance(self.class_name)
 
@@ -103,10 +106,11 @@ def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
         )
 
 
-def get_pillow_by_name(pillow_class_name, instantiate=True, params=None):
+def get_pillow_by_name(pillow_class_name, instantiate=True, params=None, num_processes=1):
+    # todo(emord) get rid of instantiate (only needed in fluff reindex)
     params = params or {}
     config = get_pillow_config_by_name(pillow_class_name)
-    return config.get_instance() if instantiate else config.get_class()
+    return config.get_instance(num_processes) if instantiate else config.get_class()
 
 
 def get_pillow_config_by_name(pillow_name):

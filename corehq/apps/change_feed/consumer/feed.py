@@ -64,7 +64,7 @@ class KafkaChangeFeed(ChangeFeed):
             if self.strict:
                 validate_offsets(since)
 
-            checkpoint_topics = {tp[0] for tp in since}
+            checkpoint_topics = {tp for tp in since}
             extra_topics = checkpoint_topics - set(self._topics)
             if extra_topics:
                 raise ValueError("'since' contains extra topics: {}".format(list(extra_topics)))
@@ -75,8 +75,10 @@ class KafkaChangeFeed(ChangeFeed):
                 copy(self._processed_topic_offsets)
             ]
             topics_missing = set(self._topics) - checkpoint_topics
-            for topic in topics_missing:
-                offsets.append(topic)  # consume all available partitions
+            if topics_missing:
+                raise ValueError(
+                    "topics are missing known {}, attempted {}".format(self._topics, checkpoint_topics)
+                )
 
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions(*offsets)

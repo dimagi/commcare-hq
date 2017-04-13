@@ -150,8 +150,14 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
         return False
 
 
-def get_kafka_checkpoints(checkpoint_id):
-    return KafkaCheckpoint.objects.filter(checkpoint_id=checkpoint_id)
+def get_kafka_checkpoints(checkpoint_id, topic_partitions):
+    checkpoints = KafkaCheckpoint.objects.filter(checkpoint_id=checkpoint_id)
+    checkpoints = [
+        checkpoint
+        for checkpoint in checkpoints
+        if (checkpoint.topic, checkpoint.partition) in topic_partitions
+    ]
+    return checkpoints
 
 
 class WrappedCheckpoint(object):
@@ -165,14 +171,15 @@ class WrappedCheckpoint(object):
 
 class KafkaPillowCheckpoint(PillowCheckpoint):
 
-    def __init__(self, checkpoint_id):
+    def __init__(self, checkpoint_id, topics):
         self.checkpoint_id = checkpoint_id
         self.sequence_format = 'json'
-        self._last_checkpoints = get_kafka_checkpoints(self.checkpoint_id)
+        self.topics = topics
+        self._last_checkpoints = get_kafka_checkpoints(self.checkpoint_id, self.topics)
         self._last_updated = self._last_checkpoints[0].last_modified
 
     def get_or_create_wrapped(self, verify_unchanged=None):
-        checkpoints = get_kafka_checkpoints(self.checkpoint_id)
+        checkpoints = get_kafka_checkpoints(self.checkpoint_id, self.topics)
         ret = {}
         for checkpoint in checkpoints:
             ret[(checkpoint.topic, checkpoint.partition)] = checkpoint.offset

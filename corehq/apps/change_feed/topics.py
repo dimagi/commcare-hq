@@ -70,14 +70,14 @@ def get_multi_topic_first_available_offsets(topics):
 
 def _get_topic_offsets(topics, latest):
     """
-    :param topics: list of topics
+    :param topics: list of topics, partition
     :param latest: True to fetch latest offsets, False to fetch earliest available
     :return: dict: { (topic, partition): offset, ... }
     """
 
     # https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol#AGuideToTheKafkaProtocol-OffsetRequest
     # https://cfchou.github.io/blog/2015/04/23/a-closer-look-at-kafka-offsetrequest/
-    assert set(topics) <= set(ALL)
+    assert set({t[0] for t in topics}) <= set(ALL)
     client = get_kafka_client()
     partition_meta = client.topic_partitions
 
