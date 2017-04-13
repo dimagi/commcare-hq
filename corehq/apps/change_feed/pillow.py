@@ -48,19 +48,19 @@ class KafkaProcessor(PillowProcessor):
             self._producer.send_change(get_topic(doc_meta), change_meta)
 
 
-def get_default_couch_db_change_feed_pillow(pillow_id):
+def get_default_couch_db_change_feed_pillow(pillow_id, params=None):
     return get_change_feed_pillow_for_db(pillow_id, CommCareCase.get_db())
 
 
-def get_user_groups_db_kafka_pillow(pillow_id):
+def get_user_groups_db_kafka_pillow(pillow_id, params=None):
     return get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(CommCareUser))
 
 
-def get_domain_db_kafka_pillow(pillow_id):
+def get_domain_db_kafka_pillow(pillow_id, params=None):
     return get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(Domain))
 
 
-def get_application_db_kafka_pillow(pillow_id):
+def get_application_db_kafka_pillow(pillow_id, params=None):
     from corehq.apps.app_manager.models import Application
     return get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(Application))
 

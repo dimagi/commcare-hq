@@ -30,7 +30,7 @@ class BlobDeletionProcessor(PillowProcessor):
             self.blob_db.delete(bucket=bucket)
 
 
-def get_main_blob_deletion_pillow(pillow_id):
+def get_main_blob_deletion_pillow(pillow_id, params=None):
     """Get blob deletion pillow for the main couch database
 
     Using the KafkaChangeFeed ties this to the main couch database.
@@ -52,7 +52,7 @@ def get_main_blob_deletion_pillow(pillow_id):
     )
 
 
-def get_application_blob_deletion_pillow(pillow_id):
+def get_application_blob_deletion_pillow(pillow_id, params=None):
     """Get blob deletion pillow for the apps couch database"""
     couch_db = couch_config.get_db_for_class(Application)
     return _get_blob_deletion_pillow(pillow_id, couch_db)

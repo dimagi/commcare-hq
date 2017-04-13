@@ -72,12 +72,12 @@ class CacheInvalidateProcessor(PillowProcessor):
             )
 
 
-def get_main_cache_invalidation_pillow(pillow_id):
+def get_main_cache_invalidation_pillow(pillow_id, params=None):
     from couchforms.models import XFormInstance
     return _get_cache_invalidation_pillow(pillow_id, XFormInstance.get_db(), couch_filter="hqadmin/not_case_form")
 
 
-def get_user_groups_cache_invalidation_pillow(pillow_id):
+def get_user_groups_cache_invalidation_pillow(pillow_id, params=None):
     from corehq.apps.users.models import CommCareUser
     return _get_cache_invalidation_pillow(pillow_id, CommCareUser.get_db())
 
