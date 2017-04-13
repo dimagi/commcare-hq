@@ -367,6 +367,12 @@ def delete_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     if not _can_edit_workers_location(request.couch_user, user):
         raise PermissionDenied()
+    if (user.user_location_id and
+            SQLLocation.objects.get_or_None(location_id=user.user_location_id,
+                                            user_id=user._id)):
+        messages.error(request, "This is a location user. You must delete the "
+                       "corresponding location before you can delete this user.")
+        return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
     user.retire()
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
@@ -688,6 +694,11 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 or (is_active and not self.can_add_extra_users)):
             return {
                 'error': _("No Permission."),
+            }
+        if not is_active and user.user_location_id:
+            return {
+                'error': _("This is a location user, archive or delete the "
+                           "corresponding location to deactivate it."),
             }
         user.is_active = is_active
         user.save()
