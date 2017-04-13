@@ -12,13 +12,16 @@ from custom.enikshay.case_utils import (
     get_open_drtb_hiv_case_from_episode,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound, ENikshayLocationNotFound
-from custom.enikshay.nikshay_datamigration.models import Outcome
-
+from custom.enikshay.nikshay_datamigration.models import (
+    Followup,
+    Outcome,
+)
 
 PERSON_CASE_TYPE = 'person'
 OCCURRENCE_CASE_TYPE = 'occurrence'
 EPISODE_CASE_TYPE = 'episode'
 DRTB_HIV_REFERRAL_CASE_TYPE = 'drtb-hiv-referral'
+TEST_CASE_TYPE = 'test'
 
 MockLocation = namedtuple('MockLocation', 'name location_id location_type')
 MockLocationType = namedtuple('MockLocationType', 'name code')
@@ -111,16 +114,28 @@ class EnikshayCaseFactory(object):
             except ENikshayCaseNotFound:
                 return None
 
+    @memoized
+    def existing_test_case(self, followup):
+        #  TODO
+        return None
+
     def get_case_structures_to_create(self):
         person_structure = self.get_person_case_structure()
-        ocurrence_structure = self.get_occurrence_case_structure(person_structure)
-        episode_structure = self.get_episode_case_structure(ocurrence_structure)
+        occurrence_structure = self.get_occurrence_case_structure(person_structure)
+        episode_structure = self.get_episode_case_structure(occurrence_structure)
+        case_structures_to_create = []
         if (
             not self._outcome
             or (not self._outcome.is_treatment_ended and self._outcome.hiv_status in ['unknown', 'reactive'])
         ):
             drtb_hiv_referral_structure = self.get_drtb_hiv_referral_case_structure(episode_structure)
-            return [drtb_hiv_referral_structure]
+            case_structures_to_create.append(drtb_hiv_referral_structure)
+        case_structures_to_create.extend([
+            self.get_test_case_structure(followup, episode_structure)
+            for followup in self._followups
+        ])
+        if case_structures_to_create:
+            return case_structures_to_create
         else:
             return [episode_structure]
 
@@ -335,6 +350,44 @@ class EnikshayCaseFactory(object):
             kwargs['attrs']['create'] = True
         return CaseStructure(**kwargs)
 
+    def get_test_case_structure(self, followup, episode_structure):
+        kwargs = {
+            'attrs': {
+                'case_type': TEST_CASE_TYPE,
+                'update': {
+                    'date_tested': followup.TestDate,
+                    'lab_serial_number': followup.LabNo,
+                    'result_grade': followup.result_grade,
+                    'testing_facility_id': followup.DMC,
+
+                    'migration_created_case': 'true',
+                    'migration_created_from_id': followup.id,
+                    'migration_created_from_record': self.patient_detail.PregId,
+                }
+            },
+            'indices': [CaseIndex(
+                episode_structure,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=EPISODE_CASE_TYPE,
+            )],
+        }
+
+        if followup.IntervalId == 0:
+            kwargs['attrs']['update']['diagnostic_test_reason'] = 'presumptive_tb'
+        elif followup.IntervalId == 1:
+            kwargs['attrs']['update']['follow_up_test_reason'] = 'end_of_ip'
+        elif followup.IntervalId == 4:
+            kwargs['attrs']['update']['follow_up_test_reason'] = 'end_of_cp'
+
+        existing_test_case = self.existing_test_case(followup)
+        if existing_test_case:
+            kwargs['case_id'] = existing_test_case.case_id
+            kwargs['attrs']['create'] = False
+        else:
+            kwargs['attrs']['create'] = True
+        return CaseStructure(**kwargs)
+
     @property
     @memoized
     def _outcome(self):
@@ -343,6 +396,11 @@ class EnikshayCaseFactory(object):
             return zero_or_one_outcomes[0]
         else:
             return None
+
+    @property
+    @memoized
+    def _followups(self):
+        return list(Followup.objects.filter(PatientID=self.patient_detail))
 
     @property
     def tu(self):

@@ -14,7 +14,7 @@ class FakePillow(ConstructedPillow):
     def __init__(self):
         super(FakePillow, self).__init__(
             'fake pillow',
-            PillowCheckpoint('test_pillow_import'),
+            PillowCheckpoint('test_pillow_import', 'text'),
             RandomChangeFeed(10),
             LoggingProcessor()
         )

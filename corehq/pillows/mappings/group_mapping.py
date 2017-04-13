@@ -1,4 +1,3 @@
-from corehq.pillows.base import DEFAULT_META
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
@@ -68,6 +67,5 @@ GROUP_INDEX_INFO = ElasticsearchIndexInfo(
     index=GROUP_INDEX,
     alias='hqgroups',
     type='group',
-    meta=DEFAULT_META,
     mapping=GROUP_MAPPING,
 )

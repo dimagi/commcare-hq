@@ -1,7 +1,7 @@
 from __future__ import division
 from collections import namedtuple
 from datetime import datetime
-
+import json
 import sys
 
 import simplejson
@@ -39,6 +39,14 @@ def get_couch_pillow_instances():
     return [
         pillow for pillow in get_all_pillow_instances()
         if isinstance(pillow.get_change_feed(), CouchChangeFeed)
+    ]
+
+
+def get_kafka_pillow_instances():
+    from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+    return [
+        pillow for pillow in get_all_pillow_instances()
+        if isinstance(pillow.get_change_feed(), KafkaChangeFeed)
     ]
 
 
@@ -156,16 +164,19 @@ def get_pillow_json(pillow_config):
     else:
         time_since_last = ''
         hours_since_last = None
-    offsets = pillow.get_change_feed().get_latest_offsets()
+    offsets = pillow.get_change_feed().get_latest_offsets_json()
 
-    def _couch_seq_to_int(checkpoint, seq):
-        return force_seq_int(seq) if checkpoint.sequence_format != 'json' else seq
+    def _seq_to_int(checkpoint, seq):
+        from pillowtop.models import kafka_seq_to_str
+        if checkpoint.sequence_format == 'json':
+            return json.loads(kafka_seq_to_str(seq))
+        else:
+            return force_seq_int(seq)
 
     return {
         'name': pillow_config.name,
         'seq_format': checkpoint.sequence_format,
-        'seq': _couch_seq_to_int(checkpoint, checkpoint.wrapped_sequence),
-        'old_seq': _couch_seq_to_int(checkpoint, checkpoint.old_sequence) or 0,
+        'seq': _seq_to_int(checkpoint, checkpoint.wrapped_sequence),
         'offsets': offsets,
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last

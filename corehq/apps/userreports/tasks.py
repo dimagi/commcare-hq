@@ -20,7 +20,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     StaticDataSourceConfiguration,
     id_is_static,
-    ReportConfiguration,
+    get_report_config,
 )
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
@@ -172,7 +172,7 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
             json_response["total_row"] = total_row
         return json_response
 
-    spec = get_document_or_not_found(ReportConfiguration, domain, report_config_id)
+    spec, is_static = get_report_config(report_config_id, domain)
     experiment_context = {
         "domain": domain,
         "report_config_id": report_config_id,

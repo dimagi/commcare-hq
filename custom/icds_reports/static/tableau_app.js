@@ -173,7 +173,7 @@ function setUpNav(viz) {
     });
     _.each(sheets, function(sheet) {
         var html = "<li><a href='#' class='nav-link'>" + sheet.getName() + "</a></li>";
-        $(".dropdown-menu").append(html);
+        $(".tableau-reports .dropdown-menu").append(html);
     });
 
     $(".nav-link").click(function (e){

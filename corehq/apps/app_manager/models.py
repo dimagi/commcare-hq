@@ -5720,7 +5720,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise RearrangeError()
         self.modules = modules
 
-    def rearrange_forms(self, to_module_id, from_module_id, i, j):
+    def rearrange_forms(self, to_module_id, from_module_id, i, j, app_manager_v2=False):
         """
         The case type of the two modules conflict,
         ConflictingCaseTypeError is raised,
@@ -5736,7 +5736,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             pass
         try:
             form = from_module.forms.pop(j)
-            if toggles.APP_MANAGER_V2.enabled(self.domain):
+            if app_manager_v2:
                 if not to_module.is_surveys and i == 0:
                     # first form is the reg form
                     i = 1
@@ -5752,8 +5752,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             to_module.add_insert_form(from_module, form, index=i, with_source=True)
         except IndexError:
             raise RearrangeError()
-        if to_module.case_type != from_module.case_type \
-                and not toggles.APP_MANAGER_V2.enabled(self.domain):
+        if to_module.case_type != from_module.case_type and not app_manager_v2:
             raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):

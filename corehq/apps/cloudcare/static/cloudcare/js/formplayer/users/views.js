@@ -117,6 +117,7 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
                     query: this.model.get('query'),
                     limit: this.limit,
                     page: this.model.get('page'),
+                    include_location: true,
                 }),
             })
             .done(this.render.bind(this))
