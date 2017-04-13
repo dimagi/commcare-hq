@@ -20,6 +20,7 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
+from corehq.apps.motech.views import OpenmrsInstancesMotechView
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
 from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
@@ -31,7 +32,7 @@ from corehq.form_processor.utils import use_new_exports
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
-from corehq.toggles import PUBLISH_CUSTOM_REPORTS
+from corehq.toggles import PUBLISH_CUSTOM_REPORTS, MOTECH
 from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
@@ -1609,6 +1610,29 @@ class MySettingsTab(UITab):
                 'url': reverse(EnableMobilePrivilegesView.urlname),
             })
         return [[_("Manage My Settings"), menu_items]]
+
+
+class MotechTab(UITab):
+    title = ugettext_noop("Motech")
+    view = OpenmrsInstancesMotechView.urlname
+
+    url_prefix_formats = (
+        '/a/{domain}/motech/',
+    )
+
+    @property
+    def _is_viewable(self):
+        return MOTECH.enabled(self.domain) and self.couch_user.is_domain_admin(self.domain)
+
+    @property
+    @memoized
+    def sidebar_items(self):
+        return [
+            (_("OpenMRS"), [{
+                'title': OpenmrsInstancesMotechView.page_title,
+                'url': reverse(OpenmrsInstancesMotechView.urlname, args=[self.domain]),
+            }])
+        ]
 
 
 class AccountingTab(UITab):

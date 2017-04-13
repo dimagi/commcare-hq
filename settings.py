@@ -335,6 +335,7 @@ HQ_APPS = (
     'corehq.blobs',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
+    'corehq.apps.motech',
 
     # custom reports
     'a5288',
