@@ -251,7 +251,6 @@ class FileRestoreResponse(RestoreResponse):
 
 class BlobRestoreResponse(RestoreResponse):
 
-    BODY_TAG_SUFFIX = '-body'
     EXTENSION = 'xml'
 
     def __init__(self, username=None, items=False):
