@@ -1,0 +1,45 @@
+{% extends "style/base_page.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Reset your password" %}{% endblock %}
+
+{% block page_content %}
+    {% block login-content %}
+    <div class="row">
+        <div class="col-sm-8">
+            {% block focus-content %}
+
+            {% for global_error in form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ global_error }}
+            </div>
+            {% endfor %}
+
+            <form action="" method="post" class="form-horizontal">{% csrf_token %}
+
+                {% for field in form.visible_fields %}
+                <div class="form-group{% if field.errors %} has-error{% endif %}">
+                  <label class="col-sm-4 control-label">{{ field.label }}</label>
+                  <div class="col-sm-4">{{ field }}
+                  {% for error in field.errors %}
+                      <span class="help-block">{{ error }}</span>
+                  {% endfor %}
+                  </div>
+                </div>
+                {% endfor %}
+
+                {# hidden submit button to enable [enter] key #}
+                <div style="display: none"><input type="submit" value=""/></div>
+
+                <div class="form-actions">
+                    <div class="col-sm-offset-4 col-sm-8">
+                        <button type="submit" class="btn btn-primary">{% trans "Submit" %}</button>
+                    </div>
+                </div>
+            </form>
+            {% endblock %}
+
+        </div>
+    </div>
+    {% endblock %}
+{% endblock page_content %}

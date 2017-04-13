@@ -6,6 +6,7 @@ from decimal import Decimal
 import logging
 import json
 import cStringIO
+from functools import partial
 import pytz
 import sys
 
@@ -125,7 +126,7 @@ from corehq.apps.domain.forms import (
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
     SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
     ContractedPartnerForm, DimagiOnlyEnterpriseForm, USE_PARENT_LOCATION_CHOICE,
-    USE_LOCATION_CHOICE)
+    USE_LOCATION_CHOICE, HQPasswordResetForm)
 from corehq.apps.domain.models import (
     Domain,
     LICENSES,
@@ -3363,14 +3364,18 @@ class CardsView(BaseCardView):
 class PasswordResetView(View):
     urlname = "password_reset_confirm"
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, domain=None, *args, **kwargs):
         extra_context = kwargs.setdefault('extra_context', {})
         extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+        if domain:
+            extra_context['domain_name'] = domain
         return password_reset_confirm(request, *args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, domain=None, *args, **kwargs):
         extra_context = kwargs.setdefault('extra_context', {})
         extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+        if domain:
+            kwargs['post_reset_redirect'] = reverse('domain_reset_pwd_complete', kwargs={'domain': domain})
         response = password_reset_confirm(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)
@@ -3380,7 +3385,7 @@ class PasswordResetView(View):
         return response
 
 
-def exception_safe_password_reset(request, *args, **kwargs):
+def exception_safe_password_reset(request, domain=None, *args, **kwargs):
     """
     Django's password reset function raises SMTP errors if there's any
     problem with the mailserver. Catch that more elegantly with a simple wrapper.
@@ -3390,6 +3395,10 @@ def exception_safe_password_reset(request, *args, **kwargs):
     # http://streamhacker.com/2009/09/19/django-ia-auth-password-reset/
     # http://www.rkblog.rk.edu.pl/w/p/password-reset-django-10/
     # http://blog.montylounge.com/2009/jul/12/django-forgot-password/
+    kwargs['password_reset_form'] = partial(HQPasswordResetForm, domain)
+    if domain:
+        kwargs['extra_context']['domain_name'] = domain
+        kwargs['extra_email_context'] = {'domain_name': domain}
     try:
         return password_reset(request, *args, **kwargs)
     except None:
