@@ -9,6 +9,7 @@ from casexml.apps.phone.models import (
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from casexml.apps.phone.tests.dbaccessors import get_all_sync_logs_docs
 from casexml.apps.phone.xml import SYNC_XMLNS
+from casexml.apps.phone.utils import get_restore_response_class
 
 from corehq.apps.users.models import CommCareUser, WebUser
 
@@ -104,3 +105,7 @@ def generate_restore_response(project, user, restore_id="", version=V1, state_ha
         )
     )
     return config.get_response()
+
+
+def has_cached_payload(sync_log, version):
+    return bool(sync_log.get_cached_payload(version))
