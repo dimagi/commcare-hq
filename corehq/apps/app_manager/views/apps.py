@@ -746,7 +746,7 @@ def rearrange(request, domain, app_id, key):
             to_module_id = int(request.POST['to_module_id'])
             from_module_id = int(request.POST['from_module_id'])
             try:
-                app_manaer_v2 = toggles.APP_MANAGER_V2.enabled(request.user.username)
+                app_manager_v2 = toggles.APP_MANAGER_V2.enabled(request.user.username)
                 app.rearrange_forms(to_module_id, from_module_id, i, j, app_manager_v2=app_manager_v2)
             except ConflictingCaseTypeError:
                 messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
