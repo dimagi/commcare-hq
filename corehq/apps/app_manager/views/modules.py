@@ -858,7 +858,10 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:
-        if search_properties.get('properties') is not None:
+        if (
+                search_properties.get('properties') is not None
+                or search_properties.get('default_properties') is not None
+        ):
             module.search_config = CaseSearch(
                 properties=[
                     CaseSearchProperty.wrap(p)
