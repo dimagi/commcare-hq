@@ -10,9 +10,10 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from corehq.toggles import MESSAGE_LOG_METADATA
+from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification
+from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -501,7 +502,7 @@ def create_basic_form_checkpoint(index):
     return checkpoint
 
 
-class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BaseProjectDataView):
+class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
     show_sync_to_dropbox = False  # remove when DBox issue is resolved.
@@ -547,6 +548,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
             'show_sync_to_dropbox': self.show_sync_to_dropbox,
             'show_date_range': self.show_date_range,
             'check_for_multimedia': self.check_for_multimedia,
+            'is_sms_export': self.sms_export,
         }
         if (
             self.default_datespan.startdate is not None
@@ -2200,7 +2202,7 @@ class GenericDownloadNewExportMixin(object):
         count = 0
         for instance in export_instances:
             count += get_export_size(instance, filters)
-        if count > MAX_EXPORTABLE_ROWS:
+        if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(self.domain):
             raise ExportAsyncException(
                 _("This export contains %(row_count)s rows. Please change the "
                   "filters to be less than %(max_rows)s rows.") % {

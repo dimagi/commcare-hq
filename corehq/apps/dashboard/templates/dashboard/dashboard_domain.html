@@ -4,44 +4,19 @@
 
 
 {% block js %}{{ block.super }}
-<script
-        src="{% static 'dashboard/js/hq_dashboard.ng.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-<script>
-(function (angular, undefined) {
-    'use strict';
-    var dashboardApp = angular.module('dashboardApp', [
-        'ui.bootstrap',
-        'ngResource',
-        'ngRoute',
-        'ng.django.rmi',
-        'hq.dashboard'
-    ]);
-    dashboardApp.config(['$httpProvider', function($httpProvider) {
-        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-    }]);
-    dashboardApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
-        djangoRMIProvider.configure({% djng_current_rmi %});
-    }]);
-    dashboardApp.constant('dashboardConfig', {
-        staticRoot: '{{ STATIC_URL }}'
-    });
-}(window.angular));
-</script>
+<script src="{% static 'dashboard/js/hq_dashboard.ng.js' %}"></script>
+<script src="{% static 'dashboard/js/dashboard_domain.js' %}"></script>
 {% endblock %}
 
 {% block dashboard-content %}
+{% initial_page_data 'djng_current_rmi' djng_current_rmi %}
+{% initial_page_data 'static_url' STATIC_URL %}
+
 <div class="page-header">
     <h1>
-        {% if is_icds %}
-            {% trans 'Welcome Back to ICDS-CAS' %}
-        {% else %}
-            {% trans 'Welcome Back to CommCare HQ' %}
-        {% endif %}
+        {% blocktrans with cc_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+            Welcome Back to {{ cc_name }}
+        {% endblocktrans %}
     </h1>
 </div>
 <div data-ng-app="dashboardApp">
@@ -55,9 +30,9 @@
         {% endfor %}
     </div>
     <p class="lead text-center" style="margin-bottom: 5em;">
-        {% if is_icds %}
-            {% blocktrans %}
-                Thanks for using ICDS-CAS!
+        {% if enterprise_mode %}
+            {% blocktrans with cc_name=commcare_hq_names.COMMCARE_NAME %}
+                Thanks for using {{ cc_name }}!
             {% endblocktrans %}
         {% else %}
             {% blocktrans %}

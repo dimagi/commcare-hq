@@ -387,7 +387,10 @@ def _sync_user_phone_numbers(couch_user_id):
         # Create entries that should exist but do not exist
         for phone_number in numbers_that_should_exist:
             if phone_number not in phone_entries:
-                couch_user.create_phone_entry(phone_number)
+                try:
+                    couch_user.create_phone_entry(phone_number)
+                except InvalidFormatException:
+                    pass
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True,

@@ -331,6 +331,16 @@ function Group(json, parent) {
         $.publish('formplayer.dirty');
     };
 
+    self.hasAnyNestedQuestions = function() {
+        return _.any(self.children(), function(d) {
+            if (d.type() === 'question' || d.type() === 'repeat-juncture') {
+                return true;
+            } else if (d.type() === 'sub-group') {
+                return d.hasAnyNestedQuestions();
+            }
+        });
+    };
+
 }
 Group.prototype = Object.create(Container.prototype);
 Group.prototype.constructor = Container;

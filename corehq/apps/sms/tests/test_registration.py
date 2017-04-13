@@ -2,7 +2,6 @@ import base64
 import json
 from corehq.apps.accounting.models import (BillingAccount, DefaultProductPlan,
     SoftwarePlanEdition, SubscriptionAdjustment, Subscription)
-from corehq.apps.accounting.tests import generator
 from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import incoming
@@ -383,7 +382,6 @@ class RegistrationAPITestCase(TestCase):
     def setUpClass(cls):
         super(RegistrationAPITestCase, cls).setUpClass()
         Role.get_cache().clear()
-        generator.instantiate_accounting()
 
         cls.domain1, cls.account1, cls.subscription1 = cls.setup_domain('reg-api-test-1')
         cls.domain2, cls.account2, cls.subscription2 = cls.setup_domain('reg-api-test-2')

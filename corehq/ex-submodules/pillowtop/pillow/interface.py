@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractproperty, abstractmethod
+from datetime import datetime
 
 import sys
 
@@ -206,9 +207,15 @@ class PillowBase(object):
                 u'document_type:{}'.format(change.metadata.document_type),
                 u'domain:{}'.format(change.metadata.domain),
                 u'is_deletion:{}'.format(change.metadata.is_deletion),
-                u'pillow_name:{}'.format(self.get_name())
+                u'pillow_name:{}'.format(self.get_name()),
             ]
             datadog_counter(metric, tags=tags)
+
+            change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).seconds
+            datadog_gauge('commcare.change_feed.change_lag', change_lag, tags=[
+                u'pillow_name:{}'.format(self.get_name()),
+                u'topic:{}'.format(change.topic),
+            ])
 
             if timer:
                 datadog_gauge('commcare.change_feed.processing_time', timer.duration, tags=tags)

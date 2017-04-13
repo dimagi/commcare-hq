@@ -125,7 +125,7 @@
          <input type="number" class="col-sm-3 form-control" data-bind="
              value: visibleValue,
              valueUpdate: 'textchange',
-@@ -137,166 +138,174 @@
+@@ -137,166 +138,177 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.textarea">
@@ -352,8 +352,6 @@
 -                                    <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>
 -                                    <span data-bind="text: disabledMessage()"></span>
 -                                </span>
--                            </div>
--                        </div>
 +                        <div data-bind="saveButton: saveButton"></div>
 +                        <table class="table">
 +                            <thead>
@@ -370,7 +368,23 @@
 +                            </tr>
 +                            </tbody>
 +                        </table>
-                     </div>
++                    </div>
++                    </div>
++                {% endif %}
++                {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
++                {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
++                    <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
++                        <form action="{% url "gzip_app" domain app.id %}" method="POST">
++                            {% csrf_token %}
++                            <legend>Export compressed application</legend>
++                            <div class="panel-body">
++                                <button type="submit" class="btn btn-primary">
++                                    <i class="fa fa-arrow-down"></i>
++                                    {% trans "Download" %}
++                                </button>
+                             </div>
+-                        </div>
+-                    </div>
 -                </div>
 -            </fieldset>
 -        </div>
@@ -398,25 +412,15 @@
 -                            name: 'CommcareSettings.widgets.customProperty'
 -                        }
 -                        ">
-                     </div>
+-                    </div>
 -
 -                </div>
 -                <button class="btn btn-default" data-bind="click: onAddCustomProperty">
 -                    <i class="fa fa-plus"></i>
 -                    {% trans "Add Custom Property" %}
 -                </button>
-+                {% endif %}
-+                {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
-+                {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-+                    <legend>Export compressed application</legend>
-+                    <form action="{% url "gzip_app" domain app.id %}" method="POST">
-+                        {% csrf_token %}
-+                        <button type="submit" class="btn btn-primary">
-+                            <i class="fa fa-arrow-down"></i>
-+                            {% trans "Download" %}
-+                        </button>
-+                    </form>
-+                    <br>
++                        </form>
++                    </div>
 +                {% endif %}
 +            {% endif %}
 +            <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">

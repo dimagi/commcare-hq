@@ -239,7 +239,8 @@ class SubmissionPost(object):
             for case in case_stock_result.case_models:
                 case_post_save.send(case.__class__, case=case)
 
-    def process_xforms_for_cases(self, xforms, case_db):
+    @staticmethod
+    def process_xforms_for_cases(xforms, case_db):
         from casexml.apps.case.xform import process_cases_with_casedb
         from corehq.apps.commtrack.processing import process_stock
 

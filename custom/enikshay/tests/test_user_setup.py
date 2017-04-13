@@ -1,4 +1,5 @@
 import mock
+from datetime import datetime
 from django.test import TestCase, override_settings
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition, CustomDataEditor
@@ -12,7 +13,9 @@ from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_F
 from corehq.apps.users.forms import UpdateCommCareUserInfoForm
 from corehq.apps.users.signals import clean_commcare_user
 from .utils import setup_enikshay_locations
-from ..user_setup import validate_nikshay_code, LOC_TYPES_TO_USER_TYPES, set_user_role, validate_usertype
+from ..user_setup import (validate_nikshay_code, LOC_TYPES_TO_USER_TYPES,
+                          set_user_role, validate_usertype, get_site_code)
+from ..models import IssuerId
 
 
 @flag_enabled('ENIKSHAY')
@@ -50,6 +53,7 @@ class TestUserSetupUtils(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         cls.web_user.delete()
+        IssuerId.objects.all().delete()
         super(TestUserSetupUtils, cls).tearDownClass()
 
     def assertValid(self, form):
@@ -173,6 +177,7 @@ class TestUserSetupUtils(TestCase):
         clean_commcare_user.send(
             'BaseEditUserView.update_user',
             domain=self.domain,
+            request_user=self.web_user,
             user=user,
             forms={'UpdateCommCareUserInfoForm': user_form,
                    'CustomDataEditor': custom_data}
@@ -232,3 +237,53 @@ class TestUserSetupUtils(TestCase):
         self.assertValid(form)
         validate_nikshay_code(self.domain, form)
         self.assertInvalid(form)
+
+    def test_issuer_id(self):
+        areo = self.make_user('ahotah@martell.biz', 'DTO')
+        areo_number = areo.user_data['id_issuer_number']
+        self.assertTrue(areo_number)
+
+        # the next id should be 1 more than this ID
+        arys = self.make_user('aoakheart@kingsguard.gov', 'DTO')
+        self.assertTrue(areo_number + 1 == arys.user_data['id_issuer_number'])
+
+    def test_device_id(self):
+        user = self.make_user('redviper@martell.biz', 'DTO')
+        user.update_device_id_last_used('rotary', datetime(1984, 1, 1))
+        user.update_device_id_last_used('palm-pilot', datetime(1997, 1, 1))
+        user.update_device_id_last_used('blackberry', datetime(2008, 1, 1))
+        user.save()
+        self.assertEqual(user.user_data['id_device_number'], 3)
+
+        # Oberyn uses the palm-pilot again, which was device #2
+        user.update_device_id_last_used('palm-pilot', datetime(2017, 1, 1))
+        user.save()
+        self.assertEqual(user.user_data['id_device_number'], 2)
+
+    def test_add_drtb_hiv_to_dto(self):
+        ellaria = self.make_user('esand@martell.biz', 'DRTB-HIV')
+        self.assertEqual(ellaria.location_id, self.locations['DRTB-HIV'].location_id)
+        self.assertItemsEqual(
+            [l.name for l in ellaria.get_sql_locations(self.domain)],
+            [self.locations['DRTB-HIV'].name, self.locations['DTO'].name]
+        )
+
+    def test_get_site_code(self):
+        for expected, name, nikshay_code, type_code, parent in [
+            ('sto_nikshaycode', 'mysto', 'nikshaycode', 'sto', self.locations['CTD']),
+            ('cdst_nikshaycode', 'mycdst', 'nikshaycode', 'cdst', self.locations['STO']),
+            ('cto_sto_mycto', 'mycto', 'nikshaycode', 'cto', self.locations['STO']),
+            ('drtbhiv_dto', 'mydrtb-hiv', 'nikshaycode', 'drtb-hiv', self.locations['DTO']),
+            ('dto_cto_nikshaycode', 'mydto', 'nikshaycode', 'dto', self.locations['CTO']),
+            ('tu_dto_nikshaycode', 'mytu', 'nikshaycode', 'tu', self.locations['DTO']),
+            ('phi_tu_nikshaycode', 'myphi', 'nikshaycode', 'phi', self.locations['TU']),
+            ('dmc_tu_nikshaycode', 'mydmc', 'nikshaycode', 'dmc', self.locations['TU']),
+
+            # remove spaces and lowercase from nikshay code
+            ('cdst_nikshay_code', 'mycdst', 'Nikshay Code', 'cdst', self.locations['STO']),
+            # single digit integer nikshay codes get prefixed with 0
+            ('cdst_01', 'mycdst', '1', 'cdst', self.locations['STO']),
+            # make name a slug
+            ('cto_sto_cra-z_nm3', 'cRa-Z n@m3', 'nikshaycode', 'cto', self.locations['STO']),
+        ]:
+            self.assertEqual(expected, get_site_code(name, nikshay_code, type_code, parent))
