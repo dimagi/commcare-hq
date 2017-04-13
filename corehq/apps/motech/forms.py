@@ -3,6 +3,7 @@ from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from django import forms
 from django.utils.translation import ugettext as _
+from corehq.apps.motech.connceted_accounts import save_openmrs_account
 from corehq.apps.style import crispy
 
 
