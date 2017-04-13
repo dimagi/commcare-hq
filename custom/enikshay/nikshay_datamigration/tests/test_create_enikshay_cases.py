@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import datetime
+from datetime import date, datetime
 
 from django.core.management import call_command
 from django.test import TestCase, override_settings
@@ -10,6 +10,7 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
+from custom.enikshay.nikshay_datamigration.models import Followup
 from custom.enikshay.nikshay_datamigration.tests.utils import NikshayMigrationMixin, ORIGINAL_PERSON_NAME
 
 
@@ -311,6 +312,150 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 0)
+
+    def test_followup_diagnostic(self):
+        followup = self._create_diagnostic_followup()
+        call_command('create_enikshay_cases', self.domain)
+
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case_id = episode_case_ids[0]
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 0)
+
+        test_case_ids = self.case_accessor.get_case_ids_in_domain(type='test')
+        self.assertEqual(len(test_case_ids), 1)
+        test_case = self.case_accessor.get_case(test_case_ids[0])
+        self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([
+            ('date_tested', '2017-04-10'),
+            ('diagnostic_test_reason', 'presumptive_tb'),
+            ('lab_serial_number', '2073'),
+            ('migration_created_case', 'true'),
+            ('migration_created_from_id', str(followup.id)),
+            ('migration_created_from_record', self.patient_detail.PregId),
+            ('result_grade', '2+'),
+            ('testing_facility_id', '1'),
+        ]))
+        self.assertEqual(len(test_case.indices), 1)
+        self._assertIndexEqual(
+            test_case.indices[0],
+            CommCareCaseIndex(
+                identifier='host',
+                referenced_type='episode',
+                referenced_id=episode_case_id,
+                relationship='extension',
+            )
+        )
+
+    def test_followup_end_of_ip(self):
+        followup = self._create_diagnostic_followup()
+        followup.IntervalId = 1
+        followup.SmearResult = 1
+        followup.save()
+        call_command('create_enikshay_cases', self.domain)
+
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case_id = episode_case_ids[0]
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 0)
+
+        test_case_ids = self.case_accessor.get_case_ids_in_domain(type='test')
+        self.assertEqual(len(test_case_ids), 1)
+        test_case = self.case_accessor.get_case(test_case_ids[0])
+        self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([
+            ('date_tested', '2017-04-10'),
+            ('follow_up_test_reason', 'end_of_ip'),
+            ('lab_serial_number', '2073'),
+            ('migration_created_case', 'true'),
+            ('migration_created_from_id', str(followup.id)),
+            ('migration_created_from_record', self.patient_detail.PregId),
+            ('result_grade', 'SC-1'),
+            ('testing_facility_id', '1'),
+        ]))
+        self.assertEqual(len(test_case.indices), 1)
+        self._assertIndexEqual(
+            test_case.indices[0],
+            CommCareCaseIndex(
+                identifier='host',
+                referenced_type='episode',
+                referenced_id=episode_case_id,
+                relationship='extension',
+            )
+        )
+
+    def test_followup_end_of_cp(self):
+        followup = self._create_diagnostic_followup()
+        followup.IntervalId = 4
+        followup.SmearResult = 98
+        followup.save()
+        call_command('create_enikshay_cases', self.domain)
+
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case_id = episode_case_ids[0]
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 0)
+
+        test_case_ids = self.case_accessor.get_case_ids_in_domain(type='test')
+        self.assertEqual(len(test_case_ids), 1)
+        test_case = self.case_accessor.get_case(test_case_ids[0])
+        self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([
+            ('date_tested', '2017-04-10'),
+            ('follow_up_test_reason', 'end_of_cp'),
+            ('lab_serial_number', '2073'),
+            ('migration_created_case', 'true'),
+            ('migration_created_from_id', str(followup.id)),
+            ('migration_created_from_record', self.patient_detail.PregId),
+            ('result_grade', 'Pos'),
+            ('testing_facility_id', '1'),
+        ]))
+        self.assertEqual(len(test_case.indices), 1)
+        self._assertIndexEqual(
+            test_case.indices[0],
+            CommCareCaseIndex(
+                identifier='host',
+                referenced_type='episode',
+                referenced_id=episode_case_id,
+                relationship='extension',
+            )
+        )
+
+    def test_followup_and_drtb_hiv_referral(self):
+        self.outcome.HIVStatus = None
+        self.outcome.save()
+        self._create_diagnostic_followup()
+        call_command('create_enikshay_cases', self.domain)
+
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='test')), 1)
+
+    def test_multiple_followups(self):
+        self._create_diagnostic_followup()
+        self._create_diagnostic_followup()
+        call_command('create_enikshay_cases', self.domain)
+
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 0)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='test')), 2)
+
+    def _create_diagnostic_followup(self):
+        return Followup.objects.create(
+            PatientID=self.patient_detail,
+            IntervalId=0,
+            TestDate=date(2017, 4, 10),
+            DMC=1,
+            LabNo=2073,
+            SmearResult=12,
+        )
 
     def _assertIndexEqual(self, index_1, index_2):
         self.assertEqual(index_1.identifier, index_2.identifier)
