@@ -38,7 +38,7 @@
                 </li>
 
                 <!-- Render page buttons -->
-                <% for (var i = 0; i < totalPages; i++) { %>
+                <% for (var i = pagesToShow.start; i < pagesToShow.end; i++) { %>
                     <% if (i + 1 === page) { %>
                     <li class="js-page active" data-page="<%= i + 1 %>"><a><%= i + 1 %></a></li>
                     <% } else { %>
