@@ -20,7 +20,7 @@
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -25,251 +28,120 @@
+@@ -25,251 +28,122 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -65,10 +65,11 @@
 -              <i class="fa fa-mobile-phone preview-icon"></i>
 -              <span class="js-preview-action-show hide">{% trans "Show App Preview" %}</span>
 -              <span class="js-preview-action-hide hide">{% trans "Hide App Preview" %}</span>
--          </a>
--        </li>
 +      <div class="appnav-advanced-label">
-+          <a href='#' id="rollout-revert" data-slug="app_manager_v2">{% trans "Turn Off New App Builder" %}</a>
++          <a href='#' id="rollout-revert" data-slug="app_manager_v2" data-redirect="{% url "view_app" domain app.id %}">
++            {% trans "Turn Off New App Builder" %}
+           </a>
+-        </li>
 +      </div>
 +
 +      {% if app.get_doc_type == 'Application' %}

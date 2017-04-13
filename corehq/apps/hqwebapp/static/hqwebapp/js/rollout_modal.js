@@ -38,14 +38,19 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
         }
 
         $("#rollout-revert").click(function() {
-            var slug = $(this).data("slug");
+            var slug = $(this).data("slug"),
+                redirect = $(this).data("redirect");
             $.post({
                 url: hqImport("hqwebapp/js/urllib.js").reverse("toggle_" + slug),
                 data: {
                     on_or_off: "off",
                 },
-                success: function() {
-                    window.location.reload(true);
+                success: function(data) {
+                    if (redirect) {
+                        window.location = redirect;
+                    } else {
+                        window.location.reload(true);
+                    }
                 },
                 error: function() {
                     alert_user(gettext('We could not turn off the new feature. Please try again later.'), 'danger');

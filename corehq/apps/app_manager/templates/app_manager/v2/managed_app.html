@@ -51,7 +51,9 @@
       </div>
 
       <div class="appnav-advanced-label">
-          <a href='#' id="rollout-revert" data-slug="app_manager_v2">{% trans "Turn Off New App Builder" %}</a>
+          <a href='#' id="rollout-revert" data-slug="app_manager_v2" data-redirect="{% url "view_app" domain app.id %}">
+            {% trans "Turn Off New App Builder" %}
+          </a>
       </div>
 
       {% if app.get_doc_type == 'Application' %}
