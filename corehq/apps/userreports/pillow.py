@@ -298,7 +298,6 @@ def _get_topic_partitions(pillow_id, topics, num_processes):
     ]
 
 
-# TODO(Emord) make other pillows support params dictionary
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
                          num_processes=1, process_num=1, params=None):
