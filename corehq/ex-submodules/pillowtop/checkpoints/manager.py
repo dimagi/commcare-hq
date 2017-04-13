@@ -203,6 +203,8 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
                         defaults={'offset': offset}
                     )
 
+        self._last_checkpoints = get_kafka_checkpoints(self.checkpoint_id, self.topics)
+
     def touch(self, min_interval):
         return False
 
