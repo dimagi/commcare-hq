@@ -9,7 +9,9 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.private_sector_datamigration.models import (
     Adherence,
     Beneficiary,
-    EpisodePrescription)
+    EpisodePrescription,
+    LabTest,
+    Episode)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -215,6 +217,110 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='prescription')), 2)
+
+    def test_labtest(self):
+        episode = Episode.objects.create(
+            id=1,
+            adherenceScore=0.5,
+            alertFrequencyId=2,
+            beneficiaryID=self.beneficiary,
+            episodeDisplayID=3,
+            lastMonthAdherencePct=0.6,
+            lastTwoWeeksAdherencePct=0.7,
+            missedDosesPct=0.8,
+            patientWeight=50,
+            unknownAdherencePct=0.9,
+            unresolvedMissedDosesPct=0.1,
+        )
+        LabTest.objects.create(
+            id=1,
+            episodeId=episode,
+            labId=2,
+            tbStatusId=3,
+            testId=4,
+            testSiteId=5,
+            testSiteSpecimenId=6,
+            testSpecimenId=7,
+            treatmentCardId=8,
+            treatmentFileId=9,
+            voucherNumber=10,
+        )
+
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
+        occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(len(occurrence_case_ids), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
+
+        test_case_ids = self.case_accessor.get_case_ids_in_domain(type='test')
+        self.assertEqual(len(test_case_ids), 1)
+        test_case = self.case_accessor.get_case(test_case_ids[0])
+        self.assertFalse(test_case.closed)  # TODO
+        self.assertIsNone(test_case.external_id)  # TODO - update with nikshay ID
+        self.assertEqual(test_case.name, None)  # TODO
+        # self.assertEqual(adherence_case.opened_on, '')  # TODO
+        self.assertEqual(test_case.owner_id, '')
+        self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([]))
+        self.assertEqual(len(test_case.indices), 1)
+        self._assertIndexEqual(
+            test_case.indices[0],
+            CommCareCaseIndex(
+                identifier='host',
+                referenced_type='occurrence',
+                referenced_id=occurrence_case_ids[0],
+                relationship='extension',
+            )
+        )
+        self.assertEqual(len(test_case.xform_ids), 1)
+
+    def test_multiple_labtests(self):
+        episode = Episode.objects.create(
+            id=1,
+            adherenceScore=0.5,
+            alertFrequencyId=2,
+            beneficiaryID=self.beneficiary,
+            episodeDisplayID=3,
+            lastMonthAdherencePct=0.6,
+            lastTwoWeeksAdherencePct=0.7,
+            missedDosesPct=0.8,
+            patientWeight=50,
+            unknownAdherencePct=0.9,
+            unresolvedMissedDosesPct=0.1,
+        )
+        LabTest.objects.create(
+            id=1,
+            episodeId=episode,
+            labId=2,
+            tbStatusId=3,
+            testId=4,
+            testSiteId=5,
+            testSiteSpecimenId=6,
+            testSpecimenId=7,
+            treatmentCardId=8,
+            treatmentFileId=9,
+            voucherNumber=10,
+        )
+        LabTest.objects.create(
+            id=2,
+            episodeId=episode,
+            labId=2,
+            tbStatusId=3,
+            testId=4,
+            testSiteId=5,
+            testSiteSpecimenId=6,
+            testSpecimenId=7,
+            treatmentCardId=8,
+            treatmentFileId=9,
+            voucherNumber=10,
+        )
+
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='test')), 2)
 
     def _assertIndexEqual(self, index_1, index_2):
         self.assertEqual(index_1.identifier, index_2.identifier)
