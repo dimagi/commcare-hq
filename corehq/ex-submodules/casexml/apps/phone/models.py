@@ -321,9 +321,6 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         """
         raise NotImplementedError()
 
-    def get_payload_attachment_name(self, version):
-        return 'restore_payload_{version}.xml'.format(version=version)
-
     def set_cached_payload(self, payload_path, version):
         self.cache_payload_paths[version] = payload_path
 
