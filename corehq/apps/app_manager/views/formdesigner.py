@@ -162,7 +162,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     })
 
     template = get_app_manager_template(
-        domain,
+        request.user,
         'app_manager/v1/form_designer.html',
         'app_manager/v2/form_designer.html',
     )
