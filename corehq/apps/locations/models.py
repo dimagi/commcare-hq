@@ -494,6 +494,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         if sp and not sp.closed:
             close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
 
+        if self.user_id:
+            from corehq.apps.users.models import CommCareUser
+            user = CommCareUser.get(self.user_id)
+            user.active = False
+            user.save()
+
         _unassign_users_from_location(self.domain, self.location_id)
 
     def _archive_single_location(self):
@@ -540,6 +546,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
                     action.xform.archive(user_id=COMMTRACK_USERNAME)
                     break
 
+        if self.user_id:
+            from corehq.apps.users.models import CommCareUser
+            user = CommCareUser.get(self.user_id)
+            user.active = True
+            user.save()
+
     def unarchive(self):
         """
         Unarchive a location and reopen supply point case if it
@@ -567,27 +579,9 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         to_delete = self.get_descendants(include_self=True)
 
         for loc in to_delete:
-            loc._sql_close_case_and_remove_users()
+            loc._close_case_and_remove_users()
 
         to_delete.delete()
-
-    def _sql_close_case_and_remove_users(self):
-        """
-        SQL ONLY VERSION
-        Closes linked supply point cases for a location and unassigns the users
-        assigned to that location.
-
-        Used by both archive and delete methods
-        """
-
-        sp = self.linked_supply_point()
-        # sanity check that the supply point exists and is still open.
-        # this is important because if you archive a child, then try
-        # to archive the parent, we don't want to try to close again
-        if sp and not sp.closed:
-            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
-
-        _unassign_users_from_location(self.domain, self.location_id)
 
     class Meta:
         app_label = 'locations'
