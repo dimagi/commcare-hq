@@ -84,7 +84,7 @@ class CustomDataEditor(object):
 
     @property
     def errors(self):
-        self.form.is_valid()
+        # form.errors calls full_clean if needed and is idempotent
         return self.form.errors
 
     def get_data_to_save(self):
