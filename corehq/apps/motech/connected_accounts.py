@@ -38,7 +38,7 @@ def get_openmrs_requests_object(domain):
     account = get_openmrs_account(domain)
 
     if account:
-        return authproxy_client.requests(account.token)
+        return account.get_requests_object()
     else:
         return None
 

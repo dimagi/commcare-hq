@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import url, include
 from corehq.apps.motech.views import OpenmrsInstancesMotechView, \
     OpenmrsConceptMotechView
 
@@ -7,4 +7,5 @@ urlpatterns = [
         OpenmrsInstancesMotechView.as_view(), name=OpenmrsInstancesMotechView.urlname),
     url('^openmrs/metadata/$',
         OpenmrsConceptMotechView.as_view(), name=OpenmrsConceptMotechView.urlname),
+    url('^openmrs/', include('corehq.apps.motech.openmrs.urls')),
 ]
