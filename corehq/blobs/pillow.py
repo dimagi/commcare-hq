@@ -58,12 +58,12 @@ def get_application_blob_deletion_pillow(pillow_id):
     return _get_blob_deletion_pillow(pillow_id, couch_db)
 
 
-def _get_blob_deletion_pillow(pillow_id, couch_db, checkpoint=None, change_feed=None, checkpoint_handler=None):
+def _get_blob_deletion_pillow(pillow_id, couch_db, checkpoint=None, change_feed=None, event_handler=None):
     if change_feed is None:
         change_feed = CouchChangeFeed(couch_db, include_docs=False)
     if checkpoint is None:
         checkpoint = PillowCheckpoint(pillow_id, change_feed.sequence_format)
-    if checkpoint_handler is None:
+    if event_handler is None:
         event_handler = PillowCheckpointEventHandler(
             checkpoint=checkpoint,
             checkpoint_frequency=KAFKA_CHECKPOINT_FREQUENCY,
