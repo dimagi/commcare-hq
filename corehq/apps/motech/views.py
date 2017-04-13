@@ -53,3 +53,9 @@ class OpenmrsInstancesMotechView(MotechSection):
             self.openmrs_instance_form.save(self.domain)
             messages.success(request, _("Your OpenMRS server settings have been saved!"))
         return self.get(request, *args, **kwargs)
+
+
+class OpenmrsConceptMotechView(MotechSection):
+    page_title = ugettext_lazy("OpenMRS Concepts")
+    urlname = 'motech_openmrs_concepts'
+    template_name = 'motech/motech_openmrs_concepts.html'

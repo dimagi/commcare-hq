@@ -20,7 +20,8 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.motech.views import OpenmrsInstancesMotechView
+from corehq.apps.motech.views import OpenmrsInstancesMotechView, \
+    OpenmrsConceptMotechView
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
 from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
@@ -1631,6 +1632,9 @@ class MotechTab(UITab):
             (_("OpenMRS"), [{
                 'title': OpenmrsInstancesMotechView.page_title,
                 'url': reverse(OpenmrsInstancesMotechView.urlname, args=[self.domain]),
+            }, {
+                'title': OpenmrsConceptMotechView.page_title,
+                'url': reverse(OpenmrsConceptMotechView.urlname, args=[self.domain]),
             }])
         ]
 
