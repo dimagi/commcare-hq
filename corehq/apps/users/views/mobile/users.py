@@ -806,7 +806,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         return CommCareUser.create(
             self.domain,
-            format_username(username, self.domain),
+            username,
             password,
             device_id="Generated from HQ",
             first_name=first_name,
