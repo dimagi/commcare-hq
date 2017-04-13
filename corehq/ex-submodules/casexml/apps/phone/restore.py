@@ -5,6 +5,7 @@ from cStringIO import StringIO
 import os
 from uuid import uuid4
 import shutil
+import tempfile
 import hashlib
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
@@ -17,7 +18,7 @@ from casexml.apps.phone.exceptions import (
     BadStateException, RestoreException, DateOpenedBugException,
 )
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED, BLOBDB_RESTORE
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 from dimagi.utils.decorators.memoized import memoized
@@ -53,6 +54,8 @@ from casexml.apps.phone.const import (
     RESTORE_CACHE_KEY_PREFIX,
 )
 from casexml.apps.phone.xml import get_sync_element, get_progress_element
+from corehq.blobs import get_blob_db
+from corehq.blobs.exceptions import NotFound
 
 from wsgiref.util import FileWrapper
 from xml.etree import ElementTree
@@ -154,6 +157,17 @@ class RestoreResponse(object):
     def as_string(self):
         raise NotImplemented()
 
+    @classmethod
+    def get_payload(cls, filename):
+        '''
+        Given a filename (or identifier) returns the associated payload as
+        a filelike object. If it doesn't exist, return None.
+
+        :filename: Identifier to lookup payload
+        :returns: Filelike object or None
+        '''
+        raise NotImplemented()
+
     def __str__(self):
         return self.as_string()
 
@@ -220,6 +234,12 @@ class FileRestoreResponse(RestoreResponse):
     def as_file(self):
         return open(self.get_filename(), 'r')
 
+    @classmethod
+    def get_payload(cls, filename):
+        if os.path.exists(filename):
+            return open(filename, 'r')
+        return None
+
     def as_string(self):
         with open(self.get_filename(), 'r') as f:
             return f.read()
@@ -227,6 +247,89 @@ class FileRestoreResponse(RestoreResponse):
     def get_http_response(self):
         headers = {'Content-Length': os.path.getsize(self.get_filename())}
         return stream_response(open(self.get_filename(), 'r'), headers)
+
+
+class BlobRestoreResponse(RestoreResponse):
+
+    EXTENSION = 'xml'
+
+    def __init__(self, username=None, items=False):
+        super(BlobRestoreResponse, self).__init__(username, items)
+        self.identifier = 'restore-response-{}'.format(uuid4().hex)
+
+        self.response_body = tempfile.TemporaryFile('w+')
+        self.blobdb = get_blob_db()
+
+    def get_filename(self, suffix=None):
+        return "{identifier}{suffix}.{ext}".format(
+            identifier=self.identifier,
+            suffix=suffix or '',
+            ext=self.EXTENSION
+        )
+
+    def __add__(self, other):
+        if not isinstance(other, BlobRestoreResponse):
+            raise NotImplementedError
+
+        response = BlobRestoreResponse(self.username, self.items)
+        response.num_items = self.num_items + other.num_items
+
+        self.response_body.seek(0)
+        other.response_body.seek(0)
+
+        shutil.copyfileobj(self.response_body, response.response_body)
+        shutil.copyfileobj(other.response_body, response.response_body)
+
+        return response
+
+    def finalize(self):
+        """
+        Creates the final file with start and ending tag
+        """
+        with tempfile.TemporaryFile('w+') as response:
+            # Add 1 to num_items to account for message element
+            items = self.items_template.format(self.num_items + 1) if self.items else ''
+            response.write(self.start_tag_template.format(
+                items=items,
+                username=self.username,
+                nature=ResponseNature.OTA_RESTORE_SUCCESS
+            ))
+
+            self.response_body.seek(0)
+            shutil.copyfileobj(self.response_body, response)
+
+            response.write(self.closing_tag)
+            response.seek(0)
+            self.blobdb.put(response, self.get_filename(), timeout=60)
+
+        self.finalized = True
+        self.close()
+
+    def get_cache_payload(self, full=False):
+        return {
+            'data': self.get_filename() if not full else self.blobdb.get(self.get_filename())
+        }
+
+    def as_file(self):
+        return self.blobdb.get(self.get_filename())
+
+    @classmethod
+    def get_payload(cls, identifier):
+        try:
+            return get_blob_db().get(identifier)
+        except NotFound:
+            return None
+
+    def as_string(self):
+        try:
+            blob = self.blobdb.get(self.get_filename())
+            return blob.read()
+        finally:
+            blob.close()
+
+    def get_http_response(self):
+        headers = {'Content-Length': self.blobdb.size(self.get_filename())}
+        return stream_response(self.blobdb.get(self.get_filename()), headers)
 
 
 class AsyncRestoreResponse(object):
@@ -265,16 +368,15 @@ class AsyncRestoreResponse(object):
 
 class CachedPayload(object):
 
-    def __init__(self, payload, is_initial):
+    def __init__(self, domain, payload, is_initial):
         self.is_initial = is_initial
         self.payload = payload
         self.payload_path = None
+        self.restore_class = _get_restore_class(domain)
         if isinstance(payload, dict):
             self.payload_path = payload['data']
-            if os.path.exists(self.payload_path):
-                self.payload = open(self.payload_path, 'r')
-            else:
-                self.payload = None
+            self.payload = self.restore_class.get_payload(self.payload_path)
+
         elif payload:
             assert hasattr(payload, 'read'), 'expected file like object'
 
@@ -382,7 +484,10 @@ class RestoreState(object):
     This allows the providers to set values on the state, for either logging or performance
     reasons.
     """
-    restore_class = FileRestoreResponse
+
+    @property
+    def restore_class(self):
+        return _get_restore_class(self.domain)
 
     def __init__(self, project, restore_user, params, async=False):
         if not project or not project.name:
@@ -624,9 +729,13 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            payload = CachedPayload(self.sync_log.get_cached_payload(self.version, stream=True), is_initial=False)
+            payload = CachedPayload(
+                self.domain,
+                self.sync_log.get_cached_payload(self.version, stream=True),
+                is_initial=False
+            )
         else:
-            payload = CachedPayload(self.cache.get(self._initial_cache_key), is_initial=True)
+            payload = CachedPayload(self.domain, self.cache.get(self._initial_cache_key), is_initial=True)
 
         payload.finalize()
         return CachedResponse(payload)
@@ -735,3 +844,9 @@ class RestoreConfig(object):
     def delete_cached_payload_if_necessary(self):
         if self.overwrite_cache and self.cache.get(self._initial_cache_key):
             self.cache.delete(self._initial_cache_key)
+
+
+def _get_restore_class(domain):
+    if BLOBDB_RESTORE.enabled(domain):
+        return BlobRestoreResponse
+    return FileRestoreResponse
