@@ -9,9 +9,11 @@ def _authproxy_client_get_password(token):
     except ConnectedAccount.DoesNotExist:
         raise KeyError(token)
 
-
-authproxy_client = AuthProxyClient(
-    settings.AUTHPROXY_URL,
-    get_password=_authproxy_client_get_password,
-    cert_file=settings.AUTHPROXY_CERT,
-)
+if settings.AUTHPROXY_URL:
+    authproxy_client = AuthProxyClient(
+        settings.AUTHPROXY_URL,
+        get_password=_authproxy_client_get_password,
+        cert_file=settings.AUTHPROXY_CERT,
+    )
+else:
+    authproxy_client = None
