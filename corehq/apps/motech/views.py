@@ -25,7 +25,7 @@ class MotechSection(BaseDomainView):
 
 
 class OpenmrsInstancesMotechView(MotechSection):
-    page_title = ugettext_lazy("OpenMRS Servers")
+    page_title = ugettext_lazy("OpenMRS Server")
     urlname = 'motech_openmrs_instances'
     template_name = 'motech/motech_openmrs_instances.html'
 
