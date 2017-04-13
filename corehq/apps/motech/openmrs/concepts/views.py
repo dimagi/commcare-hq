@@ -1,6 +1,6 @@
 import json
 from django.db.models import Q
-from django.http import StreamingHttpResponse, HttpResponse
+from django.http import StreamingHttpResponse, JsonResponse
 from django.shortcuts import render
 from corehq.apps.motech.connceted_accounts import get_openmrs_requests_object, \
     get_openmrs_account
@@ -30,24 +30,21 @@ def concept_search(request, domain):
         try:
             concept = OpenmrsConcept.objects.get(uuid=uuid, account=account)
         except OpenmrsConcept.DoesNotExist:
-            return HttpResponse(json.dumps([]), content_type='text/json')
+            return JsonResponse({'concepts': []})
         else:
-            return HttpResponse(
-                json.dumps([
-                    openmrs_concept_json_with_answers_from_concept(concept).to_json()
-                ]), content_type='text/json')
+            return JsonResponse({'concepts': [
+                openmrs_concept_json_with_answers_from_concept(concept).to_json()
+            ]})
     elif len(search) > 2:
         all_openmrs_concepts = OpenmrsConcept.objects.filter(Q(account=account) & ~Q(answers=None))
         openmrs_concepts = all_openmrs_concepts.filter(names__icontains=search)
         first_50 = openmrs_concepts[:50]
-        return HttpResponse(
-            json.dumps([
-                openmrs_concept_json_with_answers_from_concept(concept).to_json()
-                for concept in first_50
-            ], content_type='text/json')
-        )
+        return JsonResponse({'concepts': [
+            openmrs_concept_json_with_answers_from_concept(concept).to_json()
+            for concept in first_50
+        ]})
     else:
-        return HttpResponse(json.dumps([]), content_type='text/json')
+        return JsonResponse({'concepts': []})
 
 
 @require_motech_permissions
