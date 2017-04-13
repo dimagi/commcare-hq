@@ -1086,6 +1086,13 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+LOGIN_AS_ALWAYS_OFF = StaticToggle(
+    'always_turn_login_as_off',
+    'Always turn login as off',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
     'highlight_feature_flags',
     'Highlight / Mark Feature Flags in the UI',
