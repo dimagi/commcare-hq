@@ -25,12 +25,13 @@ from corehq.apps.es import UserES
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.users.forms import NewMobileWorkerForm
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.signals import clean_commcare_user
 from corehq.apps.users.util import user_display_string, format_username
 from corehq.apps.style import crispy as hqcrispy
 
 from .models import SQLLocation, LocationType, LocationFixtureConfiguration
 from .permissions import user_can_access_location_id
-from .signals import location_edited
+from .signals import location_edited, clean_location
 
 
 class ParentLocWidget(forms.Widget):
@@ -306,11 +307,12 @@ class LocationForm(forms.Form):
 class LocationFormSet(object):
     """Ties together the forms for location, location data, user, and user data."""
 
-    def __init__(self, location, user, is_new, bound_data=None, *args, **kwargs):
+    def __init__(self, location, request_user, is_new, bound_data=None, *args, **kwargs):
         from .views import LocationFieldsView
         self.location = location
         self.domain = location.domain
         self.is_new = is_new
+        self.request_user = request_user
         self.location_form = LocationForm(location, bound_data, is_new=is_new)
         self.custom_location_data = self._get_custom_location_data(bound_data, is_new)
 
@@ -323,46 +325,56 @@ class LocationFormSet(object):
         )
 
         if self.include_user_forms:
-            self.user_form = self._get_user_form(bound_data, user)
+            self.user_form = self._get_user_form(bound_data)
             self.custom_user_data = self._get_custom_user_data(bound_data)
+            self.forms = [self.location_form, self.custom_location_data,
+                          self.user_form, self.custom_user_data]
+        else:
+            self.forms = [self.location_form, self.custom_location_data]
 
-    @property
-    def errors(self):
-        errors = self.location_form.errors
-        errors.update(self.custom_location_data.errors)
-        if self.include_user_forms:
-            errors.update(self.user_form.errors)
-            errors.update(self.custom_user_data.errors)
-        return errors
-
+    @memoized
     def is_valid(self):
-        if self.include_user_forms:
-            return all([
-                self.location_form.is_valid(),
-                self.custom_location_data.is_valid(),
-                self.user_form.is_valid(),
-                self.custom_user_data.is_valid(),
-            ])
-        return all([
-            self.location_form.is_valid(),
-            self.custom_location_data.is_valid(),
-        ])
+        # Trigger the clean methods of each form
+        for form in self.forms:
+            form.errors
+        self._send_clean_signals()
+        return all(form.is_valid() for form in self.forms)
+
+    def _send_clean_signals(self):
+        clean_location.send(
+            self.__class__.__name__,
+            domain=self.domain,
+            request_user=self.request_user,
+            location=self.location,
+            forms={self.location_form.__class__.__name__: self.location_form},
+        )
+        clean_commcare_user.send(
+            'MobileWorkerListView.create_mobile_worker',
+            domain=self.domain,
+            request_user=self.request_user,
+            user=self.user,
+            forms={
+                self.user_form.__class__.__name__: self.user_form,
+                self.custom_user_data.__class__.__name__: self.custom_user_data,
+            }
+        )
 
     def save(self):
         if not self.is_valid():
             raise ValueError('Form is not valid')
 
-        user_data = self.custom_user_data.get_data_to_save()
-        user = self._make_user(user_data, self.location_form.location)
-
-        self.location_form.location.user_id = user._id
+        self.user.save()
+        self.location_form.location.user_id = self.user._id
         location_data = self.custom_location_data.get_data_to_save()
         location = self.location_form.save(metadata=location_data)
 
-        user.user_location_id = location.location_id
-        user.set_location(location)
+        self.user.user_location_id = location.location_id
+        self.user.set_location(location)
 
-    def _make_user(self, user_data, location):
+    @property
+    @memoized
+    def user(self):
+        user_data = self.custom_user_data.get_data_to_save()
         username = self.user_form.cleaned_data['username']
         password = self.user_form.cleaned_data['password']
         first_name = self.user_form.cleaned_data['first_name']
@@ -370,12 +382,13 @@ class LocationFormSet(object):
 
         return CommCareUser.create(
             self.domain,
-            format_username(username, self.domain),
+            username,
             password,
             device_id="Generated from HQ",
             first_name=first_name,
             last_name=last_name,
             user_data=user_data,
+            commit=False,
         )
 
     def _get_custom_location_data(self, bound_data, is_new):
@@ -399,12 +412,12 @@ class LocationFormSet(object):
         custom_data.form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
         return custom_data
 
-    def _get_user_form(self, bound_data, user):
+    def _get_user_form(self, bound_data):
         domain_obj = Domain.get_by_name(self.domain)
         form = NewMobileWorkerForm(
             project=domain_obj,
             data=bound_data,
-            user=user,
+            user=self.request_user,
             prefix='location_user',
         )
         form.fields['username'].help_text = None
