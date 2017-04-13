@@ -78,8 +78,8 @@ class PillowCheckpoint(object):
                 for topic_partition, offset in kafka_seq.items():
                     KafkaCheckpoint.objects.update_or_create(
                         checkpoint_id=self.checkpoint_id,
-                        topic=topic_partition.topic,
-                        partition=topic_partition.partition,
+                        topic=topic_partition[0],
+                        partition=topic_partition[1],
                         defaults={'offset': offset}
                     )
             checkpoint = self.get_or_create_wrapped(verify_unchanged=True)
