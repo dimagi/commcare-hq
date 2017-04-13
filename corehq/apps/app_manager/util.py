@@ -153,7 +153,7 @@ def save_xform(app, form, xml):
 
     form.source = xml
 
-    # Assume that the first question is the case name
+    # For registration forms, assume that the first question is the case name
     # unless something else has been specified
     if form.is_registration_form():
         questions = form.get_questions([app.default_language])
