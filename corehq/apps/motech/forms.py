@@ -28,3 +28,8 @@ class OpenmrsInstanceForm(forms.Form):
                 )
             )
         )
+
+    def save(self, domain):
+        save_openmrs_account(
+            domain, self.cleaned_data['server_url'], self.cleaned_data['username'],
+            self.cleaned_data['password'])
