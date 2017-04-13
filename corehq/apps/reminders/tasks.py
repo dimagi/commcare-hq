@@ -63,6 +63,8 @@ def process_handlers_for_case_changed(self, domain, case_id, handler_ids):
 def _case_changed(domain, case_id, handler_ids):
     case = CaseAccessors(domain).get_case(case_id)
     for handler in CaseReminderHandler.get_handlers_from_ids(handler_ids):
+        if handler.case_type != case.type:
+            continue
         if handler.domain != domain:
             raise ValueError("Unexpected domain mismatch: %s, %s" % (handler.domain, domain))
         if handler.start_condition_type == CASE_CRITERIA:
