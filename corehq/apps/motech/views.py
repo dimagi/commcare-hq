@@ -31,7 +31,7 @@ class OpenmrsInstancesMotechView(MotechSection):
     @property
     @memoized
     def openmrs_instance_form(self):
-        if self.request.method == 'post':
+        if self.request.method == 'POST':
             return OpenmrsInstanceForm(self.request.POST)
         else:
             return OpenmrsInstanceForm()
@@ -44,6 +44,5 @@ class OpenmrsInstancesMotechView(MotechSection):
 
     def post(self, request, *args, **kwargs):
         if self.openmrs_instance_form.is_valid():
-            # self.openmrs_instance_form.save(self.request.couch_user, self.domain)
             messages.success(request, _("Your OpenMRS server settings have been saved!"))
         return self.get(request, *args, **kwargs)
