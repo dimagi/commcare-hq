@@ -848,7 +848,6 @@ class RestoreConfig(object):
 
 
 def _get_restore_class(domain):
-    return BlobRestoreResponse
     if BLOBDB_RESTORE.enabled(domain):
         return BlobRestoreResponse
     return FileRestoreResponse
