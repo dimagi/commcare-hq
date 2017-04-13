@@ -70,10 +70,6 @@ def _case_changed(domain, case_id, handler_ids):
                     'prev_definition': handler,
                 }
             handler.case_changed(case, **kwargs)
-            if handler.uses_parent_case_property:
-                subcases = case.get_subcases(index_identifier=DEFAULT_PARENT_IDENTIFIER)
-                for subcase in subcases:
-                    handler.case_changed(subcase, **kwargs)
 
 
 @task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True, acks_late=True)

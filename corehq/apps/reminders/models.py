@@ -1408,6 +1408,10 @@ class CaseReminderHandler(Document):
             if getattr(obj, name) in [None, ""]:
                 raise IllegalModelStateException("%s is required" % name)
 
+        if self.active and self.uses_parent_case_property:
+            raise IllegalModelStateException("Parent case property references will only be "
+                "available in the new reminders framework")
+
         if self.start_condition_type == CASE_CRITERIA:
             check_attr("case_type")
             check_attr("start_property")
