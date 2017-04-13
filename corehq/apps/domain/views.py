@@ -2371,10 +2371,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             repeater_id=self.repeater_id,
             state=self.state
         )
-        return map(
-            lambda record: [
+        rows = []
+        for record in records:
+            row = [
                 self._make_state_label(record),
-                record.payload_id,
                 record.url if record.url else _(u'Unable to generate url for record'),
                 self._format_date(record.last_checked) if record.last_checked else '---',
                 self._format_date(record.next_check) if record.next_check else '---',
@@ -2386,15 +2386,19 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
                 else self._make_cancel_payload_button(record.get_id) if not record.cancelled
                 and not record.succeeded
                 else None
-            ],
-            records
-        )
+            ]
+
+            if toggles.SUPPORT.enabled_for_request(self.request):
+                row.insert(1, record.payload_id)
+
+            rows.append(row)
+
+        return rows
 
     @property
     def headers(self):
-        return DataTablesHeader(
+        columns = [
             DataTablesColumn(_('Status')),
-            DataTablesColumn(_('Payload ID')),
             DataTablesColumn(_('URL')),
             DataTablesColumn(_('Last sent date')),
             DataTablesColumn(_('Retry Date')),
@@ -2403,7 +2407,11 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
             DataTablesColumn(_('Cancel or Requeue payload'))
-        )
+        ]
+        if toggles.SUPPORT.enabled_for_request(self.request):
+            columns.insert(1, DataTablesColumn(_('Payload ID')))
+
+        return DataTablesHeader(*columns)
 
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
