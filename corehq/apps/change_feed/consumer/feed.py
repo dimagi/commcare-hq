@@ -9,7 +9,8 @@ from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.change_feed.topics import get_multi_topic_offset, validate_offsets
 from dimagi.utils.logging import notify_error
-from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
+from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
+from pillowtop.models import kafka_seq_to_str
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 
 MIN_TIMEOUT = 100
@@ -100,6 +101,9 @@ class KafkaChangeFeed(ChangeFeed):
 
     def get_latest_offsets(self):
         return get_multi_topic_offset(self.topics)
+
+    def get_latest_offsets_json(self):
+        return json.loads(kafka_seq_to_str(self.get_latest_offsets()))
 
     def get_latest_offsets_as_checkpoint_value(self):
         return self.get_latest_offsets()
