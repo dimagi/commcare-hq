@@ -1,13 +1,18 @@
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 
-from custom.enikshay.private_sector_datamigration.models import Adherence
+from custom.enikshay.private_sector_datamigration.models import (
+    Adherence,
+    EpisodePrescription,
+)
+
 from dimagi.utils.decorators.memoized import memoized
 
 PERSON_CASE_TYPE = 'person'
 OCCURRENCE_CASE_TYPE = 'occurrence'
 EPISODE_CASE_TYPE = 'episode'
 ADHERENCE_CASE_TYPE = 'adherence'
+PRESCRIPTION_CASE_TYPE = 'prescription'
 
 
 class BeneficiaryCaseFactory(object):
@@ -23,6 +28,9 @@ class BeneficiaryCaseFactory(object):
         case_structures_to_create = [
             self.get_adherence_case_structure(adherence, episode_structure)
             for adherence in self._adherences
+        ] + [
+            self.get_prescription_case_structure(prescription, episode_structure)
+            for prescription in self._prescriptions
         ]
         return case_structures_to_create or [episode_structure]
 
@@ -94,7 +102,30 @@ class BeneficiaryCaseFactory(object):
         }
         return CaseStructure(**kwargs)
 
+    def get_prescription_case_structure(self, prescription, episode_structure):
+        kwargs = {
+            'attrs': {
+                'case_type': PRESCRIPTION_CASE_TYPE,
+                'close': False,
+                'create': True,
+                'update': {
+                }
+            },
+            'indices': [CaseIndex(
+                episode_structure,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=EPISODE_CASE_TYPE,
+            )],
+        }
+        return CaseStructure(**kwargs)
+
     @property
     @memoized
     def _adherences(self):
         return list(Adherence.objects.filter(beneficiaryId=self.beneficiary))
+
+    @property
+    @memoized
+    def _prescriptions(self):
+        return list(EpisodePrescription.objects.filter(beneficiaryId=self.beneficiary))
