@@ -158,13 +158,14 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
 
     @mock.patch.object(CachedPayload, 'finalize')  # fake that a cached payload exists
     @mock.patch.object(RestoreConfig, 'cache')
+    @mock.patch.object(FileRestoreResponse, 'get_payload')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    def test_clears_cache(self, task, cache, _):
+    def test_clears_cache(self, task, response, cache, _):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
         task.delay.return_value = delay
-        cache_get = mock.MagicMock().return_value = StringIO('<restore_id>123</restore_id>')
-        cache.get.return_value = cache_get
+        response.return_value = StringIO('<restore_id>123</restore_id>')
+        cache.get.return_value = 'path-to-cached-restore'
 
         self._restore_config(async=True, overwrite_cache=False).get_payload()
         self.assertFalse(cache.delete.called)
@@ -221,13 +222,14 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
 
     @mock.patch.object(CachedPayload, 'finalize')  # fake that a cached payload exists
     @mock.patch.object(RestoreConfig, 'cache')
+    @mock.patch.object(FileRestoreResponse, 'get_payload')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    def test_clears_cache(self, task, cache, _):
+    def test_clears_cache(self, task, response, cache, _):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
         task.delay.return_value = delay
-        cache_get = mock.MagicMock().return_value = StringIO('<restore_id>123</restore_id>')
-        cache.get.return_value = cache_get
+        cache.get.return_value = 'path-to-cached-restore'
+        response.return_value = StringIO('<restore_id>123</restore_id>')
 
         self._restore_config(async=True, overwrite_cache=False).get_payload()
         self.assertFalse(cache.delete.called)

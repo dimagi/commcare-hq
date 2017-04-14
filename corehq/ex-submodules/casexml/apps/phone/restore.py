@@ -18,7 +18,7 @@ from casexml.apps.phone.exceptions import (
     BadStateException, RestoreException, DateOpenedBugException,
 )
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED, BLOBDB_RESTORE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 from dimagi.utils.decorators.memoized import memoized
@@ -54,6 +54,7 @@ from casexml.apps.phone.const import (
     RESTORE_CACHE_KEY_PREFIX,
 )
 from casexml.apps.phone.xml import get_sync_element, get_progress_element
+from casexml.apps.phone.utils import get_restore_response_class
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 
@@ -151,9 +152,6 @@ class RestoreResponse(object):
     def finalize(self):
         raise NotImplemented()
 
-    def get_cache_payload(self, full=False):
-        raise NotImplemented()
-
     def as_string(self):
         raise NotImplemented()
 
@@ -226,11 +224,6 @@ class FileRestoreResponse(RestoreResponse):
         self.finalized = True
         self.close()
 
-    def get_cache_payload(self, full=False):
-        return {
-            'data': self.get_filename() if not full else open(self.get_filename(), 'r')
-        }
-
     def as_file(self):
         return open(self.get_filename(), 'r')
 
@@ -239,6 +232,10 @@ class FileRestoreResponse(RestoreResponse):
         if os.path.exists(filename):
             return open(filename, 'r')
         return None
+
+    @classmethod
+    def get_content_length(cls, filename):
+        return os.path.getsize(filename)
 
     def as_string(self):
         with open(self.get_filename(), 'r') as f:
@@ -305,11 +302,6 @@ class BlobRestoreResponse(RestoreResponse):
         self.finalized = True
         self.close()
 
-    def get_cache_payload(self, full=False):
-        return {
-            'data': self.get_filename() if not full else self.blobdb.get(self.get_filename())
-        }
-
     def as_file(self):
         return self.blobdb.get(self.get_filename())
 
@@ -319,6 +311,10 @@ class BlobRestoreResponse(RestoreResponse):
             return get_blob_db().get(identifier)
         except NotFound:
             return None
+
+    @classmethod
+    def get_content_length(cls, identifier):
+        return get_blob_db().size(identifier)
 
     def as_string(self):
         try:
@@ -368,17 +364,11 @@ class AsyncRestoreResponse(object):
 
 class CachedPayload(object):
 
-    def __init__(self, domain, payload, is_initial):
+    def __init__(self, domain, payload_path, is_initial):
         self.is_initial = is_initial
-        self.payload = payload
-        self.payload_path = None
-        self.restore_class = _get_restore_class(domain)
-        if isinstance(payload, dict):
-            self.payload_path = payload['data']
-            self.payload = self.restore_class.get_payload(self.payload_path)
-
-        elif payload:
-            assert hasattr(payload, 'read'), 'expected file like object'
+        self.payload_path = payload_path
+        self.restore_class = get_restore_response_class(domain)
+        self.payload = self.restore_class.get_payload(self.payload_path) if payload_path else None
 
     def __nonzero__(self):
         return bool(self.payload)
@@ -390,9 +380,7 @@ class CachedPayload(object):
             self.payload.close()
 
     def get_content_length(self):
-        if self.payload_path:
-            return os.path.getsize(self.payload_path)
-        return None
+        return self.restore_class.get_content_length(self.payload_path)
 
     def as_file(self):
         return self.payload
@@ -487,7 +475,7 @@ class RestoreState(object):
 
     @property
     def restore_class(self):
-        return _get_restore_class(self.domain)
+        return get_restore_response_class(self.domain)
 
     def __init__(self, project, restore_user, params, async=False):
         if not project or not project.name:
@@ -729,13 +717,15 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            payload = CachedPayload(
-                self.domain,
-                self.sync_log.get_cached_payload(self.version, stream=True),
-                is_initial=False
-            )
+            cache_payload_path = self.sync_log.cache_payload_paths.get(self.version)
         else:
-            payload = CachedPayload(self.domain, self.cache.get(self._initial_cache_key), is_initial=True)
+            cache_payload_path = self.cache.get(self._initial_cache_key)
+
+        payload = CachedPayload(
+            self.domain,
+            cache_payload_path,
+            is_initial=not bool(self.sync_log)
+        )
 
         payload.finalize()
         return CachedResponse(payload)
@@ -812,41 +802,32 @@ class RestoreConfig(object):
                                 status=412)  # precondition failed
 
     def set_cached_payload_if_necessary(self, resp, duration):
-        cache_payload = resp.get_cache_payload(bool(self.sync_log))
+        cache_payload_path = resp.get_filename()
         if self.sync_log:
             # if there is a sync token, always cache
-            self._set_cache_on_synclog(cache_payload)
+            self._set_cache_on_synclog(
+                cache_payload_path
+            )
         else:
             # on initial sync, only cache if the duration was longer than the threshold
             if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
-                self._set_cache_in_redis(cache_payload)
+                self._set_cache_in_redis(cache_payload_path)
 
-    def _set_cache_on_synclog(self, cache_payload):
+    def _set_cache_on_synclog(self, cache_payload_path):
         try:
-            data = cache_payload['data']
             self.sync_log.last_cached = datetime.utcnow()
             self.sync_log.hash_at_last_cached = str(self.sync_log.get_state_hash())
+            self.sync_log.set_cached_payload(cache_payload_path, self.version)
             self.sync_log.save()
-            self.sync_log.set_cached_payload(data, self.version)
-            try:
-                data.close()
-            except AttributeError:
-                pass
         except ResourceConflict:
             # if one sync takes a long time and another one updates the sync log
             # this can fail. in this event, don't fail to respond, since it's just
             # a caching optimization
             pass
 
-    def _set_cache_in_redis(self, cache_payload):
-        self.cache.set(self._initial_cache_key, cache_payload, self.cache_timeout)
+    def _set_cache_in_redis(self, cache_payload_path):
+        self.cache.set(self._initial_cache_key, cache_payload_path, self.cache_timeout)
 
     def delete_cached_payload_if_necessary(self):
         if self.overwrite_cache and self.cache.get(self._initial_cache_key):
             self.cache.delete(self._initial_cache_key)
-
-
-def _get_restore_class(domain):
-    if BLOBDB_RESTORE.enabled(domain):
-        return BlobRestoreResponse
-    return FileRestoreResponse
