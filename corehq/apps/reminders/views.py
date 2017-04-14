@@ -466,6 +466,8 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         return reverse(self.urlname, args=[self.domain, self.handler_id])
 
     def process_schedule_form(self):
+        if self.schedule_form.cleaned_data['case_type'] != self.reminder_handler.case_type:
+            raise ValueError("Reminder case type is expected to be read only on edit")
         self.schedule_form.save(self.reminder_handler)
 
     def rule_in_progress(self):

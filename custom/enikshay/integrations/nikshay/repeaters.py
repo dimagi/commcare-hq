@@ -28,7 +28,11 @@ from custom.enikshay.integrations.ninetyninedots.repeaters import case_propertie
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
 
 
-class NikshayRegisterPatientRepeater(CaseRepeater):
+class BaseNikshayRepeater(CaseRepeater):
+    pass
+
+
+class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
     class Meta(object):
         app_label = 'repeaters'
 
@@ -66,7 +70,7 @@ class NikshayRegisterPatientRepeater(CaseRepeater):
             return False
 
 
-class NikshayHIVTestRepeater(CaseRepeater):
+class NikshayHIVTestRepeater(BaseNikshayRepeater):
     class Meta(object):
         app_label = 'repeaters'
 
@@ -107,7 +111,7 @@ class NikshayHIVTestRepeater(CaseRepeater):
             return False
 
 
-class NikshayTreatmentOutcomeRepeater(CaseRepeater):
+class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
     class Meta(object):
         app_label = 'repeaters'
 
@@ -136,7 +140,7 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
         )
 
 
-class NikshayFollowupRepeater(CaseRepeater):
+class NikshayFollowupRepeater(BaseNikshayRepeater):
     followup_for_tests = ['end_of_ip', 'end_of_cp']
 
     class Meta(object):

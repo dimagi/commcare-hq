@@ -1,18 +1,13 @@
 --- 
 +++ 
-@@ -3,15 +3,19 @@
+@@ -3,15 +3,17 @@
  <script type="text/html" id="case-config:condition">
      <!--ko with: condition -->
      <span data-bind="text: $parent.actionType"></span>
--    <div data-bind="visible: type() === 'always'">
--        <a href="#" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
--    </div>
 +
-+    {% if app.advanced_app_builder or form.get_action_type != 'open' %}
-+      <div data-bind="visible: type() === 'always'">
-+          <a href="#" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
-+      </div>
-+    {% endif %}
+     <div data-bind="visible: type() === 'always'">
+         <a href="#" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
+     </div>
 +
      <div class="form-inline" data-bind="visible: type() === 'if'">
          <a href="#" data-bind="click: function () {type('always')}">
@@ -24,7 +19,7 @@
              This would normally use .form-control, but it's going to become a select2,
              which adds wonky height & borders on Firefox when it uses .form-control
          -->
-@@ -40,7 +44,7 @@
+@@ -40,7 +42,7 @@
  </script>
  
  <script type="text/html" id="case-config:case-properties:question">
@@ -33,7 +28,7 @@
          This would normally use .form-control, but it's going to become a select2,
          which adds wonky height & borders on Firefox when it uses .form-control
      -->
-@@ -64,7 +68,7 @@
+@@ -64,7 +66,7 @@
          <input type="text" class="form-control" data-bind="
              valueDefault: property.key,
              default: property.defaultKey,
@@ -42,7 +37,7 @@
          "/>
      </span>
      <span data-bind="visible: property.required()">
-@@ -73,12 +77,16 @@
+@@ -73,12 +75,16 @@
  </script>
  
  <script type="text/html" id="case-config:case-transaction:case-preload">
@@ -61,7 +56,7 @@
                  <th></th>
                  <th>{% trans "Question" %}</th>
              </tr>
-@@ -112,9 +120,9 @@
+@@ -112,9 +118,9 @@
      </table>
      <div class="panel-body">
          <div class="alert alert-block alert-info" data-bind="visible: !case_preload().length">
@@ -73,7 +68,7 @@
              <i class="fa fa-plus"></i>
              {% trans "Load properties" %}
          </a>
-@@ -122,65 +130,68 @@
+@@ -122,65 +128,68 @@
  </script>
  
  <script type="text/html" id="case-config:case-transaction:case-properties">
@@ -198,7 +193,7 @@
              <i class="fa fa-plus"></i>
              {% trans "Save properties" %}
          </a>
-@@ -188,12 +199,14 @@
+@@ -188,12 +197,14 @@
  </script>
  
  <script type="text/html" id="case-config:refresh-form-questions">
