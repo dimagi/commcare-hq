@@ -20,7 +20,7 @@
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -25,251 +28,133 @@
+@@ -25,251 +28,137 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -104,8 +104,8 @@
 +            <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
 +            <button type="button"
 +                    class="btn btn-xs btn-default"
-+                    id="rollout-revert"
-+                    data-slug="app_manager_v2"
++                    data-toggle="modal"
++                    data-target="#rollout-revert-modal"
 +                    data-redirect="{% url "view_app" domain app.id %}"
 +            >{% trans "Off" %}</button>
 +          </div>
@@ -386,3 +386,7 @@
 +      </div>
 +    </script>
  {% endblock %}
++
++{% block modals %}{{ block.super }}
++    {% include "hqwebapp/rollout_revert_modal.html" %}
++{% endblock %}
