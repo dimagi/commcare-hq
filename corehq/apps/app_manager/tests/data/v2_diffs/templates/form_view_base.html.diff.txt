@@ -145,7 +145,7 @@
 +    <div class="tabbable appmanager-tabs-container">
          <ul class="nav nav-tabs">
 +
-+            {% if form.requires_case or form.get_action_type == 'open' %}
++            {% if form.uses_cases %}
              <li class="active">
 -                <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
 -            </li>
@@ -156,7 +156,7 @@
              </li>
 +            {% endif %}
 +
-+            <li {% if not form.requires_case and not form.get_action_type == 'open' %}class="active"{% endif %}>
++            <li {% if not form.uses_cases %}class="active"{% endif %}>
 +                <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
 +            </li>
 +
@@ -186,7 +186,7 @@
 +
 +        <div class="tab-content appmanager-tab-content">
 +
-+            {% if form.requires_case or form.get_action_type == 'open' %}
++            {% if form.uses_cases %}
 +              <div class="tab-pane active" id="case-configuration">
 +                  {% if xform_validation_missing %}
 +                      <p class="alert alert-warning">
