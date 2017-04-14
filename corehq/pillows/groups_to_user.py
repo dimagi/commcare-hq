@@ -25,9 +25,10 @@ class GroupsToUsersProcessor(PillowProcessor):
 
 def get_group_to_user_pillow(pillow_id='GroupToUserPillow', params=None):
     assert pillow_id == 'GroupToUserPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
+    topics = [GROUP]
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics)
     processor = GroupsToUsersProcessor()
-    change_feed = KafkaChangeFeed(topics=[GROUP], group_id='groups-to-users')
+    change_feed = KafkaChangeFeed(topics=topics, group_id=checkpoint.checkpoint_id)
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
