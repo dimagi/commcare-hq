@@ -1735,6 +1735,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         from corehq.apps.fixtures.models import UserFixtureType
 
+        if not location.location_id:
+            raise AssertionError("You can't set an unsaved location")
+
         self.user_data['commcare_location_id'] = location.location_id
 
         if not location.location_type_object.administrative:
@@ -2142,6 +2145,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             location_id = location_object_or_id
         else:
             location_id = location_object_or_id.location_id
+
+        if not location_id:
+            raise AssertionError("You can't set an unsaved location")
 
         membership = self.get_domain_membership(domain)
         membership.location_id = location_id
