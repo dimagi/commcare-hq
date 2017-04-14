@@ -121,4 +121,4 @@ def _archive_users(location_type):
     user_ids = (SQLLocation.objects
                 .filter(location_type=location_type)
                 .values_list('user_id', flat=True))
-    iter_update(CommCareUser.get_db(), archive, user_ids, verbose=True)
+    iter_update(CommCareUser.get_db(), archive, user_ids)
