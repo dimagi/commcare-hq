@@ -639,7 +639,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
         all_programs = [{'value': '', 'label': _('All Programs')}]
         context.update({
-            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
             'commtrack_programs': all_programs + commtrack_programs(),
         })
         context.update(get_schedule_context(form))
