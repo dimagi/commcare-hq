@@ -20,7 +20,7 @@
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -25,251 +28,123 @@
+@@ -25,251 +28,133 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -65,13 +65,8 @@
 -              <i class="fa fa-mobile-phone preview-icon"></i>
 -              <span class="js-preview-action-show hide">{% trans "Show App Preview" %}</span>
 -              <span class="js-preview-action-hide hide">{% trans "Hide App Preview" %}</span>
-+      <div class="appnav-advanced-label">
-+          <a href='#' id="rollout-revert" data-slug="app_manager_v2" data-redirect="{% url "view_app" domain app.id %}">
-+            {% trans "Turn Off New App Builder" %}
-           </a>
+-          </a>
 -        </li>
-+      </div>
-+
 +      {% if app.get_doc_type == 'Application' %}
 +        {% if not app.is_remote_app and app.langs|length > 1%}
 +            <div id="langs" class="appnav-language-select">
@@ -103,6 +98,22 @@
 -                {% trans "Multimedia" %}
 -            </a>
 -        </li>
++
++      <div class="appnav-toggle-label">
++          <div class="btn-group pull-right">
++            <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
++            <button type="button"
++                    class="btn btn-xs btn-default"
++                    id="rollout-revert"
++                    data-slug="app_manager_v2"
++                    data-redirect="{% url "view_app" domain app.id %}"
++            >{% trans "Off" %}</button>
++          </div>
++          {% trans "New App Builder" %}
++          <span class="hq-help-template"
++                data-title="New App Builder"
++                data-content="{% trans "Turn off new app builder for now." %}"></span>
++      </div>
 +
 +        {% if app.advanced_app_builder %}
 +          <div class="appnav-advanced-label">

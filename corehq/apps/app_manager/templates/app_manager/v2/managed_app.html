@@ -50,12 +50,6 @@
           </h2>
       </div>
 
-      <div class="appnav-advanced-label">
-          <a href='#' id="rollout-revert" data-slug="app_manager_v2" data-redirect="{% url "view_app" domain app.id %}">
-            {% trans "Turn Off New App Builder" %}
-          </a>
-      </div>
-
       {% if app.get_doc_type == 'Application' %}
         {% if not app.is_remote_app and app.langs|length > 1%}
             <div id="langs" class="appnav-language-select">
@@ -71,6 +65,22 @@
                 </select>
           </div>
         {% endif %}
+
+      <div class="appnav-toggle-label">
+          <div class="btn-group pull-right">
+            <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
+            <button type="button"
+                    class="btn btn-xs btn-default"
+                    id="rollout-revert"
+                    data-slug="app_manager_v2"
+                    data-redirect="{% url "view_app" domain app.id %}"
+            >{% trans "Off" %}</button>
+          </div>
+          {% trans "New App Builder" %}
+          <span class="hq-help-template"
+                data-title="New App Builder"
+                data-content="{% trans "Turn off new app builder for now." %}"></span>
+      </div>
 
         {% if app.advanced_app_builder %}
           <div class="appnav-advanced-label">
