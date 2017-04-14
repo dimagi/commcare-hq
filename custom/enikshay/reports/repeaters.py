@@ -10,7 +10,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from custom.enikshay.case_utils import get_person_case
 from custom.enikshay.integrations.ninetyninedots.repeaters import Base99DOTSRepeater
 from custom.enikshay.integrations.nikshay.repeaters import BaseNikshayRepeater
-from custom.enikshay.exceptions import ENikshayCaseNotFound
+from custom.enikshay.exceptions import ENikshayException
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.reports.filters.select import RepeatRecordStateFilter
 
@@ -54,7 +54,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     def _make_row(self, record):
         try:
             payload = record.get_payload(save_failure=False)
-        except ENikshayCaseNotFound as error:
+        except ENikshayException as error:
             payload = "Error: {}".format(error)
         row = [
             self._get_state(record)[1],
@@ -73,5 +73,5 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
                 url=reverse('case_details', args=[self.domain, person_id]),
                 case_id=person_id
             )
-        except ENikshayCaseNotFound as error:
+        except ENikshayException as error:
             return u"Error: {}".format(error)
