@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import json
 from mock import patch
 from collections import namedtuple
@@ -172,7 +174,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['regBy'], "tbu-dmdmo01")
 
         # From Person
-        self.assertEqual(payload['pname'], "Peregrine Took")
+        self.assertEqual(payload['pname'], u"Peregrine เՇร ค Շгคק")
         self.assertEqual(payload['page'], '20')
         self.assertEqual(payload['pgender'], 'M')
         self.assertEqual(payload['paddress'], 'Mr. Everest')
