@@ -1724,7 +1724,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_sql_location(self, domain):
         return self.sql_location
 
-    def set_location(self, location):
+    def set_location(self, location, commit=True):
         """
         Set the primary location, and all important user data, for
         the user.
@@ -1762,7 +1762,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.get_domain_membership(self.domain).assigned_location_ids.append(self.location_id)
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
         self.get_sql_location.reset_cache(self)
-        self.save()
+        if commit:
+            self.save()
 
     def unset_location(self, fall_back_to_next=False):
         """
