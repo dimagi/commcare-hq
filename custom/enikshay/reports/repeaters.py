@@ -41,6 +41,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     @property
     def headers(self):
         columns = [
+            DataTablesColumn(_('Record ID')),
             DataTablesColumn(_('Status')),
             DataTablesColumn(_('Person Case')),
             DataTablesColumn(_('URL')),
@@ -57,6 +58,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
         except ENikshayException as error:
             payload = u"Error: {}".format(error)
         row = [
+            record._id,
             self._get_state(record)[1],
             self._get_person_id_link(record),
             record.url if record.url else _(u'Unable to generate url for record'),
