@@ -3,11 +3,19 @@
     To use, include this file on a page that also includes hqwebapp/rollout_modal.html
 */
 hqDefine("hqwebapp/js/rollout_modal.js", function() {
+    function snooze(slug) {
+        $.cookie(cookieName(slug), true, { expires: 3, path: '/' });
+        window.analytics.usage("Soft Rollout", "snooze", slug);
+    }
+
+    function cookieName(slug) {
+        return "snooze_" + slug;
+    }
+
     $(function() {
         var $modal = $(".rollout-modal"),
-            slug = $modal.data("slug"),
-            cookie_name = "snooze_" + slug;
-        if ($modal.length && !$.cookie(cookie_name)) {
+            slug = $modal.data("slug");
+        if ($modal.length && !$.cookie(cookieName(slug))) {
             $modal.modal({
                 backdrop: 'static',
                 keyboard: false,
@@ -31,9 +39,8 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
                 window.analytics.usage("Soft Rollout", "enable", slug);
             });
             $modal.on('click', '.flag-snooze', function() {
-                $.cookie(cookie_name, true, { expires: 3, path: '/' });
                 $modal.modal('hide');
-                window.analytics.usage("Soft Rollout", "snooze", slug);
+                snooze(slug);
             });
         }
 
@@ -46,6 +53,7 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
                     on_or_off: "off",
                 },
                 success: function(data) {
+                    snooze(slug);
                     if (redirect) {
                         window.location = redirect;
                     } else {
