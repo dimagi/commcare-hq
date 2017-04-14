@@ -29,6 +29,8 @@ from corehq.apps.export.models import (
     CaseInferredSchema,
     ExportGroupSchema,
     ExportItem,
+    GeopointItem,
+    ScalarItem,
     LabelItem,
     PARENT_CASE_TABLE,
 )
@@ -1156,7 +1158,7 @@ class TestOrderingOfSchemas(SimpleTestCase):
             if not items:
                 break
 
-            self.assertEqual(item.path, items.pop(0).path)
+            self.assertEqual(item, items.pop(0))
 
     def test_basic_ordering(self):
         schema = self._create_schema([
@@ -1237,5 +1239,35 @@ class TestOrderingOfSchemas(SimpleTestCase):
                 ExportItem(path=[PathNode(name='one')]),
                 ExportItem(path=[PathNode(name='two')]),
                 ExportItem(path=[PathNode(name='three')]),
+            ],
+        )
+
+    def test_different_doc_types_ordering(self):
+        schema = self._create_schema([
+            GeopointItem(path=[PathNode(name='one')]),
+            ScalarItem(path=[PathNode(name='two')]),
+            ScalarItem(path=[PathNode(name='three')]),
+            ScalarItem(path=[PathNode(name='one')]),
+        ])
+
+        ordered_schema = self._create_schema([
+            ScalarItem(path=[PathNode(name='two')]),
+            ScalarItem(path=[PathNode(name='one')]),
+            ScalarItem(path=[PathNode(name='three')]),
+            GeopointItem(path=[PathNode(name='one')]),
+        ])
+
+        schema = CaseExportDataSchema._reorder_schema_from_schema(
+            schema,
+            ordered_schema,
+        )
+        self._assert_item_order(
+            schema,
+            [],
+            [
+                ScalarItem(path=[PathNode(name='two')]),
+                ScalarItem(path=[PathNode(name='one')]),
+                ScalarItem(path=[PathNode(name='three')]),
+                GeopointItem(path=[PathNode(name='one')]),
             ],
         )
