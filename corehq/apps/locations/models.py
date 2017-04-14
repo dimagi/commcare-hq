@@ -139,6 +139,7 @@ class LocationType(models.Model):
     def __init__(self, *args, **kwargs):
         super(LocationType, self).__init__(*args, **kwargs)
         self._administrative_old = self.administrative
+        self._has_user_old = self.has_user
 
     @property
     def expand_from(self):
@@ -171,6 +172,8 @@ class LocationType(models.Model):
         self.overstock_threshold = config.overstock_threshold
 
     def save(self, *args, **kwargs):
+        from .tasks import update_location_users
+
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
@@ -186,6 +189,8 @@ class LocationType(models.Model):
 
         if is_not_first_save:
             self.sync_administrative_status()
+            if self._has_user_old != self.has_user:
+                update_location_users.delay(self)
 
         return saved
 
