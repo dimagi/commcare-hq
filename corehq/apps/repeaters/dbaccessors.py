@@ -106,7 +106,6 @@ def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, chunk_si
     }
     kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
 
-
     for doc in paginate_view(
             RepeatRecord.get_db(),
             'receiverwrapper/repeat_records',

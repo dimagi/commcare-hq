@@ -70,8 +70,8 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
         try:
             person_id = get_person_case(self.domain, record.payload_id)
             return '<a href="{url}" target="_blank">{case_id}</a>'.format(
-                    url=reverse('case_details', args=[self.domain, person_id]),
-                    case_id=person_id
-                )
+                url=reverse('case_details', args=[self.domain, person_id]),
+                case_id=person_id
+            )
         except ENikshayCaseNotFound as error:
             return u"Error: {}".format(error)
