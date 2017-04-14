@@ -10,7 +10,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from custom.enikshay.case_utils import get_person_case
 from custom.enikshay.integrations.ninetyninedots.repeaters import Base99DOTSRepeater
 from custom.enikshay.integrations.nikshay.repeaters import BaseNikshayRepeater
-from custom.enikshay.exceptions import ENikshayCaseNotFound
+from custom.enikshay.exceptions import ENikshayException
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.reports.filters.select import RepeatRecordStateFilter
 
@@ -41,6 +41,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     @property
     def headers(self):
         columns = [
+            DataTablesColumn(_('Record ID')),
             DataTablesColumn(_('Status')),
             DataTablesColumn(_('Person Case')),
             DataTablesColumn(_('URL')),
@@ -54,9 +55,10 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     def _make_row(self, record):
         try:
             payload = record.get_payload(save_failure=False)
-        except ENikshayCaseNotFound as error:
-            payload = "Error: {}".format(error)
+        except ENikshayException as error:
+            payload = u"Error: {}".format(error)
         row = [
+            record._id,
             self._get_state(record)[1],
             self._get_person_id_link(record),
             record.url if record.url else _(u'Unable to generate url for record'),
@@ -73,5 +75,5 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
                 url=reverse('case_details', args=[self.domain, person_id]),
                 case_id=person_id
             )
-        except ENikshayCaseNotFound as error:
+        except ENikshayException as error:
             return u"Error: {}".format(error)
