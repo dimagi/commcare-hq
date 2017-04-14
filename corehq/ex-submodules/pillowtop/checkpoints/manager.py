@@ -152,10 +152,17 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
 
 def get_kafka_checkpoints(checkpoint_id, topic_partitions):
     checkpoints = KafkaCheckpoint.objects.filter(checkpoint_id=checkpoint_id)
+
+    def _check(checkpoint):
+        if isinstance(topic_partitions[0], tuple):
+            return (checkpoint.topic, checkpoint.partition) in topic_partitions
+        else:
+            return checkpoint.topic in topic_partitions
+
     checkpoints = [
         checkpoint
         for checkpoint in checkpoints
-        if (checkpoint.topic, checkpoint.partition) in topic_partitions
+        if _check(checkpoint)
     ]
     return checkpoints
 
@@ -209,6 +216,6 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
         return False
 
 
-def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info):
+def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics):
     checkpoint_id = u'{}-{}'.format(pillow_id, index_info.index)
-    return PillowCheckpoint(checkpoint_id, 'json')  # all ES pillows use json checkpoints
+    return KafkaPillowCheckpoint(checkpoint_id, topics)
