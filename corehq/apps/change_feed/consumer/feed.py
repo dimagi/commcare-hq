@@ -10,10 +10,22 @@ from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.change_feed.topics import get_multi_topic_offset, validate_offsets
 from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
-from pillowtop.models import kafka_seq_to_str
+from pillowtop.models import kafka_seq_to_str, KafkaCheckpoint
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 
 MIN_TIMEOUT = 100
+
+
+def normalize_topics(topics, group_id):
+    if isinstance(topics[0], tuple):
+        return topics
+
+    return list(
+        KafkaCheckpoint.objects
+        .filter(checkpoint_id=group_id, topic__in=topics)
+        .values_list('topic', 'partition')
+        .order_by('topic', 'partition')
+    )
 
 
 class KafkaChangeFeed(ChangeFeed):
@@ -28,7 +40,7 @@ class KafkaChangeFeed(ChangeFeed):
 
         See http://kafka.apache.org/documentation.html#introduction for a description of what these are.
         """
-        self._topics = topics
+        self._topics = normalize_topics(topics, group_id)
         self._group_id = group_id
         self._processed_topic_offsets = {}
         self.strict = strict
