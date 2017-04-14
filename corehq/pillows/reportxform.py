@@ -1,7 +1,7 @@
 from django.conf import settings
 
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.elastic import get_es_new
 from corehq.pillows.base import convert_property_dict
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
@@ -50,7 +50,7 @@ def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsear
         checkpoint=checkpoint,
         change_feed=kafka_change_feed,
         processor=form_processor,
-        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+        change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
         ),
     )

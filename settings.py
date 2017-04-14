@@ -335,6 +335,7 @@ HQ_APPS = (
     'corehq.blobs',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
+    'corehq.apps.motech',
 
     # custom reports
     'a5288',
@@ -900,6 +901,8 @@ SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
 SENTRY_API_KEY = None
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
+from env_settings import *
 
 try:
     # try to see if there's an environmental variable set for local_settings

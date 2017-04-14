@@ -950,18 +950,11 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-VELLUM_ALPHA = StaticToggle(
-    'vellum_alpha',
-    'Use alpha (pre-beta) Vellum',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN]
-)
-
 APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_USER]
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1093,6 +1086,14 @@ LOGIN_AS_ALWAYS_OFF = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+BLOBDB_RESTORE = PredictablyRandomToggle(
+    'blobdb_restore',
+    "Blobdb restore",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    randomness=0,
+)
+
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
     'highlight_feature_flags',
     'Highlight / Mark Feature Flags in the UI',
@@ -1110,6 +1111,13 @@ DASHBOARD_GRAPHS = StaticToggle(
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
     'publish_custom_reports',
     "Publish custom reports (No needed Authorization)",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+MOTECH = StaticToggle(
+    'motech',
+    "Show Motech tab",
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
