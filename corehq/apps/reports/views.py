@@ -1228,6 +1228,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
     return render_full_report_notification(request, content)
 
 
+@location_safe
 class CaseDetailsView(BaseProjectReportSectionView):
     urlname = 'case_details'
     template_name = "reports/reportdata/case_details.html"
