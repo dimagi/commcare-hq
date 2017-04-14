@@ -348,28 +348,32 @@ class LocationFormSet(object):
             location=self.location,
             forms={self.location_form.__class__.__name__: self.location_form},
         )
-        clean_commcare_user.send(
-            'MobileWorkerListView.create_mobile_worker',
-            domain=self.domain,
-            request_user=self.request_user,
-            user=self.user,
-            forms={
-                self.user_form.__class__.__name__: self.user_form,
-                self.custom_user_data.__class__.__name__: self.custom_user_data,
-            }
-        )
+        if self.include_user_forms:
+            clean_commcare_user.send(
+                'MobileWorkerListView.create_mobile_worker',
+                domain=self.domain,
+                request_user=self.request_user,
+                user=self.user,
+                forms={
+                    self.user_form.__class__.__name__: self.user_form,
+                    self.custom_user_data.__class__.__name__: self.custom_user_data,
+                }
+            )
 
     def save(self):
         if not self.is_valid():
             raise ValueError('Form is not valid')
 
-        self.user.save()
-        self.location_form.location.user_id = self.user._id
-        location_data = self.custom_location_data.get_data_to_save()
-        location = self.location_form.save(metadata=location_data)
-
-        self.user.user_location_id = location.location_id
-        self.user.set_location(location)
+        if self.include_user_forms:
+            self.user.save()
+            self.location_form.location.user_id = self.user._id
+            location_data = self.custom_location_data.get_data_to_save()
+            location = self.location_form.save(metadata=location_data)
+            self.user.user_location_id = location.location_id
+            self.user.set_location(location)
+        else:
+            location_data = self.custom_location_data.get_data_to_save()
+            location = self.location_form.save(metadata=location_data)
 
     @property
     @memoized
