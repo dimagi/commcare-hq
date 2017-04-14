@@ -82,7 +82,9 @@ from corehq.apps.app_manager.models import (
     load_case_reserved_words,
     WORKFLOW_FORM,
     CustomInstance,
-    CaseReferences)
+    CaseReferences,
+    AdvancedModule,
+)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
@@ -379,9 +381,18 @@ def new_form(request, domain, app_id, module_id):
     app = get_app(domain, app_id)
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
-    form = app.new_form(module_id, name, lang)
+    form_type = request.POST.get('form_type', 'form')
+    if form_type == "shadow":
+        app = get_app(domain, app_id)
+        module = app.get_module(module_id)
+        if module.module_type == "advanced":
+            form = app.new_shadow_form(module_id, name, lang)
+        else:
+            raise Exception("Shadow forms may only be created under shadow modules")
+    else:
+        form = app.new_form(module_id, name, lang)
 
-    if toggles.APP_MANAGER_V2.enabled(request.user.username):
+    if toggles.APP_MANAGER_V2.enabled(request.user.username) and form_type != "shadow":
         case_action = request.POST.get('case_action', 'none')
         if case_action == 'update':
             form.requires = 'case'
