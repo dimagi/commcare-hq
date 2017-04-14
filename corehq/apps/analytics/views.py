@@ -25,13 +25,13 @@ class GreenhouseCandidateView(View):
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
-        super(GreenhouseCandidateView, self).dispatch(request=request, args=args, kwargs=kwargs)
+        return super(GreenhouseCandidateView, self).dispatch(request=request, args=args, kwargs=kwargs)
 
     def post(self, request, *args, **kwargs):
         digester = hmac.new(settings.GREENHOUSE_API_KEY, request.body, hashlib.sha256)
         calculated_signature = digester.hexdigest()
 
-        if str(calculated_signature) == str(request.headers.get('HTTP_SIGNATURE', '')):
+        if str(calculated_signature) == str(request.META.get('HTTP_SIGNATURE', '')):
             body_unicode = request.body.decode('utf-8')
             data = json.loads(body_unicode)
             try:
