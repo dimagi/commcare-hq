@@ -308,7 +308,6 @@ class LocationFormSet(object):
     """Ties together the forms for location, location data, user, and user data."""
 
     def __init__(self, location, request_user, is_new, bound_data=None, *args, **kwargs):
-        from .views import LocationFieldsView
         self.location = location
         self.domain = location.domain
         self.is_new = is_new

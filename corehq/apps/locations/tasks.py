@@ -83,7 +83,7 @@ def _get_unique_username(domain, base, suffix=0, tries_left=3):
     username = format_username(with_suffix, domain)
     if not CommCareUser.username_exists(username):
         return username
-    return _get_unique_username(domain, base, suffix+1, tries_left-1)
+    return _get_unique_username(domain, base, suffix + 1, tries_left - 1)
 
 
 def _make_location_user(location):
