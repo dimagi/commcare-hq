@@ -94,8 +94,8 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=No
         'site_choice': 'pleural_effusion',
         'treatment_supporter_designation': 'ngo_volunteer',
         TREATMENT_START_DATE: "2015-03-03",
-        TREATMENT_SUPPORTER_FIRST_NAME: "Gandalf",
-        TREATMENT_SUPPORTER_LAST_NAME: "The Grey",
+        TREATMENT_SUPPORTER_FIRST_NAME: u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣",
+        TREATMENT_SUPPORTER_LAST_NAME: u"𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
     }
     update.update(extra_update)
 

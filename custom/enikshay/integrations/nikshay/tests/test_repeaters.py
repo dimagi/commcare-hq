@@ -188,7 +188,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['sitedetail'], 2)
         self.assertEqual(payload['Ptype'], '6')
         self.assertEqual(payload['poccupation'], 4)
-        self.assertEqual(payload['dotname'], 'Gandalf The Grey')
+        self.assertEqual(payload['dotname'], u'𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶')
         self.assertEqual(payload['dotmob'], '066000666')
         self.assertEqual(payload['disease_classification'], 'EP')
         self.assertEqual(payload['pregdate'], '2014-09-09')
@@ -579,7 +579,7 @@ class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload['PatientID'], self.person_id)
         self.assertEqual(payload['regBy'], "tbu-dmdmo01")
         self.assertEqual(payload['OutcomeDate'], "1990-01-01")
-        self.assertEqual(payload['MO'], "Gandalf The Grey")
+        self.assertEqual(payload['MO'], u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶")
         self.assertEqual(payload['MORemark'], 'None Collected in eNikshay')
         self.assertEqual(payload['Outcome'], '2')
 
