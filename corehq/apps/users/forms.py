@@ -91,7 +91,7 @@ def wrapped_language_validation(value):
                                     "enter a valid two or three digit code." % value)
 
 
-def _generate_strong_password():
+def generate_strong_password():
     import string
     import random
     possible = string.punctuation + string.ascii_lowercase + string.ascii_uppercase + string.digits
@@ -400,7 +400,7 @@ class SetUserPasswordForm(SetPasswordForm):
                  ugettext_lazy("This password is automatically generated. Please copy it or create your own. It will not be shown again."),
                  '<br /><span data-bind="text: passwordHelp, css: color">'
             ))
-            initial_password = _generate_strong_password()
+            initial_password = generate_strong_password()
 
         self.helper = FormHelper()
 
