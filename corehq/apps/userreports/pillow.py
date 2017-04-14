@@ -298,9 +298,13 @@ def _get_topic_partitions(pillow_id, topics, num_processes):
     ]
 
 
-def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
-                         include_ucrs=None, exclude_ucrs=None, topics=None,
-                         num_processes=1, process_num=1, params=None):
+def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', params=None):
+    ucr_division = params.get('ucr_division')
+    include_ucrs = params.get('include_ucrs')
+    exclude_ucrs = params.get('exclude_ucrs')
+    topics = params.get('topics')
+    num_processes = params.get('num_processes')
+    process_num = params.get('process_num')
     topics = topics or KAFKA_TOPICS
     topics = [kafka_bytestring(t) for t in topics]
     topics = _get_topic_partitions(pillow_id, topics, num_processes)[process_num]
@@ -317,9 +321,13 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
     )
 
 
-def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
-                                include_ucrs=None, exclude_ucrs=None, topics=None,
-                                num_processes=1, process_num=1, params=None):
+def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', params=None):
+    ucr_division = params.get('ucr_division')
+    include_ucrs = params.get('include_ucrs')
+    exclude_ucrs = params.get('exclude_ucrs')
+    topics = params.get('topics')
+    num_processes = params.get('num_processes')
+    process_num = params.get('process_num')
     topics = topics or KAFKA_TOPICS
     topics = [kafka_bytestring(t) for t in topics]
     topics = _get_topic_partitions(pillow_id, topics, num_processes)[process_num]

@@ -83,7 +83,7 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
         })
         if self.instance_generator:
             instance_generator_fn = _import_class_or_function(self.instance_generator)
-            return instance_generator_fn(self.name, **params)
+            return instance_generator_fn(self.name, params=params)
         else:
             return _get_pillow_instance(self.class_name)
 
