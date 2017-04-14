@@ -184,6 +184,7 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
         self.checkpoint_id = checkpoint_id
         self.sequence_format = 'json'
         self.topics = topics
+        get_or_create_kafka_checkpoints(checkpoint_id, topics)
 
     def get_or_create_wrapped(self, verify_unchanged=None):
         checkpoints = get_or_create_kafka_checkpoints(self.checkpoint_id, self.topics)
