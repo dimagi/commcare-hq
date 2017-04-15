@@ -342,6 +342,7 @@ HQ_APPS = (
     'custom.bihar',
     'custom.apps.gsid',
     'hsph',
+    'custom.apps.hsph.hsph_tasks',
     'mvp',
     'mvp_docs',
     'mvp_indicators',
