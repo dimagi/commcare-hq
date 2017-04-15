@@ -10,10 +10,9 @@ class Command(BaseCommand):
     args = '<path to xls file>'
 
     def add_arguments(self, parser):
-        parser.add_argument('sheet')
+        parser.add_argument('path_to_file')
 
-    def handle(self, sheet, *args, **options):
-        path_to_file = sheet
+    def handle(self, path_to_file, *args, **options):
         sheet = open_workbook(path_to_file).sheets()[0]
         for row in range(1, sheet.nrows):
             new_area_mapping = AreaMapping()
