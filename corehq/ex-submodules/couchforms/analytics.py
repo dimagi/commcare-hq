@@ -133,7 +133,6 @@ def get_form_analytics_metadata(domain, app_id, xmlns):
     view_results = Application.get_db().view(
         'exports_forms_by_app/view',
         key=[domain, app_id, xmlns],
-        stale=stale_ok(),
         group=True
     ).one()
     form_count = get_form_count_for_domain_app_xmlns(domain, app_id, xmlns)
