@@ -138,9 +138,9 @@ class AreaMapping(models.Model):
     pjname = models.CharField(max_length=255, null=False)
     awcid = models.BigIntegerField(null=False)
     awcname = models.CharField(max_length=255, null=False)
-    villcode = models.IntegerField(null=False)
-    Village_name = models.CharField(max_length=255, null=False)
+    village_code = models.IntegerField(null=False)
+    village_name = models.CharField(max_length=255, null=False)
 
     @classmethod
     def fetch_village_ids_for_awcid(cls, awcid):
-        return list(cls.objects.filter(awcid=awcid).values_list('villcode', flat=True).distinct().all())
+        return list(cls.objects.filter(awcid=awcid).values_list('village_code', flat=True).distinct().all())

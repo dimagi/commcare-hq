@@ -44,10 +44,10 @@ class BeneficiariesFilterForm(forms.Form):
         choices=get_choices_for('awcid', 'awcid')
     )
 
-    villcode = forms.ChoiceField(
+    village_code = forms.ChoiceField(
         label=_("Village-ID"),
         required=False,
-        choices=get_choices_for('villcode', 'Village_name')
+        choices=get_choices_for('village_code', 'village_name')
     )
 
     present_in = forms.ChoiceField(
@@ -77,7 +77,7 @@ class BeneficiariesFilterForm(forms.Form):
                 'awcid'
             ),
             crispy.Field(
-                'villcode'
+                'village_code'
             ),
             crispy.Field(
                 'present_in'

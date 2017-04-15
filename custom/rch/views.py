@@ -40,9 +40,9 @@ class BeneficariesList(TemplateView):
         #     self.mother_beneficiaries = self.mother_beneficiaries.filter(MDDS_VillageID__in=village_ids)
         #     self.child_beneficiaries = self.child_beneficiaries.filter(MDDS_VillageID__in=village_ids)
 
-        villcode = self.request.GET.get('villcode')
-        if villcode:
-            self.beneficiaries = self.beneficiaries.filter(village_id=villcode)
+        village_code = self.request.GET.get('village_code')
+        if village_code:
+            self.beneficiaries = self.beneficiaries.filter(village_id=village_code)
 
     def get_cas_records(self):
         self.beneficiaries = RCHRecord.objects.none()

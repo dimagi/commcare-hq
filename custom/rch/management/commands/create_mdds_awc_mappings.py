@@ -25,6 +25,6 @@ class Command(BaseCommand):
             new_area_mapping.pjname = sheet.cell(row, 5).value
             new_area_mapping.awcid = int(sheet.cell(row, 6).value)
             new_area_mapping.awcname = sheet.cell(row, 7).value
-            new_area_mapping.villcode = int(sheet.cell(row, 8).value)
-            new_area_mapping.Village_name = sheet.cell(row, 9).value
+            new_area_mapping.village_code = int(sheet.cell(row, 8).value)
+            new_area_mapping.village_name = sheet.cell(row, 9).value
             new_area_mapping.save()
