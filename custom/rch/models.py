@@ -38,7 +38,7 @@ class RCHRecord(models.Model):
     aadhar_num = models.BigIntegerField(null=True)
     dob = models.DateTimeField(null=True)
     rch_id = models.BigIntegerField(null=True)
-    doc_type = models.CharField(max_length=1, choices=[('0', 'mother'), ('1','child')], null=False)
+    doc_type = models.CharField(max_length=1, choices=[('0', 'mother'), ('1', 'child')], null=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
