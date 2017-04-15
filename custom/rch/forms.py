@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse
 from django import forms
 from django.utils.translation import ugettext_lazy as _
-
+from django.db.utils import ProgrammingError
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Layout, ButtonHolder, Submit, HTML
 from crispy_forms.helper import FormHelper
@@ -9,43 +9,45 @@ from crispy_forms.helper import FormHelper
 from custom.rch.models import AreaMapping
 
 
-def get_choices_for(field_name):
-    field_values = AreaMapping.objects.values_list(field_name, flat=True).distinct()
+def get_choices_for(value_field, field_name):
     options = set()
-    for field_value in field_values:
-        options.add((field_value, field_value))
+    try:
+        field_values = AreaMapping.objects.values_list(field_name, flat=True).distinct()
+        for field_value in field_values:
+            option_values = (
+                AreaMapping.objects.filter(**{field_name: field_value})
+                .values_list(value_field, flat=True).distinct()
+            )
+            for option_value in option_values:
+                options.add((option_value, field_value))
+    except ProgrammingError:
+        pass
     return tuple(options)
 
 
 class BeneficiariesFilterForm(forms.Form):
-    state = forms.ChoiceField(
+    stcode = forms.ChoiceField(
         label=_("State"),
         required=False,
-        choices=get_choices_for('stname')
+        choices=get_choices_for('stcode', 'stname')
     )
 
-    district = forms.ChoiceField(
+    dtcode = forms.ChoiceField(
         label=_("District"),
         required=False,
-        choices=get_choices_for('dtname')
+        choices=get_choices_for('dtcode', 'dtname')
     )
 
     awcid = forms.ChoiceField(
         label=_("AWC-ID"),
         required=False,
-        choices=get_choices_for('awcid')
+        choices=get_choices_for('awcid', 'awcid')
     )
 
-    village_id = forms.ChoiceField(
+    villcode = forms.ChoiceField(
         label=_("Village-ID"),
         required=False,
-        choices=get_choices_for('villcode')
-    )
-
-    village_name = forms.ChoiceField(
-        label=_("Village Name"),
-        required=False,
-        choices=get_choices_for('Village_name')
+        choices=get_choices_for('villcode', 'Village_name')
     )
 
     present_in = forms.ChoiceField(
@@ -66,19 +68,16 @@ class BeneficiariesFilterForm(forms.Form):
         self.helper.form_method = 'GET'
         self.helper.layout = Layout(
             crispy.Field(
-                'state',
+                'stcode',
             ),
             crispy.Field(
-                'district'
+                'dtcode'
             ),
             crispy.Field(
                 'awcid'
             ),
             crispy.Field(
-                'village_id'
-            ),
-            crispy.Field(
-                'village_name'
+                'villcode'
             ),
             crispy.Field(
                 'present_in'
