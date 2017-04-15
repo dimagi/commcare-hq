@@ -1322,7 +1322,7 @@ COUCHDB_APPS = [
     'grapevine',
     'uth',
     'openclinica',
-
+    'rch',
     # custom reports
     'gsid',
     'hsph',
