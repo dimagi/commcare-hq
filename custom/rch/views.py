@@ -55,11 +55,10 @@ class BeneficariesList(TemplateView):
         beneficiaries_in = self.request.GET.get('present_in')
         if beneficiaries_in == 'cas':
             self.get_cas_records()
-        elif beneficiaries_in == 'rch':
-            self.get_rch_records()
-        if beneficiaries_in == 'both':
+        elif beneficiaries_in == 'both':
             self.beneficiaries = RCHRecord.objects.exclude(cas_case_id__isnull=True)
-
+        else:
+            self.get_rch_records()
         context['beneficiaries_total'] = self.beneficiaries.count()
         context['beneficiaries'] = self.beneficiaries.order_by()[:20]
         return context
