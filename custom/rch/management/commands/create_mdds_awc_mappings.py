@@ -9,8 +9,11 @@ class Command(BaseCommand):
     help = "Create MDDS_AWC table from xls sheet"
     args = '<path to xls file>'
 
-    def handle(self, *args, **options):
-        path_to_file = args[0]
+    def add_arguments(self, parser):
+        parser.add_argument('sheet')
+
+    def handle(self, sheet, *args, **options):
+        path_to_file = sheet
         sheet = open_workbook(path_to_file).sheets()[0]
         for row in range(1, sheet.nrows):
             new_area_mapping = AreaMapping()
