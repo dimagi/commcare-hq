@@ -432,7 +432,7 @@ class NewLocationImporter(object):
 
         with transaction.atomic():
             type_objects = save_types(type_stubs, self.excel_importer)
-            save_locations(location_stubs, type_objects, self.excel_importer)
+            save_locations(location_stubs, type_objects, self.domain, self.excel_importer)
             # Since we updated LocationType objects in bulk, some of the post-save logic
             #   that occurs inside LocationType.save needs to be explicitly called here
             for lt in type_stubs:
@@ -847,7 +847,7 @@ def save_types(type_stubs, excel_importer=None):
     return all_objs_by_code
 
 
-def save_locations(location_stubs, types_by_code, excel_importer=None):
+def save_locations(location_stubs, types_by_code, domain, excel_importer=None):
     """
     :param location_stubs: (list) List of LocationStub objects with
         attributes like 'db_object', 'needs_save', 'do_delete' set
@@ -857,7 +857,7 @@ def save_locations(location_stubs, types_by_code, excel_importer=None):
     This recursively saves tree top to bottom. Note that the bulk updates are not possible
     as the mptt.Model (inherited by SQLLocation) doesn't support bulk creation
     """
-    domain = types_by_code[types_by_code.keys()[0]].domain
+
     def order_by_location_type():
         # todo - without refetching
         location_stubs_by_type = defaultdict(list)
@@ -865,7 +865,7 @@ def save_locations(location_stubs, types_by_code, excel_importer=None):
             location_stubs_by_type[l.location_type].append(l)
 
         top_to_bottom_locations = []
-        ordered_types = Domain.get_by_name(domain).location_types
+        ordered_types = LocationType.objects.by_domain(domain)
         for _type in ordered_types:
             top_to_bottom_locations += location_stubs_by_type[_type.code]
 
@@ -874,7 +874,7 @@ def save_locations(location_stubs, types_by_code, excel_importer=None):
     to_be_deleted = []
 
     top_to_bottom_locations = order_by_location_type()
-    for loc in reversed(top_to_bottom_locations):
+    for loc in top_to_bottom_locations:
         if excel_importer:
             excel_importer.add_progress()
         if loc.do_delete:
@@ -883,7 +883,7 @@ def save_locations(location_stubs, types_by_code, excel_importer=None):
         elif loc.needs_save:
             loc_object = loc.db_object
             loc_object.location_type = types_by_code.get(loc.location_type)
-            if loc.parent_code and loc.parent_type is not ROOT_LOCATION_TYPE:
+            if loc.parent_code and loc.parent_code is not ROOT_LOCATION_TYPE:
                 # refetch parent_location object so that mptt related fields are updated consistently,
                 #   since we are saving top to bottom, parent_location would not have any pending
                 #   saves, so this is the right point to refetch the object.
@@ -892,7 +892,6 @@ def save_locations(location_stubs, types_by_code, excel_importer=None):
                     site_code__iexact=loc.parent_code
                 )
             else:
-                print loc_object, "kiji"
                 loc_object.parent = None
             loc.db_object.save()
 
