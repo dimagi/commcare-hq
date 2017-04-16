@@ -346,18 +346,6 @@ class LocationExcelValidator(object):
                 extra=", ".join(actual - expected),
             ))
 
-        # all listed types should have a corresponding locations sheet
-        type_stubs = self._get_types(type_sheet_reader)
-        expected_sheet_names = [lt.code for lt in type_stubs] + ['types']
-        actual_sheet_names = sheets_by_title.keys()
-        missing_sheet_names = set(expected_sheet_names) - set(actual_sheet_names)
-        if missing_sheet_names:
-            raise LocationExcelSheetError(
-                _(u"Location sheets do not exist for the location types '{}' - "
-                  "All types listed in 'types' sheet should have a location sheet")
-                .format(", ".join(missing_sheet_names))
-            )
-
         # all locations sheets should have correct headers
         location_stubs = []
         optional_headers = [LOCATION_SHEET_HEADERS['custom_data'], LOCATION_SHEET_HEADERS['uncategorized_data']]
