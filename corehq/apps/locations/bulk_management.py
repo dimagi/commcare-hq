@@ -706,8 +706,8 @@ class LocationTreeValidator(object):
                     # check old_collection if it's not listed in current excel
                     parent = self.old_collection.locations_by_site_code.get(location.parent_code)
                     if not parent:
-                        return _(u"Location '{}' does not have a parent set or its parent is being deleted").format(
-                            location.site_code)
+                        return _(u"Location '{}' does not have a parent set or its parent "
+                                 "is being deleted").format(location.site_code)
                     else:
                         actual_parent_type = parent.location_type.code
                 else:
