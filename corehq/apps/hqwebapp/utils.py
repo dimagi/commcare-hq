@@ -1,6 +1,7 @@
 import logging
 import re
 import base64
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -11,11 +12,13 @@ from django.templatetags.i18n import language_name
 
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.forms import BulkUploadForm
+from corehq.apps.hqwebapp.models import HashedPasswordLoginAttempt
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 
 
 logger = logging.getLogger(__name__)
+HASHED_PASSWORD_EXPIRY = 30
 
 
 @memoized
@@ -127,7 +130,24 @@ def extract_password(password):
         return password
 
 
-def decode_password(password):
+# an attempt to decode a password should be done just once in a request for the login attempt
+# check to work correctly, plus there should be no need to decode a password multiple times in
+# the same request. So memoized since it can get called multiple times in the same request
+@memoized
+def decode_password(password, username=None):
     if settings.ENABLE_PASSWORD_HASHING:
+        if username:
+            # To avoid replay attack where the same hash used for login is used on attack
+            if HashedPasswordLoginAttempt.objects.filter(
+                username=username,
+                password_hash=password,
+                used_at__gte=(datetime.today() - timedelta(HASHED_PASSWORD_EXPIRY))
+            ).exists():
+                return ''
+            else:
+                HashedPasswordLoginAttempt.objects.create(
+                    username=username,
+                    password_hash=password
+                )
         return extract_password(password)
     return password
