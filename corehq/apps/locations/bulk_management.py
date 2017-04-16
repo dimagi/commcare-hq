@@ -477,7 +477,7 @@ class LocationTreeValidator(object):
             loc.autoset_location_id_or_site_code(self.old_collection)
 
         self.types_by_code = {lt.code: lt for lt in self.location_types}
-        self.locations_by_code = {l.site_code: l for l in self.locations}
+        self.locations_by_code = {l.site_code: l for l in self.all_listed_locations}
 
     @property
     def warnings(self):
@@ -560,17 +560,22 @@ class LocationTreeValidator(object):
         if not self.old_collection:
             return []
 
+        # Todo: performance issue for large orgs
         old_locs_by_parent = self.old_collection.locations_by_parent_code
 
-        required_locations = []
-        for l in self.locations_to_be_deleted:
-            required_locations.append((old_locs_by_parent[l.parent_code], l))
-        print required_locations, 'loiou'
+        missing_locs = []
+        listed_sites = {l.site_code for l in self.all_listed_locations}
+        for loc in self.locations_to_be_deleted:
+            required_locs = old_locs_by_parent[loc.site_code]
+            missing = set([l.site_code for l in required_locs]) - listed_sites
+            if missing:
+                missing_locs.append((missing, loc))
+
         return [
-            _(u"Location in sheet '{type}' at index {index} is being deleted, so all its "
+            _(u"Location '{code}' in sheet '{type}' at index {index} is being deleted, so all its "
               "child locations must be present in the upload, but child locations '{locs}' are missing")
-            .format(type=l.location_type, index=l.index, locs=', '.join([o.site_code for o in old_locs]))
-            for (old_locs, parent) in required_locations
+            .format(code=parent.site_code, type=parent.location_type, index=parent.index, locs=', '.join(old_locs))
+            for (old_locs, parent) in missing_locs
         ]
 
     @memoized
@@ -621,19 +626,6 @@ class LocationTreeValidator(object):
             _(u"Location type code '{}' is not listed in the excel. All types should be listed")
             .format(code)
             for code in unlisted_codes
-        ]
-
-    @memoized
-    def _check_unlisted_location_ids(self):
-        # count locations not listed in excel but are present in the domain now
-        old = self.old_collection.locations_by_id
-        listed = [l.location_id for l in self.all_listed_locations]
-        unlisted = set(old.keys()) - set(listed)
-
-        return [
-            _(u"Location '{name} (id {id})' is not listed in the excel. All locations should be listed")
-            .format(name=old[location_id].name, id=location_id)
-            for location_id in unlisted
         ]
 
     @memoized
@@ -707,25 +699,37 @@ class LocationTreeValidator(object):
         def _validate_location(location):
             loc_type = self.types_by_code.get(location.location_type)
             if not loc_type:
+                # if no location_type is set
                 return (_(
                     u"Location '{}' in sheet points to a nonexistent or to be deleted location-type '{}'")
                     .format(location.site_code, location.location_type))
 
-            parent = self.locations_by_code.get(location.parent_code)
             if loc_type.parent_code == ROOT_LOCATION_TYPE:
-                if parent:
+                # if top location then it shouldn't have a parent
+                if location.parent_code != ROOT_LOCATION_TYPE:
                     return _(u"Location '{}' is a '{}' and should not have a parent").format(
                         location.site_code, location.location_type)
                 else:
                     return
             else:
+                # if not top location, its actual parent location type should match what it is set in excel
+                parent = self.locations_by_code.get(location.parent_code)
                 if not parent:
-                    return _(u"Location '{}' does not have a parent set or its parent is being deleted").format(
-                        location.site_code)
-            correct_parent_type = loc_type.parent_code
-            if parent == ROOT_LOCATION_TYPE or parent.location_type != correct_parent_type:
-                return _(u"Location '{}' is a '{}', so it should have a parent that is a '{}'").format(
-                    location.site_code, location.location_type, correct_parent_type)
+                    # check old_collection if it's not listed in current excel
+                    parent = self.old_collection.locations_by_site_code.get(location.parent_code)
+                    if not parent:
+                        return _(u"Location '{}' does not have a parent set or its parent is being deleted").format(
+                            location.site_code)
+                    else:
+                        actual_parent_type = parent.location_type.code
+                else:
+                    actual_parent_type = parent.location_type
+                    if parent.do_delete and not location.do_delete:
+                        return _(u"Location points to a location that's being deleted")
+
+                if actual_parent_type != loc_type.parent_code:
+                    return _(u"Location '{}' is a '{}', so it should have a parent that is a '{}'").format(
+                        location.site_code, location.location_type, loc_type.parent_code)
 
         for location in self.locations:
             error = _validate_location(location)

@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 from django.test import SimpleTestCase, TestCase
 from mock import MagicMock
@@ -213,7 +213,8 @@ def get_validator(location_types, locations, old_collection=None):
 
 MockCollection = namedtuple(
     'MockCollection',
-    'types locations locations_by_id locations_by_site_code domain_name custom_data_validator')
+    'types locations locations_by_id locations_by_site_code domain_name '
+    'custom_data_validator locations_by_parent_code')
 
 
 def make_collection(types, locations):
@@ -221,11 +222,18 @@ def make_collection(types, locations):
 
     locations = [LocationStub(*loc) for loc in locations]
 
+    def locations_by_parent_code():
+        locs_by_parent = defaultdict(list)
+        for loc in locations:
+            locs_by_parent[loc.parent_code].append(loc)
+        return locs_by_parent
+
     return MockCollection(
         types=types,
         locations=locations,
         locations_by_id={l.location_id: l for l in locations},
         locations_by_site_code={l.site_code: l for l in locations},
+        locations_by_parent_code=locations_by_parent_code(),
         custom_data_validator=None,
         domain_name='location-bulk-management',
     )
@@ -335,9 +343,7 @@ class TestTreeValidator(SimpleTestCase):
         )
         old_collection = make_collection(FLAT_LOCATION_TYPES, old_locations)
         validator = get_validator(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE, old_collection)
-        missing_locations = validator._check_unlisted_location_ids()
-        self.assertEqual(len(missing_locations), 0)
-        self.assertEqual(len(validator.errors), 1)
+        self.assertEqual(len(validator.errors), 0)
 
     def test_unknown_location_ids(self):
         # all locations in the domain should be listed in given excel
@@ -988,7 +994,7 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree).union({
-            ('s3', None), ('count3', 's3')
+            ('s3', None), ('county3', 's3')
         }))
         self.assertCouchSync()
 
@@ -1010,7 +1016,7 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch({
-            ('My State 1', ''), ('State2', ''), ('My County 11', 's1'),
+            ('My State 1', None), ('S2', None), ('My County 11', 's1'),
             ('County21', 's2'), ('City111', 'county11'), ('City112', 'county11'),
             ('City211', 'county21'),
         }, check_attr='name')
@@ -1022,8 +1028,8 @@ class TestBulkManagement(TestCase):
         self.create_locations(self.basic_tree, lt_by_code)
 
         change_names = [
-            ('My State 1', '', 'state', '', 's1', False) + extra_stub_args,
-            ('My County 11', '', 'county', 's1', 'county11', False) + extra_stub_args,
+            ('My State 1', 's1', 'state', '', '', False) + extra_stub_args,
+            ('My County 11', 'county11', 'county', 's1', '', False) + extra_stub_args,
         ]
 
         result = self.bulk_update_locations(
@@ -1033,7 +1039,7 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch({
-            ('My State 1', ''), ('State2', ''), ('My County 11', 's1'),
+            ('My State 1', None), ('S2', None), ('My County 11', 's1'),
             ('County21', 's2'), ('City111', 'county11'), ('City112', 'county11'),
             ('City211', 'county21'),
         }, check_attr='name')
@@ -1045,7 +1051,7 @@ class TestBulkManagement(TestCase):
             self.basic_tree
         )
         change_parents = [
-            ('County 21', 'c2', 'county', 's1', '', False) + extra_stub_args,
+            ('County 21', 'county21', 'county', 's1', '', False) + extra_stub_args,
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -1055,7 +1061,7 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch({
-            ('s1', ''), ('s2', ''), ('county11', 's1'),
+            ('s1', None), ('s2', None), ('county11', 's1'),
             ('county21', 's1'), ('city111', 'county11'), ('city112', 'county11'),
             ('city211', 'county21'),
         })
