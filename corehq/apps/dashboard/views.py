@@ -123,7 +123,10 @@ class DomainDashboardView(HQJSONResponseMixin, BaseDashboardView):
 
     @property
     def tile_configs(self):
-        return _get_default_tile_configurations()
+        return [
+            tile for tile in _get_default_tile_configurations()
+            if tile.visibility_check(self.request)
+        ]
 
     @property
     def slug_to_tile(self):
