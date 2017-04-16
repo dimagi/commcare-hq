@@ -857,46 +857,45 @@ def save_locations(location_stubs, types_by_code, excel_importer=None):
     This recursively saves tree top to bottom. Note that the bulk updates are not possible
     as the mptt.Model (inherited by SQLLocation) doesn't support bulk creation
     """
-    location_stubs_by_parent_code = defaultdict(list)
-    for l in location_stubs:
-        location_stubs_by_parent_code[l.parent_code].append(l)
+    domain = types_by_code[types_by_code.keys()[0]].domain
+    def order_by_location_type():
+        # todo - without refetching
+        location_stubs_by_type = defaultdict(list)
+        for l in location_stubs:
+            location_stubs_by_type[l.location_type].append(l)
+
+        top_to_bottom_locations = []
+        ordered_types = Domain.get_by_name(domain).location_types
+        for _type in ordered_types:
+            top_to_bottom_locations += location_stubs_by_type[_type.code]
+
+        return top_to_bottom_locations
 
     to_be_deleted = []
 
-    def update_children(parent_stub):
-        # recursively create/update locations top to bottom
-        if parent_stub == ROOT_LOCATION_TYPE:
-            parent_code = ROOT_LOCATION_TYPE
-            parent_location = None
-        else:
-            parent_code = parent_stub.site_code
-            parent_location = parent_stub.db_object
+    top_to_bottom_locations = order_by_location_type()
+    for loc in reversed(top_to_bottom_locations):
+        if excel_importer:
+            excel_importer.add_progress()
+        if loc.do_delete:
+            # keep track of to be deleted items to delete them in top-to-bottom order
+            to_be_deleted.append(loc.db_object)
+        elif loc.needs_save:
+            loc_object = loc.db_object
+            loc_object.location_type = types_by_code.get(loc.location_type)
+            if loc.parent_code and loc.parent_type is not ROOT_LOCATION_TYPE:
+                # refetch parent_location object so that mptt related fields are updated consistently,
+                #   since we are saving top to bottom, parent_location would not have any pending
+                #   saves, so this is the right point to refetch the object.
+                loc_object.parent = SQLLocation.objects.get(
+                    domain=domain,
+                    site_code__iexact=loc.parent_code
+                )
+            else:
+                print loc_object, "kiji"
+                loc_object.parent = None
+            loc.db_object.save()
 
-        child_stubs = location_stubs_by_parent_code[parent_code]
-
-        for child_stub in child_stubs:
-            if excel_importer:
-                excel_importer.add_progress()
-            child = child_stub.db_object
-            if child_stub.do_delete:
-                # keep track of to be deleted items to delete them in top-to-bottom order
-                to_be_deleted.append(child)
-            elif child_stub.needs_save:
-                child.location_type = types_by_code.get(child_stub.location_type)
-                if parent_location:
-                    # refetch parent_location object so that mptt related fields are updated consistently,
-                    #   since we are saving top to bottom, parent_location would not have any pending
-                    #   saves, so this is the right point to refetch the object.
-                    child.parent = SQLLocation.objects.get(
-                        domain=parent_location.domain,
-                        site_code__iexact=parent_code
-                    )
-                else:
-                    child.parent = None
-                child.save()
-            update_children(child_stub)
-
-    update_children(ROOT_LOCATION_TYPE)
     for l in reversed(to_be_deleted):
         # Deletion has to happen bottom to top, otherwise mptt complains
         #   about missing parents
