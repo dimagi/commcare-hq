@@ -1080,6 +1080,13 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+LOGIN_AS_ALWAYS_OFF = StaticToggle(
+    'always_turn_login_as_off',
+    'Always turn login as off',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 BLOBDB_RESTORE = PredictablyRandomToggle(
     'blobdb_restore',
     "Blobdb restore",

@@ -254,6 +254,9 @@ def can_use_restore_as(request):
     if request.couch_user.is_superuser:
         return True
 
+    if toggles.LOGIN_AS_ALWAYS_OFF.enabled(request.domain):
+        return False
+
     return (
         request.couch_user.can_edit_commcare_users() and
         has_privilege(request, privileges.LOGIN_AS)
