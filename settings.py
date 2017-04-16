@@ -598,6 +598,7 @@ WS4REDIS_PREFIX = 'ws'
 WSGI_APPLICATION = 'ws4redis.django_runserver.application'
 WS4REDIS_ALLOWED_CHANNELS = helper.get_allowed_websocket_channels
 
+RCH_CREDENTIALS = {}
 
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
@@ -2028,7 +2029,6 @@ if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
 
-RCH_CREDENTIALS = {}
 RCH_PERMITTED_FIELDS = {
     'mother': (json.load(open(os.path.join('custom', 'rch', 'all_fields', 'mother.json')))['fields']),
     'child': (json.load(open(os.path.join('custom', 'rch', 'all_fields', 'child.json')))['fields']),
