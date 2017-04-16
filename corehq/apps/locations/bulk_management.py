@@ -557,10 +557,10 @@ class LocationTreeValidator(object):
 
     @memoized
     def _check_required_locations_missing(self):
-        if not self.old_collection:
+        if not self.locations_to_be_deleted or not self.old_collection:
+            # skip this check if no old locations or no location to be deleted
             return []
 
-        # Todo: performance issue for large orgs
         old_locs_by_parent = self.old_collection.locations_by_parent_code
 
         missing_locs = []
