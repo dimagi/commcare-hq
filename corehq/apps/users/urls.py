@@ -32,7 +32,6 @@ from .views.mobile.groups import (
     GroupsListView,
 )
 from .views.mobile.users import (
-    archive_commcare_user,
     CommCareUserSelfRegistrationView,
     ConfirmBillingAccountForExtraUsersView,
     CreateCommCareUserModal,
@@ -45,7 +44,6 @@ from .views.mobile.users import (
     MobileWorkerListView,
     reset_demo_user_restore,
     restore_commcare_user,
-    set_commcare_user_group,
     toggle_demo_mode,
     update_user_data,
     update_user_groups,
@@ -99,9 +97,6 @@ urlpatterns = [
         name=EditCommCareUserView.urlname),
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/user_data/$', update_user_data, name='update_user_data'),
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/groups/$', update_user_groups, name='update_user_groups'),
-    url(r'^commcare/archive/(?P<user_id>[ \w-]+)/$', archive_commcare_user, name='archive_commcare_user'),
-    url(r'^commcare/unarchive/(?P<user_id>[ \w-]+)/$', archive_commcare_user,
-        name='unarchive_commcare_user', kwargs={'is_active': True}),
     url(r'^commcare/delete/(?P<user_id>[ \w-]+)/$', delete_commcare_user, name='delete_commcare_user'),
     url(r'^commcare/restore/(?P<user_id>[ \w-]+)/$', restore_commcare_user, name='restore_commcare_user'),
     url(r'^commcare/toggle_demo_mode/(?P<user_id>[ \w-]+)/$', toggle_demo_mode, name='toggle_demo_mode'),
@@ -122,7 +117,6 @@ urlpatterns = [
         name=DownloadUsersStatusView.urlname),
     url(r'^commcare/download/poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
         user_download_job_poll, name='user_download_job_poll'),
-    url(r'^commcare/set_group/$', set_commcare_user_group, name='set_commcare_user_group'),
     url(r'^commcare/new_mobile_worker_modal/$',
         CreateCommCareUserModal.as_view(),
         name=CreateCommCareUserModal.urlname),
