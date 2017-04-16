@@ -1,3 +1,4 @@
+# -*- coding: utf- 8 -*-
 import json
 
 from django.utils.translation import ugettext_noop
@@ -5,9 +6,15 @@ from django.views.generic import TemplateView
 from django.core import serializers
 from django.utils.decorators import method_decorator
 
+from corehq.apps.es import cases as case_es
+from corehq.apps.locations.dbaccessors import user_ids_at_locations
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.domain.decorators import require_superuser
 from custom.rch.forms import BeneficiariesFilterForm
 from custom.rch.models import RCHRecord
+
+ICDS_CAS_DOMAIN = "icds-cas"
+RECORDS_PER_PAGE = 200
 
 
 class BeneficariesList(TemplateView):
@@ -44,8 +51,18 @@ class BeneficariesList(TemplateView):
         if village_code:
             self.beneficiaries = self.beneficiaries.filter(village_id=village_code)
 
-    def get_cas_records(self):
-        self.beneficiaries = RCHRecord.objects.none()
+    def get_cas_records(self, owner_id=None):
+        self.beneficiaries = case_es.CaseES().domain(ICDS_CAS_DOMAIN).size(RECORDS_PER_PAGE)
+        if owner_id:
+            awc_ids = list(
+                SQLLocation.objects.filter(site_code=owner_id).values_list('location_id', flat=True)
+            )
+            user_ids = user_ids_at_locations(awc_ids)
+            # ToDo: Remove owner_id from the check, added just for demo on local machine
+            user_ids = user_ids + [owner_id]
+            if user_ids:
+                self.beneficiaries = self.beneficiaries.filter(case_es.user(user_ids))
+        return self.beneficiaries.run()
 
     def get_context_data(self, **kwargs):
         context = super(BeneficariesList, self).get_context_data(**kwargs)
@@ -54,14 +71,22 @@ class BeneficariesList(TemplateView):
 
         beneficiaries_in = self.request.GET.get('present_in')
         if beneficiaries_in == 'cas':
-            self.get_cas_records()
+            cas_records = self.get_cas_records(self.request.GET.get('awcid'))
+            context['beneficiaries'] = cas_records.hits
+            context['beneficiaries_total'] = cas_records.total
+            context['beneficiaries_count'] = len(cas_records.hits)
         elif beneficiaries_in == 'both':
             self.beneficiaries = RCHRecord.objects.exclude(cas_case_id__isnull=True)
         else:
             self.get_rch_records()
-        context['beneficiaries_total'] = self.beneficiaries.count()
-        context['beneficiaries'] = self.beneficiaries.order_by()[:20]
+            context['beneficiaries_total'] = self.beneficiaries.count()
+            context['beneficiaries'] = self.beneficiaries.order_by()[:RECORDS_PER_PAGE]
         return context
+
+    def get_template_names(self):
+        if self.request.GET.get('present_in') == 'cas':
+            return "cas/beneficiaries_list.html"
+        return self.template_name
 
 
 class BeneficiaryView(TemplateView):
