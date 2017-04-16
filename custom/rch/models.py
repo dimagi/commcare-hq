@@ -93,7 +93,7 @@ class RCHRecord(models.Model):
         self.state_id = dict_of_props['MDDS_StateID']
         self.village_id = dict_of_props['MDDS_VillageID']
         self.rch_id = dict_of_props[self.rch_id_key]
-        self.village_name = dict_of_props['Village_Name']
+        self.village_name = dict_of_props.get('Village_Name')
         self._set_custom_fields(dict_of_props)
 
     @classmethod
