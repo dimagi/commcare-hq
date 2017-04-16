@@ -16,8 +16,8 @@ STATE_DISTRICT_MAPPING = {
 }
 
 RCH_RECORD_TYPE_MAPPING = {
-    MOTHER_DATA_TYPE: 'mother',
-    CHILD_DATA_TYPE: 'child',
+    MOTHER_DATA_TYPE: '0',
+    CHILD_DATA_TYPE: '1',
 }
 
 
@@ -53,10 +53,17 @@ class RCHRecord(models.Model):
             return set()
 
     def mother_record(self):
-        return self.doc_type == "mother"
+        return self.doc_type == RCH_RECORD_TYPE_MAPPING[MOTHER_DATA_TYPE]
 
     def child_record(self):
-        return self.doc_type == "child"
+        return self.doc_type == RCH_RECORD_TYPE_MAPPING[CHILD_DATA_TYPE]
+
+    @classmethod
+    def _get_rch_id_key(cls, beneficiary_type):
+        if beneficiary_type == MOTHER_DATA_TYPE:
+            return 'Registration_no'
+        elif beneficiary_type == CHILD_DATA_TYPE:
+            return 'Child_RCH_ID_No'
 
     @property
     def rch_id_key(self):
