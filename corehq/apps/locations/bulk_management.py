@@ -859,15 +859,25 @@ def save_locations(location_stubs, types_by_code, domain, excel_importer=None):
     """
 
     def order_by_location_type():
-        # todo - without refetching
+        # returns locations in the order from top to bottom
+        types_by_parent = defaultdict(list)
+        for _type in types_by_code.values():
+            key = _type.parent_type.code if _type.parent_type else ROOT_LOCATION_TYPE
+            types_by_parent[key].append(_type)
+
         location_stubs_by_type = defaultdict(list)
         for l in location_stubs:
             location_stubs_by_type[l.location_type].append(l)
 
         top_to_bottom_locations = []
-        ordered_types = LocationType.objects.by_domain(domain)
-        for _type in ordered_types:
-            top_to_bottom_locations += location_stubs_by_type[_type.code]
+
+        def append_at_bottom(parent_type):
+            top_to_bottom_locations.extend(location_stubs_by_type[parent_type.code])
+            for child_type in types_by_parent[parent_type.code]:
+                append_at_bottom(child_type)
+
+        for top_type in types_by_parent[ROOT_LOCATION_TYPE]:
+            append_at_bottom(top_type)
 
         return top_to_bottom_locations
 
