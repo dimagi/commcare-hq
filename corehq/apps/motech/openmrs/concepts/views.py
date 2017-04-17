@@ -2,7 +2,7 @@ import json
 from django.db.models import Q
 from django.http import StreamingHttpResponse, JsonResponse
 from django.shortcuts import render
-from corehq.apps.motech.connceted_accounts import get_openmrs_requests_object, \
+from corehq.apps.motech.connected_accounts import get_openmrs_requests_object, \
     get_openmrs_account
 from corehq.apps.motech.openmrs.concepts.models import OpenmrsConcept
 from corehq.apps.motech.openmrs.concepts.sync import openmrs_concept_json_from_api_json, \

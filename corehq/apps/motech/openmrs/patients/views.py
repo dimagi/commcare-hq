@@ -1,6 +1,6 @@
 import json
 from django.http import HttpResponse
-from corehq.apps.motech.connceted_accounts import get_openmrs_requests_object
+from corehq.apps.motech.connected_accounts import get_openmrs_requests_object
 from corehq.apps.motech.openmrs.patients.patientidentifiertypes import \
     openmrs_patient_identifier_type_json_from_api_json
 from corehq.apps.motech.openmrs.restclient.listapi import OpenmrsListApi
