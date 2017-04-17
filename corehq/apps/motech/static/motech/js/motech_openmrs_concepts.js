@@ -10,7 +10,7 @@ $(function () {
                 self.concepts([]);
                 self.syncButton.inProgress(true);
                 self.syncButton.hasError(false);
-                $.get(urllib.reverse('openmrs_sync_concepts')).done(function (data) {
+                $.get(urllib.reverse('openmrs_sync_concepts')).done(function () {
                     self.refreshConcepts();
                     self.syncButton.inProgress(false);
                     self.syncButton.hasError(false);
@@ -18,7 +18,7 @@ $(function () {
                     self.syncButton.inProgress(false);
                     self.syncButton.hasError(true);
                 });
-            }
+            },
         };
         self.refreshConcepts = function () {
             $.get(urllib.reverse('all_openmrs_concepts')).done(function (data) {

@@ -1,5 +1,4 @@
 import json
-from django.db import IntegrityError
 import jsonobject
 from corehq.apps.motech.openmrs.concepts.models import OpenmrsConcept
 from corehq.apps.motech.openmrs.restclient.listapi import OpenmrsListApi
