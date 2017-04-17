@@ -11,13 +11,16 @@
         <thead>
             <tr>
                 <th>Name</th>
+                <th>Data Type</th>
                 <th>Answers</th>
             </tr>
         </thead>
-        <tbody data-bind="foreach: concepts">
+        <tbody data-bind="foreach: _.sortBy(concepts(), function (concept) {
+            return concept.datatype == 'N/A' ? '1' : '0 ' + concept.datatype
+        })">
             <tr>
-                <td data-bind="text: display">
-                </td>
+                <td data-bind="text: display"></td>
+                <td data-bind="text: datatype"></td>
                 <td>
                     <ul data-bind="foreach: answers">
                         <li data-bind="text: display">

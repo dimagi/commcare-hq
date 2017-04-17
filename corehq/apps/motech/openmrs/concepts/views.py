@@ -12,7 +12,7 @@ from corehq.apps.motech.permissions import require_motech_permissions
 def all_openmrs_concepts(request, domain):
     account = get_openmrs_account(domain)
 
-    concepts = OpenmrsConcept.objects.filter(Q(account=account) & ~Q(answers=None))
+    concepts = OpenmrsConcept.objects.filter(account=account, openmrsconcept=None)
     return JsonResponse({'concepts': [
         openmrs_concept_json_with_answers_from_concept(concept).to_json()
         for concept in concepts
