@@ -28,6 +28,10 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         username = self.cleaned_data['username'].lower()
         return username
 
+    def clean_password(self):
+        from corehq.apps.hqwebapp.utils import decode_password
+        return decode_password(self.cleaned_data['password'], self.clean_username())
+
     def clean(self):
         lockout_message = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password.'))
 
