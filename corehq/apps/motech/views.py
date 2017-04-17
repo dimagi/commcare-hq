@@ -4,7 +4,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy, ugettext as _
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.motech.connceted_accounts import get_openmrs_account
+from corehq.apps.motech.connected_accounts import get_openmrs_account
 from corehq.apps.motech.forms import OpenmrsInstanceForm
 from corehq.toggles import MOTECH
 from dimagi.utils.decorators.memoized import memoized
