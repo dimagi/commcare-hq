@@ -1,28 +1,17 @@
-from lxml import etree
-from lxml.builder import E
-
 import HTMLParser
 import json
 import socket
-from datetime import timedelta, date
-from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
+from collections import defaultdict, namedtuple, OrderedDict
+from datetime import timedelta, date
 
 import dateutil
-from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.csv import UnicodeWriter
-from dimagi.utils.dates import add_months
-from django.views.decorators.http import require_POST
+from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.models import User
 from django.contrib.auth import login
+from django.contrib.auth.models import User
 from django.core import management, cache
-from django.shortcuts import render
-from django.views.generic import FormView, TemplateView, View
-from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy
 from django.http import (
     HttpResponseRedirect,
     HttpResponse,
@@ -31,26 +20,47 @@ from django.http import (
     JsonResponse,
     StreamingHttpResponse,
 )
+from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_lazy
+from django.views.decorators.http import require_POST
+from django.views.generic import FormView, TemplateView, View
+from lxml import etree
+from lxml.builder import E
 from restkit import Resource
 from restkit.errors import Unauthorized
-from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import SYNC_XMLNS
+from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
+from corehq.apps.data_analytics.admin import MALTRowAdmin
+from corehq.apps.data_analytics.const import GIR_FIELDS
+from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.domain.auth import basicauth
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.domain.decorators import (
+    require_superuser, require_superuser_or_developer,
+    login_or_basic, domain_admin_required,
+    check_lockout)
+from corehq.apps.domain.models import Domain
+from corehq.apps.es import filters
+from corehq.apps.es.domains import DomainES
+from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
 from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
+from corehq.apps.users.util import format_username
+from corehq.elastic import parse_args_for_es, run_query, ES_META
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
     CommCareCaseSQLRawDocSerializer
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
@@ -60,39 +70,28 @@ from corehq.util.supervisord.api import (
     all_pillows_supervisor_status,
     pillow_supervisor_status
 )
-from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
-from corehq.apps.data_analytics.models import MALTRow, GIRRow
-from corehq.apps.data_analytics.const import GIR_FIELDS
-from corehq.apps.data_analytics.admin import MALTRowAdmin
-from corehq.apps.domain.decorators import (
-    require_superuser, require_superuser_or_developer,
-    login_or_basic, domain_admin_required,
-    check_lockout)
-from corehq.apps.domain.models import Domain
-from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
-from corehq.apps.users.util import format_username
-from corehq.elastic import parse_args_for_es, run_query, ES_META
 from corehq.util.timer import TimingContext
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from dimagi.utils.dates import force_to_date
-from dimagi.utils.django.management import export_as_csv_action
+from dimagi.utils.csv import UnicodeWriter
+from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.datespan import datespan_in_request
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
-
 from . import service_checks, escheck
-from .forms import AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm, ReprocessMessagingCaseUpdatesForm
+from .forms import (
+    AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm,
+    ReprocessMessagingCaseUpdatesForm
+)
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from .utils import get_celery_stats
-from corehq.apps.es.domains import DomainES
-from corehq.apps.es import filters
+
 
 @require_superuser
 def default(request):

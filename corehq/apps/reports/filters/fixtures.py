@@ -105,6 +105,7 @@ class AsyncLocationFilter(BaseReportFilter):
     slug = "location_async"
     template = "reports/filters/location_async.html"
     make_optional = False
+    auto_drill = True
 
     @property
     def api_root(self):
@@ -114,6 +115,10 @@ class AsyncLocationFilter(BaseReportFilter):
 
     def load_locations_json(self, loc_id):
         return load_locs_json(self.domain, loc_id, user=self.request.couch_user)
+
+    @property
+    def location_hierarchy_config(self):
+        return location_hierarchy_config(self.domain)
 
     @property
     def filter_context(self):
@@ -128,10 +133,11 @@ class AsyncLocationFilter(BaseReportFilter):
             'api_root': api_root,
             'control_name': self.label,  # todo: cleanup, don't follow this structure
             'control_slug': self.slug,  # todo: cleanup, don't follow this structure
+            'auto_drill': self.auto_drill,
             'loc_id': loc_id,
             'locations': self.load_locations_json(loc_id),
             'make_optional': self.make_optional,
-            'hierarchy': location_hierarchy_config(self.domain)
+            'hierarchy': self.location_hierarchy_config
         }
 
     @classmethod

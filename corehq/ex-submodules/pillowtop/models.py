@@ -1,11 +1,27 @@
 import json
 from django.db import models
-
+from kafka.common import TopicAndPartition
 
 SEQUENCE_FORMATS = (
     ('text', 'text'),
     ('json', 'json'),
 )
+
+
+def str_to_kafka_seq(seq):
+    seq = json.loads(seq)
+    # deconstruct tuple keys
+    marshaled_seq = {}
+    for key, val in seq.items():
+        topic, partition = key.split(',')
+        marshaled_seq[TopicAndPartition(topic, int(partition))] = val
+    return marshaled_seq
+
+
+def kafka_seq_to_str(seq):
+    # json doesn't like tuples as keys
+    seq = {'{},{}'.format(*key): val for key, val in seq.items()}
+    return json.dumps(seq)
 
 
 class DjangoPillowCheckpoint(models.Model):
@@ -19,7 +35,7 @@ class DjangoPillowCheckpoint(models.Model):
     @property
     def wrapped_sequence(self):
         if self.sequence_format == 'json':
-            return json.loads(self.sequence)
+            return str_to_kafka_seq(self.sequence)
         else:
             return self.sequence
 
@@ -49,3 +65,14 @@ class DjangoPillowCheckpoint(models.Model):
             sequence=checkpoint_dict['seq'],
             old_sequence=checkpoint_dict.get('old_seq', None)
         )
+
+
+class KafkaCheckpoint(models.Model):
+    checkpoint_id = models.CharField(max_length=126, db_index=True)
+    topic = models.CharField(max_length=126)
+    partition = models.IntegerField()
+    offset = models.IntegerField()
+    last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('checkpoint_id', 'topic', 'partition')

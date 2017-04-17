@@ -10,7 +10,7 @@ from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
 
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, LocationRestrictedMobileWorkerFilter
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -26,6 +26,7 @@ from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_last_form_submissions_by_user,
     get_all_user_ids_submitted,
@@ -43,13 +44,14 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
     """
 
 
+@location_safe
 class ApplicationStatusReport(DeploymentsReport):
     name = ugettext_noop("Application Status")
     slug = "app_status"
     emailable = True
     exportable = True
     fields = [
-        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
     ]
 
@@ -83,7 +85,7 @@ class ApplicationStatusReport(DeploymentsReport):
     @property
     @memoized
     def users(self):
-        mobile_user_and_group_slugs = self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+        mobile_user_and_group_slugs = self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
 
         limit_user_ids = []
         if self.selected_app_id:

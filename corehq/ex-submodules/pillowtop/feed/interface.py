@@ -34,10 +34,12 @@ class Change(object):
         'deleted': 'deleted'
     }
 
-    def __init__(self, id, sequence_id, document=None, deleted=False, metadata=None, document_store=None):
+    def __init__(self, id, sequence_id, document=None, deleted=False, metadata=None,
+                 document_store=None, topic=None):
         self._dict = {}
         self.id = id
         self.sequence_id = sequence_id
+        self.topic = topic
         self.document = document
         # on couch-based change feeds .deleted represents a hard deletion.
         # on kafka-based feeds, .deleted represents a soft deletion and is equivalent
@@ -111,6 +113,8 @@ class ChangeFeed(object):
     """
     __metaclass__ = ABCMeta
 
+    sequence_format = 'text'
+
     @abstractmethod
     def iter_changes(self, since, forever):
         """
@@ -124,6 +128,13 @@ class ChangeFeed(object):
         :return: A dictionary of ``(topic/db_name, offset integer)`` pairs representing
                  the max sequence ID that is available for each topic.
         """
+
+    def get_latest_offsets_json(self):
+        """
+        :return: A version of `get_latest_offsets` that returns a dictionary, but is
+                 guarenteed to be valid JSON
+        """
+        return self.get_latest_offsets()
 
     @abstractmethod
     def get_processed_offsets(self):
