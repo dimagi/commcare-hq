@@ -68,7 +68,7 @@ def restore(request, domain, app_id=None):
     for timer in timing_context.to_list():
         datadog_gauge(
             'commcare.restores.timings',
-            timing_context.duration,
+            timer.duration,
             tags=tags + [u'segment:{}'.format(timer.name) if timer.parent else u'all'],
         )
 
