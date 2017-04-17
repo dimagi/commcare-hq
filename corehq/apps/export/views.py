@@ -2423,6 +2423,9 @@ def download_daily_saved_export(req, domain, export_instance_id):
         if not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
             raise Http404
 
+    if not export_instance.filters.is_location_safe_for_user(req):
+        return location_restricted_response(req)
+
     if not can_download_daily_saved_export(export_instance, domain, req.couch_user):
         raise Http404
 
