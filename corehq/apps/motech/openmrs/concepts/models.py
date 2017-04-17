@@ -5,7 +5,7 @@ from corehq.apps.motech.models import ConnectedAccount
 
 
 class OpenmrsConcept(models.Model):
-    uuid = models.CharField(max_length=256, primary_key=True)
+    uuid = models.CharField(max_length=256)
     account = models.ForeignKey(ConnectedAccount)
     display = models.TextField()
     concept_class = models.CharField(max_length=256)
@@ -14,6 +14,9 @@ class OpenmrsConcept(models.Model):
     answers = models.ManyToManyField('OpenmrsConcept')
     descriptions = models.TextField(validators=(json.dumps,))
     names = models.TextField(validators=(json.dumps,))
+
+    class Meta(object):
+        unique_together = [('account', 'uuid')]
 
     def __str__(self):
         return 'OpenMRS Concept {}: {}'.format(self.uuid, self.display)

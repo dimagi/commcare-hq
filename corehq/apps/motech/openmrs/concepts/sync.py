@@ -19,13 +19,13 @@ def sync_concepts_from_openmrs(account):
     while answers_relationships:
         delayed = []
         for concept, answers in answers_relationships:
-            print answers
-            try:
-                concept.answers = answers
-            except IntegrityError:
-                delayed.append((concept, answers))
-            else:
+            answer_concepts = OpenmrsConcept.objects.filter(account=account, uuid__in=answers).all()
+            if set(answer_concept.uuid for answer_concept in answer_concepts) == set(answers):
+                concept.answers = answer_concepts
                 concept.save()
+            else:
+                delayed.append((concept, answers))
+
         if len(answers_relationships) == len(delayed):
             # this is going to be an infinite loop
             raise Exception(delayed)
