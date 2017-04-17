@@ -897,7 +897,7 @@ class ImportConfigReportView(BaseUserConfigReportsView):
 def report_source_json(request, domain, report_id):
     config, _ = get_report_config_or_404(report_id, domain)
     config._doc.pop('_rev', None)
-    return json_response(config)
+    return json_response(config._doc)
 
 
 class ExpressionDebuggerView(BaseUserConfigReportsView):
@@ -1205,7 +1205,7 @@ def build_data_source_in_place(request, domain, config_id):
 def data_source_json(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
     config._doc.pop('_rev', None)
-    return json_response(config)
+    return json_response(config._doc)
 
 
 class PreviewDataSourceView(BaseUserConfigReportsView):
