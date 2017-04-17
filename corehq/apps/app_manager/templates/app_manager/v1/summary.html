@@ -27,6 +27,8 @@
     <script src="{% static 'app_manager/js/summary.js' %}"></script>
 {% endblock js %}
 
+{% block content %}
+
 {% registerurl 'ng_template' domain '---' %}
 {% registerurl 'download_case_summary' domain app_id %}
 {% registerurl 'download_form_summary' domain app_id %}
