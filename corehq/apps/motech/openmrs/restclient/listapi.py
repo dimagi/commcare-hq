@@ -12,7 +12,7 @@ class OpenmrsListApi(ListApi):
     def _get_next_start_index(self, next_url):
         parsed_url = urlparse(next_url)
         query_params = parse_qs(parsed_url.query)
-        assert parsed_url._replace(query='').geturl() == self._make_url()
+        assert parsed_url.path == self._make_url()
         assert set(query_params.keys()) == {'startIndex', 'v'}
         start_index, = query_params['startIndex']
         return int(start_index)

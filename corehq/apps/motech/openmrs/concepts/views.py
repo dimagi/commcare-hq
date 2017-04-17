@@ -1,24 +1,22 @@
-import json
 from django.db.models import Q
-from django.http import StreamingHttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render
-from corehq.apps.motech.connected_accounts import get_openmrs_requests_object, \
-    get_openmrs_account
+from corehq.apps.motech.connected_accounts import get_openmrs_account
 from corehq.apps.motech.openmrs.concepts.models import OpenmrsConcept
-from corehq.apps.motech.openmrs.concepts.sync import openmrs_concept_json_from_api_json, \
-    openmrs_concept_json_with_answers_from_concept
-from corehq.apps.motech.openmrs.restclient.listapi import OpenmrsListApi
+from corehq.apps.motech.openmrs.concepts.sync import \
+    openmrs_concept_json_with_answers_from_concept, sync_concepts_from_openmrs
 from corehq.apps.motech.permissions import require_motech_permissions
 
 
 @require_motech_permissions
 def all_openmrs_concepts(request, domain):
-    requests = get_openmrs_requests_object(domain)
-    restclient = OpenmrsListApi(requests, 'concept')
+    account = get_openmrs_account(domain)
 
-    lines = (json.dumps(openmrs_concept_json_from_api_json(concept).to_json()) + '\n'
-             for concept in restclient.get_all())
-    return StreamingHttpResponse(lines, content_type='text/json')
+    concepts = OpenmrsConcept.objects.filter(Q(account=account) & ~Q(answers=None))
+    return JsonResponse({'concepts': [
+        openmrs_concept_json_with_answers_from_concept(concept).to_json()
+        for concept in concepts
+    ]})
 
 
 @require_motech_permissions
@@ -45,6 +43,12 @@ def concept_search(request, domain):
         ]})
     else:
         return JsonResponse({'concepts': []})
+
+
+@require_motech_permissions
+def sync_concepts(request, domain):
+    sync_concepts_from_openmrs(get_openmrs_account(domain))
+    return JsonResponse({'ok': True})
 
 
 @require_motech_permissions
