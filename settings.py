@@ -130,7 +130,7 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 SECRET_KEY = 'you should really change this'
 
 # Add this to localsettings and set it to False, so that CSRF protection is enabled on localhost
-CSRF_SOFT_MODE = True
+CSRF_SOFT_MODE = False
 
 MIDDLEWARE_CLASSES = [
     'corehq.middleware.NoCacheMiddleware',
