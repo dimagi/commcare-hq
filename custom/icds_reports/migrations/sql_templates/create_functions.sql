@@ -123,7 +123,10 @@ BEGIN
 		'counsel_skin_to_skin, ' ||
 		'counsel_immediate_breastfeeding, ' ||
 		'weight_recorded_in_month, ' ||
-		'height_recorded_in_month FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'height_recorded_in_month, ' ||
+		'has_aadhar_id, ' ||
+		'thr_eligible, ' ||
+		'pnc_eligible FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
 
@@ -186,7 +189,9 @@ BEGIN
 		'bp2_complete, ' ||
 		'bp3_complete, ' ||
 		'pnc_complete, ' ||
-		'postnatal FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'postnatal, ' ||
+		'has_aadhar_id, ' ||
+		'counsel_fp_methods FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
 		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
         -- There may be better indexes to put here. Should investigate what tableau queries
@@ -894,7 +899,7 @@ BEGIN
 		'sum(thr) AS usage_num_thr, ' ||
 		'sum(add_household) AS usage_num_hh_reg, ' ||
 		'CASE WHEN sum(add_household) > 0 THEN ' || quote_literal(_yes_text) || ' ELSE ' || quote_literal(_no_text) || ' END as is_launched, '
-		'CASE WHEN sum(thr) > 0 THEN 4 WHEN sum(gmp) > 0 THEN 3 WHEN sum(add_pregnancy) > 0 THEN 2 WHEN sum(add_household) > 0 THEN 1 ELSE 0 END AS training_phase, '
+		'CASE WHEN sum(thr) > 0 THEN 4 WHEN (sum(due_list_ccs) + sum(due_list_child)) > 0 THEN 3 WHEN sum(add_pregnancy) > 0 THEN 2 WHEN sum(add_household) > 0 THEN 1 ELSE 0 END AS training_phase, '
 		'sum(add_person) AS usage_num_add_person, ' ||
 		'sum(add_pregnancy) AS usage_num_add_pregnancy, ' ||
 		'sum(home_visit) AS usage_num_home_visit, ' ||
@@ -905,7 +910,7 @@ BEGIN
 		'sum(ebf) AS usage_num_ebf, ' ||
 		'sum(cf) AS usage_num_cf, ' ||
 		'sum(delivery) AS usage_num_delivery, ' ||
-		'CASE WHEN (sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active, ' ||
+		'CASE WHEN (sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active, ' ||
 		'sum(due_list_ccs) AS usage_num_due_list_ccs, ' ||
 		'sum(due_list_child) AS usage_num_due_list_child_health, ' ||
 		'avg(pse_time) AS usage_time_pse, ' ||

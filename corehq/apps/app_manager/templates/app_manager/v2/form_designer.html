@@ -8,7 +8,7 @@
         {% include 'analytics/fullstory.html' %}
     {% endif %}
     {% if not vellum_debug %}
-        <link href="{% static vellum_style_path %}" type="text/css" rel="stylesheet"/>
+        <link href="{% static "app_manager/js/vellum/style.css" %}" type="text/css" rel="stylesheet"/>
     {% elif vellum_debug == "dev-min" %}
         <link href="{% static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"/>
     {% endif %}
@@ -164,7 +164,7 @@
             csrftoken: $.cookie('csrftoken')
         };
 
-        var CKEDITOR_BASEPATH = "{% static vellum_ckeditor_path %}";
+        var CKEDITOR_BASEPATH = "{% static "app_manager/js/vellum/lib/ckeditor/" %}";
         
         define("jquery", [], function () { return window.jQuery; });
         define("jquery.bootstrap", ["jquery"], function () {});
@@ -179,7 +179,7 @@
                 * set settings.VELLUM_DEBUG to "dev" or "dev-min"
             {% endcomment %}
             {% if not vellum_debug %}
-            baseUrl: "{% static vellum_js_path %}",
+            baseUrl: "{% static "app_manager/js/vellum/src" %}",
             {% elif vellum_debug == "dev-min" %}
             baseUrl: "{% static 'formdesigner/_build/src' %}",
             {% else %}
@@ -187,7 +187,7 @@
             {% endif %}
             // handle very bad connections
             waitSeconds: 60,
-            urlArgs: 'version={% cachebuster vellum_main_components_path %}{% cachebuster vellum_local_deps_path %}',
+            urlArgs: 'version={% cachebuster "app_manager/js/vellum/src/main-components.js" %}{% cachebuster "app_manager/js/vellum/src/local-deps.js" %}',
             paths: {
                 'jquery.vellum': 'main'
             }
@@ -215,7 +215,7 @@
         $(function () {
             var previewApp = hqImport('app_manager/js/preview_app.js');
 
-            {% if form.requires_case or form.get_action_type == 'open' %}
+            {% if form.uses_cases %}
             // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
             var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
                 attempts = attempts || 0;

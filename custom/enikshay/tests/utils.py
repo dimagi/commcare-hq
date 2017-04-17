@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from datetime import datetime
 import uuid
 
@@ -27,6 +29,118 @@ from custom.enikshay.const import (
 from corehq.apps.users.models import CommCareUser
 
 
+def get_person_case_structure(case_id, user_id, extra_update=None):
+    extra_update = extra_update or {}
+    update = {
+        'name': u"Peregrine เՇร ค Շгคק",
+        PERSON_FIRST_NAME: u"Peregrine",
+        PERSON_LAST_NAME: u"เՇร ค Շгคק",
+        'aadhaar_number': "499118665246",
+        MERM_ID: "123456789",
+        'dob': "1987-08-15",
+        'age': '20',
+        'sex': 'male',
+        'current_address': 'Mr. Everest',
+        'secondary_contact_name_address': 'Mrs. Everestie',
+        'previous_tb_treatment': 'yes',
+        'nikshay_registered': "false",
+    }
+    update.update(extra_update)
+
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": "person",
+            "user_id": user_id,
+            "create": True,
+            "owner_id": uuid.uuid4().hex,
+            "update": update
+        },
+    )
+
+
+def get_occurrence_case_structure(case_id, indexed_person_case):
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            'create': True,
+            'case_type': 'occurrence',
+            "update": dict(
+                name="Occurrence #1",
+            )
+        },
+        indices=[CaseIndex(
+            indexed_person_case,
+            identifier='host',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type=indexed_person_case.attrs['case_type'],
+        )],
+    )
+
+
+def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=None):
+    extra_update = extra_update or {}
+    update = {
+        'date_of_diagnosis': '2014-09-09',
+        'default_adherence_confidence': 'high',
+        'disease_classification': 'extra_pulmonary',
+        'episode_type': 'confirmed_tb',
+        'hiv_status': 'reactive',
+        'name': 'Episode #1',
+        'occupation': 'engineer',
+        'opened_on': datetime(1989, 6, 11, 0, 0),
+        'patient_type_choice': 'treatment_after_lfu',
+        'person_name': u'Peregrine เՇร ค Շгคק',
+        'site_choice': 'pleural_effusion',
+        'treatment_supporter_designation': 'ngo_volunteer',
+        TREATMENT_START_DATE: "2015-03-03",
+        TREATMENT_SUPPORTER_FIRST_NAME: u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣",
+        TREATMENT_SUPPORTER_LAST_NAME: u"𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
+    }
+    update.update(extra_update)
+
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            'create': True,
+            'case_type': 'episode',
+            "update": update
+        },
+        indices=[CaseIndex(
+            indexed_occurrence_case,
+            identifier='host',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type=indexed_occurrence_case.attrs['case_type'],
+        )],
+    )
+
+
+def get_adherence_case_structure(case_id, indexed_episode_id, adherence_date, extra_update=None):
+    extra_update = extra_update or {}
+    update = {
+        "person_name": "Pippin",
+        "adherence_confidence": "medium",
+        "shared_number_99_dots": False,
+        "adherence_date": adherence_date
+    }
+    update.update(extra_update)
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": "adherence",
+            "create": True,
+            "update": update
+        },
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_episode_id, attrs={"create": False}),
+            identifier='host',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type='episode',
+        )],
+        walk_related=False,
+    )
+
+
 class ENikshayCaseStructureMixin(object):
     def setUp(self):
         super(ENikshayCaseStructureMixin, self).setUp()
@@ -54,85 +168,32 @@ class ENikshayCaseStructureMixin(object):
 
     @property
     def person(self):
-        return CaseStructure(
-            case_id=self.person_id,
-            attrs={
-                "case_type": "person",
-                "user_id": self.user.user_id,
-                "create": True,
-                "owner_id": uuid.uuid4().hex,
-                "update": {
-                    'name': "Peregrine Took",
-                    PERSON_FIRST_NAME: "Peregrine",
-                    PERSON_LAST_NAME: "Took",
-                    'aadhaar_number': "499118665246",
-                    PRIMARY_PHONE_NUMBER: self.primary_phone_number,
-                    BACKUP_PHONE_NUMBER: self.secondary_phone_number,
-                    MERM_ID: "123456789",
-                    'dob': "1987-08-15",
-                    'age': '20',
-                    'sex': 'male',
-                    'current_address': 'Mr. Everest',
-                    'secondary_contact_name_address': 'Mrs. Everestie',
-                    'previous_tb_treatment': 'yes',
-                    'nikshay_registered': "false",
-                }
-            },
+        return get_person_case_structure(
+            self.person_id,
+            self.user.user_id,
+            extra_update={
+                PRIMARY_PHONE_NUMBER: self.primary_phone_number,
+                BACKUP_PHONE_NUMBER: self.secondary_phone_number,
+            }
         )
 
     @property
     def occurrence(self):
-        return CaseStructure(
-            case_id=self.occurrence_id,
-            attrs={
-                'create': True,
-                'case_type': 'occurrence',
-                "update": dict(
-                    name="Occurrence #1",
-                )
-            },
-            indices=[CaseIndex(
-                self.person,
-                identifier='host',
-                relationship=CASE_INDEX_EXTENSION,
-                related_type=self.person.attrs['case_type'],
-            )],
+        return get_occurrence_case_structure(
+            self.occurrence_id,
+            self.person
         )
 
     @property
     def episode(self):
         if not self._episode:
-            self._episode = CaseStructure(
-                case_id=self.episode_id,
-                attrs={
-                    'create': True,
-                    'case_type': 'episode',
-                    "update": {
-                        'date_of_diagnosis': '2014-09-09',
-                        'default_adherence_confidence': 'high',
-                        'disease_classification': 'extra_pulmonary',
-                        'episode_type': 'confirmed_tb',
-                        'hiv_status': 'reactive',
-                        'name': 'Episode #1',
-                        'occupation': 'engineer',
-                        'opened_on': datetime(1989, 6, 11, 0, 0),
-                        'patient_type_choice': 'treatment_after_lfu',
-                        'person_name': 'Peregrine Took',
-                        'site_choice': 'pleural_effusion',
-                        'treatment_supporter_designation': 'ngo_volunteer',
-                        TREATMENT_START_DATE: "2015-03-03",
-                        TREATMENT_SUPPORTER_FIRST_NAME: "Gandalf",
-                        TREATMENT_SUPPORTER_LAST_NAME: "The Grey",
-                        TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone,
-                        WEIGHT_BAND: "adult_55-69"
-                    }
-                },
-                indices=[CaseIndex(
-                    self.occurrence,
-                    identifier='host',
-                    relationship=CASE_INDEX_EXTENSION,
-                    related_type=self.occurrence.attrs['case_type'],
-                )],
+            self._episode = get_episode_case_structure(
+                self.episode_id,
+                self.occurrence,
+                extra_update={
+                    TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone,
+                    WEIGHT_BAND: "adult_55-69"
+                }
             )
         return self._episode
 
@@ -142,32 +203,6 @@ class ENikshayCaseStructureMixin(object):
     def create_case_structure(self):
         return {case.case_id: case for case in self.factory.create_or_update_cases([self.episode])}
 
-    def _get_adherence_case_structure(self, adherence_date, adherence_source, adherence_value, case_id=None):
-        return CaseStructure(
-            case_id=case_id or adherence_date.strftime('%Y-%m-%d'),
-            attrs={
-                "case_type": "adherence",
-                "create": True,
-                "update": {
-                    "name": adherence_date,
-                    "adherence_value": adherence_value,
-                    "adherence_source": adherence_source,
-                    "adherence_date": adherence_date,
-                    "person_name": "Pippin",
-                    "adherence_confidence": "medium",
-                    "shared_number_99_dots": False,
-                },
-            },
-            indices=[CaseIndex(
-                CaseStructure(case_id=self.episode_id,
-                              attrs={"create": False}),
-                identifier='host',
-                relationship=CASE_INDEX_EXTENSION,
-                related_type='episode',
-            )],
-            walk_related=False,
-        )
-
     @property
     def test(self):
         return CaseStructure(
@@ -176,7 +211,7 @@ class ENikshayCaseStructureMixin(object):
                 'create': True,
                 'case_type': 'test',
                 "update": dict(
-                    date_tested=datetime(2016, 8, 6).date(),
+                    date_reported=datetime(2016, 8, 6).date(),
                     lab_serial_number=19,
                     test_type_value="microscopy-zn",
                     purpose_of_testing="diagnostic",
@@ -212,14 +247,26 @@ class ENikshayCaseStructureMixin(object):
 
     def create_adherence_cases(self, adherence_dates, adherence_source='99DOTS'):
         return self.factory.create_or_update_cases([
-            self._get_adherence_case_structure(adherence_date, adherence_source, "unobserved_dose")
+            get_adherence_case_structure(
+                adherence_date.strftime('%Y-%m-%d-%H-%M'),
+                self.episode_id,
+                adherence_date,
+                extra_update={
+                    "name": adherence_date,
+                    "adherence_source": adherence_source,
+                    "adherence_value": "unobserved_dose",
+                }
+            )
             for adherence_date in adherence_dates
         ])
 
     def create_adherence_case(self, adherence_date, adherence_source="99DOTS", adherence_value="unobserved_dose",
                               case_id=None):
         return self.factory.create_or_update_cases([
-            self._get_adherence_case_structure(adherence_date, adherence_source, adherence_value, case_id)
+            get_adherence_case_structure(case_id, self.episode_id, adherence_date, extra_update={
+                "adherence_source": adherence_source,
+                "adherence_value": adherence_value,
+            })
         ])
 
 

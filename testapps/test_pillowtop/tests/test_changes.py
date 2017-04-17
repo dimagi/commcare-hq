@@ -63,7 +63,7 @@ def _make_couch_pillow(couch_db, include_docs=True):
 
     pillow = FakeConstructedPillow(
         name='fake-couch-pillow',
-        checkpoint=PillowCheckpoint('fake-feed-test-checkpoint'),
+        checkpoint=PillowCheckpoint('fake-feed-test-checkpoint', 'text'),
         change_feed=CouchChangeFeed(couch_db=couch_db, include_docs=include_docs),
         processor=LoggingProcessor(),
     )

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import json
 from mock import patch
 from collections import namedtuple
@@ -172,7 +174,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['regBy'], "tbu-dmdmo01")
 
         # From Person
-        self.assertEqual(payload['pname'], "Peregrine Took")
+        self.assertEqual(payload['pname'], u"Peregrine เՇร ค Շгคק")
         self.assertEqual(payload['page'], '20')
         self.assertEqual(payload['pgender'], 'M')
         self.assertEqual(payload['paddress'], 'Mr. Everest')
@@ -186,7 +188,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['sitedetail'], 2)
         self.assertEqual(payload['Ptype'], '6')
         self.assertEqual(payload['poccupation'], 4)
-        self.assertEqual(payload['dotname'], 'Gandalf The Grey')
+        self.assertEqual(payload['dotname'], u'𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶')
         self.assertEqual(payload['dotmob'], '066000666')
         self.assertEqual(payload['disease_classification'], 'EP')
         self.assertEqual(payload['pregdate'], '2014-09-09')
@@ -577,7 +579,7 @@ class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload['PatientID'], self.person_id)
         self.assertEqual(payload['regBy'], "tbu-dmdmo01")
         self.assertEqual(payload['OutcomeDate'], "1990-01-01")
-        self.assertEqual(payload['MO'], "Gandalf The Grey")
+        self.assertEqual(payload['MO'], u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶")
         self.assertEqual(payload['MORemark'], 'None Collected in eNikshay')
         self.assertEqual(payload['Outcome'], '2')
 
@@ -635,34 +637,34 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
         self.factory.create_or_update_cases([self.lab_referral, self.episode])
 
         # skip if episode case not nikshay registered
-        update_case(self.domain, self.test_id, {"date_tested": datetime.now()})
+        update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
         self.assertFalse(check_repeat_record_added())
 
         update_case(self.domain, self.episode_id, {"nikshay_registered": 'true'})
 
         # skip if episode case has no nikshay_id
-        update_case(self.domain, self.test_id, {"date_tested": datetime.now()})
+        update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
         self.assertFalse(check_repeat_record_added())
 
         update_case(self.domain, self.episode_id, {"nikshay_id": DUMMY_NIKSHAY_ID})
 
-        update_case(self.domain, self.test_id, {"date_tested": datetime.now()})
+        update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
         self.assertTrue(check_repeat_record_added())
 
         # skip if test submission
         self.dmc.metadata['is_test'] = 'yes'
         self.dmc.save()
-        update_case(self.domain, self.test_id, {"date_tested": datetime.now()})
+        update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
         self.assertFalse(check_repeat_record_added())
         self.dmc.metadata['is_test'] = 'no'
         self.dmc.save()
 
-        update_case(self.domain, self.test_id, {"date_tested": datetime.now()})
+        update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
         self.assertTrue(check_repeat_record_added())
 
         # allow update for diagnostic tests irrespective of the follow up test reason
         update_case(self.domain, self.test_id, {
-            "date_tested": datetime.now(),
+            "date_reported": datetime.now(),
             "purpose_of_testing": 'diagnostic',
             "follow_up_test_reason": 'end_of_no_p',
         })
@@ -670,14 +672,14 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
 
         # ensure followup test reason is in the allowed ones
         update_case(self.domain, self.test_id, {
-            "date_tested": datetime.now(),
+            "date_reported": datetime.now(),
             "purpose_of_testing": 'just like that',
             "follow_up_test_reason": 'end_of_no_p'
         })
         self.assertFalse(check_repeat_record_added())
 
         update_case(self.domain, self.test_id, {
-            "date_tested": datetime.now(),
+            "date_reported": datetime.now(),
             "purpose_of_testing": 'just like that',
             "follow_up_test_reason": 'end_of_ip',
         })
@@ -691,7 +693,7 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
 
         # ensure test type is in the allowed ones
         update_case(self.domain, self.test_id, {
-            "date_tested": datetime.now(),
+            "date_reported": datetime.now(),
             "follow_up_test_reason": 'end_of_ip',
             "test_type_value": 'irrelevant-test'
         })
@@ -737,7 +739,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         self.assertEqual(payload['password'], "Hadhafang")
         self.assertEqual(payload['IP_From'], "198.1.1.1")
         self.assertEqual(payload['TestDate'],
-                         datetime.strptime(self.test_case.dynamic_case_properties().get('date_tested'),
+                         datetime.strptime(self.test_case.dynamic_case_properties().get('date_reported'),
                                            '%Y-%m-%d').strftime('%d/%m/%Y'),
                          )
         self.assertEqual(payload['LabNo'], self.test_case.dynamic_case_properties().get('lab_serial_number'))

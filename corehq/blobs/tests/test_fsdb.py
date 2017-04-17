@@ -21,6 +21,11 @@ class _BlobDBTests(object):
         with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
+    def test_put_and_size(self):
+        identifier = get_id()
+        info = self.db.put(StringIO(b"content"), identifier)
+        self.assertEqual(self.db.size(info.identifier), len(b'content'))
+
     def test_put_and_get_with_unicode_names(self):
         bucket = "doc.4500"
         info = self.db.put(StringIO(b"content"), get_id(), bucket=bucket)

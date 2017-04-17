@@ -3,7 +3,7 @@ import copy
 from django.conf import settings
 
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
@@ -47,7 +47,7 @@ def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearch
         checkpoint=checkpoint,
         change_feed=kafka_change_feed,
         processor=form_processor,
-        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+        change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
         ),
     )

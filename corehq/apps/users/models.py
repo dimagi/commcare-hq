@@ -31,7 +31,7 @@ from dimagi.utils.logging import notify_exception, log_signal_errors
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
-from corehq.util.quickcache import skippable_quickcache, quickcache
+from corehq.util.quickcache import quickcache
 from casexml.apps.case.mock import CaseBlock
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
@@ -1179,7 +1179,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         }[doc_type].wrap(source)
 
     @classmethod
-    @skippable_quickcache(['username'], skip_arg='strict')
+    @quickcache(['username'], skip_arg='strict')
     def get_by_username(cls, username, strict=True):
         def get(stale, raise_if_none):
             result = cls.get_db().view('users/by_username',
@@ -1960,7 +1960,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """Returns all of the last modified times for each fixture type"""
         return self._get_fixture_statuses()
 
-    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
+    @quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def _get_fixture_statuses(self):
         from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
         last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
@@ -1998,7 +1998,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_usercase(self):
         return CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
 
-    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
+    @quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self):
         case = self.get_usercase()
         return case.case_id if case else None
@@ -2387,6 +2387,10 @@ class AnonymousCouchUser(object):
     username = "public_user"
     doc_type = "CommCareUser"
     _id = 'anonymous_couch_user'
+
+    @property
+    def get_id(self):
+        return self._id
 
     @property
     def is_active(self):

@@ -99,7 +99,7 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
             datetime(2016, 8, 11, tzinfo=pytz.UTC),
             "new_confidence_level",
         )
-        adherence_case_ids = [adherence_date.strftime("%Y-%m-%d") for adherence_date in adherence_dates]
+        adherence_case_ids = [adherence_date.strftime("%Y-%m-%d-%H-%M") for adherence_date in adherence_dates]
         adherence_cases = {case.case_id: case for case in case_accessor.get_cases(adherence_case_ids)}
 
         self.assertEqual(

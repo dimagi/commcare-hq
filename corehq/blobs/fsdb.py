@@ -51,6 +51,12 @@ class FilesystemBlobDB(AbstractBlobDB):
             raise NotFound(identifier, bucket)
         return open(path, "rb")
 
+    def size(self, identifier, bucket=DEFAULT_BUCKET):
+        path = self.get_path(identifier, bucket)
+        if not exists(path):
+            raise NotFound(identifier, bucket)
+        return os.path.getsize(path)
+
     def exists(self, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
         return exists(path)

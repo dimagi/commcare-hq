@@ -28,7 +28,11 @@ from custom.enikshay.integrations.ninetyninedots.repeaters import case_propertie
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
 
 
-class NikshayRegisterPatientRepeater(CaseRepeater):
+class BaseNikshayRepeater(CaseRepeater):
+    pass
+
+
+class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
     class Meta(object):
         app_label = 'repeaters'
 
@@ -66,7 +70,7 @@ class NikshayRegisterPatientRepeater(CaseRepeater):
             return False
 
 
-class NikshayHIVTestRepeater(CaseRepeater):
+class NikshayHIVTestRepeater(BaseNikshayRepeater):
     class Meta(object):
         app_label = 'repeaters'
 
@@ -107,7 +111,7 @@ class NikshayHIVTestRepeater(CaseRepeater):
             return False
 
 
-class NikshayTreatmentOutcomeRepeater(CaseRepeater):
+class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
     class Meta(object):
         app_label = 'repeaters'
 
@@ -136,7 +140,7 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
         )
 
 
-class NikshayFollowupRepeater(CaseRepeater):
+class NikshayFollowupRepeater(BaseNikshayRepeater):
     followup_for_tests = ['end_of_ip', 'end_of_cp']
 
     class Meta(object):
@@ -155,7 +159,7 @@ class NikshayFollowupRepeater(CaseRepeater):
         return reverse(NikshayPatientFollowupRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, test_case):
-        # test.date_tested populates and test.nikshay_registered is false
+        # test.date_reported populates and test.nikshay_registered is false
         # test.test_type_value = microscopy-zn or test.test_type_value = microscopy-fluorescent
         # and episode.nikshay_registered is true
         allowed_case_types_and_users = self._allowed_case_type(test_case) and self._allowed_user(test_case)
@@ -175,7 +179,7 @@ class NikshayFollowupRepeater(CaseRepeater):
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
                     test_case_properties.get('follow_up_test_reason') in self.followup_for_tests
                 ) and
-                case_properties_changed(test_case, 'date_tested') and
+                case_properties_changed(test_case, 'date_reported') and
                 not is_valid_test_submission(test_case)
             )
         else:
