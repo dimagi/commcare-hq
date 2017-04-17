@@ -7,6 +7,7 @@ from corehq.apps.motech.openmrs.restclient.listapi import OpenmrsListApi
 
 def sync_concepts_from_openmrs(account):
     requests = account.get_requests_object()
+    OpenmrsConcept.objects.filter(account=account).delete()
     api = OpenmrsListApi(requests, 'concept')
     answers_relationships = []
     for concept in api.get_all():
