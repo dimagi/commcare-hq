@@ -1,6 +1,5 @@
 from django.db.models import Q
 from django.http import JsonResponse
-from django.shortcuts import render
 from corehq.apps.motech.connected_accounts import get_openmrs_account
 from corehq.apps.motech.openmrs.concepts.models import OpenmrsConcept
 from corehq.apps.motech.openmrs.concepts.sync import \
@@ -49,10 +48,3 @@ def concept_search(request, domain):
 def sync_concepts(request, domain):
     sync_concepts_from_openmrs(get_openmrs_account(domain))
     return JsonResponse({'ok': True})
-
-
-@require_motech_permissions
-def concept_search_page(request, domain):
-    return render(request, 'openmrs/concepts/concept_search.html', {
-        'domain': domain,
-    })
