@@ -7,11 +7,12 @@ from corehq.apps.motech.models import ConnectedAccount
 
 def save_openmrs_account(domain, url, username, password):
     try:
-        account = ConnectedAccount.objects.get(domain=domain, server_type='openmrs')
+        account = ConnectedAccount.objects.get(
+            domain=domain, server_type=ConnectedAccount.OPENMRS)
     except ConnectedAccount.DoesNotExist:
         account = ConnectedAccount(
             domain=domain,
-            server_type='openmrs',
+            server_type=ConnectedAccount.OPENMRS,
             token=uuid4(),
             # os.urandom for cryptographically-random 128-bit key
             token_password=os.urandom(16),
@@ -44,6 +45,7 @@ def get_openmrs_requests_object(domain):
 
 def get_openmrs_account(domain):
     try:
-        return ConnectedAccount.objects.get(domain=domain, server_type='openmrs')
+        return ConnectedAccount.objects.get(
+            domain=domain, server_type=ConnectedAccount.OPENMRS)
     except ConnectedAccount.DoesNotExist:
         return None
