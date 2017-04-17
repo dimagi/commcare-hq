@@ -130,9 +130,11 @@ def extract_password(password):
         return password
 
 
-# an attempt to decode a password should be done just once in a request for the login attempt
-# check to work correctly, plus there should be no need to decode a password multiple times in
-# the same request. So memoized since it can get called multiple times in the same request
+# Memoized for multiple decode attempts in the same request:
+# 1. an attempt to decode a password should be done just once in a request for the login attempt
+# check to work correctly.
+# 2. there should be no need to decode a password multiple times in
+# the same request.
 @memoized
 def decode_password(password, username=None):
     if settings.ENABLE_PASSWORD_HASHING:

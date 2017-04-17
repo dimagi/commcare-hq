@@ -83,7 +83,7 @@ def mail_admins_async(self, subject, message, fail_silently=False, connection=No
         self.retry(exc=e)
 
 
-@periodic_task(run_every=crontab(hour=0, minute=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour=0, minute=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def delete_stale_password_hashes():
     from corehq.apps.hqwebapp.models import HashedPasswordLoginAttempt
     from corehq.apps.hqwebapp.utils import HASHED_PASSWORD_EXPIRY
