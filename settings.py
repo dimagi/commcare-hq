@@ -902,6 +902,9 @@ SENTRY_API_KEY = None
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 
+AUTHPROXY_URL = None
+AUTHPROXY_CERT = None
+
 from env_settings import *
 
 try:
