@@ -433,7 +433,12 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
     resp = $.ajax(options);
     resp.fail(function () {
         tfLoadingComplete(true);
-    }).done(function() {
+    }).done(function(response) {
+        if (response.hasOwnProperty('exception')) {
+            tfLoadingComplete(true);
+            return;
+        }
+
         tfLoadingComplete();
         $("#cloudcare-notifications").empty();
         FormplayerFrontend.trigger('navigateHome');
