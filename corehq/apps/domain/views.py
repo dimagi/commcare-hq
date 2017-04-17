@@ -2361,7 +2361,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
     def _format_date(self, date):
         tz_utc_aware_date = pytz.utc.localize(date)
-        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M %Z')
+        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M:%S %Z')
 
     @property
     def rows(self):
