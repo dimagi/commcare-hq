@@ -1,17 +1,12 @@
 from __future__ import print_function
 import kombu.five
 from celery import Celery
+from celery import current_app
 from celery.backends.base import DisabledBackend
 from celery.task import task
 from django.conf import settings
 from datetime import datetime
 from time import sleep, time
-
-
-def get_disabled_backend():
-    app = Celery()
-    app.config_from_object(settings)
-    return DisabledBackend(app)
 
 
 def no_result_task(*args, **kwargs):
@@ -29,7 +24,7 @@ def no_result_task(*args, **kwargs):
     result info.
     """
     kwargs['ignore_result'] = True
-    kwargs['backend'] = get_disabled_backend()
+    kwargs['backend'] = DisabledBackend(current_app)
 
     def wrapper(fcn):
         return task(*args, **kwargs)(fcn)
