@@ -1666,18 +1666,6 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
-    'mvp_indicators': [
-        {
-            'name': 'MVPCaseIndicatorPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'mvp_docs.pillows.get_mvp_case_indicator_pillow',
-        },
-        {
-            'name': 'MVPFormIndicatorPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'mvp_docs.pillows.get_mvp_form_indicator_pillow',
-        },
-    ],
     'experimental': [
         {
             'name': 'BlobDeletionPillow',
