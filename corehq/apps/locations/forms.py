@@ -349,7 +349,7 @@ class LocationFormSet(object):
         )
         if self.include_user_forms:
             clean_commcare_user.send(
-                'MobileWorkerListView.create_mobile_worker',
+                'LocationFormSet',
                 domain=self.domain,
                 request_user=self.request_user,
                 user=self.user,
@@ -377,11 +377,12 @@ class LocationFormSet(object):
     @property
     @memoized
     def user(self):
-        user_data = self.custom_user_data.get_data_to_save()
-        username = self.user_form.cleaned_data['username']
-        password = self.user_form.cleaned_data['password']
-        first_name = self.user_form.cleaned_data['first_name']
-        last_name = self.user_form.cleaned_data['last_name']
+        user_data = (self.custom_user_data.get_data_to_save()
+                     if self.custom_user_data.is_valid() else {})
+        username = self.user_form.cleaned_data.get('username', "")
+        password = self.user_form.cleaned_data.get('password', "")
+        first_name = self.user_form.cleaned_data.get('first_name', "")
+        last_name = self.user_form.cleaned_data.get('last_name', "")
 
         return CommCareUser.create(
             self.domain,
