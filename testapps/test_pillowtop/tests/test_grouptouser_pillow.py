@@ -139,7 +139,7 @@ class GroupToUserPillowDbTest(TestCase):
         group.save()
 
         # send to kafka
-        since = get_topic_offset(GROUP)
+        since = get_topic_offset((GROUP, 0))
         producer.send_change(GROUP, _group_to_change_meta(group.to_json()))
 
         # process using pillow
@@ -156,7 +156,7 @@ class GroupToUserPillowDbTest(TestCase):
         group.soft_delete()
 
         # send to kafka
-        since = get_topic_offset(GROUP)
+        since = get_topic_offset((GROUP, 0))
         producer.send_change(GROUP, _group_to_change_meta(group.to_json()))
 
         pillow = get_group_to_user_pillow()

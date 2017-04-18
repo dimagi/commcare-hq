@@ -58,7 +58,7 @@ class UserPillowTest(UserPillowTestBase):
         user.save()
 
         # send to kafka
-        since = get_topic_offset(document_types.COMMCARE_USER)
+        since = get_topic_offset((document_types.COMMCARE_USER, 0))
         producer.send_change(document_types.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
@@ -72,7 +72,7 @@ class UserPillowTest(UserPillowTestBase):
         user = CommCareUser.create(TEST_DOMAIN, username, 'secret')
 
         # send to kafka
-        since = get_topic_offset(document_types.COMMCARE_USER)
+        since = get_topic_offset((document_types.COMMCARE_USER, 0))
         producer.send_change(document_types.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
@@ -121,7 +121,7 @@ class UnknownUserPillowTest(UserPillowTestBase):
         self.assertEqual('UnknownUser', user_doc['doc_type'])
 
     def _get_kafka_seq(self):
-        return get_multi_topic_offset([topics.FORM_SQL, topics.FORM])
+        return get_multi_topic_offset([(topics.FORM_SQL, 0), (topics.FORM, 0)])
 
 
 def _form_to_change_meta(form):

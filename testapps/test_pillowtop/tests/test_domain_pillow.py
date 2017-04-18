@@ -38,7 +38,7 @@ class DomainPillowTest(TestCase):
             domain = create_domain(domain_name)
 
         # send to kafka
-        since = get_topic_offset(document_types.DOMAIN)
+        since = get_topic_offset((document_types.DOMAIN, 0))
         producer.send_change(document_types.DOMAIN, _domain_to_change_meta(domain))
 
         # send to elasticsearch
@@ -56,7 +56,7 @@ class DomainPillowTest(TestCase):
         domain_obj.doc_type = 'Domain-DUPLICATE'
 
         # send to kafka
-        since = get_topic_offset(document_types.DOMAIN)
+        since = get_topic_offset((document_types.DOMAIN, 0))
         producer.send_change(document_types.DOMAIN, _domain_to_change_meta(domain_obj))
 
         # send to elasticsearch
