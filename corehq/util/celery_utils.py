@@ -1,9 +1,40 @@
 from __future__ import print_function
 import kombu.five
 from celery import Celery
+from celery.backends.base import DisabledBackend
+from celery.task import task
 from django.conf import settings
 from datetime import datetime
 from time import sleep, time
+
+
+def get_disabled_backend():
+    app = Celery()
+    app.config_from_object(settings)
+    return DisabledBackend(app)
+
+
+def no_result_task(*args, **kwargs):
+    """
+    We use an instance of DatabaseBackend to store results of celery tasks.
+
+    But even with ignore_result=True, celery will still create an entry into
+    celery_taskmeta when creating the task because we have the DatabaseBackend
+    configured.
+
+    In order to avoid creating an entry into celery_taskmeta, we also need
+    to override the task's result backend to be an instance of the DisabledBackend.
+
+    Use this decorator to create tasks for which we don't need to store
+    result info.
+    """
+    kwargs['ignore_result'] = True
+    kwargs['backend'] = get_disabled_backend()
+
+    def wrapper(fcn):
+        return task(*args, **kwargs)(fcn)
+
+    return wrapper
 
 
 class TaskInfo(object):
