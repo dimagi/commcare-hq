@@ -157,13 +157,14 @@ def save_xform(app, form, xml):
     # unless something else has been specified
     if form.is_registration_form():
         questions = form.get_questions([app.default_language])
-        path = form.actions.open_case.name_path
-        if path:
-            name_questions = [q for q in questions if q['value'] == path]
-            if not len(name_questions):
-                path = None
-        if not path and len(questions):
-            form.actions.open_case.name_path = questions[0]['value']
+        if hasattr(form.actions, 'open_case'):
+            path = form.actions.open_case.name_path
+            if path:
+                name_questions = [q for q in questions if q['value'] == path]
+                if not len(name_questions):
+                    path = None
+            if not path and len(questions):
+                form.actions.open_case.name_path = questions[0]['value']
 
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
