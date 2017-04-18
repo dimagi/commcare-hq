@@ -329,6 +329,7 @@ hqDefine('app_manager/js/graph-config.js', function () {
             'secondary-y-labels',
             // other:
             'show-axes',
+            'show-data-labels',
             'show-grid',
             'show-legend',
             'bar-orientation',
@@ -354,6 +355,7 @@ hqDefine('app_manager/js/graph-config.js', function () {
             'secondary-y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
             // other:
             'show-axes': 'true() or false()',
+            'show-data-labels': 'true() or false()',
             'show-grid': 'true() or false()',
             'show-legend': 'true() or false()',
             'bar-orientation': '\'horizontal\' or \'vertical\'',
