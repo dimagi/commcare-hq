@@ -5549,6 +5549,145 @@
             },
             {
                 "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "initiated_on_art"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_reactive_art_initiated"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cpt_initiated"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_reactive_cpt_initiated"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "or",
+                            "filters": [
+                                {
+                                    "operator": "eq",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_outcome"
+                                    },
+                                    "property_value": "died"
+                                },
+                                {
+                                    "operator": "eq",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_status"
+                                    },
+                                    "property_value": "died"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_reactive_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "named",
+                                "name": "hiv_status"
+                            },
+                            "property_value": [
+                                "reactive",
+                                "non_reactive"
+                            ]
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_with_hiv_status"
+            },
+            {
+                "filter": {
                     "operator": "eq",
                     "type": "boolean_expression",
                     "expression": {
