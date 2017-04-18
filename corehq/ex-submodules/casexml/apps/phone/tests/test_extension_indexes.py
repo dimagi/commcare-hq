@@ -78,8 +78,6 @@ class IndexTreeTest(SyncBaseTest):
     """
     __metaclass__ = TestSequenceMeta
 
-    ALL_CASES = ['a', 'b', 'c', 'd', 'e']
-
     @property
     def all_tests(self):
         """All the test cases in a dict"""
@@ -92,10 +90,20 @@ class IndexTreeTest(SyncBaseTest):
     def _get_test(self, test_name):
         return self.all_tests[test_name]
 
+    def get_all_case_names(self, test):
+        case_names = set([])
+
+        case_names |= set([subcase for subcases in test.get('subcases', []) for subcase in subcases])
+        case_names |= set([extension for extensions in test.get('extensions', []) for extension in extensions])
+        case_names |= set(test.get('owned', []))
+        case_names |= set(test.get('closed', []))
+        case_names |= set(test.get('outcome', []))
+        return case_names
+
     def build_case_structures(self, test_name):
         test = self._get_test(test_name)
         case_structures = []
-        indices = {case: [] for case in self.ALL_CASES}
+        indices = {case: [] for case in self.get_all_case_names(test)}
 
         for i, subcase in enumerate(test.get('subcases', [])):
             indices[subcase[0]].append(CaseIndex(
@@ -126,7 +134,7 @@ class IndexTreeTest(SyncBaseTest):
                 identifier='extension_{}'.format(i),
             ))
 
-        for case in self.ALL_CASES:
+        for case in self.get_all_case_names(test):
             case_structures.append(CaseStructure(
                 attrs={
                     'create': True,
