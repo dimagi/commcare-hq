@@ -23,7 +23,7 @@ from corehq.apps.custom_data_fields.edit_entity import get_prefixed
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
-from corehq.apps.users.forms import NewMobileWorkerForm
+from corehq.apps.users.forms import NewMobileWorkerForm, generate_strong_password
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.signals import clean_commcare_user
 from corehq.apps.users.util import user_display_string
@@ -423,6 +423,9 @@ class LocationFormSet(object):
             user=self.request_user,
             prefix='location_user',
         )
+
+        initial_password = generate_strong_password() if domain_obj.strong_mobile_passwords else ''
+
         form.fields['username'].help_text = None
         form.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
@@ -432,7 +435,11 @@ class LocationFormSet(object):
                 'username',
                 'first_name',
                 'last_name',
-                'password',
+                crispy.Field(
+                    'password',
+                    data_bind="initializeValue: password, value: password, valueUpdate: 'input'",
+                    value=initial_password,
+                ),
             )
         )
         return form
