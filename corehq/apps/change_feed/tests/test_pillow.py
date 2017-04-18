@@ -2,7 +2,7 @@
 from datetime import datetime
 from mock import patch
 from django.conf import settings
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
 from kafka.common import ConsumerTimeout, KafkaUnavailableError
@@ -91,7 +91,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
         self.assertLessEqual(change_meta.publish_timestamp, datetime.utcnow())
 
 
-class TestElasticProcessorPillows(SimpleTestCase):
+class TestElasticProcessorPillows(TestCase):
 
     def setUp(self):
         with patch('pillowtop.checkpoints.manager.get_or_create_checkpoint'):
