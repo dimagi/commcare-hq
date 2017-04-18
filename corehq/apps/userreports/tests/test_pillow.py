@@ -201,7 +201,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
     @softer_assert()
     def setUp(self):
-        self.pillow = get_kafka_ucr_pillow(topics=['case-sql'])
+        self.pillow = get_kafka_ucr_pillow(params={'topics': ['case-sql']})
         self.config = get_data_source_with_related_doc_type()
         self.config.save()
         self.adapter = get_indicator_adapter(self.config)
@@ -273,8 +273,8 @@ class ReuseEvaluationContextTest(TestCase):
         self.adapters = [get_indicator_adapter(c) for c in self.configs]
 
         # one pillow that has one config, the other has both configs
-        self.pillow1 = get_kafka_ucr_pillow(topics=['case-sql'])
-        self.pillow2 = get_kafka_ucr_pillow(topics=['case-sql'])
+        self.pillow1 = get_kafka_ucr_pillow(params={'topics': ['case-sql']})
+        self.pillow2 = get_kafka_ucr_pillow(params={'topics': ['case-sql']})
         self.pillow1.bootstrap(configs=[config1])
         self.pillow2.bootstrap(configs=self.configs)
         with trap_extra_setup(KafkaUnavailableError):

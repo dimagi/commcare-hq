@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import hashlib
 
 from alembic.autogenerate.api import compare_metadata
+from django.conf import settings
+from kafka import KafkaConsumer
 from kafka.util import kafka_bytestring
 import six
 
@@ -292,6 +294,14 @@ def _get_topic_partitions(pillow_id, topics, num_processes):
         .values_list('topic', 'partition')
         .order_by('topic', 'partition')
     )
+    if not topic_partitions:
+        consumer = KafkaConsumer(
+            *topics,
+            group_id=pillow_id,
+            bootstrap_servers=[settings.KAFKA_URL]
+        )
+        offsets = consumer.offsets('fetch')
+        topic_partitions = offsets.keys()
     return [
         topic_partitions[num::num_processes]
         for num in range(num_processes)
@@ -299,15 +309,17 @@ def _get_topic_partitions(pillow_id, topics, num_processes):
 
 
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', params=None):
+    params = params or {}
     ucr_division = params.get('ucr_division')
     include_ucrs = params.get('include_ucrs')
     exclude_ucrs = params.get('exclude_ucrs')
-    topics = params.get('topics')
-    num_processes = params.get('num_processes')
-    process_num = params.get('process_num')
-    topics = topics or KAFKA_TOPICS
+
+    num_processes = params.get('num_processes', 1)
+    process_num = params.get('process_num', 0)
+    topics = params.get('topics', KAFKA_TOPICS)
     topics = [kafka_bytestring(t) for t in topics]
     topics = _get_topic_partitions(pillow_id, topics, num_processes)[process_num]
+
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
@@ -322,15 +334,17 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', params=None):
 
 
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', params=None):
+    params = params or {}
     ucr_division = params.get('ucr_division')
     include_ucrs = params.get('include_ucrs')
     exclude_ucrs = params.get('exclude_ucrs')
-    topics = params.get('topics')
-    num_processes = params.get('num_processes')
-    process_num = params.get('process_num')
-    topics = topics or KAFKA_TOPICS
+
+    num_processes = params.get('num_processes', 1)
+    process_num = params.get('process_num', 0)
+    topics = params.get('topics', KAFKA_TOPICS)
     topics = [kafka_bytestring(t) for t in topics]
     topics = _get_topic_partitions(pillow_id, topics, num_processes)[process_num]
+
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),
