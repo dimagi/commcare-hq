@@ -19,7 +19,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.commtrack.util import generate_code
 from corehq.apps.custom_data_fields import CustomDataEditor
-from corehq.apps.custom_data_fields.edit_entity import get_prefixed
+from corehq.apps.custom_data_fields.edit_entity import get_prefixed, CUSTOM_DATA_FIELD_PREFIX
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
@@ -291,7 +291,7 @@ class LocationForm(forms.Form):
             location.latitude = coords[0]
             location.longitude = coords[1]
 
-        location.metadata.update(get_prefixed(self.data))
+        location.metadata.update(get_prefixed(self.data, CUSTOM_DATA_FIELD_PREFIX))
 
         location.save()
 
@@ -451,9 +451,9 @@ class LocationFormSet(object):
             domain=self.domain,
             post_dict=bound_data,
             required_only=True,
+            # Set a different prefix so it's not confused with custom location data
+            prefix='user_data',
         )
-        # Set a different prefix so it's not confused with custom location datA
-        user_data.form.prefix = 'user_data'
         return user_data
 
 
