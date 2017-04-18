@@ -49,7 +49,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of TB patients declared Cured",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "cured",
                 "numerator": {
                     "type": "field",
@@ -66,7 +66,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of TB patients declared Treatment completed",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "treatment_complete",
                 "numerator": {
                     "type": "field",
@@ -83,7 +83,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of TB patients declared Successfully treated",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "successfully_treated",
                 "numerator": {
                     "type": "field",
@@ -100,7 +100,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of TB patients declared Died",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "died",
                 "numerator": {
                     "type": "field",
@@ -117,7 +117,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of TB patients declared Treatment Failure",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "failure",
                 "numerator": {
                     "type": "field",
@@ -134,7 +134,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of TB patients declared Lost to follow up",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "loss_to_follow_up",
                 "numerator": {
                     "type": "field",
@@ -151,7 +151,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of TB patients declared Regimen changed",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "regimen_changed",
                 "numerator": {
                     "type": "field",
@@ -168,7 +168,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of TB patients declared Not evaluated",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "not_evaluated",
                 "numerator": {
                     "type": "field",
@@ -185,7 +185,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of HIV-TB patients declared Cured",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "hiv_cured",
                 "numerator": {
                     "type": "field",
@@ -202,7 +202,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of HIV-TB patients declared Treatment completed",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "hiv_treatment_complete",
                 "numerator": {
                     "type": "field",
@@ -219,7 +219,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of HIV-TB patients declared Successfully treated",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "hiv_successfully_treated",
                 "numerator": {
                     "type": "field",
@@ -236,7 +236,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of HIV-TB patients declared Died",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "hiv_died",
                 "numerator": {
                     "type": "field",
@@ -253,7 +253,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of HIV-TB patients declared Treatment Failure",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "hiv_failure",
                 "numerator": {
                     "type": "field",
@@ -270,7 +270,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of HIV-TB patients declared Lost to follow up",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "hiv_loss_to_follow_up",
                 "numerator": {
                     "type": "field",
@@ -287,7 +287,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of HIV-TB patients declared Regimen changed",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "hiv_regimen_changed",
                 "numerator": {
                     "type": "field",
@@ -304,7 +304,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of HIV-TB patients declared Not evaluated",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "hiv_not_evaluated",
                 "numerator": {
                     "type": "field",

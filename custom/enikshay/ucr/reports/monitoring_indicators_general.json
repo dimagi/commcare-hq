@@ -121,7 +121,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of microbiologically confirmed TB cases notified",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "proportion_case_notified",
                 "numerator": {
                     "type": "field",
@@ -137,7 +137,7 @@
             {
                 "type": "percent",
                 "display": "Average time to diagnosis of TB patients from the onset of symptoms",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "average_time_of_diagnosis",
                 "numerator": {
                     "type": "field",
@@ -153,7 +153,7 @@
             {
                 "type": "percent",
                 "display": "Average time to initiation of treatment from diagnosis",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "average_time_of_treatment_initiation",
                 "numerator": {
                     "type": "field",
@@ -169,7 +169,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of TB patients screened for Diabetes",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "screened_patients",
                 "numerator": {
                     "type": "field",
@@ -186,7 +186,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of patients diagnosed with Diabetes",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "diabetes_patients",
                 "numerator": {
                     "type": "field",
@@ -203,7 +203,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of TB-Diabetes patients linked with diabetes services care",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "diabetes_patients_linked",
                 "numerator": {
                     "type": "field",
@@ -237,7 +237,7 @@
             {
                 "type": "percent",
                 "display": "Proportion of TB patients diagnosed out of household contact screening",
-                "format": "decimal",
+                "format": "percent",
                 "column_id": "contact_screening",
                 "numerator": {
                     "type": "field",
