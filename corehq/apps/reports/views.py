@@ -111,7 +111,8 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
 from corehq.apps.hqwebapp.utils import csrf_inline
-from corehq.apps.locations.permissions import can_edit_form_location, location_safe
+from corehq.apps.locations.permissions import can_edit_form_location, location_safe, \
+    user_can_access_location_id, location_restricted_exception
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import default_language as ucr_default_language
@@ -1243,6 +1244,12 @@ class CaseDetailsView(BaseProjectReportSectionView):
                           "Sorry, we couldn't find that case. If you think this "
                           "is a mistake please report an issue.")
             return HttpResponseRedirect(CaseListReport.get_url(domain=self.domain))
+        if not user_can_access_location_id(
+            self.domain,
+            request.couch_user,
+            self.case_instance.owner_id
+        ):
+            raise location_restricted_exception(request)
         return super(CaseDetailsView, self).dispatch(request, *args, **kwargs)
 
     @property
