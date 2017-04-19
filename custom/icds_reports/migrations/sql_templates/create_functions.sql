@@ -46,7 +46,8 @@ BEGIN
 		'district_site_code, ' ||
 		'state_id, ' ||
 		'state_name, ' ||
-		'state_site_code FROM ' || quote_ident(_ucr_location_table) || ')';
+		'state_site_code, ' ||
+		'5 FROM ' || quote_ident(_ucr_location_table) || ')';
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -1237,7 +1238,8 @@ BEGIN
 		'district_site_code, ' ||
 		'state_id, ' ||
 		'state_name, ' ||
-		'state_site_code FROM awc_location GROUP BY ' ||
+		'state_site_code, ' ||
+		'4 FROM awc_location GROUP BY ' ||
 		'supervisor_id, supervisor_name, supervisor_site_code, ' ||
 		'block_id, block_name, block_site_code,' ||
 		'district_id, district_name, district_site_code,' ||
@@ -1259,7 +1261,8 @@ BEGIN
 		'district_site_code, ' ||
 		'state_id, ' ||
 		'state_name, ' ||
-		'state_site_code FROM awc_location GROUP BY ' ||
+		'state_site_code, ' ||
+		'3 FROM awc_location GROUP BY ' ||
 		'block_id, block_name, block_site_code,' ||
 		'district_id, district_name, district_site_code,' ||
 		'state_id, state_name, state_site_code' ||
@@ -1280,7 +1283,8 @@ BEGIN
 		'district_site_code, ' ||
 		'state_id, ' ||
 		'state_name, ' ||
-		'state_site_code FROM awc_location GROUP BY ' ||
+		'state_site_code, ' ||
+		'2 FROM awc_location GROUP BY ' ||
 		'district_id, district_name, district_site_code,' ||
 		'state_id, state_name, state_site_code' ||
 		')';
@@ -1300,7 +1304,8 @@ BEGIN
 		quote_nullable(all_text) || ', ' ||
 		'state_id, ' ||
 		'state_name, ' ||
-		'state_site_code FROM awc_location GROUP BY ' ||
+		'state_site_code, ' ||
+		'1 FROM awc_location GROUP BY ' ||
 		'state_id, state_name, state_site_code' ||
 		')';
 END;
