@@ -217,6 +217,10 @@
             auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
         });
 
+        $('#shadow-parent').koApplyBindings({
+            shadow_parent: ko.observable({{ form.shadow_parent_form_id|JSON }})
+        });
+
         {% if request|toggle_enabled:'NO_VELLUM' %}
         $('#no-vellum').koApplyBindings({
             no_vellum: ko.observable({{ form.no_vellum|JSON }})

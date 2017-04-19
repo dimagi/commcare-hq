@@ -84,7 +84,8 @@ from corehq.apps.app_manager.models import (
     CustomInstance,
     CaseReferences,
     AdvancedModule,
-    ShadowForm)
+    ShadowForm,
+)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
@@ -363,6 +364,8 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
                 instance_path=instance.get("instancePath"),
             ) for instance in instances
         ]
+    if should_edit("shadow_parent"):
+        form.shadow_parent_form_id = request.POST['shadow_parent']
 
     handle_media_edits(request, form, should_edit, resp, lang)
 

@@ -3012,6 +3012,12 @@ class ShadowForm(AdvancedForm):
             shadow_parent_actions = self.shadow_parent_form.actions
         return self._merge_actions(shadow_parent_actions, self.extra_actions)
 
+    def get_shadow_parent_options(self):
+        return [
+            (form.get_unique_id(), u'{} / {}'.format(form.get_module().default_name(), form.default_name()))
+            for form in self.get_app().get_forms() if form.form_type == "advanced_form"
+        ]
+
     def _merge_actions(self, source_actions, extra_actions):
         # TODO: write me
         return source_actions

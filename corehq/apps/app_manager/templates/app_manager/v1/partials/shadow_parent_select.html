@@ -1,10 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% load i18n %}
+{% load hq_shared_tags %}
 
-</body>
-</html>
+<div class="form-group" xmlns="http://www.w3.org/1999/html">
+    <label class="control-label col-sm-2">
+        {% trans "Shadow parent" %}
+        <span class="hq-help-template"
+              data-content="{% blocktrans %}The form which this form will shadow{% endblocktrans %}"
+        ></span>
+    </label>
+    <div id="shadow-parent" class="col-sm-4">
+        <select data-bind="value: shadow_parent">
+            <option value=""></option>
+            {% for key, display in form.get_shadow_parent_options %}
+                <option value="{{ key }}">{{ display }}</option>
+            {% endfor %}
+        </select>
+
+        <input type="hidden" name="shadow_parent" data-bind="value: shadow_parent"/>
+    </div>
+</div>

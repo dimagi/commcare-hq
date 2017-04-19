@@ -64,6 +64,10 @@
 
             </div>
 
+            {% if form.doc_type == "ShadowForm" %}
+                {% include "app_manager/v1/partials/shadow_parent_select.html" %}
+            {% endif %}
+
             {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
             {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
                 {% include "app_manager/v1/partials/custom_instances.html" %}
