@@ -37,12 +37,15 @@ class ChangeFeedDbTest(TestCase):
         self.assertTrue(change.get('doc', None) is None)
 
     def test_couch_filter(self):
+        from time import sleep
+
         pillow = _make_couch_pillow(self.couch_db)
         pillow.couch_filter = 'couchforms/xforms'
         # save a random doc, then a form-looking thing
         self.couch_db.save_doc({'_id': uuid.uuid4().hex, 'property': 'property_value'})
         form = XFormInstance(domain='test-domain')
         form.save()
+        sleep(1)
         pillow.process_changes(since=self.update_seq, forever=False)
 
         change = self._extract_change_from_call_args(pillow.process_change.call_args)
