@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib import messages
 from django.urls import reverse
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -22,7 +23,7 @@ from custom.icds.messaging.indicators import (
     LSSubmissionPerformanceIndicator,
     LSVHNDSurveyIndicator,
 )
-from custom.icds.tasks import run_indicator
+from custom.icds.tasks import run_indicator, ENGLISH, HINDI, TELUGU, MARATHI
 
 
 class IndicatorTestForm(forms.Form):
@@ -41,6 +42,16 @@ class IndicatorTestForm(forms.Form):
         ),
         required=True
     )
+    language_code = forms.ChoiceField(
+        label=ugettext_lazy("Language"),
+        choices=(
+            (ENGLISH, ugettext_lazy("English")),
+            (HINDI, ugettext_lazy("Hindi")),
+            (TELUGU, ugettext_lazy("Telugu")),
+            (MARATHI, ugettext_lazy("Marathi")),
+        ),
+        required=True
+    )
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain')
@@ -53,6 +64,7 @@ class IndicatorTestForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Field('users', css_class='sms-typeahead'),
             crispy.Field('indicator'),
+            crispy.Field('language_code'),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Test"),
@@ -86,10 +98,12 @@ class IndicatorTestPage(BaseDomainView):
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST, domain=request.domain)
         if form.is_valid():
-            user_id = request.POST['users']
-            indicator = request.POST['indicator']
+            user_id = form.cleaned_data['users']
+            indicator = form.cleaned_data['indicator']
             indicator_cls = get_indicator_class(indicator)
-            run_indicator.delay(request.domain, user_id, indicator_cls)
+            language_code = form.cleaned_data['language_code']
+            run_indicator.delay(request.domain, user_id, indicator_cls, language_code=language_code)
+            messages.success(request, _("A task has been spawned to process the indicator for the given user."))
 
         return render(request, self.template_name, {'form': form})
 
