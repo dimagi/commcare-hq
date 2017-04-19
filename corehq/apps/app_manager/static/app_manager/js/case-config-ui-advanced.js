@@ -183,7 +183,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         };
 
         self.init = function () {
-            var $home = $('#case-config-ko');
+            var $home = self.home;  
             _.delay(function () {
                 $home.koApplyBindings(self);
                 $home.on('textchange', 'input', self.change)
@@ -193,7 +193,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                      .on('change', 'input[type="checkbox"]', self.change);
 
                 // https://gist.github.com/mkelly12/424774/#comment-92080
-                $('#case-config-ko input').on('textchange', self.change);
+                $home.find('input').on('textchange', self.change);
 
                 self.ensureBlankProperties();
                 $('#case-configuration-tab').on('click', function () {

@@ -12,7 +12,7 @@
     {% if form.source %}
     var CaseConfig = hqImport('app_manager/js/case-config-ui-advanced.js').CaseConfig;
     var caseConfig = new CaseConfig({
-        home: $('#casexml_home'),
+        home: $('#case-config-ko'),
         actions: {{ form.actions|JSON }},
         questions: {{ xform_questions|JSON }},
         requires: form_requires,
