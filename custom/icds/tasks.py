@@ -98,7 +98,7 @@ def get_language_code(user_id, telugu_user_ids, marathi_user_ids):
     queue=settings.CELERY_PERIODIC_QUEUE,
     ignore_result=True
 )
-def run_weekly_indicators():
+def run_weekly_indicators(phased_rollout=True):
     """
     Runs the weekly SMS indicators Monday at 9am IST.
     If it's the first week of the month, also run the monthly indicators.
@@ -111,7 +111,7 @@ def run_weekly_indicators():
 
         for user_id in generate_user_ids_from_primary_location_ids(domain, get_awc_location_ids(domain)):
             language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
-            if language_code != TELUGU:
+            if phased_rollout and language_code != TELUGU:
                 continue
 
             if first_week_of_month_result:
@@ -121,7 +121,7 @@ def run_weekly_indicators():
 
         for user_id in generate_user_ids_from_primary_location_ids(domain, get_supervisor_location_ids(domain)):
             language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
-            if language_code != TELUGU:
+            if phased_rollout and language_code != TELUGU:
                 continue
 
             if first_week_of_month_result:
