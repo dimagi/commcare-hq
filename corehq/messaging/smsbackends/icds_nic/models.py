@@ -11,6 +11,8 @@ from corehq.apps.sms.util import strip_plus
 from dimagi.utils.django.fields import TrimmedCharField
 from dimagi.utils.logging import notify_exception
 
+ERR_INVALID_DESTINATION = '-410'
+
 ERROR_CODES = {
     "-2": "Invalid credentials",
     "-3": "Empty mobile number",
@@ -25,7 +27,7 @@ ERROR_CODES = {
     "-407": "Invalid Expiry minutes",
     "-408": "Invalid Customer Reference Id",
     "-409": "Invalid Bill Reference Id",
-    "-410": "Invalid Destination Address",
+    ERR_INVALID_DESTINATION: "Invalid Destination Address",
     "-432": "Invalid Bill Reference Id Length",
     "-433": "Invalid Customer Reference Id Length",
 }
@@ -99,6 +101,9 @@ class SQLICDSBackend(SQLSMSBackend):
         exception_message = "Error with ICDS backend. HTTP response code: %s, %s" % (
             response_code, ERROR_CODES.get(response_code, 'Unknown Error')
         )
+        if response_code == ERR_INVALID_DESTINATION:
+            msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
+            return
         if response_code in RETRY_ERROR_CODES or response_code not in ERROR_CODES:
             raise ICDSException(exception_message)
         msg.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
