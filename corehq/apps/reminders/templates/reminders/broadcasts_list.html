@@ -4,13 +4,15 @@
 
 {% block js-inline %} {{ block.super }}
     <script>
-        var upcoming_table = null;
-        var past_table = null;
+        var upcoming_table = null,
+            past_table = null,
+            list_broadcasts_url = hqImport("hqwebapp/js/urllib.js").reverse("list_broadcasts"),
+            loader_src = hqImport("hqwebapp/js/initial_page_data.js").get("loader_src");
 
         function delete_broadcast(broadcast_id)  {
-            if(confirm("{% trans 'Are you sure you want to delete this broadcast?' %}")) {
+            if(confirm(gettext('Are you sure you want to delete this broadcast?'))) {
                 $.ajax({
-                    url: "{% url 'list_broadcasts' domain %}",
+                    url: list_broadcasts_url,
                     type: "POST",
                     data: {
                         action: "delete_broadcast",
@@ -30,18 +32,18 @@
                 "displayLength": 5,
                 "processing": true,
                 "serverSide": true,
-                "ajaxSource": "{% url 'list_broadcasts' domain %}",
+                "ajaxSource": list_broadcasts_url,
                 "fnServerParams": function(aoData) {
                     aoData.push({"name": "action", "value": "list_upcoming"});
                 },
                 "sDom": "rtp",
                 "language": {
-                    "emptyTable": "{% trans 'There are no broadcasts to display.' %}",
-                    "infoEmpty": "{% trans 'There are no broadcasts to display.' %}",
-                    "lengthMenu": "{% trans 'Show _MENU_ broadcasts per page' %}",
-                    "processing": '<img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" /> {% trans 'Loading Broadcasts...' %}',
-                    "info": "{% trans 'Showing _START_ to _END_ of _TOTAL_ broadcasts' %}",
-                    "infoFiltered": "{% trans '(filtered from _MAX_ total broadcasts)' %}"
+                    "emptyTable": gettext('There are no broadcasts to display.'),
+                    "infoEmpty": gettext('There are no broadcasts to display.'),
+                    "lengthMenu": gettext('Show _MENU_ broadcasts per page'),
+                    "processing": '<img src="' + loader_src + '" /> ' + gettext('Loading Broadcasts...'),
+                    "info": gettext('Showing _START_ to _END_ of _TOTAL_ broadcasts'),
+                    "infoFiltered": gettext('(filtered from _MAX_ total broadcasts)'),
                 },
                 "columnDefs": [
                     {
@@ -53,9 +55,8 @@
                     {
                         "targets": [3],
                         "render": function(data) {
-                            return '<button class="btn btn-danger" onClick="delete_broadcast(\'' + data + '\');"> \
-                                        {% trans 'Delete' %} \
-                                    </button>';
+                            return '<button class="btn btn-danger" onClick="delete_broadcast(\'' + data + '\');">'
+                                        + gettext('Delete') + '</button>';
                         }
                     }
                 ]
@@ -67,24 +68,24 @@
                 "displayLength": 5,
                 "processing": true,
                 "serverSide": true,
-                "ajaxSource": "{% url 'list_broadcasts' domain %}",
+                "ajaxSource": list_broadcasts_url,
                 "fnServerParams": function(aoData) {
                     aoData.push({"name": "action", "value": "list_past"});
                 },
                 "dom": "rtp",
                 "language": {
-                    "emptyTable": "{% trans 'There are no broadcasts to display.' %}",
-                    "infoEmpty": "{% trans 'There are no broadcasts to display.' %}",
-                    "lengthMenu": "{% trans 'Show _MENU_ broadcasts per page' %}",
-                    "processing": '<img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" /> {% trans 'Loading Broadcasts...' %}',
-                    "info": "{% trans 'Showing _START_ to _END_ of _TOTAL_ broadcasts' %}",
-                    "infoFiltered": "{% trans '(filtered from _MAX_ total broadcasts)' %}"
+                    "emptyTable": gettext('There are no broadcasts to display.'),
+                    "infoEmpty": gettext('There are no broadcasts to display.'),
+                    "lengthMenu": gettext('Show _MENU_ broadcasts per page'),
+                    "processing": '<img src="' + loader_src + '" /> ' + gettext('Loading Broadcasts...'),
+                    "info": gettext('Showing _START_ to _END_ of _TOTAL_ broadcasts'),
+                    "infoFiltered": gettext('(filtered from _MAX_ total broadcasts)'),
                 },
                 "columnDefs": [
                     {
                         "targets": [3],
                         "render": function(data, type, full) {
-                            return '<a class="btn btn-primary" href="' + full[5] + '">{% trans "Copy" %}</a>';
+                            return '<a class="btn btn-primary" href="' + full[5] + '">' + gettext("Copy") + '</a>';
                         }
                     }
                 ]
@@ -94,6 +95,8 @@
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl 'list_broadcasts' domain %}
+    {% initial_page_data 'loader_src' 'hqwebapp/images/ajax-loader.gif'|static %}
     <div class="btn-group">
         <a href="{% url 'add_broadcast' domain %}" class="btn btn-success">
             <i class="fa fa-plus"></i>
