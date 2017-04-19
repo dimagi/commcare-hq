@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import copy
+import operator as op
 import ast
 from datetime import date, datetime, timedelta
 from decimal import Decimal
@@ -22,7 +23,11 @@ def safe_range(start, *args):
 
 
 SAFE_OPERATORS = copy.copy(DEFAULT_OPERATORS)
-SAFE_OPERATORS[ast.Pow] = safe_pow_fn  # don't allow power operations
+SAFE_OPERATORS.update({
+    ast.Pow: safe_pow_fn,  # don't allow power operations
+    ast.Or: op.or_,  # Allows coalesce
+    ast.And: op.and_,  # Can't have "or" without "and". Allows ternary
+})
 
 FUNCTIONS = DEFAULT_FUNCTIONS
 FUNCTIONS.update({
