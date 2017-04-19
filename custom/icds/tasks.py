@@ -111,6 +111,8 @@ def run_weekly_indicators():
 
         for user_id in generate_user_ids_from_primary_location_ids(domain, get_awc_location_ids(domain)):
             language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
+            if language_code != TELUGU:
+                continue
 
             if first_week_of_month_result:
                 run_indicator.delay(domain, user_id, AWWAggregatePerformanceIndicator, language_code)
@@ -119,6 +121,8 @@ def run_weekly_indicators():
 
         for user_id in generate_user_ids_from_primary_location_ids(domain, get_supervisor_location_ids(domain)):
             language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
+            if language_code != TELUGU:
+                continue
 
             if first_week_of_month_result:
                 run_indicator.delay(domain, user_id, LSAggregatePerformanceIndicator, language_code)
