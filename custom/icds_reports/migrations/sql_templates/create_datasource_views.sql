@@ -1,4 +1,29 @@
-CREATE OR REPLACE VIEW agg_awc_monthly AS
+DROP VIEW IF EXISTS awc_location_months CASCADE;
+CREATE VIEW awc_location_months AS
+ SELECT
+	awc_location.doc_id as awc_id,
+    awc_location.awc_name,
+	awc_location.awc_site_code,
+    awc_location.supervisor_id,
+	awc_location.supervisor_name,
+	awc_location.supervisor_site_code,
+	awc_location.block_id,
+	awc_location.block_name,
+	awc_location.block_site_code,
+	awc_location.district_id,
+	awc_location.district_name,
+	awc_location.district_site_code,
+	awc_location.state_id,
+	awc_location.state_name,
+	awc_location.state_site_code,
+	awc_location.aggregation_level,
+    months.start_date AS month,
+	months.month_name AS month_display
+  FROM awc_location awc_location
+  CROSS JOIN "icds_months" months;
+
+DROP VIEW IF EXISTS agg_awc_monthly CASCADE;
+CREATE VIEW agg_awc_monthly AS
     SELECT
         "awc_location_months"."awc_id" AS "awc_id",
         "awc_location_months"."awc_name" AS "awc_name",
@@ -15,6 +40,7 @@ CREATE OR REPLACE VIEW agg_awc_monthly AS
         "awc_location_months"."state_id" AS "state_id",
         "awc_location_months"."state_name" AS "state_name",
         "awc_location_months"."state_site_code" AS "state_site_code",
+        "awc_location_months"."aggregation_level" AS "aggregation_level",
         "awc_location_months"."month" AS "month",
         "agg_awc"."is_launched" AS "is_launched",
         "agg_awc"."num_awcs" AS "num_awcs",
@@ -125,7 +151,8 @@ CREATE OR REPLACE VIEW agg_awc_monthly AS
         ("awc_location_months"."awc_id" = "agg_awc"."awc_id")
     );
 
-CREATE OR REPLACE VIEW agg_ccs_record_monthly AS
+DROP VIEW IF EXISTS agg_ccs_record_monthly CASCADE;
+CREATE VIEW agg_ccs_record_monthly AS
     SELECT
         "awc_location_months"."awc_id" AS "awc_id",
         "awc_location_months"."awc_name" AS "awc_name",
@@ -142,6 +169,7 @@ CREATE OR REPLACE VIEW agg_ccs_record_monthly AS
         "awc_location_months"."state_id" AS "state_id",
         "awc_location_months"."state_name" AS "state_name",
         "awc_location_months"."state_site_code" AS "state_site_code",
+        "awc_location_months"."aggregation_level" AS "aggregation_level",
         "awc_location_months"."month" AS "month",
         "ccs_record_categories"."ccs_status" AS "ccs_status",
         "ccs_record_categories"."trimester" AS "trimester",
@@ -199,7 +227,8 @@ CREATE OR REPLACE VIEW agg_ccs_record_monthly AS
         ("ccs_record_categories"."resident" = "agg_ccs_record"."resident")
     );
 
-CREATE OR REPLACE VIEW agg_child_health_monthly AS
+DROP VIEW IF EXISTS agg_child_health_monthly CASCADE;
+CREATE VIEW agg_child_health_monthly AS
     SELECT
         "awc_location_months"."awc_id" AS "awc_id",
         "awc_location_months"."awc_name" AS "awc_name",
@@ -216,6 +245,7 @@ CREATE OR REPLACE VIEW agg_child_health_monthly AS
         "awc_location_months"."state_id" AS "state_id",
         "awc_location_months"."state_name" AS "state_name",
         "awc_location_months"."state_site_code" AS "state_site_code",
+        "awc_location_months"."aggregation_level" AS "aggregation_level",
         "awc_location_months"."month" AS "month",
         "awc_location_months"."month_display" AS "month_display",
         "child_health_categories"."gender" AS "gender",
@@ -272,7 +302,8 @@ CREATE OR REPLACE VIEW agg_child_health_monthly AS
         ("child_health_categories"."resident" = "agg_child_health"."resident")
     );
 
-CREATE OR REPLACE VIEW agg_thr_monthly AS
+DROP VIEW IF EXISTS agg_thr_monthly CASCADE;
+CREATE VIEW agg_thr_monthly AS
     SELECT
         "awc_location_months"."awc_id" AS "awc_id",
         "awc_location_months"."awc_name" AS "awc_name",
@@ -289,6 +320,7 @@ CREATE OR REPLACE VIEW agg_thr_monthly AS
         "awc_location_months"."state_id" AS "state_id",
         "awc_location_months"."state_name" AS "state_name",
         "awc_location_months"."state_site_code" AS "state_site_code",
+        "awc_location_months"."aggregation_level" AS "aggregation_level",
         "awc_location_months"."month" AS "month",
         "thr_categories"."beneficiary_type" AS "beneficiary_type",
         "thr_categories"."caste" AS "caste",
@@ -313,7 +345,8 @@ CREATE OR REPLACE VIEW agg_thr_monthly AS
         ("thr_categories"."resident" = "agg_thr_data"."resident")
     );
 
-CREATE OR REPLACE VIEW daily_attendance_view AS
+DROP VIEW IF EXISTS daily_attendance_view CASCADE;
+CREATE VIEW daily_attendance_view AS
     SELECT "awc_location_months"."awc_id" AS "awc_id",
         "awc_location_months"."awc_name" AS "awc_name",
         "awc_location_months"."awc_site_code" AS "awc_site_code",
@@ -329,6 +362,7 @@ CREATE OR REPLACE VIEW daily_attendance_view AS
         "awc_location_months"."state_id" AS "state_id",
         "awc_location_months"."state_name" AS "state_name",
         "awc_location_months"."state_site_code" AS "state_site_code",
+        "awc_location_months"."aggregation_level" AS "aggregation_level",
         "awc_location_months"."month" AS "month",
         "daily_attendance"."doc_id" AS "doc_id",
         "daily_attendance"."pse_date" AS "pse_date",
