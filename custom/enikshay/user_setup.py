@@ -49,6 +49,8 @@ def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
                 return
             location_type = user.get_sql_location(domain).location_type.code
 
+        if 'usertype' not in custom_data.form.cleaned_data:
+            return  # There was probably a validation error
         usertype = custom_data.form.cleaned_data['usertype']
         validate_usertype(domain, location_type, usertype, custom_data)
         if new_user_form:
