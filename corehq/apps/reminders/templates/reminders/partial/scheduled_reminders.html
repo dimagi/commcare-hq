@@ -2,25 +2,28 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'moment/moment.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {
-            var reminders = [
-                {% for data in reminder_data %}
-                    {
-                        nickname: "{{ data.handler_name }}",
-                        date: "{{ data.next_fire.date }}",
-                        time: "{{ data.next_fire.time }}",
-                        case_name: "{{ data.case_name|escapejs }}",
-                        case_url: "{% if data.case_id %}{% url "case_details" domain data.case_id %}{% endif %}",
-                        recipient_desc: "{{ data.recipient_desc|escapejs }}",
-                        recipient_type: "{{ data.recipient_type }}",
-                    },
-                {% endfor %}
-                    null
-                ],
+            var reminders = _.map(hqImport("hqwebapp/js/initial_page_data.js").get("reminder_data"), function(data) {
+                    var next_fire = moment(data.next_fire);
+                    return {
+                        nickname: data.handler_name,
+                        date: next_fire.format("MMMM D, YYYY"),
+                        time: next_fire.format("h:mm a"),
+                        case_name: data.case_name,
+                        case_url: data.case_id ? hqImport("hqwebapp/js/urllib.js").reverse("case_details", data.case_id) : "",
+                        recipient_desc: data.recipient_desc,
+                        recipient_type: data.recipient_type,
+                    };
+                }),
                 i,
                 reminder;
+            reminders.push(null);
             for (i = 0; i < reminders.length; i += 1) {
                 reminder = reminders[i];
                 if (reminder) {
@@ -151,6 +154,8 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'reminder_data' reminder_data %}
+    {% registerurl "case_details" domain "---" %}
     {% include "style/partials/time_notice.html" %}
     <div id='scheduled-reminders-container'>
         <table class="calendar">
