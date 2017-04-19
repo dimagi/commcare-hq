@@ -2,6 +2,7 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 <div class="tab-pane" id="advanced">
+    {% if form.form_type != "shadow_form" %}
     <fieldset>
         <legend>{% trans "XForm" %}</legend>
         <ul class="nav nav-pills nav-stacked">
@@ -92,6 +93,7 @@
             </li>
         </ul>
     </fieldset>
+    {% endif %}
     {% if allow_form_copy%}
     <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
         {% csrf_token %}
