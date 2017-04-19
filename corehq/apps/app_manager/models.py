@@ -35,7 +35,7 @@ import types
 import re
 import datetime
 import uuid
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, OrderedDict
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
@@ -3019,8 +3019,30 @@ class ShadowForm(AdvancedForm):
         ]
 
     def _merge_actions(self, source_actions, extra_actions):
-        # TODO: write me
-        return source_actions
+        new_actions = OrderedDict(
+            (action.case_tag, LoadUpdateAction.wrap(action.to_json()))
+            for action in source_actions.load_update_cases
+        )
+        for action in extra_actions.load_update_cases:
+            new_action = new_actions.get(action.case_tag, LoadUpdateAction(case_tag=action.case_tag))
+            overwrite_properties = [
+                "case_type",
+                "details_module",
+                "auto_select",
+                "load_case_from_fixture",
+                "show_product_stock",
+                "product_program",
+                "case_index",
+            ]
+            for prop in overwrite_properties:
+                setattr(new_action, prop, getattr(action, prop))
+            if action.case_tag not in new_actions:
+                new_actions[action.case_tag] = new_action
+
+        return AdvancedFormActions(
+            load_update_cases=new_actions.values(),
+            open_cases=source_actions.open_cases,  # Shadow form is not allowed to specify any open case actions
+        )
 
 
 class SchedulePhaseForm(IndexedSchema):
