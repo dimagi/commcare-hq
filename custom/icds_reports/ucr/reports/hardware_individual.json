@@ -1,0 +1,165 @@
+{
+  "domains": [
+    "icds-test",
+    "icds-sql",
+    "icds-cas"
+  ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
+  "report_id": "static-hardware_individual",
+  "data_source_table": "static-hardware_cases",
+  "config": {
+    "title": "Hardware - Individual Hardware",
+    "description": "",
+    "visible": true,
+    "aggregation_columns": [
+      "doc_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "display": "Date Registered",
+        "field": "opened_on",
+        "type": "date",
+        "slug": "opened_on"
+      },
+      {
+        "compare_as_string": false,
+        "required": false,
+        "datatype": "string",
+        "display": "Filter by Block",
+        "field": "block_id",
+        "type": "location_drilldown",
+        "slug": "block_id"
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "name",
+        "field": "name",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Device Code",
+          "hin": "Device Code"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "registered_user_name",
+        "field": "registered_user_name",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Registered User",
+          "hin": "Registered User"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "hardware_status",
+        "field": "hardware_status",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Hardware Status",
+          "hin": "Hardware Status"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "serial_number",
+        "field": "serial_number",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Serial Number",
+          "hin": "Serial Number"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "hardware_type",
+        "field": "hardware_type",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Device Type",
+          "hin": "Device Type"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "brand",
+        "field": "brand",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Brand",
+          "hin": "Brand"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "model",
+        "field": "model",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Model Number",
+          "hin": "Model Number"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "hardware_history",
+        "field": "hardware_history",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Hardware History",
+          "hin": "Hardware History"
+        },
+        "aggregation": "simple"
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  }
+}
