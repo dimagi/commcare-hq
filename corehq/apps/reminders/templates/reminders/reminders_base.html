@@ -2,24 +2,8 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js-inline %}
-    <script>
-        $(function (){
-            var unsaved = false;
-            $(":input[type='submit'].btn-primary").click(function (){
-                unsaved = false;
-            });
-            $(":input").not(":input[type='submit']").change(function(){ 
-                unsaved = true;
-            });         
-            function unloadPage(){ 
-                if(unsaved){
-                    return "{% trans 'You have unsaved changes.' %}";
-                }
-            }           
-            window.onbeforeunload = unloadPage;                    
-        });
-    </script>
+{% block js %}{{ block.super }}
+    <script src="{% static "reminders/js/reminders.js" %}"></script>
 {% endblock%}
 
 {% block stylesheets %}{{ block.super }}
