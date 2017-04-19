@@ -169,10 +169,13 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
     form = app.get_module(module_id).get_form(form_id)
     json_loads = json.loads(request.POST.get('actions'))
     actions = AdvancedFormActions.wrap(json_loads)
-    form.actions = actions
+    if form.form_type == "shadow_form":
+        form.extra_actions = actions
+    else:
+        form.actions = actions
     for action in actions.load_update_cases:
         add_properties_to_data_dictionary(domain, action.case_type, action.case_properties.keys())
-    if advanced_actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
+    if advanced_actions_use_usercase(actions) and not is_usercase_in_use(domain):
         enable_usercase(domain)
     response_json = {}
     app.save(response_json)

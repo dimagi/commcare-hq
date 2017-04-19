@@ -31,6 +31,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         self.requires = params.requires;
         self.commtrack = params.commtrack_enabled;
         self.programs = params.commtrack_programs;
+        self.isShadowForm = params.isShadowForm;
 
         self.setPropertiesMap = function (propertiesMap) {
              self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -302,7 +303,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             return action;
         }));
 
-        self.actionOptions = ko.observableArray([
+        var _actions = [
             {
                 display: 'Load / Update / Close a case',
                 value: 'load'
@@ -315,15 +316,20 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 display: 'Load Case From Fixture',
                 value: 'load_case_from_fixture'
             },
-            {
-                display: '---',
-                value: 'separator'
-            },
-            {
-                display: 'Open a Case',
-                value: 'open'
-            }
-        ]);
+        ];
+        if (!self.caseConfig.isShadowForm) {
+            _actions = _actions.concat([
+                {
+                    display: '---',
+                    value: 'separator',
+                },
+                {
+                    display: 'Open a Case',
+                    value: 'open',
+                },
+            ]);
+        }
+        self.actionOptions = ko.observableArray(_actions);
 
         self.renameCaseTag = function (oldTag, newTag, parentOnly) {
             var actions = self.load_update_cases();

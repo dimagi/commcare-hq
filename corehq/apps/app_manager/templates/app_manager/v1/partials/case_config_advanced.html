@@ -30,7 +30,7 @@
         data: {condition: open_condition, config: $data},
     }"></div>
     <!-- /ko -->
-    <div data-bind="if: actionType == 'load'" class="row">
+    <div data-bind="if: actionType == 'load' && !caseConfig.isShadowForm" class="row">
         <div class="col-sm-6">
             <div class="panel panel-default"
                  data-bind="template: 'case-config:case-transaction:case-preload'"></div>
@@ -143,6 +143,7 @@
                 </div>
             <!-- /ko -->
 
+            <!-- ko ifnot: caseConfig.isShadowForm -->
                 <div class="form-group">
                     <div class="checkbox">
                         <label>
@@ -156,6 +157,7 @@
                         if: close_case
                     }"></div>
                 </div>
+            <!-- /ko -->
             </div>
         </div>
     </div>
