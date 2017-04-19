@@ -1,0 +1,68 @@
+{% extends 'data_interfaces/case_rule_criteria_base.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'data_interfaces/js/case_rule_actions.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    var actions_model = null;
+    $(function() {
+        actions_model = new CaseRuleActions({
+            close_case: '{{ actions_form.close_case.value|escapejs }}',
+            properties_to_update: {{ actions_form.properties_to_update.value|safe }},
+            custom_action_definitions: {{ actions_form.custom_action_definitions.value|safe }},
+        });
+        $('#rule-actions').koApplyBindings(actions_model);
+        actions_model.load_initial();
+        {% if read_only_mode %}
+            $('#rule-definition :input').prop('disabled', true);
+        {% endif %}
+
+        $("#rule-definition-form").submit(function(event) {
+            var result = true;
+
+            if(criteria_model.selected_case_filter_id() !== 'select-one') {
+                criteria_model.show_add_filter_warning(true);
+                result = false;
+            } else {
+                criteria_model.show_add_filter_warning(false);
+            }
+
+            if(actions_model.selected_case_action_id() !== 'select-one') {
+                actions_model.show_add_action_warning(true);
+                result = false;
+            } else {
+                actions_model.show_add_action_warning(false);
+            }
+
+            return result;
+        });
+    });
+</script>
+{% endblock %}
+
+{% block page_content %}{{ block.super }}
+
+{% include 'data_interfaces/partials/case_rule_actions.html' with form=actions_form %}
+
+<div id="rule-definition">
+    {% if read_only_mode %}
+        <p class="alert alert-block alert-warning">
+            {% trans "NOTE: A system administrator is required to edit this rule." %}
+        </p>
+    {% endif %}
+    <form id="rule-definition-form" class="form form-horizontal" method="POST" action="#">
+        {% crispy rule_form %}
+        {% crispy criteria_form %}
+        {% crispy actions_form %}
+        <div class="col-xs-1">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
