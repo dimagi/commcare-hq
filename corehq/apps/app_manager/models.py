@@ -909,6 +909,8 @@ class FormBase(DocumentSchema):
                 return Form.wrap(data)
             elif doc_type == 'AdvancedForm':
                 return AdvancedForm.wrap(data)
+            elif doc_type == 'ShadowForm':
+                return ShadowForm.wrap(data)
             else:
                 try:
                     return CareplanForm.wrap(data)
@@ -2974,6 +2976,47 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 meta.add_closer(self.unique_id, action.close_condition)
 
 
+class ShadowForm(AdvancedForm):
+    form_type = 'shadow_form'
+    shadow_parent_form_id = StringProperty(required=False, default=None)  # The unqiue id of the form we are shadowing.
+
+    extra_actions = SchemaProperty(AdvancedFormActions)
+
+    @property
+    def shadow_parent_form(self):
+        if not self.shadow_parent_form_id:
+            return None
+        else:
+            app = self.get_app()
+            return app.get_form(self.shadow_parent_form_id)
+
+    @property
+    def source(self):
+        if self.shadow_parent_form_id:
+            return self.shadow_parent_form.source
+        from corehq.apps.app_manager.views.utils import get_blank_form_xml
+        return get_blank_form_xml("Untitled Form")
+
+    @property
+    def xmlns(self):
+        if not self.shadow_parent_form_id:
+            return None
+        else:
+            return self.shadow_parent_form.xmlns
+
+    @property
+    def actions(self):
+        if not self.shadow_parent_form_id:
+            shadow_parent_actions = AdvancedFormActions()
+        else:
+            shadow_parent_actions = self.shadow_parent_form.actions
+        return self._merge_actions(shadow_parent_actions, self.extra_actions)
+
+    def _merge_actions(self, source_actions, extra_actions):
+        # TODO: write me
+        return source_actions
+
+
 class SchedulePhaseForm(IndexedSchema):
     """
     A reference to a form in a schedule phase.
@@ -3059,7 +3102,7 @@ class SchedulePhase(IndexedSchema):
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
     case_label = DictProperty()
-    forms = SchemaListProperty(AdvancedForm)
+    forms = SchemaListProperty(FormBase)  
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
     put_in_root = BooleanProperty(default=False)
