@@ -207,7 +207,7 @@ def queue_async_indicators():
         indicators_by_domain_doc_type = defaultdict(list)
         for indicator in indicators:
             # don't requeue anything htat's be queued in the past day
-            if not indicator.date_queued or indicator.date_queued > day_ago:
+            if not indicator.date_queued or indicator.date_queued < day_ago:
                 indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
 
         for k, indicators in indicators_by_domain_doc_type.items():
