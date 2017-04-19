@@ -300,14 +300,9 @@ class LSVHNDSurveyIndicator(LSIndicator):
         now_date = self.now.date()
         user_ids_with_forms_in_time_frame = set()
         for user_id, forms in self.forms.items():
-            try:
-                vhnd_date = convert_to_date(forms[0]['form']['vhsnd_date_planned'])
-            except KeyError:
-                # the form will not have this date if it is not known
-                continue
-            else:
-                if (now_date - vhnd_date).days < 37:
-                    user_ids_with_forms_in_time_frame.add(user_id)
+            vhnd_date = convert_to_date(forms[0]['form']['vhsnd_date_past_month'])
+            if (now_date - vhnd_date).days < 37:
+                user_ids_with_forms_in_time_frame.add(user_id)
 
         awc_ids = {
             loc
