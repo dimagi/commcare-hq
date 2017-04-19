@@ -1418,7 +1418,7 @@ class ExportDataSchema(Document):
             unordered_items = []
             for idx, item in enumerate(group_schema.items):
                 if item in orders:
-                    ordered_items.insert(orders[item], item)
+                    ordered_items[orders[item]] = item
                 else:
                     unordered_items.append(item)
             group_schema.items = filter(None, ordered_items) + unordered_items
