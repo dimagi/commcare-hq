@@ -39,13 +39,18 @@ def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
         if not custom_data:
             raise AssertionError("Expected user form and custom data form to be submitted together")
 
-        location = (validate_location(domain, new_user_form)
-                    if new_user_form else user.get_sql_location(domain))
-        if not location:
-            return
+        if sender == 'LocationFormSet':
+            location_type = new_user_form.data['location_type']
+        elif new_user_form:
+            location_type = validate_location(domain, new_user_form).location_type.code
+        else:
+            location = user.get_sql_location(domain)
+            if not location:
+                return
+            location_type = user.get_sql_location(domain).location_type.code
 
         usertype = custom_data.form.cleaned_data['usertype']
-        validate_usertype(domain, location, usertype, custom_data)
+        validate_usertype(domain, location_type, usertype, custom_data)
         if new_user_form:
             set_user_role(domain, user, usertype, new_user_form)
         else:
@@ -55,10 +60,10 @@ def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
         location_form.add_error('assigned_locations', _("You cannot edit the location of existing users."))
 
 
-def validate_usertype(domain, location, usertype, custom_data):
+def validate_usertype(domain, location_type, usertype, custom_data):
     """Restrict choices for custom user data role field based on the chosen
     location's type"""
-    allowable_usertypes = LOC_TYPES_TO_USER_TYPES[location.location_type.code]
+    allowable_usertypes = LOC_TYPES_TO_USER_TYPES[location_type]
     if usertype not in allowable_usertypes:
         msg = _("'User Type' must be one of the following: {}").format(', '.join(allowable_usertypes))
         custom_data.form.add_error('usertype', msg)
