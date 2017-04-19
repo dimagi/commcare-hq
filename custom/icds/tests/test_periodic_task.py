@@ -79,7 +79,7 @@ class TestIndicatorPeriodicTask(TestCase):
             get_user_ids_under_location_mock):
         is_first_week_of_month_mock.return_value = True
         get_user_ids_under_location_mock.return_value = set([])
-        run_weekly_indicators()
+        run_weekly_indicators(phased_rollout=False)
 
         expected_calls = []
 
@@ -99,7 +99,7 @@ class TestIndicatorPeriodicTask(TestCase):
             get_user_ids_under_location_mock):
         is_first_week_of_month_mock.return_value = False
         get_user_ids_under_location_mock.return_value = set([])
-        run_weekly_indicators()
+        run_weekly_indicators(phased_rollout=False)
 
         expected_calls = []
 
@@ -127,7 +127,7 @@ class TestIndicatorPeriodicTask(TestCase):
 
         is_first_week_of_month_mock.return_value = True
         get_user_ids_under_location_mock.side_effect = get_user_ids_wrap
-        run_weekly_indicators()
+        run_weekly_indicators(phased_rollout=False)
 
         expected_calls = []
 
