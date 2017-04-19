@@ -13,6 +13,8 @@ from dimagi.utils.logging import notify_exception
 
 ERR_INVALID_DESTINATION = '-410'
 
+INDIA_COUNTRY_CODE = '91'
+
 ERROR_CODES = {
     "-2": "Invalid credentials",
     "-3": "Empty mobile number",
@@ -86,6 +88,12 @@ class SQLICDSBackend(SQLSMSBackend):
     def get_form_class(cls):
         return ICDSBackendForm
 
+    def destination_number_is_valid(self, phone_number):
+        """
+        phone_number is not expected to contain the leading + for this validation to work.
+        """
+        return phone_number.startswith(INDIA_COUNTRY_CODE) and phone_number != INDIA_COUNTRY_CODE
+
     def get_response_code(self, response):
         api_code_string = "~code=API"
         begin_response = response.find(api_code_string)
@@ -112,6 +120,11 @@ class SQLICDSBackend(SQLSMSBackend):
     def send(self, msg, orig_phone_number=None, *args, **kwargs):
         config = self.config
         phone_number = strip_plus(msg.phone_number)
+
+        if not self.destination_number_is_valid(phone_number):
+            msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
+            return
+
         try:
             text = msg.text.encode("iso-8859-1")
             msg_type = "PM"
