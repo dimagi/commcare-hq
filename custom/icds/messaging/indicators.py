@@ -301,7 +301,7 @@ class LSVHNDSurveyIndicator(LSIndicator):
         user_ids_with_forms_in_time_frame = set()
         for user_id, forms in self.forms.items():
             try:
-                vhnd_date = convert_to_date(forms[0]['form']['vhsnd_date_planned'])
+                vhnd_date = convert_to_date(forms[0]['form']['vhsnd_date_past_month'])
             except KeyError:
                 # the form will not have this date if it is not known
                 continue
