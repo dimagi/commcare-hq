@@ -12,6 +12,7 @@ from corehq.apps.api.resources import DictObject
 from corehq.form_processor.abstract_models import CaseToXMLMixin
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms import const
+from dateutil.parser import parse as parse_datetime
 from dimagi.ext.couchdbkit import *
 import six
 from six.moves import filter
@@ -161,6 +162,13 @@ class ESXFormInstance(DictObject):
         return self.form_data.get(const.TAG_NAME, "")
 
 
+def get_datetime_or_none(string):
+    try:
+        return parse_datetime(string)
+    except:
+        return None
+
+
 class ESCase(DictObject, CaseToXMLMixin):
     """This wrapper around case data returned from ES which
     provides attribute access and helper functions for
@@ -178,6 +186,10 @@ class ESCase(DictObject, CaseToXMLMixin):
             return open_action['server_date']
         except Exception:
             pass
+
+    @property
+    def opened_on(self):
+        return get_datetime_or_none(self._data['opened_on'])
 
     @property
     def indices(self):
