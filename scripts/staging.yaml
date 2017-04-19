@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - preserve-es-user-group-ids  # Danny 4/19
   - vellum-staging # J$ 11/13
   - nh/240812/mw_pwd_reset  # Norman 3/23
   - nh/new_rb  # Norman 11/22
