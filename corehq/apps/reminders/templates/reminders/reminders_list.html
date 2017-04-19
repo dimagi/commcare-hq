@@ -10,8 +10,9 @@
 
 {% block js-inline %} {{ block.super }}
     <script>
-        var remindersList = new RemindersListModel({{ reminders|JSON }},
-            '{% url "reminder_rule_progress" domain %}');
+        debugger;
+        var remindersList = new RemindersListModel(hqImport("hqwebapp/js/initial_page_data.js").get('reminders'),
+            hqImport("hqwebapp/js/urllib.js").reverse("reminder_rule_progress"));
         $('#reminders-list').koApplyBindings(remindersList);
         remindersList.init();
 
@@ -20,7 +21,7 @@
                 "paginateType": "bootstrap",
                 "lengthChange": false,
                 "filter": true,
-                "oLanguage": {"emptyTable": "{% trans 'There are no reminders to display.' %}", "infoEmpty" : ""},
+                "oLanguage": {"emptyTable": gettext('There are no reminders to display.'), "infoEmpty" : ""},
                 "sort": true,
                 "sorting": [[0, "asc"]],
                 "displayLength": 5
@@ -38,6 +39,8 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'reminders' reminders %}
+    {% registerurl 'reminder_rule_progress' domain %}
     <h2>{% trans 'Reminders' %}</h2>
     <div class="btn-group">
         <a href="{% url "create_reminder_schedule" domain %}" class="btn btn-success">
