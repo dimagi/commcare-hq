@@ -3176,6 +3176,20 @@ class AdvancedModule(ModuleBase):
         form.source = attachment
         return form
 
+    def new_shadow_form(self, name, lang):
+        lang = lang if lang else "en"
+        name = name if name else _("Untitled Form")
+        form = ShadowForm(
+            name={lang: name},
+            no_vellum=True,
+        )
+        form.schedule = FormSchedule(enabled=False)
+
+        self.forms.append(form)
+        form = self.get_form(-1)
+        form.get_unique_id()  # This function sets the unique_id. Normally setting the source sets the id.
+        return form
+
     def add_insert_form(self, from_module, form, index=None, with_source=False):
         if isinstance(form, AdvancedForm):
             new_form = form

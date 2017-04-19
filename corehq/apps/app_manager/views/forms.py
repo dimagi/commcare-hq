@@ -84,7 +84,7 @@ from corehq.apps.app_manager.models import (
     CustomInstance,
     CaseReferences,
     AdvancedModule,
-)
+    ShadowForm)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
@@ -386,7 +386,7 @@ def new_form(request, domain, app_id, module_id):
         app = get_app(domain, app_id)
         module = app.get_module(module_id)
         if module.module_type == "advanced":
-            form = app.new_shadow_form(module_id, name, lang)
+            form = module.new_shadow_form(name, lang)
         else:
             raise Exception("Shadow forms may only be created under shadow modules")
     else:
