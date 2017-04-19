@@ -393,6 +393,19 @@
                         {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
                     </p>
                 {% endif %}
+                {% if form.form_type == "shadow_form" %}
+                    <div class="alert alert-warning">
+                        {% trans "You are viewing a shadow form, therefore:" %}
+                        <ul>
+                            <li>{% trans 'You will be unable to add "Open case" action' %}</li>
+                            <li>{% trans 'Load/Update actions will be "merged" with the source form actions'%}</li>
+                            <li>{% trans 'Every case tag in the source form load/update action configuration must appear in this configuration'%}</li>
+                            <li>{% trans 'You are not allowed to specify load or save case properties'%}</li>
+                            <li>{% trans 'The load and save case property behaviors specified in the shadow source form actions will be used for the actions with matching case tags specified here.'%}</li>
+                            <li>{% trans 'You are not allowed to specify case closures here'%}</li>
+                        </ul>
+                    </div>
+                {% endif %}
                 {% if form_errors or xform_validation_errored %}
                     <p class="alert alert-warning">
                         {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
