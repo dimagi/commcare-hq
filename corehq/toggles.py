@@ -1122,3 +1122,10 @@ MOTECH = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
+
+MARK_LATEST_SUBMISSION_ON_USER = StaticToggle(
+    'user_last_submission',
+    "Marks the latest submssion on user model",
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
