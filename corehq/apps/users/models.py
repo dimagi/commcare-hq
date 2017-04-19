@@ -56,6 +56,8 @@ from xml.etree import ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 
+from dimagi.utils.web import get_site_domain
+
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
 MAX_LOGIN_ATTEMPTS = 5
@@ -2317,8 +2319,13 @@ class Invitation(QuickCachedDocumentMixin, Document):
     def send_activation_email(self, remaining_days=30):
         url = absolute_reverse("domain_accept_invitation",
                                args=[self.domain, self.get_id])
-        params = {"domain": self.domain, "url": url, 'days': remaining_days,
-                  "inviter": self.get_inviter().formatted_name}
+        params = {
+            "domain": self.domain,
+            "url": url,
+            'days': remaining_days,
+            "inviter": self.get_inviter().formatted_name,
+            'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+        }
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
         lang = guess_domain_language(self.domain)
