@@ -38,10 +38,10 @@ class TestLSAggregatePerformanceIndicator(SimpleTestCase, TestXmlMixin):
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
         indicator = LSAggregatePerformanceIndicator('domain', 'user')
         message = indicator.get_messages()[0]
-        self.assertIn('Timely Home Visits - 22 / 269', message)
-        self.assertIn('Received adequate THR / Due for THR - 19 / 34', message)
-        self.assertIn('Number of children weighed - 30 / 33', message)
-        self.assertIn('Days AWC open - 59', message)
+        self.assertIn('Home visits completed on time / Home visits completed: 22 / 269', message)
+        self.assertIn('Beneficiaries received adequate THR / Beneficiaries eligible for THR: 19 / 34', message)
+        self.assertIn('Children weighed under 3 years / Total children under 3 years: 30 / 33', message)
+        self.assertIn('Average days AWC open / Goal: 59 / 25', message)
 
 
 class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
@@ -92,10 +92,10 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
         indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
         message = indicator.get_messages()[0]
-        self.assertIn('Home Visits - 6 / 65', message)
-        self.assertIn('Received adequate THR / Due for THR - 1 / 2', message)
-        self.assertIn('Number of children weighed - 1 / 2', message)
-        self.assertIn('Days AWC open - 3', message)
+        self.assertIn('Home visits completed / Goal: 6 / 65', message)
+        self.assertIn('Beneficiaries received adequate THR / Beneficiaries eligible for THR: 1 / 2', message)
+        self.assertIn('Children weighed under 3 years / Total children under 3 years: 1 / 2', message)
+        self.assertIn('Days AWC open / Goal: 3 / 25', message)
 
     @patch.object(LSAggregatePerformanceIndicator, 'visits_fixture', new_callable=PropertyMock)
     @patch.object(LSAggregatePerformanceIndicator, 'thr_fixture', new_callable=PropertyMock)

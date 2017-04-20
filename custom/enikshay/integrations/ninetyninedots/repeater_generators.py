@@ -78,7 +78,7 @@ class PatientPayload(jsonobject.JsonObject):
             phone_numbers=_get_phone_numbers(person_case_properties),
             merm_id=person_case_properties.get(MERM_ID, None),
             treatment_start_date=episode_case_properties.get(TREATMENT_START_DATE, None),
-            treatment_supporter_name="{} {}".format(
+            treatment_supporter_name=u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
                 episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, ''),
             ),

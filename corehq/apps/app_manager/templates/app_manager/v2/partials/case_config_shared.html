@@ -4,11 +4,9 @@
     <!--ko with: condition -->
     <span data-bind="text: $parent.actionType"></span>
 
-    {% if app.advanced_app_builder or form.get_action_type != 'open' %}
-      <div data-bind="visible: type() === 'always'">
-          <a href="#" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
-      </div>
-    {% endif %}
+    <div data-bind="visible: type() === 'always'">
+        <a href="#" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
+    </div>
 
     <div class="form-inline" data-bind="visible: type() === 'if'">
         <a href="#" data-bind="click: function () {type('always')}">

@@ -210,11 +210,13 @@ class SubscriptionAdjustmentMethod(object):
     INTERNAL = "INTERNAL"
     TASK = "TASK"
     TRIAL = "TRIAL"
+    AUTOMATIC_DOWNGRADE = 'AUTOMATIC_DOWNGRADE'
     CHOICES = (
         (USER, "User"),
         (INTERNAL, "Ops"),
         (TASK, "Task (Invoicing)"),
         (TRIAL, "30 Day Trial"),
+        (AUTOMATIC_DOWNGRADE, "Automatic Downgrade"),
     )
 
 
@@ -767,7 +769,7 @@ class DefaultProductPlan(models.Model):
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError(
-                "No default product plan was set up, did you forget to run cchq_software_plan_bootstrap?"
+                "No default product plan was set up, did you forget to run migrations?"
             )
 
     @classmethod

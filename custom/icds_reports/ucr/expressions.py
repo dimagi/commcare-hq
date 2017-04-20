@@ -1,6 +1,8 @@
+from datetime import datetime
 from jsonobject.base_properties import DefaultProperty
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.es.forms import FormES
+from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
@@ -148,8 +150,9 @@ class FormsInDateExpressionSpec(JsonObject):
 
     def _get_forms(self, case_id, from_date, to_date, context):
         domain = context.root_doc['domain']
+        xmlns_tuple = tuple(self.xmlns)
         cache_key = (self.__class__.__name__, case_id, self.count, from_date,
-                     to_date, tuple(self.xmlns))
+                     to_date, xmlns_tuple)
 
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
@@ -157,28 +160,50 @@ class FormsInDateExpressionSpec(JsonObject):
         xform_ids = self._get_case_form_ids(case_id, context)
         # TODO(Emord) this will eventually break down when cases have a lot of
         # forms associated with them. perhaps change to intersecting two sets
-        query = (
-            FormES()
-            .domain(domain)
-            .doc_id(xform_ids)
-        )
-        if from_date:
-            query = query.completed(gte=from_date)
-        if to_date:
-            query = query.completed(lte=to_date)
+        xforms = self._get_filtered_forms_from_es(case_id, xform_ids, context)
         if self.xmlns:
-            query = query.xmlns(list(self.xmlns))
+            xforms = [x for x in xforms if x['xmlns'] in xmlns_tuple]
+        if from_date:
+            xforms = [x for x in xforms if x['timeEnd'] >= from_date]
+        if to_date:
+            xforms = [x for x in xforms if x['timeEnd'] <= to_date]
         if self.count:
-            count = query.count()
+            count = len(xforms)
             context.set_cache_value(cache_key, count)
             return count
 
-        form_ids = query.get_ids()
+        form_ids = [x['_id'] for x in xforms]
         xforms = FormAccessors(domain).get_forms(form_ids)
         xforms = [self._get_form_json(f, context) for f in xforms if f.domain == domain]
 
         context.set_cache_value(cache_key, xforms)
         return xforms
+
+    def _get_filtered_forms_from_es(self, case_id, xform_ids, context):
+        cache_key = (self.__class__.__name__, 'es_helper', case_id, tuple(xform_ids))
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        def _transform_time_end(xform):
+            if not xform.get('xmlns', None):
+                return None
+            try:
+                time = xform['form']['meta']['timeEnd']
+            except KeyError:
+                return None
+
+            xform['timeEnd'] = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ').date()
+            return xform
+
+        forms = (
+            FormES()
+            .domain(context.root_doc['domain'])
+            .doc_id(xform_ids)
+            .source(['form.meta.timeEnd', 'xmlns', '_id'])
+        ).run().hits
+        forms = filter(None, map(_transform_time_end, forms))
+        context.set_cache_value(cache_key, forms)
+        return forms
 
     def _get_case_form_ids(self, case_id, context):
         cache_key = (self.__class__.__name__, 'helper', case_id)
@@ -191,7 +216,7 @@ class FormsInDateExpressionSpec(JsonObject):
         return xform_ids
 
     def _get_form_json(self, form, context):
-        cache_key = (self.__class__.__name__, 'xform', form.get_id)
+        cache_key = (XFORM_CACHE_KEY_PREFIX, form.get_id)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 

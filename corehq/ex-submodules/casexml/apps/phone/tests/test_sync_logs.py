@@ -82,32 +82,22 @@ class CachingReponseTest(TestCase):
     def testCachingResponse(self):
         log = SyncLog()
         log.save()
-        self.assertFalse(log.has_cached_payload(V1))
-        self.assertFalse(log.has_cached_payload(V2))
+        self.assertIsNone(log.cache_payload_paths.get(V1))
+        self.assertIsNone(log.cache_payload_paths.get(V2))
         self.assertEqual(None, log.get_cached_payload(V1))
         self.assertEqual(None, log.get_cached_payload(V2))
         log.invalidate_cached_payloads()
 
-        payload = "<node>melting hippo</node>"
-        log.set_cached_payload(payload, V1)
-        self.assertTrue(log.has_cached_payload(V1))
-        self.assertFalse(log.has_cached_payload(V2))
-
-        self.assertEqual(payload, log.get_cached_payload(V1))
-        self.assertEqual(None, log.get_cached_payload(V2))
-
-        v2_payload = "<node>melting hippo 2.0</node>"
-        log.set_cached_payload(v2_payload, V2)
-        self.assertTrue(log.has_cached_payload(V1))
-        self.assertTrue(log.has_cached_payload(V2))
-        self.assertEqual(payload, log.get_cached_payload(V1))
-        self.assertEqual(v2_payload, log.get_cached_payload(V2))
+        payload_path = "path-to-cache"
+        log.set_cached_payload(payload_path, V1)
+        log.set_cached_payload(payload_path, V2)
+        self.assertEqual(log.cache_payload_paths[V1], payload_path)
+        self.assertEqual(log.cache_payload_paths[V2], payload_path)
 
         log.invalidate_cached_payloads()
-        self.assertFalse(log.has_cached_payload(V1))
-        self.assertFalse(log.has_cached_payload(V2))
-        self.assertEqual(None, log.get_cached_payload(V1))
-        self.assertEqual(None, log.get_cached_payload(V2))
+        log = SyncLog.get(log._id)
+        self.assertIsNone(log.cache_payload_paths.get(V1))
+        self.assertIsNone(log.cache_payload_paths.get(V2))
 
 
 @use_sql_backend

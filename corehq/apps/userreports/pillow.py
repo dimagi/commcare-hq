@@ -7,19 +7,26 @@ from alembic.autogenerate.api import compare_metadata
 from kafka.util import kafka_bytestring
 import six
 
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.const import (
     KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
 )
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
-from fluff.signals import get_migration_context, get_tables_to_rebuild, reformat_alembic_diffs
+from fluff.signals import (
+    apply_index_changes,
+    get_migration_context,
+    get_tables_with_index_changes,
+    get_tables_to_rebuild,
+    reformat_alembic_diffs
+)
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
@@ -45,11 +52,15 @@ def time_ucr_process_change(method):
         if seconds > LONG_UCR_LOGGING_THRESHOLD:
             table = args[1]
             doc = args[2]
-            message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
+            log_message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
                 table.config._id, doc['_id'], seconds
             )
-            pillow_logging.warning(message)
-            _slow_ucr_assert(seconds < LONG_UCR_SOFT_ASSERT_THRESHOLD, message)
+            pillow_logging.warning(log_message)
+            if seconds > LONG_UCR_SOFT_ASSERT_THRESHOLD:
+                email_message = u"UCR data source {} is taking too long to process".format(
+                    table.config._id
+                )
+                _slow_ucr_assert(False, email_message)
         return result
     return timed
 
@@ -65,24 +76,10 @@ def _filter_by_hash(configs, ucr_division):
     return filtered_configs
 
 
-def _exclude_missing_domains(configs):
-    from corehq.apps.es import DomainES
-    from corehq.elastic import ESError
-
-    config_domains = {conf.domain for conf in configs}
-    try:
-        domains_present = set(DomainES().in_domains(config_domains).values_list('name', flat=True))
-    except ESError:
-        pillow_logging.exception("Unable to filter configs by domain")
-        return configs
-
-    return [config for config in configs if config.domain in domains_present]
-
-
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_provider, auto_repopulate_tables=False, ucr_division=None,
-                 include_ucrs=None, exclude_ucrs=None, filter_missing_domains=False):
+                 include_ucrs=None, exclude_ucrs=None):
         """Initializes the processor for UCRs
 
         Keyword Arguments:
@@ -99,7 +96,6 @@ class ConfigurableReportTableManagerMixin(object):
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
-        self.filter_missing_domains = filter_missing_domains
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
 
@@ -116,9 +112,6 @@ class ConfigurableReportTableManagerMixin(object):
             configs = [config for config in configs if config.table_id in self.include_ucrs]
         elif self.ucr_division:
             configs = _filter_by_hash(configs, self.ucr_division)
-
-        if self.filter_missing_domains:
-            configs = _exclude_missing_domains(configs)
 
         return configs
 
@@ -174,12 +167,13 @@ class ConfigurableReportTableManagerMixin(object):
 
         for engine_id, table_map in tables_by_engine.items():
             engine = connection_manager.get_engine(engine_id)
+            table_names = list(table_map)
             with engine.begin() as connection:
-                migration_context = get_migration_context(connection, list(table_map))
+                migration_context = get_migration_context(connection, table_names)
                 raw_diffs = compare_metadata(migration_context, metadata)
                 diffs = reformat_alembic_diffs(raw_diffs)
 
-            tables_to_rebuild = get_tables_to_rebuild(diffs, list(table_map))
+            tables_to_rebuild = get_tables_to_rebuild(diffs, table_names)
             for table_name in tables_to_rebuild:
                 sql_adapter = table_map[table_name]
                 if not sql_adapter.config.is_static:
@@ -189,6 +183,10 @@ class ConfigurableReportTableManagerMixin(object):
                         _notify_rebuild(six.text_type(e), sql_adapter.config.to_json())
                 else:
                     self.rebuild_table(sql_adapter)
+
+            tables_with_index_changes = get_tables_with_index_changes(diffs, table_names)
+            tables_with_index_changes -= tables_to_rebuild
+            apply_index_changes(engine, raw_diffs, tables_with_index_changes)
 
     def _rebuild_es_tables(self, adapters):
         # note unlike sql rebuilds this doesn't rebuild the indicators
@@ -209,9 +207,9 @@ class ConfigurableReportTableManagerMixin(object):
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
 
     @time_ucr_process_change
-    def _save_doc_to_table(self, table, doc):
+    def _save_doc_to_table(self, table, doc, eval_context):
         # best effort will swallow errors in the table
-        table.best_effort_save(doc)
+        table.best_effort_save(doc, eval_context)
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
@@ -234,17 +232,19 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
         if doc is None:
             return
 
+        eval_context = EvaluationContext(doc)
         for table in self.table_adapters_by_domain[domain]:
             if table.config.filter(doc):
                 if table.run_asynchronous:
                     async_tables.append(table.config._id)
                 else:
-                    self._save_doc_to_table(table, doc)
+                    self._save_doc_to_table(table, doc, eval_context)
+                    eval_context.reset_iteration()
             elif table.config.deleted_filter(doc):
                 table.delete(doc)
 
         if async_tables:
-            AsyncIndicator.update_indicators(change, pillow_instance, async_tables)
+            AsyncIndicator.update_indicators(change, async_tables)
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
@@ -259,8 +259,8 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
     def __init__(self, processor, pillow_name, topics):
         change_feed = KafkaChangeFeed(topics, group_id=pillow_name)
-        checkpoint = PillowCheckpoint(pillow_name)
-        event_handler = MultiTopicCheckpointEventHandler(
+        checkpoint = PillowCheckpoint(pillow_name, change_feed.sequence_format)
+        event_handler = KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
         )
         super(ConfigurableReportKafkaPillow, self).__init__(
@@ -312,7 +312,6 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
-            filter_missing_domains=True,
         ),
         pillow_name=pillow_id,
         topics=topics

@@ -7,7 +7,7 @@ from django.core.management import BaseCommand
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.app_manager.models import Application, PreloadAction, CaseReferences
 from corehq.apps.app_manager.util import save_xform
-from corehq.apps.app_manager.xform import XForm, SESSION_USERCASE_ID
+from corehq.apps.app_manager.xform import XForm, SESSION_USERCASE_ID, get_add_case_preloads_case_id_xpath
 from corehq.toggles import NAMESPACE_DOMAIN, USER_PROPERTY_EASY_REFS
 
 
@@ -92,16 +92,18 @@ class Command(BaseCommand):
                     })
                     form.actions.usercase_preload = PreloadAction()
                 if preloads:
-                    migrate_preloads(app, form, preloads)
+                    migrate_preloads(app, module, form, preloads)
 
         app.vellum_case_management = True
         app.save()
 
 
-def migrate_preloads(app, form, preloads):
+def migrate_preloads(app, module, form, preloads):
     xform = XForm(form.source)
+    case_id_xpath = get_add_case_preloads_case_id_xpath(module, form)
     for kwargs in preloads:
         hashtag = kwargs.pop("hashtag")
+        kwargs['case_id_xpath'] = case_id_xpath
         xform.add_case_preloads(**kwargs)
         refs = {path: [hashtag + case_property]
                 for path, case_property in kwargs["preloads"].iteritems()}

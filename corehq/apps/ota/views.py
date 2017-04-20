@@ -24,6 +24,7 @@ from corehq.apps.domain.decorators import (
     check_domain_migration,
     login_or_digest_or_basic_or_apikey_or_token,
 )
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
@@ -34,7 +35,6 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
-from corehq.tabs.tabclasses import ProjectSettingsTab
 from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
@@ -59,7 +59,19 @@ def restore(request, domain, app_id=None):
     couch_user = CouchUser.from_django_user_include_anonymous(domain, request.user)
     assert couch_user is not None, 'No couch user to use for restore'
     update_device_id(couch_user, request.GET.get('device_id'))
-    response, _ = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    response, timing_context = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    tags = [
+        u'domain:{}'.format(domain),
+        u'status_code:{}'.format(response.status_code),
+    ]
+    datadog_counter('commcare.restores.count', tags=tags)
+    for timer in timing_context.to_list():
+        datadog_gauge(
+            'commcare.restores.timings',
+            timer.duration,
+            tags=tags + [u'segment:{}'.format(timer.name) if timer.parent else u'all'],
+        )
+
     return response
 
 
@@ -262,7 +274,7 @@ class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
     template_name = "ota/prime_restore_cache.html"
 
     @method_decorator(domain_admin_required)
-    @toggles.PRIME_RESTORE.required_decorator()
+    @method_decorator(toggles.PRIME_RESTORE.required_decorator())
     def dispatch(self, *args, **kwargs):
         return super(PrimeRestoreCacheView, self).dispatch(*args, **kwargs)
 
@@ -273,12 +285,6 @@ class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
             'domain': self.domain,
         })
         main_context.update({
-            'active_tab': ProjectSettingsTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-                project=self.request.project
-            ),
             'is_project_settings': True,
         })
         return main_context

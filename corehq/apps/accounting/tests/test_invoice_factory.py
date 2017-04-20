@@ -18,7 +18,7 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
     @classmethod
     def setUpClass(cls):
         super(TestDomainInvoiceFactory, cls).setUpClass()
-        generator.instantiate_accounting()
+        generator.bootstrap_test_plans()
 
     def setUp(self):
         super(TestDomainInvoiceFactory, self).setUp()

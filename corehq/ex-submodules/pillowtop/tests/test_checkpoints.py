@@ -20,7 +20,7 @@ class PillowCheckpointTest(SimpleTestCase):
 
     def test_checkpoint_id(self):
         checkpoint_id = 'test-checkpoint-id'
-        self.assertEqual(checkpoint_id, PillowCheckpoint(checkpoint_id).checkpoint_id)
+        self.assertEqual(checkpoint_id, PillowCheckpoint(checkpoint_id, 'text').checkpoint_id)
 
 
 class PillowCheckpointDbTest(TestCase):
@@ -30,7 +30,7 @@ class PillowCheckpointDbTest(TestCase):
     @property
     @memoized
     def checkpoint(self):
-        return PillowCheckpoint(self._checkpoint_id)
+        return PillowCheckpoint(self._checkpoint_id, 'text')
 
     def save_checkpoint(self, checkpoint_id, sequence_id):
         checkpoint = DjangoPillowCheckpoint.objects.get_or_create(checkpoint_id=checkpoint_id)[0]
@@ -38,7 +38,7 @@ class PillowCheckpointDbTest(TestCase):
         checkpoint.save()
 
     def test_get_or_create_empty(self):
-        checkpoint = get_or_create_checkpoint('some-id')
+        checkpoint = get_or_create_checkpoint('some-id', 'text')
         self.assertEqual('0', checkpoint.sequence)
         self.assertTrue(bool(checkpoint.timestamp))
 

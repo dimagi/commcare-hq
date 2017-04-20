@@ -63,16 +63,8 @@ def get_overdue_repeat_record_count(overdue_threshold=datetime.timedelta(minutes
     return results['value'] if results else 0
 
 
-def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
-    from .models import RepeatRecord
-    kwargs = {
-        'include_docs': True,
-        'reduce': False,
-        'limit': limit,
-        'skip': skip,
-        'descending': True,
-    }
-
+def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None):
+    kwargs = {}
     if repeater_id and not state:
         kwargs['endkey'] = [domain, repeater_id]
         kwargs['startkey'] = [domain, repeater_id, {}]
@@ -83,12 +75,43 @@ def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
         kwargs['endkey'] = [domain, None, state]
         kwargs['startkey'] = [domain, None, state, {}]
     elif not repeater_id and not state:
-        kwargs['endkey'] = [domain]
-        kwargs['startkey'] = [domain, {}]
+        kwargs['endkey'] = [domain, None]
+        kwargs['startkey'] = [domain, None, {}]
+
+    return kwargs
+
+
+def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
+    from .models import RepeatRecord
+    kwargs = {
+        'include_docs': True,
+        'reduce': False,
+        'limit': limit,
+        'skip': skip,
+        'descending': True,
+    }
+    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
 
     results = RepeatRecord.get_db().view('receiverwrapper/repeat_records', **kwargs).all()
 
     return [RepeatRecord.wrap(result['doc']) for result in results]
+
+
+def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, chunk_size=1000):
+    from .models import RepeatRecord
+    kwargs = {
+        'include_docs': True,
+        'reduce': False,
+        'descending': True,
+    }
+    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
+
+    for doc in paginate_view(
+            RepeatRecord.get_db(),
+            'receiverwrapper/repeat_records',
+            chunk_size,
+            **kwargs):
+        yield RepeatRecord.wrap(doc['doc'])
 
 
 def get_repeaters_by_domain(domain):

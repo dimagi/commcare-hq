@@ -14,7 +14,8 @@ from custom.icds.messaging.indicators import (
     LSSubmissionPerformanceIndicator,
     LSVHNDSurveyIndicator,
 )
-from custom.icds.tasks import run_weekly_indicators
+from custom.icds.tasks import (run_weekly_indicators, HINDI, TELUGU, MARATHI,
+    ANDHRA_PRADESH_SITE_CODE, MAHARASHTRA_SITE_CODE)
 from django.test import TestCase, override_settings
 from mock import patch, call
 
@@ -23,6 +24,7 @@ TEST_DOMAIN = 'icds-indicator-periodic-task'
 
 @override_settings(ICDS_SMS_INDICATOR_DOMAINS=[TEST_DOMAIN])
 @patch('corehq.apps.locations.dbaccessors.UserES', UserESFake)
+@patch('custom.icds.tasks.get_user_ids_under_location')
 @patch('custom.icds.tasks.is_first_week_of_month')
 @patch('custom.icds.tasks.run_indicator.delay')
 class TestIndicatorPeriodicTask(TestCase):
@@ -73,36 +75,78 @@ class TestIndicatorPeriodicTask(TestCase):
         UserESFake.save_doc(user._doc)
         return user
 
-    def test_periodic_task_during_first_week_of_month(self, run_indicator_mock, is_first_week_of_month_mock):
+    def test_periodic_task_during_first_week_of_month(self, run_indicator_mock, is_first_week_of_month_mock,
+            get_user_ids_under_location_mock):
         is_first_week_of_month_mock.return_value = True
-        run_weekly_indicators()
+        get_user_ids_under_location_mock.return_value = set([])
+        run_weekly_indicators(phased_rollout=False)
 
         expected_calls = []
 
         for user_id in self.aww_user_ids:
-            expected_calls.append(call(self.domain, user_id, AWWAggregatePerformanceIndicator))
-            expected_calls.append(call(self.domain, user_id, AWWSubmissionPerformanceIndicator))
+            expected_calls.append(call(self.domain, user_id, AWWAggregatePerformanceIndicator, HINDI))
+            expected_calls.append(call(self.domain, user_id, AWWSubmissionPerformanceIndicator, HINDI))
 
         for user_id in self.ls_user_ids:
-            expected_calls.append(call(self.domain, user_id, LSAggregatePerformanceIndicator))
-            expected_calls.append(call(self.domain, user_id, LSSubmissionPerformanceIndicator))
-            expected_calls.append(call(self.domain, user_id, LSVHNDSurveyIndicator))
+            expected_calls.append(call(self.domain, user_id, LSAggregatePerformanceIndicator, HINDI))
+            expected_calls.append(call(self.domain, user_id, LSSubmissionPerformanceIndicator, HINDI))
+            expected_calls.append(call(self.domain, user_id, LSVHNDSurveyIndicator, HINDI))
 
         self.assertEqual(run_indicator_mock.call_count, len(expected_calls))
         run_indicator_mock.assert_has_calls(expected_calls, any_order=True)
 
-    def test_periodic_task_during_rest_of_month(self, run_indicator_mock, is_first_week_of_month_mock):
+    def test_periodic_task_during_rest_of_month(self, run_indicator_mock, is_first_week_of_month_mock,
+            get_user_ids_under_location_mock):
         is_first_week_of_month_mock.return_value = False
-        run_weekly_indicators()
+        get_user_ids_under_location_mock.return_value = set([])
+        run_weekly_indicators(phased_rollout=False)
 
         expected_calls = []
 
         for user_id in self.aww_user_ids:
-            expected_calls.append(call(self.domain, user_id, AWWSubmissionPerformanceIndicator))
+            expected_calls.append(call(self.domain, user_id, AWWSubmissionPerformanceIndicator, HINDI))
 
         for user_id in self.ls_user_ids:
-            expected_calls.append(call(self.domain, user_id, LSSubmissionPerformanceIndicator))
-            expected_calls.append(call(self.domain, user_id, LSVHNDSurveyIndicator))
+            expected_calls.append(call(self.domain, user_id, LSSubmissionPerformanceIndicator, HINDI))
+            expected_calls.append(call(self.domain, user_id, LSVHNDSurveyIndicator, HINDI))
 
         self.assertEqual(run_indicator_mock.call_count, len(expected_calls))
         run_indicator_mock.assert_has_calls(expected_calls, any_order=True)
+
+    def _run_special_language(self, expected_language, run_indicator_mock,
+            is_first_week_of_month_mock, get_user_ids_under_location_mock):
+
+        def get_user_ids_wrap(domain, site_code):
+            if site_code == ANDHRA_PRADESH_SITE_CODE and expected_language == TELUGU:
+                return set(self.aww_user_ids + self.ls_user_ids)
+
+            if site_code == MAHARASHTRA_SITE_CODE and expected_language == MARATHI:
+                return set(self.aww_user_ids + self.ls_user_ids)
+
+            return set([])
+
+        is_first_week_of_month_mock.return_value = True
+        get_user_ids_under_location_mock.side_effect = get_user_ids_wrap
+        run_weekly_indicators(phased_rollout=False)
+
+        expected_calls = []
+
+        for user_id in self.aww_user_ids:
+            expected_calls.append(call(self.domain, user_id, AWWAggregatePerformanceIndicator, expected_language))
+            expected_calls.append(call(self.domain, user_id, AWWSubmissionPerformanceIndicator, expected_language))
+
+        for user_id in self.ls_user_ids:
+            expected_calls.append(call(self.domain, user_id, LSAggregatePerformanceIndicator, expected_language))
+            expected_calls.append(call(self.domain, user_id, LSSubmissionPerformanceIndicator, expected_language))
+            expected_calls.append(call(self.domain, user_id, LSVHNDSurveyIndicator, expected_language))
+
+        self.assertEqual(run_indicator_mock.call_count, len(expected_calls))
+        run_indicator_mock.assert_has_calls(expected_calls, any_order=True)
+
+    def test_telugu(self, run_indicator_mock, is_first_week_of_month_mock, get_user_ids_under_location_mock):
+        self._run_special_language(TELUGU, run_indicator_mock, is_first_week_of_month_mock,
+            get_user_ids_under_location_mock)
+
+    def test_marathi(self, run_indicator_mock, is_first_week_of_month_mock, get_user_ids_under_location_mock):
+        self._run_special_language(MARATHI, run_indicator_mock, is_first_week_of_month_mock,
+            get_user_ids_under_location_mock)

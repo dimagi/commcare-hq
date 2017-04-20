@@ -3,6 +3,7 @@ import os
 import tempfile
 from collections import Counter
 
+import time
 import datetime
 
 from couchdbkit import ResourceConflict
@@ -15,6 +16,8 @@ from couchexport.files import Temp
 from couchexport.models import Format
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename
+from corehq.util.timer import TimingContext
+from corehq.util.datadog.gauges import datadog_gauge
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -32,6 +35,7 @@ class ExportFile(object):
     # This is essentially coppied from couchexport.files.ExportFiles
 
     def __init__(self, path, format):
+        self.path = path
         self.file = Temp(path)
         self.format = format
 
@@ -354,7 +358,10 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
     if progress_tracker:
         DownloadBase.set_progress(progress_tracker, 0, documents.count)
 
+    domain = export_instance.domain
+
     for row_number, doc in enumerate(documents):
+        start = int(time.time() * 1000)
         for table in export_instance.selected_tables:
             rows = table.get_rows(
                 doc,
@@ -368,6 +375,11 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
                 writer.write(table, row)
         if progress_tracker:
             DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
+
+        datadog_gauge('commcare.export_iteration', (time.time() * 1000) - start, tags=[
+            u'iteration:{}'.format(row_number / 500),
+            u'domain:{}'.format(domain),
+        ])
 
 
 def _get_base_query(export_instance):

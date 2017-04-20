@@ -1,7 +1,8 @@
 import copy
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER, FORM
 from corehq.apps.change_feed.topics import FORM_SQL
+from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.elastic import (
@@ -47,6 +48,9 @@ def transform_user_for_elasticsearch(doc_dict):
         doc['base_username'] = doc['username'].split("@")[0]
     else:
         doc['base_username'] = doc['username']
+    groups = Group.by_user(doc['_id'], wrap=False, include_names=True)
+    doc['__group_ids'] = [group['group_id'] for group in groups]
+    doc['__group_names'] = [group['name'] for group in groups]
     return doc
 
 
@@ -85,7 +89,7 @@ def get_unknown_users_pillow(pillow_id='unknown-users-pillow'):
         checkpoint=checkpoint,
         change_feed=change_feed,
         processor=processor,
-        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+        change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
@@ -112,7 +116,7 @@ def get_user_pillow(pillow_id='UserPillow'):
         checkpoint=checkpoint,
         change_feed=change_feed,
         processor=user_processor,
-        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+        change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )

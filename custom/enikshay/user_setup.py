@@ -5,6 +5,8 @@ domain and HQ admins are excepted, in case we ever need to violate the
 assumptions laid out here.
 """
 import math
+import re
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
@@ -20,6 +22,7 @@ LOC_TYPES_TO_USER_TYPES = {
     'dto': ['dto', 'deo'],
     'cto': ['cto'],
     'sto': ['sto'],
+    'drtb-hiv': ['drtb-hiv'],
 }
 
 
@@ -55,11 +58,6 @@ def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
 def validate_usertype(domain, location, usertype, custom_data):
     """Restrict choices for custom user data role field based on the chosen
     location's type"""
-    # TODO handle multiple locations.  How are they created?
-    # maybe set secondary loc to 'drtb-hiv' if usertype == 'drtb-hiv'?
-    location_codes = []
-    if location.location_type.code == 'dto' and 'drtb-hiv' in location_codes:
-        return
     allowable_usertypes = LOC_TYPES_TO_USER_TYPES[location.location_type.code]
     if usertype not in allowable_usertypes:
         msg = _("'User Type' must be one of the following: {}").format(', '.join(allowable_usertypes))
@@ -81,11 +79,6 @@ def set_user_role(domain, user, usertype, user_form):
     else:
         role = roles[0]
         user.set_role(domain, role.get_qualified_id())
-
-
-def get_user_data_code(domain, user):
-    """Add a mobile worker code (custom user data) that's unique across all
-    users at that location"""
 
 
 def validate_role_unchanged(domain, user, user_form):
@@ -128,17 +121,44 @@ def clean_location_callback(sender, domain, request_user, location, forms, **kwa
     set_available_tests(location, location_form)
 
 
+def get_site_code(name, nikshay_code, type_code, parent):
+
+    def code_ify(word):
+        return slugify(re.sub(r'\s+', '_', word))
+
+    nikshay_code = code_ify(nikshay_code)
+    if nikshay_code in map(str, range(0, 10)):
+        nikshay_code = "0{}".format(nikshay_code)
+
+    parent_site_code = parent.site_code
+    parent_prefix = ('drtbhiv_' if parent.location_type.code == 'drtb-hiv' else
+                     "{}_".format(parent.location_type.code))
+    if parent_site_code.startswith(parent_prefix):
+        parent_site_code = parent_site_code[len(parent_prefix):]
+
+    name_code = code_ify(name)
+
+    if type_code in ['sto', 'cdst']:
+        return '_'.join([type_code, nikshay_code])
+    elif type_code == 'cto':
+        return '_'.join([type_code, parent_site_code, name_code])
+    elif type_code == 'drtb-hiv':
+        return '_'.join(['drtbhiv', parent_site_code])
+    elif type_code in ['dto', 'tu', 'dmc', 'phi']:
+        return '_'.join([type_code, parent_site_code, nikshay_code])
+    elif type_code in ['ctd', 'drtb']:
+        return None  # we don't do anything special for these yet
+    else:
+        raise AssertionError('This eNikshay location has an unrecognized type, {}'.format(type_code))
+
+
 def set_site_code(location_form):
-    """Autogenerate site_code based on custom location data nikshay code and
-    the codes of the ancestor locations."""
-    # TODO How is this supposed to work if 'nikshay_code' isn't always required?
-    # maybe use site_code?
-    # nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code') or ''
-    # parent = location_form.cleaned_data['parent']
-    # ancestors = parent.get_ancestors(include_self=True) if parent else []
-    # ancestor_codes = [l.metadata.get('nikshay_code') or '' for l in ancestors]
-    # ancestor_codes.append(nikshay_code)
-    # location_form.cleaned_data['site_code'] = '-'.join(ancestor_codes)
+    # https://docs.google.com/document/d/1Pr19kp5cQz9412Q1lbVgszeZJTv0XRzizb0bFHDxvoA/edit#heading=h.9v4rs82o0soc
+    nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code') or ''
+    type_code = location_form.cleaned_data['location_type']
+    parent = location_form.cleaned_data['parent']
+    name = location_form.cleaned_data['name']
+    location_form.cleaned_data['site_code'] = get_site_code(name, nikshay_code, type_code, parent)
 
 
 def validate_nikshay_code(domain, location_form):
@@ -176,8 +196,10 @@ def set_available_tests(location, location_form):
 
 
 def save_user_callback(sender, couch_user, **kwargs):
-    if toggles.ENIKSHAY.enabled(couch_user.domain):
-        set_issuer_id(couch_user.domain, couch_user)
+    commcare_user = couch_user  # django signals enforce param names
+    if toggles.ENIKSHAY.enabled(commcare_user.domain):
+        set_issuer_id(commcare_user.domain, commcare_user)
+        add_drtb_hiv_to_dto(commcare_user.domain, commcare_user)
 
 
 def compress_nikshay_id(serial_id, body_digit_count):
@@ -239,6 +261,8 @@ def compress_id(serial_id, growth_symbols, lead_symbols, body_symbols, body_digi
 
 
 def get_last_used_device_number(user):
+    if not user.devices:
+        return None
     _, index = max((device.last_used, i) for i, device in enumerate(user.devices))
     return index + 1
 
@@ -263,6 +287,15 @@ def set_issuer_id(domain, user):
         # note that this is saving the user a second time 'cause it needs a
         # user id first, but if refactoring, be wary of a loop!
         user.save()
+
+
+def add_drtb_hiv_to_dto(domain, user):
+    location = user.get_sql_location(domain)
+    if location and location.location_type.code == 'drtb-hiv':
+        # also assign user to the parent DTO
+        loc_ids = user.get_location_ids(domain)
+        if location.parent.location_id not in loc_ids:
+            user.add_to_assigned_locations(location.parent)
 
 
 def connect_signals():

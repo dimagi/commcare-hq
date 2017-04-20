@@ -37,7 +37,7 @@ def get_yes_no(val):
         return 'N/A'
 
 
-@quickcache(['item'])
+@quickcache(['item', 'xmlns'])
 def get_two_last_forms(item, xmlns):
     xforms_ids = CaseAccessors(item['domain']).get_case_xform_ids(item['_id'])
     forms = FormAccessors(item['domain']).get_forms(xforms_ids)

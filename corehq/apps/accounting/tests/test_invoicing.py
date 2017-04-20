@@ -41,7 +41,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
     @classmethod
     def setUpClass(cls):
         super(BaseInvoiceTestCase, cls).setUpClass()
-        generator.instantiate_accounting()  # TODO - only call for subclasses that actually need the test plans
+        generator.bootstrap_test_plans()  # TODO - only call for subclasses that actually need the test plans
         cls.billing_contact = generator.create_arbitrary_web_user_name()
         cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
         cls.currency = generator.init_default_currency()

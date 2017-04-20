@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 from django.test import SimpleTestCase, TestCase
 from mock import MagicMock
@@ -213,7 +213,8 @@ def get_validator(location_types, locations, old_collection=None):
 
 MockCollection = namedtuple(
     'MockCollection',
-    'types locations locations_by_id locations_by_site_code domain_name custom_data_validator')
+    'types locations locations_by_id locations_by_site_code domain_name '
+    'custom_data_validator locations_by_parent_code')
 
 
 def make_collection(types, locations):
@@ -221,14 +222,22 @@ def make_collection(types, locations):
 
     locations = [LocationStub(*loc) for loc in locations]
 
+    def locations_by_parent_code():
+        locs_by_parent = defaultdict(list)
+        for loc in locations:
+            locs_by_parent[loc.parent_code].append(loc)
+        return locs_by_parent
+
     return MockCollection(
         types=types,
         locations=locations,
         locations_by_id={l.location_id: l for l in locations},
         locations_by_site_code={l.site_code: l for l in locations},
+        locations_by_parent_code=locations_by_parent_code(),
         custom_data_validator=None,
         domain_name='location-bulk-management',
     )
+
 
 class TestTreeValidator(SimpleTestCase):
 
@@ -327,17 +336,14 @@ class TestTreeValidator(SimpleTestCase):
         self.assertIn('galaxy', missing_type_errors[0])
 
     def test_missing_location_ids(self):
-        # all locations in the domain should be listed in given excel
+        # not all locations need to be specified in the upload
         old_locations = (
             BASIC_LOCATION_TREE +
             [('extra_state', 'ex_code', 'state', '', 'ex_id', False) + extra_stub_args]
         )
         old_collection = make_collection(FLAT_LOCATION_TYPES, old_locations)
         validator = get_validator(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE, old_collection)
-        missing_locations = validator._check_unlisted_location_ids()
-        self.assertEqual(len(missing_locations), 1)
-        self.assertEqual(len(validator.errors), 1)
-        self.assertIn('extra_state', missing_locations[0])
+        self.assertEqual(len(validator.errors), 0)
 
     def test_unknown_location_ids(self):
         # all locations in the domain should be listed in given excel
@@ -944,6 +950,7 @@ class TestBulkManagement(TestCase):
         self.assertCouchSync()
 
     def test_case_sensitivity(self):
+        # site-codes are automatically converted to lower-case
         upper_case = [
             ('State 1', 'S1', 'state', '', '', False) + extra_stub_args,
             ('State 2', 'S2', 'state', '', '', False) + extra_stub_args,
@@ -966,4 +973,174 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(lower_case))
+        self.assertCouchSync()
+
+    def test_partial_addition(self):
+        # new locations can be added without having to specify all of old ones
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            self.basic_tree
+        )
+
+        addition = [
+            ('State 3', 's3', 'state', '', '', False) + extra_stub_args,
+            ('County 21', 'county3', 'county', 's3', '', False) + extra_stub_args,
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            addition
+        )
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree).union({
+            ('s3', None), ('county3', 's3')
+        }))
+        self.assertCouchSync()
+
+    def test_partial_attribute_edits_by_location_id(self):
+        # a subset of locations can be edited and can be referenced by location_id
+        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
+        locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
+
+        _loc_id = lambda x: locations_by_code[x].location_id
+        change_names = [
+            ('My State 1', '', 'state', '', _loc_id('s1'), False) + extra_stub_args,
+            ('My County 11', '', 'county', 's1', _loc_id('county11'), False) + extra_stub_args,
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            change_names
+        )
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch({
+            ('My State 1', None), ('S2', None), ('My County 11', 's1'),
+            ('County21', 's2'), ('City111', 'county11'), ('City112', 'county11'),
+            ('City211', 'county21'),
+        }, check_attr='name')
+        self.assertCouchSync()
+
+    def test_partial_attribute_edits_by_site_code(self):
+        # a subset of locations can be edited and can be referenced by site_code
+        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
+        self.create_locations(self.basic_tree, lt_by_code)
+
+        change_names = [
+            ('My State 1', 's1', 'state', '', '', False) + extra_stub_args,
+            ('My County 11', 'county11', 'county', 's1', '', False) + extra_stub_args,
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            change_names
+        )
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch({
+            ('My State 1', None), ('S2', None), ('My County 11', 's1'),
+            ('County21', 's2'), ('City111', 'county11'), ('City112', 'county11'),
+            ('City211', 'county21'),
+        }, check_attr='name')
+        self.assertCouchSync()
+
+    def test_partial_parent_edits(self):
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            self.basic_tree
+        )
+        change_parents = [
+            ('County 21', 'county21', 'county', 's1', '', False) + extra_stub_args,
+        ]
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            change_parents
+        )
+
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch({
+            ('s1', None), ('s2', None), ('county11', 's1'),
+            ('county21', 's1'), ('city111', 'county11'), ('city112', 'county11'),
+            ('city211', 'county21'),
+        })
+        self.assertCouchSync()
+
+    def test_partial_parent_edits_invalid(self):
+        # can't set invalid type location for a parent location
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            self.basic_tree
+        )
+        change_parents = [
+            # city type can't have parent of state type
+            ('City211', 'city211', 'city', 's1', '', False) + extra_stub_args,
+        ]
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            change_parents
+        )
+
+        self.assertNotEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+        self.assertCouchSync()
+
+    def test_partial_delete_children(self):
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            self.basic_tree
+        )
+
+        # deleting location that has children, if listing all of its children is valid
+        delete = [
+            ('County 21', 'county21', 'city', 's2', '', True) + extra_stub_args,
+            ('City211', 'city211', 'city', 'county11', '', True) + extra_stub_args,
+        ]
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            delete
+        )
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree) - {
+            ('city211', 'county21'), ('county21', 's2')
+        })
+        self.assertCouchSync()
+
+        # deleting location if it doesn't have children should work
+        delete = [
+            ('City111', 'city111', 'city', 'county11', '', True) + extra_stub_args,
+        ]
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            delete
+        )
+
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree) - {
+            ('city211', 'county21'), ('county21', 's2'), ('city111', 'county11')
+        })
+        self.assertCouchSync()
+
+    def test_partial_delete_children_invalid(self):
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            self.basic_tree
+        )
+
+        # deleting location that has children, without listing all of its children is invalid
+        delete = [
+            ('County 21', 'county21', 'city', 's2', '', True) + extra_stub_args,
+            # city211 is missing
+        ]
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            delete
+        )
+        self.assertNotEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
         self.assertCouchSync()
