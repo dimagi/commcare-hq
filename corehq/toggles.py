@@ -1093,6 +1093,7 @@ BLOBDB_RESTORE = PredictablyRandomToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
     randomness=0.5,
+    always_disabled='icds-cas',
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
