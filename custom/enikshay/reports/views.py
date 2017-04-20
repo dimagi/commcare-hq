@@ -25,7 +25,7 @@ class LocationsView(View):
             user=user
         )
         location_choice_provider = LocationChoiceProvider(StubReport(domain=domain), None)
-        location_choice_provider.configure({'include_descendants': True})
+        location_choice_provider.configure({'include_descendants': True, 'order_by_hierarchy': True})
         return JsonResponse(
             {
                 'results': [
