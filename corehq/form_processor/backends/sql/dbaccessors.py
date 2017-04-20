@@ -50,7 +50,7 @@ from corehq.form_processor.utils.sql import (
     case_index_adapter,
     case_attachment_adapter
 )
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.chunked import chunked
@@ -169,10 +169,16 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         :return: True the django model is sharded, otherwise false.
         """
-        # TODO check for subclass of PartitionedModel when PR merged:
-        # https://github.com/dimagi/commcare-hq/pull/14852
         from corehq.form_processor.models import RestrictedManager
-        return isinstance(self.model_class.objects, RestrictedManager)
+        from corehq.sql_db.models import PartitionedModel
+        return (
+            isinstance(self.model_class.objects, RestrictedManager) or
+            issubclass(self.model_class, PartitionedModel)
+        )
+
+    @property
+    def sql_db_aliases(self):
+        return get_sql_db_aliases_in_use() if self.is_sharded() else ['default']
 
     @abstractproperty
     def model_class(self):
