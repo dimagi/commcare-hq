@@ -1065,14 +1065,6 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     }
 )
 
-BLOBDB_EXPORTS = PredictablyRandomToggle(
-    'blobdb_exports',
-    'Use the blobdb to do exports',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-    randomness=0.8,
-)
-
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
