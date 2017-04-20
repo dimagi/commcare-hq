@@ -345,7 +345,8 @@ class LocationFormSet(object):
             domain=self.domain,
             request_user=self.request_user,
             location=self.location,
-            forms={self.location_form.__class__.__name__: self.location_form},
+            forms={self.location_form.__class__.__name__: self.location_form,
+                   self.custom_location_data.__class__.__name__: self.custom_location_data},
         )
         if self.include_user_forms:
             clean_commcare_user.send(
