@@ -3018,7 +3018,8 @@ class ShadowForm(AdvancedForm):
             for form in self.get_app().get_forms() if form.form_type == "advanced_form"
         ]
 
-    def _merge_actions(self, source_actions, extra_actions):
+    @staticmethod
+    def _merge_actions(source_actions, extra_actions):
         new_actions = OrderedDict(
             (action.case_tag, LoadUpdateAction.wrap(action.to_json()))
             for action in source_actions.load_update_cases
