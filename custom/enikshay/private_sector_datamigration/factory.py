@@ -214,7 +214,7 @@ class BeneficiaryCaseFactory(object):
     @memoized
     def _episode(self):
         try:
-            return Episode.objects.get(beneficiaryID=self.beneficiary.id)
+            return Episode.objects.get(beneficiaryID=self.beneficiary)
         except Episode.DoesNotExist:
             return None
 
