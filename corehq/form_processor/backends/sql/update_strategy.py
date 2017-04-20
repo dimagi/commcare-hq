@@ -37,7 +37,7 @@ def _convert_type_check_length(property_name, value):
     try:
         return PROPERTY_TYPE_MAPPING.get(property_name, lambda x: x)(value)
     except ValueError as e:
-        raise CaseValueError('Error processing case update: Field: {}, Error: {}'.format(property_name, e.message))
+        raise CaseValueError('Error processing case update: Field: {}, Error: {}'.format(property_name, str(e)))
 
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
