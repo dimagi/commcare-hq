@@ -1,24 +1,10 @@
+var upcoming_table = null;  // needs to be accessible to global function delete_broadcast
+
 hqDefine("reminders/js/broadcasts_list.js", function() {
     $(function() {
-        var upcoming_table = null,
-            past_table,
+        var past_table,
             list_broadcasts_url = hqImport("hqwebapp/js/urllib.js").reverse("list_broadcasts"),
             loader_src = hqImport("hqwebapp/js/initial_page_data.js").get("loader_src");
-
-        function delete_broadcast(broadcast_id)  {
-            if(confirm(gettext('Are you sure you want to delete this broadcast?'))) {
-                $.ajax({
-                    url: list_broadcasts_url,
-                    type: "POST",
-                    data: {
-                        action: "delete_broadcast",
-                        broadcast_id: broadcast_id,
-                    },
-                }).done(function(response, textStatus, jqXHR) {
-                    upcoming_table.fnDraw();
-                });
-            }
-        }
 
         upcoming_table = $("#upcoming-broadcasts-table").dataTable({
             "lengthChange": false,
@@ -27,7 +13,7 @@ hqDefine("reminders/js/broadcasts_list.js", function() {
             "displayLength": 5,
             "processing": true,
             "serverSide": true,
-            "ajaxSource": list_broadcasts_url,
+            "ajaxSource": hqImport("hqwebapp/js/urllib.js").reverse("list_broadcasts"),
             "fnServerParams": function(aoData) {
                 aoData.push({"name": "action", "value": "list_upcoming"});
             },
@@ -87,3 +73,18 @@ hqDefine("reminders/js/broadcasts_list.js", function() {
         });
     });
 });
+
+function delete_broadcast(broadcast_id)  {
+    if (confirm(gettext('Are you sure you want to delete this broadcast?'))) {
+        $.ajax({
+            url: hqImport("hqwebapp/js/urllib.js").reverse("list_broadcasts"),
+            type: "POST",
+            data: {
+                action: "delete_broadcast",
+                broadcast_id: broadcast_id,
+            },
+        }).done(function(response, textStatus, jqXHR) {
+            upcoming_table.fnDraw();
+        });
+    }
+}
