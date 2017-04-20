@@ -80,19 +80,43 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         // The format of the filter. This field is not used if the
         // PropertyListItem is representing columns
         this.format = ko.observable("");
-        // The aggregation type for this column. This field is not used if
-        // the PropertyListItem represents columns in a non-aggregated report
-        // or a filter
-        this.calculation = ko.observable(
-            hqImport('userreports/js/constants.js').DEFAULT_CALCULATION_OPTIONS[0]
-        );
+
+        var constants = hqImport('userreports/js/constants.js');
+
         this.calculationOptions = ko.pureComputed(function() {
             var propObject = self.getPropertyObject(self.property());
             if (propObject) {
                 return propObject.aggregation_options;
             }
-            return hqImport('userreports/js/constants.js').DEFAULT_CALCULATION_OPTIONS;
+            return constants.DEFAULT_CALCULATION_OPTIONS;
         });
+
+        this.getDefaultCalculation = function () {
+            if (_.contains(self.calculationOptions(), constants.SUM)) {
+                return constants.SUM;
+            } else {
+                return constants.COUNT_PER_CHOICE;
+            }
+        };
+
+        // The aggregation type for this column. This field is not used if
+        // the PropertyListItem represents columns in a non-aggregated report
+        // or a filter
+        this.calculation = ko.observable(this.getDefaultCalculation());
+
+        // A proxy for calculation that will let us know when calculation has been modified by the user.
+        // This is useful because sometimes the calculation is changed programatically.
+        // This implementation is a simple mirror of calculation, but subclasses may alter it.
+        this.inputBoundCalculation = ko.computed({
+            read: function () {
+                return self.calculation();
+            },
+            write: function (value) {
+                self.calculation(value);
+            },
+            owner: this
+        });
+
         // for default filters, the value to filter by
         this.filterValue = ko.observable("");
         // for default filters, the dynamic date operator to filter by
@@ -143,11 +167,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         options = options || {};
 
         var wrapListItem = function (item) {
-            var i = new PropertyListItem(
-                self.getDefaultDisplayText.bind(self),
-                self.getPropertyObject.bind(self),
-                self.hasDisplayCol
-            );
+            var i = self._createListItem();
             i.existsInCurrentVersion(item.exists_in_current_version);
             i.property(getOrDefault(item, 'property', ""));
             i.dataSourceField(getOrDefault(item, 'data_source_field', null));
@@ -168,7 +188,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         // select2 or questionsSelect binding can handle.
         this.selectablePropertyOptions = options.selectablePropertyOptions;
 
-        this.reportType = options.reportType;
+        this.reportType = ko.observable(options.reportType);
         this.buttonText = getOrDefault(options, 'buttonText', 'Add property');
         // True if at least one column is required.
         this.requireColumns = getOrDefault(options, 'requireColumns', false);
@@ -181,7 +201,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         this.calcHelpText = getOrDefault(options, 'calcHelpText', null);
         this.filterValueHelpText = getOrDefault(options, 'filterValueHelpText', null);
         this.analyticsAction = getOrDefault(options, 'analyticsAction', null);
-        this.analyticsLabel = getOrDefault(options, 'analyticsLabel', this.reportType);
+        this.analyticsLabel = getOrDefault(options, 'analyticsLabel', this.reportType());
 
         this.hasDisplayCol = getOrDefault(options, 'hasDisplayCol', true);
         this.hasFormatCol = getOrDefault(options, 'hasFormatCol', true);
@@ -193,10 +213,19 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         }));
         this.serializedProperties = ko.computed(function(){
             return JSON.stringify(
-                _.map(self.columns(), function(c){return c.toJS();})
+                _.map(
+                    _.filter(self.columns(), function(c){return c.existsInCurrentVersion();}),
+                    function(c){return c.toJS();})
             );
         });
         this.showWarnings = ko.observable(false);
+    };
+    PropertyList.prototype._createListItem = function() {
+        return new PropertyListItem(
+            this.getDefaultDisplayText.bind(this),
+            this.getPropertyObject.bind(this),
+            this.hasDisplayCol
+        );
     };
     PropertyList.prototype.validate = function () {
         this.showWarnings(true);
@@ -214,10 +243,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         return columnsValid && columnLengthValid;
     };
     PropertyList.prototype.buttonHandler = function () {
-        this.columns.push(new PropertyListItem(
-            this.getDefaultDisplayText.bind(this),
-            this.getPropertyObject.bind(this)
-        ));
+        this.columns.push(this._createListItem());
         if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)){
             window.analytics.usage("Report Builder", this.analyticsAction, this.analyticsLabel);
             window.analytics.workflow("Clicked " + this.analyticsAction + " in Report Builder");
@@ -248,73 +274,6 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         return _.find(this.propertyOptions, function (opt) {return opt.id === property_id;});
     };
 
-    /**
-     * Return an object representing the given DataSourceProperty object
-     * in the format expected by the select2 binding.
-     * @param {object} dataSourceProperty - A js object representation of a
-     *  DataSourceProperty python object.
-     * @returns {object} - A js object in the format expected by the select2
-     *  knockout binding.
-     */
-    var convertDataSourcePropertyToSelect2Format = function (dataSourceProperty) {
-        return dataSourceProperty;
-    };
-    /**
-     * Return an object representing the given DataSourceProperty object
-     * in the format expected by the questionsSelect binding.
-     * @param {object} dataSourceProperty - A js object representation of a
-     *  DataSourceProperty python object.
-     * @returns {object} - A js object in the format expected by the questionsSelect
-     *  knockout binding.
-     */
-    var convertDataSourcePropertyToQuestionsSelectFormat = function (dataSourceProperty) {
-        if (dataSourceProperty.type === 'question') {
-            return dataSourceProperty.source;
-        } else if (dataSourceProperty.type === 'meta') {
-            return {
-                value: dataSourceProperty.source[0],
-                label: dataSourceProperty.text,
-                type: dataSourceProperty.type,
-            };
-        }
-    };
-    /**
-     * Return an object representing the given ColumnOption object in the format
-     * expected by the select2 binding.
-     * @param {object} columnOption - A js object representation of a
-     *  ColumnOption python object.
-     * @returns {object} - A js object in the format expected by the select2
-     *  knockout binding.
-     */
-    var convertReportColumnOptionToSelect2Format = function (columnOption) {
-        return {
-            id: columnOption.id,
-            text: columnOption.display,
-        };
-    };
-    /**
-     * Return an object representing the given ColumnOption object in the format
-     * expected by the questionsSelect binding.
-     * @param {object} columnOption - A js object representation of a
-     *  ColumnOption python object.
-     * @returns {object} - A js object in the format expected by the questionsSelect
-     *  knockout binding.
-     */
-    var convertReportColumnOptionToQuestionsSelectFormat = function (columnOption) {
-        var questionSelectRepresentation;
-        if (columnOption.question_source) {
-            questionSelectRepresentation = Object.assign({}, columnOption.question_source);
-        } else {
-            questionSelectRepresentation = {
-                value: columnOption.id,
-                label: columnOption.display,
-            };
-        }
-        questionSelectRepresentation.aggregation_options = columnOption.aggregation_options;
-        return questionSelectRepresentation;
-    };
-
-
     var ConfigForm = function (
             reportType,
             sourceType,
@@ -325,28 +284,33 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             reportColumnOptions,
             dateRangeOptions
     ) {
+
+        var constants = hqImport('userreports/js/constants.js');
+
         this.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
             return o.type === 'question';
         });
         this.dataSourceIndicators = dataSourceIndicators;
         this.reportColumnOptions = reportColumnOptions;
 
+        var utils = hqImport("userreports/js/utils.js");
+
         // Convert the DataSourceProperty and ColumnOption passed through the template
         // context into objects with the correct format for the select2 and
         // questionsSelect knockout bindings.
         if (this.optionsContainQuestions) {
             this.selectableDataSourceIndicators = _.compact(_.map(
-                this.dataSourceIndicators, convertDataSourcePropertyToQuestionsSelectFormat
+                this.dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
             ));
             this.selectableReportColumnOptions = _.compact(_.map(
-                this.reportColumnOptions, convertReportColumnOptionToQuestionsSelectFormat
+                this.reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat
             ));
         } else {
             this.selectableDataSourceIndicators = _.compact(_.map(
-                this.dataSourceIndicators, convertDataSourcePropertyToSelect2Format
+                this.dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format
             ));
             this.selectableReportColumnOptions = _.compact(_.map(
-                this.reportColumnOptions, convertReportColumnOptionToSelect2Format
+                this.reportColumnOptions, utils.convertReportColumnOptionToSelect2Format
             ));
         }
         this.dateRangeOptions = dateRangeOptions;
@@ -392,7 +356,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         };
         this.columnsList = new PropertyList({
             hasFormatCol: false,
-            hasCalculationCol: reportType === "table" || reportType === "worker",
+            hasCalculationCol: reportType === constants.REPORT_TYPE_TABLE,
             initialCols: columns,
             buttonText: 'Add Column',
             analyticsAction: 'Add Column',
