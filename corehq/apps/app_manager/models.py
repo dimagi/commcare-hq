@@ -3045,7 +3045,6 @@ class ShadowForm(AdvancedForm):
             open_cases=source_actions.open_cases,  # Shadow form is not allowed to specify any open case actions
         )
 
-
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = super(ShadowForm, self).extended_build_validation(error_meta, xml_valid, validate_module)
         if not self.shadow_parent_form_id:
@@ -3162,7 +3161,7 @@ class SchedulePhase(IndexedSchema):
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
     case_label = DictProperty()
-    forms = SchemaListProperty(FormBase)  
+    forms = SchemaListProperty(FormBase)
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
     put_in_root = BooleanProperty(default=False)

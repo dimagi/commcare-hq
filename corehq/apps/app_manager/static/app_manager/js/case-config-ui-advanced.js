@@ -184,7 +184,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         };
 
         self.init = function () {
-            var $home = self.home;  
+            var $home = self.home;
             _.delay(function () {
                 $home.koApplyBindings(self);
                 $home.on('textchange', 'input', self.change)
