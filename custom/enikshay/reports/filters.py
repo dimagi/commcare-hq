@@ -32,6 +32,12 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         :return: Selected locations without their descendants
         """
         location_ids = self.request.GET.getlist(self.slug)
+
+        if len(location_ids) == 0 \
+                and not self.request.couch_user.has_permission(self.request.domain, 'access_all_locations'):
+            # Display the user's location in the filter if none is selected
+            location_ids = self.request.couch_user.get_location_ids(self.request.domain)
+
         choice_provider = LocationChoiceProvider(StubReport(domain=self.domain), None)
         # We don't include descendants here because they will show up in select box
         choice_provider.configure({'include_descendants': False})
