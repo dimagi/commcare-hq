@@ -1120,5 +1120,6 @@ MARK_LATEST_SUBMISSION_ON_USER = StaticToggle(
     'user_last_submission',
     "Marks the latest submssion on user model",
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )
