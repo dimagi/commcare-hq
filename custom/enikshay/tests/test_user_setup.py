@@ -58,7 +58,7 @@ class TestUserSetupUtils(TestCase):
 
     def assertValid(self, form):
         if isinstance(form, LocationFormSet):
-            errors = ", ".join([form.errors.as_text() for form in form.forms])
+            errors = ", ".join(filter(None, [f.errors.as_text() for f in form.forms]))
         else:
             errors = form.errors.as_text()
         msg = "{} has errors: \n{}".format(form.__class__.__name__, errors)
@@ -233,14 +233,10 @@ class TestUserSetupUtils(TestCase):
         parent = self.locations['CTO']
         form = self.make_new_location_form('winterfell', 'dto', parent=parent, nikshay_code='123')
         self.assertValid(form)
-        validate_nikshay_code(self.domain, form.location_form, form.custom_location_data)
-        self.assertValid(form)
         form.save()
 
         # Making a new location with the same parent and nikshay_code should fail
         form = self.make_new_location_form('castle_black', 'dto', parent=parent, nikshay_code='123')
-        self.assertValid(form)
-        validate_nikshay_code(self.domain, form.location_form, form.custom_location_data)
         self.assertInvalid(form)
 
     def test_issuer_id(self):
