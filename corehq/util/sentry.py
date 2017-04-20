@@ -33,6 +33,9 @@ def _is_rate_limited(rate_limit_key):
 
 class HQSentryClient(DjangoClient):
     def should_capture(self, exc_info):
+        if not super(HQSentryClient, self).should_capture(exc_info):
+            return False
+
         rate_limit_key = _get_rate_limit_key(exc_info)
         if rate_limit_key:
             return not _is_rate_limited(rate_limit_key)
