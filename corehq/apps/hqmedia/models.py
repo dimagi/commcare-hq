@@ -566,6 +566,13 @@ class HQMediaMixin(Document):
                                 for icon in icons
                                 if icon]
                             )
+                # Print template
+                if display and details.display == 'long' and details.print_template:
+                    media.append(ApplicationMediaReference(
+                        details.print_template['path'],
+                        media_class=CommCareMultimedia,
+                        **media_kwargs)
+                    )
 
             if module.case_list_form.form_id:
                 _add_menu_media(module.case_list_form, **media_kwargs)
