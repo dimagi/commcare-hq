@@ -7,7 +7,7 @@ from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_domain
 
 from custom.enikshay.private_sector_datamigration.factory import BeneficiaryCaseFactory
-from custom.enikshay.private_sector_datamigration.models import Beneficiary
+from custom.enikshay.private_sector_datamigration.models import Beneficiary, Episode
 
 logger = logging.getLogger('private_sector_datamigration')
 
@@ -65,6 +65,23 @@ class Command(BaseCommand):
             beneficiaries = base_query[start:start + limit]
         else:
             beneficiaries = base_query[start:]
+
+        # Assert never null
+        assert not beneficiaries.filter(firstName__isnull=True).exists()
+        assert not beneficiaries.filter(lastName__isnull=True).exists()
+        assert not beneficiaries.filter(phoneNumber__isnull=True).exists()
+        assert not Episode.objects.filter(dateOfDiagnosis__isnull=True).exists()
+        assert not Episode.objects.filter(patientWeight__isnull=True).exists()
+        assert not Episode.objects.filter(rxStartDate__isnull=True).exists()
+        assert not Episode.objects.filter(site__isnull=True).exists()
+
+        # Assert always null
+        assert not beneficiaries.filter(mdrTBSuspected__isnull=False).exists()
+        assert not beneficiaries.filter(middleName__isnull=False).exists()
+        assert not beneficiaries.filter(nikshayId__isnull=False).exists()
+        assert not beneficiaries.filter(symptoms__isnull=False).exists()
+        assert not beneficiaries.filter(tsType__isnull=False).exists()
+        assert not Episode.objects.filter(phoneNumber__isnull=False).exists()
 
         total = beneficiaries.count()
         counter = 0

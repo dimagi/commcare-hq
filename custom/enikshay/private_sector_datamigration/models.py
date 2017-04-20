@@ -2,7 +2,7 @@ from django.db import models
 
 
 class Beneficiary(models.Model):
-    id = models.BigIntegerField(primary_key=True)
+    id = models.IntegerField()
     additionalDetails = models.CharField(max_length=500, null=True)
     addressLineOne = models.CharField(max_length=256, null=True)
     addressLineTwo = models.CharField(max_length=256, null=True)
@@ -12,10 +12,10 @@ class Beneficiary(models.Model):
     associatedQPId = models.CharField(max_length=10, null=True)
     blockOrHealthPostId = models.CharField(max_length=10, null=True)
     caseCreatedBy = models.CharField(max_length=10, null=True)
-    caseId = models.CharField(max_length=18, null=True, unique=True)
+    caseId = models.CharField(max_length=18, primary_key=True)
     caseName = models.CharField(max_length=62, null=True)
     caseReferredBy = models.CharField(max_length=18, null=True)
-    caseStatus = models.CharField(max_length=20, null=True)
+    caseStatus = models.CharField(max_length=20, null=True)  # how to migrate 'Not a patient'
     configureAlert = models.CharField(max_length=5, null=True)
     creationDate = models.DateTimeField(null=True)
     creator = models.CharField(max_length=255, null=True)
@@ -30,8 +30,8 @@ class Beneficiary(models.Model):
     fatherHusbandName = models.CharField(max_length=60, null=True)
     firstName = models.CharField(max_length=30, null=True)
     gender = models.CharField(max_length=10, null=True)
-    identificationNumber = models.CharField(max_length=30, null=True)
-    identificationTypeId = models.CharField(max_length=10, null=True)
+    identificationNumber = models.CharField(max_length=30, null=True) # has the person's govt ID
+    identificationTypeId = models.CharField(max_length=10, null=True) # 7 different options
     isActive = models.CharField(max_length=10, null=True)
     languagePreferences = models.CharField(max_length=30, null=True)
     lastName = models.CharField(max_length=30, null=True)
@@ -40,7 +40,7 @@ class Beneficiary(models.Model):
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=255, null=True)
     nikshayId = models.CharField(max_length=10, null=True)
-    occupation = models.CharField(max_length=30, null=True)
+    occupation = models.CharField(max_length=30, null=True) # TODO - this is free text, how to handle?
     onBehalfOf = models.CharField(max_length=10, null=True)
     organisationId = models.IntegerField()
     owner = models.CharField(max_length=255, null=True)
@@ -75,9 +75,38 @@ class Beneficiary(models.Model):
     wardId = models.CharField(max_length=10, null=True)
     physicalCaseId = models.CharField(max_length=18, null=True)
 
+    @property
+    def age_entered(self):
+        return self.age
+
+    @property
+    def current_address(self):
+        if not self.addressLineOne:
+            return self.addressLineTwo or ''
+        if not self.addressLineTwo:
+            return self.addressLineOne or ''
+        return ', '.join([self.addressLineOne, self.addressLineTwo])
+
+    @property
+    def current_episode_type(self):
+        return {
+            'patient': 'confirmed_tb',
+            'suspect': 'presumptive_tb',
+        }[self.caseStatus.strip()]
+
+
+    @property
+    def sex(self):
+        return {
+            '4': 'male',
+            '5': 'female',
+            '6': 'transgender',
+            None: None,
+        }[self.gender]
+
 
 class Episode(models.Model):
-    id = models.BigIntegerField(primary_key=True)
+    id = models.IntegerField()
     accountName = models.CharField(max_length=255, null=True)
     accountType = models.CharField(max_length=255, null=True)
     adherenceScore = models.DecimalField(decimal_places=10, max_digits=14)
@@ -85,7 +114,7 @@ class Episode(models.Model):
     associatedFO = models.CharField(max_length=255, null=True)
     bankName = models.CharField(max_length=255, null=True)
     basisOfDiagnosis = models.CharField(max_length=255, null=True)
-    beneficiaryID = models.IntegerField()
+    beneficiaryID = models.ForeignKey(Beneficiary)
     branchName = models.CharField(max_length=255, null=True)
     creationDate = models.DateTimeField(null=True)
     creator = models.CharField(max_length=255, null=True)
@@ -93,7 +122,7 @@ class Episode(models.Model):
     diabetes = models.CharField(max_length=255, null=True)
     dstStatus = models.CharField(max_length=255, null=True)
     episodeDisplayID = models.IntegerField()
-    episodeID = models.CharField(max_length=8, null=True)
+    episodeID = models.CharField(max_length=8, primary_key=True)
     extraPulmonary = models.CharField(max_length=255, null=True)
     hiv = models.CharField(max_length=255, null=True)
     ifscCode = models.CharField(max_length=255, null=True)
@@ -119,6 +148,13 @@ class Episode(models.Model):
     rxArchivalDate = models.DateTimeField(null=True)
     rxAssignedBy = models.CharField(max_length=255, null=True)
     rxInitiationStatus = models.CharField(max_length=255, null=True)
+    # [u'Died before treatment start',
+    #  u'Lost to follow up/ unable to capture',
+    #  u'On treatment (Program support)',
+    #  u'On treatment (public)',
+    #  u'On treatment (self)',
+    #  u'Patient missing',
+    #  u'Pending']
     rxOutcomeDate = models.DateTimeField(null=True)
     rxStartDate = models.DateTimeField(null=True)
     rxSupervisor = models.CharField(max_length=255, null=True)
@@ -127,6 +163,12 @@ class Episode(models.Model):
     treatingQP = models.CharField(max_length=255, null=True)
     treatmentOutcomeId = models.CharField(max_length=255, null=True)
     treatmentPhase = models.CharField(max_length=255, null=True)
+    # [u'Select',
+    #  None,
+    #  u'Intensive Phase',
+    #  u'N/A',
+    #  u'Continuation Phase',
+    #  u'Extended IP']
     tsProviderType = models.CharField(max_length=255, null=True)
     unknownAdherencePct = models.DecimalField(decimal_places=10, max_digits=14)
     unresolvedMissedDosesPct = models.DecimalField(decimal_places=10, max_digits=14)
@@ -134,6 +176,59 @@ class Episode(models.Model):
     treatmentCompletionInsentiveFlag = models.CharField(max_length=1, null=True)
     mermIMIEno = models.CharField(max_length=255, null=True)
     adherenceSupportAssigned = models.CharField(max_length=255, null=True)
+
+    @property
+    def current_patient_type_choice(self):
+        if self.newOrRetreatment == 'New':
+            return 'new'
+        elif self.newOrRetreatment == 'Retreatment':
+            if self.retreatmentReason in ['Recurrent', 'Relapse']:
+                return 'recurrent'
+            elif self.retreatmentReason == 'After Treatment Failure':
+                return 'treatment_after_failure'
+            elif self.retreatmentReason == 'After loss to follow-up':
+                return 'treatment_after_lfu'
+            elif self.retreatmentReason == 'Others':
+                return 'other_previously_treated'
+        return ''  # TODO - handle
+
+    @property
+    def disease_classification(self):
+        return {
+            'Pulmonary': 'pulmonary',
+            'Extrapulmonary': 'extra_pulmonary',
+            'Pulmonary+Extrapulmonary': 'extra_pulmonary',
+            'Select': '',
+            'N/A': '',
+        }[self.site]
+
+    @property
+    def hiv_status(self):
+        return {
+            'Positive': 'reactive',
+            'Negative': 'non_reactive',
+            'Not known': 'unknown',
+            'Select': 'unknown',
+            None: 'unknown',
+        }[self.hiv]
+
+    @property
+    def site_choice(self):
+        return {
+            'Abdomen': 'abdominal',
+            'Bones And Joints': 'other',
+            'Brain': 'brain',
+            'Eye': 'other',
+            'Genitourinary': 'other',
+            'Intestines': 'other',
+            'Lymph Nodes': 'lymph_node',
+            'Other': 'other',
+            'Pleural effusion': 'pleural_effusion',
+            'Skin': 'other',
+            'Spine': 'spine',
+            None: '',
+            'Select': '',
+        }[self.extraPulmonary]
 
 
 class Adherence(models.Model):

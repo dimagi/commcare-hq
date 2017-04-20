@@ -51,9 +51,46 @@ class BeneficiaryCaseFactory(object):
                 'close': False,
                 'create': True,
                 'update': {
+                    'current_address': self.beneficiary.current_address,
+                    'current_episode_type': self.beneficiary.current_episode_type,
+                    'dataset': 'real',
+                    'first_name': self.beneficiary.firstName,
+                    'last_name': self.beneficiary.lastName,
+                    'name': ' '.join([self.beneficiary.firstName, self.beneficiary.lastName]),
+                    'phone_number': self.beneficiary.phoneNumber,
+
+                    'migration_created_case': 'true',
                 }
             }
         }
+
+        if self.beneficiary.age_entered is not None:
+            kwargs['attrs']['update']['age'] = self.beneficiary.age_entered
+            kwargs['attrs']['update']['age_entered'] = self.beneficiary.age_entered
+        else:
+            if self.beneficiary.dob is not None:
+                kwargs['attrs']['update']['age'] = None # TODO - calculate from dob
+            else:
+                kwargs['attrs']['update']['age'] = ''
+            kwargs['attrs']['update']['age_entered'] = ''
+
+        if self.beneficiary.dob is not None:
+            kwargs['attrs']['update']['dob'] = self.beneficiary.dob.date()
+            kwargs['attrs']['update']['dob_known'] = 'yes'
+        else:
+            if self.beneficiary.age_entered is not None:
+                kwargs['attrs']['update']['dob'] = None # TODO - do math
+            else:
+                kwargs['attrs']['update']['dob'] = ''
+            kwargs['attrs']['update']['dob_known'] = 'no'
+
+        if self.beneficiary.sex is not None:
+            kwargs['attrs']['update']['sex'] = self.beneficiary.sex
+
+        if self._episode:
+            kwargs['attrs']['update']['hiv_status'] = self._episode.hiv_status
+            kwargs['attrs']['update']['current_patient_type_choice'] = self._episode.current_patient_type_choice
+
         return CaseStructure(**kwargs)
 
     def get_occurrence_case_structure(self, person_structure):
@@ -64,6 +101,8 @@ class BeneficiaryCaseFactory(object):
                 'create': True,
                 'update': {
                     'name': 'Occurrence #1',
+
+                    'migration_created_case': 'true',
                 }
             },
             'indices': [CaseIndex(
@@ -82,7 +121,10 @@ class BeneficiaryCaseFactory(object):
                 'close': False,
                 'create': True,
                 'update': {
+                    'adherence_schedule_id': 'schedule_mwf',
                     'name': 'Episode #1: Confirmed TB (Patient)',
+
+                    'migration_created_case': 'true',
                 }
             },
             'indices': [CaseIndex(
@@ -92,6 +134,23 @@ class BeneficiaryCaseFactory(object):
                 related_type=OCCURRENCE_CASE_TYPE,
             )],
         }
+
+        if self._episode:
+            rxStartDate = self._episode.rxStartDate.date()
+            kwargs['attrs']['date_opened'] = rxStartDate
+            kwargs['attrs']['update']['adherence_schedule_date_start'] = rxStartDate
+            kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()
+            kwargs['attrs']['update']['disease_classification'] = self._episode.disease_classification
+            kwargs['attrs']['update']['treatment_initiation_date'] = rxStartDate
+            kwargs['attrs']['update']['weight'] = int(self._episode.patientWeight)
+
+            if self._episode.nikshayID:
+                kwargs['attrs']['external_id'] = self._episode.nikshayID
+                kwargs['attrs']['update']['nikshay_id'] = self._episode.nikshayID
+
+            if self._episode.disease_classification == 'extra_pulmonary':
+                kwargs['attrs']['update']['site_choice'] = self._episode.site_choice
+
         return CaseStructure(**kwargs)
 
     def get_adherence_case_structure(self, adherence, episode_structure):
@@ -101,6 +160,7 @@ class BeneficiaryCaseFactory(object):
                 'close': False,
                 'create': True,
                 'update': {
+                    'migration_created_case': 'true',
                 }
             },
             'indices': [CaseIndex(
@@ -119,6 +179,7 @@ class BeneficiaryCaseFactory(object):
                 'close': False,
                 'create': True,
                 'update': {
+                    'migration_created_case': 'true',
                 }
             },
             'indices': [CaseIndex(
@@ -137,6 +198,7 @@ class BeneficiaryCaseFactory(object):
                 'close': False,
                 'create': True,
                 'update': {
+                    'migration_created_case': 'true',
                 }
             },
             'indices': [CaseIndex(
@@ -152,7 +214,7 @@ class BeneficiaryCaseFactory(object):
     @memoized
     def _episode(self):
         try:
-            return Episode.objects.get(beneficiaryID=self.beneficiary)
+            return Episode.objects.get(beneficiaryID=self.beneficiary.id)
         except Episode.DoesNotExist:
             return None
 

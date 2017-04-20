@@ -22,13 +22,42 @@ class TestCreateCasesByBeneficiary(TestCase):
         super(TestCreateCasesByBeneficiary, cls).setUpClass()
         cls.beneficiary = Beneficiary.objects.create(
             id=1,
+            addressLineOne='585 Mass Ave',
+            addressLineTwo='Suite 4',
+            age=25,
+            caseStatus='patient',
+            dob=datetime(1992, 1, 2),
+            firstName='Nick',
+            gender='4',
             isActive=True,
+            lastName='P',
             organisationId=2,
+            phoneNumber='5432109876',
         )
         cls.domain = 'test_domain'
         cls.case_accessor = CaseAccessors(cls.domain)
 
     def test_create_cases_for_beneficiary(self):
+        Episode.objects.create(
+            id=1,
+            adherenceScore=0.5,
+            alertFrequencyId=2,
+            beneficiaryID=self.beneficiary.id,
+            dateOfDiagnosis=datetime(2017, 4, 18),
+            episodeDisplayID=3,
+            extraPulmonary='Abdomen',
+            hiv='Negative',
+            lastMonthAdherencePct=0.6,
+            lastTwoWeeksAdherencePct=0.7,
+            missedDosesPct=0.8,
+            newOrRetreatment='New',
+            nikshayID='02139-02215',
+            patientWeight=50,
+            rxStartDate=datetime(2017, 4, 19),
+            site='Extrapulmonary',
+            unknownAdherencePct=0.9,
+            unresolvedMissedDosesPct=0.1,
+        )
         call_command('create_cases_by_beneficiary', self.domain)
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
@@ -36,10 +65,25 @@ class TestCreateCasesByBeneficiary(TestCase):
         person_case = self.case_accessor.get_case(person_case_ids[0])
         self.assertFalse(person_case.closed)  # TODO - update by outcome
         self.assertIsNone(person_case.external_id)
-        self.assertEqual(person_case.name, None)  # TODO  - assign
-        # self.assertEqual(person_case.opened_on, '')  # TODO
+        self.assertEqual(person_case.name, 'Nick P')
         self.assertEqual(person_case.owner_id, '')  # TODO - assign to location
-        self.assertEqual(person_case.dynamic_case_properties(), OrderedDict([]))
+        self.assertEqual(person_case.dynamic_case_properties(), OrderedDict([
+            ('age', '25'),
+            ('age_entered', '25'),
+            ('current_address', '585 Mass Ave, Suite 4'),
+            ('current_episode_type', 'confirmed_tb'),
+            ('current_patient_type_choice', 'new'),
+            ('dataset', 'real'),
+            ('dob', '1992-01-02'),
+            ('dob_known', 'yes'),
+            ('first_name', 'Nick'),
+            ('hiv_status', 'non_reactive'),
+            ('last_name', 'P'),
+            ('migration_created_case', 'true'),
+            # ('migration_created_from_record', 'MH-ABD-05-16-0001'),
+            ('phone_number', '5432109876'),
+            ('sex', 'male'),
+        ]))
         self.assertEqual(len(person_case.xform_ids), 1)
 
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
@@ -48,9 +92,10 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertFalse(occurrence_case.closed)  # TODO - update by outcome
         self.assertIsNone(occurrence_case.external_id)
         self.assertEqual(occurrence_case.name, 'Occurrence #1')
-        # self.assertEqual(occurrence_case.opened_on, '')  # TODO
         self.assertEqual(occurrence_case.owner_id, '')
-        self.assertEqual(occurrence_case.dynamic_case_properties(), OrderedDict([]))
+        self.assertEqual(occurrence_case.dynamic_case_properties(), OrderedDict([
+            ('migration_created_case', 'true'),
+        ]))
         self.assertEqual(len(occurrence_case.indices), 1)
         self._assertIndexEqual(
             occurrence_case.indices[0],
@@ -67,11 +112,21 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(len(episode_case_ids), 1)
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertFalse(episode_case.closed)  # TODO - update by outcome
-        self.assertIsNone(episode_case.external_id)  # TODO - update with nikshay ID
+        self.assertEqual(episode_case.external_id, '02139-02215')
         self.assertEqual(episode_case.name, 'Episode #1: Confirmed TB (Patient)')
-        # self.assertEqual(episode_case.opened_on, '')  # TODO
+        self.assertEqual(episode_case.opened_on, datetime(2017, 4, 19))
         self.assertEqual(episode_case.owner_id, '')
-        self.assertEqual(episode_case.dynamic_case_properties(), OrderedDict([]))
+        self.assertEqual(episode_case.dynamic_case_properties(), OrderedDict([
+            ('adherence_schedule_date_start', '2017-04-19'),
+            ('adherence_schedule_id', 'schedule_mwf'),
+            ('date_of_diagnosis', '2017-04-18'),
+            ('disease_classification', 'extra_pulmonary'),
+            ('migration_created_case', 'true'),
+            ('nikshay_id', '02139-02215'),
+            ('site_choice', 'abdominal'),
+            ('treatment_initiation_date', '2017-04-19'),
+            ('weight', '50'),
+        ]))
         self.assertEqual(len(episode_case.indices), 1)
         self._assertIndexEqual(
             episode_case.indices[0],
@@ -110,7 +165,9 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(adherence_case.name, None)  # TODO
         # self.assertEqual(adherence_case.opened_on, '')  # TODO
         self.assertEqual(adherence_case.owner_id, '')
-        self.assertEqual(adherence_case.dynamic_case_properties(), OrderedDict([]))
+        self.assertEqual(adherence_case.dynamic_case_properties(), OrderedDict([
+            ('migration_created_case', 'true'),
+        ]))
         self.assertEqual(len(adherence_case.indices), 1)
         self._assertIndexEqual(
             adherence_case.indices[0],
@@ -176,7 +233,9 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(prescription_case.name, None)  # TODO
         # self.assertEqual(adherence_case.opened_on, '')  # TODO
         self.assertEqual(prescription_case.owner_id, '')
-        self.assertEqual(prescription_case.dynamic_case_properties(), OrderedDict([]))
+        self.assertEqual(prescription_case.dynamic_case_properties(), OrderedDict([
+            ('migration_created_case', 'true'),
+        ]))
         self.assertEqual(len(prescription_case.indices), 1)
         self._assertIndexEqual(
             prescription_case.indices[0],
@@ -223,12 +282,16 @@ class TestCreateCasesByBeneficiary(TestCase):
             id=1,
             adherenceScore=0.5,
             alertFrequencyId=2,
-            beneficiaryID=self.beneficiary,
+            beneficiaryID=self.beneficiary.id,
+            dateOfDiagnosis=datetime(2017, 4, 18),
             episodeDisplayID=3,
+            hiv='Negative',
             lastMonthAdherencePct=0.6,
             lastTwoWeeksAdherencePct=0.7,
             missedDosesPct=0.8,
             patientWeight=50,
+            rxStartDate=datetime(2017, 4, 19),
+            site='Extrapulmonary',
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )
@@ -261,7 +324,9 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(test_case.name, None)  # TODO
         # self.assertEqual(adherence_case.opened_on, '')  # TODO
         self.assertEqual(test_case.owner_id, '')
-        self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([]))
+        self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([
+            ('migration_created_case', 'true'),
+        ]))
         self.assertEqual(len(test_case.indices), 1)
         self._assertIndexEqual(
             test_case.indices[0],
@@ -279,12 +344,16 @@ class TestCreateCasesByBeneficiary(TestCase):
             id=1,
             adherenceScore=0.5,
             alertFrequencyId=2,
-            beneficiaryID=self.beneficiary,
+            beneficiaryID=self.beneficiary.id,
+            dateOfDiagnosis=datetime(2017, 4, 18),
             episodeDisplayID=3,
+            hiv='Negative',
             lastMonthAdherencePct=0.6,
             lastTwoWeeksAdherencePct=0.7,
             missedDosesPct=0.8,
             patientWeight=50,
+            rxStartDate=datetime(2017, 4, 19),
+            site='Extrapulmonary',
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )

@@ -37,7 +37,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
                 ('dob', '{}-07-01'.format(datetime.utcnow().year - 18)),
                 ('dob_known', 'no'),
                 ('first_name', 'A B'),
-                ('has_open_tests', 'no'),
+                ('has_open_tests', 'no'), # needs update TODO
                 ('hiv_status', 'non_reactive'),
                 ('is_active', 'yes'),
                 ('last_name', 'C'),
