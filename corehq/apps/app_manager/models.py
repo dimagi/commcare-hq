@@ -5699,15 +5699,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             files["{prefix}{lang}/app_strings.txt".format(
                 prefix=prefix, lang=lang)] = self.create_app_strings(lang, build_profile_id)
         for form_stuff in self.get_forms(bare=False):
-            filename = prefix + self.get_form_filename(**form_stuff)
-            form = form_stuff['form']
-            try:
-                files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
-            except XFormValidationFailed:
-                raise XFormException(_('Unable to validate the forms due to a server error. '
-                                       'Please try again later.'))
-            except XFormException as e:
-                raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
+            if not isinstance(form_stuff['form'], ShadowForm):
+                filename = prefix + self.get_form_filename(**form_stuff)
+                form = form_stuff['form']
+                try:
+                    files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
+                except XFormValidationFailed:
+                    raise XFormException(_('Unable to validate the forms due to a server error. '
+                                           'Please try again later.'))
+                except XFormException as e:
+                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
         return files
 
     get_modules = IndexedSchema.Getter('modules')
