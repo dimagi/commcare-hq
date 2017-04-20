@@ -1,3 +1,4 @@
+/* globals COMMCAREHQ */
 hqDefine("reminders/js/reminders.manage.js", function() {
     var ManageRemindersViewModel = function (
         initial,
@@ -40,7 +41,7 @@ hqDefine("reminders/js/reminders.manage.js", function() {
                 initial.start_property_offset_type === self.choices.START_REMINDER_ON_CASE_DATE &&
                 initial_timing.event_interpretation === "OFFSET"
             );
-            $("#id_event_timing").children("option").each(function(i) {
+            $("#id_event_timing").children("option").each(function() {
                 var j = JSON.parse($(this).val());
                 if(allow_offset_timing_with_date && val === self.choices.START_REMINDER_ON_CASE_DATE &&
                    j.event_interpretation === "OFFSET") {
@@ -57,7 +58,7 @@ hqDefine("reminders/js/reminders.manage.js", function() {
                     if(j.event_interpretation === "OFFSET") {
                         $(this).hide();
                     } else {
-                        $(this).show()
+                        $(this).show();
                     }
                 }
             });
@@ -220,7 +221,7 @@ hqDefine("reminders/js/reminders.manage.js", function() {
                 dataType: "json",
                 data: {
                     action: "search_case_type",
-                }
+                },
             }).done(function(data, textStatus, jqXHR) {
                 for(var i = 0; i < data.length; i++) {
                     self.available_case_types.push(data[i]);
@@ -234,7 +235,7 @@ hqDefine("reminders/js/reminders.manage.js", function() {
                 dataType: "json",
                 data: {
                     action: "search_case_property",
-                }
+                },
             }).done(function(data, textStatus, jqXHR) {
                 self.available_case_properties = data;
             });
@@ -246,7 +247,7 @@ hqDefine("reminders/js/reminders.manage.js", function() {
                 dataType: "json",
                 data: {
                     action: "search_subcase_property",
-                }
+                },
             }).done(function(data, textStatus, jqXHR) {
                 self.available_subcase_properties = data;
             });
@@ -280,7 +281,7 @@ hqDefine("reminders/js/reminders.manage.js", function() {
                 $(this).timepicker({
                     showMeridian: false,
                     showSeconds: true,
-                    defaultTime: $(this).val() || false
+                    defaultTime: $(this).val() || false,
                 });
             });
             $('[name="form_unique_id"]').select2({
@@ -294,14 +295,14 @@ hqDefine("reminders/js/reminders.manage.js", function() {
                     data: function (term) {
                         return {
                             action: 'search_forms',
-                            term: term
+                            term: term,
                         };
                     },
                     results: function (data) {
                         return {
-                            results: data
+                            results: data,
                         };
-                    }
+                    },
                 },
                 initSelection : function (element, callback) {
                     if (element.val()) {
@@ -311,8 +312,8 @@ hqDefine("reminders/js/reminders.manage.js", function() {
                                 dataType: "json",
                                 data: {
                                     action: "search_form_by_id",
-                                    term: element.val()
-                                }
+                                    term: element.val(),
+                                },
                             }).done(function(data, textStatus, jqXHR) {
                                 if(data.id && data.text) {
                                     callback(data);
@@ -325,7 +326,7 @@ hqDefine("reminders/js/reminders.manage.js", function() {
                 },
                 formatNoMatches: function (term) {
                     return "Please create a survey first.";
-                }
+                },
             });
         };
     };
@@ -436,7 +437,7 @@ hqDefine("reminders/js/reminders.manage.js", function() {
                 subject: self.subject_data(),
                 message: self.message_data(),
                 callback_timeout_intervals: self.callback_timeout_intervals(),
-                time_window_length: self.time_window_length()
+                time_window_length: self.time_window_length(),
             }
         });
     };
@@ -469,7 +470,7 @@ hqDefine("reminders/js/reminders.manage.js", function() {
         });
     
         self.languageLabel = ko.computed(function () {
-            if (self.available_languages().length == 1) {
+            if (self.available_languages().length === 1) {
                 return "";
             }
             var languageName = self.langcode();

@@ -10,10 +10,10 @@ hqDefine("reminders/js/reminders.keywords.ko.js", function() {
     
         self.sender_content_type = ko.observable(initial_values.sender_content_type);
         self.isMessageSMS = ko.computed(function () {
-            return self.sender_content_type() == 'sms';
+            return self.sender_content_type() === 'sms';
         });
         self.isMessageSurvey = ko.computed(function () {
-            return self.sender_content_type() == 'survey';
+            return self.sender_content_type() === 'survey';
         });
     
         self.sender_message = ko.observable(initial_values.sender_message);
@@ -22,7 +22,7 @@ hqDefine("reminders/js/reminders.keywords.ko.js", function() {
     
         self.other_recipient_type = ko.observable(initial_values.other_recipient_type);
         self.showRecipientGroup = ko.computed(function () {
-            return self.other_recipient_type() == 'USER_GROUP';
+            return self.other_recipient_type() === 'USER_GROUP';
         });
     
         self.other_recipient_id = ko.observable(initial_values.other_recipient_id);
@@ -59,7 +59,7 @@ hqDefine("reminders/js/reminders.keywords.ko.js", function() {
         };
     
         self.removeNamedArg = function() {
-            if(self.named_args().length == 1) {
+            if(self.named_args().length === 1) {
                 alert("You must have at least one named answer.");
             } else {
                 self.named_args.remove(this);
@@ -69,21 +69,21 @@ hqDefine("reminders/js/reminders.keywords.ko.js", function() {
     
         self.updateExampleStructuredSMS = function() {
             var named_args_separator = "";
-            if(self.use_named_args_separator() && self.named_args_separator() != null) {
+            if (self.use_named_args_separator() && self.named_args_separator()) {
                 named_args_separator = self.named_args_separator().toString().trim();
             }
             var delimiter = " ";
-            if(self.use_custom_delimiter() && self.delimiter() != null) {
+            if (self.use_custom_delimiter() && self.delimiter()) {
                 delimiter = self.delimiter().toString().trim();
             }
-            var keyword = (self.keyword() == null) ? "" : self.keyword().toString().trim();
+            var keyword = self.keyword() ? self.keyword().toString().trim() : "";
             var example = keyword.toLowerCase();
             if(self.use_named_args()) {
                 var toggle = false;
                 for(var i = 0; i < self.named_args().length; i++) {
                     toggle = !toggle;
                     var arg_name = self.named_args()[i].name;
-                    arg_name = (arg_name == null) ? "" : arg_name.trim().toLowerCase();
+                    arg_name = arg_name ? arg_name.trim().toLowerCase() : "";
                     example += delimiter + arg_name + named_args_separator + (toggle ? "123" : "456");
                 }
             } else {

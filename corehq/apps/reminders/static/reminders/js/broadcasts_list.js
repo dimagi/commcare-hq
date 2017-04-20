@@ -1,7 +1,7 @@
 hqDefine("reminders/js/broadcasts_list.js", function() {
     $(function() {
         var upcoming_table = null,
-            past_table = null,
+            past_table,
             list_broadcasts_url = hqImport("hqwebapp/js/urllib.js").reverse("list_broadcasts"),
             loader_src = hqImport("hqwebapp/js/initial_page_data.js").get("loader_src");
 
@@ -13,7 +13,7 @@ hqDefine("reminders/js/broadcasts_list.js", function() {
                     data: {
                         action: "delete_broadcast",
                         broadcast_id: broadcast_id,
-                    }
+                    },
                 }).done(function(response, textStatus, jqXHR) {
                     upcoming_table.fnDraw();
                 });
@@ -45,16 +45,16 @@ hqDefine("reminders/js/broadcasts_list.js", function() {
                     "targets": [0],
                     "render": function(data, type, full) {
                         return '<a href="' + full[4] + '">' + full[0] + '</a>';
-                    }
+                    },
                 },
                 {
                     "targets": [3],
                     "render": function(data) {
                         return '<button class="btn btn-danger" onClick="delete_broadcast(\'' + data + '\');">'
                                     + gettext('Delete') + '</button>';
-                    }
-                }
-            ]
+                    },
+                },
+            ],
         });
         past_table = $("#past-broadcasts-table").dataTable({
             "lengthChange": false,
@@ -81,9 +81,9 @@ hqDefine("reminders/js/broadcasts_list.js", function() {
                     "targets": [3],
                     "render": function(data, type, full) {
                         return '<a class="btn btn-primary" href="' + full[5] + '">' + gettext("Copy") + '</a>';
-                    }
-                }
-            ]
+                    },
+                },
+            ],
         });
     });
 });

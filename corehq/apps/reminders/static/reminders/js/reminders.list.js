@@ -1,3 +1,4 @@
+/* globals RuleProgressBarGroup, RuleProgressBar */
 hqDefine("reminders/js/reminders.list.js", function() {
     var RemindersListModel = function (reminders, progressUrl) {
         'use strict';
@@ -52,7 +53,7 @@ hqDefine("reminders/js/reminders.list.js", function() {
                 dataType: 'json',
                 data: {
                     action: method,
-                    reminderId: self.id
+                    reminderId: self.id,
                 },
                 error: function (data) {
                     $(target_button).button('error');
@@ -92,7 +93,7 @@ hqDefine("reminders/js/reminders.list.js", function() {
             "oLanguage": {"emptyTable": gettext('There are no reminders to display.'), "infoEmpty" : ""},
             "sort": true,
             "sorting": [[0, "asc"]],
-            "displayLength": 5
+            "displayLength": 5,
         });
     });
 });

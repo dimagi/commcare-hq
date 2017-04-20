@@ -1,3 +1,4 @@
+/* globals moment */
 hqDefine("reminders/js/scheduled_reminders.js", function() {
     $(function () {
         var reminders = _.map(hqImport("hqwebapp/js/initial_page_data.js").get("reminder_data"), function(data) {
@@ -19,9 +20,9 @@ hqDefine("reminders/js/scheduled_reminders.js", function() {
             reminder = reminders[i];
             if (reminder) {
                 var recipient_text;
-                if (reminder.recipient_type == "USER" || reminder.recipient_type == "OWNER" || reminder.recipient_type == "CASE" || reminder.recipient_type == "PARENT_CASE" || reminder.recipient_type == "SUBCASE") {
+                if (_.contains(["USER", "OWNER", "CASE", "PARENT_CASE", "SUBCASE"], reminder.recipient_type)) {
                     var case_url = '<a href="' + reminder.case_url + '">' + reminder.case_name + '</a>';
-                    if (reminder.recipient_type == "CASE") {
+                    if (reminder.recipient_type === "CASE") {
                         recipient_text = case_url;
                     } else {
                         recipient_text = reminder.recipient_desc + " for " + case_url;
