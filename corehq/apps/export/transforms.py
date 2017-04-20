@@ -16,8 +16,8 @@ def owner_id_to_display(owner_id, doc):
     return cached_owner_id_to_display(owner_id)
 
 
-def case_id_to_case_name(case_id, doc):
-    return _cached_case_id_to_case_name(case_id)
+def case_id_to_case_name(case_id, doc, domain):
+    return _cached_case_id_to_case_name(case_id, domain)
 
 
 def case_or_user_id_to_name(id, doc):
