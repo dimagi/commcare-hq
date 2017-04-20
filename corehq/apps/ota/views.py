@@ -65,12 +65,13 @@ def restore(request, domain, app_id=None):
         u'status_code:{}'.format(response.status_code),
     ]
     datadog_counter('commcare.restores.count', tags=tags)
-    for timer in timing_context.to_list():
-        datadog_gauge(
-            'commcare.restores.timings',
-            timer.duration,
-            tags=tags + [u'segment:{}'.format(timer.name) if timer.parent else u'all'],
-        )
+    if timing_context is not None:
+        for timer in timing_context.to_list():
+            datadog_gauge(
+                'commcare.restores.timings',
+                timer.duration,
+                tags=tags + [u'segment:{}'.format(timer.name) if timer.parent else u'all'],
+            )
 
     return response
 
