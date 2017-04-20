@@ -39,6 +39,9 @@ class Base99DOTSRepeater(CaseRepeater):
             return True
         return False
 
+    def allow_immediate_retries(self, response):
+        return False
+
 
 class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
     """Register a patient in 99DOTS
