@@ -111,7 +111,7 @@ def get_module_view_context(app, module, lang=None):
         'lang': lang,
         'langs': app.langs,
         'module_type': module.module_type,
-        'requires_case_details': bool(module.requires_case_details),
+        'requires_case_details': bool(module.requires_case_details()),
     }
     case_property_builder = _setup_case_property_builder(app)
     if isinstance(module, CareplanModule):
