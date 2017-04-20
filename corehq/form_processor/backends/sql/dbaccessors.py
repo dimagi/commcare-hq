@@ -172,7 +172,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         from corehq.form_processor.models import RestrictedManager
         from corehq.sql_db.models import PartitionedModel
         return (
-            isinstance(self.model_class.objects, RestrictedManager) or 
+            isinstance(self.model_class.objects, RestrictedManager) or
             issubclass(self.model_class, PartitionedModel)
         )
 
