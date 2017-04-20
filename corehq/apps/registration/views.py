@@ -48,7 +48,7 @@ def registration_default(request):
     return redirect(UserRegistrationView.urlname)
 
 
-class NewUserNumberAbTestMixin(object):
+class NewUserNumberAbTestMixin__Enabled(object):
     @property
     @memoized
     def _ab(self):
@@ -64,6 +64,22 @@ class NewUserNumberAbTestMixin(object):
 
     def ab_update_response(self, response):
         self._ab.update_response(response)
+
+
+class NewUserNumberAbTestMixin__Disabled(object):
+    @property
+    def ab_show_number(self):
+        return False
+
+    @property
+    def ab_context(self):
+        return None
+
+    def ab_update_response(self, response):
+        pass
+
+
+NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__Enabled
 
 
 class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View):
