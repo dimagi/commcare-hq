@@ -7,16 +7,13 @@ import time
 import datetime
 
 from couchdbkit import ResourceConflict
-from collections import Counter
 
 from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
-from couchexport.files import Temp
 from couchexport.models import Format
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename
-from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_gauge
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
@@ -36,14 +33,15 @@ class ExportFile(object):
 
     def __init__(self, path, format):
         self.path = path
-        self.file = Temp(path)
         self.format = format
 
     def __enter__(self):
-        return self.file.file
+        self.file = open(self.path, 'r')
+        return self.file
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.file.delete()
+        self.file.close()
+        os.remove(self.path)
 
 
 class _Writer(object):
@@ -413,8 +411,8 @@ def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
     if _should_not_rebuild_export(export_instance, last_access_cutoff):
         return
     filters = filters or export_instance.get_filters()
-    file = get_export_file([export_instance], filters or [])
-    with file as payload:
+    export_file = get_export_file([export_instance], filters or [])
+    with export_file as payload:
         _save_export_payload(export_instance, payload)
 
 

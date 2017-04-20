@@ -28,9 +28,9 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     file_format = Format.from_format(export_file.format)
     filename = filename or export_instances[0].name
 
-    try:
+    with export_file as file_:
         db = get_blob_db()
-        db.put(open(export_file.path, 'r'), download_id, timeout=expiry)
+        db.put(file_, download_id, timeout=expiry)
 
         expose_blob_download(
             download_id,
@@ -38,8 +38,6 @@ def populate_export_download_task(export_instances, filters, download_id, filena
             content_disposition=safe_filename_header(filename, file_format.extension),
             download_id=download_id,
         )
-    finally:
-        export_file.file.delete()
 
 
 @task(queue='background_queue', ignore_result=True)
