@@ -3045,6 +3045,37 @@ class ShadowForm(AdvancedForm):
         )
 
 
+    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
+        errors = super(ShadowForm, self).extended_build_validation(error_meta, xml_valid, validate_module)
+        if not self.shadow_parent_form_id:
+            error = {
+                "type": "missing shadow parent",
+            }
+            error.update(error_meta)
+            errors.append(error)
+        elif not self.shadow_parent_form:
+            error = {
+                "type": "shadow parent does not exist",
+            }
+            error.update(error_meta)
+            errors.append(error)
+        return errors
+
+    def check_actions(self):
+        errors = super(ShadowForm, self).check_actions()
+
+        shadow_parent_form = self.shadow_parent_form
+        if shadow_parent_form:
+            case_tags = set(self.extra_actions.get_case_tags())
+            missing_tags = []
+            for action in shadow_parent_form.actions.load_update_cases:
+                if action.case_tag not in case_tags:
+                    missing_tags.append(action.case_tag)
+            if missing_tags:
+                errors.append({'type': 'missing shadow parent tag', 'case_tags': missing_tags})
+        return errors
+
+
 class SchedulePhaseForm(IndexedSchema):
     """
     A reference to a form in a schedule phase.
@@ -5971,7 +6002,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             errors.extend(form.validate_for_build(validate_module=False))
 
             # make sure that there aren't duplicate xmlns's
-            xmlns_count[form.xmlns] += 1
+            if not isinstance(form, ShadowForm):
+                xmlns_count[form.xmlns] += 1
             for xmlns in xmlns_count:
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
