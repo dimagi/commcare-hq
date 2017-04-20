@@ -370,12 +370,14 @@
                 </a>
             </li>
             {% endif %}{% endif %}
-            {% if form.form_type == 'advanced_form' and module.has_schedule %}
-                 <li>
-                     <a href="#visit-scheduler" data-toggle="tab">
-                         {% trans "Visit Scheduler" %}
-                     </a>
-                 </li>
+            {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
+                {% if module.has_schedule %}
+                     <li>
+                         <a href="#visit-scheduler" data-toggle="tab">
+                             {% trans "Visit Scheduler" %}
+                         </a>
+                     </li>
+                {% endif %}
             {% endif %}
             <li>
                 <a href="#advanced" data-toggle="tab">{% trans "Advanced" %}</a>
@@ -513,8 +515,10 @@
                 {% endif %}
             </div>
 
-            {% if form.form_type == 'advanced_form' and module.has_schedule %}
-                {% include "app_manager/v1/partials/form_tab_visit_scheduler.html" %}
+            {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
+                {% if module.has_schedule  %}
+                    {% include "app_manager/v1/partials/form_tab_visit_scheduler.html" %}
+                {% endif %}
             {% endif %}
             {% include "app_manager/v1/partials/form_tab_advanced.html" %}
         </div>
