@@ -610,7 +610,7 @@ class RepeatRecord(Document):
         self.failure_reason = reason
         datadog_counter(REPEATER_ERROR_COUNT, {
             'domain: ': self.domain,
-            'status_code:': response.status_code,
+            'status_code:': response.status_code if response else None,
             'reason:': reason,
             'target_url:': self.url,
             'repeater_id:': self.repeater_id,
