@@ -426,7 +426,15 @@ class LocationFormSet(object):
             prefix='location_user',
         )
 
-        initial_password = generate_strong_password() if domain_obj.strong_mobile_passwords else ''
+        if domain_obj.strong_mobile_passwords:
+            initial_password = generate_strong_password()
+            pw_field = crispy.Field(
+                'password',
+                data_bind="initializeValue: password, value: password, valueUpdate: 'input'",
+                value=initial_password,
+            )
+        else:
+            pw_field = 'password'
 
         form.fields['username'].help_text = None
         form.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
@@ -437,11 +445,7 @@ class LocationFormSet(object):
                 'username',
                 'first_name',
                 'last_name',
-                crispy.Field(
-                    'password',
-                    data_bind="initializeValue: password, value: password, valueUpdate: 'input'",
-                    value=initial_password,
-                ),
+                pw_field,
             )
         )
         return form
