@@ -4,12 +4,16 @@ import re
 from collections import defaultdict
 
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xform import get_case_updates
 from corehq.apps.es.cases import CaseES
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.util.log import with_progress_bar
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import date, datetime, time, timedelta
 from dateutil.parser import parse
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
@@ -375,6 +379,7 @@ class AutomaticUpdateRule(models.Model):
 
     def log_submission(self, form_id):
         CaseRuleSubmission.objects.create(
+            domain=self.domain,
             rule=self,
             created_on=datetime.utcnow(),
             form_id=form_id,
@@ -920,21 +925,75 @@ class AutomaticUpdateAction(models.Model):
 
 
 class CaseRuleSubmission(models.Model):
+    domain = models.CharField(max_length=126)
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
 
     # The timestamp that this record was created on
     created_on = models.DateTimeField(db_index=True)
 
     # Reference to XFormInstance.form_id or XFormInstanceSQL.form_id
-    form_id = models.CharField(max_length=255)
+    form_id = models.CharField(max_length=255, unique=True, db_index=True)
 
     # A shortcut to keep track of which forms get archived
     archived = models.BooleanField(default=False)
 
     class Meta:
         index_together = (
-            ('rule', 'created_on'),
+            ('domain', 'created_on'),
+            ('domain', 'rule', 'created_on'),
         )
+
+
+class CaseRuleUndoer(object):
+
+    def __init__(self, domain, rule_id=None, since=None):
+        self.domain = domain
+        self.rule_id = rule_id
+        self.since = since
+
+    def get_submission_queryset(self):
+        qs = CaseRuleSubmission.objects.filter(
+            domain=domain,
+            archived=False,
+        )
+
+        if self.rule_id is not None:
+            qs = qs.filter(rule_id=self.rule_id)
+
+        if self.since:
+            qs = qs.filter(created_on__gte=since)
+
+        return qs
+
+    def bulk_undo(self, progress_bar=False):
+        result = {
+            'processed': 0,
+            'skipped': 0,
+            'archived': 0,
+        }
+
+        form_ids = list(self.get_submission_queryset().values_list('form_id', flat=True))
+        form_id_chunks = chunked(form_ids, 100)
+        if progress_bar:
+            form_id_chunks = with_progress_bar(form_id_chunks)
+
+        for form_id_chunk in form_id_chunks:
+            archived_form_ids = []
+            for form in FormAccessors(self.domain).iter_forms(form_id_chunk):
+                result['processed'] += 1
+
+                if not instance.is_normal or any([u.creates_case() for u in get_case_updates(form)]):
+                    result['skipped'] += 1
+                    continue
+
+                if not form.is_archived:
+                    form.archive(user_id=SYSTEM_USER_ID)
+                result['archived'] += 1
+                archived_form_ids.append(form.form_id)
+
+            CaseRuleSubmission.objects.filter(form_id__in=archived_form_ids).update(archived=True)
+
+        return result
 
 
 class DomainCaseRuleRun(models.Model):
