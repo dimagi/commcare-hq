@@ -34,11 +34,6 @@ class Base99DOTSRepeater(CaseRepeater):
     def available_for_domain(cls, domain):
         return NINETYNINE_DOTS.enabled(domain)
 
-    def allow_retries(self, response):
-        if response is not None and response.status_code == 500:
-            return True
-        return False
-
     def allow_immediate_retries(self, response):
         return False
 
