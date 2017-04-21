@@ -138,6 +138,7 @@ class BeneficiaryCaseFactory(object):
                     'name': 'Episode #1: Confirmed TB (Patient)',
 
                     'migration_created_case': 'true',
+                    'migration_created_from_record': self.beneficiary.caseId,
                 }
             },
             'indices': [CaseIndex(

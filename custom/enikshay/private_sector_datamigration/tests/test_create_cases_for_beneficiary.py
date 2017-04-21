@@ -136,6 +136,7 @@ class TestCreateCasesByBeneficiary(TestCase):
             ('episode_id', '20160908010203004'),
             ('episode_type', 'confirmed_tb'),
             ('migration_created_case', 'true'),
+            ('migration_created_from_record', '3'),
             ('nikshay_id', '02139-02215'),
             ('site_choice', 'abdominal'),
             ('treatment_initiation_date', '2017-04-19'),
