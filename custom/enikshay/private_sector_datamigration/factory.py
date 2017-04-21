@@ -107,6 +107,7 @@ class BeneficiaryCaseFactory(object):
                 'close': False,
                 'create': True,
                 'update': {
+                    'current_episode_type': self.beneficiary.current_episode_type,
                     'name': 'Occurrence #1',
                     'occurrence_id': get_human_friendly_id(),
 

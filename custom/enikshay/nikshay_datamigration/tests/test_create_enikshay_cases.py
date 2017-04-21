@@ -39,11 +39,11 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
                 ('first_name', 'A B'),
                 ('has_open_tests', 'no'), # needs update TODO
                 ('hiv_status', 'non_reactive'),
-                ('is_active', 'yes'),
+                ('is_active', 'yes'), #
                 ('last_name', 'C'),
                 ('migration_created_case', 'true'),
                 ('migration_created_from_record', 'MH-ABD-05-16-0001'),
-                ('person_id', 'NIK-MH-ABD-05-16-0001'),
+                ('person_id', 'NIK-MH-ABD-05-16-0001'), #
                 ('phi', 'PHI'),
                 ('phi_assigned_to', self.phi.location_id),
                 ('phone_number', '5432109876'),
@@ -65,12 +65,12 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
         self.assertEqual(
             OrderedDict([
-                ('current_episode_type', 'confirmed_tb'),
-                ('ihv_date', '2016-12-25'),
-                ('initial_home_visit_status', 'completed'),
+                ('current_episode_type', 'confirmed_tb'), #
+                ('ihv_date', '2016-12-25'),#
+                ('initial_home_visit_status', 'completed'),#
                 ('migration_created_case', 'true'),
                 ('migration_created_from_record', 'MH-ABD-05-16-0001'),
-                ('occurrence_episode_count', '1'),
+                ('occurrence_episode_count', '1'), #
                 ('occurrence_id', '20160908010203004'),
             ]),
             occurrence_case.dynamic_case_properties()

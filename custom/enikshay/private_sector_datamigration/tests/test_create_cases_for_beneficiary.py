@@ -102,6 +102,7 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(occurrence_case.name, 'Occurrence #1')
         self.assertEqual(occurrence_case.owner_id, '')
         self.assertEqual(occurrence_case.dynamic_case_properties(), OrderedDict([
+            ('current_episode_type', 'confirmed_tb'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
             ('occurrence_id', '20160908010203004')
