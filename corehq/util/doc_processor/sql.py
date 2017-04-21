@@ -1,4 +1,3 @@
-from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.util.doc_processor.interface import DocumentProvider
 from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider
 
@@ -51,15 +50,10 @@ def resumable_sql_model_iterator(iteration_key, reindex_accessor, chunk_size=100
     def data_function(from_db, filter_value, last_id):
         return reindex_accessor.get_docs(from_db, filter_value, last_id, limit=chunk_size)
 
-    if reindex_accessor.is_sharded():
-        db_list = get_sql_db_aliases_in_use()
-    else:
-        db_list = ['default']
-
     args_provider = SqlModelArgsProvider(
         reindex_accessor.startkey_attribute_name,
         reindex_accessor.startkey_min_value,
-        db_list,
+        reindex_accessor.sql_db_aliases,
     )
 
     class ResumableModelIterator(ResumableFunctionIterator):
@@ -94,5 +88,5 @@ class SqlDocumentProvider(DocumentProvider):
     def get_total_document_count(self):
         return sum(
             self.reindex_accessor.get_doc_count(from_db)
-            for from_db in get_sql_db_aliases_in_use()
+            for from_db in self.reindex_accessor.sql_db_aliases
         )

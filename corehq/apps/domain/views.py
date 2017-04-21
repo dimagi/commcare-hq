@@ -2322,10 +2322,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         </button>
         '''.format(record_id)
 
-    def _make_state_label(self, record):
-        label_cls = ''
-        label_text = ''
-
+    def _get_state(self, record):
         if record.state == RECORD_SUCCESS_STATE:
             label_cls = 'success'
             label_text = _('Success')
@@ -2338,12 +2335,18 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         elif record.state == RECORD_FAILURE_STATE:
             label_cls = 'danger'
             label_text = _('Failed')
+        else:
+            label_cls = ''
+            label_text = ''
 
+        return (label_cls, label_text)
+
+    def _make_state_label(self, record):
         return '''
         <span class="label label-{}">
             {}
         </span>
-        '''.format(label_cls, label_text)
+        '''.format(*self._get_state(record))
 
     @property
     def total_records(self):
@@ -2358,7 +2361,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
     def _format_date(self, date):
         tz_utc_aware_date = pytz.utc.localize(date)
-        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M %Z')
+        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M:%S %Z')
 
     @property
     def rows(self):
@@ -2371,29 +2374,28 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             repeater_id=self.repeater_id,
             state=self.state
         )
-        rows = []
-        for record in records:
-            row = [
-                self._make_state_label(record),
-                record.url if record.url else _(u'Unable to generate url for record'),
-                self._format_date(record.last_checked) if record.last_checked else '---',
-                self._format_date(record.next_check) if record.next_check else '---',
-                escape(record.failure_reason) if not record.succeeded else None,
-                record.overall_tries if record.overall_tries > 0 else None,
-                self._make_view_payload_button(record.get_id),
-                self._make_resend_payload_button(record.get_id),
-                self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
-                else self._make_cancel_payload_button(record.get_id) if not record.cancelled
-                and not record.succeeded
-                else None
-            ]
-
-            if toggles.SUPPORT.enabled_for_request(self.request):
-                row.insert(1, record.payload_id)
-
-            rows.append(row)
-
+        rows = [self._make_row(record) for record in records]
         return rows
+
+    def _make_row(self, record):
+        row = [
+            self._make_state_label(record),
+            record.url if record.url else _(u'Unable to generate url for record'),
+            self._format_date(record.last_checked) if record.last_checked else '---',
+            self._format_date(record.next_check) if record.next_check else '---',
+            escape(record.failure_reason) if not record.succeeded else None,
+            record.overall_tries if record.overall_tries > 0 else None,
+            self._make_view_payload_button(record.get_id),
+            self._make_resend_payload_button(record.get_id),
+            self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
+            else self._make_cancel_payload_button(record.get_id) if not record.cancelled
+            and not record.succeeded
+            else None
+        ]
+
+        if toggles.SUPPORT.enabled_for_request(self.request):
+            row.insert(1, record.payload_id)
+        return row
 
     @property
     def headers(self):

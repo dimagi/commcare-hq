@@ -5,6 +5,7 @@ import contextlib
 import datetime
 import logging
 from collections import namedtuple
+from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
 
 from django.http import (
     HttpRequest,
@@ -162,6 +163,9 @@ class SubmissionPost(object):
                 if instance.xmlns == DEVICE_LOG_XMLNS:
                     try:
                         process_device_log(self.domain, instance)
+                    except ProtocolError:
+                        # if riak is down/struggling, the caller will catch and notify
+                        raise
                     except Exception:
                         notify_exception(None, "Error processing device log", details={
                             'xml': self.instance,

@@ -104,3 +104,7 @@ def generate_restore_response(project, user, restore_id="", version=V1, state_ha
         )
     )
     return config.get_response()
+
+
+def has_cached_payload(sync_log, version):
+    return bool(sync_log.get_cached_payload(version))

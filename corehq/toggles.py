@@ -244,7 +244,8 @@ def toggle_values_by_name(username=None, domain=None):
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     'custom-parent-ref',
     'Custom case parent reference',
-    TAG_ONE_OFF
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 APP_BUILDER_CAREPLAN = StaticToggle(
@@ -1064,18 +1065,17 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     }
 )
 
-BLOBDB_EXPORTS = PredictablyRandomToggle(
-    'blobdb_exports',
-    'Use the blobdb to do exports',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-    randomness=0.3,
-)
-
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+LOGIN_AS_ALWAYS_OFF = StaticToggle(
+    'always_turn_login_as_off',
+    'Always turn login as off',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1085,6 +1085,7 @@ BLOBDB_RESTORE = PredictablyRandomToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
     randomness=0,
+    always_disabled='icds-cas',
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
@@ -1113,4 +1114,12 @@ MOTECH = StaticToggle(
     "Show Motech tab",
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
+)
+
+MARK_LATEST_SUBMISSION_ON_USER = StaticToggle(
+    'user_last_submission',
+    "Marks the latest submssion on user model",
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )

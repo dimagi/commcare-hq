@@ -83,6 +83,20 @@ def get_case_parent_id_xpath(parent_path, case_id_xpath=None):
     return xpath
 
 
+def get_add_case_preloads_case_id_xpath(module, form):
+    xpath = None
+    if 'open_case' in form.active_actions():
+        xpath = CaseIDXPath(session_var(form.session_var_for_action('open_case')))
+    elif module.root_module_id and module.parent_select.active:
+        # This is a submodule. case_id will have changed to avoid a clash with the parent case.
+        # Case type is enough to ensure uniqueness for normal forms. No need to worry about a suffix.
+        case_id = '_'.join((CASE_ID, form.get_case_type()))
+        xpath = CaseIDXPath(session_var(case_id))
+    else:
+        xpath = SESSION_CASE_ID
+    return xpath
+
+
 def relative_path(from_path, to_path):
     from_nodes = from_path.split('/')
     to_nodes = to_path.split('/')
@@ -1384,9 +1398,9 @@ class XForm(WrappedNode):
                 if module.task_list.show:
                     delegation_case_block = make_delegation_stub_case_block()
 
+            case_id_xpath = get_add_case_preloads_case_id_xpath(module, form)
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
-                case_id_xpath = CaseIDXPath(session_var(form.session_var_for_action('open_case')))
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
                     case_name=open_case_action.name_path,
@@ -1397,21 +1411,11 @@ class XForm(WrappedNode):
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates['external_id'] = actions['open_case'].external_id
-            elif module.root_module_id and module.parent_select.active:
-                # This is a submodule. case_id will have changed to avoid a clash with the parent case.
-                # Case type is enough to ensure uniqueness for normal forms. No need to worry about a suffix.
-                case_id = '_'.join((CASE_ID, form.get_case_type()))
-                case_id_xpath = CaseIDXPath(session_var(case_id))
+            else:
                 self.add_bind(
                     nodeset="case/@case_id",
                     calculate=case_id_xpath,
                 )
-            else:
-                self.add_bind(
-                    nodeset="case/@case_id",
-                    calculate=SESSION_CASE_ID,
-                )
-                case_id_xpath = SESSION_CASE_ID
 
             if 'update_case' in actions or extra_updates:
                 self.add_case_updates(

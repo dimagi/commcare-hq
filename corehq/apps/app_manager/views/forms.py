@@ -657,7 +657,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
         all_programs = [{'value': '', 'label': _('All Programs')}]
         context.update({
-            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
             'commtrack_programs': all_programs + commtrack_programs(),
         })
         context.update(get_schedule_context(form))
@@ -669,7 +668,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         return template, context
     else:
         context.update({
-            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
+            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
         })
         template = get_app_manager_template(
             request.user,

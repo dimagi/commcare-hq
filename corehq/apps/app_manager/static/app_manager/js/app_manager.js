@@ -328,12 +328,15 @@ hqDefine('app_manager/js/app_manager.js', function () {
                     $(pop).popover('hide');
                     var dataType = $(e.target).closest('button').data('type');
                     $('#new-module-type').val(dataType);
-                    var form = $('#new-module-form');
-                    if (!form.data('clicked')) {
-                        form.data('clicked', 'true');
-                        $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-                        form.submit();
+                    if ($(e.target).closest('button').data('stopsubmit') !== 'yes') {
+                        var form = $('#new-module-form');
+                        if (!form.data('clicked')) {
+                            form.data('clicked', 'true');
+                            $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+                            form.submit();
+                        }
                     }
+
                 });
             }).on('click', function (e) {
                 e.preventDefault();

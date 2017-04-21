@@ -923,6 +923,21 @@ class FormBase(DocumentSchema):
     def case_references(self):
         return self.case_references_data or CaseReferences()
 
+
+    def requires_case(self):
+        return False
+
+    def get_action_type(self):
+        return ''
+
+    @property
+    def uses_cases(self):
+        return (
+            self.requires_case()
+            or self. get_action_type() == 'open'
+            or self.form_type == 'advanced_form'
+        )
+
     @case_references.setter
     def case_references(self, case_references):
         self.case_references_data = case_references

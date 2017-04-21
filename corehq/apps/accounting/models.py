@@ -210,11 +210,13 @@ class SubscriptionAdjustmentMethod(object):
     INTERNAL = "INTERNAL"
     TASK = "TASK"
     TRIAL = "TRIAL"
+    AUTOMATIC_DOWNGRADE = 'AUTOMATIC_DOWNGRADE'
     CHOICES = (
         (USER, "User"),
         (INTERNAL, "Ops"),
         (TASK, "Task (Invoicing)"),
         (TRIAL, "30 Day Trial"),
+        (AUTOMATIC_DOWNGRADE, "Automatic Downgrade"),
     )
 
 

@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
-<div class="tab-pane{% if not form.requires_case and not form.get_action_type == 'open' %} active{% endif %}" id="form-settings">
+<div class="tab-pane{% if not form.uses_cases %} active{% endif %}" id="form-settings">
     <form class="form-horizontal save-button-form" action="{% url "edit_form_attr" domain app.id form.get_unique_id 'all' %}">
         {% csrf_token %}
         <div class="save-button-holder clearfix"></div>

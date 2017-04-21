@@ -522,7 +522,7 @@ class RepeatRecord(Document):
         # never checked, or it's time to check again
         return not self.succeeded
 
-    def get_payload(self):
+    def get_payload(self, save_failure=True):
         try:
             return self.repeater.get_payload(self)
         except ResourceNotFound as e:
@@ -533,9 +533,13 @@ class RepeatRecord(Document):
                     self._id, self.domain,
                 ))
 
-            self._payload_exception(e, reraise=False)
+            if save_failure:
+                self._payload_exception(e, reraise=False)
         except Exception as e:
-            self._payload_exception(e, reraise=True)
+            if save_failure:
+                self._payload_exception(e, reraise=True)
+            else:
+                raise
 
     def _payload_exception(self, exception, reraise=False):
         self.succeeded = False

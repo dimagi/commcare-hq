@@ -12,7 +12,6 @@ from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render, redirect
-from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -359,43 +358,6 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
                     MobileWorkerListView.urlname, args=[self.domain]
                 ))
         return self.get(request, *args, **kwargs)
-
-
-# this was originally written with a GET, which is wrong
-# I'm not fixing for now, just adding the require_POST to make it unusable
-@require_POST
-@require_can_edit_commcare_users
-def set_commcare_user_group(request, domain):
-    user_id = request.GET.get('user', '')
-    user = CommCareUser.get_by_user_id(user_id)
-    group_name = request.GET.get('group', '')
-    group = Group.by_name(domain, group_name)
-    if not user.is_commcare_user() or user.domain != domain or not group:
-        return HttpResponseForbidden()
-    for group in user.get_case_sharing_groups():
-        group.remove_user(user)
-    group.add_user(user)
-    return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
-
-
-@require_can_edit_commcare_users
-def archive_commcare_user(request, domain, user_id, is_active=False):
-    can_add_extra_users = can_add_extra_mobile_workers(request)
-    if not can_add_extra_users and is_active:
-        return HttpResponse(json.dumps({
-            'success': False,
-            'message': _("You are not allowed to add additional mobile workers"),
-        }))
-    user = CommCareUser.get_by_user_id(user_id, domain)
-    user.is_active = is_active
-    user.save()
-    return HttpResponse(json.dumps(dict(
-        success=True,
-        message=_("User '{user}' has successfully been {action}.").format(
-            user=user.raw_username,
-            action=_("Reactivated") if user.is_active else _("Deactivated"),
-        )
-    )))
 
 
 @require_can_edit_commcare_users
@@ -909,13 +871,12 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
 
     def render_form(self, status):
-        context = RequestContext(self.request, {
-            'form': self.new_commcare_user_form,
-            'data_fields_form': self.custom_data.form,
-        })
         return self.render_json_response({
             "status": status,
-            "form_html": render_to_string(self.template_name, context)
+            "form_html": render_to_string(self.template_name, {
+                'form': self.new_commcare_user_form,
+                'data_fields_form': self.custom_data.form,
+            }, request=self.request)
         })
 
     def get(self, request, *args, **kwargs):

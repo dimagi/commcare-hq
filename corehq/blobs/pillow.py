@@ -1,6 +1,6 @@
 from os.path import join
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.app_manager.models import Application
 from corehq.blobs import get_blob_db
 from corehq.util.couchdb_management import couch_config
@@ -36,11 +36,19 @@ def get_main_blob_deletion_pillow(pillow_id):
     Using the KafkaChangeFeed ties this to the main couch database.
     """
     change_feed = KafkaChangeFeed(topics=[topics.META], group_id='blob-deletion-group')
+    checkpoint = PillowCheckpoint('kafka-blob-deletion-pillow-checkpoint', change_feed.sequence_format)
+    event_handler = KafkaCheckpointEventHandler(
+        checkpoint=checkpoint,
+        checkpoint_frequency=KAFKA_CHECKPOINT_FREQUENCY,
+        change_feed=change_feed
+    )
+
     return _get_blob_deletion_pillow(
         pillow_id,
         get_db(None),
-        PillowCheckpoint('kafka-blob-deletion-pillow-checkpoint', change_feed.sequence_format),
+        checkpoint,
         change_feed,
+        event_handler
     )
 
 
@@ -50,18 +58,21 @@ def get_application_blob_deletion_pillow(pillow_id):
     return _get_blob_deletion_pillow(pillow_id, couch_db)
 
 
-def _get_blob_deletion_pillow(pillow_id, couch_db, checkpoint=None, change_feed=None):
+def _get_blob_deletion_pillow(pillow_id, couch_db, checkpoint=None, change_feed=None, event_handler=None):
     if change_feed is None:
         change_feed = CouchChangeFeed(couch_db, include_docs=False)
     if checkpoint is None:
         checkpoint = PillowCheckpoint(pillow_id, change_feed.sequence_format)
+    if event_handler is None:
+        event_handler = PillowCheckpointEventHandler(
+            checkpoint=checkpoint,
+            checkpoint_frequency=KAFKA_CHECKPOINT_FREQUENCY,
+        )
+
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
         change_feed=change_feed,
         processor=BlobDeletionProcessor(get_blob_db(), couch_db.dbname),
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint,
-            checkpoint_frequency=KAFKA_CHECKPOINT_FREQUENCY,
-        ),
+        change_processed_event_handler=event_handler
     )

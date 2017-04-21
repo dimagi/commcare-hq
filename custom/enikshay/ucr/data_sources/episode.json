@@ -1479,6 +1479,23 @@
                 }
             },
             {
+                "column_id": "bacteriological_test_date_reported",
+                "display_name": "bacteriological_test_date_reported",
+                "type": "expression",
+                "datatype": "date",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "bacteriological_examination_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "date_reported"
+                    }
+                }
+            },
+            {
                 "display_name": "ip_initiation_date",
                 "datatype": "string",
                 "type": "expression",
@@ -5399,6 +5416,670 @@
                 },
                 "type": "boolean",
                 "column_id": "case_created_by_migration"
+            },
+            {
+                "filter": {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "patient_type_choice"
+                    },
+                    "property_value": [
+                        "new",
+                        "recurrent"
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "operator": "lte",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "datatype": "integer",
+                                "type": "named",
+                                "name": "age"
+                            },
+                            "property_value": 14
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_under_14"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_transgender"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_male"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_female"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_reactive"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "initiated_on_art"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_reactive_art_initiated"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cpt_initiated"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_reactive_cpt_initiated"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "or",
+                            "filters": [
+                                {
+                                    "operator": "eq",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_outcome"
+                                    },
+                                    "property_value": "died"
+                                },
+                                {
+                                    "operator": "eq",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_status"
+                                    },
+                                    "property_value": "died"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_reactive_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "named",
+                                "name": "hiv_status"
+                            },
+                            "property_value": [
+                                "reactive",
+                                "non_reactive"
+                            ]
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_with_hiv_status"
+            },
+            {
+                "filter": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "case_definition"
+                    },
+                    "property_value": "microbiological"
+                },
+                "type": "boolean",
+                "column_id": "microbiological"
+            },
+            {
+                "filter": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "episode_type"
+                    },
+                    "property_value": "confirmed_tb"
+                },
+                "type": "boolean",
+                "column_id": "patient"
+            },
+            {
+                "filter": {
+                    "operator": "in",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "treatment_initiated"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": ["yes_phi", "yes_private"]
+                },
+                "type": "boolean",
+                "column_id": "treatment_initiated"
+            },
+            {
+                "display_name": "date_of_diagnosis_diff",
+                "column_id": "date_of_diagnosis_diff",
+                "datatype": "integer",
+                "type": "expression",
+                "expression": {
+                    "type": "diff_days",
+                    "to_date_expression": {
+                        "type": "property_name",
+                        "property_name": "date_of_diagnosis"
+                    },
+                    "from_date_expression": {
+                        "type": "add_days",
+                        "date_expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "complete_treatment_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "meta", "timeEnd"],
+                                "datatype": "date"
+                            }
+                        },
+                        "count_expression": {
+                            "type": "evaluator",
+                            "statement": "0 - a",
+                            "context_variables": {
+                                "a": {
+                                    "datatype": "integer",
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "named",
+                                        "name": "complete_treatment_form"
+                                    },
+                                    "value_expression": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "ql_treatment_admin_details",
+                                            "symptom_duration"
+                                        ],
+                                        "datatype": "integer"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "display_name": "treatment_initiation_date_diff",
+                "column_id": "treatment_initiation_date_diff",
+                "datatype": "integer",
+                "type": "expression",
+                "expression": {
+                    "type": "diff_days",
+                    "to_date_expression": {
+                        "type": "property_name",
+                        "property_name": "treatment_initiation_date"
+                    },
+                    "from_date_expression": {
+                        "type": "property_name",
+                        "property_name": "date_of_diagnosis"
+                    }
+                }
+            },
+            {
+                "display_name": "diagnosed_patient",
+                "column_id": "diagnosed_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "not",
+                    "filter": {
+                        "type": "boolean_expression",
+                        "operator": "in",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "date_of_diagnosis"
+                        },
+                        "property_value": [null, ""]
+                    }
+                }
+            },
+            {
+                "display_name": "screened_for_diabetes_patient",
+                "column_id": "screened_for_diabetes_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "in",
+                            "expression": {
+                                "value_expression": {
+                                    "datatype": "string",
+                                    "type": "property_name",
+                                    "property_name": "diabetes_status"
+                                },
+                                "type": "related_doc",
+                                "related_doc_type": "CommCareCase",
+                                "doc_id_expression": {
+                                    "datatype": null,
+                                    "type": "named",
+                                    "name": "person_id"
+                                }
+                            },
+                            "property_value": ["diabetic","non_diabetic"]
+                        }
+                    ]
+                }
+            },
+            {
+                "display_name": "diabetic_patient",
+                "column_id": "diabetic_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "value_expression": {
+                                    "datatype": "string",
+                                    "type": "property_name",
+                                    "property_name": "diabetes_status"
+                                },
+                                "type": "related_doc",
+                                "related_doc_type": "CommCareCase",
+                                "doc_id_expression": {
+                                    "datatype": null,
+                                    "type": "named",
+                                    "name": "person_id"
+                                }
+                            },
+                            "property_value": "diabetic"
+                        }
+                    ]
+                }
+            },
+            {
+                "display_name": "hiv_positive_patient",
+                "column_id": "hiv_positive_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                }
+            },
+            {
+                "display_name": "adt_initiated_patient",
+                "column_id": "adt_initiated_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "value_expression": {
+                                    "datatype": "string",
+                                    "type": "property_name",
+                                    "property_name": "adt_initiated"
+                                },
+                                "type": "related_doc",
+                                "related_doc_type": "CommCareCase",
+                                "doc_id_expression": {
+                                    "datatype": null,
+                                    "type": "named",
+                                    "name": "person_id"
+                                }
+                            },
+                            "property_value": "yes"
+                        }
+                    ]
+                }
+            },
+            {
+                "display_name": "pediatric_patient",
+                "column_id": "pediatric_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "operator": "lte",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "datatype": "integer",
+                                "type": "named",
+                                "name": "age"
+                            },
+                            "property_value": 14
+                        }
+                    ]
+                }
+            },
+            {
+                "display_name": "contacts_diagnosed",
+                "column_id": "contacts_diagnosed",
+                "type": "expression",
+                "datatype": "integer",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                      "type": "first_case_form_with_xmlns",
+                      "reverse": true,
+                      "xmlns": "http://openrosa.org/formdesigner/A800140B-A98B-47BF-A021-E69971A60B40",
+                      "case_id_expression": {
+                        "type": "named",
+                        "name": "occurrence_id"
+                      }
+                    },
+                    "value_expression": {
+                        "type": "evaluator",
+                        "statement": "(a if a else 0) + (b if b else 0)",
+                        "context_variables": {
+                            "a": {
+                                "datatype": "integer",
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_contact_details",
+                                     "ql_contacts_diagnosed",
+                                     "diagnosed_under_6"
+                                ]
+                            },
+                            "b": {
+                                "datatype": "integer",
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_contact_details",
+                                     "ql_contacts_diagnosed",
+                                     "diagnosed_over_6"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "display_name": "contacts_screened",
+                "column_id": "contacts_screened",
+                "datatype": "integer",
+                "type": "expression",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                      "type": "first_case_form_with_xmlns",
+                      "reverse": true,
+                      "xmlns": "http://openrosa.org/formdesigner/A800140B-A98B-47BF-A021-E69971A60B40",
+                      "case_id_expression": {
+                        "type": "named",
+                        "name": "occurrence_id"
+                      }
+                    },
+                    "value_expression": {
+                        "type": "evaluator",
+                        "statement": "(a if a else 0) + (b if b else 0)",
+                        "context_variables": {
+                            "a": {
+                                "datatype": "integer",
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_contact_details",
+                                     "ql_contacts_screened",
+                                     "screened_under_6"
+                                ]
+                            },
+                            "b": {
+                                "datatype": "integer",
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_contact_details",
+                                     "ql_contacts_screened",
+                                     "screened_over_6"
+                                ]
+                            }
+                        }
+                    }
+                }
             }
         ],
         "named_filters": {
@@ -7187,6 +7868,15 @@
                         "type": "property_name",
                         "property_name": "_id"
                     }
+                }
+            },
+            "contact_tracing_form": {
+                "type": "first_case_form_with_xmlns",
+                "reverse": true,
+                "xmlns": "http://openrosa.org/formdesigner/A800140B-A98B-47BF-A021-E69971A60B40",
+                "case_id_expression": {
+                    "type": "named",
+                    "name": "occurrence_id"
                 }
             },
             "latest_diagnostic_mbr_test_case": {

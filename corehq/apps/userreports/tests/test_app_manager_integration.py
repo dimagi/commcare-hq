@@ -10,6 +10,7 @@ from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATY
 from dimagi.utils.parsing import json_format_datetime
 
 
+@patch('corehq.apps.app_manager.util.get_other_apps_in_domain', Mock(return_value=[]))
 class AppManagerDataSourceConfigTest(SimpleTestCase):
 
     def setUp(self):
