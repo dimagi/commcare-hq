@@ -94,6 +94,13 @@ class Beneficiary(models.Model):
             'suspect': 'presumptive_tb',
         }[self.caseStatus.strip()]
 
+    @property
+    def episode_name(self):
+        return {
+            'patient': 'Episode #1: Confirmed TB (Patient)',
+            'suspect': 'Episode #1: Suspected TB (Patient)',
+        }[self.caseStatus.strip()]
+
 
     @property
     def sex(self):
