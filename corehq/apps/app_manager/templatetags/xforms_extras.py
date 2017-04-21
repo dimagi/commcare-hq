@@ -49,9 +49,11 @@ def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, esc
 def html_trans(name, langs=["default"]):
     return mark_safe(html.strip_tags(trans(name, langs, use_delim=False)) or EMPTY_LABEL)
 
+
 @register.filter
 def html_trans_prefix(name, langs=["default"]):
     return mark_safe(trans(name, langs, use_delim=False, prefix=True, escape=True) or EMPTY_LABEL)
+
 
 @register.filter
 def html_trans_prefix_delim(name, langs=["default"]):
