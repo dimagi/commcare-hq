@@ -12,7 +12,6 @@
         <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
         <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
         <script src="{% static 'style/js/password_validators.ko.js' %}"></script>
-        <script src="{% static 'intl-tel-input/build/js/intlTelInput.min.js' %}"></script>
         <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
         <script src="{% static 'registration/js/register_new_user.js' %}"></script>
     {% endcompress %}
@@ -48,7 +47,6 @@
 
 {% block content %}
 {% initial_page_data 'hide_password_feedback' hide_password_feedback %}
-{% initial_page_data 'show_number' show_number %}
 {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
 {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
 {% initial_page_data 'ab_test' ab_test %}
@@ -56,7 +54,7 @@
 <div class="container">
   <div class="row">
     <div class="col-xs-8 col-xs-offset-4 col-md-7 col-md-offset-5 reg-form-column animate-height" style="min-height: 450px">
-      <div id="registration-form-container" {% if show_number %}class="has-phonenumber"{% endif %}>
+      <div id="registration-form-container">
         <ul class="form-step-progress">
           <li class="active">{% trans "Create Account" %}</li>
           <li data-bind="css: { active: currentStep() > 0 }">{% trans "Name Project" %}</li>

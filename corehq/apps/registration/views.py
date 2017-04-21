@@ -60,24 +60,12 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             username=reg_form.cleaned_data['email'],
             password=reg_form.cleaned_data['password']
         )
-        if 'phone_number' in reg_form.cleaned_data and reg_form.cleaned_data['phone_number']:
-            web_user = WebUser.get_by_username(new_user.username)
-            web_user.phone_numbers.append(reg_form.cleaned_data['phone_number'])
-            web_user.save()
         track_workflow(new_user.email, "Requested new account")
         login(self.request, new_user)
 
-    @property
-    @memoized
-    def ab(self):
-        return ab_tests.ABTest(ab_tests.NEW_USER_NUMBER, self.request)
-
     @allow_remote_invocation
     def register_new_user(self, data):
-        reg_form = RegisterWebUserForm(
-            data['data'],
-            show_number=(self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM)
-        )
+        reg_form = RegisterWebUserForm(data['data'])
         if reg_form.is_valid():
             self._create_new_account(reg_form)
             try:
@@ -132,7 +120,6 @@ class UserRegistrationView(BasePageView):
             else:
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
-        self.ab.update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
@@ -150,25 +137,15 @@ class UserRegistrationView(BasePageView):
         return self.request.GET.get('internal', False)
 
     @property
-    @memoized
-    def ab(self):
-        return ab_tests.ABTest(ab_tests.NEW_USER_NUMBER, self.request)
-
-    @property
     def page_context(self):
         prefills = {
             'email': self.prefilled_email,
             'atypical_user': True if self.atypical_user else False
         }
         return {
-            'reg_form': RegisterWebUserForm(
-                initial=prefills,
-                show_number=(self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM),
-            ),
+            'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
-            'show_number': (self.ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM),
-            'ab_test': self.ab.context,
         }
 
     @property
