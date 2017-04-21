@@ -132,6 +132,9 @@ class BeneficiaryCaseFactory(object):
                 'create': True,
                 'update': {
                     'adherence_schedule_id': 'schedule_mwf',
+                    'dots_99_enabled': 'false',
+                    'episode_id': get_human_friendly_id(),
+                    'episode_type': self.beneficiary.current_episode_type,
                     'name': 'Episode #1: Confirmed TB (Patient)',
 
                     'migration_created_case': 'true',
