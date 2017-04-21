@@ -22,7 +22,9 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
                                 }
                             },
                             {
-                                "match_all": {}
+                                "term": {
+                                    "doc_type": "CommCareCase"
+                                }
                             }
                         ]
                     },
@@ -75,7 +77,9 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
                                 }
                             },
                             {
-                                "match_all": {}
+                                "term": {
+                                    "doc_type": "CommCareCase"
+                                }
                             }
                         ]
                     },

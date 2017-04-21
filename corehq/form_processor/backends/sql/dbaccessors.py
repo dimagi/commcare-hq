@@ -352,6 +352,10 @@ class FormAccessorSQL(AbstractFormAccessor):
         return forms[:limit]
 
     @staticmethod
+    def get_number_of_forms_in_domain(domain, doc_type='XFormInstance'):
+        return len(FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type))
+
+    @staticmethod
     def form_exists(form_id, domain=None):
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT * FROM check_form_exists(%s, %s)', [form_id, domain])
@@ -774,6 +778,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case_ids_in_domain(domain, type_=None, deleted=False):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, case_type=type_)
+
+    @staticmethod
+    def get_number_of_cases_in_domain(domain):
+        return len(CaseAccessorSQL().get_case_ids_in_domain(domain))
 
     @staticmethod
     def get_deleted_case_ids_in_domain(domain):

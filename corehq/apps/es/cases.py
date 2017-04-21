@@ -21,6 +21,9 @@ from . import aggregations, filters
 
 class CaseES(HQESQuery):
     index = 'cases'
+    default_filters = {
+        'is_commcare_case': filters.doc_type("CommCareCase"),
+    }
 
     @property
     def builtin_filters(self):

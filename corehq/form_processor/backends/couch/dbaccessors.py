@@ -15,6 +15,7 @@ from corehq.apps.hqcase.dbaccessors import (
     get_case_ids_in_domain_by_owner,
     get_cases_in_domain_by_external_id,
     get_deleted_case_ids_by_owner,
+    get_number_of_cases_in_domain,
 )
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.blobs.mixin import BlobMixin
@@ -30,7 +31,9 @@ from couchforms.dbaccessors import (
     get_forms_by_type,
     get_deleted_form_ids_for_user,
     get_form_ids_for_user,
-    get_forms_by_id, get_form_ids_by_type)
+    get_forms_by_id, get_form_ids_by_type,
+    get_number_forms_in_domain,
+)
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
@@ -61,6 +64,10 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def get_form_ids_in_domain_by_type(domain, type_):
         return get_form_ids_by_type(domain, type_)
+
+    @staticmethod
+    def get_number_of_forms_in_domain(domain):
+        return get_number_forms_in_domain(domain)
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
@@ -132,6 +139,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_case_ids_in_domain(domain, type=None):
         return get_case_ids_in_domain(domain, type=type)
+
+    @staticmethod
+    def get_number_of_cases_in_domain(domain):
+        return get_number_of_cases_in_domain(domain)
 
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):

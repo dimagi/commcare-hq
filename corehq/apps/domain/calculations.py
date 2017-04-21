@@ -23,6 +23,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from dimagi.utils.parsing import json_format_datetime
 
 
@@ -74,7 +75,9 @@ def active_mobile_users(domain, *args):
     return num_users if 'inactive' not in args else len(user_ids) - num_users
 
 
-def cases(domain, *args):
+def cases(domain, primary_db=False, *args):
+    if primary_db:
+        return CaseAccessors(domain).get_number_of_cases_in_domain()
     return get_number_of_cases_in_domain(domain)
 
 
@@ -114,7 +117,9 @@ def inactive_cases_in_last(domain, days):
     return data['hits']['total'] if data.get('hits') else 0
 
 
-def forms(domain, *args):
+def forms(domain, primary_db=False, *args):
+    if primary_db:
+        return FormAccessors(domain).get_number_of_forms_in_domain()
     return get_number_of_forms_in_domain(domain)
 
 
