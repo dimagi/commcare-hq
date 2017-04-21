@@ -3,8 +3,11 @@ from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from django.db import models
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.fixtures.dbaccessors import get_owner_ids_by_type, \
-    get_fixture_data_types_in_domain
+from corehq.apps.fixtures.dbaccessors import (
+    get_owner_ids_by_type,
+    get_fixture_data_types_in_domain,
+    get_fixture_items_by_data_type
+)
 from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
 from corehq.apps.fixtures.utils import clean_fixture_field_name, \
     get_fields_without_attributes
@@ -400,9 +403,9 @@ class FixtureDataItem(Document):
         return cls.view('_all_docs', keys=list(fixture_ids), include_docs=True) if wrap else fixture_ids
 
     @classmethod
-    def by_data_type(cls, domain, data_type):
+    def by_data_type(cls, domain, data_type, bypass_cache=False):
         data_type_id = _id_from_doc(data_type)
-        return cls.view('fixtures/data_items_by_domain_type', key=[domain, data_type_id], reduce=False, include_docs=True, descending=True)
+        return get_fixture_items_by_data_type(domain, data_type_id, bypass_cache)
 
     @classmethod
     def by_domain(cls, domain):
@@ -423,7 +426,7 @@ class FixtureDataItem(Document):
     @classmethod
     def get_item_list(cls, domain, tag):
         data_type = FixtureDataType.by_domain_tag(domain, tag).one()
-        return cls.by_data_type(domain, data_type).all()
+        return cls.by_data_type(domain, data_type)
 
     @classmethod
     def get_indexed_items(cls, domain, tag, index_field):

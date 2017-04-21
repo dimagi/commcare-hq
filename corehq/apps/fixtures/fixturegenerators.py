@@ -51,6 +51,7 @@ class ItemListsProvider(object):
     def __call__(self, restore_user, version, last_sync=None, app=None):
         assert isinstance(restore_user, OTARestoreUser)
 
+        # cached for 30 min
         all_types = dict([(t._id, t) for t in FixtureDataType.by_domain(restore_user.domain)])
         global_types = dict([(id, t) for id, t in all_types.items() if t.is_global])
 
@@ -62,10 +63,11 @@ class ItemListsProvider(object):
             item._data_type = data_type
 
         for global_fixture in global_types.values():
-            items = list(FixtureDataItem.by_data_type(restore_user.domain, global_fixture))
+            items = FixtureDataItem.by_data_type(restore_user.domain, global_fixture)
             _ = [_set_cached_type(item, global_fixture) for item in items]
             items_by_type[global_fixture._id] = items
 
+        # uses FixtureDataItem.by_user. several couch calls. no cache
         other_items = restore_user.get_fixture_data_items()
         data_types = {}
 
