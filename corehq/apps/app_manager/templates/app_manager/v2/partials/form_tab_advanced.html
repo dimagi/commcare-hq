@@ -26,6 +26,7 @@
 
         </fieldset>
     {% endif %}
+    {% if form.form_type != "shadow_form" %}
     <div class="panel panel-appmanager">
         <div class="panel-heading">
             <h4 class="panel-title panel-title-nolink">
@@ -58,4 +59,5 @@
             </ul>
         </div>
     </div>
+    {% endif %}
 </div>

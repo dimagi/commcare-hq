@@ -14,7 +14,7 @@
 +  {% if form.requires_case or form.get_action_type == 'open' %}
      var CaseConfig = hqImport('app_manager/js/case-config-ui.js').CaseConfig;
      var caseConfig = new CaseConfig({
-         home: $('#casexml_home'),
+         home: $('#case-config-ko'),
 @@ -26,5 +26,73 @@
          propertyDescriptions: {{ property_descriptions|JSON }},
      });

@@ -85,6 +85,10 @@
 
                     </div>
 
+                    {% if form.doc_type == "ShadowForm" %}
+                        {% include "app_manager/v2/partials/shadow_parent_select.html" %}
+                    {% endif %}
+
                     {% if request|toggle_enabled:'NO_VELLUM' %}
                     <div class="form-group">
                         <label class="control-label col-sm-2">
