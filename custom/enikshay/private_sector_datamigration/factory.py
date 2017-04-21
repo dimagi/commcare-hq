@@ -157,6 +157,7 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['adherence_schedule_date_start'] = rxStartDate
             kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()
             kwargs['attrs']['update']['disease_classification'] = self._episode.disease_classification
+            kwargs['attrs']['update']['treatment_card_completed_date'] = self._episode.creationDate.date()
             kwargs['attrs']['update']['treatment_initiated'] = 'yes_private'
             kwargs['attrs']['update']['treatment_initiation_date'] = rxStartDate
             kwargs['attrs']['update']['weight'] = int(self._episode.patientWeight)
