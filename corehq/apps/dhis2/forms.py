@@ -9,6 +9,7 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
+from corehq.apps.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY
 from corehq.apps.dhis2.models import Dhis2Connection, DataSetMap, DataValueMap
 from corehq.apps.style import crispy as hqcrispy
 
@@ -17,6 +18,11 @@ LOG_LEVEL_CHOICES = (
     (99, 'Disable logging'),
     (logging.ERROR, 'Error'),
     (logging.INFO, 'Info'),
+)
+
+SEND_FREQUENCY_CHOICES = (
+    (SEND_FREQUENCY_MONTHLY, 'Monthly'),
+    (SEND_FREQUENCY_QUARTERLY, 'Quarterly'),
 )
 
 
@@ -113,6 +119,7 @@ class DataValueMapFormSetHelper(FormHelper):
 class DataSetMapForm(forms.Form):
     ucr_id = forms.CharField(label=_('UCR ID'), required=True)
 
+    frequency = forms.TypedChoiceField(label=_('Frequency'), required=True, choices=SEND_FREQUENCY_CHOICES)
     day_to_send = forms.IntegerField(label=_('Day of month to send data'), required=True)
     data_set_id = forms.CharField(
         label=_('DataSetID'),
@@ -152,6 +159,7 @@ class DataSetMapForm(forms.Form):
             crispy.Fieldset(
                 _('Edit DHIS2 DataSet map'),
                 crispy.Field('ucr_id'),
+                crispy.Field('frequency'),
                 crispy.Field('day_to_send'),
                 crispy.Field('data_set_id'),
                 crispy.Field('org_unit_id'),
@@ -170,6 +178,7 @@ class DataSetMapForm(forms.Form):
             # MVP: For now just one UCR mapped
             dataset_map = dataset_maps[0] if dataset_maps else DataSetMap(domain=domain_name)
             dataset_map.ucr_id = self.cleaned_data['ucr_id']
+            dataset_map.frequency = self.cleaned_data['frequency']
             dataset_map.day_to_send = self.cleaned_data['day_to_send']
             dataset_map.data_set_id = self.cleaned_data['data_set_id']
             dataset_map.org_unit_id = self.cleaned_data['org_unit_id']

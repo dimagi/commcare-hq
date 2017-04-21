@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.couch import get_document_or_not_found
@@ -32,13 +33,28 @@ def get_last_month():
     return DateSpan(startdate, enddate)
 
 
-def get_last_month_params(slug):
+def get_last_day():
+    today = date.today()
+    enddate = today
+    startdate = today - timedelta(days=1)
+    return DateSpan(startdate, enddate)
+
+
+def get_last_quarter():
+    today = date.today()
+    current_quarter_start = ((today.month // 3) * 3) + 1
+    startdate = date(year=today.year, month=current_quarter_start, day=1) - relativedelta(months=3)
+    enddate = date(year=today.year, month=current_quarter_start, day=1) + relativedelta(months=4) - timedelta(days=1) \
+        - relativedelta(months=3)
+    return DateSpan(startdate, enddate)
+
+
+def get_date_params(slug, date_span):
     """
     Mimics date filter request parameters
     """
-    last_month = get_last_month()
-    startdate = last_month.startdate.strftime('%Y-%m-%d')
-    enddate = last_month.enddate.strftime('%Y-%m-%d')
+    startdate = date_span.startdate.strftime('%Y-%m-%d')
+    enddate = date_span.enddate.strftime('%Y-%m-%d')
     return {
         slug: "{}+to+{}".format(startdate, enddate),
         slug + '-start': startdate,
@@ -46,11 +62,12 @@ def get_last_month_params(slug):
     }
 
 
-def get_ucr_data(report_config, date_filter):
+def get_ucr_data(report_config, date_filter, date_span):
     from corehq.apps.userreports.reports.view import get_filter_values
 
     data_source = ReportFactory.from_spec(report_config, include_prefilters=True)
-    filter_params = get_last_month_params(date_filter['slug']) if date_filter else {}
+
+    filter_params = get_date_params(date_filter['slug'], date_span) if date_filter else {}
     filter_values = get_filter_values(report_config.ui_filters, filter_params)
     data_source.set_filter_values(filter_values)
     return data_source.get_data()
