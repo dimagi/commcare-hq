@@ -60,6 +60,7 @@ class BeneficiaryCaseFactory(object):
                     'phone_number': self.beneficiary.phoneNumber,
 
                     'migration_created_case': 'true',
+                    'migration_created_from_record': self.beneficiary.caseId,
                 }
             }
         }

@@ -25,6 +25,7 @@ class TestCreateCasesByBeneficiary(TestCase):
             addressLineOne='585 Mass Ave',
             addressLineTwo='Suite 4',
             age=25,
+            caseId='3',
             caseStatus='patient',
             dob=datetime(1992, 1, 2),
             firstName='Nick',
@@ -80,7 +81,7 @@ class TestCreateCasesByBeneficiary(TestCase):
             ('hiv_status', 'non_reactive'),
             ('last_name', 'P'),
             ('migration_created_case', 'true'),
-            # ('migration_created_from_record', 'MH-ABD-05-16-0001'),
+            ('migration_created_from_record', '3'),
             ('phone_number', '5432109876'),
             ('sex', 'male'),
         ]))
