@@ -179,15 +179,22 @@ def claim(request, domain):
     Allows a user to claim a case that they don't own.
     """
     couch_user = CouchUser.from_django_user(request.user)
-    case_id = request.POST['case_id']
-    if (
-        request.session.get('last_claimed_case_id') == case_id or
-        get_first_claim(domain, couch_user.user_id, case_id)
-    ):
-        return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
-                            status=409)
+    as_user = request.POST.get('commcare_login_as', None)
+    restore_user = get_restore_user(domain, couch_user, as_user)
+
+    case_id = request.POST.get('case_id', None)
+    if case_id is None:
+        return HttpResponse('A case_id is required', status=400)
+
     try:
-        claim_case(domain, couch_user.user_id, case_id,
+        if (
+            request.session.get('last_claimed_case_id') == case_id or
+            get_first_claim(domain, restore_user.user_id, case_id)
+        ):
+            return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
+                                status=409)
+
+        claim_case(domain, restore_user.user_id, case_id,
                    host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
