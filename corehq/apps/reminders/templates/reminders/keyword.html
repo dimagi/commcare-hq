@@ -7,17 +7,8 @@
     <script src="{% static 'reminders/js/reminders.keywords.ko.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-<script>
-    $(function () {
-        var kvm = new KeywordActionsViewModel({{ form.current_values|JSON }});
-        $('#keywords-form').koApplyBindings(kvm);
-        kvm.init();
-    });
-</script>
-{% endblock %}
-
 {% block page_content %}
+    {% initial_page_data 'current_values' form.current_values %}
     <div id="keywords-form">
         {% crispy form %}
     </div>
