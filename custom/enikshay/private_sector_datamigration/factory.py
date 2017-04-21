@@ -235,9 +235,10 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _episode(self):
-        try:
-            return Episode.objects.get(beneficiaryID=self.beneficiary)
-        except Episode.DoesNotExist:
+        episodes = Episode.objects.filter(beneficiaryID=self.beneficiary).order_by('-episodeDisplayID')
+        if episodes:
+            return episodes[0]
+        else:
             return None
 
     @property
