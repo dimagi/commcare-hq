@@ -109,7 +109,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
                 ('migration_created_from_record', 'MH-ABD-05-16-0001'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occupation', 'physical_mathematical_and_engineering'),
-                ('patient_type_choice', 'treatment_after_lfu'),
+                ('patient_type_choice', 'treatment_after_lfu'), #
                 ('site_choice', 'abdominal'),
                 ('transfer_in', ''),
                 ('treatment_card_completed_date', '2016-12-13'),
