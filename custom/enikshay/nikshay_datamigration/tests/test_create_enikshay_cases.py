@@ -65,7 +65,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
         self.assertEqual(
             OrderedDict([
-                ('current_episode_type', 'confirmed_tb'), #
+                ('current_episode_type', 'confirmed_tb'),
                 ('ihv_date', '2016-12-25'),#
                 ('initial_home_visit_status', 'completed'),#
                 ('migration_created_case', 'true'),
