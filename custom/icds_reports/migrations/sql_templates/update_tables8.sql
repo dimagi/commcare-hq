@@ -50,7 +50,7 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 SELECT agg_child_health_update8();
-DROP FUNCTION agg_child_health_update8()
+DROP FUNCTION agg_child_health_update8();
 
 CREATE OR REPLACE FUNCTION agg_ccs_record_update8() RETURNS VOID AS
 $BODY$
@@ -84,7 +84,7 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 SELECT agg_ccs_record_update8();
-DROP FUNCTION agg_ccs_record_update8()
+DROP FUNCTION agg_ccs_record_update8();
 
 CREATE OR REPLACE FUNCTION agg_thr_data_update8() RETURNS VOID AS
 $BODY$
@@ -124,7 +124,7 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 SELECT agg_thr_data_update8();
-DROP FUNCTION agg_thr_data_update8()
+DROP FUNCTION agg_thr_data_update8();
 
 CREATE OR REPLACE FUNCTION agg_awc_update8() RETURNS VOID AS
 $BODY$
@@ -158,4 +158,4 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 SELECT agg_awc_update8();
-DROP FUNCTION agg_awc_update8()
+DROP FUNCTION agg_awc_update8();
