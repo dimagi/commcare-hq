@@ -4,6 +4,8 @@ from datetime import datetime
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
+from mock import patch
+
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.private_sector_datamigration.models import (
@@ -39,7 +41,10 @@ class TestCreateCasesByBeneficiary(TestCase):
         cls.domain = 'test_domain'
         cls.case_accessor = CaseAccessors(cls.domain)
 
-    def test_create_cases_for_beneficiary(self):
+    @patch('custom.enikshay.private_sector_datamigration.factory.datetime')
+    def test_create_cases_for_beneficiary(self, mock_datetime):
+        mock_datetime.utcnow.return_value = datetime(2016, 9, 8, 1, 2, 3, 4123)
+
         Episode.objects.create(
             id=1,
             adherenceScore=0.5,
@@ -98,6 +103,7 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(occurrence_case.owner_id, '')
         self.assertEqual(occurrence_case.dynamic_case_properties(), OrderedDict([
             ('migration_created_case', 'true'),
+            ('occurrence_id', '20160908010203004')
         ]))
         self.assertEqual(len(occurrence_case.indices), 1)
         self._assertIndexEqual(

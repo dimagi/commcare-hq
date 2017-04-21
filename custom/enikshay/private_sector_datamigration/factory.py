@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 
@@ -16,6 +18,9 @@ EPISODE_CASE_TYPE = 'episode'
 ADHERENCE_CASE_TYPE = 'adherence'
 PRESCRIPTION_CASE_TYPE = 'prescription'
 TEST_CASE_TYPE = 'test'
+
+def get_human_friendly_id():
+    return datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3]
 
 
 class BeneficiaryCaseFactory(object):
@@ -103,6 +108,7 @@ class BeneficiaryCaseFactory(object):
                 'create': True,
                 'update': {
                     'name': 'Occurrence #1',
+                    'occurrence_id': get_human_friendly_id(),
 
                     'migration_created_case': 'true',
                 }
