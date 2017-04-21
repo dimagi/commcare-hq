@@ -27,7 +27,7 @@ def get_fixture_data_types_in_domain(domain):
     ))
 
 
-@quickcache(['domain', 'data_type_id'], timeout=60, skip_arg='bypass_cache')
+@quickcache(['domain', 'data_type_id'], timeout=5 * 60, skip_arg='bypass_cache')
 def get_fixture_items_by_data_type(domain, data_type_id, bypass_cache=False):
     from corehq.apps.fixtures.models import FixtureDataItem
     return list(FixtureDataItem.view(
