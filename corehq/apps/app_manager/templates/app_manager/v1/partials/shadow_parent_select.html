@@ -9,7 +9,7 @@
         ></span>
     </label>
     <div id="shadow-parent" class="col-sm-4">
-        <select data-bind="value: shadow_parent">
+        <select data-bind="value: shadow_parent" class="form-control">
             <option value=""></option>
             {% for key, display in form.get_shadow_parent_options %}
                 <option value="{{ key }}">{{ display }}</option>
