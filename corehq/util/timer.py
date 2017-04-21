@@ -54,6 +54,10 @@ class NestableTimer(object):
         timers = [self] + list(itertools.chain(*[sub.to_list() for sub in self.subs]))
         return timers
 
+    @property
+    def is_leaf_node(self):
+        return not self.subs
+
     def __repr__(self):
         return "NestableTimer(name='{}', beginning={}, end={}, parent='{}')".format(
             self.name,
