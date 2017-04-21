@@ -28,6 +28,7 @@ class TestCreateCasesByBeneficiary(TestCase):
             caseId='3',
             caseStatus='patient',
             dob=datetime(1992, 1, 2),
+            emergencyContactNo='1234567890',
             firstName='Nick',
             gender='4',
             isActive=True,
@@ -83,6 +84,7 @@ class TestCreateCasesByBeneficiary(TestCase):
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
             ('phone_number', '5432109876'),
+            ('secondary_contact_phone_number', '1234567890'),
             ('sex', 'male'),
         ]))
         self.assertEqual(len(person_case.xform_ids), 1)
