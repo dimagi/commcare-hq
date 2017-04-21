@@ -141,6 +141,7 @@ class TestCreateCasesByBeneficiary(TestCase):
             ('migration_created_from_record', '3'),
             ('nikshay_id', '02139-02215'),
             ('site_choice', 'abdominal'),
+            ('transfer_in', ''),
             ('treatment_initiated', 'yes_private'),
             ('treatment_initiation_date', '2017-04-19'),
             ('weight', '50'),
