@@ -27,7 +27,8 @@ LOC_TYPES_TO_USER_TYPES = {
 
 
 def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
-    if not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain):
+    # if not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain):
+    if not toggles.ENIKSHAY.enabled(domain):
         return
 
     new_user_form = forms.get('NewMobileWorkerForm')
@@ -60,6 +61,8 @@ def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
 
     if location_form:
         location_form.add_error('assigned_locations', _("You cannot edit the location of existing users."))
+    # user_form = new_user_form or update_user_form
+    # user_form.add_error('username', _("blocking the form from being sent"))
 
 
 def validate_usertype(location_type, usertype, custom_data):
