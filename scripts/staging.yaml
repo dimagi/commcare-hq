@@ -48,10 +48,11 @@ branches:
   - vellum-staging # J$ 11/13
   - nh/240812/mw_pwd_reset  # Norman 3/23
   - nh/new_rb  # Norman 11/22
-#  - mk-nikshay-audit-cookie-safe # Manish 3/3
+  - mk-nikshay-audit-cookie-safe # Manish 3/3
   - mk-add-password-encoder # Manish 3/3
   - gc/case-close-refactor # Giovanni 4/7
-  - je/fix-change-feed-page # emord 4/12
+  - dm/sql-db-aliases
+  - np/update/twofactor # NP 4/21
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

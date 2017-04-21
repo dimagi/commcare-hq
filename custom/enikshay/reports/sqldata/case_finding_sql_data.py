@@ -101,7 +101,7 @@ class CaseFindingSqlData(EnikshaySqlData):
 
     @property
     def date_property(self):
-        return 'date_of_diagnosis'
+        return 'bacteriological_test_date_reported'
 
     @property
     def columns(self):

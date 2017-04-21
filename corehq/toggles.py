@@ -1065,14 +1065,6 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     }
 )
 
-BLOBDB_EXPORTS = PredictablyRandomToggle(
-    'blobdb_exports',
-    'Use the blobdb to do exports',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-    randomness=0.8,
-)
-
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
@@ -1092,7 +1084,8 @@ BLOBDB_RESTORE = PredictablyRandomToggle(
     "Blobdb restore",
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.2,
+    randomness=0,
+    always_disabled='icds-cas',
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
@@ -1121,4 +1114,12 @@ MOTECH = StaticToggle(
     "Show Motech tab",
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
+)
+
+MARK_LATEST_SUBMISSION_ON_USER = StaticToggle(
+    'user_last_submission',
+    "Marks the latest submssion on user model",
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )
