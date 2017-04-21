@@ -111,6 +111,7 @@ class BeneficiaryCaseFactory(object):
                     'occurrence_id': get_human_friendly_id(),
 
                     'migration_created_case': 'true',
+                    'migration_created_from_record': self.beneficiary.caseId,
                 }
             },
             'indices': [CaseIndex(

@@ -103,6 +103,7 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(occurrence_case.owner_id, '')
         self.assertEqual(occurrence_case.dynamic_case_properties(), OrderedDict([
             ('migration_created_case', 'true'),
+            ('migration_created_from_record', '3'),
             ('occurrence_id', '20160908010203004')
         ]))
         self.assertEqual(len(occurrence_case.indices), 1)
