@@ -39,7 +39,7 @@
 -                                        <li>
 -                                            <a>{% trans "Offline Install" %}</a>
 -                                        </li>
-+                                    <ul class="nav nav-tabs" role="tablist">
++                                    <ul class="nav nav-pills" role="tablist">
 +                                      <li class="active">
 +                                        <a href="#online-install-tab" data-toggle="tab">
 +                                          {% trans "Online Install" %}
