@@ -302,7 +302,8 @@ BEGIN
 		'sum(fully_immunized_eligible), ' ||
 		'sum(fully_immunized_on_time), ' ||
 		'sum(fully_immunized_late), ' ||
-		'sum(has_aadhar_id) ' ||
+		'sum(has_aadhar_id), ' ||
+		'5 ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
@@ -317,6 +318,10 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx9') || ' ON ' || quote_ident(_tablename) || '(awc_id)'; -- for second query
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx10') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)'; -- for third query
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx11') || ' ON ' || quote_ident(_tablename) || '(block_id)'; -- for fourth query
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx12') || ' ON ' || quote_ident(_tablename) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx13') || ' ON ' || quote_ident(_tablename) || '(state_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx14') || ' ON ' || quote_ident(_tablename) || '(aggregation_level)';
+
 
     -- may want a double index on month and caste for aggregate location query
 
@@ -368,6 +373,7 @@ BEGIN
 		'minority, ' ||
 		'resident, ' ||
 		_rollup_text ||
+		', 4 ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, month, gender, age_tranche, caste, disabled, minority, resident)';
 
@@ -385,6 +391,7 @@ BEGIN
 		'minority, ' ||
 		'resident, ' ||
 		_rollup_text ||
+		', 3 ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, month, gender, age_tranche, caste, disabled, minority, resident)';
@@ -403,6 +410,7 @@ BEGIN
 		'minority, ' ||
 		'resident, ' ||
 		_rollup_text ||
+		', 2 ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, month, gender, age_tranche, caste, disabled, minority, resident)';
@@ -421,6 +429,7 @@ BEGIN
 		'minority, ' ||
 		'resident, ' ||
 		_rollup_text ||
+		', 1 ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, month, gender, age_tranche, caste, disabled, minority, resident)';
@@ -511,6 +520,9 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx9') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx10') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx11') || ' ON ' || quote_ident(_tablename) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx12') || ' ON ' || quote_ident(_tablename) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx13') || ' ON ' || quote_ident(_tablename) || '(state_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx14') || ' ON ' || quote_ident(_tablename) || '(aggregation_level)';
 
     -- may want a double index on month and caste for aggregate  location query
 
@@ -564,6 +576,7 @@ BEGIN
 		'minority, ' ||
 		'resident, ' ||
 		_rollup_text ||
+		', 4 ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
@@ -581,6 +594,7 @@ BEGIN
 		'minority, ' ||
 		'resident, ' ||
 		_rollup_text ||
+		', 3 ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
@@ -599,6 +613,7 @@ BEGIN
 		'minority, ' ||
 		'resident, ' ||
 		_rollup_text ||
+		', 2 ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
@@ -617,6 +632,7 @@ BEGIN
 		'minority, ' ||
 		'resident, ' ||
 		_rollup_text ||
+		', 1 ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
@@ -655,9 +671,10 @@ BEGIN
 		'minority, ' ||
 		'resident, ' ||
 		'sum(thr_eligible), ' ||
-		'sum(rations_21_plus_distributed) ' ||
+		'sum(rations_21_plus_distributed), ' ||
+		'aggregation_level ' ||
 		'FROM ' || quote_ident(_child_health_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, caste, disabled, minority, resident)';
+		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, caste, disabled, minority, resident, aggregation_level)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -672,9 +689,10 @@ BEGIN
 		'minority, ' ||
 		'resident, ' ||
 		'sum(thr_eligible),' ||
-		'sum(rations_21_plus_distributed) ' ||
+		'sum(rations_21_plus_distributed), ' ||
+		'aggregation_level ' ||
 		'FROM ' || quote_ident(_ccs_record_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, caste, disabled, minority, resident)';
+		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, caste, disabled, minority, resident, aggregation_level)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(beneficiary_type)';
@@ -683,6 +701,13 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx5') || ' ON ' || quote_ident(_tablename) || '(disabled)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(minority)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(resident)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx9') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx10') || ' ON ' || quote_ident(_tablename) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx11') || ' ON ' || quote_ident(_tablename) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx12') || ' ON ' || quote_ident(_tablename) || '(state_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx13') || ' ON ' || quote_ident(_tablename) || '(aggregation_level)';
+
 
 
 END;
@@ -735,7 +760,7 @@ BEGIN
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
 		' (state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, thr_score, thr_eligible_ccs, ' ||
-		'thr_eligible_child, thr_rations_21_plus_distributed_ccs, thr_rations_21_plus_distributed_child, wer_score, pse_score, awc_not_open_no_data, is_launched, training_phase) ' ||
+		'thr_eligible_child, thr_rations_21_plus_distributed_ccs, thr_rations_21_plus_distributed_child, wer_score, pse_score, awc_not_open_no_data, is_launched, training_phase, aggregation_level) ' ||
 		'(SELECT ' ||
 			'state_id, ' ||
 			'district_id, ' ||
@@ -753,7 +778,8 @@ BEGIN
 			'0, ' ||
 			'25, ' ||
 			quote_literal(_no_text) || ', ' ||
-			'0 ' ||
+            '0, ' ||
+			'5 ' ||
 		'FROM ' || quote_ident(_awc_location_tablename) ||')';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -761,6 +787,9 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx3') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx4') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx5') || ' ON ' || quote_ident(_tablename) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(state_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(aggregation_level)';
 
     -- maybe have a double index on month and awc_id ? for next query
     -- maybe add a multi column index on month, is_launched and awc_id for query line ~930
@@ -1169,6 +1198,7 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		_rollup_text ||
+		', 4 ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, month, is_launched)';
 
@@ -1180,6 +1210,7 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		_rollup_text ||
+		', 3 ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, month, is_launched)';
@@ -1192,6 +1223,7 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		_rollup_text ||
+		', 2 ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, month, is_launched)';
@@ -1204,6 +1236,7 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		_rollup_text ||
+		', 1 ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, month, is_launched)';

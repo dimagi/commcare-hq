@@ -144,6 +144,7 @@ CREATE VIEW agg_awc_monthly AS
     FROM "public"."awc_location_months" "awc_location_months"
     LEFT JOIN "public"."agg_awc" "agg_awc" ON (
         ("awc_location_months"."month" = "agg_awc"."month") AND
+        ("awc_location_months"."aggregation_level" = "agg_awc"."aggregation_level") AND
         ("awc_location_months"."state_id" = "agg_awc"."state_id") AND
         ("awc_location_months"."district_id" = "agg_awc"."district_id") AND
         ("awc_location_months"."block_id" = "agg_awc"."block_id") AND
@@ -214,6 +215,7 @@ CREATE VIEW agg_ccs_record_monthly AS
     CROSS JOIN "public"."ccs_record_categories" "ccs_record_categories"
     LEFT JOIN "public"."agg_ccs_record" "agg_ccs_record" ON (
         ("awc_location_months"."month" = "agg_ccs_record"."month") AND
+        ("awc_location_months"."aggregation_level" = "agg_ccs_record"."aggregation_level") AND
         ("awc_location_months"."state_id" = "agg_ccs_record"."state_id") AND
         ("awc_location_months"."district_id" = "agg_ccs_record"."district_id") AND
         ("awc_location_months"."block_id" = "agg_ccs_record"."block_id") AND
@@ -289,6 +291,7 @@ CREATE VIEW agg_child_health_monthly AS
     CROSS JOIN "public"."child_health_categories" "child_health_categories"
     LEFT JOIN "public"."agg_child_health" "agg_child_health" ON (
         ("awc_location_months"."month" = "agg_child_health"."month") AND
+        ("awc_location_months"."aggregation_level" = "agg_child_health"."aggregation_level") AND
         ("awc_location_months"."state_id" = "agg_child_health"."state_id") AND
         ("awc_location_months"."district_id" = "agg_child_health"."district_id") AND
         ("awc_location_months"."block_id" = "agg_child_health"."block_id") AND
@@ -333,6 +336,7 @@ CREATE VIEW agg_thr_monthly AS
     CROSS JOIN "public"."thr_categories" "thr_categories"
     LEFT JOIN "public"."agg_thr_data" "agg_thr_data" ON (
         ("awc_location_months"."month" = "agg_thr_data"."month") AND
+        ("awc_location_months"."aggregation_level" = "agg_thr_data"."aggregation_level") AND
         ("awc_location_months"."state_id" = "agg_thr_data"."state_id") AND
         ("awc_location_months"."district_id" = "agg_thr_data"."district_id") AND
         ("awc_location_months"."block_id" = "agg_thr_data"."block_id") AND
