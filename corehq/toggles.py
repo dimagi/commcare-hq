@@ -1084,7 +1084,7 @@ BLOBDB_RESTORE = PredictablyRandomToggle(
     "Blobdb restore",
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.5,
+    randomness=0,
     always_disabled='icds-cas',
 )
 
