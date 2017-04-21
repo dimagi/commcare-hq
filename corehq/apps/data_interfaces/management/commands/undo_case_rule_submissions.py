@@ -27,7 +27,7 @@ class Command(BaseCommand):
 
     def validate_since(self, since):
         if since:
-            if not re.match('^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d$'):
+            if not re.match('^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d$', since):
                 raise CommandError("Please enter UTC timestamp for --since in the format: YYYY-MM-DD HH:MM:SS")
             return parse(since)
         else:
@@ -72,5 +72,5 @@ class Command(BaseCommand):
         print("Processing...")
         result = undoer.bulk_undo(progress_bar=True)
         print("%s form(s) were considered" % result['processed'])
-        print("%s form(s) had to be skipped because they opened a case or had errors." % result['skipped'])
+        print("%s form(s) had to be skipped because they opened a case or had errors" % result['skipped'])
         print("%s form(s) were archived" % result['archived'])

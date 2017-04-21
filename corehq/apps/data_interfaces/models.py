@@ -8,6 +8,7 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.es.cases import CaseES
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.log import with_progress_bar
 from couchdbkit.exceptions import ResourceNotFound
@@ -322,7 +323,7 @@ class AutomaticUpdateRule(models.Model):
             return CaseRuleActionResult()
 
         if self.criteria_match(case, now):
-            return self.apply_actions(case)
+            return self.run_actions(case)
 
         return CaseRuleActionResult()
 
@@ -953,7 +954,7 @@ class CaseRuleUndoer(object):
 
     def get_submission_queryset(self):
         qs = CaseRuleSubmission.objects.filter(
-            domain=domain,
+            domain=self.domain,
             archived=False,
         )
 
@@ -961,11 +962,12 @@ class CaseRuleUndoer(object):
             qs = qs.filter(rule_id=self.rule_id)
 
         if self.since:
-            qs = qs.filter(created_on__gte=since)
+            qs = qs.filter(created_on__gte=self.since)
 
         return qs
 
     def bulk_undo(self, progress_bar=False):
+        chunk_size = 100
         result = {
             'processed': 0,
             'skipped': 0,
@@ -973,16 +975,19 @@ class CaseRuleUndoer(object):
         }
 
         form_ids = list(self.get_submission_queryset().values_list('form_id', flat=True))
-        form_id_chunks = chunked(form_ids, 100)
+        form_id_chunks = chunked(form_ids, chunk_size)
         if progress_bar:
-            form_id_chunks = with_progress_bar(form_id_chunks)
+            length = len(form_ids) / chunk_size
+            if len(form_ids) % chunk_size > 0:
+                length += 1
+            form_id_chunks = with_progress_bar(form_id_chunks, length=length)
 
         for form_id_chunk in form_id_chunks:
             archived_form_ids = []
             for form in FormAccessors(self.domain).iter_forms(form_id_chunk):
                 result['processed'] += 1
 
-                if not instance.is_normal or any([u.creates_case() for u in get_case_updates(form)]):
+                if not form.is_normal or any([u.creates_case() for u in get_case_updates(form)]):
                     result['skipped'] += 1
                     continue
 
