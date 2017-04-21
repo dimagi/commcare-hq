@@ -132,6 +132,7 @@ class BeneficiaryCaseFactory(object):
                 'create': True,
                 'update': {
                     'adherence_schedule_id': 'schedule_mwf',
+                    'date_of_mo_signature': self.beneficiary.dateOfRegn.date(),
                     'dots_99_enabled': 'false',
                     'episode_id': get_human_friendly_id(),
                     'episode_type': self.beneficiary.current_episode_type,

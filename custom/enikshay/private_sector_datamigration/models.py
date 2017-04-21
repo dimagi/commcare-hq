@@ -20,7 +20,7 @@ class Beneficiary(models.Model):
     creationDate = models.DateTimeField(null=True)
     creator = models.CharField(max_length=255, null=True)
     dateOfIdentification = models.DateTimeField(null=True)
-    dateOfRegn = models.DateTimeField(null=True)
+    dateOfRegn = models.DateTimeField()
     diagnosisBasisId = models.IntegerField(null=True)
     districtId = models.CharField(max_length=6, null=True)
     dob = models.DateTimeField(null=True)
