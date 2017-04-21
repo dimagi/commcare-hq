@@ -137,6 +137,7 @@ class TestCreateCasesByBeneficiary(TestCase):
             ('disease_classification', 'extra_pulmonary'),
             ('dots_99_enabled', 'false'),
             ('episode_id', '20160908010203004'),
+            ('episode_pending_registration', 'no'),
             ('episode_type', 'confirmed_tb'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
