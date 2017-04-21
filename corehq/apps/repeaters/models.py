@@ -9,7 +9,7 @@ from requests.exceptions import Timeout, ConnectionError
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
-from corehq.util.datadog.utils import log_counter
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.quickcache import quickcache
 from utils import get_repeater_auth_header
 
@@ -608,10 +608,10 @@ class RepeatRecord(Document):
             self.last_checked = datetime.utcnow()
             self.cancel()
         self.failure_reason = reason
-        log_counter(REPEATER_ERROR_COUNT, {
-            '_id': self._id,
-            'reason': reason,
-            'target_url': self.url,
+        datadog_counter(REPEATER_ERROR_COUNT, {
+            'domain: ': self.domain,
+            'status_code:': response.status_code if response else None,
+            'repeater_type:': self.repeater_type,
         })
 
     def cancel(self):
