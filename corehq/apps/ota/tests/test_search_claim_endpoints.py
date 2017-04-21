@@ -116,6 +116,28 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(response.content, 'You have already claimed that case')
 
     @run_with_all_backends
+    def test_claim_restore_as(self):
+        """Server should assign cases to the correct user
+        """
+        client = Client()
+        client.login(username=USERNAME, password=PASSWORD)
+        other_user_username = 'other_user@{}.commcarehq.org'.format(DOMAIN)
+        other_user = CommCareUser.create(DOMAIN, other_user_username, PASSWORD)
+
+        url = reverse('claim_case', kwargs={'domain': DOMAIN})
+
+        client.post(url, {
+            'case_id': self.case_id,
+            'commcare_login_as': other_user_username
+        })
+
+        claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+        self.assertEqual(len(claim_ids), 1)
+
+        claim_case = CaseAccessors(DOMAIN).get_case(claim_ids[0])
+        self.assertEqual(claim_case.owner_id, other_user._id)
+
+    @run_with_all_backends
     def test_search_endpoint(self):
         known_result = (
             '<results id="case">'  # ("case" is not the case type)
