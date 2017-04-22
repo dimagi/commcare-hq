@@ -295,6 +295,10 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
             ret.strict = False
         return ret
 
+    @property
+    def response_class(self):
+        return get_restore_response_class(self.domain)
+
     def case_count(self):
         """
         How many cases are associated with this. Used in reports.
@@ -322,13 +326,20 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         raise NotImplementedError()
 
     def set_cached_payload(self, payload_path, version):
-        self.cache_payload_paths[version] = payload_path
+        self.cache_payload_paths[self._cache_key(version)] = payload_path
 
     def get_cached_payload(self, version, stream=False):
-        response_class = get_restore_response_class(self.domain)
-        if version in self.cache_payload_paths:
-            return response_class.get_payload(self.cache_payload_paths[version])
+        if self._cache_key(version) in self.cache_payload_paths:
+            return self.response_class.get_payload(self.cache_payload_paths[self._cache_key(version)])
         return None
+
+    def get_cached_payload_path(self, version):
+        if self._cache_key(version) in self.cache_payload_paths:
+            return self.cache_payload_paths[self._cache_key(version)]
+        return None
+
+    def _cache_key(self, version):
+        return u'{}-{}'.format(self.response_class.__name__, version)
 
     def invalidate_cached_payloads(self):
         self.cache_payload_paths = {}

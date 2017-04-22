@@ -717,7 +717,7 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            cache_payload_path = self.sync_log.cache_payload_paths.get(self.version)
+            cache_payload_path = self.sync_log.get_cached_payload_path(self.version)
         else:
             cache_payload_path = self.cache.get(self._initial_cache_key)
 
