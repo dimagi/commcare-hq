@@ -1,3 +1,5 @@
+from xml.sax.saxutils import escape
+
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.suite_xml import const
@@ -127,7 +129,11 @@ class FormattedDetailColumn(object):
                 template.text.xpath.variables.node.append(
                     sx.XpathVariable(name=key, locale_id=value).node
                 )
-
+        if getattr(self, 'raw_variables', {}):
+            for key, value in sorted(self.raw_variables.items()):
+                template.text.xpath.variables.node.append(
+                    sx.XpathRawVariable(name=key, value=value).node
+                )
         return template
 
     @property
@@ -313,9 +319,9 @@ class Enum(FormattedDetailColumn):
 
     def _make_xpath(self, type):
         if type == 'sort':
-            xpath_fragment_template = u"if({xpath} = '{key}', {i}, "
+            xpath_fragment_template = u"if({xpath} = {escaped_key}, {i}, "
         elif type == 'display':
-            xpath_fragment_template = u"if({xpath} = '{key}', ${key_as_var}, "
+            xpath_fragment_template = u"if({xpath} = {escaped_key}, ${key_as_var}, "
         else:
             raise ValueError('type must be in sort, display')
 
@@ -323,7 +329,7 @@ class Enum(FormattedDetailColumn):
         for i, item in enumerate(self.column.enum):
             parts.append(
                 xpath_fragment_template.format(
-                    key=item.key,
+                    escaped_key=item.escaped_key_hash,
                     key_as_var=item.key_as_variable,
                     xpath=self.xpath,
                     i=i,
@@ -349,6 +355,18 @@ class Enum(FormattedDetailColumn):
             v_val = self.id_strings.detail_column_enum_variable(
                 self.module, self.detail_type, self.column, v_key)
             variables[v_key] = v_val
+        return variables
+
+    @property
+    def raw_variables(self):
+        variables = {}
+        for item in self.column.enum:
+            key_hash = item.escaped_key_hash
+            if "$e" in key_hash:
+                key = key_hash[1:]  # exclude '$'
+                value = item.key
+                escaped_value = escape(value)
+                variables[key] = escaped_value
         return variables
 
 

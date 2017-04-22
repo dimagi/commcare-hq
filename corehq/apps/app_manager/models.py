@@ -1840,9 +1840,23 @@ class MappingItem(DocumentSchema):
         return any(special_char in self.key for special_char in special_chars)
 
     @property
+    def escaped_key_hash(self):
+        """
+        Returns the string that be safely used as right-hand side of equality-check in the
+        condition-predicate of an if-clause "if (case_property = <escaped_key_hash>, value, ...)"
+
+        If key doesn't contain special chars then "'{key}'" is returned, else it will be formatted as xml variable
+        """
+        if self.treat_as_expression:
+            return '$e{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
+        else:
+            return "'{key}'".format(key=self.key)
+
+    @property
     def key_as_variable(self):
         """
-        Return an xml variable name to represent this key.
+        Return an xml variable name to represent this key. This return value is
+        used as the variable name to store the value
 
         If the key contains spaces or a condition-predicate of an if-clause,
         return a hash of the key with "h" prepended.

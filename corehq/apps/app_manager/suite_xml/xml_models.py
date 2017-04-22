@@ -40,6 +40,12 @@ class XpathVariable(XmlObject):
     locale_id = StringField('locale/@id')
 
 
+class XpathRawVariable(XmlObject):
+    ROOT_NAME = 'variable'
+    name = StringField('@name')
+    value = StringField('.')
+
+
 class Xpath(XmlObject):
     ROOT_NAME = 'xpath'
     function = XPathField('@function')

@@ -374,6 +374,62 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_case_tile_suite(self):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
 
+    def test_id_mapping(self):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'c'},
+                model='case',
+                field='color',
+                format='enum',
+                enum=[
+                    MappingItem(key='red', value={'en': 'Red'}),
+                    MappingItem(key='with space', value={'en': 'Blue'}),
+                    MappingItem(key="with'quote", value={'en': 'Gold'})
+                ],
+                case_tile_field='sex'
+            ),
+        ]
+
+        spec = """
+            <partial>
+              <template>
+                <text>
+                  <xpath function="if(color = 'red', $kred, if(color = 'with space', $h{hash_val2}, if(color = $e{hash_val3}, $h{hash_val3}, '')))">
+                    <variable name="h{hash_val2}">
+                      <locale id="m0.case_short.case_color_1.enum.h{hash_val2}"/>
+                    </variable>
+                    <variable name="h{hash_val3}">
+                      <locale id="m0.case_short.case_color_1.enum.h{hash_val3}"/>
+                    </variable>
+                    <variable name="kred">
+                      <locale id="m0.case_short.case_color_1.enum.kred"/>
+                    </variable>
+                    <variable name="e{hash_val3}">with'quote</variable>
+                  </xpath>
+                </text>
+              </template>
+              <template>
+                <text>
+                  <xpath function="case_name"/>
+                </text>
+              </template>
+            </partial>
+        """.format(
+            hash_val2=hashlib.md5('with space').hexdigest()[:8],
+            hash_val3=hashlib.md5("with'quote").hexdigest()[:8],
+        )
+
+        self.assertXmlPartialEqual(
+            spec,
+            app.create_suite(),
+            './detail/field/template[1]'
+        )
+
     def test_case_detail_icon_mapping(self):
         app = Application.new_app('domain', 'Untitled Application')
 
