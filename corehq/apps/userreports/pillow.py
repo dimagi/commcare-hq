@@ -9,7 +9,7 @@ import six
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.const import (
-    KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
+    KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 )
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
@@ -150,8 +150,8 @@ class ConfigurableReportTableManagerMixin(object):
         ]
 
     def rebuild_tables_if_necessary(self):
-        sql_supported_backends = [UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND]
-        es_supported_backends = [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND]
+        sql_supported_backends = [UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY]
+        es_supported_backends = [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY]
         self._rebuild_sql_tables(self._tables_by_engine_id(sql_supported_backends))
         self._rebuild_es_tables(self._tables_by_engine_id(es_supported_backends))
 
