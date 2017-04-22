@@ -136,7 +136,7 @@ def swallow_programming_errors(fn):
     def decorated(request, domain, *args, **kwargs):
         try:
             return fn(request, domain, *args, **kwargs)
-        except ProgrammingError as e:
+        except ProgrammingError, e:
             if settings.DEBUG:
                 raise
             messages.error(
