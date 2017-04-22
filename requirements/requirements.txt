@@ -48,7 +48,7 @@ xlrd==0.7.3
 simplejson==2.6.1
 sh==1.09
 gevent==1.0.2
-greenlet==0.4.9
+greenlet==0.4.12
 numpy==1.7.1
 six==1.10.0
 socketpool==0.5.3
