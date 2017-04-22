@@ -57,7 +57,7 @@ amqp==1.4.7
 amqplib==1.0.2
 sqlagg==0.7.0
 django-redis==4.2
-redis==2.10.3
+redis==2.10.5
 # WeasyPrint==0.20.2
 twilio==5.6.0
 django-countries==4.0
