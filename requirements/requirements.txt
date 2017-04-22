@@ -4,7 +4,7 @@ restkit==4.2.2
 iso8601==0.1.10
 jsonobject==0.7.1
 jsonobject-couchdbkit==0.8.0.1
-celery==3.1.18
+celery==4.0.2
 # required by django-digest
 decorator==4.0.4
 django==1.10.7
