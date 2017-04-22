@@ -2,6 +2,7 @@
 from datetime import datetime
 import uuid
 from django.conf import settings
+from django.db.utils import DataError
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -14,8 +15,10 @@ from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
@@ -29,13 +32,13 @@ class FundamentalCaseTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super(FundamentalCaseTests, cls).setUpClass()
-        FormProcessorTestUtils.delete_all_cases(DOMAIN)
-        FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        FormProcessorTestUtils.delete_all_cases()
+        FormProcessorTestUtils.delete_all_xforms()
 
     @classmethod
     def tearDownClass(cls):
-        FormProcessorTestUtils.delete_all_cases(DOMAIN)
-        FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        FormProcessorTestUtils.delete_all_cases()
+        FormProcessorTestUtils.delete_all_xforms()
         super(FundamentalCaseTests, cls).tearDownClass()
 
     def setUp(self):
@@ -361,7 +364,43 @@ class FundamentalCaseTests(TestCase):
 
 @use_sql_backend
 class FundamentalCaseTestsSQL(FundamentalCaseTests):
-    pass
+    def test_db_integrity_error(self):
+        case_id = uuid.uuid4().hex
+        case = CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id='this is a very long user_id that exceeds the 255 char limit' * 5,
+            owner_id='user1',
+            case_type='demo',
+            case_name='name'
+        )
+
+        with self.assertRaises(DataError):
+            post_case_blocks([case.as_xml()], domain='domain2')
+
+        normal_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_state('domain2', XFormInstanceSQL.NORMAL)
+        self.assertEqual(len(normal_form_ids), 0)
+
+        error_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_state('domain2', XFormInstanceSQL.ERROR)
+        self.assertEqual(len(error_form_ids), 1)
+        form = FormAccessorSQL.get_form(error_form_ids[0])
+        attachments = form.get_attachments()
+        self.assertEqual(len(attachments), 1)
+
+    def test_long_value_validation(self):
+        case_id = uuid.uuid4().hex
+        case = CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id='user1',
+            owner_id='user1',
+            case_type='demo',
+            case_name='this is a very long case name that exceeds the 255 char limit' * 5
+        )
+
+        message = "Error processing case update: Field: name, Error: Value exceeds allowed length: 255"
+        with self.assertRaisesMessage(ValueError, message):
+            post_case_blocks([case.as_xml()], domain='domain2')
 
 
 def _submit_case_block(create, case_id, **kwargs):

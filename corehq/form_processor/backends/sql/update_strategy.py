@@ -13,13 +13,30 @@ from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, 
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
+
+def _validate_length(length):
+    def __inner(value):
+        if len(value) > length:
+            raise ValueError('Value exceeds allowed length: {}'.format(length))
+        return value
+
+    return __inner
+
+
 PROPERTY_TYPE_MAPPING = {
-    'opened_on': iso8601.parse_date
+    'opened_on': iso8601.parse_date,
+    'name': _validate_length(255),
+    'type': _validate_length(255),
+    'owner_id': _validate_length(255),
+    'external_id': _validate_length(255),
 }
 
 
-def _convert_type(property_name, value):
-    return PROPERTY_TYPE_MAPPING.get(property_name, lambda x: x)(value)
+def _convert_type_check_length(property_name, value):
+    try:
+        return PROPERTY_TYPE_MAPPING.get(property_name, lambda x: x)(value)
+    except ValueError as e:
+        raise ValueError('Error processing case update: Field: {}, Error: {}'.format(property_name, e.message))
 
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
@@ -106,7 +123,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def _update_known_properties(self, action):
         for name, value in action.get_known_properties().items():
             if value:
-                setattr(self.case, name, _convert_type(name, value))
+                setattr(self.case, name, _convert_type_check_length(name, value))
 
     def _apply_create_action(self, case_update, create_action):
         self._update_known_properties(create_action)
