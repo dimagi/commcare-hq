@@ -66,7 +66,7 @@ stripe==1.12.2
 django-compressor==2.1
 django-angular==0.7.16
 Pycco==0.3.0
-django-mptt==0.8.6
+django-mptt==0.8.7
 jsonpath-rw==1.4.0
 pip>=6.1.1
 git+git://github.com/smartfile/django-transfer.git@6e0dc94c3341c358fca8eb2bf74e23aee3983ec4
