@@ -18,7 +18,7 @@ diff-match-patch==20120106
 django-tastypie==0.13.3
 djangorestframework==3.5.4
 djtables==0.1.1
-elasticsearch==1.9.0
+elasticsearch==5.2.0
 #egenix-mx-base==3.2.8
 eulxml==0.18.0
 feedparser==5.1.3
