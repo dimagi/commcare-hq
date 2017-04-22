@@ -1144,3 +1144,81 @@ class TestBulkManagement(TestCase):
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
         self.assertCouchSync()
+
+
+class TestPartialBulkManagement(TestCase):
+    basic_tree = [
+        # (name, site_code, location_type, parent_code, location_id,
+        # do_delete, external_id, latitude, longitude, index)
+        ('S1', 's1', 'state', '', '', False) + extra_stub_args,
+        ('S2', 's2', 'state', '', '', False) + extra_stub_args,
+        ('County11', 'county11', 'county', 's1', '', False) + extra_stub_args,
+        ('County21', 'county21', 'county', 's2', '', False) + extra_stub_args,
+        ('City111', 'city111', 'city', 'county11', '', False) + extra_stub_args,
+        ('City112', 'city112', 'city', 'county11', '', False) + extra_stub_args,
+        ('City211', 'city211', 'city', 'county21', '', False) + extra_stub_args,
+    ]
+
+    types = [
+        ('state', None),
+        ('county', 'state'),
+        ('city', 'county')
+    ]
+
+    def test_add_children(self):
+        original = [
+            ('s1', 'state'),
+            ('s2', 'state'),
+            ('county11', 's1'),
+            ('county12', 's1'),
+            ('city111', 'county11'),
+            ('city112', 'county11'),
+            ('city121', 'county12')
+        ]
+
+        # new county
+        valid_upload = [
+            # user should be assigned to 's1'
+            # can create a new county
+            ('county13', 's1')
+        ]
+
+        # move to a different parent
+        valid_upload = [
+            # user should be assigned to 's2'
+            # can update the parent of an existing county to an existing state,
+            # if user has permission to access 's2'
+            ('county11', 's2')
+        ]
+
+
+        valid_upload = [
+            # user should be assigned to 's2'
+            # can create a new county, user should have permission to access 's2'
+            # Question: Should the user have permission to access 's1' as well, since 'county13''s parent was 's1'
+            ('county13', 's2')
+            # can change the parent of an existing city to newly created county
+            ('city111', 'county13')
+        ]
+
+        invalid_delete_upload = [
+            # when a location has to be deleted, all of its subtree has to be listed
+            # this should fail
+            ('county12', 's1', 'Yes')
+        ]
+
+        valid_delete_upload = [
+            # user should be assigned to 's1'
+            # all subtree of 'county12' specified, so this should succeed
+            ('county12', 's1', 'Yes'),
+            # move 'county112' to 'county11'
+            ('city112', 'county11', 'No'),
+        ]
+
+        valid_delete_upload = [
+            # user should be assigned to 's1'
+            # all subtree of 'county12' specified, so this should succeed
+            ('county12', 's1', 'Yes'),
+            # delete 'county112'
+            ('city112', 'county11', 'Yes'),
+        ]
