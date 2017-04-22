@@ -698,9 +698,9 @@ class RestoreConfig(object):
         cached_response = self.get_cached_response()
         tags = [u'domain:{}'.format(self.domain)]
         if cached_response:
-            datadog_counter('commcare.restore_cache_hits.count', tags=tags)
+            datadog_counter('commcare.restores.cache_hits.count', tags=tags)
             return cached_response
-        datadog_counter('commcare.restore_cache_misses.count', tags=tags)
+        datadog_counter('commcare.restores.cache_misses.count', tags=tags)
 
         # Start new sync
         if self.async:
