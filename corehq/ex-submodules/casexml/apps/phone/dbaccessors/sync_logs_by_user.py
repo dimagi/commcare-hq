@@ -1,9 +1,7 @@
 from casexml.apps.phone.models import SyncLog
 from dimagi.utils.couch.database import get_db
-from corehq.util.quickcache import quickcache
 
 
-@quickcache(['user_id'], timeout=60 * 60)
 def get_last_synclog_for_user(user_id):
     results = synclog_view(
         "phone/sync_logs_by_user",
