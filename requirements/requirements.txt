@@ -52,7 +52,7 @@ greenlet==0.4.9
 numpy==1.7.1
 six==1.10.0
 socketpool==0.5.3
-markdown==2.2.1
+markdown==2.6.8
 amqp==1.4.7
 amqplib==1.0.2
 sqlagg==0.7.0
