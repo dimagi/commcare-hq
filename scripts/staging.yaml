@@ -51,7 +51,7 @@ branches:
   - mk-nikshay-audit-cookie-safe # Manish 3/3
   - mk-add-password-encoder # Manish 3/3
   - gc/case-close-refactor # Giovanni 4/7
-  - np/update/twofactor # NP 4/21
+#  - np/update/twofactor # NP 4/21
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
