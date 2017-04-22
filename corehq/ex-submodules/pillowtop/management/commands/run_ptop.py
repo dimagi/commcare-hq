@@ -47,6 +47,22 @@ class Command(BaseCommand):
             default=None,
             help="Run a single specific pillow name from settings.PILLOWTOPS list",
         )
+        parser.add_argument(
+            '--num-processes',
+            action='store',
+            dest='num_processes',
+            default=1,
+            type=int,
+            help="Number of pillow processes for this pillow name that are running",
+        )
+        parser.add_argument(
+            '--process-number',
+            action='store',
+            dest='process_number',
+            default=0,
+            type=int,
+            help="The pillow number in the sequence of processes that are running",
+        )
 
     def handle(self, **options):
         run_all = options['run_all']
