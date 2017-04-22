@@ -62,7 +62,7 @@ class ItemListsProvider(object):
             item._data_type = data_type
 
         for global_fixture in global_types.values():
-            items = list(FixtureDataItem.by_data_type(restore_user.domain, global_fixture))
+            items = FixtureDataItem.by_data_type(restore_user.domain, global_fixture)
             _ = [_set_cached_type(item, global_fixture) for item in items]
             items_by_type[global_fixture._id] = items
 

@@ -205,7 +205,7 @@ def update_items(fields_patches, domain, data_type_id, transaction):
                 )
         setattr(item, "fields", updated_fields)
         transaction.save(item)
-    data_items = FixtureDataItem.by_data_type(domain, data_type_id)
+    data_items = FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
 
 
 def create_types(fields_patches, domain, data_tag, is_global, transaction):
