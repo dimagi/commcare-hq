@@ -72,7 +72,6 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches:
-      - br/gevent-bckd-queue
+    branches: []
   submodules/commcare-translations:
     branches: []
