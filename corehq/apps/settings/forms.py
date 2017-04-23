@@ -57,7 +57,13 @@ class HQPasswordChangeForm(PasswordChangeForm):
         )
 
     def clean_old_password(self):
-        return decode_password(self.cleaned_data['old_password'])
+        old_password = decode_password(self.cleaned_data['old_password'])
+        if not self.user.check_password(old_password):
+            raise forms.ValidationError(
+                self.error_messages['password_incorrect'],
+                code='password_incorrect',
+            )
+        return old_password
 
     def clean_new_password1(self):
         new_password = decode_password(self.cleaned_data.get('new_password1'))
