@@ -590,18 +590,19 @@ class RestoreState(object):
 
     def start_sync(self):
         self.start_time = datetime.utcnow()
-        self.current_sync_log = self.create_sync_log()
+        self.current_sync_log = self._new_sync_log()
 
     def finish_sync(self):
         self.duration = datetime.utcnow() - self.start_time
         self.current_sync_log.duration = self.duration.seconds
         self.current_sync_log.save()
 
-    def create_sync_log(self):
+    def _new_sync_log(self):
         previous_log_id = None if self.is_initial else self.last_sync_log._id
         previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
         new_synclog = SyncLog(
+            _id=uuid4().hex,
             domain=self.restore_user.domain,
             build_id=self.params.app_id,
             user_id=self.restore_user.user_id,
@@ -611,7 +612,6 @@ class RestoreState(object):
             previous_log_id=previous_log_id,
             previous_log_rev=previous_log_rev,
         )
-        new_synclog.save(**get_safe_write_kwargs())
         return new_synclog
 
     @property
