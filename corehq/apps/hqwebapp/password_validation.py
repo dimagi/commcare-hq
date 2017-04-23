@@ -10,7 +10,7 @@ class UsedPasswordValidator(object):
     def validate(self, password, user=None):
         used_passwords = UsedPasswords.objects.filter(
             user=user,
-        ).order_by('-created_at').all()[:RESTRICT_USED_PASSWORDS_NUM - 1].values_list('password', flat=True)
+        ).order_by('-created_at').all()[:RESTRICT_USED_PASSWORDS_NUM].values_list('password', flat=True)
         used_passwords = list(used_passwords) + [user.password]
         for used_password in used_passwords:
             if verify_password(password, used_password):
