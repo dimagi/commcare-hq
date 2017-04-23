@@ -234,7 +234,7 @@
             "property_name": "hardware_type"
           },
           "comment": null,
-          "property_value": "mobile"
+          "property_value": "phone"
         },
         "type": "boolean",
         "display_name": null,
@@ -271,7 +271,7 @@
                 "property_name": "hardware_type"
               },
               "comment": null,
-              "property_value": "mobile"
+              "property_value": "phone"
             },
             {
               "operator": "eq",
@@ -304,7 +304,7 @@
                 "property_name": "hardware_type"
               },
               "comment": null,
-              "property_value": "mobile"
+              "property_value": "phone"
             },
             {
               "operator": "eq",
@@ -337,7 +337,7 @@
                 "property_name": "hardware_type"
               },
               "comment": null,
-              "property_value": "mobile"
+              "property_value": "phone"
             },
             {
               "operator": "eq",
@@ -370,7 +370,7 @@
                 "property_name": "hardware_type"
               },
               "comment": null,
-              "property_value": "mobile"
+              "property_value": "phone"
             },
             {
               "operator": "eq",
