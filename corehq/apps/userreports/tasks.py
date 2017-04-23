@@ -147,7 +147,7 @@ def iteratively_build_table(config, last_id=None, resume_helper=None, in_place=F
 
 
 @task(queue=UCR_CELERY_QUEUE)
-def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_order, params):
+def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
     def _run_report(backend_to_use):
@@ -158,8 +158,13 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
                 [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
             )
 
-        datatables_params = DatatablesParams.from_request_dict(params)
-        page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
+        if params:
+            datatables_params = DatatablesParams.from_request_dict(params)
+            start = datatables_params.start
+            limit = datatables_params.count
+        else:
+            start, limit = None, None
+        page = list(data_source.get_data(start=start, limit=limit))
         total_records = data_source.get_total_records()
         json_response = {
             'aaData': page,
