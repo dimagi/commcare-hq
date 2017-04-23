@@ -23,7 +23,6 @@ class TestCreateCasesByBeneficiary(TestCase):
     def setUpClass(cls):
         super(TestCreateCasesByBeneficiary, cls).setUpClass()
         cls.beneficiary = Beneficiary.objects.create(
-            id=1,
             addressLineOne='585 Mass Ave',
             addressLineTwo='Suite 4',
             age=25,
@@ -47,13 +46,13 @@ class TestCreateCasesByBeneficiary(TestCase):
         mock_datetime.utcnow.return_value = datetime(2016, 9, 8, 1, 2, 3, 4123)
 
         Episode.objects.create(
-            id=1,
             adherenceScore=0.5,
             alertFrequencyId=2,
             beneficiaryID=self.beneficiary,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
             episodeDisplayID=3,
+            episodeID=6,
             extraPulmonary='Abdomen',
             hiv='Negative',
             lastMonthAdherencePct=0.6,
@@ -162,12 +161,33 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(len(episode_case.xform_ids), 1)
 
     def test_adherence(self):
+        episode = Episode.objects.create(
+            adherenceScore=0.5,
+            alertFrequencyId=2,
+            beneficiaryID=self.beneficiary,
+            creationDate=datetime(2017, 4, 20),
+            dateOfDiagnosis=datetime(2017, 4, 18),
+            episodeDisplayID=3,
+            episodeID=1,
+            extraPulmonary='Abdomen',
+            hiv='Negative',
+            lastMonthAdherencePct=0.6,
+            lastTwoWeeksAdherencePct=0.7,
+            missedDosesPct=0.8,
+            newOrRetreatment='New',
+            nikshayID='02139-02215',
+            patientWeight=50,
+            rxStartDate=datetime(2017, 4, 19),
+            site='Extrapulmonary',
+            unknownAdherencePct=0.9,
+            unresolvedMissedDosesPct=0.1,
+        )
         Adherence.objects.create(
-            id=1,
-            beneficiaryId=self.beneficiary,
+            adherenceId=5,
             dosageStatusId=2,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
+            episodeId=episode,
             reportingMechanismId=4,
         )
 
@@ -183,12 +203,13 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(len(adherence_case_ids), 1)
         adherence_case = self.case_accessor.get_case(adherence_case_ids[0])
         self.assertFalse(adherence_case.closed)  # TODO
-        self.assertIsNone(adherence_case.external_id)  # TODO - update with nikshay ID
+        self.assertIsNone(adherence_case.external_id)
         self.assertEqual(adherence_case.name, None)  # TODO
         # self.assertEqual(adherence_case.opened_on, '')  # TODO
         self.assertEqual(adherence_case.owner_id, '')
         self.assertEqual(adherence_case.dynamic_case_properties(), OrderedDict([
             ('migration_created_case', 'true'),
+            ('migration_created_from_record', '5'),
         ]))
         self.assertEqual(len(adherence_case.indices), 1)
         self._assertIndexEqual(
@@ -203,20 +224,41 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(len(adherence_case.xform_ids), 1)
 
     def test_multiple_adherences(self):
-        Adherence.objects.create(
+        episode = Episode.objects.create(
             id=1,
-            beneficiaryId=self.beneficiary,
+            adherenceScore=0.5,
+            alertFrequencyId=2,
+            beneficiaryID=self.beneficiary,
+            creationDate=datetime(2017, 4, 20),
+            dateOfDiagnosis=datetime(2017, 4, 18),
+            episodeDisplayID=3,
+            extraPulmonary='Abdomen',
+            hiv='Negative',
+            lastMonthAdherencePct=0.6,
+            lastTwoWeeksAdherencePct=0.7,
+            missedDosesPct=0.8,
+            newOrRetreatment='New',
+            nikshayID='02139-02215',
+            patientWeight=50,
+            rxStartDate=datetime(2017, 4, 19),
+            site='Extrapulmonary',
+            unknownAdherencePct=0.9,
+            unresolvedMissedDosesPct=0.1,
+        )
+        Adherence.objects.create(
+            adherenceId=1,
             dosageStatusId=2,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
+            episodeId=episode,
             reportingMechanismId=4,
         )
         Adherence.objects.create(
-            id=2,
-            beneficiaryId=self.beneficiary,
+            adherenceId=2,
             dosageStatusId=2,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
+            episodeId=episode,
             reportingMechanismId=4,
         )
 

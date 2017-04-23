@@ -183,6 +183,7 @@ class BeneficiaryCaseFactory(object):
                 'create': True,
                 'update': {
                     'migration_created_case': 'true',
+                    'migration_created_from_record': adherence.adherenceId,
                 }
             },
             'indices': [CaseIndex(
@@ -244,7 +245,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _adherences(self):
-        return list(Adherence.objects.filter(beneficiaryId=self.beneficiary))
+        return list(Adherence.objects.filter(episodeId=self._episode)) if self._episode else []
 
     @property
     @memoized
