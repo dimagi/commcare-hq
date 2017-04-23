@@ -588,6 +588,7 @@ MOBILE_UCR = StaticToggle(
      'through the app builder'),
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )
 
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
@@ -1031,6 +1032,7 @@ ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
     'Allow anonymous users to access web apps applications',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
