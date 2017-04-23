@@ -16,7 +16,7 @@ class UsedPasswordValidator(object):
         for used_password in used_passwords:
             if hasher.verify(password, used_password):
                 raise ValidationError(
-                    _("Your password can not be same as earlier {restricted} passwords.").format(
+                    _("Your password can not be same as last {restricted} passwords.").format(
                         restricted=RESTRICT_USED_PASSWORDS_NUM
                     ),
                     code='password_already_user',
@@ -30,6 +30,6 @@ class UsedPasswordValidator(object):
         )
 
     def get_help_text(self):
-        return _("Your password can't be same as earlier {restricted} passwords.").format(
+        return _("Your password can't be same as last {restricted} passwords.").format(
             restricted=RESTRICT_USED_PASSWORDS_NUM
         )
