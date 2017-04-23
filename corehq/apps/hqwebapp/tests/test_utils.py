@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase, override_settings
+from django.contrib.auth.hashers import get_hasher
 
 from corehq.apps.hqwebapp.models import HashedPasswordLoginAttempt
 from corehq.apps.hqwebapp.utils import decode_password, extract_password
@@ -16,23 +17,24 @@ HASHED_PASSWORD_MAPPING = {
 @override_settings(ENABLE_PASSWORD_HASHING=True)
 class TestDecodePassword(TestCase):
     def test_decoder(self):
+        hasher = get_hasher()
         for password_hash, password in HASHED_PASSWORD_MAPPING.items():
-            self.assertFalse(HashedPasswordLoginAttempt.objects.filter(
-                username="username",
-                password_hash=password_hash
-            ).exists())
+            HashedPasswordLoginAttempt.objects.all().delete()
             self.assertEqual(decode_password(password_hash, "username"), password)
-            self.assertTrue(HashedPasswordLoginAttempt.objects.filter(
-                username="username",
-                password_hash=password_hash
-            ).exists())
+            self.assertTrue(
+                hasher.verify(
+                    password_hash,
+                    HashedPasswordLoginAttempt.objects.filter(username="username").all()[0].password_hash
+                )
+            )
 
     def test_replay_attack(self):
-        password_hash = "sha256$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
+        password_hash = "sha256$1e2d5bc2hhMjU2JDFLMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
+        hasher = get_hasher()
         username = "james@007.com"
         HashedPasswordLoginAttempt.objects.create(
             username=username,
-            password_hash=password_hash
+            password_hash=hasher.encode(password_hash, hasher.salt())
         )
         self.assertEqual(decode_password(password_hash, username), '')
 
