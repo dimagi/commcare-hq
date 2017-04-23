@@ -1,7 +1,6 @@
 import logging
 import re
 import base64
-from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -143,7 +142,6 @@ def decode_password(password, username=None):
             # To avoid replay attack where the same hash used for login from previous login attempt
             login_attempts = HashedPasswordLoginAttempt.objects.filter(
                 username=username,
-                used_at__gte=(datetime.today() - timedelta(HASHED_PASSWORD_EXPIRY))
             )
             for login_attempt in login_attempts:
                 if hasher.verify(password, login_attempt.password_hash):
