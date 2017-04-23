@@ -16,6 +16,7 @@ from corehq.apps.hqwebapp.utils import decode_password
 
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
+from django.contrib.auth import password_validation
 
 from datetime import datetime
 
@@ -63,7 +64,9 @@ class HQPasswordChangeForm(PasswordChangeForm):
         return clean_password(new_password)
 
     def clean_new_password2(self):
-        return decode_password(self.cleaned_data.get('new_password2'))
+        password2 = decode_password(self.cleaned_data.get('new_password2'))
+        password_validation.validate_password(password2, self.user)
+        return password2
 
     def save(self, commit=True):
         user = super(HQPasswordChangeForm, self).save(commit)

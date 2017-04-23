@@ -900,6 +900,7 @@ SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
 SENTRY_API_KEY = None
 
 ENABLE_PASSWORD_HASHING = False
+ENABLE_USED_PASSWORDS_CHECK = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 
 try:
@@ -2030,3 +2031,10 @@ _raven_config = helper.configure_sentry(
 if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
+
+if ENABLE_USED_PASSWORDS_CHECK:
+    AUTH_PASSWORD_VALIDATORS = [
+        {
+            'NAME': 'corehq.apps.hqwebapp.password_validation.ReusedPasswordValidator',
+        }
+    ]
