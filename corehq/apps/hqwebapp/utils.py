@@ -130,33 +130,47 @@ def extract_password(password):
         return password
 
 
+@memoized
+def get_password_hasher():
+    return get_hasher()
+
+
+def hash_password(password):
+    hasher = get_password_hasher()
+    return hasher.encode(password, hasher.salt())
+
+
+def verify_password(password, password_salt):
+    hasher = get_password_hasher()
+    return hasher.verify(password, password_salt)
+
+
 # quickcache for multiple decode attempts in the same request:
 # 1. an attempt to decode a password should be done just once in a request for the login attempt
 # check to work correctly.
 # 2. there should be no need to decode a password multiple times in the same request.
-@quickcache(['password'], timeout=0)
-def decode_password(password, username=None):
+@quickcache(['password_hash'], timeout=0)
+def decode_password(password_hash, username=None):
     def replay_attack():
         # Replay attack where the same hash used from previous login attempt
         login_attempts = HashedPasswordLoginAttempt.objects.filter(
             username=username,
         )
         for login_attempt in login_attempts:
-            if hasher.verify(password, login_attempt.password_hash):
+            if verify_password(password_hash, login_attempt.password_hash):
                 return True
 
     def record_login_attempt():
         HashedPasswordLoginAttempt.objects.create(
             username=username,
-            password_hash=hasher.encode(password, hasher.salt())
+            password_hash=hash_password(password_hash)
         )
 
     if settings.ENABLE_PASSWORD_HASHING:
         if username:
-            hasher = get_hasher()
             if replay_attack():
                 return ''
             record_login_attempt()
-        return extract_password(password)
+        return extract_password(password_hash)
     else:
-        return password
+        return password_hash
