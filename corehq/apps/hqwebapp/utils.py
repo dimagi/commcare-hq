@@ -136,20 +136,27 @@ def extract_password(password):
 # 2. there should be no need to decode a password multiple times in the same request.
 @quickcache(['password'], timeout=0)
 def decode_password(password, username=None):
+    def replay_attack():
+        # Replay attack where the same hash used from previous login attempt
+        login_attempts = HashedPasswordLoginAttempt.objects.filter(
+            username=username,
+        )
+        for login_attempt in login_attempts:
+            if hasher.verify(password, login_attempt.password_hash):
+                return True
+
+    def record_login_attempt():
+        HashedPasswordLoginAttempt.objects.create(
+            username=username,
+            password_hash=hasher.encode(password, hasher.salt())
+        )
+
     if settings.ENABLE_PASSWORD_HASHING:
         if username:
             hasher = get_hasher()
-            # To avoid replay attack where the same hash used for login from previous login attempt
-            login_attempts = HashedPasswordLoginAttempt.objects.filter(
-                username=username,
-            )
-            for login_attempt in login_attempts:
-                if hasher.verify(password, login_attempt.password_hash):
-                    return ''
-
-            HashedPasswordLoginAttempt.objects.create(
-                username=username,
-                password_hash=hasher.encode(password, hasher.salt())
-            )
+            if replay_attack():
+                return ''
+            record_login_attempt()
         return extract_password(password)
-    return password
+    else:
+        return password
