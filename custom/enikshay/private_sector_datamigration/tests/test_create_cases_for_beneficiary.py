@@ -185,7 +185,7 @@ class TestCreateCasesByBeneficiary(TestCase):
         Adherence.objects.create(
             adherenceId=5,
             dosageStatusId=2,
-            doseDate=datetime.utcnow(),
+            doseDate=datetime(2017, 4, 22),
             doseReasonId=3,
             episodeId=episode,
             reportingMechanismId=4,
@@ -208,6 +208,7 @@ class TestCreateCasesByBeneficiary(TestCase):
         # self.assertEqual(adherence_case.opened_on, '')  # TODO
         self.assertEqual(adherence_case.owner_id, '')
         self.assertEqual(adherence_case.dynamic_case_properties(), OrderedDict([
+            ('adherence_date', '2017-04-22'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '5'),
         ]))
