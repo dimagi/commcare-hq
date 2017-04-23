@@ -2,7 +2,7 @@ from django.db import models
 
 
 class Beneficiary(models.Model):
-    id = models.IntegerField()
+    id = models.IntegerField(null=True)
     additionalDetails = models.CharField(max_length=500, null=True)
     addressLineOne = models.CharField(max_length=256, null=True)
     addressLineTwo = models.CharField(max_length=256, null=True)
@@ -113,7 +113,7 @@ class Beneficiary(models.Model):
 
 
 class Episode(models.Model):
-    id = models.IntegerField()
+    id = models.IntegerField(null=True)
     accountName = models.CharField(max_length=255, null=True)
     accountType = models.CharField(max_length=255, null=True)
     adherenceScore = models.DecimalField(decimal_places=10, max_digits=14)
@@ -239,8 +239,8 @@ class Episode(models.Model):
 
 
 class Adherence(models.Model):
-    id = models.BigIntegerField(primary_key=True)
-    adherenceId = models.CharField(max_length=18, null=True, unique=True)
+    id = models.IntegerField(null=True)
+    adherenceId = models.CharField(max_length=18, primary_key=True)
     beneficiaryId = models.ForeignKey(Beneficiary, null=True, on_delete=models.CASCADE)
     commentId = models.CharField(max_length=8, null=True)
     creationDate = models.DateTimeField(null=True)
@@ -248,7 +248,7 @@ class Adherence(models.Model):
     dosageStatusId = models.IntegerField() # 0, 1, 3
     doseDate = models.DateTimeField()
     doseReasonId = models.IntegerField()
-    episodeId = models.ForeignKey(Episode, null=True, on_delete=models.CASCADE)
+    episodeId = models.ForeignKey(Episode, on_delete=models.CASCADE)
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=255, null=True)
     owner = models.CharField(max_length=255, null=True)
