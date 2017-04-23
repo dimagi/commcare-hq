@@ -15,10 +15,10 @@ from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.models import HashedPasswordLoginAttempt
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
-
+from corehq.util.quickcache import quickcache
 
 logger = logging.getLogger(__name__)
-HASHED_PASSWORD_EXPIRY = 30
+HASHED_PASSWORD_EXPIRY = 30  # days
 
 
 @memoized
@@ -130,12 +130,11 @@ def extract_password(password):
         return password
 
 
-# Memoized for multiple decode attempts in the same request:
+# quickcache for multiple decode attempts in the same request:
 # 1. an attempt to decode a password should be done just once in a request for the login attempt
 # check to work correctly.
-# 2. there should be no need to decode a password multiple times in
-# the same request.
-@memoized
+# 2. there should be no need to decode a password multiple times in the same request.
+@quickcache(['password'], timeout=0)
 def decode_password(password, username=None):
     if settings.ENABLE_PASSWORD_HASHING:
         if username:
