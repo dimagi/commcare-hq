@@ -16,7 +16,7 @@ from crispy_forms.helper import FormHelper
 from dateutil.relativedelta import relativedelta
 from django import forms
 from django.conf import settings
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, password_validation
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
@@ -1331,7 +1331,22 @@ class HQSetPasswordForm(SetPasswordForm):
                                     """))
 
     def clean_new_password1(self):
-        return clean_password(self.cleaned_data.get('new_password1'))
+        from corehq.apps.hqwebapp.utils import decode_password
+        password1 = decode_password(self.cleaned_data.get('new_password1'))
+        return clean_password(password1)
+
+    def clean_new_password2(self):
+        from corehq.apps.hqwebapp.utils import decode_password
+        password1 = self.cleaned_data.get('new_password1')
+        password2 = decode_password(self.cleaned_data.get('new_password2'))
+        if password1 and password2:
+            if password1 != password2:
+                raise forms.ValidationError(
+                    self.error_messages['password_mismatch'],
+                    code='password_mismatch',
+                )
+        password_validation.validate_password(password2, self.user)
+        return password2
 
     def save(self, commit=True):
         user = super(HQSetPasswordForm, self).save(commit)
