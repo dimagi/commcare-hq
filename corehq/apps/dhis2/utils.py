@@ -33,13 +33,6 @@ def get_last_month():
     return DateSpan(startdate, enddate)
 
 
-def get_last_day():
-    today = date.today()
-    enddate = today
-    startdate = today - timedelta(days=1)
-    return DateSpan(startdate, enddate)
-
-
 def get_last_quarter():
     today = date.today()
     current_quarter_start = ((today.month // 3) * 3) + 1
