@@ -2035,6 +2035,6 @@ if _raven_config:
 if ENABLE_USED_PASSWORDS_CHECK:
     AUTH_PASSWORD_VALIDATORS = [
         {
-            'NAME': 'corehq.apps.hqwebapp.password_validation.ReusedPasswordValidator',
+            'NAME': 'corehq.apps.hqwebapp.password_validation.UsedPasswordValidator',
         }
     ]

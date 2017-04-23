@@ -6,7 +6,7 @@ from corehq.apps.hqwebapp.const import RESTRICT_USED_PASSWORDS_NUM
 from corehq.apps.hqwebapp.models import UsedPasswords
 
 
-class ReusedPasswordValidator(object):
+class UsedPasswordValidator(object):
     def validate(self, password, user=None):
         hasher = get_hasher()
         used_passwords = UsedPasswords.objects.filter(
