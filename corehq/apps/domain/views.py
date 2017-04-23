@@ -661,7 +661,7 @@ class DomainAccountingSettings(BaseProjectSettingsView):
 
     @property
     def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        return Subscription.get_active_subscription_by_domain(self.domain)
 
 
 class DomainSubscriptionView(DomainAccountingSettings):
@@ -676,7 +676,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
     @property
     @memoized
     def plan(self):
-        plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        plan_version = subscription.plan_version
         date_end = None
         next_subscription = {
             'exists': False,
@@ -1134,7 +1135,7 @@ class CreditsStripePaymentView(BaseStripePaymentView):
             self.get_or_create_payment_method(),
             self.domain,
             self.account,
-            subscription=Subscription.get_subscribed_plan_by_domain(self.domain_object)[1],
+            subscription=Subscription.get_active_subscription_by_domain(self.domain),
             post_data=self.request.POST.copy(),
         )
 
@@ -1337,7 +1338,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'is_form_editable': self.is_form_editable,
-            'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain)[0],
+            'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain),
             'select_subscription_type_form': self.select_subscription_type_form,
             'subscription_management_forms': self.slug_to_form.values(),
             'today': datetime.date.today(),
@@ -1365,7 +1366,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             })
 
         subscription_type = None
-        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
         if subscription is None:
             subscription_type = None
         else:
@@ -1554,10 +1555,11 @@ class ConfirmSelectedPlanView(SelectPlanView):
 
     @property
     def downgrade_messages(self):
-        current_plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
-        if subscription is None:
-            current_plan_version = None
-        downgrades = get_change_status(current_plan_version, self.selected_plan_version)[1]
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        downgrades = get_change_status(
+            subscription.plan_version if subscription else None,
+            self.selected_plan_version
+        )[1]
         downgrade_handler = DomainDowngradeStatusHandler(
             self.domain_object, self.selected_plan_version, downgrades,
         )
@@ -1683,7 +1685,7 @@ class SubscriptionMixin(object):
     @property
     @memoized
     def subscription(self):
-        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
         if subscription is None:
             raise Http404
         if subscription.is_renewed:

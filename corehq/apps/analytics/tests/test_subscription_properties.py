@@ -87,7 +87,7 @@ class TestSubscriptionProperties(TestCase):
         self.assertEqual(properties['_is_on_extended_trial_plan'], 'yes')
 
     def _change_to_probono(self, domain_name, pro_bono_status):
-        plan, subscription = Subscription.get_subscribed_plan_by_domain(domain_name)
+        subscription = Subscription.get_active_subscription_by_domain(domain_name)
         subscription.update_subscription(
             pro_bono_status=pro_bono_status,
             date_start=datetime.date.today() - datetime.timedelta(days=1),
@@ -95,7 +95,7 @@ class TestSubscriptionProperties(TestCase):
         )
 
     def _change_to_extended_trial(self, domain_name):
-        plan, subscription = Subscription.get_subscribed_plan_by_domain(domain_name)
+        subscription = Subscription.get_active_subscription_by_domain(domain_name)
         subscription.update_subscription(
             service_type=SubscriptionType.EXTENDED_TRIAL,
             date_start=datetime.date.today() - datetime.timedelta(days=1),
