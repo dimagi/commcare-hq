@@ -9,6 +9,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature import PKCS1_PSS
 from django.templatetags.i18n import language_name
+from django.contrib.auth.hashers import get_hasher
 
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.forms import BulkUploadForm
@@ -138,17 +139,19 @@ def extract_password(password):
 def decode_password(password, username=None):
     if settings.ENABLE_PASSWORD_HASHING:
         if username:
-            # To avoid replay attack where the same hash used for login is used on attack
-            if HashedPasswordLoginAttempt.objects.filter(
+            hasher = get_hasher()
+            # To avoid replay attack where the same hash used for login from previous login attempt
+            login_attempts = HashedPasswordLoginAttempt.objects.filter(
                 username=username,
-                password_hash=password,
                 used_at__gte=(datetime.today() - timedelta(HASHED_PASSWORD_EXPIRY))
-            ).exists():
-                return ''
-            else:
-                HashedPasswordLoginAttempt.objects.create(
-                    username=username,
-                    password_hash=password
-                )
+            )
+            for login_attempt in login_attempts:
+                if hasher.verify(password, login_attempt.password_hash):
+                    return ''
+
+            HashedPasswordLoginAttempt.objects.create(
+                username=username,
+                password_hash=hasher.encode(password, hasher.salt())
+            )
         return extract_password(password)
     return password
