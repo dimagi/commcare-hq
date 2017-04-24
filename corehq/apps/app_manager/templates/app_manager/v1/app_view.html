@@ -257,23 +257,6 @@
             });
         </script>
     {% endif %}
-    <script>
-        $('#open_checker').click(function() {
-            ga_track_event('App Builder', 'Manage Multimedia');
-        });
-
-        $('#download_zip').click(function() {
-            ga_track_event('App Builder', 'Download Multimedia');
-        });
-    </script>
-    <script>
-        // Set up typeahead for domain names
-        $(function(){
-            $("#id_domain").koApplyBindings({
-                domain_names: {{ domain_names|JSON }},
-            });
-        });
-    </script>
 {% endblock %}
 
 {% block title %}
@@ -285,6 +268,7 @@
 {% endblock %}
 
 {% block form-view %}
+    {% initial_page_data 'domain_names' domain_names %}
     <div class="tab-content">
         <div class="tab-pane" id="releases">
             <!-- templates only; will be populated asynchronously -->

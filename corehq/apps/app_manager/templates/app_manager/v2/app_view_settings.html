@@ -164,26 +164,10 @@
       {% endif %}
     });
   </script>
-  <script>
-    // Set up typeahead for domain names
-    $(function(){
-      $("#id_domain").koApplyBindings({
-        domain_names: {{ domain_names|JSON }},
-      });
-    });
-  </script>
-  <script>
-    $('#open_checker').click(function() {
-      ga_track_event('App Builder', 'Manage Multimedia');
-    });
-
-    $('#download_zip').click(function() {
-      ga_track_event('App Builder', 'Download Multimedia');
-    });
-  </script>
 {% endblock js-inline %}
 
 
 {% block app_view_tabs %}
+  {% initial_page_data 'domain_names' domain_names %}
   {% include "app_manager/v2/partials/app-settings.html" %}
 {% endblock app_view_tabs %}
