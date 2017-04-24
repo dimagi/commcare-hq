@@ -3022,7 +3022,7 @@ class ShadowForm(AdvancedForm):
         if self.shadow_parent_form:
             return self.shadow_parent_form.source
         from corehq.apps.app_manager.views.utils import get_blank_form_xml
-        return get_blank_form_xml("Untitled Form")
+        return get_blank_form_xml("")
 
     @property
     def xmlns(self):
