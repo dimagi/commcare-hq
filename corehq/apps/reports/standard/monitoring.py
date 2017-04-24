@@ -680,13 +680,12 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
     @property
     @memoized
-    def selected_users(self):
+    def selected_simplified_users(self):
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        users_data = EMWF.pull_users_and_groups(
+        return util.get_simplified_users(EMWF.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
-        )
-        return users_data.combined_users
+        ))
 
     @property
     def rows(self):
@@ -697,16 +696,16 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
         rows = []
         totals = [0] * (len(self.all_relevant_forms) + 1)
-        for user in self.selected_users:
+        for simplified_user in self.selected_simplified_users:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
                     row.append(self._form_counts[
-                        (user.user_id, form['app_id'], form['xmlns'].lower())
+                        (simplified_user.user_id, form['app_id'], form['xmlns'].lower())
                     ])
                 row_sum = sum(row)
                 row = (
-                    [self.get_user_link(user)] +
+                    [self.get_user_link(simplified_user)] +
                     [self.table_cell(row_data, zerostyle=True) for row_data in row] +
                     [self.table_cell(row_sum, "<strong>%s</strong>" % row_sum)]
                 )
@@ -714,7 +713,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                           for i, col in enumerate(row[1:])]
                 rows.append(row)
             else:
-                rows.append([self.get_user_link(user), '--'])
+                rows.append([self.get_user_link(simplified_user), '--'])
         if self.all_relevant_forms:
             self.total_row = [_("All Users")] + totals
         return rows
@@ -726,8 +725,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         if EMWF.show_all_mobile_workers(mobile_user_and_group_slugs):
             user_ids = []
         else:
-            # Don't query ALL mobile workers
-            user_ids = [u.user_id for u in self.selected_users]
+            user_ids = [simplified_user.user_id for simplified_user in self.selected_simplified_users]
         return get_form_counts_by_user_xmlns(
             domain=self.domain,
             startdate=self.datespan.startdate_utc.replace(tzinfo=pytz.UTC),
