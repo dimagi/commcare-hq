@@ -6,6 +6,10 @@ from corehq.util.soft_assert import soft_assert
 def get_user_id_by_username(username):
     _soft_assert = soft_assert(notify_admins=True, fail_if_debug=False)
     _soft_assert(username, 'get_user_id_by_username called with null username')
+
+    if not username:
+        return None
+
     result = CouchUser.view(
         'users/by_username',
         key=username,
