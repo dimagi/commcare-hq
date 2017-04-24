@@ -25,6 +25,7 @@ from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_
 from corehq.form_processor.utils.xform import TestFormMetadata
 from corehq.sql_db.models import PartitionedModel
 from corehq.sql_db.routers import db_for_read_write
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
 
 DOMAIN = 'test-form-accessor'
@@ -360,7 +361,7 @@ class FormAccessorsTests(TestCase):
         for form_id in ['f1', 'f2']:
             form = FormAccessors(DOMAIN).get_form(form_id)
             if isinstance(form, PartitionedModel):
-                form.delete(using='default')
+                form.delete(using=get_db_alias_for_partitioned_doc(form.form_id))
             else:
                 form.delete()
 

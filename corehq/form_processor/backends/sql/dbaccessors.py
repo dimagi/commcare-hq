@@ -137,6 +137,8 @@ class ShardAccessor(object):
         :param doc_ids:
         :return: Dict of ``doc_id -> Django DB alias``
         """
+        assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
+        consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         databases = {}
         shard_map = partition_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
@@ -154,6 +156,8 @@ class ShardAccessor(object):
         """
         :return: Django DB alias in which the doc should be stored
         """
+        assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
+        consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         shard_map = partition_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
         hash_ = ShardAccessor.hash_doc_id_python(doc_id)
