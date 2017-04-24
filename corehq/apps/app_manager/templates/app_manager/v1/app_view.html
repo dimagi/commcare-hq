@@ -194,51 +194,6 @@
             }));
         });
     </script>
-    <script>
-        $("#copy-app-form form button").click(function() {
-            var $submit = $(this),
-                $form = $submit.closest("form"),
-                domain = $form.find("#id_domain").val(),
-                $modal = $("#copy-toggles");
-            {% if request.user.is_superuser %}
-                $submit.disableButton();
-                $.ajax({
-                    method: "GET",
-                    url: "{% url "toggle_diff" domain %}",
-                    data: {
-                        domain: domain,
-                    },
-                    success: function(toggles) {
-                        if (toggles.length) {
-                            var template = _.template($modal.find("script").html()),
-                                $ul = $modal.find("ul").html("");
-                            _.each(toggles, function(toggle) {
-                                $ul.append(template(toggle));
-                            });
-                            $modal.modal().one("click", ".btn-primary", function() {
-                                $(this).disableButton();
-                                var slugs = _.map($modal.find(":checked"), function(c) {
-                                    return $(c).data("slug");
-                                });
-                                $form.find("input[name='toggles']").val(slugs.join(","));
-                                $form.submit();
-                            }).one("hide.bs.modal", function() {
-                                $submit.enableButton();
-                            });
-                        } else {
-                            $form.submit();
-                        }
-                    },
-                    error: function() {
-                        // If anything goes wrong, just submit the form
-                        $form.submit();
-                    },
-                });
-            {% else %}
-                $form.submit();
-            {% endif %}
-        });
-    </script>
 {% endblock %}
 
 {% block title %}
@@ -251,10 +206,12 @@
 
 {% block form-view %}
     {% initial_page_data 'domain_names' domain_names %}
+    {% initial_page_data 'is_superuser' request.user.is_superuser %}
     {% initial_page_data 'lang' lang %}
     {% initial_page_data 'translations' translations %}
     {% registerurl "edit_app_ui_translations" domain app.id %}
     {% registerurl "get_app_ui_translations" domain %}
+    {% registerurl "toggle_diff" domain %}
     <div class="tab-content">
         <div class="tab-pane" id="releases">
             <!-- templates only; will be populated asynchronously -->
