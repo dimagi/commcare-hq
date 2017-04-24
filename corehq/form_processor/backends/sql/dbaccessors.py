@@ -628,7 +628,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def case_exists(case_id):
-        db = ShardAccessor.get_database_for_doc(case_id)
+        db = get_db_alias_for_partitioned_doc(case_id)
         return CommCareCaseSQL.using(db).filter(case_id=case_id).exits()
 
     @staticmethod
