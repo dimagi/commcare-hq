@@ -496,7 +496,7 @@ class RepeatRecord(Document):
         ).one()
         return results['value'] if results else 0
 
-    def set_next_try(self, reason=None, requeue=False):
+    def set_next_try(self, requeue=False):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
         assert self.succeeded is False
