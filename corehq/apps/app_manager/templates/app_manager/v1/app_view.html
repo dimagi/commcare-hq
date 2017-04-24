@@ -22,6 +22,10 @@
         <script src="{% static 'app_manager/js/app_view_application.js' %}"></script>
     {% endif %}
 
+    {% if linked_apps_enabled %}
+        <script src="{% static 'app_manager/js/linked_whitelist.js' %}"></script>
+    {% endif %}
+
     {# these scripts are for releases.html, but including them there causes hard-to-reproduce problems #}
     <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
@@ -31,9 +35,6 @@
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
-    {% if linked_apps_enabled %}
-        <script src="{% static 'app_manager/js/linked_whitelist.js' %}"></script>
-    {% endif %}
     <script>
         COMMCAREHQ.appView = {
             settings: {
@@ -97,6 +98,7 @@
         });
         {% endif %}
 
+        // Releases page ajax: used in app manager v1 only
         $(function () {
             var state = "",
                 $main = $("#releases"),
