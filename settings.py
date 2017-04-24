@@ -1277,6 +1277,8 @@ APPS_DB = NEW_APPS_DB
 
 SYNCLOGS_DB = 'synclogs'
 
+META_DB = 'meta'
+
 
 COUCHDB_APPS = [
     'api',
@@ -1340,10 +1342,10 @@ COUCHDB_APPS = [
     'ilsgateway',
     'ewsghana',
     ('auditcare', 'auditcare'),
-    ('performance_sms', 'meta'),
+    ('performance_sms', META_DB),
     ('repeaters', 'receiverwrapper'),
-    ('userreports', 'meta'),
-    ('custom_data_fields', 'meta'),
+    ('userreports', META_DB),
+    ('custom_data_fields', META_DB),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
@@ -1351,8 +1353,8 @@ COUCHDB_APPS = [
     ('fluff', 'fluff-opm'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
-    ('export', 'meta'),
-    ('callcenter', 'meta'),
+    ('export', META_DB),
+    ('callcenter', META_DB),
 
     # users and groups
     ('groups', USERS_GROUPS_DB),
