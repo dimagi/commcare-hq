@@ -43,7 +43,7 @@ from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
     user_display_string,
     user_location_data,
-    create_user,
+    create_django_user,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted
@@ -1269,7 +1269,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         try:
             django_user = User.objects.get(username=username)
         except User.DoesNotExist:
-            django_user = create_user(
+            django_user = create_django_user(
                 username, password=password, email=email,
                 first_name=first_name, last_name=last_name, **kwargs
             )

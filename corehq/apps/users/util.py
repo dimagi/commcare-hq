@@ -179,7 +179,14 @@ def user_location_data(location_ids):
     return ' '.join(location_ids)
 
 
-def create_user(username, password, is_staff=False, is_superuser=False, is_active=True, password_hashed=False, **kwargs):
+def create_django_user(
+        username,
+        password,
+        is_staff=False,
+        is_superuser=False,
+        is_active=True,
+        password_hashed=False,
+        **kwargs):
     user = User()
     user.username = username.lower()
     for key, val in kwargs.items():
