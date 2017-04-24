@@ -1265,7 +1265,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return cls.get_by_username(django_user.username)
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='',
+    def create(cls, domain, username, password, email=None, uuid_='', date='',
                first_name='', last_name='', **kwargs):
         try:
             django_user = User.objects.get(username=username)
@@ -1275,10 +1275,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 first_name=first_name, last_name=last_name, **kwargs
             )
 
-        if uuid:
-            if not re.match(r'[\w-]+', uuid):
-                raise cls.InvalidID('invalid id %r' % uuid)
-            couch_user = cls(_id=uuid)
+        if uuid_:
+            if not re.match(r'[\w-]+', uuid_):
+                raise cls.InvalidID('invalid id %r' % uuid_)
+            couch_user = cls(_id=uuid_)
         else:
             couch_user = cls(_id=uuid.uuid4().hex)
 
