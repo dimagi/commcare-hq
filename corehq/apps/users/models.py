@@ -3,6 +3,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
 import re
+import uuid
 
 from restkit.errors import NoMoreData
 from rest_framework.authtoken.models import Token
@@ -1279,7 +1280,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 raise cls.InvalidID('invalid id %r' % uuid)
             couch_user = cls(_id=uuid)
         else:
-            couch_user = cls()
+            couch_user = cls(_id=uuid.uuid4().hex)
 
         if date:
             couch_user.created_on = force_to_datetime(date)
