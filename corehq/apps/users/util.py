@@ -177,3 +177,21 @@ def user_display_string(username, first_name="", last_name=""):
 def user_location_data(location_ids):
     # Spec for 'commcare_location_ids' custom data field
     return ' '.join(location_ids)
+
+
+def create_user(username, password, is_staff=False, is_superuser=False, is_active=True, password_hashed=False, **kwargs):
+    user = User()
+    user.username = username.lower()
+    for key, val in kwargs.items():
+        if key and val:
+            setattr(user, key, val)
+    user.is_staff = is_staff
+    user.is_active = is_active
+    user.is_superuser = is_superuser
+    if not password_hashed:
+        user.set_password(password)
+    else:
+        user.password = password
+
+    user.save()
+    return user
