@@ -3000,31 +3000,40 @@ class ShadowForm(AdvancedForm):
     # form actions to be merged with the parent actions
     extra_actions = SchemaProperty(AdvancedFormActions)
 
+    def __init__(self, *args, **kwargs):
+        super(ShadowForm, self).__init__(*args, **kwargs)
+        self._shadow_parent_form = None
+
     @property
     def shadow_parent_form(self):
         if not self.shadow_parent_form_id:
             return None
         else:
-            app = self.get_app()
-            return app.get_form(self.shadow_parent_form_id)
+            if not self._shadow_parent_form or self._shadow_parent_form.unique_id != self.shadow_parent_form_id:
+                app = self.get_app()
+                try:
+                    self._shadow_parent_form = app.get_form(self.shadow_parent_form_id)
+                except FormNotFoundException:
+                    self._shadow_parent_form = None
+            return self._shadow_parent_form
 
     @property
     def source(self):
-        if self.shadow_parent_form_id:
+        if self.shadow_parent_form:
             return self.shadow_parent_form.source
         from corehq.apps.app_manager.views.utils import get_blank_form_xml
         return get_blank_form_xml("Untitled Form")
 
     @property
     def xmlns(self):
-        if not self.shadow_parent_form_id:
+        if not self.shadow_parent_form:
             return None
         else:
             return self.shadow_parent_form.xmlns
 
     @property
     def actions(self):
-        if not self.shadow_parent_form_id:
+        if not self.shadow_parent_form:
             shadow_parent_actions = AdvancedFormActions()
         else:
             shadow_parent_actions = self.shadow_parent_form.actions
