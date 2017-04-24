@@ -19,6 +19,7 @@ from dimagi.utils.couch.database import get_db
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
+from casexml.apps.phone.utils import get_restore_response_class
 import logging
 
 
@@ -270,6 +271,7 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     had_state_error = BooleanProperty(default=False)
     error_date = DateTimeProperty()
     error_hash = StringProperty()
+    cache_payload_paths = DictProperty()
 
     strict = True  # for asserts
 
@@ -292,6 +294,10 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         if hasattr(ret, 'has_assert_errors'):
             ret.strict = False
         return ret
+
+    @property
+    def response_class(self):
+        return get_restore_response_class(self.domain)
 
     def case_count(self):
         """
@@ -319,25 +325,25 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         """
         raise NotImplementedError()
 
-    def get_payload_attachment_name(self, version):
-        return 'restore_payload_{version}.xml'.format(version=version)
-
-    def has_cached_payload(self, version):
-        return self.get_payload_attachment_name(version) in self._doc.get('_attachments', {})
+    def set_cached_payload(self, payload_path, version):
+        self.cache_payload_paths[self._cache_key(version)] = payload_path
 
     def get_cached_payload(self, version, stream=False):
-        try:
-            return self.fetch_attachment(self.get_payload_attachment_name(version), stream=stream)
-        except ResourceNotFound:
-            return None
+        if self._cache_key(version) in self.cache_payload_paths:
+            return self.response_class.get_payload(self.cache_payload_paths[self._cache_key(version)])
+        return None
 
-    def set_cached_payload(self, payload, version):
-        self.put_attachment(payload, name=self.get_payload_attachment_name(version),
-                            content_type='text/xml')
+    def get_cached_payload_path(self, version):
+        if self._cache_key(version) in self.cache_payload_paths:
+            return self.cache_payload_paths[self._cache_key(version)]
+        return None
+
+    def _cache_key(self, version):
+        return u'{}-{}'.format(self.response_class.__name__, version)
 
     def invalidate_cached_payloads(self):
-        for name in copy(self._doc.get('_attachments', {})):
-            self.delete_attachment(name)
+        self.cache_payload_paths = {}
+        self.save()
 
     @classmethod
     def from_other_format(cls, other_sync_log):

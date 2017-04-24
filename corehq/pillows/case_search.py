@@ -10,7 +10,7 @@ from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
 from corehq.apps.case_search.models import case_search_enabled_domains, \
     case_search_enabled_for_domain
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -83,7 +83,7 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
         checkpoint=checkpoint,
         change_feed=change_feed,
         processor=case_processor,
-        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+        change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
         ),
     )

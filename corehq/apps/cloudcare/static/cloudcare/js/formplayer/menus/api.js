@@ -22,10 +22,10 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                         FormplayerFrontend.trigger('retry', response, function() {
                             menus.fetch($.extend(true, {}, options));
                         }, gettext('Waiting for server progress'));
-                    } else if (response.exception){
+                    } else if (response.hasOwnProperty('exception')){
                         FormplayerFrontend.trigger(
                             'showError',
-                            response.exception,
+                            response.exception || FormplayerFrontend.Constants.GENERIC_ERROR,
                             response.type === 'html'
                         );
                         FormplayerFrontend.trigger('navigation:back');

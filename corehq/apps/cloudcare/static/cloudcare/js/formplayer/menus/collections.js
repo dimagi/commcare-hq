@@ -28,6 +28,7 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'numEntitiesPerRow',
             'maxWidth',
             'maxHeight',
+            'widthHints',
         ],
 
         commandProperties: [

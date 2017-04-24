@@ -7,6 +7,7 @@ from casexml.apps.phone.restore import RestoreParams, RestoreConfig
 from casexml.apps.phone.tests.utils import create_restore_user, generate_restore_payload
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
+from corehq.util.test_utils import flag_enabled
 from corehq.form_processor.tests.utils import use_sql_backend
 
 
@@ -77,41 +78,51 @@ class PhoneFootprintTest(SimpleTestCase):
         self.assertEqual(0, len(log.get_footprint_of_cases_on_phone()))
 
 
-class CachingReponseTest(TestCase):
+class CachingResponseTest(TestCase):
 
     def testCachingResponse(self):
         log = SyncLog()
         log.save()
-        self.assertFalse(log.has_cached_payload(V1))
-        self.assertFalse(log.has_cached_payload(V2))
+        self.assertIsNone(log.get_cached_payload_path(V1))
+        self.assertIsNone(log.get_cached_payload_path(V2))
         self.assertEqual(None, log.get_cached_payload(V1))
         self.assertEqual(None, log.get_cached_payload(V2))
         log.invalidate_cached_payloads()
 
-        payload = "<node>melting hippo</node>"
-        log.set_cached_payload(payload, V1)
-        self.assertTrue(log.has_cached_payload(V1))
-        self.assertFalse(log.has_cached_payload(V2))
-
-        self.assertEqual(payload, log.get_cached_payload(V1))
-        self.assertEqual(None, log.get_cached_payload(V2))
-
-        v2_payload = "<node>melting hippo 2.0</node>"
-        log.set_cached_payload(v2_payload, V2)
-        self.assertTrue(log.has_cached_payload(V1))
-        self.assertTrue(log.has_cached_payload(V2))
-        self.assertEqual(payload, log.get_cached_payload(V1))
-        self.assertEqual(v2_payload, log.get_cached_payload(V2))
+        payload_path = "path-to-cache"
+        log.set_cached_payload(payload_path, V1)
+        log.set_cached_payload(payload_path, V2)
+        self.assertEqual(log.get_cached_payload_path(V1), payload_path)
+        self.assertEqual(log.get_cached_payload_path(V2), payload_path)
 
         log.invalidate_cached_payloads()
-        self.assertFalse(log.has_cached_payload(V1))
-        self.assertFalse(log.has_cached_payload(V2))
-        self.assertEqual(None, log.get_cached_payload(V1))
-        self.assertEqual(None, log.get_cached_payload(V2))
+        log = SyncLog.get(log._id)
+        self.assertIsNone(log.get_cached_payload_path(V1))
+        self.assertIsNone(log.get_cached_payload_path(V2))
+
+
+class SimpleCachingResponseTest(SimpleTestCase):
+
+    def test_switch_restore_response(self):
+        '''
+        Ensures that when switching from using a FileRestoreResponse to a
+        BlobRestoreResponse that we don't use the old FileRestoreResponse
+        cache
+        '''
+        log = SyncLog()
+        payload_path = "path-to-cache"
+
+        log.set_cached_payload(payload_path, V2)
+        self.assertEqual(log.get_cached_payload_path(V2), payload_path)
+
+        with flag_enabled('BLOBDB_RESTORE'):
+            self.assertIsNone(log.get_cached_payload_path(V2))
+            log.set_cached_payload(payload_path, V2)
+            self.assertEqual(log.get_cached_payload_path(V2), payload_path)
 
 
 @use_sql_backend
-class CachingReponseTestSQL(CachingReponseTest):
+class CachingResponseTestSQL(CachingResponseTest):
     pass
 
 

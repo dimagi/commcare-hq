@@ -75,7 +75,7 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.util.quickcache import skippable_quickcache
+from corehq.util.quickcache import quickcache
 from corehq.util.xml_utils import indent_xml
 from corehq.apps.analytics.tasks import track_clicked_preview_on_hubspot
 from corehq.apps.analytics.utils import get_meta
@@ -474,7 +474,7 @@ def get_cases_vary_on(request, domain):
 
 def get_cases_skip_arg(request, domain):
     """
-    When this function returns True, skippable_quickcache will not go to the cache for the result. By default,
+    When this function returns True, quickcache will not go to the cache for the result. By default,
     if neither of these params are passed into the function, nothing will be cached. Cache will always be
     skipped if ids_only is false.
 
@@ -487,7 +487,7 @@ def get_cases_skip_arg(request, domain):
 
 
 @cloudcare_api
-@skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
+@quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
 def get_cases(request, domain):
     request_params = request.GET
 

@@ -60,6 +60,17 @@ class AbstractBlobDB(object):
         raise NotImplementedError
 
     @abstractmethod
+    def size(self, identifier, bucket=DEFAULT_BUCKET):
+        """Gets the size of a blob in bytes
+
+        :param identifier: The identifier of the object to get.
+        :param bucket: Optional bucket name. This must have the same
+        value that was passed to ``put``.
+        :returns: The number of bytes of a blob
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def delete(self, identifier=NOT_SET, bucket=NOT_SET):
         """Delete a blob or bucket of blobs
 

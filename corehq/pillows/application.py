@@ -1,11 +1,11 @@
 from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplication
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.doc_processor.couch import CouchDocumentProvider
-from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, get_checkpoint_for_elasticsearch_pillow
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
@@ -25,13 +25,14 @@ def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'
         index_info=APP_INDEX_INFO,
         doc_prep_fn=transform_app_for_es
     )
+    change_feed = KafkaChangeFeed(topics=[topics.APP], group_id='apps-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topics.APP], group_id='apps-to-es'),
+        change_feed=change_feed,
         processor=app_processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
 

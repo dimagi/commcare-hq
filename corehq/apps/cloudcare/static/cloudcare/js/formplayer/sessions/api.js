@@ -22,10 +22,10 @@ FormplayerFrontend.module("Sessions", function (Sessions, FormplayerFrontend, Ba
                 }),
                 url: formplayerUrl + '/get_sessions',
                 success: function (parsed, response) {
-                    if (response.exception){
+                    if (response.hasOwnProperty('exception')){
                         FormplayerFrontend.trigger(
                             'showError',
-                            response.exception,
+                            response.exception || FormplayerFrontend.Constants.GENERIC_ERROR,
                             response.type === 'html'
                         );
                         FormplayerFrontend.trigger('navigation:back');

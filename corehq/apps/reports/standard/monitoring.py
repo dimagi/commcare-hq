@@ -4,7 +4,6 @@ from urllib import urlencode
 import math
 import operator
 from pygooglechart import ScatterChart
-from corehq.util.quickcache import quickcache
 import pytz
 
 from corehq import toggles
@@ -31,7 +30,6 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_duration_stats_for_users)
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.filters.users import (
     ExpandedMobileWorkerFilter as EMWF, LocationRestrictedMobileWorkerFilter
 )
@@ -682,40 +680,33 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
     @property
     @memoized
-    def selected_simplified_users(self):
+    def selected_users(self):
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        return util.get_simplified_users(EMWF.user_es_query(
-            self.domain,
-            mobile_user_and_group_slugs,
-        ))
-
-    @quickcache(['self.domain', 'mobile_user_and_group_slugs'], timeout=10)
-    def is_query_too_big(self, mobile_user_and_group_slugs):
-        user_es_query = EMWF.user_es_query(
+        users_data = EMWF.pull_users_and_groups(
             self.domain,
             mobile_user_and_group_slugs,
         )
-        return user_es_query.count() > USER_QUERY_LIMIT
+        return users_data.combined_users
 
     @property
     def rows(self):
-        if self.is_query_too_big(self.request.GET.getlist(EMWF.slug)):
+        if util.is_query_too_big(self.domain, self.request.GET.getlist(EMWF.slug)):
             raise BadRequestError(
                 _('Query selects too many users. Please modify your filters to select fewer users')
             )
 
         rows = []
         totals = [0] * (len(self.all_relevant_forms) + 1)
-        for simplified_user in self.selected_simplified_users:
+        for user in self.selected_users:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
                     row.append(self._form_counts[
-                        (simplified_user.user_id, form['app_id'], form['xmlns'].lower())
+                        (user.user_id, form['app_id'], form['xmlns'].lower())
                     ])
                 row_sum = sum(row)
                 row = (
-                    [self.get_user_link(simplified_user)] +
+                    [self.get_user_link(user)] +
                     [self.table_cell(row_data, zerostyle=True) for row_data in row] +
                     [self.table_cell(row_sum, "<strong>%s</strong>" % row_sum)]
                 )
@@ -723,7 +714,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                           for i, col in enumerate(row[1:])]
                 rows.append(row)
             else:
-                rows.append([self.get_user_link(simplified_user), '--'])
+                rows.append([self.get_user_link(user), '--'])
         if self.all_relevant_forms:
             self.total_row = [_("All Users")] + totals
         return rows
@@ -735,7 +726,8 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         if EMWF.show_all_mobile_workers(mobile_user_and_group_slugs):
             user_ids = []
         else:
-            user_ids = [simplified_user.user_id for simplified_user in self.selected_simplified_users]
+            # Don't query ALL mobile workers
+            user_ids = [u.user_id for u in self.selected_users]
         return get_form_counts_by_user_xmlns(
             domain=self.domain,
             startdate=self.datespan.startdate_utc.replace(tzinfo=pytz.UTC),

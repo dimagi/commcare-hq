@@ -27,7 +27,7 @@ from django.urls import reverse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
-from corehq.util.quickcache import quickcache, skippable_quickcache
+from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
     iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
@@ -424,8 +424,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return domain and domain.secure_sessions
 
     @staticmethod
-    @skippable_quickcache(['couch_user._id', 'is_active'],
-                          skip_arg='strict', timeout=5*60, memoize_timeout=10)
+    @quickcache(['couch_user._id', 'is_active'],
+                skip_arg='strict', timeout=5*60, memoize_timeout=10)
     def active_for_couch_user(couch_user, is_active=True, strict=False):
         domain_names = couch_user.get_domains()
         return Domain.view(
@@ -545,7 +545,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return self.name
 
     @classmethod
-    @skippable_quickcache(['name'], skip_arg='strict', timeout=30*60)
+    @quickcache(['name'], skip_arg='strict', timeout=30*60)
     def get_by_name(cls, name, strict=False):
         if not name:
             # get_by_name should never be called with name as None (or '', etc)

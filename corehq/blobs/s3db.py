@@ -60,6 +60,11 @@ class S3BlobDB(AbstractBlobDB):
             resp = self._s3_bucket().Object(path).get()
         return BlobStream(resp["Body"], self, path)
 
+    def size(self, identifier, bucket=DEFAULT_BUCKET):
+        path = self.get_path(identifier, bucket)
+        with maybe_not_found(throw=NotFound(identifier, bucket)):
+            return self._s3_bucket().Object(path).content_length
+
     def exists(self, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
         try:

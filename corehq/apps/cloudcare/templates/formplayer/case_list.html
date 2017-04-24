@@ -25,8 +25,10 @@
           <% if(!useTiles) { %>
             <thead>
               <tr>
-                <% _.each(headers, function(header) { %>
-                <th class="module-caselist-header"> <%= header %></th>
+                <% _.each(headers, function(header, index) { %>
+                  <% if (!(widthHints[index] === 0)) { %>
+                    <th class="module-caselist-header"> <%= header %></th>
+                  <% } %>
                 <% }); %>
               </tr>
             </thead>
@@ -103,13 +105,15 @@
 
 <script type="text/template" id="case-view-item-template">
     <% _.each(data, function(datum, index) { %>
-      <% if (styles[index].displayFormat === 'Image') { %>
-        <td class="module-caselist-column"><img class="module-icon" src="<%= resolveUri(datum) %>"/></td>
-      <% } else if (styles[index].displayFormat === 'Graph') { %>
-        <td class="module-caselist-column"><iframe srcdoc="<%= datum %>" height="300" width="300"></iframe></td>
-      <% } else { %>
-        <td class="module-caselist-column"><%= datum %></td>
-      <% } %>
+        <% if (!(styles[index].widthHint === 0)) { %>
+          <% if (styles[index].displayFormat === 'Image') { %>
+            <td class="module-caselist-column"><img class="module-icon" src="<%= resolveUri(datum) %>"/></td>
+          <% } else if (styles[index].displayFormat === 'Graph') { %>
+            <td class="module-caselist-column"><iframe srcdoc="<%= datum %>" height="300" width="300"></iframe></td>
+          <% } else { %>
+            <td class="module-caselist-column"><%= datum %></td>
+          <% } %>
+        <% } %>
     <% }); %>
 </script>
 

@@ -29,6 +29,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
+from djangular.views.mixins import JSONResponseMixin
 
 import httpagentparser
 from couchdbkit import ResourceNotFound
@@ -355,6 +356,7 @@ def login(req):
     return _login(req, domain, "login_and_password/login.html")
 
 
+@location_safe
 def domain_login(req, domain, template_name="login_and_password/login.html"):
     project = Domain.get_by_name(domain)
     if not project:
@@ -1195,3 +1197,16 @@ def couch_doc_counts(request, domain):
         cls.__name__: get_doc_count_in_domain_by_class(domain, cls, start, end)
         for cls in [CommCareCase, XFormInstance]
     })
+
+
+# Use instead of djangular's base JSONResponseMixin
+# Adds djng_current_rmi to view context
+class HQJSONResponseMixin(JSONResponseMixin):
+    # Add the output of djng_current_rmi to view context, which requires having
+    # the rest of the context, specifically context['view'], available.
+    # See https://github.com/jrief/django-angular/blob/master/djng/templatetags/djng_tags.py
+    def get_context_data(self, **kwargs):
+        context = super(HQJSONResponseMixin, self).get_context_data(**kwargs)
+        from djangular.templatetags.djangular_tags import djng_current_rmi
+        context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
+        return context

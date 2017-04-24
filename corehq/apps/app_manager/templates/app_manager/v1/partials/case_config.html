@@ -107,7 +107,7 @@
                     <span class="help-block" data-bind="visible: !case_type()">{% trans "Required" %}</span>
                     {% if show_custom_ref %}
                         <label>{% trans "Override reference id: " %}</label>
-                        <input type="text" data-bind="value: reference_id"/>
+                        <input type="text" class="form-control" data-bind="value: reference_id"/>
                     {% endif %}
                 </span>
                 <a href="#" data-bind="openModal: 'remove-subcase-modal-template'" class="pull-right">

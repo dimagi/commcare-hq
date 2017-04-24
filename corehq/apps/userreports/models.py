@@ -5,13 +5,12 @@ import json
 from datetime import datetime
 
 from django.conf import settings
-from django.contrib import admin
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import ugettext as _
 
 from corehq.sql_db.connections import UCR_ENGINE_ID
-from corehq.util.quickcache import quickcache, skippable_quickcache
+from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -258,12 +257,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def get_columns(self):
         return self.indicators.get_columns()
 
-    def get_items(self, document):
+    def get_items(self, document, eval_context=None):
         if self.filter(document):
             if not self.base_item_expression:
                 return [document]
             else:
-                result = self.parsed_expression(document)
+                result = self.parsed_expression(document, eval_context)
                 if result is None:
                     return []
                 elif isinstance(result, list):
@@ -278,7 +277,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             eval_context = EvaluationContext(doc)
 
         rows = []
-        for item in self.get_items(doc):
+        for item in self.get_items(doc, eval_context):
             indicators = self.indicators.get_values(item, eval_context)
             rows.append(indicators)
             eval_context.increment_iteration()
@@ -525,7 +524,7 @@ class StaticDataSourceConfiguration(JsonObject):
         return '{}{}-{}'.format(cls._datasource_id_prefix, domain, table_id)
 
     @classmethod
-    @skippable_quickcache([], skip_arg='rebuild')
+    @quickcache([], skip_arg='rebuild')
     def by_id_mapping(cls, rebuild=False):
         mapping = {}
         for wrapped, path in cls._all():
@@ -622,7 +621,7 @@ class StaticReportConfiguration(JsonObject):
                 yield cls.wrap(json.load(f)), path
 
     @classmethod
-    @skippable_quickcache([], skip_arg='rebuild')
+    @quickcache([], skip_arg='rebuild')
     def by_id_mapping(cls, rebuild=False):
         mapping = {}
         for wrapped, path in StaticReportConfiguration._all():
@@ -759,9 +758,6 @@ class AsyncIndicator(models.Model):
                     indicator.save()
 
         return indicator
-
-
-admin.site.register(AsyncIndicator)
 
 
 def get_datasource_config(config_id, domain):

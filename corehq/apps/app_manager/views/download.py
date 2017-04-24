@@ -342,7 +342,7 @@ def download_index(request, domain, app_id):
 
     """
     template = get_app_manager_template(
-        domain,
+        request.user,
         "app_manager/v1/download_index.html",
         "app_manager/v2/download_index.html",
     )
@@ -387,12 +387,12 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     lang, langs = get_langs(request, app)
 
     if ajax and "blank form" in [error.get('type') for error in errors]:
-        response_html = ("" if toggles.APP_MANAGER_V2.enabled(domain)
+        response_html = ("" if toggles.APP_MANAGER_V2.enabled(request.user.username)
                          else render_to_string('app_manager/v1/partials/create_form_prompt.html'))
     else:
         response_html = render_to_string(
             get_app_manager_template(
-                domain,
+                request.user,
                 'app_manager/v1/partials/build_errors.html',
                 'app_manager/v2/partials/build_errors.html',
             ), {

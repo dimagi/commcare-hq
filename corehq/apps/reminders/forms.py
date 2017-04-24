@@ -503,6 +503,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
         super(BaseScheduleCaseReminderForm, self).__init__(data, *args, **kwargs)
 
+        if is_edit:
+            self.fields['case_type'].disabled = True
+
         self.domain = domain
         self.is_edit = is_edit
         self.is_previewer = is_previewer

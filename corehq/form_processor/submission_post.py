@@ -14,7 +14,8 @@ from django.http import (
 )
 import sys
 import couchforms
-from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex
+from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
+    CaseValueError
 from casexml.apps.case.xml import V2
 from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.commtrack.exceptions import MissingProductId
@@ -175,7 +176,7 @@ class SubmissionPost(object):
                     try:
                         case_stock_result = self.process_xforms_for_cases(xforms, case_db)
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
-                            PhoneDateValueError, InvalidCaseIndex) as e:
+                            PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                         self._handle_known_error(e, instance, xforms)
                     except Exception as e:
                         # handle / log the error and reraise so the phone knows to resubmit
@@ -239,7 +240,8 @@ class SubmissionPost(object):
             for case in case_stock_result.case_models:
                 case_post_save.send(case.__class__, case=case)
 
-    def process_xforms_for_cases(self, xforms, case_db):
+    @staticmethod
+    def process_xforms_for_cases(xforms, case_db):
         from casexml.apps.case.xform import process_cases_with_casedb
         from corehq.apps.commtrack.processing import process_stock
 

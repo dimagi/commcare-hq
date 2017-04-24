@@ -20,6 +20,7 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
+from corehq.apps.motech.views import OpenmrsInstancesMotechView
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
 from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
@@ -31,7 +32,7 @@ from corehq.form_processor.utils import use_new_exports
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
-from corehq.toggles import PUBLISH_CUSTOM_REPORTS
+from corehq.toggles import PUBLISH_CUSTOM_REPORTS, MOTECH
 from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
@@ -791,7 +792,7 @@ class ApplicationsTab(UITab):
 
     @property
     def view(self):
-        if toggles.APP_MANAGER_V2.enabled(self.domain):
+        if toggles.APP_MANAGER_V2.enabled(self.couch_user.username):
             return "default_new_app"
         return "default_app"
 
@@ -833,7 +834,7 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])
-                     if toggles.APP_MANAGER_V2.enabled(self.domain)
+                     if toggles.APP_MANAGER_V2.enabled(self.couch_user.username)
                      else reverse('default_app', args=[self.domain])),
             ))
         return submenu_context
@@ -1611,6 +1612,29 @@ class MySettingsTab(UITab):
         return [[_("Manage My Settings"), menu_items]]
 
 
+class MotechTab(UITab):
+    title = ugettext_noop("Motech")
+    view = OpenmrsInstancesMotechView.urlname
+
+    url_prefix_formats = (
+        '/a/{domain}/motech/',
+    )
+
+    @property
+    def _is_viewable(self):
+        return MOTECH.enabled(self.domain) and self.couch_user.is_domain_admin(self.domain)
+
+    @property
+    @memoized
+    def sidebar_items(self):
+        return [
+            (_("OpenMRS"), [{
+                'title': OpenmrsInstancesMotechView.page_title,
+                'url': reverse(OpenmrsInstancesMotechView.urlname, args=[self.domain]),
+            }])
+        ]
+
+
 class AccountingTab(UITab):
     title = ugettext_noop("Accounting")
     view = "accounting_default"
@@ -1752,7 +1776,9 @@ class AdminTab(UITab):
         admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views import (AuthenticateAs, ReprocessMessagingCaseUpdatesView)
+            from corehq.apps.hqadmin.views import (
+                AuthenticateAs, ReprocessMessagingCaseUpdatesView
+            )
             admin_operations.extend([
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',

@@ -24,10 +24,12 @@
 </script>
 
 <script type="text/html" id="case-config:case-transaction">
+    {% if app.advanced_app_builder or form.actions.open_case.condition.type == 'if' %}
     <div data-bind="template: {
         name: 'case-config:condition',
         data: {condition: condition, config: $data}
     }, visible: allow.condition()"></div>
+    {% endif %}
     <div data-bind="if: allow.case_preload()">
         <div class="panel panel-appmanager case-properties wide-select2s"
              data-bind="template: 'case-config:case-transaction:case-properties'"></div>
@@ -37,19 +39,19 @@
              data-bind="template: 'case-config:case-transaction:case-properties'"></div>
     </div>
     {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
-    {% if app.advanced_app_builder or form.get_action_type != 'open' %}
         <div class="panel panel-appmanager">
             <label class="panel-body">
                 <input type="checkbox" data-bind="checked: close_case"/>
                 {% trans "Close this case when the form is complete" %}
             </label>
+            {% if app.advanced_app_builder or form.actions.close_case.condition.type == 'if' %}
             <div data-bind="template: {
                 name: 'case-config:condition',
                 data: {condition: $data.close_condition, config: $data},
                 if: $data.close_condition
             }"></div>
+            {% endif %}
         </div>
-    {% endif %}
     {% endif %}
 </script>
 
@@ -73,7 +75,7 @@
     <div data-bind="template: 'case-config:refresh-form-questions'"></div>
 
     <div data-bind="with: caseConfigViewModel">
-        {% if app.advanced_app_builder %}
+        {% if app.advanced_app_builder or form.actions.subcases %}
             <div class="form-inline container-fluid">
                 {% trans "This form " %}
                 {% trans "Does not use cases" as no_cases %}
@@ -101,7 +103,7 @@
                      data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
                 </div>
             </div>
-                {% if app.advanced_app_builder %}
+                {% if app.advanced_app_builder or form.actions.subcases %}
                 <!--ko if: actionType() !== 'none'-->
                 <header class="clearfix" data-bind="visible: actionType() !== 'open-other'">
                     <h5 class="pull-left">{% trans "Child Cases" %}</h5>
@@ -125,7 +127,7 @@
                             <span class="help-block" data-bind="visible: !case_type()">{% trans "Required" %}</span>
                             {% if show_custom_ref %}
                                 <label>{% trans "Override reference id: " %}</label>
-                                <input type="text" data-bind="value: reference_id"/>
+                                <input type="text" class="form-control" data-bind="value: reference_id"/>
                             {% endif %}
                         </span>
                         <a href="#" data-bind="openModal: 'remove-subcase-modal-template'" class="pull-right">

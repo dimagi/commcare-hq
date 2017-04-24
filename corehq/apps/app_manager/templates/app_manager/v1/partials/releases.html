@@ -261,7 +261,7 @@
                             {% trans "View More" %}
                         </a>
                     </div>
-                    <div data-bind="visible: doneFetching() && !savedApps().length, css: {hide: false}" class="hide">
+                    <div data-bind="visible: doneFetching() && !savedApps().length && buildButtonEnabled(), css: {hide: false}" class="hide">
                         <div class="alert alert-info">
                             {% trans 'Use the <strong>Make New Version</strong> button to create and deploy the latest version of your application' %}
                         </div>

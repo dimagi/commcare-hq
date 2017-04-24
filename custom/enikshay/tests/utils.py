@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from datetime import datetime
 import uuid
 
@@ -30,9 +32,9 @@ from corehq.apps.users.models import CommCareUser
 def get_person_case_structure(case_id, user_id, extra_update=None):
     extra_update = extra_update or {}
     update = {
-        'name': "Peregrine Took",
-        PERSON_FIRST_NAME: "Peregrine",
-        PERSON_LAST_NAME: "Took",
+        'name': u"Peregrine เՇร ค Շгคק",
+        PERSON_FIRST_NAME: u"Peregrine",
+        PERSON_LAST_NAME: u"เՇร ค Շгคק",
         'aadhaar_number': "499118665246",
         MERM_ID: "123456789",
         'dob': "1987-08-15",
@@ -88,12 +90,12 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=No
         'occupation': 'engineer',
         'opened_on': datetime(1989, 6, 11, 0, 0),
         'patient_type_choice': 'treatment_after_lfu',
-        'person_name': 'Peregrine Took',
+        'person_name': u'Peregrine เՇร ค Շгคק',
         'site_choice': 'pleural_effusion',
         'treatment_supporter_designation': 'ngo_volunteer',
         TREATMENT_START_DATE: "2015-03-03",
-        TREATMENT_SUPPORTER_FIRST_NAME: "Gandalf",
-        TREATMENT_SUPPORTER_LAST_NAME: "The Grey",
+        TREATMENT_SUPPORTER_FIRST_NAME: u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣",
+        TREATMENT_SUPPORTER_LAST_NAME: u"𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
     }
     update.update(extra_update)
 
@@ -209,7 +211,7 @@ class ENikshayCaseStructureMixin(object):
                 'create': True,
                 'case_type': 'test',
                 "update": dict(
-                    date_tested=datetime(2016, 8, 6).date(),
+                    date_reported=datetime(2016, 8, 6).date(),
                     lab_serial_number=19,
                     test_type_value="microscopy-zn",
                     purpose_of_testing="diagnostic",

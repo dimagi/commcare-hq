@@ -26,6 +26,15 @@
         "field": "opened_on",
         "type": "date",
         "display": "Date Opened"
+      },
+      {
+        "compare_as_string": false,
+        "required": false,
+        "datatype": "string",
+        "display": "Filter by State",
+        "field": "state_id",
+        "type": "location_drilldown",
+        "slug": "state_id"
       }
     ],
     "columns": [

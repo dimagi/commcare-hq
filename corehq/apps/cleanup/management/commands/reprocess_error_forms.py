@@ -1,66 +1,15 @@
 from __future__ import print_function
-import datetime
-import warnings
 
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.signals import case_post_save
-from casexml.apps.case.xform import get_and_check_xform_domain, process_cases_with_casedb
 from collections import defaultdict
+
+from django.core.management.base import BaseCommand
+
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils import should_use_sql_backend
-from couchforms.models import XFormInstance
-from dimagi.utils.parsing import string_to_datetime
-from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
-
-from corehq.apps.cleanup.xforms import iter_problem_forms
-from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
-
-
-def _process_cases(xform, config=None):
-    """
-    Creates or updates case objects which live outside of the form.
-
-    If reconcile is true it will perform an additional step of
-    reconciling the case update history after the case is processed.
-    """
-    warnings.warn(
-        'This function is deprecated. You should be using SubmissionPost.',
-        DeprecationWarning,
-    )
-
-    assert getattr(settings, 'UNIT_TESTING', False)
-    domain = get_and_check_xform_domain(xform)
-
-    with CaseDbCacheCouch(domain=domain, lock=True, deleted_ok=True) as case_db:
-        case_result = process_cases_with_casedb([xform], case_db, config=config)
-
-    cases = case_result.cases
-    docs = [xform] + cases
-    now = datetime.datetime.utcnow()
-    for case in cases:
-        case.server_modified_on = now
-    XFormInstance.get_db().bulk_save(docs)
-
-    for case in cases:
-        case_post_save.send(CommCareCase, case=case)
-
-    case_result.commit_dirtiness_flags()
-    return cases
-
-
-def reprocess_form_cases(form):
-    """
-    For a given form, reprocess all case elements inside it. This operation
-    should be a no-op if the form was sucessfully processed, but should
-    correctly inject the update into the case history if the form was NOT
-    successfully processed.
-    """
-    _process_cases(form)
-    # mark cleaned up now that we've reprocessed it
-    if form.doc_type != 'XFormInstance':
-        form = XFormInstance.get(form._id)
-        form.doc_type = 'XFormInstance'
-        form.save()
+from corehq.form_processor.utils.xform import reprocess_xform_error
+from corehq.util.log import with_progress_bar
+from couchforms.dbaccessors import get_form_ids_by_type
 
 
 class Command(BaseCommand):
@@ -70,12 +19,12 @@ class Command(BaseCommand):
             'just a domain to process all problem forms in the domain.')
 
     def add_arguments(self, parser):
+        parser.add_argument('domain')
         parser.add_argument(
-            'domain',
-        )
-        parser.add_argument(
-            'since',
-            nargs='?',
+            '--verbose',
+            action='store_true',
+            dest='verbose',
+            default=False,
         )
         parser.add_argument(
             '--dryrun',
@@ -85,32 +34,41 @@ class Command(BaseCommand):
             help="Don't do the actual reprocessing, just print the ids that would be affected",
         )
 
-    def handle(self, domain, since, **options):
-        if since:
-            since = string_to_datetime(since)
-
-        if should_use_sql_backend(domain):
-            raise CommandError('This command only works for couch-based domains.')
+    def handle(self, domain, **options):
+        verbose = options["verbose"] or options["dryrun"]
 
         succeeded = []
         failed = []
         error_messages = defaultdict(lambda: 0)
-        for form in iter_problem_forms(domain, since):
-            print("%s\t%s\t%s\t%s\t%s" % (form._id, form.received_on,
-                              form.xmlns,
-                              form.get_data('form/meta/username'),
-                              form.problem.strip()))
+        problem_ids = self._get_form_ids(domain)
+        prefix = "Processing: "
+        form_iterator = FormAccessors(domain).iter_forms(problem_ids)
+        if not verbose:
+            form_iterator = with_progress_bar(form_iterator, len(problem_ids), prefix=prefix, oneline=False)
+        for form in form_iterator:
+            if verbose:
+                print("%s\t%s\t%s\t%s" % (form.form_id, form.received_on, form.xmlns, form.problem.strip()))
+
             if not options["dryrun"]:
                 try:
-                    reprocess_form_cases(form)
+                    reprocess_xform_error(form)
                 except Exception as e:
-                    failed.append(form._id)
+                    raise
+                    failed.append(form.form_id)
                     error_messages[str(e)] += 1
                 else:
-                    succeeded.append(form._id)
+                    succeeded.append(form.form_id)
 
-        print("%s / %s forms successfully processed, %s failures" % \
-              (len(succeeded), len(succeeded) + len(failed), len(failed)))
-        if error_messages:
-            print("The following errors were seen: \n%s" % \
-                  ("\n".join("%s: %s" % (v, k) for k, v in error_messages.items())))
+        if not options["dryrun"]:
+            print("%s / %s forms successfully processed, %s failures" %
+                  (len(succeeded), len(succeeded) + len(failed), len(failed)))
+            if error_messages:
+                print("The following errors were seen: \n%s" %
+                      ("\n".join("%s: %s" % (v, k) for k, v in error_messages.items())))
+
+    def _get_form_ids(self, domain):
+        if should_use_sql_backend(domain):
+            problem_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, 'XFormError')
+        else:
+            problem_ids = get_form_ids_by_type(domain, 'XFormError')
+        return problem_ids

@@ -68,7 +68,7 @@ class TestLSVHNDSurveyIndicator(TestCase):
                 u'meta': {
                     u'user_id': user_id
                 },
-                u'vhsnd_date_planned': es_formatted_date(date),
+                u'vhsnd_date_past_month': es_formatted_date(date),
             }
         }
 

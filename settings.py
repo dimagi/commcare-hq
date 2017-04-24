@@ -335,6 +335,7 @@ HQ_APPS = (
     'corehq.blobs',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
+    'corehq.apps.motech',
 
     # custom reports
     'a5288',
@@ -902,6 +903,11 @@ SENTRY_API_KEY = None
 ENABLE_PASSWORD_HASHING = False
 ENABLE_USED_PASSWORDS_CHECK = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
+AUTHPROXY_URL = None
+AUTHPROXY_CERT = None
+
+from env_settings import *
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1795,7 +1801,9 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patients_due_to_follow_up.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_treatment_outcome_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_treatment_outcome.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_treatment_outcome.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_general.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_tb_hiv.json')
 ]
 
 
@@ -2031,6 +2039,7 @@ _raven_config = helper.configure_sentry(
 if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
+    SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
 
 if ENABLE_USED_PASSWORDS_CHECK:
     AUTH_PASSWORD_VALIDATORS = [

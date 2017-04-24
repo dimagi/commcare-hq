@@ -21,6 +21,7 @@ CASE_TYPE_EPISODE = "episode"
 CASE_TYPE_PERSON = "person"
 CASE_TYPE_LAB_REFERRAL = "lab_referral"
 CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
+CASE_TYPE_TEST = "test"
 
 
 def get_all_parents_of_case(domain, case_id):
@@ -74,16 +75,16 @@ def get_first_parent_of_case(domain, case_id, parent_case_type):
 
 def get_occurrence_case_from_episode(domain, episode_case_id):
     """
-    Gets the first open occurrence case for an episode
+    Gets the first occurrence case for an episode
     """
     return get_first_parent_of_case(domain, episode_case_id, CASE_TYPE_OCCURRENCE)
 
 
 def get_person_case_from_occurrence(domain, occurrence_case_id):
     """
-    Gets the first open person case for an occurrence
+    Gets the first person case for an occurrence
     """
-    return get_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
+    return get_first_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
 
 
 def get_person_case_from_episode(domain, episode_case_id):
@@ -267,3 +268,27 @@ def get_adherence_cases_by_day(domain, episode_case_id):
         adherence[adherence_datetime.date()].append(case)
 
     return adherence
+
+
+def get_person_case(domain, case_id):
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+    except CaseNotFound:
+        raise ENikshayCaseNotFound("Couldn't find case: {}".format(case_id))
+
+    case_type = case.type
+
+    if case_type == CASE_TYPE_PERSON:
+        return case_id
+    elif case_type == CASE_TYPE_EPISODE:
+        return get_person_case_from_episode(domain, case.case_id).case_id
+    elif case_type == CASE_TYPE_ADHERENCE:
+        episode_case = get_episode_case_from_adherence(domain, case.case_id)
+        return get_person_case_from_episode(domain, episode_case.case_id).case_id
+    elif case_type == CASE_TYPE_TEST:
+        occurrence_case = get_occurrence_case_from_test(domain, case.case_id)
+        return get_person_case_from_occurrence(domain, occurrence_case.case_id).case_id
+    elif case_type == CASE_TYPE_OCCURRENCE:
+        return get_person_case_from_occurrence(domain, case.case_id).case_id
+    else:
+        raise ENikshayCaseNotFound(u"Unknown case type: {}".format(case_type))

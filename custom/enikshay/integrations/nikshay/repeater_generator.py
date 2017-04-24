@@ -240,11 +240,11 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         interval_id, lab_serial_number, result_grade, dmc_code = self._get_mandatory_fields(
             test_case, test_case_properties)
 
-        test_conducted_on = _format_date(test_case_properties, 'date_tested')
+        test_reported_on = _format_date(test_case_properties, 'date_reported')
         properties_dict = self._base_properties(repeat_record)
         properties_dict.update({
             "PatientID": episode_case_properties.get('nikshay_id'),
-            "TestDate": test_conducted_on,
+            "TestDate": test_reported_on,
             "LabNo": lab_serial_number,
             "Local_ID": person_case.get_id,
             "IntervalId": interval_id,

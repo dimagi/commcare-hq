@@ -1,16 +1,16 @@
 from __future__ import absolute_import
-from datetime import datetime
+from collections import defaultdict
+from datetime import datetime, timedelta
 
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
-from django.core.paginator import Paginator
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
 from corehq.apps.userreports.const import (
     UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
-    ASYNC_INDICATOR_QUEUE_TIME,
+    ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
 )
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
@@ -20,15 +20,15 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     StaticDataSourceConfiguration,
     id_is_static,
-    ReportConfiguration,
+    get_report_config,
 )
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.util.context_managers import notify_someone
 from corehq.util.couch import get_document_or_not_found
 from corehq.util.datadog.gauges import datadog_gauge
-from dimagi.utils.couch import CriticalSection, release_lock
-from dimagi.utils.couch.cache.cache_core import get_redis_client
+from corehq.util.quickcache import quickcache
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
@@ -170,7 +170,7 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
             json_response["total_row"] = total_row
         return json_response
 
-    spec = get_document_or_not_found(ReportConfiguration, domain, report_config_id)
+    spec, is_static = get_report_config(report_config_id, domain)
     experiment_context = {
         "domain": domain,
         "report_config_id": report_config_id,
@@ -202,49 +202,68 @@ def queue_async_indicators():
         datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
 
     with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
-        redis_client = get_redis_client().client.get_client()
+        day_ago = datetime.utcnow() - timedelta(days=1)
         indicators = AsyncIndicator.objects.all()[:10000]
-        paginator = Paginator(indicators, 1000)
-        for page in paginator.page_range:
-            for indicator in paginator.page(page).object_list:
-                now = datetime.utcnow()
-                if now > cutoff:
-                    break
-                _queue_indicator(redis_client, indicator)
+        indicators_by_domain_doc_type = defaultdict(list)
+        for indicator in indicators:
+            # don't requeue anything htat's be queued in the past day
+            if not indicator.date_queued or indicator.date_queued < day_ago:
+                indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
+
+        for k, indicators in indicators_by_domain_doc_type.items():
+            now = datetime.utcnow()
+            if now > cutoff:
+                break
+            _queue_indicators(indicators)
 
 
-def _queue_indicator(redis_client, indicator):
-    lock_key = _get_indicator_queued_lock_key(indicator)
-    lock = redis_client.lock(lock_key, timeout=60 * 60 * 24)
-    if not lock.acquire(blocking=False):
-        return
+def _queue_indicators(indicators):
+    def _queue_chunk(indicators):
+        now = datetime.utcnow()
+        indicator_doc_ids = [i.doc_id for i in indicators]
+        AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
+        save_document.delay(indicator_doc_ids)
 
-    indicator.date_queued = datetime.utcnow()
-    indicator.save()
-    save_document.delay(indicator.id, indicator.doc_id)
+    to_queue = []
+    for indicator in indicators:
+        to_queue.append(indicator)
+        if len(to_queue) >= ASYNC_INDICATOR_CHUNK_SIZE:
+            _queue_chunk(to_queue)
+            to_queue = []
+
+    _queue_chunk(to_queue)
 
 
-def _get_indicator_queued_lock_key(indicator):
-    return 'async_indicator_queued-{}'.format(indicator.id)
+@quickcache(['config_id'])
+def _get_config(config_id):
+    # performance optimization for save_document. don't use elsewhere
+    return _get_config_by_id(config_id)
 
 
 @task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
-def save_document(async_indicator_id, doc_id):
-    lock_key = get_async_indicator_modify_lock_key(doc_id)
-    with CriticalSection([lock_key]):
-        indicator = AsyncIndicator.objects.get(pk=async_indicator_id)
-        doc_store = get_document_store(indicator.domain, indicator.doc_type)
-        doc = doc_store.get_document(indicator.doc_id)
+def save_document(doc_ids):
+    lock_keys = []
+    for doc_id in doc_ids:
+        lock_keys.append(get_async_indicator_modify_lock_key(doc_id))
 
-        eval_context = EvaluationContext(doc)
-        for config_id in indicator.indicator_config_ids:
-            config = _get_config_by_id(config_id)
-            adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-            adapter.best_effort_save(doc, eval_context)
-            eval_context.reset_iteration()
+    with CriticalSection(lock_keys):
+        indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids)
+        first_indicator = indicators[0]
 
-        redis_client = get_redis_client().client.get_client()
-        queued_lock_key = _get_indicator_queued_lock_key(indicator)
-        lock = redis_client.lock(queued_lock_key)
-        release_lock(lock, degrade_gracefully=True)
-        indicator.delete()
+        for i in indicators:
+            assert i.domain == first_indicator.domain
+            assert i.doc_type == first_indicator.doc_type
+
+        indicator_by_doc_id = {i.doc_id: i for i in indicators}
+        doc_store = get_document_store(first_indicator.domain, first_indicator.doc_type)
+        for doc in doc_store.iter_documents(doc_ids):
+            indicator = indicator_by_doc_id[doc['_id']]
+
+            eval_context = EvaluationContext(doc)
+            for config_id in indicator.indicator_config_ids:
+                config = _get_config(config_id)
+                adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+                adapter.best_effort_save(doc, eval_context)
+                eval_context.reset_iteration()
+
+        indicators.delete()

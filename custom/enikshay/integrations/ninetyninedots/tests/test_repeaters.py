@@ -269,7 +269,7 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             "phone_numbers": expected_numbers,
             "merm_id": person_case_properties.get(MERM_ID, None),
             "treatment_start_date": episode_case_properties.get(TREATMENT_START_DATE, None),
-            "treatment_supporter_name": "{} {}".format(
+            "treatment_supporter_name": u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
                 episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, ''),
             ),

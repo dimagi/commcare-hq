@@ -19,7 +19,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
 from django_otp.plugins.otp_static.models import StaticToken
-from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
+from djangular.views.mixins import allow_remote_invocation
 
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
@@ -44,7 +44,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
-from corehq.apps.hqwebapp.views import BasePageView, logout
+from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin, logout
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.registration.forms import AdminInvitesUserForm, WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user
@@ -388,7 +388,7 @@ def get_domain_languages(domain):
     return sorted(domain_languages) or langcodes.get_all_langs_for_select()
 
 
-class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
+class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/web_users.html'
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'

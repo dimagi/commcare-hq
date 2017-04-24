@@ -229,9 +229,6 @@ def get_mvp_case_indicator_pillow(pillow_id='MVPCaseIndicatorPillow'):
 
 
 def _get_mvp_indicator_pillow(pillow_id, processor):
-    checkpoint = PillowCheckpoint(
-        'mvp_docs.pillows.{}.{}'.format(pillow_id, get_machine_id()),
-    )
     feed = CouchChangeFeed(
         XFormInstance.get_db(),
         include_docs=True,
@@ -240,6 +237,9 @@ def _get_mvp_indicator_pillow(pillow_id, processor):
             'domains': ' '.join(processor.domains),
             'doc_types': ' '.join(processor.doc_types),
         }
+    )
+    checkpoint = PillowCheckpoint(
+        'mvp_docs.pillows.{}.{}'.format(pillow_id, get_machine_id()), feed.sequence_format
     )
     return ConstructedPillow(
         name=pillow_id,

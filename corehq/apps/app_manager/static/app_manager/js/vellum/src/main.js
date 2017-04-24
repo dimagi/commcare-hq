@@ -11,6 +11,7 @@ requirejs.config({
         ], 
         "local-deps": [
             "jquery.jstree", 
+            "jstree-actions", 
             "save-button", 
             "ckeditor", 
             "ckeditor-jquery", 

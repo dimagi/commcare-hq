@@ -193,4 +193,5 @@ CHECKS = {
     'elasticsearch': check_elasticsearch,
     'blobdb': check_blobdb,
     'formplayer': check_formplayer,
+    'rabbitmq': check_rabbitmq,
 }

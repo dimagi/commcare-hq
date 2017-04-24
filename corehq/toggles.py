@@ -244,7 +244,8 @@ def toggle_values_by_name(username=None, domain=None):
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     'custom-parent-ref',
     'Custom case parent reference',
-    TAG_ONE_OFF
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 APP_BUILDER_CAREPLAN = StaticToggle(
@@ -950,18 +951,11 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-VELLUM_ALPHA = StaticToggle(
-    'vellum_alpha',
-    'Use alpha (pre-beta) Vellum',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN]
-)
-
 APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_USER]
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1071,19 +1065,26 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     }
 )
 
-BLOBDB_EXPORTS = PredictablyRandomToggle(
-    'blobdb_exports',
-    'Use the blobdb to do exports',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-    randomness=0,
-)
-
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
+)
+
+LOGIN_AS_ALWAYS_OFF = StaticToggle(
+    'always_turn_login_as_off',
+    'Always turn login as off',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+BLOBDB_RESTORE = PredictablyRandomToggle(
+    'blobdb_restore',
+    "Blobdb restore",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    randomness=0,
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
@@ -1105,4 +1106,19 @@ PUBLISH_CUSTOM_REPORTS = StaticToggle(
     "Publish custom reports (No needed Authorization)",
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
+)
+
+MOTECH = StaticToggle(
+    'motech',
+    "Show Motech tab",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+MARK_LATEST_SUBMISSION_ON_USER = StaticToggle(
+    'user_last_submission',
+    "Marks the latest submssion on user model",
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )
