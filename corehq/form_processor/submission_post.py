@@ -149,7 +149,7 @@ class SubmissionPost(object):
 
         cases = []
         ledgers = []
-        submission_type = 'normal'
+        submission_type = 'unknown'
         with result.get_locked_forms() as xforms:
             from casexml.apps.case.xform import get_and_check_xform_domain
             domain = get_and_check_xform_domain(xforms[0])
@@ -177,6 +177,7 @@ class SubmissionPost(object):
                     submission_type = 'duplicate'
                     self.interface.save_processed_models([instance])
                 elif not instance.is_error:
+                    submission_type = 'normal'
                     try:
                         case_stock_result = self.process_xforms_for_cases(xforms, case_db)
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
@@ -195,6 +196,8 @@ class SubmissionPost(object):
                         case_stock_result.case_result.close_extensions(case_db)
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
+                elif instance.is_error:
+                    submission_type = 'error'
 
             errors = self.process_signals(instance)
             response = self._get_open_rosa_response(instance, errors)
