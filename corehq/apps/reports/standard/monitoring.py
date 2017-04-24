@@ -1469,8 +1469,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     self.request.domain,
                     self.request.couch_user)
                 )
-                accessible_user_ids = user_ids_at_locations(accessible_location_ids)
-                user_query.filter(accessible_user_ids)
+                user_query = user_query.location(accessible_location_ids)
             return util.get_simplified_users(user_query)
         elif not self.group_ids:
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
