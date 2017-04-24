@@ -276,7 +276,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
             e.preventDefault();
             var dataType = $(this).data("type");
             var moduleId = $(this).data("module");
-            var form = $("#new-form-form-" + moduleId);
+            var form = $("#form-to-create-new-form-for-module-" + moduleId);
             $("input[name=form_type]", form).val(dataType);
             if (!form.data('clicked')) {
                 form.data('clicked', 'true');
