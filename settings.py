@@ -335,6 +335,7 @@ HQ_APPS = (
     'corehq.blobs',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
+    'corehq.apps.motech',
 
     # custom reports
     'a5288',
@@ -725,6 +726,8 @@ ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
+GREENHOUSE_API_KEY = ''
+
 MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
@@ -898,6 +901,11 @@ SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
 SENTRY_API_KEY = None
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
+AUTHPROXY_URL = None
+AUTHPROXY_CERT = None
+
+from env_settings import *
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1188,7 +1196,7 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
-        }
+        },
     }
 }
 
@@ -1658,18 +1666,6 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
-    'mvp_indicators': [
-        {
-            'name': 'MVPCaseIndicatorPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'mvp_docs.pillows.get_mvp_case_indicator_pillow',
-        },
-        {
-            'name': 'MVPFormIndicatorPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'mvp_docs.pillows.get_mvp_form_indicator_pillow',
-        },
-    ],
     'experimental': [
         {
             'name': 'BlobDeletionPillow',
@@ -1791,7 +1787,9 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patients_due_to_follow_up.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_treatment_outcome_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_treatment_outcome.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_treatment_outcome.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_general.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_tb_hiv.json')
 ]
 
 
@@ -1830,6 +1828,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
 
@@ -1899,6 +1898,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression'),
     ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
     ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
+    ('month_expression', 'custom.enikshay.expressions.month_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -2025,3 +2025,4 @@ _raven_config = helper.configure_sentry(
 if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
+    SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'

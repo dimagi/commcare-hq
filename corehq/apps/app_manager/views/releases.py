@@ -96,7 +96,7 @@ def paginate_releases(request, domain, app_id):
 @require_deploy_apps
 def releases_ajax(request, domain, app_id):
     template = get_app_manager_template(
-        domain,
+        request.user,
         "app_manager/v1/partials/releases.html",
         "app_manager/v2/partials/releases.html",
     )
@@ -120,13 +120,13 @@ def get_releases_context(request, domain, app_id):
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
         ),
-        'build_profile_access': build_profile_access and not toggles.APP_MANAGER_V2.enabled(domain),
+        'build_profile_access': build_profile_access and not toggles.APP_MANAGER_V2.enabled(request.user.username),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
         'latest_build_id': get_latest_build_id(domain, app_id)
     })
     if not app.is_remote_app():
-        if toggles.APP_MANAGER_V2.enabled(domain) and len(app.modules) == 0:
+        if toggles.APP_MANAGER_V2.enabled(request.user.username) and len(app.modules) == 0:
             context.update({'intro_only': True})
         # Multimedia is not supported for remote applications at this time.
         try:
@@ -219,7 +219,7 @@ def save_copy(request, domain, app_id):
         copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
 
     template = get_app_manager_template(
-        domain,
+        request.user,
         "app_manager/v1/partials/build_errors.html",
         "app_manager/v2/partials/build_errors.html",
     )
@@ -295,7 +295,7 @@ def odk_install(request, domain, app_id, with_media=False):
         "profile_url": profile_url,
     }
     template = get_app_manager_template(
-        domain,
+        request.user,
         "app_manager/v1/odk_install.html",
         "app_manager/v2/odk_install.html",
     )
@@ -394,7 +394,7 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         self.template_name = get_app_manager_template(
-            self.domain,
+            request.user,
             self.template_name,
             'app_manager/v2/app_diff.html',
         )

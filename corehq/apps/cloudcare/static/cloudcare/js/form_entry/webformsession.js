@@ -345,7 +345,7 @@ WebFormSession.prototype.nextQuestion = function(opts) {
             'action': Formplayer.Const.NEXT_QUESTION,
         },
         function(resp) {
-            opts.callback(parseInt(resp.currentIndex), resp.isAtLastIndex);
+            opts.callback(parseInt(resp.currentIndex), resp.isAtFirstIndex, resp.isAtLastIndex);
             resp.title = opts.title;
             $.publish('session.reconcile', [resp, {}]);
         });
@@ -356,7 +356,7 @@ WebFormSession.prototype.prevQuestion = function(opts) {
             'action': Formplayer.Const.PREV_QUESTION,
         },
         function(resp) {
-            opts.callback(parseInt(resp.currentIndex), false);
+            opts.callback(parseInt(resp.currentIndex), resp.isAtFirstIndex, resp.isAtLastIndex);
             resp.title = opts.title;
             $.publish('session.reconcile', [resp, {}]);
         });

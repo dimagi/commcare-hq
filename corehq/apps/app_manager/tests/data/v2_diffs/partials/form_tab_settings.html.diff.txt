@@ -5,7 +5,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
 -<div class="tab-pane active" id="form-settings">
-+<div class="tab-pane{% if not form.requires_case and not form.get_action_type == 'open' %} active{% endif %}" id="form-settings">
++<div class="tab-pane{% if not form.uses_cases %} active{% endif %}" id="form-settings">
      <form class="form-horizontal save-button-form" action="{% url "edit_form_attr" domain app.id form.get_unique_id 'all' %}">
          {% csrf_token %}
          <div class="save-button-holder clearfix"></div>
@@ -164,11 +164,6 @@
 +
 +                    </div>
 +
-+                    {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
-+                    {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
-+                        {% include "app_manager/v2/partials/custom_instances.html" %}
-+                    {% endif %}
-+
 +                    {% if request|toggle_enabled:'NO_VELLUM' %}
 +                    <div class="form-group">
 +                        <label class="control-label col-sm-2">
@@ -185,7 +180,12 @@
 +                             <input type="hidden" name="no_vellum" data-bind="value: no_vellum"/>
 +                        </div>
 +                    </div>
-+                  {% endif %}
++                    {% endif %}
++
++                    {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
++                    {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
++                        {% include "app_manager/v2/partials/custom_instances.html" %}
++                    {% endif %}
 +                  </div>
 +              </div>
 +            </div>

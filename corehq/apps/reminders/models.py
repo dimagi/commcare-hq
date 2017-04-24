@@ -1408,6 +1408,10 @@ class CaseReminderHandler(Document):
             if getattr(obj, name) in [None, ""]:
                 raise IllegalModelStateException("%s is required" % name)
 
+        if self.active and self.uses_parent_case_property:
+            raise IllegalModelStateException("Parent case property references will only be "
+                "available in the new reminders framework")
+
         if self.start_condition_type == CASE_CRITERIA:
             check_attr("case_type")
             check_attr("start_property")
@@ -1515,10 +1519,10 @@ class CaseReminderHandler(Document):
         self.get_handler_ids.clear(CaseReminderHandler, self.domain, reminder_type_filter=None)
         reminder_type = self.reminder_type or REMINDER_TYPE_DEFAULT
         self.get_handler_ids.clear(CaseReminderHandler, self.domain, reminder_type_filter=reminder_type)
+        self.get_handler_ids_for_case_post_save.clear(CaseReminderHandler, self.domain, self.case_type)
 
     def save(self, **params):
         from corehq.apps.reminders.tasks import process_reminder_rule
-        self.clear_caches()
         self.check_state()
         schedule_changed = params.pop("schedule_changed", False)
         prev_definition = params.pop("prev_definition", None)
@@ -1530,6 +1534,7 @@ class CaseReminderHandler(Document):
         else:
             self.locked = True
         super(CaseReminderHandler, self).save(**params)
+        self.clear_caches()
         delay = self.start_condition_type == CASE_CRITERIA
         if not unlock:
             if delay:
@@ -1625,6 +1630,24 @@ class CaseReminderHandler(Document):
         ).all()
         count = reduced[0]['value'] if reduced else 0
         return count > 0
+
+    @classmethod
+    @quickcache(['domain', 'case_type'], timeout=4 * 60 * 60)
+    def get_handler_ids_for_case_post_save(cls, domain, case_type):
+        result = cls.view('reminders/handlers_by_reminder_type',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True,
+            reduce=False,
+        )
+
+        def filter_fcn(handler):
+            return (
+                handler.case_type == case_type and
+                (handler.reminder_type is None or handler.reminder_type == REMINDER_TYPE_DEFAULT)
+            )
+
+        return [handler._id for handler in result if filter_fcn(handler)]
 
     @classmethod
     @quickcache(['domain', 'reminder_type_filter'], timeout=60 * 60)

@@ -233,7 +233,7 @@ class BaseProjectReportSectionView(BaseDomainView):
 @location_safe
 class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
-    page_title = _("My Saved Reports")
+    page_title = ugettext_noop("My Saved Reports")
     template_name = 'reports/reports_home.html'
 
     @use_jquery_ui
@@ -1289,6 +1289,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
                     self.request.user.username),
             },
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
+            "can_edit_data": self.request.couch_user.can_edit_data,
             'is_usercase': self.case_instance.type == USERCASE_TYPE,
         }
 

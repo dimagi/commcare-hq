@@ -100,7 +100,7 @@
     "GroupToUserPillow": {
         "advertised_name": "GroupToUserPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "GroupToUserPillow-test_hqusers_2017-02-03",
+        "checkpoint_id": "GroupToUserPillow-test_hqusers_2017-03-22",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "GroupToUserPillow"
     },
@@ -138,20 +138,6 @@
         "checkpoint_id": "fluff.M4ChangeFormFluffPillow.testhq",
         "full_class_name": "custom.m4change.models.M4ChangeFormFluffPillow",
         "name": "M4ChangeFormFluffPillow"
-    },
-    "MVPCaseIndicatorPillow": {
-        "advertised_name": "MVPCaseIndicatorPillow",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "mvp_docs.pillows.MVPCaseIndicatorPillow.testhq",
-        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
-        "name": "MVPCaseIndicatorPillow"
-    },
-    "MVPFormIndicatorPillow": {
-        "advertised_name": "MVPFormIndicatorPillow",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "mvp_docs.pillows.MVPFormIndicatorPillow.testhq",
-        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
-        "name": "MVPFormIndicatorPillow"
     },
     "OpmUserFluffPillow": {
         "advertised_name": "OpmUserFluffPillow",
@@ -198,7 +184,7 @@
     "UnknownUsersPillow": {
         "advertised_name": "UnknownUsersPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "UnknownUsersPillow-test_hqusers_2017-02-03",
+        "checkpoint_id": "UnknownUsersPillow-test_hqusers_2017-03-22",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UnknownUsersPillow"
     },
@@ -219,7 +205,7 @@
     "UserPillow": {
         "advertised_name": "UserPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "UserPillow-test_hqusers_2017-02-03",
+        "checkpoint_id": "UserPillow-test_hqusers_2017-03-22",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UserPillow"
     },

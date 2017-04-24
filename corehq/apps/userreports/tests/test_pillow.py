@@ -7,12 +7,14 @@ from kafka.common import KafkaUnavailableError
 from mock import patch, MagicMock
 from datetime import datetime, timedelta
 from six.moves import range
+from sqlalchemy.engine import reflection
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
+
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
@@ -24,8 +26,7 @@ from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
 from corehq.apps.userreports.tasks import rebuild_indicators, queue_async_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
     doc_to_change, get_data_source_with_related_doc_type
-from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.elastic import ESError
+from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.test_utils import softer_assert, trap_extra_setup
 from corehq.util.context_managers import drop_connected_signals
@@ -357,29 +358,30 @@ class AsyncIndicatorTest(TestCase):
         AsyncIndicator.objects.all().delete()
 
     def test_async_save_success(self):
+        parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         for i in range(3):
             since = self.pillow.get_change_feed().get_latest_offsets()
             form, cases = post_case_blocks(
                 [
                     CaseBlock(
                         create=i == 0,
-                        case_id='parent-id',
+                        case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
                     ).as_xml(),
                     CaseBlock(
                         create=i == 0,
-                        case_id='child-id',
+                        case_id=child_id,
                         case_name='child-name',
                         case_type='bug-child',
-                        index={'parent': ('bug', 'parent-id')},
+                        index={'parent': ('bug', parent_id)},
                         update={'update-prop-child': i}
                     ).as_xml()
                 ], domain=self.domain
             )
             # ensure indicator is added
-            indicators = AsyncIndicator.objects.filter(doc_id='child-id')
+            indicators = AsyncIndicator.objects.filter(doc_id=child_id)
             self.assertEqual(indicators.count(), 0)
             self.pillow.process_changes(since=since, forever=False)
             self.assertEqual(indicators.count(), 1)
@@ -394,37 +396,38 @@ class AsyncIndicatorTest(TestCase):
             self.assertEqual(int(row.parent_property), i)
 
             # ensure no errors or anything left in the queue
-            errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+            errors = PillowError.objects.filter(doc_id=child_id, pillow=self.pillow.pillow_id)
             self.assertEqual(errors.count(), 0)
             self.assertEqual(indicators.count(), 0)
 
-    @patch('corehq.apps.userreports.tasks._get_config_by_id')
+    @patch('corehq.apps.userreports.tasks._get_config')
     def test_async_save_fails(self, config):
         # process_changes will generate an exception when trying to use this config
         config.return_value = None
         since = self.pillow.get_change_feed().get_latest_offsets()
+        parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         form, cases = post_case_blocks(
             [
                 CaseBlock(
                     create=True,
-                    case_id='parent-id',
+                    case_id=parent_id,
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': 0},
                 ).as_xml(),
                 CaseBlock(
                     create=True,
-                    case_id='child-id',
+                    case_id=child_id,
                     case_name='child-name',
                     case_type='bug-child',
-                    index={'parent': ('bug', 'parent-id')},
+                    index={'parent': ('bug', parent_id)},
                     update={'update-prop-child': 0}
                 ).as_xml()
             ], domain=self.domain
         )
 
         # ensure async indicator is added
-        indicators = AsyncIndicator.objects.filter(doc_id='child-id')
+        indicators = AsyncIndicator.objects.filter(doc_id=child_id)
         self.assertEqual(indicators.count(), 0)
         self.pillow.process_changes(since=since, forever=False)
         self.assertEqual(indicators.count(), 1)
@@ -432,11 +435,12 @@ class AsyncIndicatorTest(TestCase):
         # ensure the save errors and fails to produce a row
         with self.assertRaises(AttributeError):
             queue_async_indicators()
+
         rows = self.adapter.get_query_object()
         self.assertEqual(rows.count(), 0)
 
         # ensure there is not a pillow error and the async indicator is still there
-        errors = PillowError.objects.filter(doc_id='child-id', pillow=self.pillow.pillow_id)
+        errors = PillowError.objects.filter(doc_id=child_id, pillow=self.pillow.pillow_id)
         self.assertEqual(errors.count(), 0)
         self.assertEqual(indicators.count(), 1)
 
@@ -520,3 +524,43 @@ def _save_sql_case(doc):
             ], domain=doc['domain']
         )
     return cases[0]
+
+
+class RebuildTableTest(TestCase):
+
+    def teardown(self):
+        # we need to get the config multiple times in the test for it to properly
+        # recalculate the schema, so we can't have a class wide config variable
+        config = get_sample_data_source()
+        adapter = get_indicator_adapter(config)
+        adapter.drop_table()
+
+    def test_add_index(self):
+        # build the table without an index
+        config = get_sample_data_source()
+        config.save()
+        self.addCleanup(config.delete)
+        pillow = get_kafka_ucr_pillow()
+        pillow.bootstrap([config])
+
+        adapter = get_indicator_adapter(config)
+        engine = adapter.engine
+        insp = reflection.Inspector.from_engine(engine)
+        table_name = get_table_name(config.domain, config.table_id)
+        self.assertEqual(len(insp.get_indexes(table_name)), 0)
+
+        # add the index to the config
+        config = get_sample_data_source()
+        self.addCleanup(config.delete)
+        config.configured_indicators[0]['create_index'] = True
+        config.save()
+        adapter = get_indicator_adapter(config)
+
+        # mock rebuild table to ensure the table isn't rebuilt when adding index
+        pillow = get_kafka_ucr_pillow()
+        pillow.processors[0].rebuild_table = MagicMock()
+        pillow.bootstrap([config])
+        self.assertFalse(pillow.processors[0].rebuild_table.called)
+        engine = adapter.engine
+        insp = reflection.Inspector.from_engine(engine)
+        self.assertEqual(len(insp.get_indexes(table_name)), 1)

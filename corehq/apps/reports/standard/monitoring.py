@@ -4,7 +4,6 @@ from urllib import urlencode
 import math
 import operator
 from pygooglechart import ScatterChart
-from corehq.util.quickcache import quickcache
 import pytz
 
 from corehq import toggles
@@ -31,7 +30,6 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_duration_stats_for_users)
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.filters.users import (
     ExpandedMobileWorkerFilter as EMWF, LocationRestrictedMobileWorkerFilter
 )
@@ -690,17 +688,9 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         )
         return users_data.combined_users
 
-    @quickcache(['self.domain', 'mobile_user_and_group_slugs'], timeout=10)
-    def is_query_too_big(self, mobile_user_and_group_slugs):
-        user_es_query = EMWF.user_es_query(
-            self.domain,
-            mobile_user_and_group_slugs,
-        )
-        return user_es_query.count() > USER_QUERY_LIMIT
-
     @property
     def rows(self):
-        if self.is_query_too_big(self.request.GET.getlist(EMWF.slug)):
+        if util.is_query_too_big(self.domain, self.request.GET.getlist(EMWF.slug)):
             raise BadRequestError(
                 _('Query selects too many users. Please modify your filters to select fewer users')
             )

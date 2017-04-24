@@ -16,6 +16,10 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             "click .js-module-audio-pause": "audioPause",
         },
 
+        initialize: function (options) {
+            this.menuIndex = options.menuIndex;
+        },
+
         getTemplate: function () {
             if (this.model.collection.layoutStyle === FormplayerFrontend.Constants.LayoutStyles.GRID) {
                 return "#menu-view-grid-item-template";
@@ -71,6 +75,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.request('resourceMap', audioUri, appId) : "",
+                menuIndex: this.menuIndex,
             };
         },
     });
@@ -92,9 +97,10 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 environment: FormplayerFrontend.request('currentUser').environment,
             };
         },
-        childViewOptions: function () {
+        childViewOptions: function (model, index) {
             return {
                 sessionId: this.options.sessionId,
+                menuIndex: index,
             };
         },
     });

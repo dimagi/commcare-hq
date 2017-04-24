@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
-from custom.icds_reports.views import tableau
+from custom.icds_reports.views import TableauView
 
 urlpatterns = [
-    url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', tableau, name='icds_tableau'),
+    url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
 ]

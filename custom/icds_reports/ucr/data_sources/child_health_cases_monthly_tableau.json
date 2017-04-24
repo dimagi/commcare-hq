@@ -177,6 +177,7 @@
       },
       {
         "column_id": "supervisor_id",
+        "create_index": true,
         "datatype": "string",
         "display_name": null,
         "expression": {
@@ -605,8 +606,12 @@
         "expression": {
           "type": "conditional",
           "test": {
-            "type": "named",
-            "name": "wer_eligible"
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "icds_child_valid_in_month"
+            }
           },
           "expression_if_true": {
             "type": "named",
@@ -629,8 +634,12 @@
         "expression": {
           "type": "conditional",
           "test": {
-            "type": "named",
-            "name": "wer_eligible"
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "icds_child_valid_in_month"
+            }
           },
           "expression_if_true": {
             "type": "named",
@@ -651,15 +660,19 @@
             {
               "type": "boolean_expression",
               "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "icds_child_valid_in_month"
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
               "property_value": "severely_underweight",
               "expression": {
                 "type": "named",
                 "name": "nutrition_status_last_recorded"
               }
-            },
-            {
-              "type": "named",
-              "name": "wer_eligible"
             }
           ]
         },
@@ -674,15 +687,19 @@
             {
               "type": "boolean_expression",
               "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "icds_child_valid_in_month"
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
               "property_value": "moderately_underweight",
               "expression": {
                 "type": "named",
                 "name": "nutrition_status_last_recorded"
               }
-            },
-            {
-              "type": "named",
-              "name": "wer_eligible"
             }
           ]
         },
@@ -697,15 +714,19 @@
             {
               "type": "boolean_expression",
               "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "icds_child_valid_in_month"
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
               "property_value": "normal",
               "expression": {
                 "type": "named",
                 "name": "nutrition_status_last_recorded"
               }
-            },
-            {
-              "type": "named",
-              "name": "wer_eligible"
             }
           ]
         },
@@ -2728,7 +2749,11 @@
         ]
       }
     },
+    "asynchronous": true,
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY"
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

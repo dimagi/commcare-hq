@@ -6,6 +6,7 @@ import math
 
 from django.contrib import messages
 from django.conf import settings
+from couchdbkit import ResourceNotFound
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from corehq.util.quickcache import quickcache
@@ -107,6 +108,15 @@ class StaticToggle(object):
                 raise Http404()
             return wrapped_view
         return decorator
+
+    def get_enabled_domains(self):
+        from toggle.models import Toggle
+        try:
+            toggle = Toggle.get(self.slug)
+            enabled_users = toggle.enabled_users
+            return [user.split('domain:')[1] for user in enabled_users if 'domain:' in user]
+        except ResourceNotFound:
+            return []
 
 
 def deterministic_random(input_string):
@@ -234,7 +244,8 @@ def toggle_values_by_name(username=None, domain=None):
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     'custom-parent-ref',
     'Custom case parent reference',
-    TAG_ONE_OFF
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 APP_BUILDER_CAREPLAN = StaticToggle(
@@ -923,7 +934,7 @@ EDIT_FORMPLAYER = PredictablyRandomToggle(
     'Edit forms on Formplayer',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.5,
+    randomness=1.0,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -940,18 +951,11 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-VELLUM_BETA = StaticToggle(
-    'vellum_beta',
-    'Use Vellum beta version',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
-)
-
 APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_USER]
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1036,6 +1040,13 @@ INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+UATBC_ADHERENCE_TASK = StaticToggle(
+    'uatbc_adherence_calculations',
+    'This runs backend adherence calculations for enikshay domains',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 VIEW_APP_CHANGES = StaticToggle(
     'app-changes-with-improved-diff',
     'Improved app changes view',
@@ -1061,6 +1072,21 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+LOGIN_AS_ALWAYS_OFF = StaticToggle(
+    'always_turn_login_as_off',
+    'Always turn login as off',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+BLOBDB_RESTORE = PredictablyRandomToggle(
+    'blobdb_restore',
+    "Blobdb restore",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    randomness=0,
+)
+
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
     'highlight_feature_flags',
     'Highlight / Mark Feature Flags in the UI',
@@ -1073,4 +1099,26 @@ DASHBOARD_GRAPHS = StaticToggle(
     'Show submission graph on dashboard',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+PUBLISH_CUSTOM_REPORTS = StaticToggle(
+    'publish_custom_reports',
+    "Publish custom reports (No needed Authorization)",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+MOTECH = StaticToggle(
+    'motech',
+    "Show Motech tab",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+MARK_LATEST_SUBMISSION_ON_USER = StaticToggle(
+    'user_last_submission',
+    "Marks the latest submssion on user model",
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )

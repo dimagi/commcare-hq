@@ -40,7 +40,9 @@
                 "field": "referring_facility_id",
                 "choice_provider": {
                     "include_descendants": true,
-                    "type": "location"
+                    "type": "location",
+                    "show_full_path": true,
+                    "order_by_hierarchy": true
                 },
                 "display": "Location"
             }
@@ -251,9 +253,9 @@
                 "calculate_total": false
             },
             {
-                "display": "Nikshay ID",
+                "display": "Follow up Nikshay ID",
                 "type": "field",
-                "field": "nikshay_id",
+                "field": "follow_up_nikshay_id",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -263,9 +265,9 @@
                 "calculate_total": false
             },
             {
-                "display": "Regimen - New (N) / Previously treated (PT)",
+                "display": "Follow up regimen - New (N) / Previously treated (PT)",
                 "type": "field",
-                "field": "regimen",
+                "field": "follow_up_regimen",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -275,14 +277,16 @@
                 "calculate_total": false
             },
             {
-                "display": "Month",
+                "display": "Follow up month",
                 "type": "field",
-                "field": "treatment_initiation_date",
+                "field": "follow_up_treatment_initiation_date_month",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "custom",
+                    "custom_type": "month_display"
                 },
                 "calculate_total": false
             },

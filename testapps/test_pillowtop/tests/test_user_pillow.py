@@ -5,7 +5,7 @@ from corehq.apps.change_feed import document_types
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.topics import get_topic_offset
+from corehq.apps.change_feed.topics import get_topic_offset, get_multi_topic_offset
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import UserES
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -63,7 +63,7 @@ class UserPillowTest(UserPillowTestBase):
 
         # send to elasticsearch
         pillow = get_user_pillow()
-        pillow.process_changes(since={document_types.COMMCARE_USER: since}, forever=False)
+        pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
         self.assertEqual(0, UserES().run().total)
 
@@ -77,7 +77,7 @@ class UserPillowTest(UserPillowTestBase):
 
         # send to elasticsearch
         pillow = get_user_pillow()
-        pillow.process_changes(since={document_types.COMMCARE_USER: since}, forever=False)
+        pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
         self._verify_user_in_es(username)
         return user
@@ -121,12 +121,7 @@ class UnknownUserPillowTest(UserPillowTestBase):
         self.assertEqual('UnknownUser', user_doc['doc_type'])
 
     def _get_kafka_seq(self):
-        # KafkaChangeFeed listens for multiple topics (form, form-sql) in the case search pillow,
-        # so we need to provide a dict of seqs to kafka
-        return {
-            topics.FORM_SQL: get_topic_offset(topics.FORM_SQL),
-            topics.FORM: get_topic_offset(topics.FORM)
-        }
+        return get_multi_topic_offset([topics.FORM_SQL, topics.FORM])
 
 
 def _form_to_change_meta(form):

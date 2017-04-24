@@ -1,14 +1,12 @@
-from collections import namedtuple
 import logging
+from collections import namedtuple
 
 from couchdbkit.exceptions import BulkSaveError
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
 from dimagi.utils.decorators.memoized import memoized
-
 from ..utils import should_use_sql_backend
-
 
 CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])
 ProcessedForms = namedtuple('ProcessedForms', ['submitted', 'deprecated'])

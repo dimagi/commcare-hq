@@ -154,59 +154,62 @@ def _get_summary_details(config, domain):
                 locale=Locale(id=id_strings.report_description(report_config.uuid))
             )
 
-    return models.Detail(custom_xml=Detail(
-        id='reports.{}.summary'.format(config.uuid),
+    detail_id = 'reports.{}.summary'.format(config.uuid)
+    detail = Detail(
         title=Text(
             locale=Locale(id=id_strings.report_menu()),
         ),
-        details=[
-            Detail(
-                title=Text(
-                    locale=Locale(id=id_strings.report_menu()),
+        fields=[
+            Field(
+                header=Header(
+                    text=Text(
+                        locale=Locale(id=id_strings.report_name_header())
+                    )
                 ),
-                fields=[
-                    Field(
-                        header=Header(
-                            text=Text(
-                                locale=Locale(id=id_strings.report_name_header())
-                            )
-                        ),
-                        template=Template(
-                            text=Text(
-                                locale=Locale(id=id_strings.report_name(config.uuid))
-                            )
-                        ),
-                    ),
-                    Field(
-                        header=Header(
-                            text=Text(
-                                locale=Locale(id=id_strings.report_description_header()),
-                            )
-                        ),
-                        template=Template(
-                            text=_get_description_text(config)
-                        ),
-                    ),
-                ] + [
-                    Field(
-                        header=Header(
-                            text=Text(
-                                locale=Locale(id=id_strings.report_last_sync())
-                            )
-                        ),
-                        template=Template(
-                            text=Text(
-                                xpath=Xpath(
-                                    function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
-                                )
-                            )
-                        )
-                    ),
-                ] + list(_get_graph_fields()),
+                template=Template(
+                    text=Text(
+                        locale=Locale(id=id_strings.report_name(config.uuid))
+                    )
+                ),
             ),
-            _get_data_detail(config, domain),
-        ],
-    ).serialize().decode('utf-8'))
+            Field(
+                header=Header(
+                    text=Text(
+                        locale=Locale(id=id_strings.report_description_header()),
+                    )
+                ),
+                template=Template(
+                    text=_get_description_text(config)
+                ),
+            ),
+        ] + [
+            Field(
+                header=Header(
+                    text=Text(
+                        locale=Locale(id=id_strings.report_last_sync())
+                    )
+                ),
+                template=Template(
+                    text=Text(
+                        xpath=Xpath(
+                            function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
+                        )
+                    )
+                )
+            ),
+        ] + list(_get_graph_fields()),
+    )
+    if config.show_data_table:
+        return models.Detail(custom_xml=Detail(
+            id=detail_id,
+            title=Text(
+                locale=Locale(id=id_strings.report_menu()),
+            ),
+            details=[detail, _get_data_detail(config, domain)]
+        ).serialize().decode('utf-8'))
+    else:
+        detail.id = detail_id
+        return models.Detail(custom_xml=detail.serialize().decode('utf-8'))
 
 
 def _get_data_detail(config, domain):
@@ -233,7 +236,11 @@ def _get_data_detail(config, domain):
                     )
                 return word_eval
 
-            transform = col['transform']
+            try:
+                transform = col['transform']
+            except KeyError:
+                transform = {}
+
             if transform.get('type') == 'translation':
                 default_val = "column[@id='{column_id}']"
                 xpath_function = default_val

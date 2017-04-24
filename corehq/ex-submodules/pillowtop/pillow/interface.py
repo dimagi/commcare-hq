@@ -143,15 +143,10 @@ class PillowBase(object):
 
     def _normalize_sequence(self, sequence):
         from pillowtop.feed.couch import CouchChangeFeed
-        from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
         change_feed = self.get_change_feed()
 
         if not isinstance(sequence, dict):
-            if isinstance(change_feed, KafkaChangeFeed):
-                topics = change_feed.topics
-                assert len(topics) == 1
-                topic = topics[0]
-            elif isinstance(change_feed, CouchChangeFeed):
+            if isinstance(change_feed, CouchChangeFeed):
                 topic = change_feed.couch_db
             else:
                 return {}

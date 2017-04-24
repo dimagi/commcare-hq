@@ -12,7 +12,6 @@ from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render, redirect
-from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -280,7 +279,7 @@ class EditCommCareUserView(BaseEditUserView):
                 clean_commcare_user.send(
                     'EditCommCareUserView.phone_number',
                     domain=self.domain,
-                    request_user=self.request.user,
+                    request_user=self.request.couch_user,
                     user=self.editable_user,
                     forms={'phone_number': phone_number},
                 )
@@ -359,43 +358,6 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
                     MobileWorkerListView.urlname, args=[self.domain]
                 ))
         return self.get(request, *args, **kwargs)
-
-
-# this was originally written with a GET, which is wrong
-# I'm not fixing for now, just adding the require_POST to make it unusable
-@require_POST
-@require_can_edit_commcare_users
-def set_commcare_user_group(request, domain):
-    user_id = request.GET.get('user', '')
-    user = CommCareUser.get_by_user_id(user_id)
-    group_name = request.GET.get('group', '')
-    group = Group.by_name(domain, group_name)
-    if not user.is_commcare_user() or user.domain != domain or not group:
-        return HttpResponseForbidden()
-    for group in user.get_case_sharing_groups():
-        group.remove_user(user)
-    group.add_user(user)
-    return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
-
-
-@require_can_edit_commcare_users
-def archive_commcare_user(request, domain, user_id, is_active=False):
-    can_add_extra_users = can_add_extra_mobile_workers(request)
-    if not can_add_extra_users and is_active:
-        return HttpResponse(json.dumps({
-            'success': False,
-            'message': _("You are not allowed to add additional mobile workers"),
-        }))
-    user = CommCareUser.get_by_user_id(user_id, domain)
-    user.is_active = is_active
-    user.save()
-    return HttpResponse(json.dumps(dict(
-        success=True,
-        message=_("User '{user}' has successfully been {action}.").format(
-            user=user.raw_username,
-            action=_("Reactivated") if user.is_active else _("Deactivated"),
-        )
-    )))
 
 
 @require_can_edit_commcare_users
@@ -638,7 +600,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     def query(self):
         return self.request.GET.get('query')
 
-    def _format_user(self, user_json):
+    def _format_user(self, user_json, include_location=False):
         user = CouchUser.wrap_correctly(user_json)
         user_data = {}
         for field in self.custom_data.fields:
@@ -650,6 +612,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,
             'user_id': user.user_id,
+            'location': user.sql_location.to_json() if include_location and user.sql_location else None,
             'mark_activated': False,
             'mark_deactivated': False,
             'dateRegistered': user.created_on.strftime(USER_DATE_FORMAT) if user.created_on else '',
@@ -685,6 +648,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         # front end pages start at one
         page = in_data.get('page', 1)
         query = in_data.get('query')
+        include_location = in_data.get('include_location', False)
 
         # backend pages start at 0
         users_query = self._user_query(query, page - 1, limit)
@@ -696,7 +660,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         users_data = users_query.run()
         return {
             'response': {
-                'itemList': map(self._format_user, users_data.hits),
+                'itemList': map(lambda user: self._format_user(user, include_location), users_data.hits),
                 'total': users_data.total,
                 'page': page,
                 'query': query,
@@ -776,28 +740,22 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         self.request.POST = form_data
 
-        self._mobile_worker_form.is_valid()
-        self.custom_data.is_valid()
-        clean_commcare_user.send(
-            'MobileWorkerListView.create_mobile_worker',
-            domain=self.domain,
-            request_user=self.request.user,
-            user=None,
-            forms={
-                self._mobile_worker_form.__class__.__name__: self._mobile_worker_form,
-                self.custom_data.__class__.__name__: self.custom_data,
-            }
-        )
-
-        if not self._mobile_worker_form.is_valid() or not self.custom_data.is_valid():
-            return {
-                'error': _("Forms did not validate"),
-            }
-
+        is_valid = lambda: self._mobile_worker_form.is_valid() and self.custom_data.is_valid()
         if form_data.get('is_anonymous') and ANONYMOUS_WEB_APPS_USAGE.enabled(self.domain):
+            if not is_valid():
+                return {'error': _("Forms did not validate")}
             couch_user = self._build_anonymous_commcare_user()
         else:
+            is_valid()
             couch_user = self._build_commcare_user()
+            self.send_clean_commcare_user_signal(couch_user)
+            if not is_valid():
+                return {'error': _("Forms did not validate")}
+
+            couch_user.save()
+            location_id = self.new_mobile_worker_form.cleaned_data['location_id']
+            if location_id:
+                couch_user.set_location(SQLLocation.objects.get(location_id=location_id))
 
         return {
             'success': True,
@@ -806,6 +764,18 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 args=[self.domain, couch_user.userID]
             )
         }
+
+    def send_clean_commcare_user_signal(self, couch_user):
+        clean_commcare_user.send(
+            'MobileWorkerListView.create_mobile_worker',
+            domain=self.domain,
+            request_user=self.request.couch_user,
+            user=couch_user,
+            forms={
+                self._mobile_worker_form.__class__.__name__: self._mobile_worker_form,
+                self.custom_data.__class__.__name__: self.custom_data,
+            }
+        )
 
     def _build_anonymous_commcare_user(self):
         username = ANONYMOUS_USERNAME
@@ -833,9 +803,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         password = self.new_mobile_worker_form.cleaned_data['password']
         first_name = self.new_mobile_worker_form.cleaned_data['first_name']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
-        location_id = self.new_mobile_worker_form.cleaned_data['location_id']
 
-        couch_user = CommCareUser.create(
+        return CommCareUser.create(
             self.domain,
             format_username(username, self.domain),
             password,
@@ -843,10 +812,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             first_name=first_name,
             last_name=last_name,
             user_data=self.custom_data.get_data_to_save(),
+            commit=False,
         )
-        if location_id:
-            couch_user.set_location(SQLLocation.objects.get(location_id=location_id))
-        return couch_user
 
     def _ensure_proper_request(self, in_data):
         if not self.can_add_extra_users:
@@ -904,13 +871,12 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
 
     def render_form(self, status):
-        context = RequestContext(self.request, {
-            'form': self.new_commcare_user_form,
-            'data_fields_form': self.custom_data.form,
-        })
         return self.render_json_response({
             "status": status,
-            "form_html": render_to_string(self.template_name, context)
+            "form_html": render_to_string(self.template_name, {
+                'form': self.new_commcare_user_form,
+                'data_fields_form': self.custom_data.form,
+            }, request=self.request)
         })
 
     def get(self, request, *args, **kwargs):

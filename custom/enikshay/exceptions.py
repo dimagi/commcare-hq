@@ -6,6 +6,10 @@ class ENikshayCaseNotFound(ENikshayException):
     pass
 
 
+class ENikshayLocationNotFound(ENikshayException):
+    pass
+
+
 class NikshayLocationNotFound(ENikshayException):
     pass
 

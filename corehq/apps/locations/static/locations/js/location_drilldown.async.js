@@ -80,7 +80,7 @@ function LocationSelectViewModel(options) {
 
     // load location hierarchy and set initial path
     this.load = function(locs, selected) {
-        this.root(new model.func({name: '_root', children: locs}, this));
+        this.root(new model.func({name: '_root', children: locs, auto_drill: model.auto_drill}, this));
         this.path_push(this.root());
 
         if (selected) {
@@ -109,6 +109,8 @@ function LocationModel(data, root, depth, func, withAllOption) {
     this.children_loaded = false;
     this.func = typeof func !== 'undefined' ? func : LocationModel;
     this.withAllOption = typeof withAllOption !== 'undefined' ? withAllOption : true;
+
+    this.auto_drill = data.auto_drill;
 
     this.children_are_editable = function() {
         return _.every(this.children(), function(child) {
@@ -180,9 +182,10 @@ function LocationModel(data, root, depth, func, withAllOption) {
             //the children list, but all my attempts to make computed observables
             //based of children() caused infinite loops.
             if(loc.withAllOption || (!loc.withAllOption && loc.depth > REQUIRED))
-                children.splice(0, 0, {name: '_all'});
+                children.splice(0, 0, {name: '_all', auto_drill: loc.auto_drill});
         }
         this.children($.map(children, function(e) {
+            e.auto_drill = loc.auto_drill;
             var child = new loc.func(e, root, loc.depth + 1);
             return (child.filter() ? child : null);
         }));
@@ -222,7 +225,7 @@ function LocationModel(data, root, depth, func, withAllOption) {
     this.can_edit_children = function() {
         // Are there more than one editable options?
         return this.children().filter(function(child) {
-            return (child.name() !== '_all' && child.can_edit());
+            return ((!loc.auto_drill || child.name() !== '_all') && child.can_edit());
         }).length > 1;
     };
 

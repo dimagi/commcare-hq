@@ -38,7 +38,7 @@
                         <div class="panel-body">
                             <div data-bind="bootstrapTabs: true">
                                 <div class="tabbable">
-                                    <ul class="nav nav-tabs" role="tablist">
+                                    <ul class="nav nav-pills" role="tablist">
                                       <li class="active">
                                         <a href="#online-install-tab" data-toggle="tab">
                                           {% trans "Online Install" %}
@@ -313,11 +313,13 @@
                     </div>
                 {% endif %}
                 {% if request.user.is_superuser %}
-                    <div class="panel panel-default">
+                    <div class="panel panel-appmanager">
                         <div class="panel-heading">
-                            <a data-bind="attr: {href: $root.url('source', id)}">
-                                {% trans 'View Source Files' %}
-                            </a>
+                            <h4 class="panel-title">
+                                <a data-bind="attr: {href: $root.url('source', id)}">
+                                    {% trans 'View Source Files' %}
+                                </a>
+                            </h4>
                         </div>
                     </div>
                 {% endif %}

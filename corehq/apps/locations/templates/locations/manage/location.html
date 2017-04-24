@@ -15,12 +15,7 @@
         // Multiselect widget
         $(function () {
             var multiselect_utils = hqImport('style/js/multiselect_utils');
-            multiselect_utils.createFullMultiselectWidget(
-                'id_users-selected_ids',
-                django.gettext("Available Workers"),
-                django.gettext("Workers in Location"),
-                django.gettext("Search Workers...")
-            );
+
             multiselect_utils.createFullMultiselectWidget(
                 'id_products-selected_ids',
                 django.gettext("Available Products"),

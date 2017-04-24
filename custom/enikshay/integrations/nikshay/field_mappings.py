@@ -84,6 +84,7 @@ treatment_outcome = {
     'died': '3',
     'failure': '4',
     'regimen_changed': '7',
+    'loss_to_follow_up': '5',
 }
 
 hiv_status = {

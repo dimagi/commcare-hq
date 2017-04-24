@@ -22,7 +22,6 @@ from corehq.apps.data_dictionary.models import CaseType, CaseProperty, PROPERTY_
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.style.decorators import use_jquery_ui
-from corehq.tabs.tabclasses import ApplicationsTab
 
 from couchexport.writers import Excel2007ExportWriter
 from couchexport.models import Format
@@ -166,12 +165,6 @@ class DataDictionaryView(BaseProjectDataView):
     def main_context(self):
         main_context = super(DataDictionaryView, self).main_context
         main_context.update({
-            'active_tab': ApplicationsTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-                project=self.request.project
-            ),
             'question_types': [{'value': k, 'display': v} for k, v in PROPERTY_TYPE_CHOICES if k],
         })
         return main_context

@@ -266,6 +266,7 @@ class BlobDbBackendMigrator(BaseDocMigrator):
         self.db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
+        self.bad_blobs_state = 0
         if not isinstance(self.db, MigratingBlobDB):
             raise MigrationError(
                 "Expected to find migrating blob db backend (got %r)" % self.db)
@@ -276,8 +277,14 @@ class BlobDbBackendMigrator(BaseDocMigrator):
     def _do_migration(self, doc):
         obj = self.blob_helper(doc, self.couchdb)
         bucket = obj._blobdb_bucket()
-        assert obj.external_blobs and obj.external_blobs == obj.blobs, doc
-        for name, meta in obj.blobs.iteritems():
+        if obj.external_blobs != obj.blobs:
+            self.bad_blobs_state += 1
+            super(BlobDbBackendMigrator, self)._backup_doc({
+                "doc_type": obj.doc_type,
+                "doc_id": obj._id,
+                "error": "blobs != external_blobs",
+            })
+        for name, meta in obj.external_blobs.iteritems():
             self.total_blobs += 1
             try:
                 content = self.db.old_db.get(meta.id, bucket)
@@ -287,6 +294,7 @@ class BlobDbBackendMigrator(BaseDocMigrator):
                     "doc_id": obj._id,
                     "blob_identifier": meta.id,
                     "blob_bucket": bucket,
+                    "error": "not found",
                 })
                 self.not_found += 1
             else:
@@ -301,6 +309,11 @@ class BlobDbBackendMigrator(BaseDocMigrator):
             if self.dirpath is None:
                 print("Missing blob ids have been written in the log file:")
                 print(self.filename)
+        if self.bad_blobs_state:
+            print("{count} documents had `blobs != external_blobs`, which is "
+                  "not a valid state. Search for 'blobs != external_blobs' in "
+                  "the migration logs to find them."
+                  .format(count=self.bad_blobs_state))
 
     def should_process(self, doc):
         return self.blob_helper.get_external_blobs(doc)

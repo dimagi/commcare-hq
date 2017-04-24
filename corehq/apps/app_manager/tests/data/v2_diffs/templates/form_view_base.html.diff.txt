@@ -30,7 +30,7 @@
              {% with module_name=module.name|trans:langs %}
              labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
              {% endwith %}
-@@ -203,28 +203,16 @@
+@@ -203,13 +203,6 @@
                  workflow: '{{ form.post_form_workflow }}',
              };
  
@@ -44,14 +44,7 @@
              $('#form-workflow').koApplyBindings(new FormWorkflow(options))
          {% endif %}
  
-         $('#auto-gps-capture').koApplyBindings({
-             auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
-         });
--        {% if request|toggle_enabled:'NO_VELLUM' %}
--        $('#no-vellum').koApplyBindings({
--            no_vellum: ko.observable({{ form.no_vellum|JSON }})
--        });
--        {% endif %}
+@@ -225,7 +218,7 @@
  
          gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
  
@@ -60,7 +53,7 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -290,67 +278,55 @@
+@@ -291,67 +284,55 @@
      </script>
  {% endblock %}
  
@@ -152,7 +145,7 @@
 +    <div class="tabbable appmanager-tabs-container">
          <ul class="nav nav-tabs">
 +
-+            {% if form.requires_case or form.get_action_type == 'open' %}
++            {% if form.uses_cases %}
              <li class="active">
 -                <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
 -            </li>
@@ -163,14 +156,14 @@
              </li>
 +            {% endif %}
 +
-+            <li {% if not form.requires_case and not form.get_action_type == 'open' %}class="active"{% endif %}>
++            <li {% if not form.uses_cases %}class="active"{% endif %}>
 +                <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
 +            </li>
 +
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -362,6 +338,7 @@
+@@ -363,6 +344,7 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -178,7 +171,7 @@
              {% if form.form_type == 'advanced_form' and module.has_schedule %}
                   <li>
                       <a href="#visit-scheduler" data-toggle="tab">
-@@ -369,45 +346,46 @@
+@@ -370,45 +352,46 @@
                       </a>
                   </li>
              {% endif %}
@@ -193,7 +186,7 @@
 +
 +        <div class="tab-content appmanager-tab-content">
 +
-+            {% if form.requires_case or form.get_action_type == 'open' %}
++            {% if form.uses_cases %}
 +              <div class="tab-pane active" id="case-configuration">
 +                  {% if xform_validation_missing %}
 +                      <p class="alert alert-warning">
@@ -260,7 +253,7 @@
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
                      <p class="alert alert-warning">
-@@ -433,7 +411,6 @@
+@@ -434,7 +417,6 @@
                          {% block usercase_management_content %}
                              {%  if form.uses_usercase and not allow_usercase %}
                                  <div class="container-fluid col-sm-6">
@@ -268,7 +261,7 @@
                                {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                                  <p>{% blocktrans %}
                                      The User Properties feature is no longer available because of the change in your
-@@ -478,7 +455,7 @@
+@@ -479,7 +461,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -277,7 +270,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -491,23 +468,25 @@
+@@ -492,23 +474,25 @@
                      </p>
                  {% endif %}
              </div>

@@ -9,7 +9,7 @@
 {% endblock stylesheets %} 
 
 {% block page_title %}
-    Build #{{ app.version }}: {{ app.name }}
+    {{ app.name }}: Build #{{ app.version }}{% if app.build_comment %}: {{ app.build_comment }}{% endif %}
 {% endblock page_title %}
 
 {% block downloads %}

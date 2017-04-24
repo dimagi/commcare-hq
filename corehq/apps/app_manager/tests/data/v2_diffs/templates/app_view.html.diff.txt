@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,400 +1,115 @@
+@@ -1,400 +1,118 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -327,6 +327,9 @@
 +        settings: {
 +          sections: {{ settings_layout|JSON }},
 +          values: {{ settings_values|JSON }},
++          {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
++          customProperties: {{ custom_properties|JSON }},
++          {% endif %}
 +          urls: {
 +            save: '{% url "edit_commcare_settings" domain app.id %}'
 +          },

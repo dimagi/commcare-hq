@@ -24,6 +24,7 @@ from corehq.apps.domain.decorators import (
     check_domain_migration,
     login_or_digest_or_basic_or_apikey_or_token,
 )
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
@@ -34,7 +35,6 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
-from corehq.tabs.tabclasses import ProjectSettingsTab
 from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
@@ -59,7 +59,22 @@ def restore(request, domain, app_id=None):
     couch_user = CouchUser.from_django_user_include_anonymous(domain, request.user)
     assert couch_user is not None, 'No couch user to use for restore'
     update_device_id(couch_user, request.GET.get('device_id'))
-    response, _ = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    response, timing_context = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    tags = [
+        u'domain:{}'.format(domain),
+        u'status_code:{}'.format(response.status_code),
+    ]
+    datadog_counter('commcare.restores.count', tags=tags)
+    if timing_context is not None:
+        for timer in timing_context.to_list():
+            # Only record leaf nodes so we can sum to get the total
+            if timer.is_leaf_node:
+                datadog_gauge(
+                    'commcare.restores.timings',
+                    timer.duration,
+                    tags=tags + [u'segment:{}'.format(timer.name)],
+                )
+
     return response
 
 
@@ -164,15 +179,22 @@ def claim(request, domain):
     Allows a user to claim a case that they don't own.
     """
     couch_user = CouchUser.from_django_user(request.user)
-    case_id = request.POST['case_id']
-    if (
-        request.session.get('last_claimed_case_id') == case_id or
-        get_first_claim(domain, couch_user.user_id, case_id)
-    ):
-        return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
-                            status=409)
+    as_user = request.POST.get('commcare_login_as', None)
+    restore_user = get_restore_user(domain, couch_user, as_user)
+
+    case_id = request.POST.get('case_id', None)
+    if case_id is None:
+        return HttpResponse('A case_id is required', status=400)
+
     try:
-        claim_case(domain, couch_user.user_id, case_id,
+        if (
+            request.session.get('last_claimed_case_id') == case_id or
+            get_first_claim(domain, restore_user.user_id, case_id)
+        ):
+            return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
+                                status=409)
+
+        claim_case(domain, restore_user.user_id, case_id,
                    host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
@@ -273,12 +295,6 @@ class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
             'domain': self.domain,
         })
         main_context.update({
-            'active_tab': ProjectSettingsTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-                project=self.request.project
-            ),
             'is_project_settings': True,
         })
         return main_context

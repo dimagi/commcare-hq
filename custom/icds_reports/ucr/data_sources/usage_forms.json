@@ -920,6 +920,9 @@
     "named_expressions": {},
     "named_filters": {},
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY"
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

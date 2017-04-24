@@ -147,6 +147,19 @@ class ExportItem(DocumentSchema):
     inferred = BooleanProperty(default=False)
     inferred_from = SetProperty(default=set)
 
+    def __key(self):
+        return'{}:{}:{}'.format(
+            _path_nodes_to_string(self.path),
+            self.doc_type,
+            self.transform,
+        )
+
+    def __hash__(self):
+        return hash(self.__key())
+
+    def __eq__(self, other):
+        return self.__key() == other.__key()
+
     @classmethod
     def wrap(cls, data):
         if cls is ExportItem:
@@ -248,8 +261,11 @@ class ExportColumn(DocumentSchema):
         # <element>value</element>  -> 'value'
         #
         # This line ensures that we grab the actual value instead of the dictionary
-        if isinstance(value, dict) and '#text' in value:
-            value = value.get('#text')
+        if isinstance(value, dict):
+            if '#text' in value:
+                value = value.get('#text')
+            else:
+                return EMPTY_VALUE
 
         if transform_dates:
             value = couch_to_excel_datetime(value, doc)
@@ -855,7 +871,7 @@ class ExportInstance(BlobMixin, Document):
     def copy_export(self):
         export_json = self.to_json()
         del export_json['_id']
-        export_json['name'] = '{} - Copy'.format(self.name)
+        export_json['name'] = u'{} - Copy'.format(self.name)
         new_export = self.__class__.wrap(export_json)
         return new_export
 
@@ -1393,7 +1409,7 @@ class ExportDataSchema(Document):
         orders = {}
         for group_schema in ordered_schema.group_schemas:
             for idx, item in enumerate(group_schema.items):
-                orders[tuple(item.path)] = idx
+                orders[item] = idx
 
         # Next iterate through current schema and order the ones that have an order
         # and put the rest at the bottom. The ones not ordered are deleted items
@@ -1401,8 +1417,8 @@ class ExportDataSchema(Document):
             ordered_items = [None] * len(group_schema.items)
             unordered_items = []
             for idx, item in enumerate(group_schema.items):
-                if tuple(item.path) in orders:
-                    ordered_items.insert(orders[tuple(item.path)], item)
+                if item in orders:
+                    ordered_items[orders[item]] = item
                 else:
                     unordered_items.append(item)
             group_schema.items = filter(None, ordered_items) + unordered_items
@@ -1422,11 +1438,7 @@ class ExportDataSchema(Document):
         def resolvefn(group_schema1, group_schema2):
 
             def keyfn(export_item):
-                return'{}:{}:{}'.format(
-                    _path_nodes_to_string(export_item.path),
-                    export_item.doc_type,
-                    export_item.transform,
-                )
+                return export_item
 
             group_schema1.last_occurrences = _merge_dicts(
                 group_schema1.last_occurrences,
@@ -1785,7 +1797,7 @@ class CaseExportDataSchema(ExportDataSchema):
             app.copy_of or app._id,  # If not copy, must be current app
             app.version,
         ))
-        if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
+        if any(map(lambda relationship_tuple: relationship_tuple[1] in ['parent', 'host'], parent_types)):
             case_schemas.append(cls._generate_schema_for_parent_case(
                 app.copy_of or app._id,
                 app.version,

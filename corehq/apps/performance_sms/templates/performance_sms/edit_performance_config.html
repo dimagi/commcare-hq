@@ -2,9 +2,6 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
-{% block js %}{{ block.super }}
-    <script src="{% static 'style/js/main.js' %}"></script>
-{% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {

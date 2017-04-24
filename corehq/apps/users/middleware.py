@@ -1,16 +1,23 @@
 from django.conf import settings
 import django.core.exceptions
-from corehq.apps.users.models import CouchUser, InvalidUser
-from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
-
-
+from corehq.apps.users.models import CouchUser, InvalidUser, AnonymousCouchUser
+from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE, PUBLISH_CUSTOM_REPORTS
 
 SESSION_USER_KEY_PREFIX = "session_user_doc_%s"
 
 
+def is_public_reports(view_kwargs, request):
+    return (
+        request.user.is_anonymous and
+        'domain' in view_kwargs and
+        request.path.startswith(u'/a/{}/reports/custom'.format(view_kwargs['domain'])) and
+        PUBLISH_CUSTOM_REPORTS.enabled(view_kwargs['domain'])
+    )
+
+
 class UsersMiddleware(object):
 
-    def __init__(self):        
+    def __init__(self):
         # Normally we'd expect this class to be pulled out of the middleware list, too,
         # but in case someone forgets, this will stop this class from being used.
         found_domain_app = False
@@ -41,4 +48,6 @@ class UsersMiddleware(object):
                     request.couch_user = InvalidUser()
                 if request.couch_user:
                     request.couch_user.current_domain = domain
+        elif is_public_reports(view_kwargs, request):
+            request.couch_user = AnonymousCouchUser()
         return None

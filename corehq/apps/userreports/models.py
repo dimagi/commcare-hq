@@ -5,13 +5,12 @@ import json
 from datetime import datetime
 
 from django.conf import settings
-from django.contrib import admin
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import ugettext as _
 
 from corehq.sql_db.connections import UCR_ENGINE_ID
-from corehq.util.quickcache import quickcache, skippable_quickcache
+from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -56,6 +55,11 @@ from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.modules import to_function
 
 
+class ElasticSearchIndexSettings(DocumentSchema):
+    refresh_interval = StringProperty(default="5s")
+    number_of_shards = IntegerProperty(default=2)
+
+
 class DataSourceBuildInformation(DocumentSchema):
     """
     A class to encapsulate meta information about the process through which
@@ -87,6 +91,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
     domain = StringProperty(required=True)
     engine_id = StringProperty(default=UCR_ENGINE_ID)
+    es_index_settings = SchemaProperty(ElasticSearchIndexSettings)
     backend_id = StringProperty(default=UCR_SQL_BACKEND)
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
@@ -252,12 +257,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def get_columns(self):
         return self.indicators.get_columns()
 
-    def get_items(self, document):
+    def get_items(self, document, eval_context=None):
         if self.filter(document):
             if not self.base_item_expression:
                 return [document]
             else:
-                result = self.parsed_expression(document)
+                result = self.parsed_expression(document, eval_context)
                 if result is None:
                     return []
                 elif isinstance(result, list):
@@ -272,7 +277,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             eval_context = EvaluationContext(doc)
 
         rows = []
-        for item in self.get_items(doc):
+        for item in self.get_items(doc, eval_context):
             indicators = self.indicators.get_values(item, eval_context)
             rows.append(indicators)
             eval_context.increment_iteration()
@@ -328,6 +333,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             self.is_deactivated = True
             self.save()
             get_indicator_adapter(self).drop_table()
+
+    def get_es_index_settings(self):
+        es_index_settings = self.es_index_settings.to_json()
+        es_index_settings.pop('doc_type')
+        return {"settings": es_index_settings}
 
 
 class ReportMeta(DocumentSchema):
@@ -514,7 +524,7 @@ class StaticDataSourceConfiguration(JsonObject):
         return '{}{}-{}'.format(cls._datasource_id_prefix, domain, table_id)
 
     @classmethod
-    @skippable_quickcache([], skip_arg='rebuild')
+    @quickcache([], skip_arg='rebuild')
     def by_id_mapping(cls, rebuild=False):
         mapping = {}
         for wrapped, path in cls._all():
@@ -535,9 +545,10 @@ class StaticDataSourceConfiguration(JsonObject):
                 yield wrapped, path
 
     @classmethod
-    def all(cls):
+    def all(cls, use_server_filter=True):
         for wrapped, path in cls._all():
-            if (wrapped.server_environment and
+            if (use_server_filter and
+                    wrapped.server_environment and
                     settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
                 continue
 
@@ -610,7 +621,7 @@ class StaticReportConfiguration(JsonObject):
                 yield cls.wrap(json.load(f)), path
 
     @classmethod
-    @skippable_quickcache([], skip_arg='rebuild')
+    @quickcache([], skip_arg='rebuild')
     def by_id_mapping(cls, rebuild=False):
         mapping = {}
         for wrapped, path in StaticReportConfiguration._all():
@@ -747,9 +758,6 @@ class AsyncIndicator(models.Model):
                     indicator.save()
 
         return indicator
-
-
-admin.site.register(AsyncIndicator)
 
 
 def get_datasource_config(config_id, domain):

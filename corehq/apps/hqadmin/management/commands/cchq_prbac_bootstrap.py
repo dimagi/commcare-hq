@@ -95,12 +95,7 @@ class Command(BaseCommand):
                 logger.info('Role already exists: %s', role.name)
         if roles_to_save:
             roles = Role.objects.bulk_create(roles_to_save)
-            if roles[0].id is None:
-                # pre Django 1.10
-                self.roles_by_slug = {role.slug: role for role in Role.objects.all()}
-            else:
-                # Django 1.10 (omit extra query)
-                self.roles_by_slug.update((role.slug, role) for role in roles)
+            self.roles_by_slug.update((role.slug, role) for role in roles)
 
     BOOTSTRAP_PRIVILEGES = [
         Role(slug=privileges.API_ACCESS, name='API Access', description=''),
@@ -149,7 +144,9 @@ class Command(BaseCommand):
         Role(slug=privileges.DAILY_SAVED_EXPORT, name='DAILY_SAVED_EXPORT',
              description="Allows domains to create Daily Saved Exports"),
         Role(slug=privileges.ZAPIER_INTEGRATION, name='Zapier Integration',
-             description='Allows domains to use zapier (zapier.com) integration')
+             description='Allows domains to use zapier (zapier.com) integration'),
+        Role(slug=privileges.LOGIN_AS, name='Login As for App Preview',
+                     description='Allows domains to use the login as feature of app preview')
     ]
 
     BOOTSTRAP_PLANS = [

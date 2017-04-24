@@ -80,7 +80,7 @@ class CustomDataEditor(object):
         return definition or CustomDataFieldsDefinition()
 
     def is_valid(self):
-        return self.form.is_valid()
+        return not self.errors
 
     @property
     def errors(self):

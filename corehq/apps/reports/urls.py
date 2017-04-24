@@ -3,6 +3,7 @@ import logging
 from django.conf.urls import include, url
 from django.core.exceptions import ImproperlyConfigured
 
+from corehq.apps.reports.standard.forms.reports import ReprocessXFormErrorView
 from corehq.apps.userreports.reports.view import (
     ConfigurableReport,
     CustomConfigurableReportDispatcher,
@@ -145,6 +146,8 @@ urlpatterns = [
     url(r"^export/forms/all/async/$", export_all_form_metadata_async, name="export_all_form_metadata_async"),
     url(r'^download/cases/$', download_cases, name='download_cases'),
     url(r'^download/internal/cases/$', download_cases_internal, name='download_cases_internal'),
+    url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),
+        name=ReprocessXFormErrorView.urlname),
 
     url(r'^custom/', include(custom_report_urls)),
     url(r'^filters/', include(filter_urls)),

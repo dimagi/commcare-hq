@@ -94,7 +94,7 @@ def delete_app(request, domain, app_id):
     app.save()
     clear_app_cache(request, domain)
 
-    if toggles.APP_MANAGER_V2.enabled(domain):
+    if toggles.APP_MANAGER_V2.enabled(request.user.username):
         return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
     return back_to_main(request, domain)
 
@@ -123,12 +123,12 @@ def default_new_app(request, domain):
     """
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
-    if tours.NEW_APP.is_enabled(request.user):
+    if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(request.user.username):
         identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
 
-    if not toggles.APP_MANAGER_V2.enabled(domain):
+    if not toggles.APP_MANAGER_V2.enabled(request.user.username):
         # APP MANAGER V2 is completely blank on new app
         module = Module.new_module(_("Untitled Module"), lang)
         app.add_module(module)
@@ -138,7 +138,7 @@ def default_new_app(request, domain):
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
-    if toggles.APP_MANAGER_V2.enabled(request.domain):
+    if toggles.APP_MANAGER_V2.enabled(request.user.username):
         return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
     return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, 0, 0]))
 
@@ -149,7 +149,7 @@ def get_app_view_context(request, app):
     context = {}
 
     settings_layout = copy.deepcopy(
-        get_commcare_settings_layout(request.domain)[app.get_doc_type()]
+        get_commcare_settings_layout(request.user)[app.get_doc_type()]
     )
     for section in settings_layout:
         new_settings = []
@@ -344,7 +344,7 @@ def copy_app(request, domain):
 def app_from_template(request, domain, slug):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
-    if tours.NEW_APP.is_enabled(request.user):
+    if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(request.user.username):
         identify.delay(request.couch_user.username, {'First Template App Chosen': '%s' % slug})
     clear_app_cache(request, domain)
     template = load_app_template(slug)
@@ -381,7 +381,7 @@ def export_gzip(req, domain, app_id):
 @require_can_edit_apps
 def import_app(request, domain):
     template = get_app_manager_template(
-        domain,
+        request.user,
         "app_manager/v1/import_app.html",
         "app_manager/v2/import_app.html",
     )
@@ -449,7 +449,7 @@ def app_settings(request, domain, app_id=None):
 def view_app(request, domain, app_id=None):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id,
-                        release_manager=toggles.APP_MANAGER_V2.enabled(domain))
+                        release_manager=toggles.APP_MANAGER_V2.enabled(request.user.username))
 
 
 @no_conflict_require_POST
@@ -746,13 +746,14 @@ def rearrange(request, domain, app_id, key):
             to_module_id = int(request.POST['to_module_id'])
             from_module_id = int(request.POST['from_module_id'])
             try:
-                app.rearrange_forms(to_module_id, from_module_id, i, j)
+                app_manager_v2 = toggles.APP_MANAGER_V2.enabled(request.user.username)
+                app.rearrange_forms(to_module_id, from_module_id, i, j, app_manager_v2=app_manager_v2)
             except ConflictingCaseTypeError:
                 messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
         elif "modules" == key:
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException:
-        if toggles.APP_MANAGER_V2.enabled(domain):
+        if toggles.APP_MANAGER_V2.enabled(request.user.username):
             messages.error(request, _(
                 'The form cannot be moved into the desired menu.'
             ))
@@ -849,7 +850,7 @@ def drop_user_case(request, domain, app_id):
     messages.success(
         request,
         _('You have successfully removed User Properties from this application.')
-        if toggles.APP_MANAGER_V2.enabled(domain) else
+        if toggles.APP_MANAGER_V2.enabled(request.user.username) else
         _('You have successfully removed User Case properties from this application.')
     )
     return back_to_main(request, domain, app_id=app_id)
