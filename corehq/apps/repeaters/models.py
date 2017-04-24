@@ -623,7 +623,6 @@ class RepeatRecord(Document):
         self.succeeded = False
         self.failure_reason = ''
         self.overall_tries = 0
-        self.next_check = datetime.utcnow()
         self.set_next_try(requeue=True)
 
 
