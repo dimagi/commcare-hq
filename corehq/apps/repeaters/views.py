@@ -16,7 +16,7 @@ from .forms import CaseRepeaterForm
 class AddCaseRepeaterView(AddRepeaterView):
     urlname = 'add_case_repeater'
     repeater_form_class = CaseRepeaterForm
-    template_name = 'repeaters/add_case_repeater.html'
+    template_name = 'domain/admin/add_form_repeater.html'
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
