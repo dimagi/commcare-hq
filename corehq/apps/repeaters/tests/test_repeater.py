@@ -572,6 +572,25 @@ class RepeaterFailureTest(BaseRepeaterTest):
 
         self.assertTrue(repeat_record.succeeded)
 
+    @run_with_all_backends
+    def test_no_immediate_retry(self):
+        repeat_record = self.repeater.register(CaseAccessors(self.domain_name).get_case(CASE_ID))
+        with patch.object(CaseRepeater, 'allow_immediate_retries', return_value=False):
+
+            with patch(
+                    'corehq.apps.repeaters.models.simple_post_with_cached_timeout',
+                    return_value=MockResponse(status_code=404, reason='Not Found')
+            ) as mock_fire:
+                repeat_record.fire()
+                self.assertEqual(mock_fire.call_count, 1)
+
+            with patch(
+                    'corehq.apps.repeaters.models.simple_post_with_cached_timeout',
+                    return_value=MockResponse(status_code=200, reason='Hooray')
+            ) as mock_fire:
+                check_repeaters()
+                self.assertEqual(mock_fire.call_count, 1)
+
 
 class IgnoreDocumentTest(BaseRepeaterTest):
 
