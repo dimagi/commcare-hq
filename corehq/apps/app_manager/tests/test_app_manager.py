@@ -1,5 +1,7 @@
 # coding: utf-8
 import json
+import uuid
+
 from mock import patch
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.app_manager.util import (add_odk_profile_after_build,
@@ -166,7 +168,7 @@ class AppManagerTest(TestCase):
         # regression test against case where contents gets lazy-put w/o saving
         app = Application.wrap(self._yesno_source)
         self.assertEqual(app['_id'], None)  # i.e. hasn't been saved
-        app._id = Application.get_db().server.next_uuid()
+        app._id = uuid.uuid4().hex
         copy = app.make_build()
         copy.save()
         self._check_has_build_files(copy, self.min_paths)

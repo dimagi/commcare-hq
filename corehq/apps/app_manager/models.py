@@ -5143,7 +5143,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if not copy._id:
             # I expect this always to be the case
             # but check explicitly so as not to change the _id if it exists
-            copy._id = copy.get_db().server.next_uuid()
+            copy._id = uuid.uuid4().hex
 
         force_new_forms = False
         if previous_version and self.build_profiles != previous_version.build_profiles:

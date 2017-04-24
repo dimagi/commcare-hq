@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+
+import uuid
+
 from dimagi.ext.couchdbkit import Document, StringProperty, DateTimeProperty
 from dimagi.utils.parsing import json_format_datetime
 from .utils import generate_aes_key
@@ -25,7 +28,7 @@ class MobileAuthKeyRecord(Document):
         if not self.key:
             self.key = generate_aes_key()
         if not self._id:
-            self._id = self.get_db().server.next_uuid()
+            self._id = uuid.uuid4().hex
 
     @property
     def uuid(self):
