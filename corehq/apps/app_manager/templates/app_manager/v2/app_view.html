@@ -28,21 +28,6 @@
 
 {% block js-inline %}
   {{ block.super }}
-  {% if app.get_doc_type == "Application" %}
-    <script>
-      $(function () {
-        var $translation_ui = $("#translations_ui");
-        mk_translation_ui({
-          translations: {{ translations|JSON }},
-          url: "{% url "edit_app_ui_translations" domain app.id %}",
-          suggestion_url: "{% url "get_app_ui_translations" domain %}",
-          lang: "{{ lang }}",
-          allow_autofill: "{{ lang }}" !== 'en',
-          $home: $translation_ui
-        });
-      });
-    </script>
-  {% endif %}
   {% if app %}
     <script>
       COMMCAREHQ.appView = {
