@@ -26,33 +26,6 @@
   {% endif %}
 {% endblock js %}
 
-{% block js-inline %}
-  {{ block.super }}
-  {% if app %}
-    <script>
-      COMMCAREHQ.appView = {
-        settings: {
-          sections: {{ settings_layout|JSON }},
-          values: {{ settings_values|JSON }},
-          {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
-          customProperties: {{ custom_properties|JSON }},
-          {% endif %}
-          urls: {
-            save: '{% url "edit_commcare_settings" domain app.id %}'
-          },
-          user: {
-            is_previewer: {{ request.couch_user.is_previewer|BOOL }}
-          },
-          permissions: {
-            cloudcare: {{ is_cloudcare_allowed|BOOL }}
-          },
-          warning: '{% trans "This is not an allowed value for this field"|escapejs %}'
-        }
-      };
-    </script>
-  {% endif %}
-{% endblock %}
-
 {% block pre_form_content %}
   <div class="appmanager-page-actions">
       {% if can_preview_form %}

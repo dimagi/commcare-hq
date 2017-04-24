@@ -36,26 +36,6 @@
 {% block js-inline %}
     {{ block.super }}
     <script>
-        COMMCAREHQ.appView = {
-            settings: {
-                sections: {{ settings_layout|JSON }},
-                values: {{ settings_values|JSON }},
-                {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
-                customProperties: {{ custom_properties|JSON }},
-                {% endif %}
-                urls: {
-                    save: '{% url "edit_commcare_settings" domain app.id %}'
-                },
-                user: {
-                    is_previewer: {{ request.couch_user.is_previewer|BOOL }}
-                },
-                permissions: {
-                    cloudcare: {{ is_cloudcare_allowed|BOOL }}
-                },
-                warning: '{% trans "This is not an allowed value for this field"|escapejs %}'
-            }
-        };
-
         {% if not app.is_remote_app and app.get_doc_type != 'LinkedApplication' %}
             {% if linked_apps_enabled %}
              $(function () {
@@ -194,6 +174,7 @@
 {% endblock %}
 
 {% block form-view %}
+    {% initial_page_data 'app_view_options' app_view_options %}
     {% initial_page_data 'domain_names' domain_names %}
     {% initial_page_data 'is_remote_app' app.is_remote_app %}
     {% initial_page_data 'is_superuser' request.user.is_superuser %}

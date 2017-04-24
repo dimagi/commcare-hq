@@ -4,6 +4,11 @@ hqDefine("app_manager/js/app_view.js", function() {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
             reverse = hqImport("hqwebapp/js/urllib.js").reverse;
 
+        // App view
+        COMMCAREHQ.appView = {
+            settings: initial_page_data("app_view_options"),
+        };
+
         // Settings
         var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
         COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
