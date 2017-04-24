@@ -696,7 +696,10 @@ class RestoreConfig(object):
         self.delete_cached_payload_if_necessary()
 
         cached_response = self.get_cached_response()
-        tags = [u'domain:{}'.format(self.domain)]
+        tags = [
+            u'domain:{}'.format(self.domain),
+            u'is_initial:{}'.format(not bool(self.sync_log)),
+        ]
         if cached_response:
             datadog_counter('commcare.restores.cache_hits.count', tags=tags)
             return cached_response
