@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
             ),
             reverse_sql=
             """
-            DROP INDEX accounting_subscription_active_subscriber;
+            DROP INDEX IF EXISTS accounting_subscription_active_subscriber;
             """,
         )
     ]
