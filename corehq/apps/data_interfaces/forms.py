@@ -563,6 +563,16 @@ class CaseRuleCriteriaForm(forms.Form):
     filter_on_closed_parent = forms.CharField(required=False, initial='false')
 
     @property
+    def current_values(self):
+        return {
+            'filter_on_server_modified': self['filter_on_server_modified'].value(),
+            'server_modified_boundary': self['server_modified_boundary'].value(),
+            'custom_match_definitions': json.loads(self['custom_match_definitions'].value()),
+            'property_match_definitions': json.loads(self['property_match_definitions'].value()),
+            'filter_on_closed_parent': self['filter_on_closed_parent'].value(),
+        }
+
+    @property
     def constants(self):
         return {
             'MATCH_DAYS_BEFORE': MatchPropertyDefinition.MATCH_DAYS_BEFORE,
