@@ -128,7 +128,7 @@ class RepeaterTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_repeater_failed_sends(self):
         """
-        This tests records that fail to send three times
+        This tests records that fail are requeued later
         """
         def now():
             return datetime.utcnow()
@@ -141,7 +141,7 @@ class RepeaterTest(BaseRepeaterTest):
                     'corehq.apps.repeaters.models.simple_post_with_logged_timeout',
                     return_value=MockResponse(status_code=404, reason='Not Found')) as mock_post:
                 repeat_record.fire()
-                self.assertEqual(mock_post.call_count, 3)
+                self.assertEqual(mock_post.call_count, 1)
 
         next_check_time = now() + timedelta(minutes=60)
 
@@ -171,16 +171,13 @@ class RepeaterTest(BaseRepeaterTest):
     def test_repeater_successful_send(self):
 
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
-        mocked_responses = [
-            MockResponse(status_code=404, reason='Not Found'),
-            MockResponse(status_code=200, reason='No Reason')
-        ]
+
         for repeat_record in repeat_records:
             with patch(
                     'corehq.apps.repeaters.models.simple_post_with_logged_timeout',
-                    side_effect=mocked_responses) as mock_post:
+                    return_value=MockResponse(status_code=200, reason='No Reason')) as mock_post:
                 repeat_record.fire()
-                self.assertEqual(mock_post.call_count, 2)
+                self.assertEqual(mock_post.call_count, 1)
                 mock_post.assert_any_call(
                     repeat_record.domain,
                     repeat_record.get_payload(),
@@ -572,25 +569,6 @@ class RepeaterFailureTest(BaseRepeaterTest):
             repeat_record.fire()
 
         self.assertTrue(repeat_record.succeeded)
-
-    @run_with_all_backends
-    def test_no_immediate_retry(self):
-        repeat_record = self.repeater.register(CaseAccessors(self.domain_name).get_case(CASE_ID))
-        with patch.object(CaseRepeater, 'allow_immediate_retries', return_value=False):
-
-            with patch(
-                    'corehq.apps.repeaters.models.simple_post_with_logged_timeout',
-                    return_value=MockResponse(status_code=404, reason='Not Found')
-            ) as mock_fire:
-                repeat_record.fire()
-                self.assertEqual(mock_fire.call_count, 1)
-
-            with patch(
-                    'corehq.apps.repeaters.models.simple_post_with_logged_timeout',
-                    return_value=MockResponse(status_code=200, reason='Hooray')
-            ) as mock_fire:
-                check_repeaters()
-                self.assertEqual(mock_fire.call_count, 1)
 
 
 class IgnoreDocumentTest(BaseRepeaterTest):

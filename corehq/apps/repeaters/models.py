@@ -267,11 +267,6 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         """
         return True
 
-    def allow_immediate_retries(self, response):
-        """Whether to retry failed requests immediately a few times
-        """
-        return True
-
     def get_headers(self, repeat_record):
         # to be overridden
         generator = self.get_payload_generator(self.format_or_default_format())
@@ -570,11 +565,8 @@ class RepeatRecord(Document):
     def handle_failure(self, response, post_info, tries):
         """Do something with the response if the repeater fails
         """
-        if tries < post_info.max_tries and self.repeater.allow_immediate_retries(response):
-            return self.post(post_info, tries)
-        else:
-            self._fail(u'{}: {}'.format(response.status_code, response.reason), response)
-            self.repeater.handle_failure(response, self)
+        self._fail(u'{}: {}'.format(response.status_code, response.reason), response)
+        self.repeater.handle_failure(response, self)
 
     def handle_exception(self, exception):
         """handle internal exceptions
