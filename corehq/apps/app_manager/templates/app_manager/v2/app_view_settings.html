@@ -105,25 +105,14 @@
         return '{{ app.anonymous_cloudcare_url }}';
     }
   </script>
-  <script>
-    $(function () {
-      var langs = {{ app.langs|JSON }};
-      var saveURL = "{% url "edit_app_langs" domain app.id %}";
-      var validate = !{{ app.is_remote_app|BOOL }};
-      var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
-      $("#supported-languages").koApplyBindings(new SupportedLanguages({
-        langs: langs,
-        saveURL: saveURL,
-        validate: validate
-      }));
-    });
-  </script>
 {% endblock js-inline %}
 
 
 {% block app_view_tabs %}
   {% initial_page_data 'domain_names' domain_names %}
+  {% initial_page_data 'is_remote_app' app.is_remote_app %}
   {% initial_page_data 'is_superuser' request.user.is_superuser %}
+  {% initial_page_data 'langs' app.langs %}
   {% registerurl "toggle_diff" domain %}
   {% include "app_manager/v2/partials/app-settings.html" %}
 {% endblock app_view_tabs %}
