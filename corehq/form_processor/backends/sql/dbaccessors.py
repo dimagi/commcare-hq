@@ -627,6 +627,11 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return cases
 
     @staticmethod
+    def case_exists(case_id):
+        db = ShardAccessor.get_database_for_doc(case_id)
+        return CommCareCaseSQL.using(db).filter(case_id=case_id).exits()
+
+    @staticmethod
     def get_case_xform_ids(case_id):
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(

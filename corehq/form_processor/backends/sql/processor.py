@@ -262,6 +262,10 @@ class FormProcessorSQL(object):
 
         return case, None
 
+    @staticmethod
+    def case_exists(case_id):
+        return CaseAccessorSQL.case_exists(case_id)
+
 
 def get_case_transactions(case_id, updated_xforms=None):
     """
