@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from collections import namedtuple
 from mock import patch
 
@@ -58,9 +60,26 @@ class SimplePostCacheTest(SimpleTestCase):
 
             self.assertEqual(mock_post.call_count, 1)
 
-            with self.assertRaises(RequestConnectionError):
-                simple_post_with_cached_timeout('abc', 'http://google.com')
+        # if you call this again with the same data, it should return the cached result
+        with self.assertRaises(RequestConnectionError):
+            simple_post_with_cached_timeout('abc', 'http://google.com')
+        self.assertEqual(mock_post.call_count, 1)
 
+    def test_bust_cache_new_data(self):
+        """if you call the same url with different data it shouldn't return the cached result"""
+
+        with patch(
+                'corehq.apps.repeaters.models.simple_post',
+                side_effect=[MockResponse(status_code=400, reason='Ugly')]) as mock_post:
+
+            simple_post_with_cached_timeout('abc', 'http://google.com')
+
+        with patch(
+                'corehq.apps.repeaters.models.simple_post',
+                side_effect=[MockResponse(status_code=201, reason='Hooray')]) as mock_post:
+
+            # RequestConnectionError exception isn't raised
+            simple_post_with_cached_timeout(u'иэш ↁата', 'http://google.com')
             self.assertEqual(mock_post.call_count, 1)
 
     def test_bust_cache_new_url(self):

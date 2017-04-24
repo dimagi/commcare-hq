@@ -50,7 +50,7 @@ from .utils import get_all_repeater_types
 def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False, *args, **kwargs):
     # no control characters (e.g. '/') in keys
     key = hashlib.md5(
-        '{0} timeout {1}'.format(__name__, url)
+        u'{0} timeout {1} {2}'.format(__name__, url, data).encode('utf-8')
     ).hexdigest()
 
     cache_value = cache.get(key)
