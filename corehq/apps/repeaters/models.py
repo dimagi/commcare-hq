@@ -15,11 +15,9 @@ from utils import get_repeater_auth_header
 
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
-from django.core.cache import cache
-import hashlib
 
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
-from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
+from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -47,29 +45,15 @@ from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
 
 
-def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False, *args, **kwargs):
-    # no control characters (e.g. '/') in keys
-    key = hashlib.md5(
-        u'{0} timeout {1} {2}'.format(__name__, url, data).encode('utf-8')
-    ).hexdigest()
-
-    cache_value = cache.get(key)
-
-    if cache_value and not force_send:
-        raise RequestConnectionError(cache_value)
-
+def simple_post_with_logged_timeout(domain, data, url, *args, **kwargs):
     try:
-        resp = simple_post(data, url, *args, **kwargs)
-    except (Timeout, ConnectionError) as e:
-        cache.set(key, e.message, expiry)
-        raise RequestConnectionError(e.message)
-
-    if not 200 <= resp.status_code < 300:
-        message = u'Status Code {}: {}. {}'.format(resp.status_code, resp.reason, getattr(resp, 'content', None))
-        cache.set(key, message, expiry)
-
-    return resp
-
+        response = simple_post(data, url, *args, **kwargs)
+    except (Timeout, ConnectionError) as error:
+        datadog_counter('commcare.repeaters.timeout', tags=[
+            u'domain:{}'.format(domain),
+        ])
+        raise RequestConnectionError(error)
+    return response
 
 DELETED = "-Deleted"
 
@@ -496,26 +480,22 @@ class RepeatRecord(Document):
         ).one()
         return results['value'] if results else 0
 
-    def set_next_try(self, requeue=False):
+    def set_next_try(self):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
         assert self.succeeded is False
         assert self.next_check is not None
-        now = datetime.utcnow()
-        if requeue:
-            self.next_check = now
-        else:
-            window = timedelta(minutes=0)
-            if self.last_checked:
-                window = self.next_check - self.last_checked
-                window += (window // 2)  # window *= 1.5
-            if window < MIN_RETRY_WAIT:
-                window = MIN_RETRY_WAIT
-            elif window > MAX_RETRY_WAIT:
-                window = MAX_RETRY_WAIT
+        window = timedelta(minutes=0)
+        if self.last_checked:
+            window = self.next_check - self.last_checked
+            window += (window // 2)  # window *= 1.5
+        if window < MIN_RETRY_WAIT:
+            window = MIN_RETRY_WAIT
+        elif window > MAX_RETRY_WAIT:
+            window = MAX_RETRY_WAIT
 
-            self.last_checked = now
-            self.next_check = self.last_checked + window
+        self.last_checked = datetime.utcnow()
+        self.next_check = self.last_checked + window
 
     def try_now(self):
         # try when we haven't succeeded and either we've
@@ -560,7 +540,8 @@ class RepeatRecord(Document):
     def post(self, post_info, tries=0):
         tries += 1
         try:
-            response = simple_post_with_cached_timeout(
+            response = simple_post_with_logged_timeout(
+                self.domain,
                 post_info.payload,
                 self.url,
                 headers=post_info.headers,
@@ -623,7 +604,7 @@ class RepeatRecord(Document):
         self.succeeded = False
         self.failure_reason = ''
         self.overall_tries = 0
-        self.set_next_try(requeue=True)
+        self.next_check = datetime.utcnow()
 
 
 # import signals
