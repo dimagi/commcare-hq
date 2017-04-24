@@ -1287,6 +1287,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             couch_user.created_on = datetime.utcnow()
 
+        DjangoUserCommCareFields.objects.create(
+            user=django_user,
+            couch_user_id=couch_user._id,
+        )
+
         user_data = {'commcare_project': domain}
         user_data.update(kwargs.get('user_data', {}))
         couch_user.user_data = user_data
@@ -2446,3 +2451,9 @@ class AnonymousCouchUser(object):
 
     def can_edit_web_users(self):
         return False
+
+
+class DjangoUserCommCareFields(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    couch_user_id = models.CharField(max_length=255)
