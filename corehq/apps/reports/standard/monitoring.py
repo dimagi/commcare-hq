@@ -1473,15 +1473,14 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
                 self.domain, self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
             )
-            users = util.get_simplified_users(user_query)
             if not self.request.couch_user.has_permission(self.domain, 'access_all_locations'):
                 accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
                     self.request.domain,
                     self.request.couch_user)
                 )
-                accessible_user_ids = set(user_ids_at_locations(accessible_location_ids))
-                users = [u for u in users if u.user_id in accessible_user_ids]
-            return users
+                accessible_user_ids = user_ids_at_locations(accessible_location_ids)
+                user_query.filter(accessible_user_ids)
+            return util.get_simplified_users(user_query)
         elif not self.group_ids:
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
