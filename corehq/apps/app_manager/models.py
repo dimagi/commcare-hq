@@ -47,6 +47,7 @@ import itertools
 from lxml import etree
 from django.core.cache import cache
 from django.utils.translation import override, ugettext as _, ugettext
+from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
@@ -3030,10 +3031,13 @@ class ShadowForm(AdvancedForm):
         return self._merge_actions(shadow_parent_actions, self.extra_actions)
 
     def get_shadow_parent_options(self):
-        return [
+        options = [
             (form.get_unique_id(), u'{} / {}'.format(form.get_module().default_name(), form.default_name()))
             for form in self.get_app().get_forms() if form.form_type == "advanced_form"
         ]
+        if self.shadow_parent_form_id and self.shadow_parent_form_id not in [x[0] for x in options]:
+            options = [(self.shadow_parent_form_id, ugettext_lazy("Unknown, please change"))] + options
+        return options
 
     @staticmethod
     def _merge_actions(source_actions, extra_actions):
