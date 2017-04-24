@@ -81,6 +81,9 @@ class CouchTransaction(object):
 
 
 def get_docs(db, keys, **query_params):
+    if not keys:
+        return []
+
     payload = json.dumps({'keys': [_f for _f in keys if _f]})
     url = db.uri + '/_all_docs'
     query_params['include_docs'] = True
