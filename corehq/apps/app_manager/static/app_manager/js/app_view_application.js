@@ -6,14 +6,16 @@ hqDefine("app_manager/js/app_view_application.js", function() {
 
         // Languages: CommCare Translations
         var $translation_ui = $("#translations_ui");
-        mk_translation_ui({
-            translations: initial_page_data("translations"),
-            url: reverse("edit_app_ui_translations"),
-            suggestion_url: reverse("get_app_ui_translations"),
-            lang: initial_page_data("lang"),
-            allow_autofill: initial_page_data("lang") !== 'en',
-            $home: $translation_ui
-        });
+        if ($translation_ui.length) {
+            mk_translation_ui({
+                translations: initial_page_data("translations"),
+                url: reverse("edit_app_ui_translations"),
+                suggestion_url: reverse("get_app_ui_translations"),
+                lang: initial_page_data("lang"),
+                allow_autofill: initial_page_data("lang") !== 'en',
+                $home: $translation_ui
+            });
+        }
 
         // Copy app with feature flags
         $("#copy-app-form form button").click(function() {

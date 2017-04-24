@@ -4,28 +4,31 @@ hqDefine("app_manager/js/app_view.js", function() {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
             reverse = hqImport("hqwebapp/js/urllib.js").reverse;
 
-        // App view
-        COMMCAREHQ.appView = {
-            settings: initial_page_data("app_view_options"),
-        };
-
         // Settings
-        var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
-        COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
-        $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
+        var $settingsContainer = $('#commcare-settings');
+        if ($settingsContainer.length) {
+            var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
+            $settingsContainer.koApplyBindings(new CommcareSettings(initial_page_data("app_view_options")));
+        }
 
         // Languages
-        var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
-        $("#supported-languages").koApplyBindings(new SupportedLanguages({
-            langs: initial_page_data("langs"),
-            saveURL: reverse("edit_app_langs"),
-            validate: !initial_page_data("is_remote_app"),
-        }));
+        var $languagesContainer = $("#supported-languages");
+        if ($languagesContainer.length) {
+            var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
+            $("#supported-languages").koApplyBindings(new SupportedLanguages({
+                langs: initial_page_data("langs"),
+                saveURL: reverse("edit_app_langs"),
+                validate: !initial_page_data("is_remote_app"),
+            }));
+        }
 
         // Set up typeahead for domain names when copying app
-        $("#id_domain").koApplyBindings({
-            domain_names: initial_page_data("domain_names"),
-        });
+        var $domainContainer = $("#id_domain");
+        if ($domainContainer.length) {
+            $domainContainer.koApplyBindings({
+                domain_names: initial_page_data("domain_names"),
+            });
+        }
 
         // Multimedia analytics
         $(document).on("click", '#download_zip', function() {
