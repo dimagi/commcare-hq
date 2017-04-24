@@ -18,7 +18,6 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
     CaseValueError
 from casexml.apps.case.xml import V2
 from corehq.toggles import ASYNC_RESTORE
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.form_processor.exceptions import CouchSaveAborted
