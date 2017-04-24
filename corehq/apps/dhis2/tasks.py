@@ -42,7 +42,7 @@ def send_datavalues(domain_name):
         domain_name=domain_name,
     )
     for dataset_map in dataset_maps:
-        if dataset_map.day_to_send == datetime.today().day:
+        if dataset_map.should_send_on_date(datetime.today()):
             api.post('dataValueSets', dataset_map.get_dataset())
 
 
