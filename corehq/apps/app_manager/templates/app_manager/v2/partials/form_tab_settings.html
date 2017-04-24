@@ -89,7 +89,7 @@
                         {% include "app_manager/v2/partials/shadow_parent_select.html" %}
                     {% endif %}
 
-                    {% if request|toggle_enabled:'NO_VELLUM' %}
+                    {% if request|toggle_enabled:'NO_VELLUM' and form.form_type != "shadow_form"%}
                     <div class="form-group">
                         <label class="control-label col-sm-2">
                             {% trans "Disallow editing form in Form Builder" %}
