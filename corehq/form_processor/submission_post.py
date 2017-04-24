@@ -44,7 +44,7 @@ CaseStockProcessingResult = namedtuple(
 )
 
 
-class FormProcessingResult(namedtuple('FormProcessingResult', 'response xform cases ledgers')):
+class FormProcessingResult(namedtuple('FormProcessingResult', 'response xform cases ledgers submission_type')):
     @property
     def case(self):
         assert len(self.cases) == 1
@@ -134,24 +134,23 @@ class SubmissionPost(object):
     def run(self):
         failure_response = self._handle_basic_failure_modes()
         if failure_response:
-            return FormProcessingResult(failure_response, None, [], [])
+            return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
         result = process_xform_xml(self.domain, self.instance, self.attachments)
         submitted_form = result.submitted_form
 
         self._post_process_form(submitted_form)
         self._invalidate_caches(submitted_form.user_id)
+        submission_type = None
 
         if submitted_form.is_submission_error_log:
-            datadog_counter('commcare.xform_submissions.submission_error_log.count', tags=[
-                u'domain:{}'.format(self.domain),
-            ])
             self.formdb.save_new_form(submitted_form)
             response = self.get_exception_response_and_log(submitted_form, self.path)
-            return FormProcessingResult(response, None, [], [])
+            return FormProcessingResult(response, None, [], [], 'submission_error_log')
 
         cases = []
         ledgers = []
+        submission_type = 'normal'
         with result.get_locked_forms() as xforms:
             from casexml.apps.case.xform import get_and_check_xform_domain
             domain = get_and_check_xform_domain(xforms[0])
@@ -165,9 +164,7 @@ class SubmissionPost(object):
             with case_db_cache as case_db:
                 instance = xforms[0]
                 if instance.xmlns == DEVICE_LOG_XMLNS:
-                    datadog_counter('commcare.xform_submissions.device_logs.count', tags=[
-                        u'domain:{}'.format(self.domain),
-                    ])
+                    submission_type = 'device_log'
                     try:
                         process_device_log(self.domain, instance)
                     except Exception:
@@ -178,14 +175,9 @@ class SubmissionPost(object):
                         raise
 
                 elif instance.is_duplicate:
-                    datadog_counter('commcare.xform_submissions.duplicate.count', tags=[
-                        u'domain:{}'.format(self.domain),
-                    ])
+                    submission_type = 'duplicate'
                     self.interface.save_processed_models([instance])
                 elif not instance.is_error:
-                    datadog_counter('commcare.xform_submissions.normal.count', tags=[
-                        u'domain:{}'.format(self.domain),
-                    ])
                     try:
                         case_stock_result = self.process_xforms_for_cases(xforms, case_db)
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
@@ -207,7 +199,7 @@ class SubmissionPost(object):
 
             errors = self.process_signals(instance)
             response = self._get_open_rosa_response(instance, errors)
-            return FormProcessingResult(response, instance, cases, ledgers)
+            return FormProcessingResult(response, instance, cases, ledgers, submission_type)
 
     @property
     def _cache(self):
