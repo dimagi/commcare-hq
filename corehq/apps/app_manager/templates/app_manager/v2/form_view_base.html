@@ -359,9 +359,11 @@
                 {% endif %}
             {% endif %}
 
+            {% if form.form_type != "shadow_form" %}
             <li>
                 <a href="#advanced" data-toggle="tab">{% trans "Actions" %}</a>
             </li>
+            {% endif %}
         </ul>
 
         <div class="tab-content appmanager-tab-content">
@@ -500,8 +502,9 @@
                     {% include "app_manager/v2/partials/form_tab_visit_scheduler.html" %}
                 {% endif %}
             {% endif %}
-
-            {% include "app_manager/v2/partials/form_tab_advanced.html" %}
+            {% if form.form_type != "shadow_form" %}
+                {% include "app_manager/v2/partials/form_tab_advanced.html" %}
+            {% endif %}
         </div>
     </div>
     <div id="questions"></div>
