@@ -1,10 +1,8 @@
 import logging
-from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
 from couchdbkit import ResourceNotFound
 from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
-    HttpResponseServerError,
 )
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.decorators import (
@@ -29,7 +27,6 @@ from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_ba
 from corehq.util.datadog.gauges import datadog_gauge, datadog_counter
 from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
 from corehq.util.datadog.utils import log_counter
-from corehq.util.service_down import notify_riak_down
 from corehq.util.timer import TimingContext
 import couchforms
 from django.views.decorators.http import require_POST
@@ -92,12 +89,8 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         last_sync_token=couchforms.get_last_sync_token(request),
         openrosa_headers=couchforms.get_openrosa_headers(request),
     )
-    try:
-        with TimingContext() as timer:
-            result = submission_post.run()
-    except ProtocolError:
-        notify_riak_down()
-        return HttpResponseServerError()
+    with TimingContext() as timer:
+        result = submission_post.run()
 
     response = result.response
 

@@ -5,7 +5,6 @@ import contextlib
 import datetime
 import logging
 from collections import namedtuple
-from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
 
 from django.http import (
     HttpRequest,
@@ -15,7 +14,8 @@ from django.http import (
 )
 import sys
 import couchforms
-from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex
+from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
+    CaseValueError
 from casexml.apps.case.xml import V2
 from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.commtrack.exceptions import MissingProductId
@@ -163,9 +163,6 @@ class SubmissionPost(object):
                 if instance.xmlns == DEVICE_LOG_XMLNS:
                     try:
                         process_device_log(self.domain, instance)
-                    except ProtocolError:
-                        # if riak is down/struggling, the caller will catch and notify
-                        raise
                     except Exception:
                         notify_exception(None, "Error processing device log", details={
                             'xml': self.instance,
@@ -179,7 +176,7 @@ class SubmissionPost(object):
                     try:
                         case_stock_result = self.process_xforms_for_cases(xforms, case_db)
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
-                            PhoneDateValueError, InvalidCaseIndex) as e:
+                            PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                         self._handle_known_error(e, instance, xforms)
                     except Exception as e:
                         # handle / log the error and reraise so the phone knows to resubmit
