@@ -21,6 +21,7 @@ from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SE
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
+from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.models import (
@@ -695,8 +696,12 @@ class RestoreConfig(object):
         self.delete_cached_payload_if_necessary()
 
         cached_response = self.get_cached_response()
+        tags = [u'domain:{}'.format(self.domain)]
         if cached_response:
+            datadog_counter('commcare.restores.cache_hits.count', tags=tags)
             return cached_response
+        datadog_counter('commcare.restores.cache_misses.count', tags=tags)
+
         # Start new sync
         if self.async:
             response = self._get_asynchronous_payload()
