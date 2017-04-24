@@ -18,6 +18,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
     CaseValueError
 from casexml.apps.case.xml import V2
 from corehq.toggles import ASYNC_RESTORE
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.form_processor.exceptions import CouchSaveAborted
@@ -142,6 +143,9 @@ class SubmissionPost(object):
         self._invalidate_caches(submitted_form.user_id)
 
         if submitted_form.is_submission_error_log:
+            datadog_counter('commcare.xform_submissions.submission_error_log.count', tags=[
+                u'domain:{}'.format(self.domain),
+            ])
             self.formdb.save_new_form(submitted_form)
             response = self.get_exception_response_and_log(submitted_form, self.path)
             return FormProcessingResult(response, None, [], [])
@@ -161,6 +165,9 @@ class SubmissionPost(object):
             with case_db_cache as case_db:
                 instance = xforms[0]
                 if instance.xmlns == DEVICE_LOG_XMLNS:
+                    datadog_counter('commcare.xform_submissions.device_logs.count', tags=[
+                        u'domain:{}'.format(self.domain),
+                    ])
                     try:
                         process_device_log(self.domain, instance)
                     except Exception:
@@ -171,8 +178,14 @@ class SubmissionPost(object):
                         raise
 
                 elif instance.is_duplicate:
+                    datadog_counter('commcare.xform_submissions.duplicate.count', tags=[
+                        u'domain:{}'.format(self.domain),
+                    ])
                     self.interface.save_processed_models([instance])
                 elif not instance.is_error:
+                    datadog_counter('commcare.xform_submissions.normal.count', tags=[
+                        u'domain:{}'.format(self.domain),
+                    ])
                     try:
                         case_stock_result = self.process_xforms_for_cases(xforms, case_db)
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
