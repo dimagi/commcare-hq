@@ -608,11 +608,11 @@ class RepeatRecord(Document):
             self.last_checked = datetime.utcnow()
             self.cancel()
         self.failure_reason = reason
-        datadog_counter(REPEATER_ERROR_COUNT, {
-            'domain: ': self.domain,
-            'status_code:': response.status_code if response else None,
-            'repeater_type:': self.repeater_type,
-        })
+        datadog_counter(REPEATER_ERROR_COUNT, tags=[
+            u'domain:{}'.format(self.domain),
+            u'status_code:{}'.format(response.status_code if response else None),
+            u'repeater_type:{}'.format(self.repeater_type),
+        ])
 
     def cancel(self):
         self.next_check = None
