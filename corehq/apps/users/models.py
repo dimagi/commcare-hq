@@ -1181,6 +1181,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @classmethod
     @quickcache(['username'], skip_arg='strict')
     def get_by_username(cls, username, strict=True):
+        if not username:
+            return None
+
         def get(stale, raise_if_none):
             result = cls.get_db().view('users/by_username',
                 key=username,
