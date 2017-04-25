@@ -157,9 +157,12 @@ class ZapierUpdateCase(View):
             return HttpResponseForbidden("This user does not have access to this domain.")
 
         try:
-            CaseAccessors(domain).get_case(case_id)
+            case = CaseAccessors(domain).get_case(case_id)
         except CaseNotFound:
             return HttpResponseForbidden("Could not find case in domain")
+
+        if not case.type == case_type:
+            return HttpResponseForbidden("Case type mismatch")
 
         factory = CaseFactory(domain=domain)
         factory.update_case(
