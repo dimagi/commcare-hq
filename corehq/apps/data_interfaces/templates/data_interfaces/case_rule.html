@@ -24,6 +24,7 @@
 
         $("#rule-definition-form").submit(function(event) {
             var result = true;
+            var criteria_model = hqImport('data_interfaces/js/case_rule_criteria.js').get_criteria_model();
 
             if(criteria_model.selected_case_filter_id() !== 'select-one') {
                 criteria_model.show_add_filter_warning(true);

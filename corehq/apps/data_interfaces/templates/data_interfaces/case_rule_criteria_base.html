@@ -6,24 +6,8 @@
     <script src="{% static 'data_interfaces/js/case_rule_criteria.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-<script>
-    var criteria_model = null;
-    $(function() {
-        criteria_model = new CaseRuleCriteria(
-            hqImport("hqwebapp/js/initial_page_data.js").get('criteria_initial'),
-            hqImport("hqwebapp/js/initial_page_data.js").get('criteria_constants')
-        );
-        $('#rule-criteria').koApplyBindings(criteria_model);
-        criteria_model.load_initial();
-    });
-</script>
-{% endblock %}
-
 {% block page_content %}
-
 {% initial_page_data 'criteria_initial' criteria_form.current_values %}
 {% initial_page_data 'criteria_constants' criteria_form.constants %}
-
 {% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
 {% endblock %}
