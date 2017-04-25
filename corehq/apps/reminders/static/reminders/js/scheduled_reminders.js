@@ -2,7 +2,7 @@
 hqDefine("reminders/js/scheduled_reminders.js", function() {
     $(function () {
         var reminders = _.map(hqImport("hqwebapp/js/initial_page_data.js").get("reminder_data"), function(data) {
-                var next_fire = moment(data.next_fire);
+                var next_fire = moment.utc(data.next_fire);
                 return {
                     nickname: data.handler_name,
                     date: next_fire.format("MMMM D, YYYY"),
