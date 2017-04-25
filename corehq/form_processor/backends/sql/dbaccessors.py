@@ -631,8 +631,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def case_exists(case_id):
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
         db = get_db_alias_for_partitioned_doc(case_id)
-        return CommCareCaseSQL.using(db).filter(case_id=case_id).exits()
+        return CommCareCaseSQL.objects.using(db).filter(case_id=case_id).exists()
 
     @staticmethod
     def get_case_xform_ids(case_id):
