@@ -1,11 +1,11 @@
+import itertools
 import logging
 import struct
 from abc import ABCMeta, abstractproperty
 from abc import abstractmethod
-from itertools import groupby
 from datetime import datetime
-
-import itertools
+from itertools import groupby
+from uuid import UUID
 
 import csiphash
 import six
@@ -52,10 +52,9 @@ from corehq.form_processor.utils.sql import (
 )
 from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
 from corehq.sql_db.routers import db_for_read_write
+from corehq.util.queries import fast_distinct_in_domain
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.chunked import chunked
-from uuid import UUID
-
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -138,6 +137,8 @@ class ShardAccessor(object):
         :param doc_ids:
         :return: Dict of ``doc_id -> Django DB alias``
         """
+        assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
+        consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         databases = {}
         shard_map = partition_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
@@ -155,6 +156,8 @@ class ShardAccessor(object):
         """
         :return: Django DB alias in which the doc should be stored
         """
+        assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
+        consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         shard_map = partition_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
         hash_ = ShardAccessor.hash_doc_id_python(doc_id)
@@ -946,6 +949,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             publish_case_deleted(domain, case_id)
 
         return affected_count
+
+    @staticmethod
+    def get_case_owner_ids(domain):
+        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+        db_aliases = get_db_aliases_for_partitioned_query()
+        owner_ids = set()
+        for db_alias in db_aliases:
+            owner_ids.update(fast_distinct_in_domain(CommCareCaseSQL, 'owner_id', domain, using=db_alias))
+
+        return owner_ids
 
 
 class LedgerReindexAccessor(ReindexAccessor):
