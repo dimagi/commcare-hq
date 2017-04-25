@@ -16,6 +16,9 @@
     {{ block.super }}
     {% compress js %}
         <script src="{% static 'domain/js/encoder.js' %}"></script>
+        <script>
+            var hex_parser = hqImport('domain/js/encoder.js');
+        </script>
     {% endcompress %}
 {% endblock %}
 {% endif %}
