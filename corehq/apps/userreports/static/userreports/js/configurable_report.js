@@ -3,7 +3,7 @@ hqDefine("userreports/js/configurable_report.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
 
     var getStandardHQReport = function() {
-        if (!initial_page_data("getStandardHQReport")) {
+        if (!initial_page_data("standardHQReport")) {
             return undefined;
         }
 
