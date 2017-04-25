@@ -603,7 +603,7 @@ class RestoreState(object):
         previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
         new_synclog = SyncLog(
-            _id=uuid4().hex,
+            _id=SyncLog.get_db().server.next_uuid(),
             domain=self.restore_user.domain,
             build_id=self.params.app_id,
             user_id=self.restore_user.user_id,

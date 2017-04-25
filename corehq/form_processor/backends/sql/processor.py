@@ -34,7 +34,7 @@ class FormProcessorSQL(object):
                 attachment_id=uuid.uuid4(),
                 content_type=attachment.content_type,
             )
-            xform_attachment.write_content(attachment.content_as_file())
+            xform_attachment.write_content(attachment.content)
             if xform_attachment.is_image:
                 try:
                     img_size = Image.open(attachment.content_as_file()).size

@@ -272,6 +272,19 @@ hqDefine('app_manager/js/app_manager.js', function () {
             }
         });
 
+        $('.new-form').on('click', function (e) {
+            e.preventDefault();
+            var dataType = $(this).data("type");
+            var moduleId = $(this).data("module");
+            var form = $("#form-to-create-new-form-for-module-" + moduleId);
+            $("input[name=form_type]", form).val(dataType);
+            if (!form.data('clicked')) {
+                form.data('clicked', 'true');
+                $('.new-form-icon-module-' + moduleId).removeClass().addClass("fa fa-refresh fa-spin");
+                form.submit();
+            }
+        });
+
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
             $(document).on('click', '.js-new-form', function (e) {
                 e.preventDefault();

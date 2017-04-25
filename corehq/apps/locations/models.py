@@ -1,3 +1,4 @@
+import uuid
 import warnings
 from functools import partial
 
@@ -879,7 +880,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
 
         # Set the UUID here so we can save to SQL first (easier to rollback)
         if not self._id:
-            self._id = self.get_db().server.next_uuid()
+            self._id = uuid.uuid4().hex
 
         sync_to_sql = kwargs.pop('sync_to_sql', True)
         kwargs['sync_to_sql'] = False  # only sync here

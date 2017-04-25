@@ -1762,7 +1762,7 @@ class EditFormInstance(View):
             edit_session_data[USERCASE_ID] = usercase_id
 
         case_blocks = extract_case_blocks(instance, include_path=True)
-        if form.form_type == 'advanced_form':
+        if form.form_type == 'advanced_form' or form.form_type == "shadow_form":
             datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
             for case_block in case_blocks:
                 path = case_block.path[0]  # all case blocks in advanced forms are nested one level deep
