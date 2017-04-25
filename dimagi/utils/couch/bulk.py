@@ -1,3 +1,4 @@
+import uuid
 from collections import defaultdict
 import json
 import logging
@@ -52,7 +53,7 @@ class CouchTransaction(object):
     def save(self, doc):
         cls = doc.__class__
         if not doc.get_id:
-            doc._id = cls.get_db().server.next_uuid()
+            doc._id = uuid.uuid4().hex
         self.docs_to_save[cls][doc.get_id] = doc
 
     def preview_save(self, cls=None):
