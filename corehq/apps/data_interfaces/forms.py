@@ -832,6 +832,14 @@ class CaseRuleActionsForm(forms.Form):
     properties_to_update = forms.CharField(required=False, initial='[]')
     custom_action_definitions = forms.CharField(required=False, initial='[]')
 
+    @property
+    def current_values(self):
+        return {
+            'close_case': self['close_case'].value(),
+            'properties_to_update': json.loads(self['properties_to_update'].value()),
+            'custom_action_definitions': json.loads(self['custom_action_definitions'].value()),
+        }
+
     def compute_initial(self, rule):
         initial = {}
         custom_action_definitions = []
