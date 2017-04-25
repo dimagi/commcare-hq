@@ -36,6 +36,7 @@
                 includeFilter: true,
                 aaSorting: [[5, 'asc']],
             });
+            var standardHQReport = hqImport("userreports/js/configurable_report.js").getStandardHQReport();
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);
             }
