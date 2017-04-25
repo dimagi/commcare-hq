@@ -66,18 +66,14 @@ from xml.etree import ElementTree
 logger = logging.getLogger(__name__)
 
 
-def restore_cache_key(prefix, user_id, version=None):
-    if version is not None:
-        hashable_key = '{prefix}-{user}-{version}'.format(
-            prefix=prefix,
-            user=user_id,
-            version=version,
-        )
-    else:
-        hashable_key = '{prefix}-{user}'.format(
-            prefix=prefix,
-            user=user_id,
-        )
+def restore_cache_key(domain, prefix, user_id, version=None):
+    response_class = get_restore_response_class(domain)
+    hashable_key = '{response_class}-{prefix}-{user}-{version}'.format(
+        response_class=response_class.__name__,
+        prefix=prefix,
+        user=user_id,
+        version=version or '',
+    )
     return hashlib.md5(hashable_key).hexdigest()
 
 
@@ -674,11 +670,11 @@ class RestoreConfig(object):
 
     @property
     def async_cache_key(self):
-        return restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id)
+        return restore_cache_key(self.domain, ASYNC_RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id)
 
     @property
     def _restore_cache_key(self):
-        return restore_cache_key(RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id, self.version)
+        return restore_cache_key(self.domain, RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id, self.version)
 
     def validate(self):
         try:
