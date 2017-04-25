@@ -11,14 +11,15 @@
     {% endblock %}
 {% endblock page_content %}
 
-{% if implement_password_hashing %}
+
 {% block js %}
     {{ block.super }}
+    {% if implement_password_hashing %}
     {% compress js %}
         <script src="{% static 'domain/js/encoder.js' %}"></script>
-        <script>
-            var hex_parser = hqImport('domain/js/encoder.js');
-        </script>
     {% endcompress %}
+    <script>
+        var hex_parser = hqImport('domain/js/encoder.js');
+    </script>
+    {% endif %}
 {% endblock %}
-{% endif %}
