@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.core.management import BaseCommand
 from xlrd import open_workbook
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
