@@ -7,7 +7,7 @@ from custom.ewsghana.tests.handlers.utils import EWSScriptTest, TEST_DOMAIN
 class TestUndo(EWSScriptTest):
 
     def tearDown(self):
-        FormProcessorTestUtils.delete_all_xforms(TEST_DOMAIN, self.user1._id)
+        FormProcessorTestUtils.delete_all_xforms(TEST_DOMAIN)
 
     def test_no_product_reports(self):
         a = """
