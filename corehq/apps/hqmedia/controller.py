@@ -39,6 +39,25 @@ class BaseMultimediaUploadController(object):
         from corehq.apps.hqmedia.views import MultimediaUploadStatusView
         return reverse(MultimediaUploadStatusView.name)
 
+    @property
+    def js_options(self):
+        options = {
+            'allowCloseDuringUpload': True,
+            'fileFilters': self.supported_files,
+            'uploadURL': self.destination,
+            'processingURL': self.processing_url,
+            #swfURL: '{% static 'hqmedia/MediaUploader/flashuploader.swf' %}',
+            'isMultiFileUpload': self.is_multi_file,
+            'uploadParams': self.upload_params,
+            'licensingParams': self.licensing_params,
+        }
+        return {
+            'slug': self.slug,
+            'uploader_type': self.uploader_type,
+            'media_type': self.media_type,
+            'options': options,
+        }
+
 
 class MultimediaBulkUploadController(BaseMultimediaUploadController):
     is_multi_file = True

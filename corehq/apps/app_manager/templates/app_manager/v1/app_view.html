@@ -180,7 +180,10 @@
     {% initial_page_data 'is_superuser' request.user.is_superuser %}
     {% initial_page_data 'lang' lang %}
     {% initial_page_data 'langs' app.langs %}
+    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
     {% initial_page_data 'translations' translations %}
+    {% initial_page_data 'uploaders' uploaders %}
     {% registerurl "edit_app_langs" domain app.id %}
     {% registerurl "edit_app_ui_translations" domain app.id %}
     {% registerurl "get_app_ui_translations" domain %}
