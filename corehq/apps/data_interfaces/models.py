@@ -169,115 +169,6 @@ class AutomaticUpdateRule(models.Model):
         if result:
             yield result
 
-    def rule_matches_case(self, case, now):
-        if self.migrated:
-            raise self.MigrationError("Attempted to call old method on migrated model.")
-
-        try:
-            return self._rule_matches_case(case, now)
-        except (CaseNotFound, ResourceNotFound):
-            # This might happen if the rule references a parent case and the
-            # parent case is not found
-            return False
-
-    def _rule_matches_case(self, case, now):
-        if self.migrated:
-            raise self.MigrationError("Attempted to call old method on migrated model.")
-
-        if case.type != self.case_type:
-            return False
-
-        if self.filter_on_server_modified and \
-                (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))):
-            return False
-
-        return all([criterion.matches(case, now)
-                   for criterion in self.automaticupdaterulecriteria_set.all()])
-
-    def apply_actions(self, case):
-        if self.migrated:
-            raise self.MigrationError("Attempted to call old method on migrated model.")
-
-        cases_to_update = defaultdict(dict)
-        close = False
-
-        def _get_case_property_value(current_case, name):
-            result = current_case.resolve_case_property(name)
-            if result:
-                return result[0].value
-
-            return None
-
-        def _add_update_property(name, value, current_case):
-            while name.startswith('parent/'):
-                name = name[7:]
-                # uses first parent if there are multiple
-                parent_cases = current_case.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
-                if parent_cases:
-                    current_case = parent_cases[0]
-                else:
-                    return
-            cases_to_update[current_case.case_id][name] = value
-
-        for action in self.automaticupdateaction_set.all():
-            if action.action == AutomaticUpdateAction.ACTION_UPDATE:
-                if action.property_value_type == AutomaticUpdateAction.CASE_PROPERTY:
-                    value = _get_case_property_value(case, action.property_value)
-                    if value is None:
-                        continue
-                else:
-                    value = action.property_value
-
-                if value != _get_case_property_value(case, action.property_name):
-                    _add_update_property(action.property_name, value, case)
-            elif action.action == AutomaticUpdateAction.ACTION_CLOSE:
-                close = True
-
-        # Update any referenced parent cases
-        for id, properties in cases_to_update.items():
-            if id == case.case_id:
-                continue
-            update_case(case.domain, id, case_properties=properties, close=False,
-                xmlns=AUTO_UPDATE_XMLNS)
-
-        # Update / close the case
-        properties = cases_to_update[case.case_id]
-        if close or properties:
-            update_case(case.domain, case.case_id, case_properties=properties, close=close,
-                xmlns=AUTO_UPDATE_XMLNS)
-
-        return close
-
-    def apply_rule(self, case, now):
-        """
-        :return: True to stop processing further rules on the case (e.g., the
-        case is closed or deleted), False otherwise
-        """
-        if self.migrated:
-            raise self.MigrationError("Attempted to call old method on migrated model.")
-
-        if self.deleted:
-            raise Exception("Attempted to call apply_rule on a deleted rule")
-
-        if not self.active:
-            raise Exception("Attempted to call apply_rule on an inactive rule")
-
-        if not isinstance(case, (CommCareCase, CommCareCaseSQL)):
-            raise ValueError("Invalid case given")
-
-        if not case.doc_type.startswith('CommCareCase'):
-            raise ValueError("Invalid case given")
-
-        if case.domain != self.domain:
-            raise ValueError("Invalid case given")
-
-        if case.is_deleted or case.closed:
-            return True
-
-        if self.rule_matches_case(case, now):
-            return self.apply_actions(case)
-        return False
-
     def activate(self, active=True):
         self.active = active
         self.save()
@@ -385,6 +276,11 @@ class AutomaticUpdateRule(models.Model):
             created_on=datetime.utcnow(),
             form_id=form_id,
         )
+
+    def add_criteria(self, definition_class, **definition_kwargs):
+        criteria = CaseRuleCriteria(rule=self)
+        criteria.definition = definition_class.objects.create(**definition_kwargs)
+        criteria.save()
 
 
 class CaseRuleCriteria(models.Model):

@@ -3,9 +3,16 @@ from contextlib import contextmanager
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
-from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
-                                                AutomaticUpdateRuleCriteria,
-                                                AutomaticUpdateAction, AUTO_UPDATE_XMLNS)
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    AutomaticUpdateRuleCriteria,
+    AutomaticUpdateAction, AUTO_UPDATE_XMLNS,
+    MatchPropertyDefinition,
+    UpdateCaseDefinition,
+    CaseRuleCriteria,
+    CaseRuleAction,
+    CaseRuleSubmission,
+)
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from datetime import datetime, date
 
@@ -127,13 +134,24 @@ class AutomaticCaseUpdateTest(TestCase):
             rule=self.rule5,
         )
 
+        self.rule = self.rule.migrate()
+        self.rule2 = self.rule2.migrate()
+        self.rule3 = self.rule3.migrate()
+        self.rule4 = self.rule4.migrate()
+        self.rule5 = self.rule5.migrate()
+
         with drop_connected_signals(case_post_save):
             case = self.factory.create_case(case_type='test-case-type')
         self.case_id = case.case_id
 
     def tearDown(self):
+        CaseRuleSubmission.objects.all().delete()
         AutomaticUpdateRuleCriteria.objects.all().delete()
         AutomaticUpdateAction.objects.all().delete()
+        CaseRuleCriteria.objects.all().delete()
+        MatchPropertyDefinition.objects.all().delete()
+        CaseRuleAction.objects.all().delete()
+        UpdateCaseDefinition.objects.all().delete()
         AutomaticUpdateRule.objects.all().delete()
         FormProcessorTestUtils.delete_all_cases(self.domain)
         super(AutomaticCaseUpdateTest, self).tearDown()
@@ -208,86 +226,86 @@ class AutomaticCaseUpdateTest(TestCase):
     @run_with_all_backends
     def test_match_days_after(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
-            AutomaticUpdateRuleCriteria.objects.create(
+            self.rule2.add_criteria(
+                MatchPropertyDefinition,
                 property_name='last_visit_date',
                 property_value='30',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
-                rule=self.rule2,
+                match_type=MatchPropertyDefinition.MATCH_DAYS_AFTER,
             )
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'last_visit_date', '2015-12-30')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'last_visit_date', '2015-12-03')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'last_visit_date', '2015-12-02')
-            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'last_visit_date', '2015-11-01')
-            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
     def test_match_days_before(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
-            AutomaticUpdateRuleCriteria.objects.create(
+            self.rule2.add_criteria(
+                MatchPropertyDefinition,
                 property_name='last_visit_date',
                 property_value='30',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_BEFORE,
-                rule=self.rule2,
+                match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE,
             )
             # When the case property doesn't exist, it should not match
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'last_visit_date', '2015-10-01')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'last_visit_date', '2016-01-02')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'last_visit_date', '2016-01-31')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'last_visit_date', '2016-02-01')
-            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'last_visit_date', '2016-03-01')
-            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
     def test_match_equal(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
-            AutomaticUpdateRuleCriteria.objects.create(
+            self.rule2.add_criteria(
+                MatchPropertyDefinition,
                 property_name='property1',
                 property_value='value1',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
-                rule=self.rule2,
+                match_type=MatchPropertyDefinition.MATCH_EQUAL,
             )
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property1', 'x')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property1', 'value1')
-            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
     def test_match_not_equal(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
-            AutomaticUpdateRuleCriteria.objects.create(
+            self.rule2.add_criteria(
+                MatchPropertyDefinition,
                 property_name='property2',
                 property_value='value2',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_NOT_EQUAL,
-                rule=self.rule2,
+                match_type=MatchPropertyDefinition.MATCH_NOT_EQUAL,
             )
-            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property2', 'value2')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property2', 'x')
-            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
     def test_date_case_properties_for_equality(self):
@@ -297,102 +315,102 @@ class AutomaticCaseUpdateTest(TestCase):
         interfere with our ability to compare dates for equality.
         """
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
-            AutomaticUpdateRuleCriteria.objects.create(
+            self.rule2.add_criteria(
+                MatchPropertyDefinition,
                 property_name='property1',
                 property_value='2016-02-24',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
-                rule=self.rule2,
+                match_type=MatchPropertyDefinition.MATCH_EQUAL,
             )
 
             set_case_property_directly(case, 'property1', '2016-02-24')
-            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property1', '2016-02-25')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
     def test_date_case_properties_for_inequality(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
-            AutomaticUpdateRuleCriteria.objects.create(
+            self.rule2.add_criteria(
+                MatchPropertyDefinition,
                 property_name='property1',
                 property_value='2016-02-24',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_NOT_EQUAL,
-                rule=self.rule2,
+                match_type=MatchPropertyDefinition.MATCH_NOT_EQUAL,
             )
 
             set_case_property_directly(case, 'property1', '2016-02-24')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property1', '2016-02-25')
-            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
     def test_match_has_value(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
-            AutomaticUpdateRuleCriteria.objects.create(
+            self.rule2.add_criteria(
+                MatchPropertyDefinition,
                 property_name='property3',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_HAS_VALUE,
-                rule=self.rule2,
+                match_type=MatchPropertyDefinition.MATCH_HAS_VALUE,
             )
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property3', 'x')
-            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property3', '')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
     def test_and_criteria(self):
         with _with_case(self.domain, 'test-case-type-2', datetime(2015, 1, 1)) as case:
 
-            AutomaticUpdateRuleCriteria.objects.create(
+            self.rule2.add_criteria(
+                MatchPropertyDefinition,
                 property_name='last_visit_date',
                 property_value='30',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
-                rule=self.rule2,
+                match_type=MatchPropertyDefinition.MATCH_DAYS_AFTER,
             )
-            AutomaticUpdateRuleCriteria.objects.create(
+            self.rule2.add_criteria(
+                MatchPropertyDefinition,
                 property_name='property1',
                 property_value='value1',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
-                rule=self.rule2,
+                match_type=MatchPropertyDefinition.MATCH_EQUAL,
             )
-            AutomaticUpdateRuleCriteria.objects.create(
+            self.rule2.add_criteria(
+                MatchPropertyDefinition,
                 property_name='property2',
                 property_value='value2',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_NOT_EQUAL,
-                rule=self.rule2,
+                match_type=MatchPropertyDefinition.MATCH_NOT_EQUAL,
             )
-            AutomaticUpdateRuleCriteria.objects.create(
+            self.rule2.add_criteria(
+                MatchPropertyDefinition,
                 property_name='property3',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_HAS_VALUE,
-                rule=self.rule2,
+                match_type=MatchPropertyDefinition.MATCH_HAS_VALUE,
             )
 
             set_case_property_directly(case, 'last_visit_date', '2015-11-01')
             set_case_property_directly(case, 'property1', 'value1')
             set_case_property_directly(case, 'property2', 'x')
             set_case_property_directly(case, 'property3', 'x')
-            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'last_visit_date', '2015-12-30')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'last_visit_date', '2015-11-01')
             set_case_property_directly(case, 'property1', 'x')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property1', 'value1')
             set_case_property_directly(case, 'property2', 'value2')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property2', 'x')
             set_case_property_directly(case, 'property3', '')
-            self.assertFalse(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertFalse(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
             set_case_property_directly(case, 'property3', 'x')
-            self.assertTrue(self.rule2.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
     def test_get_rules_from_domain(self):
         rules = AutomaticUpdateRule.by_domain(self.domain)
@@ -463,35 +481,38 @@ class AutomaticCaseUpdateTest(TestCase):
                 property_value_type=AutomaticUpdateAction.CASE_PROPERTY,
                 rule=rule,
             )
+            rule = rule.migrate()
 
             # rule should match on parent case property and update parent case
-            rule.apply_rule(child, datetime(2016, 3, 1))
+            rule.run_rule(child, datetime(2016, 3, 1))
             updated_parent = self.case_db.get_case(parent.case_id)
             updated_child = self.case_db.get_case(child.case_id)
             self.assertEqual(updated_parent.get_case_property('update_flag'), 'P')
             self.assertEqual(updated_child.get_case_property('parent_name'), 'abc')
 
             # Update the rule to match on a different name and now it shouldn't match
-            rule.automaticupdaterulecriteria_set.all().delete()
-            AutomaticUpdateRuleCriteria.objects.create(
+            rule.delete_criteria()
+            rule.add_criteria(
+                MatchPropertyDefinition,
                 property_name='parent/name',
                 property_value='def',
-                match_type=AutomaticUpdateRuleCriteria.MATCH_EQUAL,
-                rule=rule,
+                match_type=MatchPropertyDefinition.MATCH_EQUAL,
             )
+            # reset memoized caches
+            rule = AutomaticUpdateRule.objects.get(pk=rule.pk)
 
-            self.assertFalse(rule.rule_matches_case(child, datetime(2016, 3, 1)))
+            self.assertFalse(rule.criteria_match(child, datetime(2016, 3, 1)))
 
     @run_with_all_backends
     def test_no_server_boundary(self):
         with _with_case(self.domain, 'test-case-type-3', datetime(2016, 1, 1), case_name='signal') as case:
             # no filtering on server modified date so same day matches
-            self.assertTrue(self.rule5.rule_matches_case(case, datetime(2016, 1, 1)))
+            self.assertTrue(self.rule5.criteria_match(case, datetime(2016, 1, 1)))
 
     @run_with_all_backends
     def test_run_on_save(self):
         with _with_case(self.domain, 'test-case-type-3', datetime(2016, 1, 1), case_name='signal') as case:
-            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.apply_rule') as apply:
+            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.run_rule') as apply:
                 # property is updated after save signal (case update used to force save)
                 update_case(self.domain, case.case_id, {})
                 apply.assert_called_once()
@@ -499,7 +520,7 @@ class AutomaticCaseUpdateTest(TestCase):
     @run_with_all_backends
     def test_early_task_exit(self):
         with _with_case(self.domain, 'test-case-type-3', datetime(2016, 1, 1), case_name='signal') as case:
-            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.apply_rule') as apply:
+            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.run_rule') as apply:
                 hqcase.utils.update_case(case.domain, case.case_id, case_properties={}, xmlns=AUTO_UPDATE_XMLNS)
                 apply.assert_not_called()
 
