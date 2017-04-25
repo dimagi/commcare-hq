@@ -358,6 +358,7 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'date_tested': followup.TestDate or '',
                     'lab_serial_number': followup.LabNo or '',
+                    'name': followup.TestDate,
                     'result_grade': followup.result_grade,
                     'testing_facility_id': followup.DMC,
 
