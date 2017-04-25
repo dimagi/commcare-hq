@@ -5,7 +5,7 @@ hqDefine("reminders/js/scheduled_reminders.js", function() {
                 var next_fire = moment.utc(data.next_fire);
                 return {
                     nickname: data.handler_name,
-                    date: next_fire.format("MMMM D, YYYY"),
+                    date: next_fire.format("YYYY-MM-DD"),
                     time: next_fire.format("h:mm a"),
                     case_name: data.case_name,
                     case_url: data.case_id ? hqImport("hqwebapp/js/urllib.js").reverse("case_details", data.case_id) : "",
