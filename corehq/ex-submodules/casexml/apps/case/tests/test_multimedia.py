@@ -90,20 +90,19 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
         """
         RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
         """
-        response, form, cases, _ = submit_form_locally(
+        result = submit_form_locally(
             xml_data,
             TEST_DOMAIN_NAME,
             attachments=dict_attachments,
             last_sync_token=sync_token,
             received_on=date
         )
-        attachments = form.attachments
+        attachments = result.xform.attachments
         self.assertEqual(set(dict_attachments.keys()),
                          set(attachments.keys()))
-        [case] = cases
-        self.assertEqual(case.case_id, TEST_CASE_ID)
+        self.assertEqual(result.case.case_id, TEST_CASE_ID)
 
-        return response, form, cases
+        return result.response, result.xform, result.cases
 
     def _submit_and_verify(self, doc_id, xml_data, dict_attachments,
                            sync_token=None, date=None):
