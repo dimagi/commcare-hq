@@ -140,6 +140,10 @@ Util.CloudcareUrl = function (options) {
     this.previewCommand = options.previewCommand;
     this.installReference = options.installReference;
 
+    this.setSteps = function (steps) {
+        this.steps = steps;
+    };
+
     this.addStep = function (step) {
         if (!this.steps) {
             this.steps = [];
