@@ -77,7 +77,6 @@ class SyncLogIDProvider(BaseIDProvider):
         from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain
         from casexml.apps.phone.models import SyncLog
         for user_id in get_all_user_ids_by_domain(domain):
-            # this excludes sync logs in old DB (prior to migration to synclog DB). See ``synclog_view``.
             rows = SyncLog.view(
                 "phone/sync_logs_by_user",
                 startkey=[user_id],

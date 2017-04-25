@@ -2038,7 +2038,8 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
     end_date = forms.DateField(
         help_text=ugettext_noop(
-            '1 year after the deployment date (date the project goes live).'
+            'Specify the End Date based on the Start Date plus number of '
+            'months of software plan in the contract with the Client.'
         ),
         label=ugettext_noop('End Date'),
     )
