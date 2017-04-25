@@ -88,7 +88,7 @@ hqDefine("userreports/js/configurable_report.js", function() {
     };
 
     $(function() {
-       getStandardHQReport();
+        getStandardHQReport();
 
         // Bind the ReportConfigsViewModel to the save button.
         var defaultConfig = initial_page_data("default_config");
