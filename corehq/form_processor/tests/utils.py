@@ -88,16 +88,16 @@ class FormProcessorTestUtils(object):
 
     @classmethod
     @unit_testing_only
-    def delete_all_xforms(cls, domain=None, user_id=None):
+    def delete_all_xforms(cls, domain=None):
         logger.debug("Deleting all Couch xforms for domain %s", domain)
         cls._delete_all(XFormInstance.get_db(), all_known_formlike_doc_types(), domain)
-        FormProcessorTestUtils.delete_all_sql_forms(domain, user_id)
+        FormProcessorTestUtils.delete_all_sql_forms(domain)
 
     @staticmethod
     @unit_testing_only
-    def delete_all_sql_forms(domain=None, user_id=None):
+    def delete_all_sql_forms(domain=None):
         logger.debug("Deleting all SQL xforms for domain %s", domain)
-        FormAccessorSQL.delete_all_forms(domain, user_id)
+        FormAccessorSQL.delete_all_forms(domain)
 
     @classmethod
     @unit_testing_only
