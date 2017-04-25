@@ -1120,6 +1120,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
+            # gets overridden in ansible environment specific way
             'handlers': ['notify_exception', 'sentry'],
             'level': 'ERROR',
             'propagate': True,
