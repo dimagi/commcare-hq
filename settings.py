@@ -765,7 +765,7 @@ ELASTICSEARCH_VERSION = 1.7
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance
 COUCH_HTTPS = False
-COUCH_SERVER_ROOTS = ['localhost:5984']  # 6984 for https couch
+COUCH_SERVER_ROOTS = ['localhost:5984', 'localhost:5984']  # 6984 for https couch
 COUCH_USERNAME = ''
 COUCH_PASSWORD = ''
 COUCH_DATABASE_NAME = 'commcarehq'
