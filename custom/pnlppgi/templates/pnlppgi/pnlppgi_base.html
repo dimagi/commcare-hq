@@ -124,6 +124,7 @@
     </script>
     <script>
 
+        $(function() {
         {% if report_table and report_table.datatables %}
             var reportTables = new HQReportDataTables({
                 dataTableElem: '#report_table_{{ report.slug }}',
@@ -165,7 +166,6 @@
 
         {% endif %}
 
-        $(function() {
             $('.header-popover').popover({
                 trigger: 'hover',
                 placement: 'bottom',

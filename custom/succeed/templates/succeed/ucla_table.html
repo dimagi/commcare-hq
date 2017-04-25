@@ -4,6 +4,7 @@
 {% block js-inline %}
     <script type="text/javascript">
 
+        $(function() {
         {% if report_table and report_table.datatables %}
             var reportTables = new HQReportDataTables({
                 dataTableElem: '#report_table_{{ report.slug }}',
@@ -43,7 +44,6 @@
             reportTables.render();
         {% endif %}
 
-        $(function() {
             $('.header-popover').popout({
                 trigger: 'hover',
                 placement: 'bottom'
