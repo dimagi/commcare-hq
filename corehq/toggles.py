@@ -974,7 +974,7 @@ DATA_MIGRATION = StaticToggle(
 
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
-    'Make the Worker Activity Report use the Groups or Users (EMWF) filter',
+    'Make the Worker Activity Report use the Groups or Users or Locations (LocationRestrictedEMWF) filter',
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
     description=(
