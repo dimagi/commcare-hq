@@ -44,6 +44,7 @@ from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
     user_display_string,
     user_location_data,
+    username_to_user_id,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted
@@ -1196,9 +1197,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
             if result['doc'] is None or result['doc']['username'] != username:
                 raise NoResultFound
-        except NoMoreData:
-            logging.exception('called get_by_username(%r) and it failed pretty bad' % username)
-            raise
         except NoResultFound:
             result = get(stale=None, raise_if_none=False)
 
@@ -1219,6 +1217,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         self.get_by_username.clear(self.__class__, self.username)
         self.get_by_user_id.clear(self.__class__, self.user_id)
+        username_to_user_id.clear(self.username)
         domains = getattr(self, 'domains', None)
         if domains is None:
             domain = getattr(self, 'domain', None)
