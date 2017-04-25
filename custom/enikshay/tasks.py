@@ -30,6 +30,10 @@ from .data_store import AdherenceDatastore
 logger = get_task_logger(__name__)
 
 
+class EnikshayTaskException(Exception):
+    pass
+
+
 @periodic_task(
     run_every=crontab(day_of_week=[1], hour=0, minute=0),  # every Monday
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
@@ -66,10 +70,12 @@ class EpisodeAdherenceUpdater(object):
                         self.domain
                     )
             except Exception, e:
-                raise Exception("Error calculating adherence values for episode case_id({}): {}".format(
-                    episode.case_id,
-                    e
-                ))
+                raise EnikshayTaskException(
+                    "Error calculating adherence values for episode case_id({}): {}".format(
+                        episode.case_id,
+                        e
+                    )
+                )
 
     def _get_open_episode_cases(self):
         # return all open 'episode' cases
@@ -206,7 +212,7 @@ class EpisodeUpdate(object):
             two adherence_cases on one day at different time, it will be counted as one
         """
         if bool(lte) != bool(gte):
-            raise Exception("Both of lte and gte should be specified or niether of them")
+            raise EnikshayTaskException("Both of lte and gte should be specified or niether of them")
 
         if not lte:
             return dose_taken_by_date.values().count(True)
