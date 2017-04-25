@@ -16,7 +16,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.data import COUNTRIES
-
+from django.contrib.auth import password_validation
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
@@ -28,7 +28,7 @@ from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
-
+from corehq.apps.hqwebapp.utils import decode_password
 # Bootstrap 3 Crispy Forms
 from crispy_forms import layout as cb3_layout
 from crispy_forms import helper as cb3_helper
@@ -413,9 +413,22 @@ class SetUserPasswordForm(SetPasswordForm):
         )
 
     def clean_new_password1(self):
+        password1 = decode_password(self.cleaned_data.get('new_password1'))
         if self.project.strong_mobile_passwords:
-            return clean_password(self.cleaned_data.get('new_password1'))
-        return self.cleaned_data.get('new_password1')
+            return clean_password(password1)
+        return password1
+
+    def clean_new_password2(self):
+        password2 = decode_password(self.cleaned_data.get('new_password2'))
+        password1 = self.cleaned_data.get('new_password1')
+        if password1 and password2:
+            if password1 != password2:
+                raise forms.ValidationError(
+                    self.error_messages['password_mismatch'],
+                    code='password_mismatch',
+                )
+        password_validation.validate_password(password2, self.user)
+        return password2
 
 
 class CommCareAccountForm(forms.Form):
