@@ -35,7 +35,7 @@ import types
 import re
 import datetime
 import uuid
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, OrderedDict
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
@@ -47,6 +47,7 @@ import itertools
 from lxml import etree
 from django.core.cache import cache
 from django.utils.translation import override, ugettext as _, ugettext
+from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
@@ -909,6 +910,8 @@ class FormBase(DocumentSchema):
                 return Form.wrap(data)
             elif doc_type == 'AdvancedForm':
                 return AdvancedForm.wrap(data)
+            elif doc_type == 'ShadowForm':
+                return ShadowForm.wrap(data)
             else:
                 try:
                     return CareplanForm.wrap(data)
@@ -2989,6 +2992,120 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 meta.add_closer(self.unique_id, action.close_condition)
 
 
+class ShadowForm(AdvancedForm):
+    form_type = 'shadow_form'
+    # The unqiue id of the form we are shadowing
+    shadow_parent_form_id = StringProperty(required=False, default=None)
+
+    # form actions to be merged with the parent actions
+    extra_actions = SchemaProperty(AdvancedFormActions)
+
+    def __init__(self, *args, **kwargs):
+        super(ShadowForm, self).__init__(*args, **kwargs)
+        self._shadow_parent_form = None
+
+    @property
+    def shadow_parent_form(self):
+        if not self.shadow_parent_form_id:
+            return None
+        else:
+            if not self._shadow_parent_form or self._shadow_parent_form.unique_id != self.shadow_parent_form_id:
+                app = self.get_app()
+                try:
+                    self._shadow_parent_form = app.get_form(self.shadow_parent_form_id)
+                except FormNotFoundException:
+                    self._shadow_parent_form = None
+            return self._shadow_parent_form
+
+    @property
+    def source(self):
+        if self.shadow_parent_form:
+            return self.shadow_parent_form.source
+        from corehq.apps.app_manager.views.utils import get_blank_form_xml
+        return get_blank_form_xml("")
+
+    @property
+    def xmlns(self):
+        if not self.shadow_parent_form:
+            return None
+        else:
+            return self.shadow_parent_form.xmlns
+
+    @property
+    def actions(self):
+        if not self.shadow_parent_form:
+            shadow_parent_actions = AdvancedFormActions()
+        else:
+            shadow_parent_actions = self.shadow_parent_form.actions
+        return self._merge_actions(shadow_parent_actions, self.extra_actions)
+
+    def get_shadow_parent_options(self):
+        options = [
+            (form.get_unique_id(), u'{} / {}'.format(form.get_module().default_name(), form.default_name()))
+            for form in self.get_app().get_forms() if form.form_type == "advanced_form"
+        ]
+        if self.shadow_parent_form_id and self.shadow_parent_form_id not in [x[0] for x in options]:
+            options = [(self.shadow_parent_form_id, ugettext_lazy("Unknown, please change"))] + options
+        return options
+
+    @staticmethod
+    def _merge_actions(source_actions, extra_actions):
+        new_actions = OrderedDict(
+            (action.case_tag, LoadUpdateAction.wrap(action.to_json()))
+            for action in source_actions.load_update_cases
+        )
+        for action in extra_actions.load_update_cases:
+            new_action = new_actions.get(action.case_tag, LoadUpdateAction(case_tag=action.case_tag))
+            overwrite_properties = [
+                "case_type",
+                "details_module",
+                "auto_select",
+                "load_case_from_fixture",
+                "show_product_stock",
+                "product_program",
+                "case_index",
+            ]
+            for prop in overwrite_properties:
+                setattr(new_action, prop, getattr(action, prop))
+            if action.case_tag not in new_actions:
+                new_actions[action.case_tag] = new_action
+
+        return AdvancedFormActions(
+            load_update_cases=new_actions.values(),
+            open_cases=source_actions.open_cases,  # Shadow form is not allowed to specify any open case actions
+        )
+
+    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
+        errors = super(ShadowForm, self).extended_build_validation(error_meta, xml_valid, validate_module)
+        if not self.shadow_parent_form_id:
+            error = {
+                "type": "missing shadow parent",
+            }
+            error.update(error_meta)
+            errors.append(error)
+        elif not self.shadow_parent_form:
+            error = {
+                "type": "shadow parent does not exist",
+            }
+            error.update(error_meta)
+            errors.append(error)
+        return errors
+
+    def check_actions(self):
+        errors = super(ShadowForm, self).check_actions()
+
+        shadow_parent_form = self.shadow_parent_form
+        if shadow_parent_form:
+            case_tags = set(self.extra_actions.get_case_tags())
+            missing_tags = []
+            for action in shadow_parent_form.actions.load_update_cases:
+                if action.case_tag not in case_tags:
+                    missing_tags.append(action.case_tag)
+            if missing_tags:
+                errors.append({'type': 'missing shadow parent tag', 'case_tags': missing_tags})
+        return errors
+
+
 class SchedulePhaseForm(IndexedSchema):
     """
     A reference to a form in a schedule phase.
@@ -3074,7 +3191,7 @@ class SchedulePhase(IndexedSchema):
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
     case_label = DictProperty()
-    forms = SchemaListProperty(AdvancedForm)
+    forms = SchemaListProperty(FormBase)
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
     put_in_root = BooleanProperty(default=False)
@@ -3146,6 +3263,20 @@ class AdvancedModule(ModuleBase):
         if attachment == Ellipsis:
             attachment = get_blank_form_xml(name)
         form.source = attachment
+        return form
+
+    def new_shadow_form(self, name, lang):
+        lang = lang if lang else "en"
+        name = name if name else _("Untitled Form")
+        form = ShadowForm(
+            name={lang: name},
+            no_vellum=True,
+        )
+        form.schedule = FormSchedule(enabled=False)
+
+        self.forms.append(form)
+        form = self.get_form(-1)
+        form.get_unique_id()  # This function sets the unique_id. Normally setting the source sets the id.
         return form
 
     def add_insert_form(self, from_module, form, index=None, with_source=False):
@@ -5598,15 +5729,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             files["{prefix}{lang}/app_strings.txt".format(
                 prefix=prefix, lang=lang)] = self.create_app_strings(lang, build_profile_id)
         for form_stuff in self.get_forms(bare=False):
-            filename = prefix + self.get_form_filename(**form_stuff)
-            form = form_stuff['form']
-            try:
-                files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
-            except XFormValidationFailed:
-                raise XFormException(_('Unable to validate the forms due to a server error. '
-                                       'Please try again later.'))
-            except XFormException as e:
-                raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
+            if not isinstance(form_stuff['form'], ShadowForm):
+                filename = prefix + self.get_form_filename(**form_stuff)
+                form = form_stuff['form']
+                try:
+                    files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
+                except XFormValidationFailed:
+                    raise XFormException(_('Unable to validate the forms due to a server error. '
+                                           'Please try again later.'))
+                except XFormException as e:
+                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
         return files
 
     get_modules = IndexedSchema.Getter('modules')
@@ -5901,7 +6033,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             errors.extend(form.validate_for_build(validate_module=False))
 
             # make sure that there aren't duplicate xmlns's
-            xmlns_count[form.xmlns] += 1
+            if not isinstance(form, ShadowForm):
+                xmlns_count[form.xmlns] += 1
             for xmlns in xmlns_count:
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})

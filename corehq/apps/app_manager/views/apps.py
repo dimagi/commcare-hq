@@ -281,17 +281,19 @@ def get_apps_base_context(request, domain, app):
 
     if app and not app.is_remote_app():
         app.assert_app_v2()
+        show_advanced = (
+            toggles.APP_BUILDER_ADVANCED.enabled(domain)
+            or getattr(app, 'commtrack_enabled', False)
+        )
         context.update({
             'show_care_plan': (
                 not app.has_careplan_module
                 and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)
             ),
-            'show_advanced': (
-                toggles.APP_BUILDER_ADVANCED.enabled(domain)
-                or getattr(app, 'commtrack_enabled', False)
-            ),
+            'show_advanced': show_advanced,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
+            'show_shadow_forms': show_advanced,
         })
 
     return context

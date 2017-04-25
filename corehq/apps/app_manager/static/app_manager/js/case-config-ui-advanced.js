@@ -31,6 +31,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         self.requires = params.requires;
         self.commtrack = params.commtrack_enabled;
         self.programs = params.commtrack_programs;
+        self.isShadowForm = params.isShadowForm;
 
         self.setPropertiesMap = function (propertiesMap) {
              self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -183,7 +184,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         };
 
         self.init = function () {
-            var $home = $('#case-config-ko');
+            var $home = self.home;
             _.delay(function () {
                 $home.koApplyBindings(self);
                 $home.on('textchange', 'input', self.change)
@@ -193,7 +194,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                      .on('change', 'input[type="checkbox"]', self.change);
 
                 // https://gist.github.com/mkelly12/424774/#comment-92080
-                $('#case-config-ko input').on('textchange', self.change);
+                $home.find('input').on('textchange', self.change);
 
                 self.ensureBlankProperties();
                 $('#case-configuration-tab').on('click', function () {
@@ -302,7 +303,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             return action;
         }));
 
-        self.actionOptions = ko.observableArray([
+        var _actions = [
             {
                 display: 'Load / Update / Close a case',
                 value: 'load'
@@ -315,15 +316,20 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 display: 'Load Case From Fixture',
                 value: 'load_case_from_fixture'
             },
-            {
-                display: '---',
-                value: 'separator'
-            },
-            {
-                display: 'Open a Case',
-                value: 'open'
-            }
-        ]);
+        ];
+        if (!self.caseConfig.isShadowForm) {
+            _actions = _actions.concat([
+                {
+                    display: '---',
+                    value: 'separator',
+                },
+                {
+                    display: 'Open a Case',
+                    value: 'open',
+                },
+            ]);
+        }
+        self.actionOptions = ko.observableArray(_actions);
 
         self.renameCaseTag = function (oldTag, newTag, parentOnly) {
             var actions = self.load_update_cases();
