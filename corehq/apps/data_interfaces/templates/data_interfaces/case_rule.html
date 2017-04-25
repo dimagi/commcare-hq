@@ -9,11 +9,7 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
-    var actions_model = null;
     $(function() {
-        actions_model = new CaseRuleActions(hqImport("hqwebapp/js/initial_page_data.js").get('actions_initial'));
-        $('#rule-actions').koApplyBindings(actions_model);
-        actions_model.load_initial();
         if(hqImport("hqwebapp/js/initial_page_data.js").get('read_only_mode')) {
             $('#rule-definition :input').prop('disabled', true);
         }
@@ -29,6 +25,7 @@
                 criteria_model.show_add_filter_warning(false);
             }
 
+            var actions_model = hqImport('data_interfaces/js/case_rule_actions.js').get_actions_model();
             if(actions_model.selected_case_action_id() !== 'select-one') {
                 actions_model.show_add_action_warning(true);
                 result = false;
