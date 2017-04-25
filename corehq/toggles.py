@@ -168,6 +168,8 @@ class PredictablyRandomToggle(StaticToggle):
     def enabled(self, item, **kwargs):
         if settings.UNIT_TESTING:
             return False
+        elif item in self.always_disabled:
+            return False
         return (
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
             or super(PredictablyRandomToggle, self).enabled(item, **kwargs)
