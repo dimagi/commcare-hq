@@ -2,7 +2,7 @@
 hqDefine("userreports/js/configurable_report.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
 
-    var get = function() {
+    var getStandardHQReport = function() {
         var $editReportButton = $("#edit-report-link");
 
         if (initial_page_data("created_by_builder")) {
@@ -84,6 +84,8 @@ hqDefine("userreports/js/configurable_report.js", function() {
     };
 
     $(function() {
+       getStandardHQReport();
+
         // Bind the ReportConfigsViewModel to the save button.
         var defaultConfig = initial_page_data("default_config");
         if (initial_page_data("has_datespan")) {
@@ -123,6 +125,6 @@ hqDefine("userreports/js/configurable_report.js", function() {
     });
 
     return {
-        get: get,
+        getStandardHQReport: getStandardHQReport,
     };
 });
