@@ -653,7 +653,7 @@ class RestoreConfig(object):
             RESTORE_CACHE_KEY_PREFIX,
             self.restore_user.user_id,
             version=self.version,
-            sync_log_id=self.sync_log._id,
+            sync_log_id=self.sync_log._id if self.sync_log else '',
         )
 
     def validate(self):
@@ -697,7 +697,7 @@ class RestoreConfig(object):
         return response
 
     def get_cached_response(self):
-        if self.overwrite_cache or self.sync_log:
+        if self.overwrite_cache:
             return None
 
         cache_payload_path = self.cache.get(self._restore_cache_key)
@@ -780,7 +780,7 @@ class RestoreConfig(object):
         # on initial sync, only cache if the duration was longer than the threshold
         is_long_restore = duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD)
 
-        if self.force_cache or is_long_restore:
+        if self.force_cache or is_long_restore or self.sync_log:
             self._set_cache_in_redis(cache_payload_path)
 
     def _set_cache_in_redis(self, cache_payload_path):
