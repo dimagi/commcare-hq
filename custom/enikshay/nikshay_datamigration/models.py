@@ -287,8 +287,6 @@ class Outcome(models.Model):
     )
     InitiatedDate = models.CharField(max_length=255, null=True)  # dates, None, and NULL
     userName = models.CharField(max_length=255)
-    # loginDate = models.DateTimeField()
-    # OutcomeDate1 = models.CharField(max_length=255)  # datetimes and NULL
 
     @property
     def hiv_status(self):
@@ -345,16 +343,15 @@ class Followup(models.Model):
     id = models.AutoField(primary_key=True)
     PatientID = models.ForeignKey(PatientDetail, on_delete=models.CASCADE)  # requires trimming whitespace in excel
     IntervalId = models.IntegerField()
-    TestDate = models.DateField()
+    TestDate = models.DateField(null=True)
     DMC = models.IntegerField()
-    LabNo = models.IntegerField()
+    LabNo = models.CharField(max_length=255, null=True)
     SmearResult = models.IntegerField()
     PatientWeight = models.IntegerField(null=True)
     DmcStoCode = models.CharField(max_length=255, null=True)
     DmcDtoCode = models.CharField(max_length=255, null=True)
-    DmcTbuCode = models.IntegerField(null=True)
+    DmcTbuCode = models.CharField(max_length=255, null=True)
     RegBy = models.CharField(max_length=255, null=True)
-    # regdate = models.DateTimeField(null=True)  # remove from CSV - poorly formatted (and unused)
 
     @property
     def result_grade(self):
@@ -371,6 +368,5 @@ class Followup(models.Model):
             11: '1+',
             12: '2+',
             13: '3+',
-            0: 'NA',
             98: 'Pos',
         }[self.SmearResult]
