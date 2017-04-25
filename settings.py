@@ -765,7 +765,7 @@ ELASTICSEARCH_VERSION = 1.7
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance
 COUCH_HTTPS = False
-COUCH_SERVER_ROOT = 'localhost:5984'  # 6984 for https couch
+COUCH_SERVER_ROOTS = ['localhost:5984']  # 6984 for https couch
 COUCH_USERNAME = ''
 COUCH_PASSWORD = ''
 COUCH_DATABASE_NAME = 'commcarehq'
@@ -1252,16 +1252,16 @@ COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
 COUCH_DATABASE_NAME = helper.get_db_name(COUCH_DATABASE_NAME, UNIT_TESTING)
-_dynamic_db_settings = helper.get_dynamic_db_settings(
-    COUCH_SERVER_ROOT,
+_dynamic_db_settings = [helper.get_dynamic_db_settings(
+    server_root,
     COUCH_USERNAME,
     COUCH_PASSWORD,
     COUCH_DATABASE_NAME,
     use_https=COUCH_HTTPS,
-)
+) for server_root in COUCH_SERVER_ROOTS]
 
 # create local server and database configs
-COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
+COUCH_DATABASE_SERVERS = [server["COUCH_DATABASE"] for server in _dynamic_db_settings]
 
 NEW_USERS_GROUPS_DB = 'users'
 USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
@@ -1376,7 +1376,7 @@ COUCHDB_APPS = [
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
-    COUCH_DATABASE,
+    COUCH_DATABASE_SERVERS,
     COUCHDB_APPS,
     [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB, NEW_APPS_DB],
 )

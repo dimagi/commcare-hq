@@ -123,7 +123,7 @@ def assign_test_db_names(dbs):
 
 
 class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
-                          ['couch_database_url', 'couchdb_apps', 'extra_db_names'])):
+                          ['couch_database_urls', 'couchdb_apps', 'extra_db_names'])):
     def make_couchdb_tuples(self):
         """
         Helper function to generate couchdb tuples
@@ -136,14 +136,18 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
         return db_uri
 
     def _make_couchdb_tuple(self, row):
+        url_index = 0
         if isinstance(row, six.string_types):
             app_label, postfix = row, None
         else:
             app_label, postfix = row
+            if len(row) == 3:
+                url_index = row[2]
+        couch_database_url = self.couch_database_urls[url_index]
         if postfix:
-            return app_label, self._format_db_uri('%s__%s' % (self.couch_database_url, postfix))
+            return app_label, self._format_db_uri('%s__%s' % (couch_database_url, postfix))
         else:
-            return app_label, self._format_db_uri(self.couch_database_url)
+            return app_label, self._format_db_uri(couch_database_url)
 
     def get_extra_couchdbs(self):
         """
