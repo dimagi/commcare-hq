@@ -66,13 +66,14 @@ from xml.etree import ElementTree
 logger = logging.getLogger(__name__)
 
 
-def restore_cache_key(domain, prefix, user_id, version=None):
+def restore_cache_key(domain, prefix, user_id, version=None, sync_log_id=None):
     response_class = get_restore_response_class(domain)
-    hashable_key = '{response_class}-{prefix}-{user}-{version}'.format(
+    hashable_key = '{response_class}-{prefix}-{user}-{version}-{sync_log_id}'.format(
         response_class=response_class.__name__,
         prefix=prefix,
         user=user_id,
         version=version or '',
+        sync_log_id=sync_log_id or '',
     )
     return hashlib.md5(hashable_key).hexdigest()
 
@@ -659,7 +660,13 @@ class RestoreConfig(object):
 
     @property
     def _restore_cache_key(self):
-        return restore_cache_key(self.domain, RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id, self.version)
+        return restore_cache_key(
+            self.domain,
+            RESTORE_CACHE_KEY_PREFIX,
+            self.restore_user.user_id,
+            version=self.version,
+            sync_log_id=self.sync_log._id,
+        )
 
     def validate(self):
         try:
@@ -790,7 +797,7 @@ class RestoreConfig(object):
         # on initial sync, only cache if the duration was longer than the threshold
         is_long_restore = duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD)
 
-        if not self.sync_log and (self.force_cache or is_long_restore):
+        if self.force_cache or is_long_restore:
             self._set_cache_in_redis(cache_payload_path)
 
     def _set_cache_in_redis(self, cache_payload_path):
