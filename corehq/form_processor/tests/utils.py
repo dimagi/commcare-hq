@@ -42,18 +42,24 @@ class FormProcessorTestUtils(object):
     def delete_all_cases(cls, domain=None):
         logger.debug("Deleting all Couch cases for domain %s", domain)
         assert CommCareCase.get_db().dbname.startswith('test_')
-        view_kwargs = {}
-        if domain:
-            view_kwargs = {
-                'startkey': [domain],
-                'endkey': [domain, {}],
-            }
-
-        cls._delete_all(
-            CommCareCase.get_db(),
-            'cases_by_server_date/by_server_modified_on',
-            **view_kwargs
-        )
+        for doc_type in ['CommCareCase', 'CommCareCase-Deleted']:
+            if domain:
+                view = 'by_domain_doc_type_date/view'
+                view_kwargs = {
+                    'startkey': [domain, doc_type],
+                    'endkey': [domain, doc_type, {}],
+                }
+            else:
+                view = 'all_docs/by_doc_type'
+                view_kwargs = {
+                    'startkey': [doc_type],
+                    'endkey': [doc_type, {}],
+                }
+            cls._delete_all(
+                CommCareCase.get_db(),
+                view,
+                **view_kwargs
+            )
 
         FormProcessorTestUtils.delete_all_sql_cases(domain)
 
