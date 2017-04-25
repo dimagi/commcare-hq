@@ -178,9 +178,9 @@ hqDefine('registration/js/new_user.ko.js', function () {
         self.currentStep = ko.observable(0);
 
         var _getDataForSubmission = function () {
-            var password = self.password()
-            if(typeof(hex_parser) != 'undefined') {
-                var password = (new hex_parser()).encode(self.password())
+            var password = self.password();
+            if(typeof(hex_parser) !== 'undefined') {
+                password = (new hex_parser()).encode(self.password());
             }
             return {
                 full_name: self.fullName(),

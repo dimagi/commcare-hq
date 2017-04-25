@@ -45,5 +45,5 @@ hqDefine('domain/js/encoder.js', function () {
         }
     });
 
-    return HexParsr
+    return HexParsr;
 });
