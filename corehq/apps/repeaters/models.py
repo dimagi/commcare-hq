@@ -58,7 +58,7 @@ def simple_post_with_logged_timeout(domain, data, url, *args, **kwargs):
 DELETED = "-Deleted"
 
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
-PostInfo = namedtuple('PostInfo', 'payload headers force_send max_tries')
+PostInfo = namedtuple('PostInfo', 'payload headers')
 
 
 class GeneratorCollection(object):
@@ -523,12 +523,12 @@ class RepeatRecord(Document):
         if reraise:
             raise
 
-    def fire(self, max_tries=3, force_send=False):
+    def fire(self, force_send=False):
         headers = self.repeater.get_headers(self)
         if self.try_now() or force_send:
             self.overall_tries += 1
             tries = 0
-            post_info = PostInfo(self.get_payload(), headers, force_send, max_tries)
+            post_info = PostInfo(self.get_payload(), headers)
             self.post(post_info, tries=tries)
             self.save()
 
@@ -540,7 +540,6 @@ class RepeatRecord(Document):
                 post_info.payload,
                 self.url,
                 headers=post_info.headers,
-                force_send=post_info.force_send,
                 timeout=POST_TIMEOUT,
             )
         except Exception as e:

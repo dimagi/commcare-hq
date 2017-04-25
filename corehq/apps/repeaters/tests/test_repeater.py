@@ -183,7 +183,6 @@ class RepeaterTest(BaseRepeaterTest):
                     repeat_record.get_payload(),
                     repeat_record.repeater.get_url(repeat_record),
                     headers=repeat_record.repeater.get_headers(repeat_record),
-                    force_send=False,
                     timeout=POST_TIMEOUT,
                 )
 
@@ -674,6 +673,5 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 self.payload,
                 self.repeater.url,
                 headers=headers,
-                force_send=False,
                 timeout=POST_TIMEOUT,
             )
