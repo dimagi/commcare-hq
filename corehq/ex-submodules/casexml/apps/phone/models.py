@@ -328,31 +328,19 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         """
         raise NotImplementedError()
 
-    def set_cached_payload(self, payload_path, version):
-        self.cache_payload_paths[self._cache_key(version)] = payload_path
-
-    def get_cached_payload(self, version, stream=False):
-        if self._cache_key(version) in self.cache_payload_paths:
-            return self.response_class.get_payload(self.cache_payload_paths[self._cache_key(version)])
-        return None
-
-    def get_cached_payload_path(self, version):
-        if self._cache_key(version) in self.cache_payload_paths:
-            return self.cache_payload_paths[self._cache_key(version)]
-        return None
-
     def _cache_key(self, version):
-        return u'{}-{}'.format(self.response_class.__name__, version)
-
-    def invalidate_cached_payloads(self):
         from casexml.apps.phone.restore import restore_cache_key
-        keys = [restore_cache_key(
+
+        return restore_cache_key(
             self.domain,
             RESTORE_CACHE_KEY_PREFIX,
             self.user_id,
             version=version,
             sync_log_id=self._id,
-        ) for version in [V1, V2]]
+        )
+
+    def invalidate_cached_payloads(self):
+        keys = [self._cache_key(version) for version in [V1, V2]]
 
         for key in keys:
             get_redis_default_cache().delete(key)
