@@ -360,7 +360,7 @@ class AsyncRestoreResponse(object):
         return response
 
 
-class CachedPayload(object):
+class CachedResponse(object):
 
     def __init__(self, domain, payload_path):
         self.payload_path = payload_path
@@ -381,18 +381,6 @@ class CachedPayload(object):
 
     def as_file(self):
         return self.payload
-
-
-class CachedResponse(object):
-
-    def __init__(self, payload):
-        self.payload = payload
-
-    def __nonzero__(self):
-        return bool(self.payload)
-
-    def as_string(self):
-        return self.payload.as_string()
 
     def get_http_response(self):
         headers = {}
@@ -710,16 +698,11 @@ class RestoreConfig(object):
 
     def get_cached_response(self):
         if self.overwrite_cache or self.sync_log:
-            return CachedResponse(None)
+            return None
 
         cache_payload_path = self.cache.get(self._restore_cache_key)
 
-        payload = CachedPayload(
-            self.domain,
-            cache_payload_path,
-        )
-
-        return CachedResponse(payload)
+        return CachedResponse(self.domain, cache_payload_path)
 
     def _get_asynchronous_payload(self):
         new_task = False
