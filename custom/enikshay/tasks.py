@@ -239,10 +239,14 @@ class EpisodeUpdate(object):
             }
         """
 
+        debug_data = []
         adherence_schedule_date_start = self.get_adherence_schedule_start_date()
+        debug_data.append("adherence_schedule_date_start: {}".format(adherence_schedule_date_start))
+        debug_data.append("purge_date: {}".format(self.case_updater.purge_date))
+
         if not adherence_schedule_date_start:
             # adherence schedule hasn't been selected, so no update necessary
-            return {}
+            return {'update': {}, 'debug_data': debug_data}
 
         default_update = {
             'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
@@ -257,6 +261,7 @@ class EpisodeUpdate(object):
         else:
             update = {}
             latest_adherence_date = self.get_latest_adherence_date()
+            debug_data.append("latest_adherence_date: {}".format(latest_adherence_date))
             if not latest_adherence_date:
                 update = default_update
             else:
@@ -295,14 +300,14 @@ class EpisodeUpdate(object):
         for key, val in update.iteritems():
             if isinstance(val, datetime.datetime):
                 update[key] = val.date()
-        return update
+        return {'update': update, 'debug_data': debug_data}
 
     def case_block(self):
         """
         Returns:
             CaseBlock object with adherence updates. If no update is necessary, None is returned
         """
-        update = self.update_json()
+        update = self.update_json()['update']
         if update:
             return CaseBlock(**{
                 'case_id': self.episode.case_id,
