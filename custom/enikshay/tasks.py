@@ -7,7 +7,7 @@ from celery.task import periodic_task
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from django.conf import settings
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_datetime, parse_date
 
 from casexml.apps.case.mock import CaseBlock
 from corehq import toggles
@@ -66,7 +66,7 @@ class EpisodeAdherenceUpdater(object):
                         self.domain
                     )
             except Exception, e:
-                logger.error("Error calculating adherence values for episode case_id({}): {}".format(
+                raise Exception("Error calculating adherence values for episode case_id({}): {}".format(
                     episode.case_id,
                     e
                 ))
@@ -169,7 +169,7 @@ class EpisodeUpdate(object):
         # index by 'adherence_date'
         cases_by_date = defaultdict(list)
         for case in adherence_cases:
-            adherence_date = parse_datetime(case['adherence_date']).date()
+            adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
             cases_by_date[adherence_date].append(case)
 
         # calculate whether adherence is taken on each day
@@ -178,6 +178,24 @@ class EpisodeUpdate(object):
             dose_taken_by_date[d] = is_dose_taken(cases)
 
         return dose_taken_by_date
+
+    def get_adherence_schedule_start_date(self):
+        # return property 'adherence_schedule_date_start' of episode case, cast to datetime
+        raw_date = self.get_property('adherence_schedule_date_start')
+        if not raw_date:
+            return None
+        if parse_datetime(raw_date):
+            return parse_datetime(raw_date)
+        elif parse_date(raw_date):
+            return datetime.datetime.combine(parse_date(raw_date), datetime.datetime.min.time())
+        else:
+            logger.error(
+                "Episode case {case_id} has invalid format for 'adherence_schedule_date_start' {date}".format(
+                    case_id=self.episode.case_id,
+                    date=raw_date
+                )
+            )
+            return None
 
     def count_doses_taken(self, dose_taken_by_date, lte=None, gte=None):
         """
@@ -214,7 +232,8 @@ class EpisodeUpdate(object):
                 'aggregated_score_count_taken': value
             }
         """
-        adherence_schedule_date_start = parse_datetime(self.get_property('adherence_schedule_date_start'))
+
+        adherence_schedule_date_start = self.get_adherence_schedule_start_date()
         if not adherence_schedule_date_start:
             # adherence schedule hasn't been selected, so no update necessary
             return {}
