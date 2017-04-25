@@ -25,13 +25,10 @@ from .const import (
     SCHEDULE_ID_FIXTURE,
     HISTORICAL_CLOSURE_REASON,
 )
+from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
 
 logger = get_task_logger(__name__)
-
-
-class EnikshayTaskException(Exception):
-    pass
 
 
 @periodic_task(
