@@ -677,7 +677,7 @@ class RestoreConfig(object):
         return restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id)
 
     @property
-    def _initial_cache_key(self):
+    def _restore_cache_key(self):
         return restore_cache_key(RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id, self.version)
 
     def validate(self):
@@ -727,7 +727,7 @@ class RestoreConfig(object):
         if self.sync_log:
             cache_payload_path = self.sync_log.get_cached_payload_path(self.version)
         else:
-            cache_payload_path = self.cache.get(self._initial_cache_key)
+            cache_payload_path = self.cache.get(self._restore_cache_key)
 
         payload = CachedPayload(
             self.domain,
@@ -834,8 +834,8 @@ class RestoreConfig(object):
             pass
 
     def _set_cache_in_redis(self, cache_payload_path):
-        self.cache.set(self._initial_cache_key, cache_payload_path, self.cache_timeout)
+        self.cache.set(self._restore_cache_key, cache_payload_path, self.cache_timeout)
 
     def delete_cached_payload_if_necessary(self):
-        if self.overwrite_cache and self.cache.get(self._initial_cache_key):
-            self.cache.delete(self._initial_cache_key)
+        if self.overwrite_cache and self.cache.get(self._restore_cache_key):
+            self.cache.delete(self._restore_cache_key)
