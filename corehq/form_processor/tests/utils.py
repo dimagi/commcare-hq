@@ -103,7 +103,7 @@ class FormProcessorTestUtils(object):
     @unit_testing_only
     def delete_all_sync_logs(cls):
         logger.debug("Deleting all synclogs")
-        cls._delete_all(SyncLog.get_db(), ["SyncLog"])
+        cls._delete_all_from_view(SyncLog.get_db(), 'phone/sync_logs_by_user')
 
     @staticmethod
     @unit_testing_only
@@ -122,15 +122,20 @@ class FormProcessorTestUtils(object):
                     'endkey': [doc_type, {}],
                 }
 
-            deleted = set()
-            for row in db.view(view, reduce=False, **view_kwargs):
-                doc_id = row['id']
-                if doc_id not in deleted:
-                    try:
-                        safe_delete(db, doc_id)
-                        deleted.add(doc_id)
-                    except ResourceNotFound:
-                        pass
+            FormProcessorTestUtils._delete_all_from_view(db, view, view_kwargs)
+
+    @staticmethod
+    def _delete_all_from_view(db, view, view_kwargs=None):
+        view_kwargs = view_kwargs or {}
+        deleted = set()
+        for row in db.view(view, reduce=False, **view_kwargs):
+            doc_id = row['id']
+            if doc_id not in deleted:
+                try:
+                    safe_delete(db, doc_id)
+                    deleted.add(doc_id)
+                except ResourceNotFound:
+                    pass
 
 
 run_with_all_backends = functools.partial(
