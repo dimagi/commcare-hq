@@ -354,6 +354,7 @@ class EnikshayCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': TEST_CASE_TYPE,
+                'owner_id': '-',
                 'update': {
                     'date_tested': followup.TestDate or '',
                     'lab_serial_number': followup.LabNo or '',
