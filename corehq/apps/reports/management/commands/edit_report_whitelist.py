@@ -23,7 +23,7 @@ class Command(BaseCommand):
         )
 
 
-    def handle(self, domain, *reports, **options):
+    def handle(self, domain, reports, **options):
         reset = options.pop('reset')
         domain = Domain.get_by_name(domain)
 

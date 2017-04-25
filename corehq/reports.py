@@ -159,6 +159,8 @@ def REPORTS(project):
 def _filter_reports(report_set, reports):
     if report_set:
         return [r for r in reports if r.slug in report_set]
+    else:
+        return reports
 
 def _get_dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
