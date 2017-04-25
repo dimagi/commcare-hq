@@ -44,7 +44,7 @@
              $('#form-workflow').koApplyBindings(new FormWorkflow(options))
          {% endif %}
  
-@@ -229,7 +222,7 @@
+@@ -232,7 +225,7 @@
  
          gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
  
@@ -53,7 +53,7 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -295,69 +288,55 @@
+@@ -298,69 +291,55 @@
      </script>
  {% endblock %}
  
@@ -165,7 +165,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -369,34 +348,34 @@
+@@ -372,34 +351,34 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -216,7 +216,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -408,30 +387,32 @@
+@@ -411,30 +390,32 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -273,7 +273,7 @@
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
                      <p class="alert alert-warning">
-@@ -457,7 +438,6 @@
+@@ -460,7 +441,6 @@
                          {% block usercase_management_content %}
                              {%  if form.uses_usercase and not allow_usercase %}
                                  <div class="container-fluid col-sm-6">
@@ -281,7 +281,7 @@
                                {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                                  <p>{% blocktrans %}
                                      The User Properties feature is no longer available because of the change in your
-@@ -502,7 +482,7 @@
+@@ -505,7 +485,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -290,7 +290,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -515,14 +495,15 @@
+@@ -518,14 +498,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -308,7 +308,7 @@
              {% endif %}
          </div>
      </div>
-@@ -530,12 +511,12 @@
+@@ -533,12 +514,12 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
