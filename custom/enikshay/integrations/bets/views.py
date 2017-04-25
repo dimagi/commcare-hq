@@ -33,6 +33,12 @@ class VoucherUpdate(jsonobject.JsonObject):
     payment_amount = jsonobject.IntegerProperty(required=False)
     failure_description = jsonobject.StringProperty(required=False)
 
+    case_type = 'voucher'
+
+    @property
+    def case_id(self):
+        return self.voucher_id
+
     @property
     def properties(self):
         if self.payment_status == 'success':
@@ -54,25 +60,32 @@ def get_case(domain, case_id):
     return case_accessor.get_case(case_id)
 
 
-@require_POST
-@login_or_digest_or_basic_or_apikey()
-def update_voucher(request, domain):
+def _update_case_from_request(request, domain, update_model):
     try:
         request_json = json.loads(request.body)
     except ValueError:
         return json_response({"error": "Malformed JSON"}, status_code=400)
     try:
-        update = VoucherUpdate.wrap(request_json)
+        update = update_model.wrap(request_json)
     except BadValueError as e:
         return json_response({"error": e.message}, status_code=400)
 
     try:
-        case = get_case(domain, update.voucher_id)
-        if case.type != 'voucher':
+        case = get_case(domain, update.case_id)
+        if case.type != update.case_type:
             raise CaseNotFound()
     except CaseNotFound:
-        return json_response({"error": "No case found with that ID"}, status_code=404)
+        return json_response(
+            {"error": "No {} case found with that ID".format(update.case_type)},
+            status_code=404,
+        )
 
-    update_case(domain, update.voucher_id, case_properties=update.properties)
+    update_case(domain, update.case_id, case_properties=update.properties)
 
-    return json_response({'status': "woo!"})
+    return json_response({'status': "success"})
+
+
+@require_POST
+@login_or_digest_or_basic_or_apikey()
+def update_voucher(request, domain):
+    return _update_case_from_request(request, domain, VoucherUpdate)
