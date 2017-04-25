@@ -413,14 +413,31 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
         if not self.name:
             raise InvalidAttachment("cannot save attachment without name")
 
+        content_readable = content
+        if isinstance(content, basestring):
+            content_readable = StringIO(content)
+
         db = get_blob_db()
         bucket = self.blobdb_bucket()
-        info = db.put(content, get_short_identifier(), bucket=bucket)
+        info = db.put(content_readable, get_short_identifier(), bucket=bucket)
         self.md5 = info.md5_hash
         self.content_length = info.length
         self.blob_id = info.identifier
 
+        self._set_cached_content(content)
+
+    def _set_cached_content(self, content):
+        self._cached_content = content
+
+    def _get_cached_content(self, stream=False):
+        if hasattr(self, '_cached_content') and self._cached_content:
+            return StringIO(self._cached_content) if stream else self._cached_content
+
     def read_content(self, stream=False):
+        cached = self._get_cached_content(stream)
+        if cached:
+            return cached
+
         db = get_blob_db()
         try:
             blob = db.get(self.blob_id, self.blobdb_bucket())
