@@ -236,6 +236,6 @@ hqDefine("data_interfaces/js/case_rule_criteria.js", function() {
 
     return {
         get_criteria_model: function() {return criteria_model;},
-    }
+    };
 
 });

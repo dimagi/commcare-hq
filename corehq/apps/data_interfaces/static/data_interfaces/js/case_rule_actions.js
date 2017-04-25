@@ -153,6 +153,6 @@ hqDefine("data_interfaces/js/case_rule_actions.js", function() {
 
     return {
         get_actions_model: function() {return actions_model;},
-    }
+    };
 
 });
