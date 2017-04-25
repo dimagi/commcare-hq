@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from django.test import TestCase, SimpleTestCase
+from django.contrib.auth.models import User
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
@@ -9,33 +10,39 @@ from corehq.form_processor.tests.utils import run_with_all_backends, FormProcess
 
 class UserModelTest(TestCase):
 
-    def setUp(self):
-        super(UserModelTest, self).setUp()
-        self.domain = 'my-domain'
-        self.domain_obj = create_domain(self.domain)
-        self.user = CommCareUser.create(
-            domain=self.domain,
+    @classmethod
+    def setUpClass(cls):
+        super(UserModelTest, cls).setUpClass()
+        cls.domain = 'my-domain'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.user = CommCareUser.create(
+            domain=cls.domain,
             username='birdman',
             password='***',
         )
 
-        self.metadata = TestFormMetadata(
-            domain=self.user.domain,
-            user_id=self.user._id,
+        cls.metadata = TestFormMetadata(
+            domain=cls.user.domain,
+            user_id=cls.user._id,
         )
-        get_simple_wrapped_form('123', metadata=self.metadata)
+        get_simple_wrapped_form('123', metadata=cls.metadata)
 
-    def tearDown(self):
-        CommCareUser.get_db().delete_doc(self.user._id)
-        FormProcessorTestUtils.delete_all_xforms(self.domain)
-        self.domain_obj.delete()
-        super(UserModelTest, self).tearDown()
+    @classmethod
+    def tearDownClass(cls):
+        CommCareUser.get_db().delete_doc(cls.user._id)
+        FormProcessorTestUtils.delete_all_xforms(cls.domain)
+        cls.domain_obj.delete()
+        super(UserModelTest, cls).tearDownClass()
 
     @run_with_all_backends
     def test_get_form_ids(self):
         form_ids = list(self.user._get_form_ids())
         self.assertEqual(len(form_ids), 1)
         self.assertEqual(form_ids[0], '123')
+
+    def test_django_user_commcare_fields(self):
+        django_user = User.objects.get(djangousercommcarefields__couch_user_id=self.user._id)
+        self.assertIsNotNone(django_user)
 
 
 class UserDeviceTest(SimpleTestCase):

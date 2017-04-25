@@ -3,6 +3,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
 import re
+import uuid
 
 from restkit.errors import NoMoreData
 from rest_framework.authtoken.models import Token
@@ -38,12 +39,12 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers, guess_domain_language
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
     user_display_string,
     user_location_data,
+    create_django_user,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted
@@ -1267,27 +1268,32 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return cls.get_by_username(django_user.username)
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='',
+    def create(cls, domain, username, password, email=None, uuid_='', date='',
                first_name='', last_name='', **kwargs):
         try:
             django_user = User.objects.get(username=username)
         except User.DoesNotExist:
-            django_user = create_user(
+            django_user = create_django_user(
                 username, password=password, email=email,
                 first_name=first_name, last_name=last_name, **kwargs
             )
 
-        if uuid:
-            if not re.match(r'[\w-]+', uuid):
-                raise cls.InvalidID('invalid id %r' % uuid)
-            couch_user = cls(_id=uuid)
+        if uuid_:
+            if not re.match(r'[\w-]+', uuid_):
+                raise cls.InvalidID('invalid id %r' % uuid_)
+            couch_user = cls(_id=uuid_)
         else:
-            couch_user = cls()
+            couch_user = cls(_id=uuid.uuid4().hex)
 
         if date:
             couch_user.created_on = force_to_datetime(date)
         else:
             couch_user.created_on = datetime.utcnow()
+
+        DjangoUserCommCareFields.objects.create(
+            user=django_user,
+            couch_user_id=couch_user._id,
+        )
 
         user_data = {'commcare_project': domain}
         user_data.update(kwargs.get('user_data', {}))
@@ -2448,3 +2454,9 @@ class AnonymousCouchUser(object):
 
     def can_edit_web_users(self):
         return False
+
+
+class DjangoUserCommCareFields(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    couch_user_id = models.CharField(max_length=255)
