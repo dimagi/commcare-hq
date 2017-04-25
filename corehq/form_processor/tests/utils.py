@@ -21,6 +21,7 @@ from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, Case
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.config import get_sql_db_aliases_in_use
+from corehq.sql_db.models import PartitionedModel
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.couch.database import safe_delete
@@ -45,11 +46,11 @@ class FormProcessorTestUtils(object):
         cls._delete_all(CommCareCase.get_db(), ['CommCareCase', 'CommCareCase-Deleted'], domain)
         FormProcessorTestUtils.delete_all_sql_cases(domain)
 
-    @staticmethod
+    @classmethod
     @unit_testing_only
-    def delete_all_sql_cases(domain=None):
+    def delete_all_sql_cases(cls, domain=None):
         logger.debug("Deleting all SQL cases for domain %s", domain)
-        CaseAccessorSQL.delete_all_cases(domain)
+        cls._delete_all_sql_sharded_modesl(CommCareCaseSQL, domain)
 
     @staticmethod
     def delete_all_ledgers(domain=None):
@@ -93,17 +94,29 @@ class FormProcessorTestUtils(object):
         cls._delete_all(XFormInstance.get_db(), all_known_formlike_doc_types(), domain)
         FormProcessorTestUtils.delete_all_sql_forms(domain)
 
-    @staticmethod
+    @classmethod
     @unit_testing_only
-    def delete_all_sql_forms(domain=None):
+    def delete_all_sql_forms(cls, domain=None):
         logger.debug("Deleting all SQL xforms for domain %s", domain)
-        FormAccessorSQL.delete_all_forms(domain)
+        cls._delete_all_sql_sharded_modesl(XFormInstanceSQL, domain)
 
     @classmethod
     @unit_testing_only
     def delete_all_sync_logs(cls):
         logger.debug("Deleting all synclogs")
         cls._delete_all(SyncLog.get_db(), ["SyncLog"])
+
+    @staticmethod
+    @unit_testing_only
+    def _delete_all_sql_sharded_modesl(model_class, domain=None):
+        assert issubclass(model_class, PartitionedModel)
+        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+        dbs = get_db_aliases_for_partitioned_query()
+        for db in dbs:
+            query = model_class.objects.using(db)
+            if domain:
+                query.filter(domain=domain)
+            query.delete()
 
     @staticmethod
     @unit_testing_only
