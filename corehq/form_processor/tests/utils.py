@@ -22,7 +22,7 @@ from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.couch.database import safe_delete
 
 logger = logging.getLogger(__name__)
@@ -42,25 +42,7 @@ class FormProcessorTestUtils(object):
     def delete_all_cases(cls, domain=None):
         logger.debug("Deleting all Couch cases for domain %s", domain)
         assert CommCareCase.get_db().dbname.startswith('test_')
-        for doc_type in ['CommCareCase', 'CommCareCase-Deleted']:
-            if domain:
-                view = 'by_domain_doc_type_date/view'
-                view_kwargs = {
-                    'startkey': [domain, doc_type],
-                    'endkey': [domain, doc_type, {}],
-                }
-            else:
-                view = 'all_docs/by_doc_type'
-                view_kwargs = {
-                    'startkey': [doc_type],
-                    'endkey': [doc_type, {}],
-                }
-            cls._delete_all(
-                CommCareCase.get_db(),
-                view,
-                **view_kwargs
-            )
-
+        cls._delete_all(CommCareCase.get_db(), ['CommCareCase', 'CommCareCase-Deleted'], domain)
         FormProcessorTestUtils.delete_all_sql_cases(domain)
 
     @staticmethod
@@ -108,27 +90,7 @@ class FormProcessorTestUtils(object):
     @unit_testing_only
     def delete_all_xforms(cls, domain=None, user_id=None):
         logger.debug("Deleting all Couch xforms for domain %s", domain)
-        view = 'couchforms/all_submissions_by_domain'
-        view_kwargs = {}
-        if domain and user_id:
-            view = 'all_forms/view'
-            view_kwargs = {
-                'startkey': ['submission user', domain, user_id],
-                'endkey': ['submission user', domain, user_id, {}],
-
-            }
-        elif domain:
-            view_kwargs = {
-                'startkey': [domain],
-                'endkey': [domain, {}]
-            }
-
-        cls._delete_all(
-            XFormInstance.get_db(),
-            view,
-            **view_kwargs
-        )
-
+        cls._delete_all(XFormInstance.get_db(), all_known_formlike_doc_types(), domain)
         FormProcessorTestUtils.delete_all_sql_forms(domain, user_id)
 
     @staticmethod
@@ -141,20 +103,34 @@ class FormProcessorTestUtils(object):
     @unit_testing_only
     def delete_all_sync_logs(cls):
         logger.debug("Deleting all synclogs")
-        cls._delete_all(SyncLog.get_db(), 'phone/sync_logs_by_user')
+        cls._delete_all(SyncLog.get_db(), ["SyncLog"])
 
     @staticmethod
     @unit_testing_only
-    def _delete_all(db, viewname, **view_kwargs):
-        deleted = set()
-        for row in db.view(viewname, reduce=False, **view_kwargs):
-            doc_id = row['id']
-            if doc_id not in deleted:
-                try:
-                    safe_delete(db, doc_id)
-                    deleted.add(doc_id)
-                except ResourceNotFound:
-                    pass
+    def _delete_all(db, doc_types, domain=None):
+        for doc_type in doc_types:
+            if domain:
+                view = 'by_domain_doc_type_date/view'
+                view_kwargs = {
+                    'startkey': [domain, doc_type],
+                    'endkey': [domain, doc_type, {}],
+                }
+            else:
+                view = 'all_docs/by_doc_type'
+                view_kwargs = {
+                    'startkey': [doc_type],
+                    'endkey': [doc_type, {}],
+                }
+
+            deleted = set()
+            for row in db.view(view, reduce=False, **view_kwargs):
+                doc_id = row['id']
+                if doc_id not in deleted:
+                    try:
+                        safe_delete(db, doc_id)
+                        deleted.add(doc_id)
+                    except ResourceNotFound:
+                        pass
 
 
 run_with_all_backends = functools.partial(
