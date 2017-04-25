@@ -1,4 +1,5 @@
 from xml.etree import ElementTree
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from casexml.apps.case.xml import V1
 from casexml.apps.phone.models import (
     get_properly_wrapped_sync_log,
@@ -6,9 +7,10 @@ from casexml.apps.phone.models import (
     OTARestoreWebUser,
     OTARestoreCommCareUser,
 )
-from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings, restore_cache_key
 from casexml.apps.phone.tests.dbaccessors import get_all_sync_logs_docs
 from casexml.apps.phone.xml import SYNC_XMLNS
+from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 
 from corehq.apps.users.models import CommCareUser, WebUser
 
@@ -106,5 +108,21 @@ def generate_restore_response(project, user, restore_id="", version=V1, state_ha
     return config.get_response()
 
 
-def has_cached_payload(sync_log, version):
-    return bool(sync_log.get_cached_payload(version))
+def has_cached_payload(sync_log, version, prefix=RESTORE_CACHE_KEY_PREFIX):
+    return bool(get_redis_default_cache().get(restore_cache_key(
+        sync_log.domain,
+        prefix,
+        sync_log.user_id,
+        version=version,
+        sync_log_id=sync_log._id,
+    )))
+
+
+def get_cached_payload(sync_log, version, prefix=RESTORE_CACHE_KEY_PREFIX):
+    return get_redis_default_cache().get(restore_cache_key(
+        sync_log.domain,
+        prefix,
+        sync_log.user_id,
+        version=version,
+        sync_log_id=sync_log._id,
+    ))
