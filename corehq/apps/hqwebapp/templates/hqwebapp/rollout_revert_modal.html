@@ -1,26 +1,26 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% with slug="app_manager_v2" name="New Form Builder" %}
+{% with slug="app_manager_v2" name="New App Builder" %}
     <div class="modal fade" id="rollout-revert-modal">
         <div class="modal-dialog">
             <div class="modal-content">
                 {% blocktrans %}
                 <div class="modal-header">
-                    <h4 class="modal-title">Roll back {{ name }}?</h4>
+                    <h4 class="modal-title">Roll Back {{ name }}</h4>
                 </div>
                 <div class="modal-body">
-                    <p>
-                        Roll back {{ name }}?
+                    <p class="lead">
+                        Are you sure you want to roll back {{ name }}?
                     </p>
                     <div class="row">
                         <div class="col-sm-6 text-center">
-                            <button class="btn btn-lg btn-default btn-full-width" id="rollout-revert" data-slug="{{ slug }}">
+                            <button class="btn btn-default btn-full-width" id="rollout-revert" data-slug="{{ slug }}">
                                 Yes, turn off {{ name }}
                             </button>
                         </div>
                         <div class="col-sm-6 text-center">
-                            <button class="btn btn-lg btn-primary btn-full-width" data-dismiss="modal">
+                            <button class="btn btn-primary btn-full-width" data-dismiss="modal">
                                 Cancel
                             </button>
                         </div>
