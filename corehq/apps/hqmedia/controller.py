@@ -46,11 +46,21 @@ class BaseMultimediaUploadController(object):
             'fileFilters': self.supported_files,
             'uploadURL': self.destination,
             'processingURL': self.processing_url,
-            #swfURL: '{% static 'hqmedia/MediaUploader/flashuploader.swf' %}',
             'isMultiFileUpload': self.is_multi_file,
             'uploadParams': self.upload_params,
             'licensingParams': self.licensing_params,
         }
+        if hasattr(self, 'queue_template'):
+            options.update({'queueTemplate': self.queue_template})
+        if hasattr(self, 'status_template'):
+            options.update({'statusTemplate': self.status_template})
+        if hasattr(self, 'details_template'):
+            options.update({'detailsTemplate': self.details_template})
+        if hasattr(self, 'errors_template'):
+            options.update({'errorsTemplate': self.errors_template})
+        if hasattr(self, 'existing_file_template'):
+            options.update({'existingFileTemplate': self.existing_file_template})
+
         return {
             'slug': self.slug,
             'uploader_type': self.uploader_type,
