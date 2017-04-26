@@ -19,6 +19,7 @@ from corehq.util.view_utils import get_request
 
 logger = logging.getLogger(__name__)
 HASHED_PASSWORD_EXPIRY = 30  # days
+PASSWORD_HASHER = get_hasher()
 
 
 @memoized
@@ -130,19 +131,12 @@ def extract_password(password):
         return password
 
 
-@memoized
-def get_password_hasher():
-    return get_hasher()
-
-
 def hash_password(password):
-    hasher = get_password_hasher()
-    return hasher.encode(password, hasher.salt())
+    return PASSWORD_HASHER.encode(password, PASSWORD_HASHER.salt())
 
 
 def verify_password(password, password_salt):
-    hasher = get_password_hasher()
-    return hasher.verify(password, password_salt)
+    return PASSWORD_HASHER.verify(password, password_salt)
 
 
 def decode_password(password_hash, username=None):

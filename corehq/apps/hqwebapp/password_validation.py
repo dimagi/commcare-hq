@@ -10,7 +10,7 @@ class UsedPasswordValidator(object):
     def validate(self, password, user=None):
         used_passwords = UsedPasswords.objects.filter(
             user=user,
-        ).order_by('-created_at').all()[:RESTRICT_USED_PASSWORDS_NUM].values_list('password', flat=True)
+        ).order_by('-created_at').all()[:RESTRICT_USED_PASSWORDS_NUM].values_list('password_hash', flat=True)
         used_passwords = list(used_passwords) + [user.password]
         for used_password in used_passwords:
             if verify_password(password, used_password):
@@ -24,7 +24,7 @@ class UsedPasswordValidator(object):
     def password_changed(self, password, user):
         UsedPasswords.objects.create(
             user=user,
-            password=hash_password(password)
+            password_hash=hash_password(password)
         )
 
     def get_help_text(self):

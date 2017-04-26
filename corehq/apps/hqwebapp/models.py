@@ -37,7 +37,7 @@ class HashedPasswordLoginAttempt(models.Model):
 
 class UsedPasswords(models.Model):
     user = models.ForeignKey(User, db_index=True)
-    password = models.CharField(max_length=128)
+    password_hash = models.CharField(max_length=128)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
