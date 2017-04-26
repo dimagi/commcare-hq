@@ -318,10 +318,11 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         call_command('create_enikshay_cases', self.domain)
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
-        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        occurrence_cases = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(len(occurrence_cases), 1)
+        occurrence_case_id = occurrence_cases[0]
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(len(episode_case_ids), 1)
-        episode_case_id = episode_case_ids[0]
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 0)
 
         test_case_ids = self.case_accessor.get_case_ids_in_domain(type='test')
@@ -349,8 +350,8 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             test_case.indices[0],
             CommCareCaseIndex(
                 identifier='host',
-                referenced_type='episode',
-                referenced_id=episode_case_id,
+                referenced_type='occurrence',
+                referenced_id=occurrence_case_id,
                 relationship='extension',
             )
         )
@@ -363,10 +364,11 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         call_command('create_enikshay_cases', self.domain)
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
-        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        occurrence_cases = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(len(occurrence_cases), 1)
+        occurrence_case_id = occurrence_cases[0]
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(len(episode_case_ids), 1)
-        episode_case_id = episode_case_ids[0]
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 0)
 
         test_case_ids = self.case_accessor.get_case_ids_in_domain(type='test')
@@ -394,8 +396,8 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             test_case.indices[0],
             CommCareCaseIndex(
                 identifier='host',
-                referenced_type='episode',
-                referenced_id=episode_case_id,
+                referenced_type='occurrence',
+                referenced_id=occurrence_case_id,
                 relationship='extension',
             )
         )
@@ -408,10 +410,11 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         call_command('create_enikshay_cases', self.domain)
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
-        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        occurrence_cases = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(len(occurrence_cases), 1)
+        occurrence_case_id = occurrence_cases[0]
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(len(episode_case_ids), 1)
-        episode_case_id = episode_case_ids[0]
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 0)
 
         test_case_ids = self.case_accessor.get_case_ids_in_domain(type='test')
@@ -439,8 +442,8 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             test_case.indices[0],
             CommCareCaseIndex(
                 identifier='host',
-                referenced_type='episode',
-                referenced_id=episode_case_id,
+                referenced_type='occurrence',
+                referenced_id=occurrence_case_id,
                 relationship='extension',
             )
         )

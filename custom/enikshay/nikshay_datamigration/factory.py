@@ -130,14 +130,11 @@ class EnikshayCaseFactory(object):
         ):
             drtb_hiv_referral_structure = self.get_drtb_hiv_referral_case_structure(episode_structure)
             case_structures_to_create.append(drtb_hiv_referral_structure)
-        case_structures_to_create.extend([
-            self.get_test_case_structure(followup, episode_structure)
+        test_structures = [
+            self.get_test_case_structure(followup, occurrence_structure)
             for followup in self._followups
-        ])
-        if case_structures_to_create:
-            return case_structures_to_create
-        else:
-            return [episode_structure]
+        ]
+        return (case_structures_to_create or [episode_structure]) + test_structures
 
     def get_person_case_structure(self):
         kwargs = {
@@ -350,7 +347,7 @@ class EnikshayCaseFactory(object):
             kwargs['attrs']['create'] = True
         return CaseStructure(**kwargs)
 
-    def get_test_case_structure(self, followup, episode_structure):
+    def get_test_case_structure(self, followup, occurrence_structure):
         kwargs = {
             'attrs': {
                 'case_type': TEST_CASE_TYPE,
@@ -373,10 +370,10 @@ class EnikshayCaseFactory(object):
                 }
             },
             'indices': [CaseIndex(
-                episode_structure,
+                occurrence_structure,
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
-                related_type=EPISODE_CASE_TYPE,
+                related_type=OCCURRENCE_CASE_TYPE,
             )],
         }
 
