@@ -116,13 +116,3 @@ def has_cached_payload(sync_log, version, prefix=RESTORE_CACHE_KEY_PREFIX):
         version=version,
         sync_log_id=sync_log._id,
     )))
-
-
-def get_cached_payload(sync_log, version, prefix=RESTORE_CACHE_KEY_PREFIX):
-    return get_redis_default_cache().get(restore_cache_key(
-        sync_log.domain,
-        prefix,
-        sync_log.user_id,
-        version=version,
-        sync_log_id=sync_log._id,
-    ))
