@@ -194,16 +194,17 @@ class ConfigurableReportTableManagerMixin(object):
             adapter.rebuild_table_if_necessary()
 
     def rebuild_table(self, adapter):
-        # https://manage.dimagi.com/default.asp?252832
-        if adapter.config.get_id not in ("static-enikshay-episode", "static-np-migration-3-episode"):
-            config = adapter.config
-            if not config.is_static:
-                latest_rev = config.get_db().get_rev(config._id)
-                if config._rev != latest_rev:
-                    raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
-            adapter.rebuild_table()
-            if self.auto_repopulate_tables:
-                rebuild_indicators.delay(adapter.config.get_id)
+        if adapter.config.get_id in ("static-enikshay-episode", "static-np-migration-3-episode"):
+            # https://manage.dimagi.com/default.asp?252832
+            return
+        config = adapter.config
+        if not config.is_static:
+            latest_rev = config.get_db().get_rev(config._id)
+            if config._rev != latest_rev:
+                raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
+        adapter.rebuild_table()
+        if self.auto_repopulate_tables:
+            rebuild_indicators.delay(adapter.config.get_id)
 
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
