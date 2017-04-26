@@ -361,6 +361,7 @@ class EnikshayCaseFactory(object):
                     'lab_serial_number': followup.LabNo or '',
                     'name': followup.TestDate,
                     'result_grade': followup.result_grade,
+                    'result_recorded': 'yes',
                     'testing_facility_id': followup.DMC,
 
                     'migration_created_case': 'true',

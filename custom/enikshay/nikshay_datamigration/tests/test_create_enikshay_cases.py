@@ -338,6 +338,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             ('migration_created_from_id', str(followup.id)),
             ('migration_created_from_record', self.patient_detail.PregId),
             ('result_grade', '2+'),
+            ('result_recorded', 'yes'),
             ('testing_facility_id', '1'),
         ]))
         self.assertEqual(len(test_case.indices), 1)
@@ -379,6 +380,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             ('migration_created_from_id', str(followup.id)),
             ('migration_created_from_record', self.patient_detail.PregId),
             ('result_grade', 'SC-1'),
+            ('result_recorded', 'yes'),
             ('testing_facility_id', '1'),
         ]))
         self.assertEqual(len(test_case.indices), 1)
@@ -420,6 +422,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             ('migration_created_from_id', str(followup.id)),
             ('migration_created_from_record', self.patient_detail.PregId),
             ('result_grade', 'Pos'),
+            ('result_recorded', 'yes'),
             ('testing_facility_id', '1'),
         ]))
         self.assertEqual(len(test_case.indices), 1)
