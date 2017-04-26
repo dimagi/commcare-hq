@@ -1504,6 +1504,12 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "UCLA_SUBSTANCE_USE": "custom.ucla.api.substance_use_message_bank_content",
 }
 
+MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+
+AVAILABLE_CUSTOM_RULE_CRITERIA = {}
+
+AVAILABLE_CUSTOM_RULE_ACTIONS = {}
+
 # These are custom templates which can wrap default the sms/chat.html template
 CUSTOM_CHAT_TEMPLATES = {
     "FRI": "fri/chat.html",
