@@ -161,6 +161,7 @@ hqDefine('app_manager/js/releases.js', function () {
             ga_track_event('App Manager', 'Deploy Button', self.id());
             analytics.workflow('Clicked Deploy');
             $.post(releasesMain.options.urls.hubspot_click_deploy);
+            self.get_short_odk_url();
         };
 
         self.clickScan = function() {

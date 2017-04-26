@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -20,32 +20,39 @@
+@@ -20,34 +20,41 @@
              </div>
          {% else %}
              <div class="panel-group" data-bind="attr: {id: 'deploy-accordion_' + id()}">
@@ -12,8 +12,10 @@
 -                            href="#panel-android"
 -                            aria-expanded="true"
 -                            aria-controls="panel-android"
--                            data-bind="attr: {'data-parent': '#deploy-accordion_' + id()}"
--                            >
+-                            data-bind="
+-                               click: get_short_odk_url,
+-                               attr: {'data-parent': '#deploy-accordion_' + id()}
+-                            ">
 -                            {% trans "Download to Android" %}
 -                        </a>
 +                        <h4 class="panel-title">
@@ -22,8 +24,10 @@
 +                                href="#panel-android"
 +                                aria-expanded="true"
 +                                aria-controls="panel-android"
-+                                data-bind="attr: {'data-parent': '#deploy-accordion_' + id()}"
-+                                >
++                                data-bind="
++                                    click: get_short_odk_url,
++                                    attr: {'data-parent': '#deploy-accordion_' + id()}
++                                ">
 +                                {% trans "Download to Android" %}
 +                            </a>
 +                        </h4>
