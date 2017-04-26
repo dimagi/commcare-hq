@@ -101,7 +101,11 @@ class EpisodeUpdate(object):
         self.case_updater = case_updater
         self._cache_dose_taken_by_date = False
 
+    @property
     @memoized
+    def case_properties(self):
+        return self.episode.dynamic_case_properties()
+
     def get_property(self, property):
         """
         Args:
@@ -110,7 +114,7 @@ class EpisodeUpdate(object):
         Returns:
             value of the episode case-property named 'property'
         """
-        return self.episode.dynamic_case_properties().get(property)
+        return self.case_properties.get(property)
 
     @memoized
     def get_valid_adherence_cases(self):
