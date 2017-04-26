@@ -101,6 +101,7 @@ class EpisodeUpdate(object):
         self.case_updater = case_updater
         self._cache_dose_taken_by_date = False
 
+    @memoized
     def get_property(self, property):
         """
         Args:
