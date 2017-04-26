@@ -24,7 +24,7 @@ from custom.enikshay.integrations.utils import (
 )
 
 
-from custom.enikshay.integrations.ninetyninedots.repeaters import case_properties_changed
+from custom.enikshay.integrations.utils import case_properties_changed
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
 
 
