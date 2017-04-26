@@ -117,7 +117,7 @@
                 {% if report_table.headers.custom_sort %}customSort: {{ report_table.headers.custom_sort|JSON }},{% endif %}
                 loadingTemplateSelector: '#js-template-loading-report'
             });
-            var standardHQReport = hqImport("userreports/js/configurable_report.js").getStandardHQReport();
+            var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);
             }
