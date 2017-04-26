@@ -15,7 +15,7 @@ from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.models import HashedPasswordLoginAttempt
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
-from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import get_request
 
 logger = logging.getLogger(__name__)
 HASHED_PASSWORD_EXPIRY = 30  # days
@@ -145,11 +145,6 @@ def verify_password(password, password_salt):
     return hasher.verify(password, password_salt)
 
 
-# quickcache for multiple decode attempts in the same request:
-# 1. an attempt to decode a password should be done just once in a request for the login attempt
-# check to work correctly.
-# 2. there should be no need to decode a password multiple times in the same request.
-@quickcache(['password_hash'], timeout=0)
 def decode_password(password_hash, username=None):
     def replay_attack():
         # Replay attack where the same hash used from previous login attempt
@@ -167,10 +162,20 @@ def decode_password(password_hash, username=None):
         )
 
     if settings.ENABLE_PASSWORD_HASHING:
-        if username:
-            if replay_attack():
-                return ''
-            record_login_attempt()
-        return extract_password(password_hash)
+        # 1. an attempt to decode a password should be done just once in a request for the login attempt
+        # check to work correctly and not consider it a replay attack in case of multiple calls
+        # 2. also there should be no need to decode a password multiple times in the same request.
+        request = get_request()
+        if not hasattr(request, 'decoded_password'):
+            request.decoded_password = {}
+        if request.decoded_password.get(password_hash):
+            return request.decoded_password[password_hash]
+        else:
+            if username:
+                if replay_attack():
+                    return ''
+                record_login_attempt()
+            request.decoded_password[password_hash] = extract_password(password_hash)
+            return request.decoded_password[password_hash]
     else:
         return password_hash
