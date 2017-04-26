@@ -86,3 +86,59 @@ class TestBetsUpdates(TestCase):
             'payment_amount': 100,
         })
         self.assertEqual(res.status_code, 404, res.content)
+
+    def make_episode_case(self):
+        return create_and_save_a_case(
+            self.domain,
+            uuid.uuid4().hex,
+            case_name='prescription',
+            case_properties={'test_confirming_diagnosis': "Old Nan's wisdom",
+                             'weight': "15 stone"},
+            case_type='episode',
+        )
+
+    def test_update_incentive_success(self):
+        episode = self.make_episode_case()
+        res = self.make_request(update_incentive, {
+            'beneficiary_id': episode.case_id,
+            'episode_id': episode.case_id,
+            'payment_status': 'success',
+            'bets_parent_event_id': '106',
+            'payment_amount': 100,
+        })
+        self.assertEqual(res.status_code, 200, res.content)
+        self.assertDictContainsSubset(
+            {
+                'tb_incentive_106_status': 'paid',
+                'tb_incentive_106_amount': '100',
+            },
+            get_case(self.domain, episode.case_id).case_json,
+        )
+
+    def test_update_incentive_failure(self):
+        episode = self.make_episode_case()
+        res = self.make_request(update_incentive, {
+            'beneficiary_id': episode.case_id,
+            'episode_id': episode.case_id,
+            'payment_status': 'failure',
+            'failure_description': 'We do not sow',
+            'bets_parent_event_id': '106',
+        })
+        self.assertEqual(res.status_code, 200, res.content)
+        self.assertDictContainsSubset(
+            {
+                'tb_incentive_106_status': 'rejected',
+                'tb_incentive_106_rejection_reason': 'We do not sow',
+            },
+            get_case(self.domain, episode.case_id).case_json,
+        )
+
+    def test_update_incentive_bad_event(self):
+        res = self.make_request(update_incentive, {
+            'beneficiary_id': '123',
+            'episode_id': '123',
+            'payment_status': 'success',
+            'bets_parent_event_id': '404',
+            'payment_amount': 100,
+        })
+        self.assertEqual(res.status_code, 400, res.content)

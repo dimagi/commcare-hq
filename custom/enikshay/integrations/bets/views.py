@@ -6,19 +6,13 @@ import json
 from django.views.decorators.http import require_POST
 from dimagi.utils.web import json_response
 from dimagi.ext import jsonobject
-from jsonobject.exceptions import BadValueError, WrappingAttributeError
-# import JsonObject, StringProperty, ListProperty, DictProperty
-# from dimagi.utils.decorators.memoized import memoized
+from jsonobject.exceptions import BadValueError
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 
-# TODO does this auth check domain?
-
-
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from casexml.apps.case.const import CASE_INDEX_EXTENSION, UNOWNED_EXTENSION_OWNER_ID
 from corehq.form_processor.exceptions import CaseNotFound
-from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.hqcase.utils import update_case
+from .const import BETS_EVENT_IDS
 
 
 class ApiError(Exception):
@@ -52,6 +46,42 @@ class VoucherUpdate(jsonobject.JsonObject):
                 'state': 'rejected',
                 'reason_rejected': self.failure_description,
                 'date_rejected': datetime.datetime.utcnow().date().isoformat(),
+            }
+
+
+class IncentiveUpdate(jsonobject.JsonObject):
+    beneficiary_id = jsonobject.StringProperty(required=True)
+    episode_id = jsonobject.StringProperty(required=True)
+    payment_status = jsonobject.StringProperty(required=True, choices=['success', 'failure'])
+    payment_amount = jsonobject.IntegerProperty(required=False)
+    failure_description = jsonobject.StringProperty(required=False)
+    bets_parent_event_id = jsonobject.StringProperty(
+        required=False, choices=BETS_EVENT_IDS.values())
+
+    case_type = 'episode'
+
+    @property
+    def case_id(self):
+        return self.episode_id
+
+    @property
+    def properties(self):
+        status_key = 'tb_incentive_{}_status'.format(self.bets_parent_event_id)
+        if self.payment_status == 'success':
+            amount_key = 'tb_incentive_{}_amount'.format(self.bets_parent_event_id)
+            date_key = 'tb_incentive_{}_payment_date'.format(self.bets_parent_event_id)
+            return {
+                status_key: 'paid',
+                amount_key: self.payment_amount,
+                date_key: datetime.datetime.utcnow().date().isoformat(),
+            }
+        else:
+            date_key = 'tb_incentive_{}_rejection_date'.format(self.bets_parent_event_id)
+            reason_key = 'tb_incentive_{}_rejection_reason'.format(self.bets_parent_event_id)
+            return {
+                status_key: 'rejected',
+                date_key: datetime.datetime.utcnow().date().isoformat(),
+                reason_key: self.failure_description,
             }
 
 
@@ -89,3 +119,9 @@ def _update_case_from_request(request, domain, update_model):
 @login_or_digest_or_basic_or_apikey()
 def update_voucher(request, domain):
     return _update_case_from_request(request, domain, VoucherUpdate)
+
+
+@require_POST
+@login_or_digest_or_basic_or_apikey()
+def update_incentive(request, domain):
+    return _update_case_from_request(request, domain, IncentiveUpdate)
