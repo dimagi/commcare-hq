@@ -23,6 +23,7 @@ from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
+from corehq.apps.settings.forms import EncodedPasswordChangeForm
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.apps.users.util import format_username, cc_user_domain
@@ -363,7 +364,7 @@ class RoleForm(forms.Form):
         self.fields['role'].choices = role_choices
 
 
-class SetUserPasswordForm(SetPasswordForm):
+class SetUserPasswordForm(EncodedPasswordChangeForm, SetPasswordForm):
 
     new_password1 = forms.CharField(
         label=ugettext_noop("New password"),
@@ -417,18 +418,6 @@ class SetUserPasswordForm(SetPasswordForm):
         if self.project.strong_mobile_passwords:
             return clean_password(password1)
         return password1
-
-    def clean_new_password2(self):
-        password2 = decode_password(self.cleaned_data.get('new_password2'))
-        password1 = self.cleaned_data.get('new_password1')
-        if password1 and password2:
-            if password1 != password2:
-                raise forms.ValidationError(
-                    self.error_messages['password_mismatch'],
-                    code='password_mismatch',
-                )
-        password_validation.validate_password(password2, self.user)
-        return password2
 
 
 class CommCareAccountForm(forms.Form):
