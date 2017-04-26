@@ -357,6 +357,8 @@ class EnikshayCaseFactory(object):
                 'closed': True, #
                 'owner_id': '-',
                 'update': {
+                    'date_opened': followup.TestDate,
+                    'date_reported': followup.TestDate,
                     'date_tested': followup.TestDate or '',
                     'lab_serial_number': followup.LabNo or '',
                     'name': followup.TestDate,
