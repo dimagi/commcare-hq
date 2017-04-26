@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, date
 import itertools
 import json
 from wsgiref.util import FileWrapper
+from corehq.apps.reports.standard.cases.data_sources import CaseInfo
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
@@ -112,7 +113,8 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
 from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location, location_safe, \
-    user_can_access_location_id, location_restricted_exception
+    user_can_access_location_id, location_restricted_exception, \
+    user_can_access_other_user
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import default_language as ucr_default_language
@@ -1244,13 +1246,22 @@ class CaseDetailsView(BaseProjectReportSectionView):
                           "Sorry, we couldn't find that case. If you think this "
                           "is a mistake please report an issue.")
             return HttpResponseRedirect(CaseListReport.get_url(domain=self.domain))
-        if not user_can_access_location_id(
-            self.domain,
-            request.couch_user,
-            self.case_instance.owner_id
-        ):
+        if not self.verify_location_allowed():
             raise location_restricted_exception(request)
         return super(CaseDetailsView, self).dispatch(request, *args, **kwargs)
+
+    def verify_location_allowed(self):
+        case = self.case_instance
+        domain = self.domain
+        user = self.request.couch_user
+        info = CaseInfo(self, case)
+        if info.owner_type == 'location':
+            return user_can_access_location_id(domain, user, info.owner_id)
+        elif info.owner_type == 'user':
+            owning_user = CommCareUser.get(info.owner_id)
+            return user_can_access_other_user(domain, user, owning_user)
+        else:
+            return False
 
     @property
     def case_id(self):
