@@ -23,6 +23,13 @@
   }
   #formdesigner {
     background-color: @cc-brand-low !important;
+    opacity: 100;
+    .transition(opacity 1s);
+
+    &.loading {
+      opacity: 0;
+    }
+
     .fd-content-right .fd-head,
     .fd-content-right .fd-form-actions {
       // There is a 2px white line between the right edge of form player and the
