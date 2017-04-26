@@ -354,10 +354,10 @@ class EnikshayCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': TEST_CASE_TYPE,
-                'closed': True, #
+                'close': True, #
+                'date_opened': followup.TestDate,
                 'owner_id': '-',
                 'update': {
-                    'date_opened': followup.TestDate,
                     'date_reported': followup.TestDate,
                     'date_tested': followup.TestDate or '',
                     'lab_serial_number': followup.LabNo or '',
