@@ -360,6 +360,7 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'date_reported': followup.TestDate,
                     'date_tested': followup.TestDate or '',
+                    'episode_type_at_request': 'presumptive_tb' if followup.IntervalId == 0 else 'confirmed_tb',
                     'lab_serial_number': followup.LabNo or '',
                     'name': followup.TestDate,
                     'result_grade': followup.result_grade,

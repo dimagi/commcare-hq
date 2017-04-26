@@ -335,6 +335,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             ('date_reported', '2017-04-10'),
             ('date_tested', '2017-04-10'),
             ('diagnostic_test_reason', 'presumptive_tb'),
+            ('episode_type_at_request', 'presumptive_tb'),
             ('lab_serial_number', '2073'),
             ('migration_created_case', 'true'),
             ('migration_created_from_id', str(followup.id)),
@@ -378,6 +379,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([
             ('date_reported', '2017-04-10'),
             ('date_tested', '2017-04-10'),
+            ('episode_type_at_request', 'confirmed_tb'),
             ('follow_up_test_reason', 'end_of_ip'),
             ('lab_serial_number', '2073'),
             ('migration_created_case', 'true'),
@@ -422,6 +424,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([
             ('date_reported', '2017-04-10'),
             ('date_tested', '2017-04-10'),
+            ('episode_type_at_request', 'confirmed_tb'),
             ('follow_up_test_reason', 'end_of_cp'),
             ('lab_serial_number', '2073'),
             ('migration_created_case', 'true'),
