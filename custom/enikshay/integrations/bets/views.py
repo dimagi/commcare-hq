@@ -3,6 +3,7 @@
 """
 import datetime
 import json
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from dimagi.utils.web import json_response
 from dimagi.ext import jsonobject
@@ -116,12 +117,14 @@ def _update_case_from_request(request, domain, update_model):
 
 
 @require_POST
+@csrf_exempt
 @login_or_digest_or_basic_or_apikey()
 def update_voucher(request, domain):
     return _update_case_from_request(request, domain, VoucherUpdate)
 
 
 @require_POST
+@csrf_exempt
 @login_or_digest_or_basic_or_apikey()
 def update_incentive(request, domain):
     return _update_case_from_request(request, domain, IncentiveUpdate)
