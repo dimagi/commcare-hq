@@ -36,6 +36,7 @@ var ReportConfig = function (data) {
 
     self.unwrap = function () {
         var data = ko.mapping.toJS(self);
+        var standardHQReport = hqImport("userreports/js/configurable_report.js").getStandardHQReport();
         if (null !== standardHQReport.slug) {
             data['report_slug'] = standardHQReport.slug;
         }
