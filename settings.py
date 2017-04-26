@@ -763,12 +763,16 @@ ELASTICSEARCH_PORT = 9200
 ELASTICSEARCH_VERSION = 1.7
 
 ####### Couch Config #######
-# for production this ought to be set to true on your configured couch instance
-COUCH_HTTPS = False
-COUCH_SERVER_ROOT = 'localhost:5984'  # 6984 for https couch
-COUCH_USERNAME = ''
-COUCH_PASSWORD = ''
-COUCH_DATABASE_NAME = 'commcarehq'
+COUCH_DATABASES = {
+    'default': {
+        # for production this ought to be set to true on your configured couch instance
+        'COUCH_HTTPS': False,
+        'COUCH_SERVER_ROOT': 'localhost:5984',  # 6984 for https couch
+        'COUCH_USERNAME': '',
+        'COUCH_PASSWORD': '',
+        'COUCH_DATABASE_NAME': 'commcarehq'
+    }
+}
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
@@ -1252,18 +1256,6 @@ INDICATOR_CONFIG = {
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
-COUCH_DATABASE_NAME = helper.get_db_name(COUCH_DATABASE_NAME, UNIT_TESTING)
-_dynamic_db_settings = helper.get_dynamic_db_settings(
-    COUCH_SERVER_ROOT,
-    COUCH_USERNAME,
-    COUCH_PASSWORD,
-    COUCH_DATABASE_NAME,
-    use_https=COUCH_HTTPS,
-)
-
-# create local server and database configs
-COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
-
 NEW_USERS_GROUPS_DB = 'users'
 USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
@@ -1377,10 +1369,12 @@ COUCHDB_APPS = [
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
-    COUCH_DATABASE,
+    COUCH_DATABASES,
     COUCHDB_APPS,
     [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB, NEW_APPS_DB],
+    UNIT_TESTING
 )
+COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url
 COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
 EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
