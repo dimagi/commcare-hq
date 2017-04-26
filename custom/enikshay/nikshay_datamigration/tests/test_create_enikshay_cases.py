@@ -327,6 +327,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         test_case_ids = self.case_accessor.get_case_ids_in_domain(type='test')
         self.assertEqual(len(test_case_ids), 1)
         test_case = self.case_accessor.get_case(test_case_ids[0])
+        self.assertEqual(test_case.closed, True)
         self.assertEqual(test_case.name, '2017-04-10')
         self.assertEqual(test_case.owner_id, '-')
         self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([
@@ -367,6 +368,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         test_case_ids = self.case_accessor.get_case_ids_in_domain(type='test')
         self.assertEqual(len(test_case_ids), 1)
         test_case = self.case_accessor.get_case(test_case_ids[0])
+        self.assertEqual(test_case.closed, True)
         self.assertEqual(test_case.name, '2017-04-10')
         self.assertEqual(test_case.owner_id, '-')
         self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([
@@ -407,6 +409,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         test_case_ids = self.case_accessor.get_case_ids_in_domain(type='test')
         self.assertEqual(len(test_case_ids), 1)
         test_case = self.case_accessor.get_case(test_case_ids[0])
+        self.assertEqual(test_case.closed, True)
         self.assertEqual(test_case.name, '2017-04-10')
         self.assertEqual(test_case.owner_id, '-')
         self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([
