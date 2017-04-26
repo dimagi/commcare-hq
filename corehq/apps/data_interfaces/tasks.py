@@ -84,10 +84,11 @@ def run_rules_for_case(case, rules, now):
     last_result = None
     for rule in rules:
         if last_result:
-            if last_result.num_related_updates > 0 or last_result.num_related_closes > 0:
-                case.get_parent.reset_cache(case)
-
-            if last_result.num_updates > 0:
+            if (
+                last_result.num_updates > 0 or
+                last_result.num_related_updates > 0 or
+                last_result.num_related_closes > 0
+            ):
                 case = CaseAccessors(case.domain).get_case(case.case_id)
 
         last_result = rule.run_rule(case, now)

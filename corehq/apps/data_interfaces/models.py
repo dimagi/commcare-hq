@@ -11,6 +11,7 @@ from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.log import with_progress_bar
+from corehq.util.test_utils import unit_testing_only
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import date, datetime, time, timedelta
 from dateutil.parser import parse
@@ -176,6 +177,13 @@ class AutomaticUpdateRule(models.Model):
     def soft_delete(self):
         self.deleted = True
         self.save()
+
+    @unit_testing_only
+    def hard_delete(self):
+        self.delete_criteria()
+        self.delete_actions()
+        CaseRuleSubmission.objects.filter(rule=self).delete()
+        self.delete()
 
     @property
     @memoized
