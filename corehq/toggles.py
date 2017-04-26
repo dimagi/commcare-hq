@@ -50,7 +50,8 @@ ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, T
 class StaticToggle(object):
 
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
-                 description=None, save_fn=None, always_enabled=None):
+                 description=None, save_fn=None, always_enabled=None,
+                 always_disabled=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -61,6 +62,7 @@ class StaticToggle(object):
         # two parameters, `domain_name` and `toggle_is_enabled`
         self.save_fn = save_fn
         self.always_enabled = always_enabled or set()
+        self.always_disabled = always_disabled or set()
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -69,6 +71,8 @@ class StaticToggle(object):
     def enabled(self, item, **kwargs):
         if item in self.always_enabled:
             return True
+        elif item in self.always_disabled:
+            return False
         return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in self.namespaces])
 
     def enabled_for_request(self, request):
@@ -148,11 +152,11 @@ class PredictablyRandomToggle(StaticToggle):
             description=None,
             always_disabled=None):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
-                                                      help_link=help_link, description=description)
+                                                      help_link=help_link, description=description,
+                                                      always_disabled=always_disabled)
         assert namespaces, 'namespaces must be defined!'
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
         self.randomness = randomness
-        self.always_disabled = always_disabled or set()
 
     @property
     def randomness_percent(self):
@@ -588,6 +592,7 @@ MOBILE_UCR = StaticToggle(
      'through the app builder'),
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )
 
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
@@ -974,7 +979,7 @@ DATA_MIGRATION = StaticToggle(
 
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
-    'Make the Worker Activity Report use the Groups or Users (EMWF) filter',
+    'Make the Worker Activity Report use the Groups or Users or Locations (LocationRestrictedEMWF) filter',
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
     description=(
@@ -1031,6 +1036,7 @@ ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
     'Allow anonymous users to access web apps applications',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(

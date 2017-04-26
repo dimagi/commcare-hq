@@ -3,6 +3,19 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
+{% block js-inline %}{{ block.super }}
+  <script type="text/javascript">
+    $(function () {
+      _.each($('.select2'), function (elem) {
+        if ($(elem).prop('required')) {
+          $(elem).prev().find('.select2-focusser').prop('required', true);
+          $(elem).removeProp('required');
+        }
+      });
+    })
+  </script>
+{% endblock %}
+
 {% block page_content %}
     {% crispy form %}
 {% endblock %}

@@ -1,5 +1,6 @@
 import datetime
 import logging
+import uuid
 
 import redis
 from couchdbkit.exceptions import ResourceNotFound
@@ -32,7 +33,7 @@ class FormProcessorCouch(object):
 
     @classmethod
     def new_xform(cls, form_data):
-        _id = extract_meta_instance_id(form_data) or XFormInstance.get_db().server.next_uuid()
+        _id = extract_meta_instance_id(form_data) or uuid.uuid4().hex
         assert _id
         xform = XFormInstance(
             # form has to be wrapped
@@ -96,8 +97,7 @@ class FormProcessorCouch(object):
     @classmethod
     def assign_new_id(cls, xform):
         assert not xform.persistent_blobs, "some blobs would be lost"
-        new_id = XFormInstance.get_db().server.next_uuid()
-        xform._id = new_id
+        xform._id = uuid.uuid4().hex
         return xform
 
     @classmethod

@@ -92,6 +92,7 @@
                     fixColsWidth: 130,
                 {% endif %}
             });
+            var standardHQReport = hqImport("userreports/js/configurable_report.js").getStandardHQReport();
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);
             }

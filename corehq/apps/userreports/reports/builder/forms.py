@@ -1297,7 +1297,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
                     _("Rows"),
                     _('Choose which property this report will group its results by. Each value of this property will be a row in the table. For example, if you choose a yes or no question, the report will show a row for "yes" and a row for "no."'),
                 ),
-                'group_by',
+                crispy.Field('group_by', required=True),
             ),
             self.user_filter_fieldset,
             self.default_filter_fieldset

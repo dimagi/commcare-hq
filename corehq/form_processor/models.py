@@ -1,6 +1,5 @@
 from __future__ import print_function
 import json
-import logging
 import mimetypes
 import os
 import uuid
@@ -11,7 +10,6 @@ from collections import (
 from datetime import datetime
 
 from StringIO import StringIO
-from django.conf import settings
 from django.db import models
 from jsonfield.fields import JSONField
 from jsonobject import JsonObject
@@ -22,14 +20,12 @@ from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
 from corehq.blobs.mixin import get_short_identifier
 from corehq.blobs.exceptions import NotFound, BadName
-from corehq.form_processor import signals
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
+from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.sql_db.routers import db_for_read_write
-from corehq.util.exceptions import AccessRestricted
-from corehq.util.mixin import DisabledDbMixin
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.signals import xform_archived, xform_unarchived
@@ -133,24 +129,19 @@ class AttachmentMixin(SaveStateMixin):
         raise NotImplementedError
 
 
-class RestrictedManager(models.Manager):
-
-    def get_queryset(self):
-        if not getattr(settings, 'ALLOW_FORM_PROCESSING_QUERIES', False):
-            raise AccessRestricted('Only "raw" queries allowed')
-        else:
-            return super(RestrictedManager, self).get_queryset()
+class RestrictedManager(RequireDBManager):
 
     def raw(self, raw_query, params=None, translations=None, using=None):
         from django.db.models.query import RawQuerySet
         if not using:
             using = db_for_read_write(self.model)
-        return RawQuerySet(raw_query, model=self.model,
-                params=params, translations=translations,
-                using=using)
+        return RawQuerySet(
+            raw_query, model=self.model,
+            params=params, translations=translations, using=using
+        )
 
 
-class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, AttachmentMixin,
+class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
                        AbstractXFormInstance, TrackRelatedChanges):
     objects = RestrictedManager()
 
@@ -392,7 +383,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         ]
 
 
-class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
+class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
     attachment_id = models.UUIDField(unique=True, db_index=True)
     content_type = models.CharField(max_length=255, null=True)
     content_length = models.IntegerField(null=True)
@@ -413,14 +404,31 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
         if not self.name:
             raise InvalidAttachment("cannot save attachment without name")
 
+        content_readable = content
+        if isinstance(content, basestring):
+            content_readable = StringIO(content)
+
         db = get_blob_db()
         bucket = self.blobdb_bucket()
-        info = db.put(content, get_short_identifier(), bucket=bucket)
+        info = db.put(content_readable, get_short_identifier(), bucket=bucket)
         self.md5 = info.md5_hash
         self.content_length = info.length
         self.blob_id = info.identifier
 
+        self._set_cached_content(content)
+
+    def _set_cached_content(self, content):
+        self._cached_content = content
+
+    def _get_cached_content(self, stream=False):
+        if hasattr(self, '_cached_content') and self._cached_content:
+            return StringIO(self._cached_content) if stream else self._cached_content
+
     def read_content(self, stream=False):
+        cached = self._get_cached_content(stream)
+        if cached:
+            return cached
+
         db = get_blob_db()
         try:
             blob = db.get(self.blob_id, self.blobdb_bucket())
@@ -486,7 +494,7 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
         ]
 
 
-class XFormOperationSQL(DisabledDbMixin, models.Model):
+class XFormOperationSQL(PartitionedModel, models.Model):
     objects = RestrictedManager()
 
     ARCHIVE = 'archive'
@@ -563,7 +571,7 @@ class SupplyPointCaseMixin(object):
         return SQLLocation.objects.get(location_id=self.location_id)
 
 
-class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
+class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin, MessagingCaseContactMixin):
     objects = RestrictedManager()
@@ -949,7 +957,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         ]
 
 
-class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
+class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     objects = RestrictedManager()
 
     # relationship_ids should be powers of 2
@@ -1028,7 +1036,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
         app_label = "form_processor"
 
 
-class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
+class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     objects = RestrictedManager()
 
     # types should be powers of 2
@@ -1289,7 +1297,7 @@ class FormEditRebuild(CaseTransactionDetail):
     deprecated_form_id = StringProperty()
 
 
-class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
+class LedgerValue(PartitionedModel, models.Model, TrackRelatedChanges):
     """
     Represents the current state of a ledger. Supercedes StockState
     """
@@ -1360,7 +1368,9 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
         unique_together = ("case", "section_id", "entry_id")
 
 
-class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
+class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
+    objects = RestrictedManager()
+
     TYPE_BALANCE = 1
     TYPE_TRANSFER = 2
     TYPE_CHOICES = (

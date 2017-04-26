@@ -11,7 +11,7 @@
   {% if form.uses_cases %}
     var CaseConfig = hqImport('app_manager/js/case-config-ui.js').CaseConfig;
     var caseConfig = new CaseConfig({
-        home: $('#casexml_home'),
+        home: $('#case-config-ko'),
         actions: {{ form.actions|JSON }},
         questions: {{ xform_questions|JSON }},
         save_url: "{% url "edit_form_actions" app.domain app.id module.id nav_form.id %}",
