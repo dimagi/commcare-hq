@@ -9,7 +9,7 @@ import yaml
 from django.urls import reverse
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
-    get_apps_in_domain, get_other_apps_in_domain
+    get_apps_in_domain, get_case_sharing_apps_in_domain
 )
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
@@ -226,9 +226,9 @@ class ParentCasePropertyBuilder(object):
 
     @property
     @memoized
-    def other_app_forms_info(self):
+    def case_sharing_app_forms_info(self):
         forms_info = []
-        for app in self.get_other_apps_in_domain():
+        for app in self.get_other_case_sharing_apps_in_domain():
             for module in app.get_modules():
                 for form in module.get_forms():
                     forms_info.append((module.case_type, form))
@@ -239,8 +239,8 @@ class ParentCasePropertyBuilder(object):
         parent_types = set()
         case_properties = set()
         forms_info = self.forms_info
-        if include_shared_properties:
-            forms_info += self.other_app_forms_info
+        if self.app.case_sharing and include_shared_properties:
+            forms_info += self.case_sharing_app_forms_info
 
         for m_case_type, form in forms_info:
             p_types, c_props = form.get_parent_types_and_contributed_properties(m_case_type, case_type)
@@ -254,8 +254,8 @@ class ParentCasePropertyBuilder(object):
         return set(p[0] for p in parent_types)
 
     @memoized
-    def get_other_apps_in_domain(self):
-        return get_other_apps_in_domain(self.app.domain, self.app.id)
+    def get_other_case_sharing_apps_in_domain(self):
+        return get_case_sharing_apps_in_domain(self.app.domain, self.app.id)
 
     @memoized
     def get_properties(self, case_type, already_visited=(),
@@ -296,8 +296,8 @@ class ParentCasePropertyBuilder(object):
             for parent_type in parent_types:
                 for property in get_properties_recursive(parent_type[0]):
                     case_properties.add('%s/%s' % (parent_type[1], property))
-        if include_shared_properties:
-            for app in self.get_other_apps_in_domain():
+        if self.app.case_sharing and include_shared_properties:
+            for app in self.get_other_case_sharing_apps_in_domain():
                 case_properties.update(
                     get_case_properties(
                         app, [case_type],
@@ -371,9 +371,10 @@ def get_case_properties(app, case_types, defaults=(),
 def get_shared_case_types(app):
     shared_case_types = set()
 
-    apps = get_other_apps_in_domain(app.domain, app.id)
-    for app in apps:
-        shared_case_types |= set(chain(*[m.get_case_types() for m in app.get_modules()]))
+    if app.case_sharing:
+        apps = get_case_sharing_apps_in_domain(app.domain, app.id)
+        for app in apps:
+            shared_case_types |= set(chain(*[m.get_case_types() for m in app.get_modules()]))
 
     return shared_case_types
 
