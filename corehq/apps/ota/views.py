@@ -66,7 +66,7 @@ def restore(request, domain, app_id=None):
     ]
     datadog_counter('commcare.restores.count', tags=tags)
     if timing_context is not None:
-        for timer in timing_context.to_list():
+        for timer in timing_context.to_list(exclude_root=True):
             # Only record leaf nodes so we can sum to get the total
             if timer.is_leaf_node:
                 datadog_gauge(
