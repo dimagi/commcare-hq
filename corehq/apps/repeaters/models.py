@@ -564,7 +564,10 @@ class RepeatRecord(Document):
     def handle_failure(self, response, post_info, tries):
         """Do something with the response if the repeater fails
         """
-        self._fail(u'{}: {}'.format(response.status_code, response.reason), response)
+        self._fail(
+            u'{}: {}. {}'.format(response.status_code, response.reason, getattr(response, 'content', None)),
+            response
+        )
         self.repeater.handle_failure(response, self)
 
     def handle_exception(self, exception):
