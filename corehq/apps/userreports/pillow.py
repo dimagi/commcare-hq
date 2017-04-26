@@ -195,7 +195,7 @@ class ConfigurableReportTableManagerMixin(object):
 
     def rebuild_table(self, adapter):
         # https://manage.dimagi.com/default.asp?252832
-        if not adapter.config.get_id == "static-enikshay-episode":
+        if adapter.config.get_id not in ("static-enikshay-episode", "static-np-migration-3-episode"):
             config = adapter.config
             if not config.is_static:
                 latest_rev = config.get_db().get_rev(config._id)
