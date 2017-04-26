@@ -191,6 +191,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
             ),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'implement_password_hashing': settings.ENABLE_PASSWORD_HASHING,
             'show_number': self.ab_show_number,
             'ab_test': self.ab_context,
         }
