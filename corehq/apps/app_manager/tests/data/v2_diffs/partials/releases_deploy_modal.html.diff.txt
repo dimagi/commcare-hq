@@ -13,8 +13,8 @@
 -                            aria-expanded="true"
 -                            aria-controls="panel-android"
 -                            data-bind="
--                               click: get_short_odk_url,
--                               attr: {'data-parent': '#deploy-accordion_' + id()}
+-                                click: get_short_odk_url,
+-                                attr: {'data-parent': '#deploy-accordion_' + id()}
 -                            ">
 -                            {% trans "Download to Android" %}
 -                        </a>
@@ -63,7 +63,7 @@
                                              <p>
                                                  {% trans "Download" %}
                                                  <a href="https://play.google.com/store/apps/details?id=org.commcare.dalvik">
-@@ -106,7 +113,7 @@
+@@ -108,7 +115,7 @@
                                                      </span>
                                                  </p>
                                              </div>
@@ -72,7 +72,7 @@
                                              <div data-bind="ifnot: hqImport('app_manager/js/app_manager.js').versionGE(build_spec.version(), '2.13.0')">
                                                  Upgrade to CommCare 2.13 to use this feature
                                              </div>
-@@ -164,20 +171,22 @@
+@@ -166,20 +173,22 @@
                          </div>
                      </div>
                  </div>
@@ -108,7 +108,7 @@
                      </div>
                      <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_download_java'}">
                          <div class="panel-body">
-@@ -207,8 +216,9 @@
+@@ -209,8 +218,9 @@
                      </div>
                  </div>
                  {% if can_send_sms %}
@@ -119,7 +119,7 @@
                              <a data-toggle="collapse"
                                 data-bind="
                                     click: onSMSPanelClick,
-@@ -219,8 +229,9 @@
+@@ -221,8 +231,9 @@
                                     }
                                  "
                                 aria-expanded="true" aria-controls="panel-sms">
@@ -131,7 +131,7 @@
                      </div>
                      <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_sms'}">
                          <div class="panel-body">
-@@ -277,20 +288,22 @@
+@@ -279,20 +290,22 @@
                  </div>
                  {% endif %}
                  {% if multimedia_state.has_media %}
@@ -167,7 +167,7 @@
                          </div>
                          <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_multimedia'}">
                              <div class="panel-body">
-@@ -300,11 +313,13 @@
+@@ -302,11 +315,13 @@
                      </div>
                  {% endif %}
                  {% if request.user.is_superuser %}
