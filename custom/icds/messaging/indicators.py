@@ -123,7 +123,14 @@ class AWWIndicator(SMSIndicator):
     @property
     @memoized
     def supervisor(self):
+        """
+        Returns None if there is a misconfiguration (i.e., if the AWW's location
+        has no parent location, or if there are no users at the parent location).
+        """
         supervisor_location = self.user.sql_location.parent
+        if supervisor_location is None:
+            return None
+
         return get_users_by_location_id(self.domain, supervisor_location.location_id).first()
 
 
@@ -182,6 +189,9 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
         raise IndicatorError("AWC {} not found in the restore".format(location_name))
 
     def get_messages(self, language_code=None):
+        if self.supervisor is None:
+            return []
+
         agg_perf = LSAggregatePerformanceIndicator(self.domain, self.supervisor)
 
         visits = self.get_value_from_fixture(agg_perf.visits_fixture, 'count')
