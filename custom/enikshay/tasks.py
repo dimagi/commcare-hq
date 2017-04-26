@@ -67,7 +67,7 @@ class EpisodeAdherenceUpdater(object):
                         self.domain
                     )
             except Exception, e:
-                raise EnikshayTaskException(
+                logger.error(
                     "Error calculating adherence values for episode case_id({}): {}".format(
                         episode.case_id,
                         e
@@ -192,7 +192,7 @@ class EpisodeUpdate(object):
         elif parse_date(raw_date):
             return datetime.datetime.combine(parse_date(raw_date), datetime.datetime.min.time())
         else:
-            logger.error(
+            raise EnikshayTaskException(
                 "Episode case {case_id} has invalid format for 'adherence_schedule_date_start' {date}".format(
                     case_id=self.episode.case_id,
                     date=raw_date
