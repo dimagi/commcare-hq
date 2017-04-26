@@ -287,8 +287,17 @@ class AutomaticUpdateRule(models.Model):
 
     def add_criteria(self, definition_class, **definition_kwargs):
         criteria = CaseRuleCriteria(rule=self)
-        criteria.definition = definition_class.objects.create(**definition_kwargs)
+        definition = definition_class.objects.create(**definition_kwargs)
+        criteria.definition = definition
         criteria.save()
+        return criteria, definition
+
+    def add_action(self, definition_class, **definition_kwargs):
+        action = CaseRuleAction(rule=self)
+        definition = definition_class.objects.create(**definition_kwargs)
+        action.definition = definition
+        action.save()
+        return action, definition
 
 
 class CaseRuleCriteria(models.Model):
@@ -623,6 +632,9 @@ class CaseRuleAction(models.Model):
 
 
 class CaseRuleActionResult(object):
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
     def _validate_int(self, value):
         if not isinstance(value, int):
