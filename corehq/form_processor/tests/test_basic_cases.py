@@ -302,7 +302,7 @@ class FundamentalCaseTests(TestCase):
 
     def test_restore_caches_cleared(self):
         cache = get_redis_default_cache()
-        cache_key = restore_cache_key(RESTORE_CACHE_KEY_PREFIX, 'user_id', version="2.0")
+        cache_key = restore_cache_key(DOMAIN, RESTORE_CACHE_KEY_PREFIX, 'user_id', version="2.0")
         cache.set(cache_key, 'test-thing')
         self.assertEqual(cache.get(cache_key), 'test-thing')
         form = """
