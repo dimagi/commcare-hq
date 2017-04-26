@@ -294,7 +294,7 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(len(prescription_case_ids), 1)
         prescription_case = self.case_accessor.get_case(prescription_case_ids[0])
         self.assertFalse(prescription_case.closed)  # TODO
-        self.assertIsNone(prescription_case.external_id)  # TODO - update with nikshay ID
+        self.assertIsNone(prescription_case.external_id)
         self.assertEqual(prescription_case.name, None)  # TODO
         # self.assertEqual(adherence_case.opened_on, '')  # TODO
         self.assertEqual(prescription_case.owner_id, '')
