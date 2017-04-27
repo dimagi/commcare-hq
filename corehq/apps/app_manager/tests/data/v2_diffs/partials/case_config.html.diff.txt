@@ -1,15 +1,6 @@
 --- 
 +++ 
-@@ -1,7 +1,7 @@
- {% load i18n %}
- {% load hq_shared_tags %}
- 
--{% include 'app_manager/v1/partials/case_config_shared.html' %}
-+{% include 'app_manager/v2/partials/case_config_shared.html' %}
- 
- <script type="text/html" id="remove-subcase-modal-template">
-     <div class="modal-dialog">
-@@ -24,105 +24,127 @@
+@@ -22,105 +22,127 @@
  </script>
  
  <script type="text/html" id="case-config:case-transaction">
