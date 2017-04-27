@@ -52,7 +52,9 @@ class Command(BaseCommand):
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
-        base_query = Beneficiary.objects.all()
+        base_query = Beneficiary.objects.filter(
+            caseStatus__in=['suspect', 'patient', 'patient '],
+        )
 
         if options['nikshayId']:
             base_query = base_query.filter(nikshayId=options['nikshayId'])
