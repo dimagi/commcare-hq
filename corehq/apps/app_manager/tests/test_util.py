@@ -118,12 +118,20 @@ class SchemaTest(SimpleTestCase):
 
     def test_get_casedb_schema_with_form(self):
         village = self.add_form("village")
+        self.factory.form_requires_case(
+            village,
+            case_type=self.factory.app.get_module(0).case_type,
+            update={'foo': '/data/question1'}
+        )
         schema = util.get_casedb_schema(village)
         self.assertEqual(len(schema["subsets"]), 1, schema["subsets"])
         self.assert_has_kv_pairs(schema["subsets"][0], {
             'id': 'case',
             'name': 'village',
-            'structure': {'case_name': {"description": ""}},
+            'structure': {
+                'case_name': {"description": ""},
+                'foo': {"description": ""},
+            },
             'related': None,
         })
 
@@ -131,6 +139,9 @@ class SchemaTest(SimpleTestCase):
         family = self.add_form("family")
         village = self.add_form("village")
         self.factory.form_opens_case(village, case_type='family', is_subcase=True)
+        self.factory.form_requires_case(family, case_type='family', update={
+            'foo': '/data/question1',
+        })
         schema = util.get_casedb_schema(family)
         subsets = {s["id"]: s for s in schema["subsets"]}
         self.assertEqual(subsets["parent"]["related"], None)
@@ -142,6 +153,9 @@ class SchemaTest(SimpleTestCase):
 
     def test_get_casedb_schema_with_multiple_parent_case_types(self):
         referral = self.add_form("referral")
+        self.factory.form_requires_case(referral, case_type='referral', update={
+            'foo': '/data/question1',
+        })
         child = self.add_form("child")
         self.factory.form_opens_case(child, case_type='referral', is_subcase=True)
         pregnancy = self.add_form("pregnancy")
@@ -154,10 +168,15 @@ class SchemaTest(SimpleTestCase):
 
     def test_get_casedb_schema_with_deep_hierarchy(self):
         child = self.add_form("child")
+        case_type = self.factory.app.get_module(0).case_type
+        case_update = {'foo': '/data/question1'}
+        self.factory.form_requires_case(child, case_type=case_type, update=case_update)
         parent = self.add_form("parent")
+        self.factory.form_requires_case(parent, case_type=case_type, update=case_update)
         self.factory.form_opens_case(parent, case_type='child', is_subcase=True)
         grandparent = self.add_form("grandparent")
         self.factory.form_opens_case(grandparent, case_type='parent', is_subcase=True)
+        self.factory.form_requires_case(grandparent, case_type=case_type, update=case_update)
         greatgrandparent = self.add_form("greatgrandparent")
         self.factory.form_opens_case(greatgrandparent, case_type='grandparent', is_subcase=True)
         schema = util.get_casedb_schema(child)
