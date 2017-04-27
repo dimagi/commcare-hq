@@ -20,12 +20,12 @@ hqDefine('domain/js/encoder.js', function () {
         };
 
         this.encode = function(password) {
-            password = password.trim()
+            password = password.trim();
             if(password) {
                 var secret_password = this.addPadding(window.btoa(b64EncodeUnicode(password)));
                 return this.addPadding(window.btoa(secret_password));
             }
-            return password
+            return password;
         };
     }
 
