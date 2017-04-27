@@ -980,23 +980,31 @@ def new_module(request, domain, app_id):
         form_id = None
         if toggles.APP_MANAGER_V2.enabled(request.user.username):
             if module_type == 'case':
-                # registration form
-                register = app.new_form(module_id, "Register", lang)
-                register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
-                register.actions.update_case = UpdateCaseAction(
-                    condition=FormActionCondition(type='always'))
-
-                # one followup form
-                followup = app.new_form(module_id, "Followup", lang)
-                followup.requires = "case"
-                followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
-
                 # make case type unique across app
                 app_case_types = [m.case_type for m in app.modules if m.case_type]
                 if len(app_case_types):
                     module.case_type = app_case_types[0]
                 else:
                     module.case_type = 'case'
+
+                reg_forms = []
+                if len(app_case_types) > 0:
+                    reg_forms = [
+                        f.id for m in app.modules if m.case_type
+                        for f in m.forms if f.is_registration_form(case_type=m.case_type)
+                    ]
+
+                # add a registration form unless there's already a case module that has one
+                if len(app_case_types) == 0 or len(reg_forms) == 0:
+                    register = app.new_form(module_id, "Register", lang)
+                    register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
+                    register.actions.update_case = UpdateCaseAction(
+                        condition=FormActionCondition(type='always'))
+
+                # add a followup form
+                followup = app.new_form(module_id, "Followup", lang)
+                followup.requires = "case"
+                followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
             else:
                 app.new_form(module_id, "Survey", lang)
             form_id = 0
