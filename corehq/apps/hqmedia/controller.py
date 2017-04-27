@@ -1,3 +1,4 @@
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
 
@@ -51,15 +52,15 @@ class BaseMultimediaUploadController(object):
             'licensingParams': self.licensing_params,
         }
         if hasattr(self, 'queue_template'):
-            options.update({'queueTemplate': self.queue_template})
+            options.update({'queueTemplate': render_to_string(self.queue_template)})
         if hasattr(self, 'status_template'):
-            options.update({'statusTemplate': self.status_template})
+            options.update({'statusTemplate': render_to_string(self.status_template)})
         if hasattr(self, 'details_template'):
-            options.update({'detailsTemplate': self.details_template})
+            options.update({'detailsTemplate': render_to_string(self.details_template)})
         if hasattr(self, 'errors_template'):
-            options.update({'errorsTemplate': self.errors_template})
+            options.update({'errorsTemplate': render_to_string(self.errors_template)})
         if hasattr(self, 'existing_file_template'):
-            options.update({'existingFileTemplate': self.existing_file_template})
+            options.update({'existingFileTemplate': render_to_string(self.existing_file_template)})
 
         return {
             'slug': self.slug,
