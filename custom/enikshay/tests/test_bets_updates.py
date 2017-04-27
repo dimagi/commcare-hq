@@ -1,6 +1,6 @@
 import json
 import uuid
-from django.test import TestCase, override_settings, RequestFactory
+from django.test import TestCase, override_settings, Client
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from custom.enikshay.integrations.bets.views import update_voucher, update_incentive, get_case
@@ -26,12 +26,11 @@ class TestBetsUpdates(TestCase):
         super(TestBetsUpdates, cls).tearDownClass()
 
     def make_request(self, view, data):
-        factory = RequestFactory()
-        request = factory.post("/a/enikshay/bets/{}".format(view.__name__),
-                               data=json.dumps(data),
-                               content_type='application/json')
-        request.user = self.web_user.get_django_user()
-        return view(request, self.domain)
+        c = Client()
+        c.force_login(self.web_user.get_django_user())
+        return c.post("/a/{}/bets/{}".format(self.domain, view.__name__),
+                      data=json.dumps(data),
+                      content_type='application/json')
 
     def make_voucher(self):
         return create_and_save_a_case(
