@@ -221,6 +221,7 @@ def get_restore_params(request):
         'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP),
         'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
         'openrosa_version': openrosa_version,
+        'device_id': request.GET.get('device_id'),
     }
 
 
@@ -228,7 +229,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None,
-                         as_user=None,
+                         as_user=None, device_id=None,
                          has_data_cleanup_privelege=False,
                          openrosa_version=OPENROSA_DEFAULT_VERSION):
     # not a view just a view util
@@ -264,6 +265,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             state_hash=state,
             include_item_count=items,
             app=app,
+            device_id=device_id,
         ),
         cache_settings=RestoreCacheSettings(
             force_cache=force_cache or async_restore_enabled,
