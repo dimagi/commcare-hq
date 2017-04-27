@@ -62,6 +62,7 @@ class BeneficiaryCaseFactory(object):
                     'first_name': self.beneficiary.firstName,
                     'last_name': self.beneficiary.lastName,
                     'name': ' '.join([self.beneficiary.firstName, self.beneficiary.lastName]),
+                    'occupation': '',
                     'phone_number': self.beneficiary.phoneNumber,
                     'secondary_contact_phone_number': self.beneficiary.emergencyContactNo,
 

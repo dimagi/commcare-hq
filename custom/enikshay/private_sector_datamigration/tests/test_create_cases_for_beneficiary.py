@@ -89,6 +89,7 @@ class TestCreateCasesByBeneficiary(TestCase):
             ('last_name', 'P'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
+            ('occupation', ''),
             ('phone_number', '5432109876'),
             ('secondary_contact_phone_number', '1234567890'),
             ('sex', 'male'),
