@@ -135,7 +135,7 @@ class LocationForm(forms.Form):
             return filter(None, [
                 _("Location Information"),
                 'name',
-                'location_type' if len(self._get_allowed_types(self.domain, self.location.parent)) > 1 else None,
+                'location_type' if len(self.get_allowed_types(self.domain, self.location.parent)) > 1 else None,
             ])
         else:
             return [
@@ -224,7 +224,7 @@ class LocationForm(forms.Form):
             self.cleaned_data['site_code'] = generate_code(self.cleaned_data['name'], all_codes)
 
     @staticmethod
-    def _get_allowed_types(domain, parent):
+    def get_allowed_types(domain, parent):
         parent_type = parent.location_type if parent else None
         return list(LocationType.objects
                     .filter(domain=domain,
@@ -233,7 +233,7 @@ class LocationForm(forms.Form):
 
     def clean_location_type(self):
         loc_type = self.cleaned_data['location_type']
-        allowed_types = self._get_allowed_types(self.domain, self.cleaned_data.get('parent'))
+        allowed_types = self.get_allowed_types(self.domain, self.cleaned_data.get('parent'))
         if not allowed_types:
             raise forms.ValidationError(_('The selected parent location cannot have child locations!'))
 
@@ -315,14 +315,6 @@ class LocationFormSet(object):
         self.location_form = LocationForm(location, bound_data, is_new=is_new)
         self.custom_location_data = self._get_custom_location_data(bound_data, is_new)
 
-        make_user = bound_data and (LocationType.objects
-                                   .get(domain=self.domain, name=bound_data['location_type'])
-                                   .has_user)
-        self.include_user_forms = is_new and (
-            (bound_data is None) or
-            make_user
-        )
-
         if self.include_user_forms:
             self.user_form = self._get_user_form(bound_data)
             self.custom_user_data = self._get_custom_user_data(bound_data)
@@ -330,6 +322,23 @@ class LocationFormSet(object):
                           self.user_form, self.custom_user_data]
         else:
             self.forms = [self.location_form, self.custom_location_data]
+
+    @property
+    @memoized
+    def include_user_forms(self):
+        if not self.is_new:
+            return False
+
+        possible_types = LocationForm.get_allowed_types(self.domain, self.location.parent)
+        if any(lt.has_user for lt in possible_types):
+            if not self.location_form.is_bound:
+                # The form hasn't yet been submitted, so we don't know which type
+                return True
+            else:
+                self.location_form.is_valid()
+                if 'location_type_object' in self.location_form.cleaned_data:
+                    return self.location_form.cleaned_data['location_type_object'].has_user
+        return False
 
     @memoized
     def is_valid(self):
