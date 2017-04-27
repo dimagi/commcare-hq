@@ -562,8 +562,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         form.get_unique_id()
         app.save()
 
-    allow_usercase = (domain_has_privilege(request.domain, privileges.USER_CASE)
-                      and not toggles.USER_TESTING_SIMPLIFY.enabled(request.domain))
+    allow_usercase = domain_has_privilege(request.domain, privileges.USER_CASE)
     valid_index_names = DEFAULT_CASE_INDEX_IDENTIFIERS.values()
     if allow_usercase:
         valid_index_names.append(USERCASE_PREFIX[0:-1])     # strip trailing slash
