@@ -318,23 +318,31 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         call_command('create_enikshay_cases', self.domain)
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
-        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        occurrence_cases = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(len(occurrence_cases), 1)
+        occurrence_case_id = occurrence_cases[0]
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(len(episode_case_ids), 1)
-        episode_case_id = episode_case_ids[0]
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 0)
 
         test_case_ids = self.case_accessor.get_case_ids_in_domain(type='test')
         self.assertEqual(len(test_case_ids), 1)
         test_case = self.case_accessor.get_case(test_case_ids[0])
+        self.assertEqual(test_case.closed, False)
+        self.assertEqual(test_case.name, '2017-04-10')
+        self.assertEqual(test_case.opened_on, datetime(2017, 4, 10))
+        self.assertEqual(test_case.owner_id, '-')
         self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([
+            ('date_reported', '2017-04-10'),
             ('date_tested', '2017-04-10'),
             ('diagnostic_test_reason', 'presumptive_tb'),
+            ('episode_type_at_request', 'presumptive_tb'),
             ('lab_serial_number', '2073'),
             ('migration_created_case', 'true'),
             ('migration_created_from_id', str(followup.id)),
             ('migration_created_from_record', self.patient_detail.PregId),
             ('result_grade', '2+'),
+            ('result_recorded', 'yes'),
             ('testing_facility_id', '1'),
         ]))
         self.assertEqual(len(test_case.indices), 1)
@@ -342,8 +350,8 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             test_case.indices[0],
             CommCareCaseIndex(
                 identifier='host',
-                referenced_type='episode',
-                referenced_id=episode_case_id,
+                referenced_type='occurrence',
+                referenced_id=occurrence_case_id,
                 relationship='extension',
             )
         )
@@ -356,23 +364,31 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         call_command('create_enikshay_cases', self.domain)
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
-        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        occurrence_cases = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(len(occurrence_cases), 1)
+        occurrence_case_id = occurrence_cases[0]
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(len(episode_case_ids), 1)
-        episode_case_id = episode_case_ids[0]
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 0)
 
         test_case_ids = self.case_accessor.get_case_ids_in_domain(type='test')
         self.assertEqual(len(test_case_ids), 1)
         test_case = self.case_accessor.get_case(test_case_ids[0])
+        self.assertEqual(test_case.closed, False)
+        self.assertEqual(test_case.name, '2017-04-10')
+        self.assertEqual(test_case.opened_on, datetime(2017, 4, 10))
+        self.assertEqual(test_case.owner_id, '-')
         self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([
+            ('date_reported', '2017-04-10'),
             ('date_tested', '2017-04-10'),
+            ('episode_type_at_request', 'confirmed_tb'),
             ('follow_up_test_reason', 'end_of_ip'),
             ('lab_serial_number', '2073'),
             ('migration_created_case', 'true'),
             ('migration_created_from_id', str(followup.id)),
             ('migration_created_from_record', self.patient_detail.PregId),
             ('result_grade', 'SC-1'),
+            ('result_recorded', 'yes'),
             ('testing_facility_id', '1'),
         ]))
         self.assertEqual(len(test_case.indices), 1)
@@ -380,8 +396,8 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             test_case.indices[0],
             CommCareCaseIndex(
                 identifier='host',
-                referenced_type='episode',
-                referenced_id=episode_case_id,
+                referenced_type='occurrence',
+                referenced_id=occurrence_case_id,
                 relationship='extension',
             )
         )
@@ -394,23 +410,31 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         call_command('create_enikshay_cases', self.domain)
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
-        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        occurrence_cases = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(len(occurrence_cases), 1)
+        occurrence_case_id = occurrence_cases[0]
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(len(episode_case_ids), 1)
-        episode_case_id = episode_case_ids[0]
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')), 0)
 
         test_case_ids = self.case_accessor.get_case_ids_in_domain(type='test')
         self.assertEqual(len(test_case_ids), 1)
         test_case = self.case_accessor.get_case(test_case_ids[0])
+        self.assertEqual(test_case.closed, False)
+        self.assertEqual(test_case.name, '2017-04-10')
+        self.assertEqual(test_case.opened_on, datetime(2017, 4, 10))
+        self.assertEqual(test_case.owner_id, '-')
         self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([
+            ('date_reported', '2017-04-10'),
             ('date_tested', '2017-04-10'),
+            ('episode_type_at_request', 'confirmed_tb'),
             ('follow_up_test_reason', 'end_of_cp'),
             ('lab_serial_number', '2073'),
             ('migration_created_case', 'true'),
             ('migration_created_from_id', str(followup.id)),
             ('migration_created_from_record', self.patient_detail.PregId),
             ('result_grade', 'Pos'),
+            ('result_recorded', 'yes'),
             ('testing_facility_id', '1'),
         ]))
         self.assertEqual(len(test_case.indices), 1)
@@ -418,8 +442,8 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             test_case.indices[0],
             CommCareCaseIndex(
                 identifier='host',
-                referenced_type='episode',
-                referenced_id=episode_case_id,
+                referenced_type='occurrence',
+                referenced_id=occurrence_case_id,
                 relationship='extension',
             )
         )
