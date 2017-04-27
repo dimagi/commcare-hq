@@ -43,24 +43,26 @@ def run_indicator(domain, user_id, indicator_class, language_code=None):
     :param indicator_class: a subclass of AWWIndicator or LSIndicator
     """
     user = CommCareUser.get_by_user_id(user_id, domain=domain)
-    indicator = indicator_class(domain, user)
+
     # The user's phone number and preferred language is stored on the usercase
     usercase = user.get_usercase()
+
+    phone_number = get_one_way_number_for_recipient(usercase)
+    if not phone_number or phone_number == '91':
+        # If there is no phone number, don't bother calculating the indicator
+        return
+
     if not language_code:
         language_code = usercase.get_language_code()
 
+    indicator = indicator_class(domain, user)
     messages = indicator.get_messages(language_code=language_code)
 
     if not isinstance(messages, list):
         raise ValueError("Expected a list of messages")
 
-    if messages:
-        phone_number = get_one_way_number_for_recipient(usercase)
-        if not phone_number:
-            return
-
-        for message in messages:
-            send_sms(domain, usercase, phone_number, message)
+    for message in messages:
+        send_sms(domain, usercase, phone_number, message)
 
 
 def get_awc_location_ids(domain):

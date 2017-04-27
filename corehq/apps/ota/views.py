@@ -56,7 +56,8 @@ def restore(request, domain, app_id=None):
     We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
-    update_device_id(request.couch_user, request.GET.get('device_id'))
+    if toggles.ENIKSHAY.enabled(domain):
+        update_device_id(request.couch_user, request.GET.get('device_id'))
     response, timing_context = get_restore_response(domain, request.couch_user, app_id, **get_restore_params(request))
     tags = [
         u'domain:{}'.format(domain),
