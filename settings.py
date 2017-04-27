@@ -924,7 +924,8 @@ except ImportError as error:
 
 def _determine_couch_databases(couch_databases):
     from dev_settings import COUCH_DATABASES as DEFAULT_COUCH_DATABASES_VALUE
-    if couch_databases is DEFAULT_COUCH_DATABASES_VALUE and 'COUCH_SERVER_ROOT' in globals():
+    if 'COUCH_SERVER_ROOT' in globals() and \
+            couch_databases in (None, DEFAULT_COUCH_DATABASES_VALUE):
         import warnings
         couch_databases = {
             'default': {
@@ -953,7 +954,10 @@ COUCH_DATABASES = {
     return couch_databases
 
 
-COUCH_DATABASES = _determine_couch_databases(COUCH_DATABASES)
+try:
+    COUCH_DATABASES = _determine_couch_databases(COUCH_DATABASES)
+except NameError:
+    COUCH_DATABASES = _determine_couch_databases(None)
 
 
 _location = lambda x: os.path.join(FILEPATH, x)
