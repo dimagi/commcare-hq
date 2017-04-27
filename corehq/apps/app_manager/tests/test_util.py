@@ -295,8 +295,14 @@ class SchemaTest(SimpleTestCase):
             self.factory.form_opens_case(child, case_type='referral', is_subcase=True)
             pregnancy = self.add_form("pregnancy")
             self.factory.form_opens_case(pregnancy, case_type='referral', is_subcase=True)
+            schema = util.get_casedb_schema(pregnancy)
+            subsets = {s["id"]: s for s in schema["subsets"]}
+            self.assertEqual(subsets, {})
+
             referral_2 = self.add_form_app_2('referral')
-            referral_2.requires = "case"
+            self.factory.form_requires_case(referral_2, case_type='referral', update={
+                'foo': '/data/question1',
+            })
             schema = util.get_casedb_schema(referral_2)
             subsets = {s["id"]: s for s in schema["subsets"]}
             self.assertTrue(re.match(r'^parent \((pregnancy|child) or (pregnancy|child)\)$',
