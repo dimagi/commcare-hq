@@ -66,6 +66,7 @@ def _get_users_by_loc_id(location_type):
     loc_ids = SQLLocation.objects.filter(location_type=location_type).location_ids()
     user_ids = list(UserES()
                     .domain(location_type.domain)
+                    .show_inactive()
                     .term('user_location_id', list(loc_ids))
                     .values_list('_id', flat=True))
     return {
@@ -86,7 +87,7 @@ def _get_unique_username(domain, base, suffix=0, tries_left=3):
     return _get_unique_username(domain, base, suffix + 1, tries_left - 1)
 
 
-def _make_location_user(location):
+def make_location_user(location):
     """For locations where location_type.has_user is True"""
     return CommCareUser.create(
         location.domain,
@@ -102,7 +103,7 @@ def _create_or_unarchive_users(location_type):
 
     with IterDB(CommCareUser.get_db()) as iter_db:
         for loc in SQLLocation.objects.filter(location_type=location_type):
-            user = users_by_loc.get(loc.location_id, None) or _make_location_user(loc)
+            user = users_by_loc.get(loc.location_id, None) or make_location_user(loc)
             user.is_active = True
             user.user_location_id = loc.location_id
             user.set_location(loc, commit=False)
@@ -122,3 +123,7 @@ def _archive_users(location_type):
                 .filter(location_type=location_type)
                 .values_list('user_id', flat=True))
     iter_update(CommCareUser.get_db(), archive, user_ids)
+
+    for loc in SQLLocation.objects.filter(location_type=location_type):
+        loc.user_id = ''
+        loc.save()
