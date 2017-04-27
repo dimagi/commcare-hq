@@ -5,7 +5,8 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.userreports.expressions.getters import transform_from_datatype
-from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, CHOICE_DELIMITER
+from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, CHOICE_DELIMITER, \
+    LocationDrilldownFilterValue
 from corehq.apps.userreports.util import localize
 from corehq.util.dates import iso_string_to_date, get_quarter_date_range
 
@@ -445,4 +446,13 @@ class LocationDrilldownFilter(BaseFilter):
             return self.default_value(kwargs.get('request_user', None))
 
     def default_value(self, request_user=None):
-        return [self.user_location_id(request_user) if request_user else None]
+        if request_user:
+            user_location_id = self.user_location_id(request_user)
+            if user_location_id:
+                return [user_location_id]
+            elif request_user.is_domain_admin(self.domain):
+                return LocationDrilldownFilterValue.SHOW_ALL
+            else:
+                return LocationDrilldownFilterValue.SHOW_NONE
+        else:
+            return LocationDrilldownFilterValue.SHOW_NONE
