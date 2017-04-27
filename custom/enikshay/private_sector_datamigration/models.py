@@ -245,7 +245,7 @@ class Adherence(models.Model):
     commentId = models.CharField(max_length=8, null=True)
     creationDate = models.DateTimeField(null=True)
     creator = models.CharField(max_length=255, null=True)
-    dosageStatusId = models.IntegerField() # 0, 1, 3
+    dosageStatusId = models.IntegerField()
     doseDate = models.DateTimeField()
     doseReasonId = models.IntegerField()
     episodeId = models.ForeignKey(Episode, on_delete=models.CASCADE)
@@ -254,6 +254,14 @@ class Adherence(models.Model):
     owner = models.CharField(max_length=255, null=True)
     reportingMechanismId = models.IntegerField()
     unknwDoseReasonId = models.CharField(max_length=8, null=True)
+
+    @property
+    def adherence_value(self):
+        return {
+            0: 'directly_observed_dose',
+            1: 'missed_dose',
+            3: 'self_administered_dose',
+        }[self.dosageStatusId]
 
 
 class EpisodePrescription(models.Model):

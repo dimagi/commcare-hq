@@ -183,6 +183,7 @@ class BeneficiaryCaseFactory(object):
                 'create': True,
                 'update': {
                     'adherence_date': adherence.doseDate.date(),
+                    'adherence_value': adherence.adherence_value,
                     'migration_created_case': 'true',
                     'migration_created_from_record': adherence.adherenceId,
                 }
