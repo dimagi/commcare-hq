@@ -66,14 +66,15 @@ from xml.etree import ElementTree
 logger = logging.getLogger(__name__)
 
 
-def restore_cache_key(domain, prefix, user_id, version=None, sync_log_id=None):
+def restore_cache_key(domain, prefix, user_id, version=None, sync_log_id=None, device_id=None):
     response_class = get_restore_response_class(domain)
-    hashable_key = '{response_class}-{prefix}-{user}-{version}-{sync_log_id}'.format(
+    hashable_key = '{response_class}-{prefix}-{user}-{version}-{sync_log_id}-{device_id}'.format(
         response_class=response_class.__name__,
         prefix=prefix,
         user=user_id,
         version=version or '',
         sync_log_id=sync_log_id or '',
+        device_id=device_id or '',
     )
     return hashlib.md5(hashable_key).hexdigest()
 
@@ -406,14 +407,22 @@ class RestoreParams(object):
     :param version:             The version of the restore format
     :param state_hash:          The case state hash string to use to verify the state of the phone
     :param include_item_count:  Set to `True` to include the item count in the response
+    :param device_id:           The Device id of the device restoring
     """
 
-    def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False, app=None):
+    def __init__(self,
+            sync_log_id='',
+            version=V1,
+            state_hash='',
+            include_item_count=False,
+            device_id=None,
+            app=None):
         self.sync_log_id = sync_log_id
         self.version = version
         self.state_hash = state_hash
         self.include_item_count = include_item_count
         self.app = app
+        self.device_id = device_id
 
     @property
     def app_id(self):
@@ -654,6 +663,7 @@ class RestoreConfig(object):
             self.restore_user.user_id,
             version=self.version,
             sync_log_id=self.sync_log._id if self.sync_log else '',
+            device_id=self.params.device_id,
         )
 
     def validate(self):

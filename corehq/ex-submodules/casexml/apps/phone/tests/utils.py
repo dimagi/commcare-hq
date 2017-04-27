@@ -77,7 +77,7 @@ def generate_restore_payload(project, user, restore_id="", version=V1, state_has
 
 
 def get_restore_config(project, user, restore_id="", version=V1, state_hash="",
-                       items=False, overwrite_cache=False, force_cache=False):
+                       items=False, overwrite_cache=False, force_cache=False, device_id=None):
     return RestoreConfig(
         project=project,
         restore_user=user,
@@ -85,7 +85,8 @@ def get_restore_config(project, user, restore_id="", version=V1, state_hash="",
             sync_log_id=restore_id,
             version=version,
             state_hash=state_hash,
-            include_item_count=items
+            include_item_count=items,
+            device_id=device_id,
         ),
         cache_settings=RestoreCacheSettings(
             overwrite_cache=overwrite_cache,
