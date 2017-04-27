@@ -18,9 +18,10 @@ class UsedPasswordValidator(object):
                     _("Your password can not be same as last {restricted} passwords.").format(
                         restricted=RESTRICT_USED_PASSWORDS_NUM
                     ),
-                    code='password_already_user',
+                    code='password_already_used',
                 )
 
+    # hook to password_changed called on all validators when password is changed for a Django User
     def password_changed(self, password, user):
         UsedPasswords.objects.create(
             user=user,

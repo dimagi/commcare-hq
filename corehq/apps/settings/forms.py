@@ -27,7 +27,7 @@ class EncodedPasswordChangeForm(object):
         new_password = decode_password(self.cleaned_data.get('new_password1'))
         if new_password == '':
             raise ValidationError(
-                _("Password cannot be empty"), code='password_empty',
+                _("Password cannot be empty"), code='new_password1_empty',
             )
 
         return clean_password(new_password)
@@ -37,7 +37,7 @@ class EncodedPasswordChangeForm(object):
         password2 = decode_password(self.cleaned_data.get('new_password2'))
         if password2 == '':
             raise ValidationError(
-                _("Password cannot be empty"), code='password_empty',
+                _("Password cannot be empty"), code='new_password2_empty',
             )
 
         password1 = self.cleaned_data.get('new_password1')
