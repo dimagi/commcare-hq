@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -22,105 +22,127 @@
+@@ -22,105 +22,125 @@
  </script>
  
  <script type="text/html" id="case-config:case-transaction">
