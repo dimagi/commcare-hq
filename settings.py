@@ -762,18 +762,6 @@ ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 ELASTICSEARCH_VERSION = 1.7
 
-####### Couch Config #######
-COUCH_DATABASES = {
-    'default': {
-        # for production this ought to be set to true on your configured couch instance
-        'COUCH_HTTPS': False,
-        'COUCH_SERVER_ROOT': 'localhost:5984',  # 6984 for https couch
-        'COUCH_USERNAME': '',
-        'COUCH_PASSWORD': '',
-        'COUCH_DATABASE_NAME': 'commcarehq'
-    }
-}
-
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
 
@@ -932,6 +920,41 @@ except ImportError as error:
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
+
+
+def _determine_couch_databases(couch_databases):
+    from dev_settings import COUCH_DATABASES as DEFAULT_COUCH_DATABASES_VALUE
+    if couch_databases is DEFAULT_COUCH_DATABASES_VALUE and 'COUCH_SERVER_ROOT' in globals():
+        import warnings
+        couch_databases = {
+            'default': {
+                'COUCH_HTTPS': COUCH_HTTPS,
+                'COUCH_SERVER_ROOT': COUCH_SERVER_ROOT,
+                'COUCH_USERNAME': COUCH_USERNAME,
+                'COUCH_PASSWORD': COUCH_PASSWORD,
+                'COUCH_DATABASE_NAME': COUCH_DATABASE_NAME,
+            },
+        }
+        warnings.warn("""COUCH_SERVER_ROOT and related variables are deprecated
+
+Please replace your COUCH_* settings with
+
+COUCH_DATABASES = {
+    'default': {
+        'COUCH_HTTPS': %(COUCH_HTTPS)r,
+        'COUCH_SERVER_ROOT': %(COUCH_SERVER_ROOT)r,
+        'COUCH_USERNAME': %(COUCH_USERNAME)r,
+        'COUCH_PASSWORD': %(COUCH_PASSWORD)r,
+        'COUCH_DATABASE_NAME': %(COUCH_DATABASE_NAME)r,
+    },
+}
+""" % globals(), DeprecationWarning)
+
+    return couch_databases
+
+
+COUCH_DATABASES = _determine_couch_databases(COUCH_DATABASES)
+
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
