@@ -10,7 +10,7 @@ from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
-    NumericFilter, DynamicChoiceListFilter, Choice, PreFilter, LocationDrilldownFilter
+    NumericFilter, DynamicChoiceListFilter, Choice, PreFilter, LocationDrilldownFilter, REQUEST_USER_KEY
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.userreports.const import UCR_BACKENDS, UCR_SQL_BACKEND
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -733,7 +733,7 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         # test include_descendants=False
         self.assertListEqual(
             ui_filter.value(
-                **{ui_filter.name: self.locations.get('Middlesex').location_id, 'request_user': self.user}
+                **{ui_filter.name: self.locations.get('Middlesex').location_id, REQUEST_USER_KEY: self.user}
             ),
             [self.locations.get('Middlesex').location_id]
         )
@@ -748,7 +748,7 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         }, report)
         self.assertListEqual(
             ui_filter.value(
-                **{ui_filter.name: self.locations.get('Middlesex').location_id, 'request_user': self.user}
+                **{ui_filter.name: self.locations.get('Middlesex').location_id, REQUEST_USER_KEY: self.user}
             ),
             [self.locations.get(name).location_id
              for name in ['Middlesex', 'Cambridge', 'Somerville']]

@@ -19,6 +19,7 @@ import six
 from six.moves import range
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
+REQUEST_USER_KEY = 'request_user'
 
 
 class BaseFilter(object):
@@ -44,7 +45,7 @@ class BaseFilter(object):
             selected or default filter value
         """
         kwargs = {
-            "request_user": user
+            REQUEST_USER_KEY: user
         }
         if self.all_required_params_are_in_context(request_params):
             kwargs.update(
@@ -52,7 +53,7 @@ class BaseFilter(object):
             )
             return self.value(**kwargs)
         else:
-            return self.default_value(request_user=user)
+            return self.default_value(**kwargs)
 
     def all_required_params_are_in_context(self, context):
         return all(slug.name in context for slug in self.params if slug.required)
@@ -380,7 +381,7 @@ class DynamicChoiceListFilter(BaseFilter):
 
     def value(self, **kwargs):
         selection = six.text_type(kwargs.get(self.name, ""))
-        user = kwargs.get("request_user", None)
+        user = kwargs.get(REQUEST_USER_KEY, None)
         if selection:
             choices = selection.split(CHOICE_DELIMITER)
             typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
@@ -445,7 +446,7 @@ class LocationDrilldownFilter(BaseFilter):
         if selected_loc_id:
             return self.valid_location_ids(selected_loc_id)
         else:
-            return self.default_value(kwargs.get('request_user', None))
+            return self.default_value(kwargs.get(REQUEST_USER_KEY, None))
 
     def default_value(self, request_user=None):
         # Returns list of visible locations for the user if user is assigned to a location
