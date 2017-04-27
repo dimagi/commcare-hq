@@ -8,6 +8,7 @@ RATE_LIMITED_EXCEPTIONS = {
     'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
     'socket.error': 'rabbitmq',
     'redis.exceptions.ConnectionError': 'redis',
+    'restkit.errors.RequestError': 'couchdb',
 }
 
 
