@@ -345,14 +345,13 @@ class Followup(models.Model):
     IntervalId = models.IntegerField()
     TestDate = models.DateField()
     DMC = models.IntegerField()
-    LabNo = models.IntegerField()
+    LabNo = models.CharField(max_length=255, null=True)
     SmearResult = models.IntegerField()
     PatientWeight = models.IntegerField(null=True)
     DmcStoCode = models.CharField(max_length=255, null=True)
     DmcDtoCode = models.CharField(max_length=255, null=True)
-    DmcTbuCode = models.IntegerField(null=True)
+    DmcTbuCode = models.CharField(max_length=255, null=True)
     RegBy = models.CharField(max_length=255, null=True)
-    # regdate = models.DateTimeField(null=True)  # remove from CSV - poorly formatted (and unused)
 
     @property
     def result_grade(self):
