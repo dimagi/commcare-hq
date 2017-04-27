@@ -51,3 +51,21 @@ DAILY_SCHEDULE_ID = 'schedule_daily'
 SCHEDULE_ID_FIXTURE = 'id'
 # one of values of 'adherence_closure_reason' case property
 HISTORICAL_CLOSURE_REASON = 'historical'
+
+# Voucher Case Properties
+DATE_FULFILLED = "date_fulfilled"
+VOUCHER_ID = "voucher_id"
+FULFILLED_BY_ID = "fulfilled_by_id"
+AMOUNT_APPROVED = "amount_approved"
+
+# BETS event names
+VOUCHER_EVENT_ID = "VOUCHER_EVENT_ID"  # TODO: Get this from BETS
+
+LOCATION_TYPE_MAP = {
+    "pcc": "chemist",
+    "pcp": "mbbs",
+    "plc": "lab",
+    "pac": "ayush_other",
+    # TODO: ?? -> dots_provider
+    # TODO: ?? -> compounder
+}

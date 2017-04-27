@@ -25,8 +25,38 @@ class BaseBETSRepeater(CaseRepeater):
         return self._allowed_case_type(case) and self._allowed_user(case)
 
 
+class BETSVoucherRepeater(BaseBETSRepeater):
+    """Forward a voucher to BETS
+    Case Type: Voucher
+    Trigger: When voucher.state transitions to "approved" or "partially_approved"
+             and voucher.sent_to_bets != 'true'
+    Side Effects:
+        Success: voucher.event_{EVENT_ID} = "true" and voucher.bets_{EVENT_ID}_error = ''
+        Error: voucher.bets_{EVENT_ID}_error = 'error message'
+    """
+    friendly_name = _("BETS - Voucher Forwarding (voucher case type)")
+
+    @classmethod
+    def get_custom_url(cls, domain):
+        from custom.enikshay.integrations.bets.views import BETSVoucherRepeaterView
+        return reverse(BETSVoucherRepeaterView.urlname, args=[domain])
+
+    def allowed_to_forward(self, voucher_case):
+        if not self.case_types_and_users_allowed(voucher_case):
+            return False
+
+        case_properties = voucher_case.dynamic_case_properties()
+        approved = case_properties.get("state") == "approved"
+        not_sent = case_properties.get("event_{}".format(VOUCHER_EVENT_ID)) != "sent"
+        return (
+            approved
+            and not_sent
+            and case_properties_changed(voucher_case, ['state'])
+        )
+
+
 def create_case_repeat_records(sender, case, **kwargs):
-    pass
+    create_repeat_records(BETSVoucherRepeater, case)
 
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
 
