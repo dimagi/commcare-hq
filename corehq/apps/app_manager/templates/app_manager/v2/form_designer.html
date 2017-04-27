@@ -68,6 +68,12 @@
                   {% else %}
                       "fa fa-file-o"
                   {% endif %},
+                formLoadingCallback: function () {
+                  $('#formdesigner').addClass('loading');
+                },
+                formLoadedCallback: function () {
+                  $('#formdesigner').removeClass('loading');
+                },
                 formName: "{{ form.name|trans:app.langs|escapejs }}",
                 saveType: 'patch',
                 saveUrl: '{% url "edit_form_attr" domain app.id form.get_unique_id "xform" %}',
@@ -296,7 +302,7 @@
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
 
 {% block form-view %}
-    <div id="formdesigner" class="clearfix app-manager-v2"></div>
+    <div id="formdesigner" class="clearfix app-manager-v2 loading"></div>
 {% endblock %}
 
 {% block column_style %}hq-flush-content{% endblock %}

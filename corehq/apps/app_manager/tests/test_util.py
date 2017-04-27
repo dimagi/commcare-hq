@@ -15,7 +15,6 @@ from mock import patch, MagicMock
 import re
 
 
-@patch('corehq.apps.app_manager.util.get_other_apps_in_domain', MagicMock(return_value=[]))
 @patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))
 class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data',)
@@ -94,7 +93,6 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
 
 
 @flag_enabled('USER_PROPERTY_EASY_REFS')
-@patch('corehq.apps.app_manager.util.get_other_apps_in_domain', MagicMock(return_value=[]))
 @patch('corehq.apps.app_manager.util.get_case_property_description_dict', MagicMock(return_value={}))
 @patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=False))
 @patch('corehq.apps.app_manager.util.is_usercase_in_use', MagicMock(return_value=False))
@@ -285,7 +283,7 @@ class SchemaTest(SimpleTestCase):
         self.assertEqual(session_schema['structure'], expected_session_schema_structure)
 
     def test_get_case_sharing_hierarchy(self):
-        with patch('corehq.apps.app_manager.util.get_other_apps_in_domain') as mock_sharing:
+        with patch('corehq.apps.app_manager.util.get_case_sharing_apps_in_domain') as mock_sharing:
             mock_sharing.return_value = [self.factory.app, self.factory_2.app]
             self.factory.app.case_sharing = True
             self.factory_2.app.case_sharing = True
@@ -377,7 +375,6 @@ class SchemaTest(SimpleTestCase):
         return form
 
 
-@patch('corehq.apps.app_manager.util.get_other_apps_in_domain', MagicMock(return_value=[]))
 @patch('corehq.apps.app_manager.util.get_case_property_description_dict', MagicMock(return_value={}))
 @patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=True))
 @patch('corehq.apps.app_manager.util.is_usercase_in_use', MagicMock(return_value=True))

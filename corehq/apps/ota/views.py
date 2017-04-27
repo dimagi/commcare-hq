@@ -56,10 +56,9 @@ def restore(request, domain, app_id=None):
     We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
-    couch_user = CouchUser.from_django_user_include_anonymous(domain, request.user)
-    assert couch_user is not None, 'No couch user to use for restore'
-    update_device_id(couch_user, request.GET.get('device_id'))
-    response, timing_context = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    if toggles.ENIKSHAY.enabled(domain):
+        update_device_id(request.couch_user, request.GET.get('device_id'))
+    response, timing_context = get_restore_response(domain, request.couch_user, app_id, **get_restore_params(request))
     tags = [
         u'domain:{}'.format(domain),
         u'status_code:{}'.format(response.status_code),
@@ -178,9 +177,8 @@ def claim(request, domain):
     """
     Allows a user to claim a case that they don't own.
     """
-    couch_user = CouchUser.from_django_user(request.user)
     as_user = request.POST.get('commcare_login_as', None)
-    restore_user = get_restore_user(domain, couch_user, as_user)
+    restore_user = get_restore_user(domain, request.couch_user, as_user)
 
     case_id = request.POST.get('case_id', None)
     if case_id is None:
@@ -223,6 +221,7 @@ def get_restore_params(request):
         'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP),
         'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
         'openrosa_version': openrosa_version,
+        'device_id': request.GET.get('device_id'),
     }
 
 
@@ -230,7 +229,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None,
-                         as_user=None,
+                         as_user=None, device_id=None,
                          has_data_cleanup_privelege=False,
                          openrosa_version=OPENROSA_DEFAULT_VERSION):
     # not a view just a view util
@@ -266,6 +265,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             state_hash=state,
             include_item_count=items,
             app=app,
+            device_id=device_id,
         ),
         cache_settings=RestoreCacheSettings(
             force_cache=force_cache or async_restore_enabled,
