@@ -176,11 +176,14 @@
             return true;
         });
 
-        $('#form-filter').koApplyBindings({
-                formFilter: formFilter,
-                formFilterAllowed: formFilterAllowed,
-                errorMessages: {notAllowed: formFilterErrorMessage}
-        });
+        var $formFilter = $('#form-filter');
+        if ($formFilter.length) {
+            $formFilter.koApplyBindings({
+                    formFilter: formFilter,
+                    formFilterAllowed: formFilterAllowed,
+                    errorMessages: {notAllowed: formFilterErrorMessage},
+            });
+        };
         {% endif %}
 
         {% if allow_form_workflow %}
