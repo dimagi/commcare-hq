@@ -3,8 +3,10 @@ https://docs.google.com/document/d/1RPPc7t9NhRjOOiedlRmtCt3wQSjAnWaj69v2g7QRzS0/
 """
 import datetime
 import json
+from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.ext import jsonobject
 from jsonobject.exceptions import BadValueError
@@ -17,6 +19,12 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_EPISODE
 from .const import BETS_EVENT_IDS
+
+
+class ApiError(Exception):
+    def __init__(self, msg, status_code):
+        self.status_code = status_code
+        super(ApiError, self).__init__(msg)
 
 
 class VoucherUpdate(jsonobject.JsonObject):
@@ -88,25 +96,34 @@ def get_case(domain, case_id):
     return case_accessor.get_case(case_id)
 
 
-def _update_case_from_request(request, domain, update_model):
+def _get_case_update(request, domain, update_model):
     try:
         request_json = json.loads(request.body)
     except ValueError:
-        return json_response({"error": "Malformed JSON"}, status_code=400)
+        raise ApiError(msg="Malformed JSON", status_code=400)
     try:
         update = update_model.wrap(request_json)
     except BadValueError as e:
-        return json_response({"error": e.message}, status_code=400)
-
+        raise ApiError(msg=e.message, status_code=400)
     try:
         case = get_case(domain, update.case_id)
         if case.type != update.case_type:
             raise CaseNotFound()
     except CaseNotFound:
-        return json_response(
-            {"error": "No {} case found with that ID".format(update.case_type)},
-            status_code=404,
+        raise ApiError(
+            msg="No {} case found with that ID".format(update.case_type),
+            status_code=404
         )
+    return update
+
+
+def _update_case_from_request(request, domain, update_model):
+    try:
+        update = _get_case_update(request, domain, update_model)
+    except ApiError as e:
+        if not settings.UNIT_TESTING:
+            notify_exception(request, "BETS sent the eNikshay API a bad request.")
+        return json_response({"error": e.message}, status_code=e.status_code)
 
     update_case(domain, update.case_id, case_properties=update.properties)
 
