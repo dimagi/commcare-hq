@@ -155,21 +155,30 @@ def decode_password(password_hash, username=None):
             password_hash=hash_password(password_hash)
         )
 
+    def _decode_password():
+        if username:
+            if replay_attack():
+                return ''
+            record_login_attempt()
+        return extract_password(password_hash)
+
     if settings.ENABLE_PASSWORD_HASHING:
-        # 1. an attempt to decode a password should be done just once in a request for the login attempt
-        # check to work correctly and not consider it a replay attack in case of multiple calls
-        # 2. also there should be no need to decode a password multiple times in the same request.
         request = get_request()
-        if not hasattr(request, 'decoded_password'):
-            request.decoded_password = {}
-        if request.decoded_password.get(password_hash):
-            return request.decoded_password[password_hash]
+        if request:
+            # 1. an attempt to decode a password should be done just once in a request for the login attempt
+            # check to work correctly and not consider it a replay attack in case of multiple calls
+            # 2. also there should be no need to decode a password multiple times in the same request.
+            if not hasattr(request, 'decoded_password'):
+                request.decoded_password = {}
+
+            # return decoded password set on request object for the password_hash
+            if request.decoded_password.get(password_hash):
+                return request.decoded_password[password_hash]
+            else:
+                # decode the password and save it on the request object for password_hash
+                request.decoded_password[password_hash] = _decode_password()
+                return request.decoded_password[password_hash]
         else:
-            if username:
-                if replay_attack():
-                    return ''
-                record_login_attempt()
-            request.decoded_password[password_hash] = extract_password(password_hash)
-            return request.decoded_password[password_hash]
+            return _decode_password()
     else:
         return password_hash
