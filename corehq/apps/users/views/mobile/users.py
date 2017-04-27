@@ -370,8 +370,8 @@ def delete_commcare_user(request, domain, user_id):
     if (user.user_location_id and
             SQLLocation.objects.get_or_None(location_id=user.user_location_id,
                                             user_id=user._id)):
-        messages.error(request, "This is a location user. You must delete the "
-                       "corresponding location before you can delete this user.")
+        messages.error(request, _("This is a location user. You must delete the "
+                       "corresponding location before you can delete this user."))
         return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
     user.retire()
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
