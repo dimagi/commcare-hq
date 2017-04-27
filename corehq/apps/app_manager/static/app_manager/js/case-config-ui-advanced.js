@@ -183,6 +183,17 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             });
         };
 
+        self.initAccordion = function() {
+            // Leave all the actions, collapsed, unless there's just
+            // one in the section, and then open it
+            if ($('#case-load-accordion > .panel').length === 1) {
+                self.applyAccordion('load', 0);
+            }
+            if ($('#case-open-accordion > .panel').length === 1) {
+                self.applyAccordion('open', 0);
+            }
+        };
+
         self.init = function () {
             var $home = self.home;
             _.delay(function () {
@@ -197,15 +208,9 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 $home.find('input').on('textchange', self.change);
 
                 self.ensureBlankProperties();
+                self.initAccordion();
                 $('#case-configuration-tab').on('click', function () {
-                    // Leave all the actions, collapsed, unless there's just
-                    // one in the section, and then open it
-                    if ($('#case-load-accordion > .panel').length === 1) {
-                        self.applyAccordion('load', 0);
-                    }
-                    if ($('#case-open-accordion > .panel').length === 1) {
-                        self.applyAccordion('open', 0);
-                    }
+                    self.initAccordion();
                 });
 
                 $('.hq-help-template').each(function () {
