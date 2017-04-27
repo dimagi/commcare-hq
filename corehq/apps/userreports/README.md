@@ -1268,8 +1268,10 @@ This filter allows selection of a location for filtering by drilling down from t
   "type": "location_drilldown",
   "slug": "by_location",
   "field": "district_id",
+  "include_descendants": true
 }
 ```
+Setting "include_descendants" to `true` will include descendant locations in the results. It defaults to `false`.
 
 ### Internationalization
 

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, time
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.userreports.expressions.getters import transform_from_datatype
@@ -399,7 +400,7 @@ class LocationDrilldownFilter(BaseFilter):
     javascript_template = 'reports_core/filters/location_async/location_async.js'
     location_filter = True
 
-    def __init__(self, name, field, datatype, label, domain, css_id=None):
+    def __init__(self, name, field, datatype, label, domain, include_descendants, css_id=None):
         params = [
             FilterParam(name, True),
         ]
@@ -409,6 +410,7 @@ class LocationDrilldownFilter(BaseFilter):
         self.label = label
         self.css_id = css_id or self.name
         self.domain = domain
+        self.include_descendants = include_descendants
 
     @property
     def api_root(self):
@@ -416,6 +418,7 @@ class LocationDrilldownFilter(BaseFilter):
                                                     'resource_name': 'location_internal',
                                                     'api_name': 'v0.5'})
 
+    @memoized
     def user_location_id(self, user):
         domain_membership = user.get_domain_membership(self.domain)
         return domain_membership.location_id if domain_membership else None
@@ -431,4 +434,15 @@ class LocationDrilldownFilter(BaseFilter):
         }
 
     def value(self, **kwargs):
-        return kwargs.get(self.name, None)
+        selected_loc_id = kwargs.get(self.name, None)
+        if selected_loc_id:
+            if self.include_descendants:
+                location_ids = SQLLocation.objects.get_locations_and_children_ids([selected_loc_id])
+            else:
+                location_ids = [selected_loc_id]
+            return location_ids
+        else:
+            return self.default_value(kwargs.get('request_user', None))
+
+    def default_value(self, request_user=None):
+        return [self.user_location_id(request_user) if request_user else None]

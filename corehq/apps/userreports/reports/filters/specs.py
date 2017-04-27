@@ -102,6 +102,7 @@ class DynamicChoiceListFilterSpec(FilterSpec):
 
 class LocationDrilldownFilterSpec(FilterSpec):
     type = TypeProperty('location_drilldown')
+    include_descendants = BooleanProperty(default=False)
 
 
 class PreFilterSpec(FilterSpec):

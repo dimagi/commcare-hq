@@ -346,17 +346,23 @@ class LocationDrilldownFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.show_all:
             return None
-        return EQFilter(self.filter.field, self.filter.slug)
+        return INFilter(
+            self.filter.field,
+            get_INFilter_bindparams(self.filter.slug, self.value)
+        )
+
+    def to_sql_values(self):
+        if self.show_all:
+            return {}
+        return {
+            get_INFilter_element_bindparam(self.filter.slug, i): val
+            for i, val in enumerate(self.value)
+        }
 
     def to_es_filter(self):
         if self.show_all:
             return None
         return filters.term(self.filter.field, self.value)
-
-    def to_sql_values(self):
-        if self.show_all:
-            return {}
-        return {self.filter.slug: self.value}
 
 
 def dynamic_choice_list_url(domain, report, filter):

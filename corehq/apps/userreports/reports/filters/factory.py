@@ -93,7 +93,8 @@ def _build_location_drilldown_filter(spec, report):
         datatype=wrapped.datatype,
         field=wrapped.field,
         label=wrapped.display,
-        domain=report.domain
+        domain=report.domain,
+        include_descendants=wrapped.include_descendants,
     )
 
 
