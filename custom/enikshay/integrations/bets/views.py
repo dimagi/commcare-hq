@@ -1,5 +1,5 @@
 """
-# https://docs.google.com/document/d/1RPPc7t9NhRjOOiedlRmtCt3wQSjAnWaj69v2g7QRzS0/edit
+https://docs.google.com/document/d/1RPPc7t9NhRjOOiedlRmtCt3wQSjAnWaj69v2g7QRzS0/edit
 """
 import datetime
 import json
@@ -8,27 +8,24 @@ from django.views.decorators.http import require_POST
 from dimagi.utils.web import json_response
 from dimagi.ext import jsonobject
 from jsonobject.exceptions import BadValueError
-from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 
+from corehq import toggles
+from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
+from corehq.apps.hqcase.utils import update_case
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.apps.hqcase.utils import update_case
+
+from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_EPISODE
 from .const import BETS_EVENT_IDS
-
-
-class ApiError(Exception):
-    def __init__(self, msg, status_code):
-        self.status_code = status_code
-        super(ApiError, self).__init__(msg)
 
 
 class VoucherUpdate(jsonobject.JsonObject):
     voucher_id = jsonobject.StringProperty(required=True)
     payment_status = jsonobject.StringProperty(required=True, choices=['success', 'failure'])
-    payment_amount = jsonobject.IntegerProperty(required=False)
+    payment_amount = jsonobject.DecimalProperty(required=False)
     failure_description = jsonobject.StringProperty(required=False)
 
-    case_type = 'voucher'
+    case_type = CASE_TYPE_VOUCHER
 
     @property
     def case_id(self):
@@ -54,12 +51,12 @@ class IncentiveUpdate(jsonobject.JsonObject):
     beneficiary_id = jsonobject.StringProperty(required=True)
     episode_id = jsonobject.StringProperty(required=True)
     payment_status = jsonobject.StringProperty(required=True, choices=['success', 'failure'])
-    payment_amount = jsonobject.IntegerProperty(required=False)
+    payment_amount = jsonobject.DecimalProperty(required=False)
     failure_description = jsonobject.StringProperty(required=False)
     bets_parent_event_id = jsonobject.StringProperty(
         required=False, choices=BETS_EVENT_IDS.values())
 
-    case_type = 'episode'
+    case_type = CASE_TYPE_EPISODE
 
     @property
     def case_id(self):
@@ -119,6 +116,7 @@ def _update_case_from_request(request, domain, update_model):
 @require_POST
 @csrf_exempt
 @login_or_digest_or_basic_or_apikey()
+@toggles.ENIKSHAY_API.required_decorator()
 def update_voucher(request, domain):
     return _update_case_from_request(request, domain, VoucherUpdate)
 
@@ -126,5 +124,6 @@ def update_voucher(request, domain):
 @require_POST
 @csrf_exempt
 @login_or_digest_or_basic_or_apikey()
+@toggles.ENIKSHAY_API.required_decorator()
 def update_incentive(request, domain):
     return _update_case_from_request(request, domain, IncentiveUpdate)

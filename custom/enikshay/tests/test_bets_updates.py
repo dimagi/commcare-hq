@@ -4,10 +4,11 @@ from django.test import TestCase, override_settings, RequestFactory
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from custom.enikshay.integrations.bets.views import update_voucher, update_incentive, get_case
-from corehq.util.test_utils import create_and_save_a_case
+from corehq.util.test_utils import create_and_save_a_case, flag_enabled
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@flag_enabled('ENIKSHAY_API')
 class TestBetsUpdates(TestCase):
     domain = 'enikshay-bets-updates'
 
@@ -50,7 +51,7 @@ class TestBetsUpdates(TestCase):
             # 'payment_status': 'success',
             'payment_amount': 100,
         })
-        self.assertEqual(res.status_code, 400, res.content)
+        self.assertEqual(res.status_code, 400)
 
     def test_update_voucher_success(self):
         voucher = self.make_voucher()
@@ -59,7 +60,7 @@ class TestBetsUpdates(TestCase):
             'payment_status': 'success',
             'payment_amount': 100,
         })
-        self.assertEqual(res.status_code, 200, res.content)
+        self.assertEqual(res.status_code, 200)
         self.assertDictContainsSubset(
             {'state': 'paid', 'amount_fulfilled': '100'},
             get_case(self.domain, voucher.case_id).case_json,
@@ -73,7 +74,7 @@ class TestBetsUpdates(TestCase):
             'failure_description': 'The Iron Bank will have its due',
             'payment_amount': 0,
         })
-        self.assertEqual(res.status_code, 200, res.content)
+        self.assertEqual(res.status_code, 200)
         self.assertDictContainsSubset(
             {'state': 'rejected', 'reason_rejected': 'The Iron Bank will have its due'},
             get_case(self.domain, voucher.case_id).case_json,
@@ -85,7 +86,7 @@ class TestBetsUpdates(TestCase):
             'payment_status': 'success',
             'payment_amount': 100,
         })
-        self.assertEqual(res.status_code, 404, res.content)
+        self.assertEqual(res.status_code, 404)
 
     def make_episode_case(self):
         return create_and_save_a_case(
@@ -106,7 +107,7 @@ class TestBetsUpdates(TestCase):
             'bets_parent_event_id': '106',
             'payment_amount': 100,
         })
-        self.assertEqual(res.status_code, 200, res.content)
+        self.assertEqual(res.status_code, 200)
         self.assertDictContainsSubset(
             {
                 'tb_incentive_106_status': 'paid',
@@ -124,7 +125,7 @@ class TestBetsUpdates(TestCase):
             'failure_description': 'We do not sow',
             'bets_parent_event_id': '106',
         })
-        self.assertEqual(res.status_code, 200, res.content)
+        self.assertEqual(res.status_code, 200)
         self.assertDictContainsSubset(
             {
                 'tb_incentive_106_status': 'rejected',
@@ -141,4 +142,4 @@ class TestBetsUpdates(TestCase):
             'bets_parent_event_id': '404',
             'payment_amount': 100,
         })
-        self.assertEqual(res.status_code, 400, res.content)
+        self.assertEqual(res.status_code, 400)

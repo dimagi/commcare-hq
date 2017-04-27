@@ -708,6 +708,13 @@ NINETYNINE_DOTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ENIKSHAY_API = StaticToggle(
+    'enikshay_api',
+    'Enable access to eNikshay api endpoints',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER]
+)
+
 NIKSHAY_INTEGRATION = StaticToggle(
     'nikshay_integration',
     'Enable patient registration in Nikshay',
