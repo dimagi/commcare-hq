@@ -194,6 +194,9 @@ class ConfigurableReportTableManagerMixin(object):
             adapter.rebuild_table_if_necessary()
 
     def rebuild_table(self, adapter):
+        if adapter.config.get_id in ("static-enikshay-episode", "static-np-migration-3-episode"):
+            # https://manage.dimagi.com/default.asp?252832
+            return
         config = adapter.config
         if not config.is_static:
             latest_rev = config.get_db().get_rev(config._id)
@@ -233,6 +236,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             return
 
         eval_context = EvaluationContext(doc)
+
         for table in self.table_adapters_by_domain[domain]:
             if table.config.filter(doc):
                 if table.run_asynchronous:
@@ -240,7 +244,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
                 else:
                     self._save_doc_to_table(table, doc, eval_context)
                     eval_context.reset_iteration()
-            elif table.config.deleted_filter(doc):
+            elif table.config.deleted_filter(doc) or table.doc_exists(doc):
                 table.delete(doc)
 
         if async_tables:

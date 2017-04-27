@@ -39,7 +39,7 @@
                  dataSourcesEndpoint: '{% url "get_form_data_schema" domain=domain form_unique_id=form.get_unique_id %}',
                  dataSources: [
                      {% comment %} DEPRECATED. Use dataSourcesEndpoint {% endcomment %}
-@@ -39,6 +58,16 @@
+@@ -39,6 +58,22 @@
                  ],
                  form: {{ form.source|JSON }},
                  formId: '{{ form.get_unique_id }}',
@@ -53,10 +53,16 @@
 +                  {% else %}
 +                      "fa fa-file-o"
 +                  {% endif %},
++                formLoadingCallback: function () {
++                  $('#formdesigner').addClass('loading');
++                },
++                formLoadedCallback: function () {
++                  $('#formdesigner').removeClass('loading');
++                },
                  formName: "{{ form.name|trans:app.langs|escapejs }}",
                  saveType: 'patch',
                  saveUrl: '{% url "edit_form_attr" domain app.id form.get_unique_id "xform" %}',
-@@ -56,6 +85,7 @@
+@@ -56,6 +91,7 @@
                  onFormSave: function (data) {
                      var app_manager = hqImport('app_manager/js/app_manager.js')
                      app_manager.updateDOM(data.update);
@@ -64,7 +70,7 @@
                      {% if request.couch_user.days_since_created == 0 %}
                          analytics.workflow('Saved the Form Builder within first 24 hours');
                      {% endif %}
-@@ -162,11 +192,10 @@
+@@ -162,11 +198,10 @@
                  'jquery.vellum': 'main'
              }
          });
@@ -77,7 +83,7 @@
  
                  $('#formdesigner').vellum(VELLUM_OPTIONS);
  
-@@ -183,14 +212,93 @@
+@@ -183,14 +218,93 @@
              });
          });
          analytics.workflow('Entered the Form Builder');
@@ -168,7 +174,7 @@
  
  {% block form-view %}
 -    <div id="formdesigner" class="clearfix"></div>
-+    <div id="formdesigner" class="clearfix app-manager-v2"></div>
++    <div id="formdesigner" class="clearfix app-manager-v2 loading"></div>
  {% endblock %}
  
  {% block column_style %}hq-flush-content{% endblock %}
