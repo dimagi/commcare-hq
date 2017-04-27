@@ -1,9 +1,11 @@
-Performance metrics collected over the last 30 days for your AWCs:
+Aggregate Performance Report over the last 30 days for your AWCs
 
-Home visits completed on time / Home visits completed: {{ visits }}
+1. Number of Visits / Number of Desired visits: {{ total_visits }} / {{ total_visits_goal }}
 
-Beneficiaries received adequate THR / Beneficiaries eligible for THR: {{ thr_distribution }}
+2. Number of Visits on time / Number of visits: {{ on_time_visits }} / {{ total_visits }}
 
-Children weighed under 3 years / Total children under 3 years: {{ children_weighed }}
+THR Distribution: {{ thr_distribution }}
 
-Average days AWC open / Goal: {{ days_open }} / 25
+Number of children weighed: {{ children_weighed }}
+
+Average no. of days AWC open / Goal: {{ days_open }} / 25
