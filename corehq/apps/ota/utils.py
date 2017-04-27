@@ -110,7 +110,11 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privil
         if as_user is not None and not _restoring_as_yourself(couch_user, as_user):
             as_user_obj = CouchUser.get_by_username(as_user)
             if not as_user_obj:
-                raise RestorePermissionDenied(_(u'Invalid restore as user {}').format(as_user))
+                if '.commcarehq.org' not in as_user:
+                    message = _(u'User not found. Usernames should be of the form <user>@<domain>.commcarehq.org')
+                else:
+                    message = _(u'User with username {username} was not found.').format(username=as_user)
+                raise RestorePermissionDenied(message)
 
             _ensure_cleanup_permission(domain, couch_user, as_user_obj, has_data_cleanup_privilege)
             _ensure_valid_restore_as_user(domain, couch_user, as_user_obj)
