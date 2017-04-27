@@ -23,6 +23,7 @@ from corehq.apps.custom_data_fields.edit_entity import get_prefixed, CUSTOM_DATA
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
+from corehq.apps.locations.tasks import make_location_user
 from corehq.apps.users.forms import NewMobileWorkerForm, generate_strong_password
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.signals import clean_commcare_user
@@ -273,6 +274,36 @@ class LocationForm(forms.Form):
 
         return [lat, lon]
 
+    def _sync_location_user(self):
+        if not self.location.location_id:
+            return
+        if self.location.location_type.has_user and not self.location.user_id:
+            # make sure there's a location user
+            res = list(UserES()
+                       .domain(self.domain)
+                       .show_inactive()
+                       .term('user_location_id', self.location.location_id)
+                       .values_list('_id', flat=True))
+            user_id = res[0] if res else None
+            if user_id:
+                user = CommCareUser.get(user_id)
+            else:
+                user = make_location_user(self.location)
+            user.is_active = True
+            user.user_location_id = self.location.location_id
+            user.set_location(self.location, commit=False)
+            user.save()
+            self.location.user_id = user._id
+            self.location.save()
+        elif self.location.user_id and not self.location.location_type.has_user:
+            # archive the location user
+            user = CommCareUser.get_by_user_id(self.location.user_id, self.domain)
+            if user:
+                user.is_active = False
+                user.save()
+            self.location.user_id = ''
+            self.location.save()
+
     def save(self, metadata):
         if self.errors:
             raise ValueError('form does not validate')
@@ -296,6 +327,7 @@ class LocationForm(forms.Form):
         location.save()
 
         if not is_new:
+            self._sync_location_user()
             orig_parent_id = self.cleaned_data.get('orig_parent_id')
             reparented = orig_parent_id is not None
             location_edited.send(sender='loc_mgmt', sql_loc=location,
