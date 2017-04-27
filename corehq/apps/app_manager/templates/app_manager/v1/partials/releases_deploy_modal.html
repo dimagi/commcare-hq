@@ -27,8 +27,10 @@
                             href="#panel-android"
                             aria-expanded="true"
                             aria-controls="panel-android"
-                            data-bind="attr: {'data-parent': '#deploy-accordion_' + id()}"
-                            >
+                            data-bind="
+                                click: get_short_odk_url,
+                                attr: {'data-parent': '#deploy-accordion_' + id()}
+                            ">
                             {% trans "Download to Android" %}
                         </a>
                     </div>
