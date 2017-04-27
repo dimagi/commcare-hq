@@ -434,22 +434,27 @@ class LocationDrilldownFilter(BaseFilter):
             'loc_url': self.api_root
         }
 
+    def valid_location_ids(self, location_id):
+        if self.include_descendants:
+            return SQLLocation.objects.get_locations_and_children_ids([location_id])
+        else:
+            return [location_id]
+
     def value(self, **kwargs):
         selected_loc_id = kwargs.get(self.name, None)
         if selected_loc_id:
-            if self.include_descendants:
-                location_ids = SQLLocation.objects.get_locations_and_children_ids([selected_loc_id])
-            else:
-                location_ids = [selected_loc_id]
-            return location_ids
+            return self.valid_location_ids(selected_loc_id)
         else:
             return self.default_value(kwargs.get('request_user', None))
 
     def default_value(self, request_user=None):
+        # Returns list of visible locations for the user if user is assigned to a location
+        #   or special value of SHOW_ALL or SHOW_NONE depending whether
+        #   user is domain-admin or not respectively
         if request_user:
             user_location_id = self.user_location_id(request_user)
             if user_location_id:
-                return [user_location_id]
+                return self.valid_location_ids(user_location_id)
             elif request_user.is_domain_admin(self.domain):
                 return LocationDrilldownFilterValue.SHOW_ALL
             else:
