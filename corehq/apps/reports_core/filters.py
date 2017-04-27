@@ -402,7 +402,8 @@ class LocationDrilldownFilter(BaseFilter):
     javascript_template = 'reports_core/filters/location_async/location_async.js'
     location_filter = True
 
-    def __init__(self, name, field, datatype, label, domain, include_descendants, css_id=None):
+    def __init__(self, name, field, datatype, label, domain, include_descendants,
+                 max_drilldown_levels, css_id=None):
         params = [
             FilterParam(name, True),
         ]
@@ -413,6 +414,7 @@ class LocationDrilldownFilter(BaseFilter):
         self.css_id = css_id or self.name
         self.domain = domain
         self.include_descendants = include_descendants
+        self.max_drilldown_levels = max_drilldown_levels
 
     @property
     def api_root(self):
@@ -432,7 +434,8 @@ class LocationDrilldownFilter(BaseFilter):
             'loc_id': loc_id,
             'hierarchy': location_hierarchy_config(self.domain),
             'locations': load_locs_json(self.domain, selected_loc_id=loc_id, user=request_user),
-            'loc_url': self.api_root
+            'loc_url': self.api_root,
+            'max_drilldown_levels': self.max_drilldown_levels,
         }
 
     def valid_location_ids(self, location_id):

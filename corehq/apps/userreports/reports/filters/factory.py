@@ -95,6 +95,7 @@ def _build_location_drilldown_filter(spec, report):
         label=wrapped.display,
         domain=report.domain,
         include_descendants=wrapped.include_descendants,
+        max_drilldown_levels=wrapped.max_drilldown_levels,
     )
 
 
