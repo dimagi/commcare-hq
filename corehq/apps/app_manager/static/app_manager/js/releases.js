@@ -93,7 +93,10 @@ hqDefine('app_manager/js/releases.js', function () {
             if (!(ko.utils.unwrapObservable(self[url_type])) || self.build_profile()) {
                 return self.generate_short_url(url_type);
             } else {
-                return ko.utils.unwrapObservable(self[url_type]);
+                var data = ko.utils.unwrapObservable(self[url_type]);
+                var bitly_code = self.parse_bitly_url(data);
+                self.app_code(bitly_code);
+                return data;
             }
         };
 
