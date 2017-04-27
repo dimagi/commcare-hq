@@ -58,7 +58,8 @@ def restore(request, domain, app_id=None):
     """
     couch_user = CouchUser.from_django_user_include_anonymous(domain, request.user)
     assert couch_user is not None, 'No couch user to use for restore'
-    update_device_id(couch_user, request.GET.get('device_id'))
+    if toggles.ENIKSHAY.enabled(domain):
+        update_device_id(couch_user, request.GET.get('device_id'))
     response, timing_context = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
     tags = [
         u'domain:{}'.format(domain),
