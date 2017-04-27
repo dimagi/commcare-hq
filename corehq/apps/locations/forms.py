@@ -273,7 +273,7 @@ class LocationForm(forms.Form):
 
         return [lat, lon]
 
-    def save(self, metadata=None):
+    def save(self, metadata):
         if self.errors:
             raise ValueError('form does not validate')
 
