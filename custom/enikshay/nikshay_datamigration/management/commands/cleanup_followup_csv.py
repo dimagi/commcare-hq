@@ -7,5 +7,5 @@ class Command(BaseCleanupCommand):
     def clean_rows(rows, exclude_ids):
         return [
             [cell.strip() for cell in row] for row in rows
-            if row[6] not in ['NULL', '0']  # SmearResult
+            if row[3] not in ['NULL', '']  # TestDate
         ]
