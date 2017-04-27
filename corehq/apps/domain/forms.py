@@ -16,7 +16,7 @@ from crispy_forms.helper import FormHelper
 from dateutil.relativedelta import relativedelta
 from django import forms
 from django.conf import settings
-from django.contrib.auth import get_user_model, password_validation
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
