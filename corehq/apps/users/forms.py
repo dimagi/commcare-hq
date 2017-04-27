@@ -415,6 +415,10 @@ class SetUserPasswordForm(EncodedPasswordChangeForm, SetPasswordForm):
 
     def clean_new_password1(self):
         password1 = decode_password(self.cleaned_data.get('new_password1'))
+        if password1 == '':
+            raise ValidationError(
+                _("Password cannot be empty"), code='new_password1_empty',
+            )
         if self.project.strong_mobile_passwords:
             return clean_password(password1)
         return password1
