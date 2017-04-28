@@ -126,6 +126,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         ]
 
     @staticmethod
+    def case_exists(case_id):
+        return CommCareCase.get_db().doc_exist(case_id)
+
+    @staticmethod
     def get_case_xform_ids(case_id):
         return get_case_xform_ids(case_id)
 
