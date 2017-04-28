@@ -140,11 +140,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'vellum_debug': settings.VELLUM_DEBUG,
         'nav_form': form,
         'formdesigner': True,
-        'multimedia_object_map': app.get_object_map(),
-        'sessionid': request.COOKIES.get('sessionid'),
-        'features': vellum_features,
-        'plugins': vellum_plugins,
-        'app_callout_templates': next(app_callout_templates),
         'scheduler_data_nodes': scheduler_data_nodes,
         'include_fullstory': include_fullstory,
         'notifications_enabled': request.user.is_superuser,
@@ -164,6 +159,32 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             'edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'edit_form_comment_url': reverse(
             'edit_form_attr', args=[app.domain, app.id, form.unique_id, 'comment']),
+    })
+
+    vellum_options = {
+        'plugins': vellum_plugins,
+        'features': vellum_features,
+        #'core': ...
+        'intents': {
+            'templates': next(app_callout_templates),
+        },
+        'javaRosa': {
+            'langs': app.langs,
+            'displayLanguage': context['lang'],
+        },
+        'uploader': {
+            'uploadUrls': {
+                'image': reverse("hqmedia_uploader_image", args=[domain, app.id]),
+                'audio': reverse("hqmedia_uploader_audio", args=[domain, app.id]),
+                'video': reverse("hqmedia_uploader_video", args=[domain, app.id]),
+                'text': reverse("hqmedia_uploader_text", args=[domain, app.id]),
+            },
+            'objectMap': app.get_object_map(),
+            'sessionid': request.COOKIES.get('sessionid'),
+        },
+    }
+    context.update({
+        'vellum_options': vellum_options,
     })
 
     template = get_app_manager_template(
