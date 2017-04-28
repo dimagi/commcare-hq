@@ -40,7 +40,7 @@ class Beneficiary(models.Model):
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=255, null=True)
     nikshayId = models.CharField(max_length=10, null=True)
-    occupation = models.CharField(max_length=30, null=True) # TODO - this is free text, how to handle?
+    occupation = models.CharField(max_length=30, null=True)
     onBehalfOf = models.CharField(max_length=10, null=True)
     organisationId = models.IntegerField()
     owner = models.CharField(max_length=255, null=True)
