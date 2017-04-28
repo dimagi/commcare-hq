@@ -55,7 +55,7 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
 {% endblock %}
 
 {% block page_content %}
-<div class="appmanager-content appmanager-content-transition-all{% if not formdesigner %} appmanager-settings-content {% endif %}"
+<div class="js-unhide-on-unsaved appmanager-content appmanager-content-transition-all{% if not formdesigner %} appmanager-settings-content {% endif %}"
      id="js-appmanager-body">
     {% if app %}
         {% if error %}
