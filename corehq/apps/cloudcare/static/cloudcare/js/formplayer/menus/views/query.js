@@ -46,7 +46,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             var fields = $(".query-field");
             var model = this.parentModel;
             fields.each(function(index) {
-                if (this.value !== "") {
+                if (this.value !== '') {
                     payload[model[index].get('id')] = this.value;
                 }
             });
