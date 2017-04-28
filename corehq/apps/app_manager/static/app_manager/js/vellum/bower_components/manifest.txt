@@ -10,7 +10,7 @@
 ├── chai#3.5.0 (4.0.0-canary.2 available)
 ├── codemirror#5.19.0 (latest is 5.25.2)
 ├── equivalent-xml-js#7de21be295
-├── fuse.js#2.5.0 (latest is 2.6.2)
+├── fuse.js#2.5.0 (latest is 2.7.2)
 ├── jquery#3.2.1
 ├── jsdiff#3.2.0
 ├─┬ jstree#3.3.3 (3.3.4 available)

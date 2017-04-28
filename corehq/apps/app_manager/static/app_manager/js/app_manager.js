@@ -58,15 +58,24 @@ hqDefine('app_manager/js/app_manager.js', function () {
             var r = $('input[name="' + name + '"]').first().val();
             return JSON.parse(r);
         }
+        function updateRelatedTags($elem, name, value) {
+            var relatedTags = $elem.find("[data-" + name +"]");
+            _.each(relatedTags, function (related) {
+                $(related).data(name, value);
+            });
+        }
         function resetIndexes($sortable) {
             if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+                var parentVar = $sortable.data('parentvar');
+                var parentValue = $sortable.closest("[data-indexVar='" + parentVar + "']").data('index');
                 _.each($sortable.find('> .js-sorted-li'), function (elem, i) {
                     $(elem).data('index', i);
                     var indexVar = $(elem).data('indexvar');
-                    var relatedTags = $(elem).find("[data-" + indexVar +"]");
-                    _.each(relatedTags, function (related) {
-                        $(related).data(indexVar, i);
-                    });
+                    updateRelatedTags($(elem), indexVar, i);
+                    if (parentVar) {
+                        $(elem).data(parentVar, parentValue);
+                        updateRelatedTags($(elem), parentVar, parentValue);
+                    }
                 });
                 _.each($('[data-updateprop]'), function (tag) {
                     var tagName = $(tag).data('updateprop'),
@@ -207,6 +216,11 @@ hqDefine('app_manager/js/app_manager.js', function () {
 
                             if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
                                 resetIndexes($sortable);
+                                if (from_module_id !== to_module_id) {
+                                    var $parentSortable = $sortable.parents(".sortable"),
+                                        $fromSortable = $parentSortable.find("[data-index=" + from_module_id + "] .sortable");
+                                    resetIndexes($fromSortable);
+                                }
                                 $.post($form.attr('action'), $form.serialize(), function (data) {});
                             } else {
                                 // disable sortable

@@ -11,12 +11,15 @@ from corehq.util.soft_assert import soft_assert
 from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 from dimagi.utils.couch.database import get_db
 from casexml.apps.case import const
+from casexml.apps.case.xml import V1, V2
+from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
 from casexml.apps.phone.utils import get_restore_response_class
@@ -320,25 +323,22 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         """
         raise NotImplementedError()
 
-    def set_cached_payload(self, payload_path, version):
-        self.cache_payload_paths[self._cache_key(version)] = payload_path
-
-    def get_cached_payload(self, version, stream=False):
-        if self._cache_key(version) in self.cache_payload_paths:
-            return self.response_class.get_payload(self.cache_payload_paths[self._cache_key(version)])
-        return None
-
-    def get_cached_payload_path(self, version):
-        if self._cache_key(version) in self.cache_payload_paths:
-            return self.cache_payload_paths[self._cache_key(version)]
-        return None
-
     def _cache_key(self, version):
-        return u'{}-{}'.format(self.response_class.__name__, version)
+        from casexml.apps.phone.restore import restore_cache_key
+
+        return restore_cache_key(
+            self.domain,
+            RESTORE_CACHE_KEY_PREFIX,
+            self.user_id,
+            version=version,
+            sync_log_id=self._id,
+        )
 
     def invalidate_cached_payloads(self):
-        self.cache_payload_paths = {}
-        self.save()
+        keys = [self._cache_key(version) for version in [V1, V2]]
+
+        for key in keys:
+            get_redis_default_cache().delete(key)
 
     @classmethod
     def from_other_format(cls, other_sync_log):

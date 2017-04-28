@@ -158,7 +158,7 @@ class TestAdherenceUpdater(TestCase):
     def assert_update(self, input, output):
         update = self.calculate_adherence_update(input)
         self.assertDictEqual(
-            update.update_json(),
+            update.update_json()['update'],
             output
         )
 

@@ -481,14 +481,12 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
     };
 });
 
-$(function () {
-    ko.bindingHandlers.passwordSetter = {
-        init: function (element, valueAccessor) {
-            var observableValue = valueAccessor();
-            $(element).password_setter();
-            $(element).on('textchange change', function () {
-                observableValue($(element).val());
-            });
-        }
+ko.bindingHandlers.passwordSetter = {
+    init: function (element, valueAccessor) {
+        var observableValue = valueAccessor();
+        $(element).password_setter();
+        $(element).on('textchange change', function () {
+            observableValue($(element).val());
+        });
     }
-});
+};

@@ -15,6 +15,7 @@ import sys
 from django.views.generic.base import TemplateView, View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
+from corehq import toggles
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
@@ -22,6 +23,7 @@ from corehq.apps.analytics.tasks import (
     track_clicked_signup_on_hubspot,
 )
 from corehq.apps.analytics.utils import get_meta
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.exceptions import NameUnavailableException
@@ -356,13 +358,16 @@ def confirm_domain(request, guid=None):
         return render(request, 'registration/confirmation_error.html', context)
 
     requested_domain = Domain.get_by_name(req.domain)
+    view_name = "dashboard_default"
+    if toggles.APP_MANAGER_V2.enabled(request.user.username) and not domain_has_apps(req.domain):
+        view_name = "default_new_app"
 
     # Has guid already been confirmed?
     if requested_domain.is_active:
         assert(req.confirm_time is not None and req.confirm_ip is not None)
         messages.success(request, 'Your account %s has already been activated. '
             'No further validation is required.' % req.new_user_username)
-        return HttpResponseRedirect(reverse("dashboard_default", args=[requested_domain]))
+        return HttpResponseRedirect(reverse(view_name, args=[requested_domain]))
 
     # Set confirm time and IP; activate domain and new user who is in the
     req.confirm_time = datetime.utcnow()
@@ -380,7 +385,7 @@ def confirm_domain(request, guid=None):
         % (requesting_user.username))
     track_workflow(requesting_user.email, "Confirmed new project")
     track_confirmed_account_on_hubspot.delay(requesting_user)
-    return HttpResponseRedirect(reverse("dashboard_default", args=[requested_domain]))
+    return HttpResponseRedirect(reverse(view_name, args=[requested_domain]))
 
 
 @retry_resource(3)

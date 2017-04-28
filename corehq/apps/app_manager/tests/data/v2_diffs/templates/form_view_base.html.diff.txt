@@ -21,7 +21,26 @@
      {% if allow_form_workflow %}
          <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
      {% endif %}
-@@ -187,7 +187,7 @@
+@@ -176,18 +176,21 @@
+             return true;
+         });
+ 
+-        $('#form-filter').koApplyBindings({
+-                formFilter: formFilter,
+-                formFilterAllowed: formFilterAllowed,
+-                errorMessages: {notAllowed: formFilterErrorMessage}
+-        });
++        var $formFilter = $('#form-filter');
++        if ($formFilter.length) {
++            $formFilter.koApplyBindings({
++                    formFilter: formFilter,
++                    formFilterAllowed: formFilterAllowed,
++                    errorMessages: {notAllowed: formFilterErrorMessage},
++            });
++        };
+         {% endif %}
+ 
+         {% if allow_form_workflow %}
              var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
              var labels = {};
              labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
@@ -30,7 +49,7 @@
              {% with module_name=module.name|trans:langs %}
              labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
              {% endwith %}
-@@ -203,13 +203,6 @@
+@@ -203,13 +206,6 @@
                  workflow: '{{ form.post_form_workflow }}',
              };
  
@@ -44,7 +63,7 @@
              $('#form-workflow').koApplyBindings(new FormWorkflow(options))
          {% endif %}
  
-@@ -229,7 +222,7 @@
+@@ -232,7 +228,7 @@
  
          gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
  
@@ -53,7 +72,7 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -295,69 +288,55 @@
+@@ -298,69 +294,55 @@
      </script>
  {% endblock %}
  
@@ -165,7 +184,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -369,34 +348,34 @@
+@@ -372,35 +354,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -190,6 +209,8 @@
              {% endif %}
          </ul>
 -        <br>
++
+         {% include 'app_manager/v2/partials/case_config_ko_templates.html' %}
 -        <div class="tab-content">
 -            {% if nav_form %}
 -                {% include "app_manager/v1/partials/form_tab_settings.html" %}
@@ -216,7 +237,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -408,30 +387,32 @@
+@@ -412,30 +395,32 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -273,7 +294,7 @@
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
                      <p class="alert alert-warning">
-@@ -457,7 +438,6 @@
+@@ -461,7 +446,6 @@
                          {% block usercase_management_content %}
                              {%  if form.uses_usercase and not allow_usercase %}
                                  <div class="container-fluid col-sm-6">
@@ -281,7 +302,7 @@
                                {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                                  <p>{% blocktrans %}
                                      The User Properties feature is no longer available because of the change in your
-@@ -502,7 +482,7 @@
+@@ -506,7 +490,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -290,7 +311,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -515,14 +495,15 @@
+@@ -519,14 +503,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -308,7 +329,7 @@
              {% endif %}
          </div>
      </div>
-@@ -530,12 +511,12 @@
+@@ -534,12 +519,12 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}

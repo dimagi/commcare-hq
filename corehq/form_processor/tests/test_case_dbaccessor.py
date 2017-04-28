@@ -585,7 +585,7 @@ class CaseAccessorTestsSQL(TestCase):
         case2 = _create_case(domain='d2', case_type='t1')
         case2.external_id = '123'
         CaseAccessorSQL.save_case(case2)
-        self.addCleanup(lambda: CaseAccessorSQL.delete_all_cases('d2'))
+        self.addCleanup(lambda: FormProcessorTestUtils.delete_all_cases('d2'))
 
         [case] = CaseAccessorSQL.get_cases_by_external_id(DOMAIN, '123')
         self.assertEqual(case.case_id, case1.case_id)

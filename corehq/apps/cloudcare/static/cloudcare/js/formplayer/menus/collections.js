@@ -16,6 +16,7 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'appId',
             'persistentCaseTile',
             'tiles',
+            'selections',
         ],
 
         entityProperties: [
@@ -37,6 +38,12 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
 
         parse: function (response, request) {
             _.extend(this, _.pick(response, this.commonProperties));
+
+            if (response.selections) {
+                var urlObject = Util.currentUrlToObject();
+                urlObject.setSteps(response.selections);
+                Util.setUrlToObject(urlObject);
+            }
 
             if (response.commands) {
                 _.extend(this, _.pick(response, this.commandProperties));
