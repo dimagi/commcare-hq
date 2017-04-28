@@ -4,6 +4,7 @@ import logging
 import urllib
 import urlparse
 from django.utils.translation import ugettext_lazy as _
+from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
 from requests.exceptions import Timeout, ConnectionError
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
@@ -58,7 +59,7 @@ def simple_post_with_logged_timeout(domain, data, url, *args, **kwargs):
 DELETED = "-Deleted"
 
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
-PostInfo = namedtuple('PostInfo', 'payload headers')
+PostInfo = namedtuple('PostInfo', 'payload headers auth')
 
 
 class GeneratorCollection(object):
@@ -132,6 +133,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     format = StringProperty()
 
     use_basic_auth = BooleanProperty(default=False)
+    auth_type = StringProperty(choices=("basic", "digest", ""))
     username = StringProperty()
     password = StringProperty()
     friendly_name = _("Data")
@@ -271,10 +273,20 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         # to be overridden
         generator = self.get_payload_generator(self.format_or_default_format())
         headers = generator.get_headers()
-        if self.use_basic_auth:
-            headers.update(get_repeater_auth_header(headers, self.username, self.password))
-
         return headers
+
+    def _use_basic_auth(self):
+        return self.auth_type == "basic"
+
+    def _use_digest_auth(self):
+        return self.auth_type == "digest"
+
+    def get_auth(self):
+        if self._use_basic_auth():
+            return HTTPBasicAuth(self.username, self.password)
+        elif self._use_digest_auth():
+            return HTTPDigestAuth(self.username, self.password)
+        return None
 
     def handle_success(self, response, repeat_record):
         """handle a successful post
@@ -525,10 +537,11 @@ class RepeatRecord(Document):
 
     def fire(self, force_send=False):
         headers = self.repeater.get_headers(self)
+        auth = self.repeater.get_auth()
         if self.try_now() or force_send:
             self.overall_tries += 1
             tries = 0
-            post_info = PostInfo(self.get_payload(), headers)
+            post_info = PostInfo(self.get_payload(), headers, auth)
             self.post(post_info, tries=tries)
             self.save()
 
@@ -541,6 +554,7 @@ class RepeatRecord(Document):
                 self.url,
                 headers=post_info.headers,
                 timeout=POST_TIMEOUT,
+                auth=post_info.auth,
             )
         except Exception as e:
             self.handle_exception(e)

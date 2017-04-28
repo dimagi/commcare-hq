@@ -23,9 +23,14 @@ class GenericRepeaterForm(forms.Form):
         help_text='Please enter the full url, like http://www.example.com/forwarding/',
         widget=forms.TextInput(attrs={"class": "url"})
     )
-    use_basic_auth = forms.BooleanField(
+    auth_type = forms.ChoiceField(
+        choices=[
+            (None, "None"),
+            ("basic", "Basic"),
+            ("digest", "Digest"),
+        ],
         required=False,
-        label='Use basic authentication?',
+        label="Authentication protocol",
     )
     username = forms.CharField(
         required=False,
@@ -89,7 +94,7 @@ class GenericRepeaterForm(forms.Form):
         form_fields.extend([
             "url",
             self.special_crispy_fields["test_link"],
-            self.special_crispy_fields["use_basic_auth"],
+            self.special_crispy_fields["auth_type"],
             "username",
             "password"
         ])
@@ -117,7 +122,7 @@ class GenericRepeaterForm(forms.Form):
                 ),
                 css_class='form-group'
             ),
-            "use_basic_auth": twbscrispy.PrependedText('use_basic_auth', ''),
+            "auth_type": twbscrispy.PrependedText('auth_type', ''),
         }
 
     def clean(self):
