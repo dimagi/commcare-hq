@@ -1,4 +1,6 @@
 import logging
+import re
+import base64
 
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -6,14 +8,18 @@ from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature import PKCS1_PSS
 from django.templatetags.i18n import language_name
+from django.contrib.auth.hashers import get_hasher
 
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.forms import BulkUploadForm
+from corehq.apps.hqwebapp.models import HashedPasswordLoginAttempt
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
-
+from corehq.util.view_utils import get_request
 
 logger = logging.getLogger(__name__)
+HASHED_PASSWORD_EXPIRY = 30  # days
+PASSWORD_HASHER = get_hasher()
 
 
 @memoized
@@ -81,3 +87,98 @@ def aliased_language_name(lang_code):
             if code == lang_code:
                 return name
         raise KeyError('Unknown language code %s' % lang_code)
+
+
+def extract_password(password):
+    # Passwords set with expected salts length and padding would respect this regex
+    reg_exp = r"^sha256\$([a-z|0-9|A-Z]{6})(.*)([a-z|0-9|A-Z]{6})=$"
+    match_result = re.match(reg_exp, password)
+    # strip out outer level padding of salts/keys and ensure three matches
+    if match_result and len(match_result.groups()) == 3:
+        match_groups = re.match(reg_exp, password).groups()
+        hash_left = match_groups[0]
+        hash_right = match_groups[2]
+        stripped_password = match_groups[1]
+        # decode the stripped password to get internal block
+        # decoded(salt1 + encoded_password + salt2)
+        try:
+            decoded_password = base64.b64decode(stripped_password)
+        except TypeError:
+            return ''
+        match_result_2 = re.match(reg_exp, decoded_password)
+        # strip out hashes from the internal block and ensure 3 matches
+        if match_result_2 and len(match_result_2.groups()) == 3:
+            match_groups = match_result_2.groups()
+            # ensure the same hashes were used in the internal block as the outer
+            if match_groups[0] == hash_left and match_groups[2] == hash_right:
+                # decode to get the real password
+                password_hash = re.match(reg_exp, decoded_password).groups()[1]
+                # return password decoded for UTF-8 support
+                try:
+                    return base64.b64decode(password_hash).decode('utf-8')
+                except TypeError:
+                    return ''
+            else:
+                # this sounds like someone tried to hash something but failed so ignore the password submitted
+                # completely
+                return ''
+        else:
+            # this sounds like someone tried to hash something but failed so ignore the password submitted
+            # completely
+            return ''
+    else:
+        # return the password received AS-IS
+        return password
+
+
+def hash_password(password):
+    return PASSWORD_HASHER.encode(password, PASSWORD_HASHER.salt())
+
+
+def verify_password(password, password_salt):
+    return PASSWORD_HASHER.verify(password, password_salt)
+
+
+def decode_password(password_hash, username=None):
+    def replay_attack():
+        # Replay attack where the same hash used from previous login attempt
+        login_attempts = HashedPasswordLoginAttempt.objects.filter(
+            username=username,
+        )
+        for login_attempt in login_attempts:
+            if verify_password(password_hash, login_attempt.password_hash):
+                return True
+
+    def record_login_attempt():
+        HashedPasswordLoginAttempt.objects.create(
+            username=username,
+            password_hash=hash_password(password_hash)
+        )
+
+    def _decode_password():
+        if username:
+            if replay_attack():
+                return ''
+            record_login_attempt()
+        return extract_password(password_hash)
+
+    if settings.ENABLE_PASSWORD_HASHING:
+        request = get_request()
+        if request:
+            # 1. an attempt to decode a password should be done just once in a request for the login attempt
+            # check to work correctly and not consider it a replay attack in case of multiple calls
+            # 2. also there should be no need to decode a password multiple times in the same request.
+            if not hasattr(request, 'decoded_password'):
+                request.decoded_password = {}
+
+            # return decoded password set on request object for the password_hash
+            if request.decoded_password.get(password_hash):
+                return request.decoded_password[password_hash]
+            else:
+                # decode the password and save it on the request object for password_hash
+                request.decoded_password[password_hash] = _decode_password()
+                return request.decoded_password[password_hash]
+        else:
+            return _decode_password()
+    else:
+        return password_hash
