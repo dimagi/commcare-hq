@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,298 +1,77 @@
+@@ -1,300 +1,78 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
