@@ -1,3 +1,4 @@
+/* globals HQMediaUploaderTypes */
 hqDefine("hqmedia/js/hqmediauploaders.js", function() {
     var HQMediaUploaders = {};  // This will be referenced by the media references
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
