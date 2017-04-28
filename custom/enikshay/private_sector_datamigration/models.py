@@ -15,7 +15,7 @@ class Beneficiary(models.Model):
     caseId = models.CharField(max_length=18, primary_key=True)
     caseName = models.CharField(max_length=62, null=True)
     caseReferredBy = models.CharField(max_length=18, null=True)
-    caseStatus = models.CharField(max_length=20, null=True)  # how to migrate 'Not a patient'
+    caseStatus = models.CharField(max_length=20, null=True)
     configureAlert = models.CharField(max_length=5, null=True)
     creationDate = models.DateTimeField(null=True)
     creator = models.CharField(max_length=255, null=True)
