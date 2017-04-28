@@ -233,7 +233,9 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     except Exception:
         logging.exception("Could not clean text for sms dated '%s' in domain '%s'" % (msg.date, msg.domain))
     try:
-        if not domain_has_privilege(msg.domain, privileges.OUTBOUND_SMS):
+        # We need to send SMS when msg.domain is None to support sending to
+        # people who opt in without being tied to a domain
+        if msg.domain and not domain_has_privilege(msg.domain, privileges.OUTBOUND_SMS):
             raise Exception(
                 ("Domain '%s' does not have permission to send SMS."
                  "  Please investigate why this function was called.") % msg.domain
@@ -550,6 +552,8 @@ def process_incoming(msg):
             text = get_message(MSG_OPTED_OUT, v, context=(opt_in_keywords[0],))
             if v:
                 send_sms_to_verified_number(v, text, metadata=metadata)
+            elif msg.backend_id:
+                send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id, metadata=metadata)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text, metadata=metadata)
     elif is_opt_message(msg.text, opt_in_keywords) and not can_receive_sms:
@@ -557,6 +561,8 @@ def process_incoming(msg):
             text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
             if v:
                 send_sms_to_verified_number(v, text)
+            elif msg.backend_id:
+                send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id, metadata=metadata)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text)
     else:
