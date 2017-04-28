@@ -518,7 +518,6 @@ class EntriesHelper(object):
 
         datums, assertions = self.get_datum_meta_assertions_advanced(module, form)
         datums.extend(EntriesHelper.get_new_case_id_datums_meta(form))
-
         for datum_meta in datums:
             e.datums.append(datum_meta.datum)
 
@@ -575,7 +574,6 @@ class EntriesHelper(object):
             target_module_ = get_target_module(action_.case_type, action_.details_module)
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action_.case_tag)
             filter_xpath = EntriesHelper.get_filter_xpath(target_module_)
-
             return SessionDatum(
                 id=action_.case_session_var,
                 nodeset=(EntriesHelper.get_nodeset_xpath(action_.case_type, filter_xpath=filter_xpath)
@@ -764,6 +762,12 @@ class EntriesHelper(object):
         def append_update(dict_, new_dict):
             for key in new_dict:
                 dict_[key].append(new_dict[key])
+
+        if module.root_module and module.root_module.module_type == 'advanced':
+            # there's no need to return datums for advanced modules because they always handle
+            # datum selection on a per-form basis
+            # see: http://manage.dimagi.com/default.asp?244371
+            return
 
         parent_datums = get_datums(module.root_module)
         if parent_datums:

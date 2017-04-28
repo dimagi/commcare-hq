@@ -12,7 +12,7 @@ from corehq.apps.app_manager.models import (
     LoadCaseFromFixture,
     LoadUpdateAction,
     Module,
-)
+    AdvancedFormActions)
 from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.util.test_utils import flag_enabled
@@ -272,4 +272,42 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             self.get_xml('advanced_module_parent_filters'),
             factory.app.create_suite(),
             "./entry[2]"
+        )
+
+    def test_parent_child_advanced_modules_with_same_case_type(self):
+        # http://manage.dimagi.com/default.asp?244371
+        app = Application.new_app('domain', "Untitled Application")
+
+        parent_module = app.add_module(AdvancedModule.new_module('Parent Module', None))
+        parent_module.case_type = 'shared'
+        parent_module.unique_id = 'id_parent_module'
+        parent_form = parent_module.new_form('Parent Form', None)
+        parent_form.actions = AdvancedFormActions(
+            load_update_cases=[
+                LoadUpdateAction(
+                    details_module=parent_module.unique_id,
+                    case_tag='parent_tag',
+                    case_type='shared',
+                )
+            ]
+        )
+
+        child_module = app.add_module(AdvancedModule.new_module("Child Module", None))
+        child_module.case_type = 'shared'
+        child_module.unique_id = 'id_child_module'
+        child_form = child_module.new_form('Child Form', None)
+        child_form.actions = AdvancedFormActions(
+            load_update_cases=[
+                LoadUpdateAction(
+                    details_module=child_module.unique_id,
+                    case_tag='child_tag',
+                    case_type='shared',
+                )
+            ]
+        )
+
+        # make child module point to advanced module as parent
+        child_module.root_module_id = parent_module.unique_id
+        self.assertXmlPartialEqual(
+            self.get_xml('advanced_module_parent_child_select'), app.create_suite(), "./entry"
         )

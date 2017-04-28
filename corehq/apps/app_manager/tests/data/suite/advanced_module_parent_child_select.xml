@@ -1,0 +1,24 @@
+<partial>
+  <entry>
+    <command id="m0-f0">
+      <text>
+        <locale id="forms.m0f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <session>
+      <datum detail-confirm="m0_case_long" detail-select="m0_case_short" id="case_id_parent_tag" nodeset="instance('casedb')/casedb/case[@case_type='shared'][@status='open']" value="./@case_id"/>
+    </session>
+  </entry>
+  <entry>
+    <command id="m1-f0">
+      <text>
+        <locale id="forms.m1f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <session>
+      <datum detail-confirm="m1_case_long" detail-select="m1_case_short" id="case_id_child_tag" nodeset="instance('casedb')/casedb/case[@case_type='shared'][@status='open']" value="./@case_id"/>
+    </session>
+  </entry>
+</partial>
