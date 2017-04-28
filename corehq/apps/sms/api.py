@@ -542,11 +542,10 @@ def process_incoming(msg):
         msg.domain = msg.domain_scope
         msg.save()
 
-    can_receive_sms = PhoneBlacklist.can_receive_sms(msg.phone_number)
     opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
     domain = v.domain if v else None
 
-    if is_opt_message(msg.text, opt_out_keywords) and can_receive_sms:
+    if is_opt_message(msg.text, opt_out_keywords):
         if PhoneBlacklist.opt_out_sms(msg.phone_number, domain=domain):
             metadata = MessageMetadata(ignore_opt_out=True)
             text = get_message(MSG_OPTED_OUT, v, context=(opt_in_keywords[0],))
@@ -556,13 +555,13 @@ def process_incoming(msg):
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id, metadata=metadata)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text, metadata=metadata)
-    elif is_opt_message(msg.text, opt_in_keywords) and not can_receive_sms:
+    elif is_opt_message(msg.text, opt_in_keywords):
         if PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
             text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
             if v:
                 send_sms_to_verified_number(v, text)
             elif msg.backend_id:
-                send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id, metadata=metadata)
+                send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text)
     else:
