@@ -292,3 +292,60 @@ def get_person_case(domain, case_id):
         return get_person_case_from_occurrence(domain, case.case_id).case_id
     else:
         raise ENikshayCaseNotFound(u"Unknown case type: {}".format(case_type))
+
+
+def _get_voucher_parent(domain, voucher_case_id):
+    prescription = None
+    test = None
+
+    try:
+        prescription = get_first_parent_of_case(domain, voucher_case_id, "prescription")
+    except ENikshayCaseNotFound:
+        pass
+    try:
+        test = get_first_parent_of_case(domain, voucher_case_id, "test")
+    except ENikshayCaseNotFound as e:
+        pass
+    if not (prescription or test):
+        raise ENikshayCaseNotFound(
+            "Couldn't find any open parent prescription or test cases for id: {}".format(voucher_case_id)
+        )
+    assert not (prescription and test), "Didn't expect voucher to have prescription AND test parent"
+    return test or prescription
+
+
+def get_episode_case_from_voucher(domain, voucher_case_id):
+    voucher_parent = _get_voucher_parent(domain, voucher_case_id)
+    assert voucher_parent.type == "prescription"
+    episode = get_first_parent_of_case(domain, voucher_parent.case_id, "episode")
+    return episode
+
+
+def get_person_case_from_voucher(domain, voucher_case_id):
+    # Case structure could be one of these two things:
+    #   person <- occurrence <- episode <- prescription <- voucher
+    #   person <- occurrence <- test <- voucher
+    voucher_parent = _get_voucher_parent(domain, voucher_case_id)
+    if voucher_parent.type == "prescription":
+        episode = get_first_parent_of_case(domain, voucher_parent.case_id, "episode")
+        return get_person_case_from_episode(domain, episode.case_id)
+    else:
+        assert voucher_parent.type == "test"
+        occurrence = get_occurrence_case_from_test(domain, voucher_parent.case_id)
+        return get_person_case_from_occurrence(domain, occurrence.case_id)
+
+
+def get_prescription_vouchers_from_episode(domain, episode_case_id):
+    case_accessor = CaseAccessors(domain)
+    prescription_cases = case_accessor.get_reverse_indexed_cases([episode_case_id])
+    return case_accessor.get_reverse_indexed_cases([case.case_id for case in prescription_cases])
+
+
+def get_approved_prescription_vouchers_from_episode(domain, episode_case_id):
+    vouchers = get_prescription_vouchers_from_episode(domain, episode_case_id)
+    return [
+        v for v in vouchers if
+        (v.dynamic_case_properties().get("type") == "prescription"
+        # TODO: Confirm state == "fulfilled"
+        and v.dynamic_case_properties().get("state") == "fulfilled")
+    ]

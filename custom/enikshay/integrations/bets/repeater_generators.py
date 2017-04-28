@@ -46,6 +46,123 @@ class BETSPayload(jsonobject.JsonObject):
 class IncentivePayload(BETSPayload):
     EpisodeID = jsonobject.StringProperty(required=False)
 
+    @classmethod
+    def create_180_treatment_payload(cls, episode_case):
+        episode_case_properties = episode_case.dynamic_case_properties()
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
+        location = cls._get_location(
+            person_case.owner_id,
+            field_name="owner_id",
+            related_case_type="person",
+            related_case_id=person_case.case_id
+        )
+
+        return cls(
+            EventID=TREATMENT_180_EVENT,
+            EventOccurDate=episode_case_properties.get(TREATMENT_OUTCOME_DATE),
+            BeneficiaryUUID=person_case.owner_id,
+            BeneficiaryType="patient",
+            EpisodeID=episode_case.case_id,
+            Location=location.metadata["nikshay_code"],
+        )
+
+    @classmethod
+    def create_drug_refill_payload(cls, voucher_case):
+        voucher_case_properties = voucher_case.dynamic_case_properties()
+        person_case = get_person_case_from_voucher(voucher_case.domain, voucher_case.case_id)
+        episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+
+        location = cls._get_location(
+            person_case.owner_id,
+            field_name="owner_id",
+            related_case_type="person",
+            related_case_id=person_case.case_id,
+        )
+
+        return cls(
+            EventID=DRUG_REFILL_EVENT,
+            EventOccurDate=voucher_case_properties.get("date_approved"),
+            BeneficiaryUUID=person_case.case_id,
+            BeneficiaryType="patient",
+            EpisodeID=episode_case.case_id,
+            Location=location.metadata["nikshay_code"],
+        )
+
+    @classmethod
+    def create_successful_treatment_payload(cls, episode_case):
+        episode_case_properties = episode_case.dynamic_case_properties()
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
+
+        location = cls._get_location(
+            person_case.dynamic_case_properties().get('last_owner'),
+            field_name="last_owner",
+            related_case_type="person",
+            related_case_id=person_case.case_id,
+        )
+
+        return cls(
+            EventID=SUCCESSFUL_TREATMENT_EVENT,
+            EventOccurDate=episode_case_properties[TREATMENT_OUTCOME_DATE],
+            BeneficiaryUUID=person_case.case_id,
+            BeneficiaryType="patient",
+            EpisodeID=episode_case.case_id,
+            Location=location.metadata["nikshay_code"],
+        )
+
+    @staticmethod
+    def _india_now():
+        utc_now = pytz.UTC.localize(datetime.utcnow())
+        india_now = timezone('Asia/Kolkata').localize(utc_now)
+        return str(india_now)
+
+    @classmethod
+    def create_diagnosis_and_notification_payload(cls, episode_case):
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
+
+        location = cls._get_location(
+            person_case.owner_id,
+            field_name="owner_id",
+            related_case_type="person",
+            related_case_id=person_case.case_id,
+        )
+
+        return cls(
+            EventID=DIAGNOSIS_AND_NOTIFICATION_EVENT,
+            EventOccurDate=cls._india_now(),
+            BeneficiaryUUID=person_case.owner_id,
+            BeneficiaryType=LOCATION_TYPE_MAP[location.location_type],
+            EpisodeID=episode_case.case_id,
+            Location=location.metadata["nikshay_code"],
+        )
+
+    @classmethod
+    def create_ayush_referral_payload(cls, episode_case):
+        episode_case_properties = episode_case.dynamic_case_properties()
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
+
+        location = cls._get_location(
+            episode_case_properties.get("presumptive_referral_by_ayush"),
+            field_name="presumptive_referral_by_ayush",
+            related_case_type="episode",
+            related_case_id=episode_case.case_id,
+        )
+
+        person_owner_location = cls._get_location(
+            person_case.owner_id,
+            field_name="owner_id",
+            related_case_type="person",
+            related_case_id=person_case.case_id
+        )
+
+        return cls(
+            EventID=AYUSH_REFERRAL_EVENT,
+            EventOccurDate=cls._india_now(),
+            BeneficiaryUUID=episode_case_properties.get("presumptive_referral_by_ayush"),
+            BeneficiaryType=LOCATION_TYPE_MAP[location.location_type],
+            EpisodeID=episode_case.case_id,
+            Location=person_owner_location.metadata["nikshay_code"],
+        )
+
 
 class VoucherPayload(BETSPayload):
 
@@ -129,3 +246,42 @@ class BETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
     def get_payload(self, repeat_record, voucher_case):
         return json.dumps(VoucherPayload.create_voucher_payload(voucher_case).to_json())
 
+
+@RegisterGenerator(BETS180TreatmentRepeater, "case_json", "JSON", is_default=True)
+class BETS180TreatmentPayloadGenerator(BETSBasePayloadGenerator):
+    event_id = TREATMENT_180_EVENT
+
+    def get_payload(self, repeat_record, episode_case):
+        return json.dumps(IncentivePayload.create_180_treatment_payload(episode_case).to_json())
+
+
+@RegisterGenerator(BETSDrugRefillRepeater, "case_json", "JSON", is_default=True)
+class BETSDrugRefillPayloadGenerator(BETSBasePayloadGenerator):
+    event_id = DRUG_REFILL_EVENT
+
+    def get_payload(self, repeat_record, voucher_case):
+        return json.dumps(IncentivePayload.create_drug_refill_payload(voucher_case).to_json())
+
+
+@RegisterGenerator(BETSSuccessfulTreatmentRepeater, "case_json", "JSON", is_default=True)
+class BETSSuccessfulTreatmentPayloadGenerator(BETSBasePayloadGenerator):
+    event_id = SUCCESSFUL_TREATMENT_EVENT
+
+    def get_payload(self, repeat_record, episode_case):
+        return json.dumps(IncentivePayload.create_successful_treatment_payload(episode_case).to_json())
+
+
+@RegisterGenerator(BETSDiagnosisAndNotificationRepeater, "case_json", "JSON", is_default=True)
+class BETSDiagnosisAndNotificationPayloadGenerator(BETSBasePayloadGenerator):
+    event_id = DIAGNOSIS_AND_NOTIFICATION_EVENT
+
+    def get_payload(self, repeat_record, episode_case):
+        return json.dumps(IncentivePayload.create_diagnosis_and_notification_payload(episode_case).to_json())
+
+
+@RegisterGenerator(BETSAYUSHReferralRepeater, "case_json", "JSON", is_default=True)
+class BETSAYUSHReferralPayloadGenerator(BETSBasePayloadGenerator):
+    event_id = AYUSH_REFERRAL_EVENT
+
+    def get_payload(self, repeat_record, episode_case):
+        return json.dumps(IncentivePayload.create_ayush_referral_payload(episode_case).to_json())

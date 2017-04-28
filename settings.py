@@ -1711,6 +1711,12 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSVoucherRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETS180TreatmentRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSDrugRefillRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSSuccessfulTreatmentRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSDiagnosisAndNotificationRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSAYUSHReferralRepeater',
+
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
