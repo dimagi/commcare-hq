@@ -385,7 +385,7 @@ class CachedResponse(object):
 
     def get_http_response(self):
         headers = {}
-        content_length = self.payload.get_content_length()
+        content_length = self.get_content_length()
         if content_length is not None:
             headers['Content-Length'] = content_length
         return stream_response(self.payload.as_file(), headers)
