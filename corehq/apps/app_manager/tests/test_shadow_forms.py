@@ -33,6 +33,14 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
 
         self.shadow_form = self.factory.new_shadow_form(self.advanced_module)
         self.shadow_form.shadow_parent_form_id = self.form0.unique_id
+        # Shadow form load_update_case actions should contain all case tags from the parent
+        self.shadow_form.extra_actions.load_update_cases = [
+            LoadUpdateAction(
+                case_type="patient",
+                case_tag="load_0",
+                details_module=self.advanced_module.unique_id,
+            )
+        ]
 
         self.basic_module = self.factory.new_basic_module("basic_module", "doctor", with_form=False)
 
@@ -73,8 +81,14 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
 
     def test_shadow_form_action_additions(self):
         # Confirm that shadow form action additions are reflected in the suite file
+        original_actions = self.shadow_form.extra_actions.load_update_cases
         try:
             self.shadow_form.extra_actions.load_update_cases = [
+                LoadUpdateAction(
+                    case_type="patient",
+                    case_tag="load_0",
+                    details_module=self.advanced_module.unique_id,
+                ),
                 LoadUpdateAction(
                     case_tag="load_1",
                     case_type="doctor",
@@ -84,7 +98,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
             suite = self.factory.app.create_suite()
         finally:
             # reset the actions
-            self.shadow_form.extra_actions = AdvancedFormActions()
+            self.shadow_form.extra_actions.load_update_cases = original_actions
 
         # Confirm that the source session has not changed:
         expected_source_session = """
@@ -129,6 +143,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
 
     def test_shadow_form_action_modifications(self):
         # Confirm that shadow form action modifications are reflected in the suite file
+        original_actions = self.shadow_form.extra_actions.load_update_cases
         try:
             self.shadow_form.extra_actions.load_update_cases = [
                 LoadUpdateAction(
@@ -140,7 +155,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
             suite = self.factory.app.create_suite()
         finally:
             # reset the actions
-            self.shadow_form.extra_actions = AdvancedFormActions()
+            self.shadow_form.extra_actions.load_update_cases = original_actions
 
         # Confirm that the source session has not changed:
         expected_source_session = """
