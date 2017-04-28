@@ -1038,6 +1038,17 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+LOCATION_USERS = StaticToggle(
+    'location_users',
+    'Autogenerate users for each location',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "This flag adds an option to the location types page (under 'advanced "
+        "mode') to create users for all locations of a specified type."
+    ),
+)
+
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',

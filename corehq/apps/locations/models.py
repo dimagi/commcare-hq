@@ -122,6 +122,7 @@ class LocationType(models.Model):
         on_delete=models.SET_NULL,
     )  # include all levels of this type and their ancestors
     last_modified = models.DateTimeField(auto_now=True)
+    has_user = models.BooleanField(default=False)
 
     emergency_level = StockLevelField(default=0.5)
     understock_threshold = StockLevelField(default=1.5)
@@ -139,6 +140,7 @@ class LocationType(models.Model):
     def __init__(self, *args, **kwargs):
         super(LocationType, self).__init__(*args, **kwargs)
         self._administrative_old = self.administrative
+        self._has_user_old = self.has_user
 
     @property
     def expand_from(self):
@@ -171,6 +173,8 @@ class LocationType(models.Model):
         self.overstock_threshold = config.overstock_threshold
 
     def save(self, *args, **kwargs):
+        from .tasks import update_location_users
+
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
@@ -186,6 +190,8 @@ class LocationType(models.Model):
 
         if is_not_first_save:
             self.sync_administrative_status()
+            if self._has_user_old != self.has_user:
+                update_location_users.delay(self)
 
         return saved
 
@@ -394,6 +400,9 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True, blank=True)
 
+    # For locations where location_type.has_user == True
+    user_id = models.CharField(max_length=255, blank=True)
+
     objects = _tree_manager = LocationManager()
     # This should really be the default location manager
     active_objects = OnlyUnarchivedLocationManager()
@@ -490,6 +499,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         if sp and not sp.closed:
             close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
 
+        if self.user_id:
+            from corehq.apps.users.models import CommCareUser
+            user = CommCareUser.get(self.user_id)
+            user.active = False
+            user.save()
+
         _unassign_users_from_location(self.domain, self.location_id)
 
     def _archive_single_location(self):
@@ -536,6 +551,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
                     action.xform.archive(user_id=COMMTRACK_USERNAME)
                     break
 
+        if self.user_id:
+            from corehq.apps.users.models import CommCareUser
+            user = CommCareUser.get(self.user_id)
+            user.active = True
+            user.save()
+
     def unarchive(self):
         """
         Unarchive a location and reopen supply point case if it
@@ -563,27 +584,9 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         to_delete = self.get_descendants(include_self=True)
 
         for loc in to_delete:
-            loc._sql_close_case_and_remove_users()
+            loc._close_case_and_remove_users()
 
         to_delete.delete()
-
-    def _sql_close_case_and_remove_users(self):
-        """
-        SQL ONLY VERSION
-        Closes linked supply point cases for a location and unassigns the users
-        assigned to that location.
-
-        Used by both archive and delete methods
-        """
-
-        sp = self.linked_supply_point()
-        # sanity check that the supply point exists and is still open.
-        # this is important because if you archive a child, then try
-        # to archive the parent, we don't want to try to close again
-        if sp and not sp.closed:
-            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
-
-        _unassign_users_from_location(self.domain, self.location_id)
 
     class Meta:
         app_label = 'locations'

@@ -64,10 +64,10 @@
                                     </span>
                                 </th>
                                 <th data-bind="visible: advanced_mode">
-                                    {% trans "Type Code"%}
+                                    {% trans "Type Code" %}
                                 </th>
                                 <th data-bind="visible: advanced_mode">
-                                    {% trans "Level to expand from"%}
+                                    {% trans "Level to expand from" %}
                                     <span class="hq-help-template"
                                           data-title="{% trans "Level to expand from" %}"
                                           data-content="{% blocktrans %}
@@ -77,7 +77,7 @@
                                     </span>
                                 </th>
                                 <th data-bind="visible: advanced_mode">
-                                    {% trans "Level to expand to"%}
+                                    {% trans "Level to expand to" %}
                                     <span class="hq-help-template"
                                           data-title="{% trans "Level to expand to" %}"
                                           data-content="{% blocktrans %}
@@ -88,7 +88,7 @@
                                     </span>
                                 </th>
                                 <th data-bind="visible: advanced_mode">
-                                    {% trans "Include without expanding"%}
+                                    {% trans "Include without expanding" %}
                                     <span class="hq-help-template"
                                           data-title="{% trans "Include without expanding" %}"
                                           data-content="{% blocktrans %}
@@ -97,6 +97,11 @@
                                           {% endblocktrans %}">
                                     </span>
                                 </th>
+                                {% if request|toggle_enabled:'LOCATION_USERS' %}
+                                <th data-bind="visible: advanced_mode">
+                                    {% trans "Has Location User" %}
+                                </th>
+                                {% endif %}
                                 {% if commtrack_enabled %}
                                 <th>
                                     {% trans "Tracks Stock" %}
@@ -195,6 +200,11 @@
                                                    optionsCaption: '\u2013{%trans 'none'%}\u2013'">
                                 </select>
                             </td>
+                            {% if request|toggle_enabled:'LOCATION_USERS' %}
+                            <td data-bind="visible: $parent.advanced_mode">
+                                <input data-bind="checked: has_user" type="checkbox" />
+                            </td>
+                            {% endif %}
                             {% if commtrack_enabled %}
                             <td>
                                 <input data-bind="checked: tracks_stock" type="checkbox" />

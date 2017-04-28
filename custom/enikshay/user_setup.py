@@ -27,7 +27,8 @@ LOC_TYPES_TO_USER_TYPES = {
 
 
 def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
-    if not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain):
+    # if not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain):
+    if not toggles.ENIKSHAY.enabled(domain):
         return
 
     new_user_form = forms.get('NewMobileWorkerForm')
@@ -39,13 +40,20 @@ def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
         if not custom_data:
             raise AssertionError("Expected user form and custom data form to be submitted together")
 
-        location = (validate_location(domain, new_user_form)
-                    if new_user_form else user.get_sql_location(domain))
-        if not location:
-            return
+        if sender == 'LocationFormSet':
+            location_type = new_user_form.data['location_type']
+        elif new_user_form:
+            location_type = validate_location(domain, new_user_form).location_type.code
+        else:
+            location = user.get_sql_location(domain)
+            if not location:
+                return
+            location_type = user.get_sql_location(domain).location_type.code
 
+        if 'usertype' not in custom_data.form.cleaned_data:
+            return  # There was probably a validation error
         usertype = custom_data.form.cleaned_data['usertype']
-        validate_usertype(domain, location, usertype, custom_data)
+        validate_usertype(location_type, usertype, custom_data)
         if new_user_form:
             set_user_role(domain, user, usertype, new_user_form)
         else:
@@ -53,12 +61,14 @@ def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
 
     if location_form:
         location_form.add_error('assigned_locations', _("You cannot edit the location of existing users."))
+    # user_form = new_user_form or update_user_form
+    # user_form.add_error('username', _("blocking the form from being sent"))
 
 
-def validate_usertype(domain, location, usertype, custom_data):
+def validate_usertype(location_type, usertype, custom_data):
     """Restrict choices for custom user data role field based on the chosen
     location's type"""
-    allowable_usertypes = LOC_TYPES_TO_USER_TYPES[location.location_type.code]
+    allowable_usertypes = LOC_TYPES_TO_USER_TYPES[location_type]
     if usertype not in allowable_usertypes:
         msg = _("'User Type' must be one of the following: {}").format(', '.join(allowable_usertypes))
         custom_data.form.add_error('usertype', msg)
@@ -111,12 +121,13 @@ def clean_location_callback(sender, domain, request_user, location, forms, **kwa
         return
 
     location_form = forms.get('LocationForm')
+    custom_data = forms.get('CustomDataEditor')
 
     if location_form.is_new_location:
-        validate_nikshay_code(domain, location_form)
-        set_site_code(location_form)
+        validate_nikshay_code(domain, location_form, custom_data)
+        set_site_code(location_form, custom_data)
     else:
-        validate_nikshay_code_unchanged(location, location_form)
+        validate_nikshay_code_unchanged(location, custom_data)
 
     set_available_tests(location, location_form)
 
@@ -152,20 +163,20 @@ def get_site_code(name, nikshay_code, type_code, parent):
         raise AssertionError('This eNikshay location has an unrecognized type, {}'.format(type_code))
 
 
-def set_site_code(location_form):
+def set_site_code(location_form, custom_data):
     # https://docs.google.com/document/d/1Pr19kp5cQz9412Q1lbVgszeZJTv0XRzizb0bFHDxvoA/edit#heading=h.9v4rs82o0soc
-    nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code') or ''
+    nikshay_code = custom_data.form.cleaned_data.get('nikshay_code') or ''
     type_code = location_form.cleaned_data['location_type']
     parent = location_form.cleaned_data['parent']
     name = location_form.cleaned_data['name']
     location_form.cleaned_data['site_code'] = get_site_code(name, nikshay_code, type_code, parent)
 
 
-def validate_nikshay_code(domain, location_form):
+def validate_nikshay_code(domain, location_form, custom_data):
     """When locations are created, enforce that a custom location data field
     (Nikshay code) is unique amongst sibling locations"""
     from corehq.apps.locations.models import SQLLocation
-    nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code', None)
+    nikshay_code = custom_data.form.cleaned_data.get('nikshay_code', None)
     loctype = location_form.cleaned_data['location_type']
     if loctype not in TYPES_WITH_REQUIRED_NIKSHAY_CODES:
         return
@@ -178,16 +189,16 @@ def validate_nikshay_code(domain, location_form):
     ]
     if nikshay_code in sibling_codes:
         msg = "Nikshay Code '{}' is already in use.".format(nikshay_code)
-        location_form.custom_data.form.add_error('nikshay_code', msg)
+        custom_data.form.add_error('nikshay_code', msg)
 
 
-def validate_nikshay_code_unchanged(location, location_form):
+def validate_nikshay_code_unchanged(location, custom_data):
     """Block edit of custom location data nikshay code after creation"""
-    specified_nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code', None)
+    specified_nikshay_code = custom_data.form.cleaned_data.get('nikshay_code', None)
     existing_nikshay_code = location.metadata.get('nikshay_code', None)
     if existing_nikshay_code and specified_nikshay_code != existing_nikshay_code:
         msg = "You cannot modify the Nikshay Code of an existing location."
-        location_form.custom_data.form.add_error('nikshay_code', msg)
+        custom_data.form.add_error('nikshay_code', msg)
 
 
 def set_available_tests(location, location_form):

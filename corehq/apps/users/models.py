@@ -1425,6 +1425,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
 
+    # This means that this user represents a location, and has a 1-1 relationship
+    # with a location where location.location_type.has_user == True
+    user_location_id = StringProperty()
+
     is_anonymous = BooleanProperty(default=False)
 
     @classmethod
@@ -1720,7 +1724,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_sql_location(self, domain):
         return self.sql_location
 
-    def set_location(self, location):
+    def set_location(self, location, commit=True):
         """
         Set the primary location, and all important user data, for
         the user.
@@ -1728,6 +1732,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         :param location: may be a sql or couch location
         """
         from corehq.apps.fixtures.models import UserFixtureType
+
+        if not location.location_id:
+            raise AssertionError("You can't set an unsaved location")
 
         self.user_data['commcare_location_id'] = location.location_id
 
@@ -1755,7 +1762,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.get_domain_membership(self.domain).assigned_location_ids.append(self.location_id)
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
         self.get_sql_location.reset_cache(self)
-        self.save()
+        if commit:
+            self.save()
 
     def unset_location(self, fall_back_to_next=False):
         """
@@ -2136,6 +2144,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             location_id = location_object_or_id
         else:
             location_id = location_object_or_id.location_id
+
+        if not location_id:
+            raise AssertionError("You can't set an unsaved location")
 
         membership = self.get_domain_membership(domain)
         membership.location_id = location_id
