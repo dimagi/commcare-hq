@@ -58,9 +58,8 @@
     </script>
   {% endif %}
 
-
-  {% include 'hqmedia/partials/multimedia_init.html' %}
   <script>
+    var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders.js").get();
     var refs = {{ refs|JSON }};
     var media_info = {{ media_info|JSON }};
     var image_refs = {};

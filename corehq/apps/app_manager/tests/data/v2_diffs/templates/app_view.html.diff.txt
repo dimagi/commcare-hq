@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,301 +1,79 @@
+@@ -1,300 +1,80 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -19,6 +19,7 @@
 -    <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 -    <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
 -    <script src="{% static "jsdiff/diff.js" %}"></script>
+-    <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
 -
 -    <script src="{% static 'app_manager/js/app_view.js' %}"></script>
 -    {% if app.get_doc_type == "Application" %}
@@ -120,9 +121,7 @@
 -            });
 -        });
 -
--    </script>
--    {% include 'hqmedia/partials/multimedia_init.html' %}
--    <script>
+-        var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders.js").get();
 -        var refs = {{ refs|JSON }};
 -        var media_info = {{ media_info|JSON }};
 -        var image_refs = {};
@@ -186,6 +185,7 @@
 +  <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
 +  <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 +  <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
++  <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
 +  <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 +  <script src="{% static 'app_manager/js/app_view.js' %}"></script>
 +  {% if app.get_doc_type == "Application" %}
