@@ -193,9 +193,9 @@ class EpisodeUpdate(object):
         if not raw_date:
             return None
         if parse_datetime(raw_date):
-            return parse_datetime(raw_date)
+            return (parse_datetime(raw_date)).replace(tzinfo=pytz.utc)
         elif parse_date(raw_date):
-            return datetime.datetime.combine(parse_date(raw_date), datetime.datetime.min.time())
+            return (datetime.datetime.combine(parse_date(raw_date), datetime.datetime.min.time())).replace(tzinfo=pytz.utc)
         else:
             raise EnikshayTaskException(
                 "Episode case {case_id} has invalid format for 'adherence_schedule_date_start' {date}".format(
