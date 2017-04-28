@@ -79,7 +79,7 @@ def get_supervisor_location_ids(domain):
 
 def is_first_week_of_month():
     day = ServerTime(datetime.utcnow()).user_time(pytz.timezone('Asia/Kolkata')).done().day
-    return day <= 7
+    return False
 
 
 def get_user_ids_under_location(domain, site_code):
