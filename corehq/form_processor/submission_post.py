@@ -214,14 +214,19 @@ class SubmissionPost(object):
 
     def _invalidate_caches(self, user_id):
         """invalidate cached initial restores"""
-        initial_restore_cache_key = self._restore_cache_key(RESTORE_CACHE_KEY_PREFIX, user_id, version=V2)
+        initial_restore_cache_key = self._restore_cache_key(
+            self.domain,
+            RESTORE_CACHE_KEY_PREFIX,
+            user_id,
+            version=V2
+        )
         self._cache.delete(initial_restore_cache_key)
 
         if ASYNC_RESTORE.enabled(self.domain):
             self._invalidate_async_caches(user_id)
 
     def _invalidate_async_caches(self, user_id):
-        cache_key = self._restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, user_id)
+        cache_key = self._restore_cache_key(self.domain, ASYNC_RESTORE_CACHE_KEY_PREFIX, user_id)
         task_id = self._cache.get(cache_key)
 
         if task_id is not None:

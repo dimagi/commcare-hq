@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,298 +1,79 @@
+@@ -1,298 +1,77 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -199,12 +199,10 @@
 +      {% if can_preview_form %}
 +        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
 +      {% endif %}
-+      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
-+          <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
-+              <i class="fa fa-list-alt"></i>
-+              {% trans "App Summary" %}
-+          </a>
-+      {% endif %}
++      <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
++          <i class="fa fa-list-alt"></i>
++          {% trans "App Summary" %}
++      </a>
 +  </div>
 +
 +  <div class="appmanager-edit-title">

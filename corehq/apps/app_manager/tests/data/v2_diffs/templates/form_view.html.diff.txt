@@ -11,7 +11,7 @@
  
  {% block case_management_js %}{{ block.super }}
 -    {% if form.source %}
-+  {% if form.uses_cases %}
++  {% if form.source %}
      var CaseConfig = hqImport('app_manager/js/case-config-ui.js').CaseConfig;
      var caseConfig = new CaseConfig({
          home: $('#case-config-ko'),

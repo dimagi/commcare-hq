@@ -172,6 +172,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
+    def case_exists(case_id):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_case_xform_ids(case_id):
         raise NotImplementedError
 
