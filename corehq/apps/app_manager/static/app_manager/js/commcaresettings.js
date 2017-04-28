@@ -489,4 +489,4 @@ ko.bindingHandlers.passwordSetter = {
             observableValue($(element).val());
         });
     }
-}
+};
