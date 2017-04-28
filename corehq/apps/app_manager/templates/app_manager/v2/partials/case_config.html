@@ -36,21 +36,19 @@
         <div class="panel panel-appmanager"
              data-bind="template: 'case-config:case-transaction:case-properties'"></div>
     </div>
-    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
-        <div class="panel panel-appmanager">
-            <label class="panel-body">
-                <input type="checkbox" data-bind="checked: close_case"/>
-                {% trans "Close this case when the form is complete" %}
-            </label>
-            {% if app.advanced_app_builder or form.actions.close_case.condition.type == 'if' %}
-            <div data-bind="template: {
-                name: 'case-config:condition',
-                data: {condition: $data.close_condition, config: $data},
-                if: $data.close_condition
-            }"></div>
-            {% endif %}
-        </div>
-    {% endif %}
+    <div class="panel panel-appmanager">
+        <label class="panel-body">
+            <input type="checkbox" data-bind="checked: close_case"/>
+            {% trans "Close this case when the form is complete" %}
+        </label>
+        {% if app.advanced_app_builder or form.actions.close_case.condition.type == 'if' %}
+        <div data-bind="template: {
+            name: 'case-config:condition',
+            data: {condition: $data.close_condition, config: $data},
+            if: $data.close_condition
+        }"></div>
+        {% endif %}
+    </div>
 </script>
 
 <div id="case-config-ko">
