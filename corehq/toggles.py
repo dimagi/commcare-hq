@@ -394,7 +394,7 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     description=(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
-    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting', 
+    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
 )
 
 EXPORT_NO_SORT = StaticToggle(
@@ -455,7 +455,9 @@ HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
     description=(
-        "Do not turn this feature flag.  It is only used for providing compatability for old projects.  We are actively trying to remove projects from this list."
+        "Do not turn this feature flag.  It is only used for providing "
+        "compatability for old projects.  We are actively trying to remove "
+        "projects from this list."
     ),
 )
 
@@ -894,7 +896,8 @@ TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
-    'Allow specifying a custom base URL for an application. Main use case is to allow migrating ICDS to a new cluster.',
+    'Allow specifying a custom base URL for an application. Main use case is '
+    'to allow migrating ICDS to a new cluster.',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
