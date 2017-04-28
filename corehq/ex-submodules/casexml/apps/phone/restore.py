@@ -413,11 +413,26 @@ class CachedResponse(object):
         return self.payload.as_string()
 
     def get_http_response(self):
+
+        def get_payload_content_length():
+            if isinstance(self.payload, file):
+                offset = self.payload.tell()
+                self.payload.seek(0, 2)
+                length = self.payload.tell()
+                self.payload.seek(offset)
+                return length
+            return self.payload.get_content_length()
+
+        def get_payload_as_file():
+            if isinstance(self.payload, file):
+                return self.payload
+            return self.payload.as_file()
+
         headers = {}
-        content_length = self.payload.get_content_length()
+        content_length = get_payload_content_length()
         if content_length is not None:
             headers['Content-Length'] = content_length
-        return stream_response(self.payload.as_file(), headers)
+        return stream_response(get_payload_as_file(), headers)
 
     def as_file(self):
         if self.payload:
