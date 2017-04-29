@@ -5,6 +5,7 @@ from couchdbkit.exceptions import BulkSaveError
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
+from corehq.toggles import ENTERPRISE_OPTIMIZATIONS
 from dimagi.utils.decorators.memoized import memoized
 from ..utils import should_use_sql_backend
 
@@ -111,7 +112,11 @@ class FormProcessorInterface(object):
         else:
             # check across Couch & SQL to ensure global uniqueness
             # check this domains DB first to support existing bad data
-            return self.processor.is_duplicate(xform_id) or self.other_db_processor().is_duplicate(xform_id)
+            return (
+                self.processor.is_duplicate(xform_id) or
+                # only check other
+                ENTERPRISE_OPTIMIZATIONS.enabled(self.domain) and self.other_db_processor().is_duplicate(xform_id)
+            )
 
     def new_xform(self, form_json):
         return self.processor.new_xform(form_json)
