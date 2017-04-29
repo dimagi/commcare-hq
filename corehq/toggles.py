@@ -119,10 +119,14 @@ class StaticToggle(object):
         from toggle.models import Toggle
         try:
             toggle = Toggle.get(self.slug)
-            enabled_users = toggle.enabled_users
-            return [user.split('domain:')[1] for user in enabled_users if 'domain:' in user]
         except ResourceNotFound:
             return []
+
+        enabled_users = toggle.enabled_users
+        domains = {user.split('domain:')[1] for user in enabled_users if 'domain:' in user}
+        domains |= self.always_enabled
+        domains -= self.always_disabled
+        return list(domains)
 
 
 def deterministic_random(input_string):
