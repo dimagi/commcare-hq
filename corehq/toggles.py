@@ -382,6 +382,13 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting', 
 )
 
+EXPORT_NO_SORT = StaticToggle(
+    'export_no_sort',
+    'Do not sort exports',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 LOCATIONS_IN_UCR = StaticToggle(
     'locations_in_ucr',
     'Add Locations as one of the Source Types for User Configurable Reports',
@@ -712,6 +719,13 @@ NINETYNINE_DOTS = StaticToggle(
     'Enable access to 99DOTS',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
+)
+
+ENIKSHAY_API = StaticToggle(
+    'enikshay_api',
+    'Enable access to eNikshay api endpoints',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER]
 )
 
 NIKSHAY_INTEGRATION = StaticToggle(

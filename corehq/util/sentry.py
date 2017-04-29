@@ -7,7 +7,8 @@ RATE_LIMITED_EXCEPTIONS = {
     'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'riak',
     'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
     'socket.error': 'rabbitmq',
-    'redis.ConnectionError': 'redis'
+    'redis.exceptions.ConnectionError': 'redis',
+    'restkit.errors.RequestError': 'couchdb',
 }
 
 

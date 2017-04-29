@@ -1,7 +1,6 @@
 from django.utils.translation import ugettext as _
 import sqlalchemy
 from sqlalchemy.exc import IntegrityError, ProgrammingError
-
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import (
     ColumnNotFoundError, TableRebuildError, TableNotFoundWarning,
@@ -123,9 +122,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         with self.engine.begin() as connection:
             delete = table.delete(table.c.doc_id == doc['_id'])
             connection.execute(delete)
-
-    def doc_exists(self, doc):
-        return self.session_helper.Session.query(self.get_query_object().filter_by(doc_id=doc['_id']).exists())
 
 
 class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):

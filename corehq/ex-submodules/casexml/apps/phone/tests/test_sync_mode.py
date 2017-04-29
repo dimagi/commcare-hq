@@ -84,7 +84,7 @@ class SyncBaseTest(TestCase):
 
     def tearDown(self):
         restore_config = RestoreConfig(project=self.project, restore_user=self.user)
-        restore_config.cache.delete(restore_config._initial_cache_key)
+        restore_config.cache.delete(restore_config._restore_cache_key)
         super(SyncBaseTest, self).tearDown()
 
     @classmethod
