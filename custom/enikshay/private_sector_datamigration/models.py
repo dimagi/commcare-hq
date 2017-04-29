@@ -365,6 +365,16 @@ class Agency(models.Model):
     trainingAttended = models.CharField(max_length=256, null=True)
     tbCorner = models.CharField(max_length=1, null=True)
 
+    @classmethod
+    def get_agencies_by_state_and_district(cls, state_id, district_id):
+        agency_ids = UserDetail.objects.filter(
+            isPrimary=True,
+        ).filter(
+            stateId=state_id,
+            districtId=district_id,
+        ).values('agencyId').distinct()
+        return Agency.objects.filter(agencyId__in=agency_ids)
+
     @property
     def location_type(self):
         return {
