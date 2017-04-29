@@ -100,8 +100,8 @@ class StaticToggle(object):
             @wraps(view_func)
             def wrapped_view(request, *args, **kwargs):
                 if (
-                    (hasattr(request, 'user') and self.enabled(request.user.username))
-                    or (hasattr(request, 'domain') and self.enabled(request.domain))
+                    (hasattr(request, 'user') and self.enabled(request.user.username, namespace=None))
+                    or (hasattr(request, 'domain') and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN))
                 ):
                     return view_func(request, *args, **kwargs)
                 if request.user.is_superuser:
