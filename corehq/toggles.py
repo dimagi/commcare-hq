@@ -68,12 +68,13 @@ class StaticToggle(object):
         else:
             self.namespaces = [None]
 
-    def enabled(self, item, **kwargs):
+    def enabled(self, item):
         if item in self.always_enabled:
             return True
         elif item in self.always_disabled:
             return False
-        return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in self.namespaces])
+
+        return any([toggle_enabled(self.slug, item, namespace=n) for n in self.namespaces])
 
     def enabled_for_request(self, request):
         return (
