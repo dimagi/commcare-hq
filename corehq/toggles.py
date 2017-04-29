@@ -68,23 +68,24 @@ class StaticToggle(object):
         else:
             self.namespaces = [None]
 
-    def enabled(self, item):
+    def enabled(self, item, namespace=Ellipsis):
         if item in self.always_enabled:
             return True
         elif item in self.always_disabled:
             return False
 
-        return any([toggle_enabled(self.slug, item, namespace=n) for n in self.namespaces])
+        namespaces = [self.namespaces] if namespace == Ellipsis else [namespace]
+        return any([toggle_enabled(self.slug, item, namespace=n) for n in namespaces])
 
     def enabled_for_request(self, request):
         return (
             None in self.namespaces
             and hasattr(request, 'user')
-            and toggle_enabled(self.slug, request.user.username, None)
+            and self.enabled(request.user.username, namespace=None)
         ) or (
             NAMESPACE_DOMAIN in self.namespaces
             and hasattr(request, 'domain')
-            and toggle_enabled(self.slug, request.domain, NAMESPACE_DOMAIN)
+            and self.enabled(request.user.username, namespace=NAMESPACE_DOMAIN)
         )
 
     def set(self, item, enabled, namespace=None):
