@@ -114,7 +114,7 @@ class FormProcessorInterface(object):
             # check this domains DB first to support existing bad data
             return (
                 self.processor.is_duplicate(xform_id) or
-                # only check other
+                # don't bother checking other DB if there's only one active domain
                 ENTERPRISE_OPTIMIZATIONS.enabled(self.domain) and self.other_db_processor().is_duplicate(xform_id)
             )
 
