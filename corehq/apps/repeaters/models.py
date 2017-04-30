@@ -537,7 +537,7 @@ class RepeatRecord(Document):
         tries += 1
         try:
             generator = self.get_payload_generator(self.format_or_default_format())
-            if generator.format_label == 'XML' and self.repeater.operation:
+            if generator.format_label == 'XML' and hasattr(self.repeater, 'operation'):
                 client = Client(self.url)
                 response = client.service[self.repeater.operation](**post_info.payload)
                 return self.handle_success(response)
