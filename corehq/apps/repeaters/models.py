@@ -1,5 +1,6 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
+from zeep import Client
 import logging
 import urllib
 import urlparse
@@ -535,13 +536,19 @@ class RepeatRecord(Document):
     def post(self, post_info, tries=0):
         tries += 1
         try:
-            response = simple_post_with_logged_timeout(
-                self.domain,
-                post_info.payload,
-                self.url,
-                headers=post_info.headers,
-                timeout=POST_TIMEOUT,
-            )
+            generator = self.get_payload_generator(self.format_or_default_format())
+            if generator.format_label == 'XML' and self.repeater.operation:
+                client = Client(self.url)
+                response = client.service[self.repeater.operation](**post_info.payload)
+                return self.handle_success(response)
+            else:
+                response = simple_post_with_logged_timeout(
+                    self.domain,
+                    post_info.payload,
+                    self.url,
+                    headers=post_info.headers,
+                    timeout=POST_TIMEOUT,
+                )
         except Exception as e:
             self.handle_exception(e)
         else:
