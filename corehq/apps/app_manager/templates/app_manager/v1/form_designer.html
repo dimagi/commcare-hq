@@ -131,7 +131,7 @@
                   }
                 }
             },
-            csrftoken: '{{ csrf_token }}'
+            csrftoken: $("#csrfTokenContainer").val()
         };
 
         var CKEDITOR_BASEPATH = "{% static "app_manager/js/vellum/lib/ckeditor/" %}";
