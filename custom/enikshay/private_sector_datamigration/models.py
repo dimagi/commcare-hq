@@ -394,15 +394,15 @@ class Agency(models.Model):
         return ' '.join(filter(
             None,
             [
-                self.primary_user_detail.firstName,
-                self.primary_user_detail.middleName,
-                self.primary_user_detail.lastName,
+                self._primary_user_detail.firstName,
+                self._primary_user_detail.middleName,
+                self._primary_user_detail.lastName,
             ]
         ))
 
     @property
     @memoized
-    def primary_user_detail(self):
+    def _primary_user_detail(self):
         return UserDetail.objects.filter(
             isPrimary=True,
         ).get(agencyId=self.agencyId)
@@ -497,4 +497,17 @@ class LookupMaster(models.Model):
         return LookupMaster.objects.filter(
             groupCode='WARD',
             referenceLookupId=block.lookupKey,
+        )
+
+
+class IdsToDto(models.Model):
+    nikshay_location_code = models.CharField(max_length=256, primary_key=True)
+    state_id = models.CharField(max_length=256)
+    district_id = models.CharField(max_length=256)
+    block_id = models.CharField(max_length=256)
+    ward_id = models.CharField(max_length=256)
+
+    class Meta:
+        unique_together = (
+            ('state_id', 'district_id', 'block_id', 'ward_id'),
         )
