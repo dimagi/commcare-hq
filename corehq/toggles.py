@@ -141,7 +141,11 @@ def was_domain_created_after(domain, checkpoint):
     """
     from corehq.apps.domain.models import Domain
     domain_obj = Domain.get_by_name(domain)
-    return domain_obj is not None and domain_obj.date_created > checkpoint
+    return (
+        domain_obj is not None and
+        domain_obj.date_created is not None and
+        domain_obj.date_created > checkpoint
+    )
 
 
 def deterministic_random(input_string):
