@@ -443,7 +443,10 @@ class SQLLocation(MPTTModel):
 
     def delete(self, *args, **kwargs):
         if kwargs.pop('sync_to_couch', True):
-            self.couch_location.delete(sync_to_sql=False)
+            try:
+                self.couch_location.delete(sync_to_sql=False)
+            except ResourceNotFound:
+                pass
         super(SQLLocation, self).delete(*args, **kwargs)
 
     def to_json(self):
@@ -911,7 +914,10 @@ class Location(CachedCouchDocumentMixin, Document):
 
     def delete(self, *args, **kwargs):
         if kwargs.pop('sync_to_sql', True):
-            self.sql_location.delete(sync_to_couch=False)
+            try:
+                self.sql_location.delete(sync_to_couch=False)
+            except SQLLocation.DoesNotExist:
+                pass
         super(Location, self).delete(*args, **kwargs)
 
     @classmethod
