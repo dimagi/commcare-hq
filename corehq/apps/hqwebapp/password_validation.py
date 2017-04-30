@@ -7,7 +7,7 @@ from corehq.apps.hqwebapp.utils import verify_password, hash_password
 
 
 class UsedPasswordValidator(object):
-    def validate(self, password, user=None):
+    def validate(self, password, user):
         used_passwords = UsedPasswords.objects.filter(
             user=user,
         ).order_by('-created_at').all()[:RESTRICT_USED_PASSWORDS_NUM].values_list('password_hash', flat=True)
