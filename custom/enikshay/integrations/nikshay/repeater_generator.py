@@ -358,7 +358,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
         except SQLLocation.DoesNotExist:
             raise NikshayLocationNotFound(
                 "Location with id {location_id} not found. This is the tu_choide for person with id: {person_id}"
-                    .format(location_id=tu_choice, person_id=person_case.case_id)
+                .format(location_id=tu_choice, person_id=person_case.case_id)
             )
         try:
             tu_code = tu_location.metadata['nikshay_code']
