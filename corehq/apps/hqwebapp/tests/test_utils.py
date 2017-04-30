@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-from django.test import TestCase, override_settings
-
+from django.test import TestCase, override_settings, Client
+from django.urls import reverse
 from corehq.apps.hqwebapp.models import HashedPasswordLoginAttempt
 from corehq.apps.hqwebapp.utils import decode_password, extract_password, verify_password, hash_password
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import WebUser
 
 HASHED_PASSWORD_MAPPING = {
     "sha256$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127=": "123456",
@@ -13,30 +15,51 @@ HASHED_PASSWORD_MAPPING = {
 }
 
 
-@override_settings(ENABLE_PASSWORD_HASHING=True)
 class TestDecodePassword(TestCase):
-    def test_decoder(self):
-        for password_hash, password in HASHED_PASSWORD_MAPPING.items():
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = Domain(name="delhi", is_active=True)
+        cls.domain.save()
+        cls.username = "username@test.com"
+        cls.web_user = WebUser.create(cls.domain.name, cls.username, "123456")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        cls.web_user.delete()
+
+    def test_login_attempt(self):
+        with override_settings(ENABLE_PASSWORD_HASHING=True):
+            password_hash = "sha256$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
             HashedPasswordLoginAttempt.objects.all().delete()
-            self.assertEqual(decode_password(password_hash, "username"), password)
+            client = Client(enforce_csrf_checks=False)
+            form_data = {
+                'auth-username': self.username,
+                'auth-password': password_hash,
+                'hq_login_view-current_step': 'auth'
+            }
+            response = client.post(reverse('login'), form_data, follow=True)
+            self.assertRedirects(response, '/domain/select/')
+            # ensure that login attempt was stored
             self.assertTrue(
                 verify_password(
                     password_hash,
-                    HashedPasswordLoginAttempt.objects.filter(username="username").all()[0].password_hash
+                    HashedPasswordLoginAttempt.objects.filter(username=self.username).all()[0].password_hash
                 )
             )
+            client.get(reverse('logout'))
 
-    def test_replay_attack(self):
-        password_hash = "sha256$1e2d5bc2hhMjU2JDFLMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
-        username = "james@007.com"
-        HashedPasswordLoginAttempt.objects.create(
-            username=username,
-            password_hash=hash_password(password_hash)
-        )
-        self.assertEqual(decode_password(password_hash, username), '')
+            # test replay attack
+            response = client.post(reverse('login'), form_data, follow=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.request['PATH_INFO'], '/accounts/login/')
 
 
 class TestExtractPassword(TestCase):
+    def test_password_decoding(self):
+        for password_hash, password in HASHED_PASSWORD_MAPPING.items():
+            self.assertEqual(extract_password(password_hash), password)
+
     def test_invalid_regex_format(self):
         password_hash = "sha255$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
         self.assertEqual(extract_password(password_hash), password_hash)
