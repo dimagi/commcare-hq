@@ -457,3 +457,44 @@ class UserDetail(models.Model):
     valid = models.BooleanField()
     villageTownCity = models.CharField(max_length=256, null=True)
     wardId = models.CharField(max_length=256, null=True)
+
+
+class LookupMaster(models.Model):
+    id = models.IntegerField(primary_key=True)
+    active = models.CharField(max_length=256, null=True)
+    creationDate = models.DateTimeField(null=True)
+    creator = models.CharField(max_length=256, null=True)
+    description = models.CharField(max_length=256, null=True)
+    displayOrder = models.IntegerField(null=True)
+    groupCode = models.CharField(max_length=256, null=True)
+    lookupKey = models.CharField(max_length=256, null=True)
+    modificationDate = models.DateTimeField(null=True)
+    modifiedBy = models.CharField(max_length=256, null=True)
+    owner = models.CharField(max_length=256, null=True)
+    referenceLookupId = models.CharField(max_length=256, null=True)
+    value = models.CharField(max_length=256, null=True)
+
+    @classmethod
+    def get_states(cls):
+        return LookupMaster.objects.filter(groupCode='STATE')
+
+    @classmethod
+    def get_districts_by_state(cls, state):
+        return LookupMaster.objects.filter(
+            groupCode='DIST',
+            referenceLookupId=state.lookupKey,
+        )
+
+    @classmethod
+    def get_blocks_by_district(cls, district):
+        return LookupMaster.objects.filter(
+            groupCode='BLOCK',
+            referenceLookupId=district.lookupKey,
+        )
+
+    @classmethod
+    def get_wards_by_block(cls, block):
+        return LookupMaster.objects.filter(
+            groupCode='WARD',
+            referenceLookupId=block.lookupKey,
+        )
