@@ -1,5 +1,7 @@
 from django.db import models
 
+from dimagi.utils.decorators.memoized import memoized
+
 
 class Beneficiary(models.Model):
     id = models.IntegerField(null=True)
@@ -366,12 +368,14 @@ class Agency(models.Model):
     tbCorner = models.CharField(max_length=1, null=True)
 
     @classmethod
-    def get_agencies_by_state_and_district(cls, state_id, district_id):
+    def get_agencies_by_ward(cls, state_id, district_id, block_id, ward_id):
         agency_ids = UserDetail.objects.filter(
             isPrimary=True,
         ).filter(
             stateId=state_id,
             districtId=district_id,
+            blockOrHealthPostId=block_id,
+            wardId=ward_id,
         ).values('agencyId').distinct()
         return Agency.objects.filter(agencyId__in=agency_ids)
 
@@ -384,6 +388,24 @@ class Agency(models.Model):
             'ATPH': 'pcc',
             'ATPR': 'pcp',
         }[self.agencyTypeId]
+
+    @property
+    def name(self):
+        return ' '.join(filter(
+            None,
+            [
+                self.primary_user_detail.firstName,
+                self.primary_user_detail.middleName,
+                self.primary_user_detail.lastName,
+            ]
+        ))
+
+    @property
+    @memoized
+    def primary_user_detail(self):
+        return UserDetail.objects.filter(
+            isPrimary=True,
+        ).get(agencyId=self.agencyId)
 
 
 class UserDetail(models.Model):
