@@ -156,7 +156,10 @@ def decode_password(password_hash, username=None):
         )
 
     def _decode_password():
-        if username:
+        # force check for replay attack and recording login attempt only for web sign in by checking for username
+        # Also skip those two checks in case of 2-step authentication by checking for auth-username which is not
+        # present in consecutive token step's POST params
+        if username and request.POST.get('auth-username'):
             if replay_attack():
                 return ''
             record_login_attempt()
