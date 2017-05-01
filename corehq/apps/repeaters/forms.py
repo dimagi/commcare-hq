@@ -30,7 +30,7 @@ class GenericRepeaterForm(forms.Form):
             ("digest", "Digest"),
         ],
         required=False,
-        label="Authentication protocol",
+        label=_("Authentication protocol"),
     )
     username = forms.CharField(
         required=False,
