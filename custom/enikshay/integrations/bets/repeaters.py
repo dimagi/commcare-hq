@@ -107,18 +107,21 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
         episode = get_episode_case_from_voucher(voucher_case.domain, voucher_case.case_id)
         episode_case_properties = episode.dynamic_case_properties()
 
-        voucher_count = episode_case_properties.get('approved_voucher_count', 0)
-        if voucher_count < 2:
-            voucher_count = len(get_approved_prescription_vouchers_from_episode(episode.domain, episode.case_id))
+        def _get_voucher_count():
+            # This is an expensive operation, so only call this function if all other conditions are true.
+            voucher_count = episode_case_properties.get('approved_voucher_count', 0)
+            if voucher_count < 2:
+                voucher_count = len(get_approved_prescription_vouchers_from_episode(episode.domain, episode.case_id))
+            return voucher_count
 
         not_sent = voucher_case_properties.get("event_{}".format(DRUG_REFILL_EVENT)) != "sent"
         return (
-            voucher_count >= 2
             # TODO: Confirm state == "fulfilled"
-            and voucher_case_properties.get("state") == "fulfilled"
-            and case_properties_changed(voucher_case, ['state'])
+            voucher_case_properties.get("state") == "fulfilled"
             and voucher_case_properties.get("type") == "prescription"
             and not_sent
+            and case_properties_changed(voucher_case, ['state'])
+            and _get_voucher_count() >= 2
         )
 
 
