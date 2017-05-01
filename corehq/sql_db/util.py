@@ -18,11 +18,7 @@ def get_object_from_partitioned_database(model_class, partition_value, partition
 
     :return: The model object
     """
-    if settings.USE_PARTITIONED_DATABASE:
-        db_name = ShardAccessor.get_database_for_doc(partition_value)
-    else:
-        db_name = 'default'
-
+    db_name = get_db_alias_for_partitioned_doc(partition_value)
     kwargs = {
         partitioned_field_name: partition_value,
     }
@@ -39,11 +35,7 @@ def save_object_to_partitioned_database(obj, partition_value):
     :param parition_value: The value that is used to partition the model; this
     value will be used to select the database
     """
-    if settings.USE_PARTITIONED_DATABASE:
-        db_name = ShardAccessor.get_database_for_doc(partition_value)
-    else:
-        db_name = 'default'
-
+    db_name = get_db_alias_for_partitioned_doc(partition_value)
     obj.save(using=db_name)
 
 
@@ -57,11 +49,7 @@ def delete_object_from_partitioned_database(obj, partition_value):
     :param parition_value: The value that is used to partition the model; this
     value will be used to select the database
     """
-    if settings.USE_PARTITIONED_DATABASE:
-        db_name = ShardAccessor.get_database_for_doc(partition_value)
-    else:
-        db_name = 'default'
-
+    db_name = get_db_alias_for_partitioned_doc(partition_value)
     obj.delete(using=db_name)
 
 
@@ -82,10 +70,7 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
 
     :return: A generator with the results
     """
-    if settings.USE_PARTITIONED_DATABASE:
-        db_names = partition_config.get_form_processing_dbs()
-    else:
-        db_names = ['default']
+    db_names = get_db_aliases_for_partitioned_query()
 
     if values and not isinstance(values, (list, tuple)):
         raise ValueError("Expected a list or tuple")
@@ -100,3 +85,19 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
 
         for result in qs:
             yield result
+
+
+def get_db_alias_for_partitioned_doc(partition_value):
+    if settings.USE_PARTITIONED_DATABASE:
+        db_name = ShardAccessor.get_database_for_doc(partition_value)
+    else:
+        db_name = 'default'
+    return db_name
+
+
+def get_db_aliases_for_partitioned_query():
+    if settings.USE_PARTITIONED_DATABASE:
+        db_names = partition_config.get_form_processing_dbs()
+    else:
+        db_names = ['default']
+    return db_names

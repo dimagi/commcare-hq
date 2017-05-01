@@ -2,10 +2,10 @@
 hqDefine("reminders/js/scheduled_reminders.js", function() {
     $(function () {
         var reminders = _.map(hqImport("hqwebapp/js/initial_page_data.js").get("reminder_data"), function(data) {
-                var next_fire = moment(data.next_fire);
+                var next_fire = moment.utc(data.next_fire);
                 return {
                     nickname: data.handler_name,
-                    date: next_fire.format("MMMM D, YYYY"),
+                    date: next_fire.format("YYYY-MM-DD"),
                     time: next_fire.format("h:mm a"),
                     case_name: data.case_name,
                     case_url: data.case_id ? hqImport("hqwebapp/js/urllib.js").reverse("case_details", data.case_id) : "",

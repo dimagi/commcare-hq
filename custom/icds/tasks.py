@@ -26,6 +26,10 @@ SUPERVISOR_LOCATION_TYPE_CODE = 'supervisor'
 
 ANDHRA_PRADESH_SITE_CODE = '28'
 MAHARASHTRA_SITE_CODE = ''
+MADHYA_PRADESH_SITE_CODE = '23'
+BIHAR_SITE_CODE = '10'
+CHHATTISGARH_SITE_CODE = '22'
+JHARKHAND_SITE_CODE = '20'
 
 ENGLISH = 'en'
 HINDI = 'hin'
@@ -43,24 +47,26 @@ def run_indicator(domain, user_id, indicator_class, language_code=None):
     :param indicator_class: a subclass of AWWIndicator or LSIndicator
     """
     user = CommCareUser.get_by_user_id(user_id, domain=domain)
-    indicator = indicator_class(domain, user)
+
     # The user's phone number and preferred language is stored on the usercase
     usercase = user.get_usercase()
+
+    phone_number = get_one_way_number_for_recipient(usercase)
+    if not phone_number or phone_number == '91':
+        # If there is no phone number, don't bother calculating the indicator
+        return
+
     if not language_code:
         language_code = usercase.get_language_code()
 
+    indicator = indicator_class(domain, user)
     messages = indicator.get_messages(language_code=language_code)
 
     if not isinstance(messages, list):
         raise ValueError("Expected a list of messages")
 
-    if messages:
-        phone_number = get_one_way_number_for_recipient(usercase)
-        if not phone_number:
-            return
-
-        for message in messages:
-            send_sms(domain, usercase, phone_number, message)
+    for message in messages:
+        send_sms(domain, usercase, phone_number, message)
 
 
 def get_awc_location_ids(domain):
@@ -73,7 +79,7 @@ def get_supervisor_location_ids(domain):
 
 def is_first_week_of_month():
     day = ServerTime(datetime.utcnow()).user_time(pytz.timezone('Asia/Kolkata')).done().day
-    return day <= 7
+    return day >= 1 and day <= 7
 
 
 def get_user_ids_under_location(domain, site_code):
@@ -109,11 +115,16 @@ def run_weekly_indicators(phased_rollout=True):
     for domain in settings.ICDS_SMS_INDICATOR_DOMAINS:
         telugu_user_ids = get_user_ids_under_location(domain, ANDHRA_PRADESH_SITE_CODE)
         marathi_user_ids = get_user_ids_under_location(domain, MAHARASHTRA_SITE_CODE)
+        hindi_user_ids = get_user_ids_under_location(domain, MADHYA_PRADESH_SITE_CODE)
+        hindi_user_ids |= get_user_ids_under_location(domain, BIHAR_SITE_CODE)
+        hindi_user_ids |= get_user_ids_under_location(domain, CHHATTISGARH_SITE_CODE)
+        hindi_user_ids |= get_user_ids_under_location(domain, JHARKHAND_SITE_CODE)
+        user_ids_to_send_to = telugu_user_ids | hindi_user_ids
 
         for user_id in generate_user_ids_from_primary_location_ids(domain, get_awc_location_ids(domain)):
-            language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
-            if phased_rollout and language_code != TELUGU:
+            if phased_rollout and user_id not in user_ids_to_send_to:
                 continue
+            language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
 
             if first_week_of_month_result:
                 run_indicator.delay(domain, user_id, AWWAggregatePerformanceIndicator, language_code)
@@ -121,9 +132,9 @@ def run_weekly_indicators(phased_rollout=True):
             run_indicator.delay(domain, user_id, AWWSubmissionPerformanceIndicator, language_code)
 
         for user_id in generate_user_ids_from_primary_location_ids(domain, get_supervisor_location_ids(domain)):
-            language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
-            if phased_rollout and language_code != TELUGU:
+            if phased_rollout and user_id not in user_ids_to_send_to:
                 continue
+            language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
 
             if first_week_of_month_result:
                 run_indicator.delay(domain, user_id, LSAggregatePerformanceIndicator, language_code)

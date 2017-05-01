@@ -7,6 +7,7 @@
         $(function () {
             var separator = '{{ separator }}';
             var report_labels = JSON.parse('{{ report_labels|safe }}');
+            var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
 
             $('#filter_range').createDateRangePicker(
                 report_labels,

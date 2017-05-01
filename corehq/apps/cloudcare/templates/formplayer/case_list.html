@@ -123,7 +123,7 @@
     <div class="<%= prefix %>-grid-style-<%= index %> box">
         <% if (styles[index].displayFormat === 'Image') {
         if(resolveUri(datum)) { %>
-        <img class="module-icon" style="max-width:25%; height: auto;" src="<%= resolveUri(datum) %>"/>
+        <img class="module-icon" style="max-width:100%; height: auto;" src="<%= resolveUri(datum) %>"/>
         <% } %>
         <% } else { %>
         <div><%= datum %></div>
@@ -162,5 +162,6 @@
         color: #685c53;
         border-color: #685c53;
         max-height: 400 px;
+        justify-items: center;
     }
 </script>

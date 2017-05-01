@@ -60,6 +60,16 @@ DATABASES = {
     }
 }
 
+COUCH_DATABASES = {
+    'default': {
+        'COUCH_HTTPS': False,
+        'COUCH_SERVER_ROOT': 'localhost:5984',
+        'COUCH_USERNAME': 'commcarehq',
+        'COUCH_PASSWORD': 'commcarehq',
+        'COUCH_DATABASE_NAME': 'commcarehq'
+    },
+}
+
 CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
 
 # Use faster compressor that doesn't do source maps

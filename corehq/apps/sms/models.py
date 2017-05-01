@@ -465,32 +465,31 @@ class PhoneBlacklist(models.Model):
         Opts a phone number in to receive SMS.
         Returns True if the number was actually opted-in, False if not.
         """
-        try:
-            phone_obj = cls.get_by_phone_number(phone_number)
-            if phone_obj.can_opt_in:
-                phone_obj.domain = domain
-                phone_obj.send_sms = True
-                phone_obj.last_sms_opt_in_timestamp = datetime.utcnow()
-                phone_obj.save()
-                return True
-        except cls.DoesNotExist:
-            pass
-        return False
+        phone_obj = cls.get_or_create(phone_number)[0]
+        if not phone_obj.can_opt_in:
+            return False
+
+        phone_obj.domain = domain
+        phone_obj.send_sms = True
+        phone_obj.last_sms_opt_in_timestamp = datetime.utcnow()
+        phone_obj.save()
+        return True
 
     @classmethod
     def opt_out_sms(cls, phone_number, domain=None):
         """
         Opts a phone number out from receiving SMS.
-        Returns True if the number was actually opted-out, False if not.
+        Does not bother changing the state for numbers marked as excluded from the opt in workflow.
         """
         phone_obj = cls.get_or_create(phone_number)[0]
-        if phone_obj:
-            phone_obj.domain = domain
-            phone_obj.send_sms = False
-            phone_obj.last_sms_opt_out_timestamp = datetime.utcnow()
-            phone_obj.save()
-            return True
-        return False
+        if not phone_obj.can_opt_in:
+            return False
+
+        phone_obj.domain = domain
+        phone_obj.send_sms = False
+        phone_obj.last_sms_opt_out_timestamp = datetime.utcnow()
+        phone_obj.save()
+        return True
 
 
 class PhoneNumber(UUIDGeneratorMixin, models.Model):

@@ -121,7 +121,7 @@
                     {% if date.day == 1 %}class="calendar-first"{% endif %}>
                     <div class="calendar-cell">
                         <p class="date-header">{{ date }}</p>
-                        <ol data-date="{{ date }}" class="scheduled-reminders"></ol>
+                        <ol data-date="{{ date|date:'Y-m-d' }}" class="scheduled-reminders"></ol>
                     </div>
                 </td>
             {% if date.weekday == 6 %}

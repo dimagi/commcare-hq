@@ -20,3 +20,7 @@ class NikshayCodeNotFound(ENikshayException):
 
 class NikshayRequiredValueMissing(ENikshayException):
     pass
+
+
+class EnikshayTaskException(ENikshayException):
+    pass

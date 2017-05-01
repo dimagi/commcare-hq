@@ -13,6 +13,8 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.utils import use_new_exports, should_use_sql_backend
+from corehq.util.quickcache import quickcache
+from corehq.apps.reports.const import USER_QUERY_LIMIT
 
 from couchexport.util import SerializableFunction
 from couchforms.analytics import get_first_form_submission_received
@@ -471,3 +473,14 @@ def resync_case_to_es(domain, case):
         publish_case_saved(case)
     else:
         CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+
+
+@quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)
+def is_query_too_big(domain, mobile_user_and_group_slugs):
+    from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+
+    user_es_query = ExpandedMobileWorkerFilter.user_es_query(
+        domain,
+        mobile_user_and_group_slugs,
+    )
+    return user_es_query.count() > USER_QUERY_LIMIT

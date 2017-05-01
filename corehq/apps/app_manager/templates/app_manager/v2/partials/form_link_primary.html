@@ -15,6 +15,10 @@
    data-moduleid="{{ module.id }}"
    data-formid="{{ form.id }}"
    data-updateprop="href"
+   title="{{ form.name|html_trans_prefix_delim:langs }}"
+   data-toggle="tooltip"
+   data-placement="bottom"
+   data-container="body"
    class="appnav-title
           {% if not form.no_vellum %}appnav-title-secondary {% endif %}
           {% if form.get_action_type == 'open' %}appnav-title-no-delete  appnav-title-registration
@@ -42,6 +46,6 @@
         >
     </i>
     <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
-    {{ form.name|html_trans_prefix:langs }}
+        {{ form.name|html_trans_prefix:langs }}
     </span>
 </a>

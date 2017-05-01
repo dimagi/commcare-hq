@@ -1,6 +1,7 @@
 import json
 import logging
 
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
@@ -158,7 +159,11 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             app,
             request.couch_user.username,
         ),
-        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
+        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
+        'edit_form_name_url': reverse(
+            'edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
+        'edit_form_comment_url': reverse(
+            'edit_form_attr', args=[app.domain, app.id, form.unique_id, 'comment']),
     })
 
     template = get_app_manager_template(
