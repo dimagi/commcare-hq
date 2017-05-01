@@ -243,7 +243,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         adherence_case = self.case_accessor.get_case(adherence_case_ids[0])
         self.assertFalse(adherence_case.closed)  # TODO
         self.assertIsNone(adherence_case.external_id)
-        self.assertEqual(adherence_case.name, None)  # TODO
+        self.assertEqual(adherence_case.name, '2017-04-22')
         # self.assertEqual(adherence_case.opened_on, '')  # TODO
         self.assertEqual(adherence_case.owner_id, '-')
         self.assertEqual(adherence_case.dynamic_case_properties(), OrderedDict([
@@ -318,6 +318,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             prescriptionID=3,
             pricePerUnit=0.5,
             productID=4,
+            productName='drug name',
             refill_Index=5,
             voucherID=6,
         )
@@ -335,11 +336,12 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         prescription_case = self.case_accessor.get_case(prescription_case_ids[0])
         self.assertFalse(prescription_case.closed)  # TODO
         self.assertIsNone(prescription_case.external_id)
-        self.assertEqual(prescription_case.name, None)  # TODO
+        self.assertEqual(prescription_case.name, 'drug name')
         # self.assertEqual(adherence_case.opened_on, '')  # TODO
         self.assertEqual(prescription_case.owner_id, '-')
         self.assertEqual(prescription_case.dynamic_case_properties(), OrderedDict([
             ('migration_created_case', 'true'),
+            ('migration_created_from_record', '3'),
         ]))
         self.assertEqual(len(prescription_case.indices), 1)
         self._assertIndexEqual(

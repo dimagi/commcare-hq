@@ -207,6 +207,8 @@ class BeneficiaryCaseFactory(object):
                 'update': {
                     'adherence_date': adherence.doseDate.date(),
                     'adherence_value': adherence.adherence_value,
+                    'name': adherence.doseDate.date(),
+
                     'migration_created_case': 'true',
                     'migration_created_from_record': adherence.adherenceId,
                 }
@@ -228,7 +230,10 @@ class BeneficiaryCaseFactory(object):
                 'create': True,
                 'owner_id': '-',
                 'update': {
+                    'name': prescription.productName,
+
                     'migration_created_case': 'true',
+                    'migration_created_from_record': prescription.prescriptionID,
                 }
             },
             'indices': [CaseIndex(
