@@ -208,7 +208,7 @@ class Episode(models.Model):
     tsProviderType = models.CharField(max_length=255, null=True)
     unknownAdherencePct = models.DecimalField(decimal_places=10, max_digits=14)
     unresolvedMissedDosesPct = models.DecimalField(decimal_places=10, max_digits=14)
-    treatingHospital = models.CharField(max_length=10, null=True)  # this might be the agency that owns the patient
+    treatingHospital = models.CharField(max_length=10, null=True)
     treatmentCompletionInsentiveFlag = models.CharField(max_length=1, null=True)
     mermIMIEno = models.CharField(max_length=255, null=True)
     adherenceSupportAssigned = models.CharField(max_length=255, null=True)
