@@ -22,6 +22,7 @@ CASE_TYPE_PERSON = "person"
 CASE_TYPE_LAB_REFERRAL = "lab_referral"
 CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 CASE_TYPE_TEST = "test"
+CASE_TYPE_VOUCHER = "voucher"
 
 
 def get_all_parents_of_case(domain, case_id):

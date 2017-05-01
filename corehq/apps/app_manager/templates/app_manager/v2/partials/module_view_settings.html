@@ -84,6 +84,9 @@
                           </select>
                       </div>
                   </div>
+              {% else %}
+                    {# grid display input depends on the value of put_in_root #}
+                    <input id="put_in_root" type="hidden" value="{% if module.put_in_root %}true{% else %}false{% endif %}" />
               {% endif %}
 
               {% if app.grid_display_for_some_modules %}

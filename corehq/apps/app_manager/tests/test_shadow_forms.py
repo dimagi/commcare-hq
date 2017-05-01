@@ -33,6 +33,14 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
 
         self.shadow_form = self.factory.new_shadow_form(self.advanced_module)
         self.shadow_form.shadow_parent_form_id = self.form0.unique_id
+        # Shadow form load_update_case actions should contain all case tags from the parent
+        self.shadow_form.extra_actions.load_update_cases = [
+            LoadUpdateAction(
+                case_type="patient",
+                case_tag="load_0",
+                details_module=self.advanced_module.unique_id,
+            )
+        ]
 
         self.basic_module = self.factory.new_basic_module("basic_module", "doctor", with_form=False)
 
@@ -73,8 +81,14 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
 
     def test_shadow_form_action_additions(self):
         # Confirm that shadow form action additions are reflected in the suite file
+        original_actions = self.shadow_form.extra_actions.load_update_cases
         try:
             self.shadow_form.extra_actions.load_update_cases = [
+                LoadUpdateAction(
+                    case_type="patient",
+                    case_tag="load_0",
+                    details_module=self.advanced_module.unique_id,
+                ),
                 LoadUpdateAction(
                     case_tag="load_1",
                     case_type="doctor",
@@ -84,7 +98,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
             suite = self.factory.app.create_suite()
         finally:
             # reset the actions
-            self.shadow_form.extra_actions = AdvancedFormActions()
+            self.shadow_form.extra_actions.load_update_cases = original_actions
 
         # Confirm that the source session has not changed:
         expected_source_session = """
@@ -129,6 +143,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
 
     def test_shadow_form_action_modifications(self):
         # Confirm that shadow form action modifications are reflected in the suite file
+        original_actions = self.shadow_form.extra_actions.load_update_cases
         try:
             self.shadow_form.extra_actions.load_update_cases = [
                 LoadUpdateAction(
@@ -140,7 +155,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
             suite = self.factory.app.create_suite()
         finally:
             # reset the actions
-            self.shadow_form.extra_actions = AdvancedFormActions()
+            self.shadow_form.extra_actions.load_update_cases = original_actions
 
         # Confirm that the source session has not changed:
         expected_source_session = """
@@ -175,3 +190,71 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
             </partial>
         """
         self.assertXmlPartialEqual(expected_shadow_session, suite, "./entry/command[@id='m0-f1']/../session")
+
+    def test_shadow_form_action_reordering(self):
+        # Confirm that the ordering of the actions in the shadow form is used, not the source ordering
+
+        source_form_original_actions = self.form0.actions.load_update_cases
+        shadow_form_original_actions = self.shadow_form.extra_actions.load_update_cases
+        try:
+            # Add an action to the source form
+            self.form0.actions.load_update_cases = [
+                LoadUpdateAction(
+                    case_type="patient",
+                    case_tag="load_0",
+                    case_properties={
+                        "name": "/data/name"
+                    },
+                    preload={
+                        "/data/name": "name"
+                    },
+                    details_module=self.advanced_module.unique_id,
+                ),
+                LoadUpdateAction(
+                    case_type="patient",
+                    case_tag="load_1",
+                    case_properties={
+                        "name": "/data/name"
+                    },
+                    preload={
+                        "/data/name": "name"
+                    },
+                    details_module=self.advanced_module.unique_id,
+                )
+            ]
+
+            # specify a different order in the shadow form
+            self.shadow_form.extra_actions.load_update_cases = [
+                LoadUpdateAction(
+                    case_tag="load_1",
+                    case_type="patient",
+                    details_module=self.advanced_module.unique_id,
+                ),
+                LoadUpdateAction(
+                    case_tag="load_0",
+                    case_type="patient",
+                    details_module=self.advanced_module.unique_id,
+                )
+            ]
+            suite = self.factory.app.create_suite()
+
+        finally:
+            # reset the actions
+            self.form0.actions.load_update_cases = source_form_original_actions
+            self.shadow_form.extra_actions.load_update_cases = shadow_form_original_actions
+
+        # Confirm that the load_0 action comes first in the source form
+        self.assertXmlHasXpath(
+            suite, "./entry/command[@id='m0-f0']/../session/datum[@id='case_id_load_0' and position() = 1]"
+        )
+        self.assertXmlHasXpath(
+            suite, "./entry/command[@id='m0-f0']/../session/datum[@id='case_id_load_1' and position() = 2]"
+        )
+
+        # Confirm that the load_0 action comes second in the shadow form
+        self.assertXmlHasXpath(
+            suite, "./entry/command[@id='m0-f1']/../session/datum[@id='case_id_load_1' and position() = 1]"
+        )
+        self.assertXmlHasXpath(
+            suite, "./entry/command[@id='m0-f1']/../session/datum[@id='case_id_load_0' and position() = 2]"
+        )

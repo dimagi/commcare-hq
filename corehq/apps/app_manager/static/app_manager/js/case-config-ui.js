@@ -889,7 +889,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
                 allow: {
                     repeats: function () {
                         // This placeholder function allows us to reuse the "case-config:case-properties:question"
-                        // template in case_config_shared.html
+                        // template in case_config_ko_templates.html
                         return true;
                     }
                 },

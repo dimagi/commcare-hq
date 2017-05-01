@@ -1,7 +1,9 @@
+{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
+
 {% if more_than_one_week %}
-AWC {{ awc }} has not submitted any form or done any activity in ICDS CAS application in more than one week. Please follow up with Block Level Helpdesk or Supervisor for assistance
+{{ awc }} आँगनवाड़ी केंद्र द्वारा एक सप्ताह से अधिक समय से न कोई फॉर्म समर्पित किया हैं और न ही आई . सी.डी.यस- सी.ए.स एप्लीकेशन पर कोई कार्य किया हैं | कृपया सहायता हेतु प्रखंड स्तरीय हेल्पडेस्क अथवा या महिला पर्यवेक्षक से संपर्क करे |
 {% endif %}
 
 {% if more_than_one_month %}
-AWC {{ awc }} has not submitted any form or done any activity in ICDS CAS application in more than one month. Please follow up with Block Level Helpdesk or Supervisor for assistance
+{{ awc }} आँगनवाड़ी केंद्र द्वारा एक महीने से अधिक समय से न कोई फॉर्म समर्पित किया हैं और न ही आई . सी.डी.यस- सी.ए.स एप्लीकेशन पर कोई कार्य ही किया हैं | कृपया सहायता हेतु प्रखंड स्तरीय हेल्पडेस्क अथवा महिला पर्यवेक्षक से संपर्क करे |
 {% endif %}

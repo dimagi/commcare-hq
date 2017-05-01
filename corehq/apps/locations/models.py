@@ -9,7 +9,6 @@ from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin, SyncCouchToSQLMixin
 from dimagi.utils.decorators.memoized import memoized
 from datetime import datetime
 from django.db import models, transaction
@@ -369,11 +368,10 @@ class OnlyUnarchivedLocationManager(LocationManager):
         return list(self.accessible_to_user(domain, user).location_ids())
 
 
-class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
+class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
-    _migration_couch_id_name = "location_id"  # Used for SyncSQLToCouchMixin
     location_type = models.ForeignKey(LocationType, on_delete=models.CASCADE)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True, blank=True)
@@ -399,34 +397,57 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     active_objects = OnlyUnarchivedLocationManager()
 
     @classmethod
-    def _migration_get_fields(cls):
+    def get_sync_fields(cls):
         return ["domain", "name", "site_code", "external_id",
                 "metadata", "is_archived"]
 
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return Location
+    def sync_couch_location(self):
+        if self.location_id:
+            couch_obj = self.couch_location
+        else:
+            couch_obj = Location()
+            couch_obj._id = uuid.uuid4().hex
+            self.location_id = couch_obj._id
 
-    def _migration_do_sync(self):
-        couch_obj = self._migration_get_or_create_couch_object()
         couch_obj._sql_location_type = self.location_type
         couch_obj.latitude = float(self.latitude) if self.latitude else None
         couch_obj.longitude = float(self.longitude) if self.longitude else None
-        self._migration_sync_to_couch(couch_obj)
+
+        for field_name in self.get_sync_fields():
+            value = getattr(self, field_name)
+            setattr(couch_obj, field_name, value)
+
+        return couch_obj
 
     @transaction.atomic()
     def save(self, *args, **kwargs):
         from corehq.apps.commtrack.models import sync_supply_point
         from .document_store import publish_location_saved
-        self.supply_point_id = sync_supply_point(self)
 
         sync_to_couch = kwargs.pop('sync_to_couch', True)
-        kwargs['sync_to_couch'] = False  # call it here
-        super(SQLLocation, self).save(*args, **kwargs)
+
         if sync_to_couch:
-            self._migration_do_sync()
+            couch_obj = self.sync_couch_location()
+
+        self.supply_point_id = sync_supply_point(self)
+
+        if not self.location_id:
+            raise ValueError("Expected non-empty location_id")
+
+        super(SQLLocation, self).save(*args, **kwargs)
+
+        if sync_to_couch:
+            couch_obj.save(sync_to_sql=False)
 
         publish_location_saved(self.domain, self.location_id)
+
+    def delete(self, *args, **kwargs):
+        if kwargs.pop('sync_to_couch', True):
+            try:
+                self.couch_location.delete(sync_to_sql=False)
+            except ResourceNotFound:
+                pass
+        super(SQLLocation, self).delete(*args, **kwargs)
 
     def to_json(self):
         return {
@@ -745,7 +766,7 @@ def filter_for_archived(locations, include_archive_ancestors):
         return locations.filter(is_archived=False)
 
 
-class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
+class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
     site_code = StringProperty()  # should be unique, not yet enforced
@@ -846,16 +867,18 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
             raise LocationType.DoesNotExist(msg)
 
     @classmethod
-    def _migration_get_fields(cls):
+    def get_sync_fields(cls):
         return ["domain", "name", "site_code", "external_id", "metadata",
                 "is_archived", "latitude", "longitude"]
 
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLLocation
+    def sync_sql_location(self):
+        if not self._id:
+            self._id = uuid.uuid4().hex
 
-    def _migration_do_sync(self):
-        sql_location = self._migration_get_or_create_sql_object()
+        try:
+            sql_location = self.sql_location
+        except SQLLocation.DoesNotExist:
+            sql_location = SQLLocation(location_id=self._id)
 
         location_type = self._sql_location_type or sql_location.location_type
         sql_location.location_type = location_type
@@ -863,7 +886,11 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         if hasattr(self, '_sql_parent'):
             sql_location.parent = self._sql_parent
 
-        self._migration_sync_to_sql(sql_location)
+        for field_name in self.get_sync_fields():
+            value = getattr(self, field_name)
+            setattr(sql_location, field_name, value)
+
+        return sql_location
 
     def save(self, *args, **kwargs):
         self.last_modified = datetime.utcnow()
@@ -878,16 +905,20 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
             ]
             self.site_code = generate_code(self.name, all_codes)
 
-        # Set the UUID here so we can save to SQL first (easier to rollback)
-        if not self._id:
-            self._id = uuid.uuid4().hex
-
         sync_to_sql = kwargs.pop('sync_to_sql', True)
-        kwargs['sync_to_sql'] = False  # only sync here
         with transaction.atomic():
             if sync_to_sql:
-                self._migration_do_sync()
+                sql_location = self.sync_sql_location()
+                sql_location.save(sync_to_couch=False)
             super(Location, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if kwargs.pop('sync_to_sql', True):
+            try:
+                self.sql_location.delete(sync_to_couch=False)
+            except SQLLocation.DoesNotExist:
+                pass
+        super(Location, self).delete(*args, **kwargs)
 
     @classmethod
     def filter_by_type(cls, domain, loc_type, root_loc=None):

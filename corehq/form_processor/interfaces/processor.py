@@ -192,11 +192,7 @@ class FormProcessorInterface(object):
 
         if not couch_sql_migration_in_progress(self.domain):
             # during migration we're copying from one DB to the other so this check will always fail
-            case, _ = self.other_db_processor().get_case_with_lock(
-                case_id, lock=False, strip_history=True, wrap=False
-            )
-            if case:
-                # case exists in other database
+            if self.other_db_processor().case_exists(case_id):
                 raise IllegalCaseId("Bad case id")
 
         return case, lock

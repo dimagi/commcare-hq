@@ -1,5 +1,7 @@
 from django.conf.urls import url
 
+from .views import update_voucher, update_incentive
+
 from custom.enikshay.integrations.bets.views import (
     BETSVoucherRepeaterView,
     BETSDrugRefillRepeaterView,
@@ -10,6 +12,8 @@ from custom.enikshay.integrations.bets.views import (
 )
 
 urlpatterns = [
+    url(r'^update_voucher$', update_voucher, name='update_voucher'),
+    url(r'^update_incentive$', update_incentive, name='update_incentive'),
     url(
         r'^new_bets_voucher_repeater$',
         BETSVoucherRepeaterView.as_view(),
