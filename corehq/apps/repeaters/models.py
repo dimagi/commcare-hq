@@ -132,7 +132,6 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     url = StringProperty()
     format = StringProperty()
 
-    use_basic_auth = BooleanProperty(default=False)
     auth_type = StringProperty(choices=("basic", "digest", ""))
     username = StringProperty()
     password = StringProperty()
