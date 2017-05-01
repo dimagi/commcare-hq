@@ -33,6 +33,8 @@ class TestCreateCasesByBeneficiary(TestCase):
             emergencyContactNo='1234567890',
             firstName='Nick',
             gender='4',
+            identificationNumber='98765',
+            identificationTypeId='16',
             isActive=True,
             lastName='P',
             organisationId=2,
@@ -76,6 +78,7 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(person_case.name, 'Nick P')
         self.assertEqual(person_case.owner_id, '')  # TODO - assign to location
         self.assertEqual(person_case.dynamic_case_properties(), OrderedDict([
+            ('aadhaar_number', '98765'),
             ('age', '25'),
             ('age_entered', '25'),
             ('current_address', '585 Mass Ave, Suite 4'),

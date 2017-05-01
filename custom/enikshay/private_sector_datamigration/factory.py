@@ -95,6 +95,12 @@ class BeneficiaryCaseFactory(object):
         if self.beneficiary.sex is not None:
             kwargs['attrs']['update']['sex'] = self.beneficiary.sex
 
+        if self.beneficiary.has_aadhaar_number:
+            kwargs['attrs']['update']['aadhaar_number'] = self.beneficiary.identificationNumber
+        else:
+            kwargs['attrs']['update']['other_id_number'] = self.beneficiary.identificationNumber
+            kwargs['attrs']['update']['other_id_type'] = self.beneficiary.other_id_type
+
         if self._episode:
             kwargs['attrs']['update']['hiv_status'] = self._episode.hiv_status
             kwargs['attrs']['update']['current_patient_type_choice'] = self._episode.current_patient_type_choice

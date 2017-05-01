@@ -32,8 +32,8 @@ class Beneficiary(models.Model):
     fatherHusbandName = models.CharField(max_length=60, null=True)
     firstName = models.CharField(max_length=30, null=True)
     gender = models.CharField(max_length=10, null=True)
-    identificationNumber = models.CharField(max_length=30, null=True) # has the person's govt ID
-    identificationTypeId = models.CharField(max_length=10, null=True) # 7 different options
+    identificationNumber = models.CharField(max_length=30, null=True)
+    identificationTypeId = models.CharField(max_length=10, null=True)
     isActive = models.CharField(max_length=10, null=True)
     languagePreferences = models.CharField(max_length=30, null=True)
     lastName = models.CharField(max_length=30, null=True)
@@ -103,7 +103,6 @@ class Beneficiary(models.Model):
             'suspect': 'Episode #1: Suspected TB (Patient)',
         }[self.caseStatus.strip()]
 
-
     @property
     def sex(self):
         return {
@@ -112,6 +111,19 @@ class Beneficiary(models.Model):
             '6': 'transgender',
             None: None,
         }[self.gender]
+
+    @property
+    def has_aadhaar_number(self):
+        return self.identificationTypeId == '16'
+
+    @property
+    def other_id_type(self):
+        return {
+            '17': 'pan_card',
+            '18': 'drivers_license',
+            '19': 'ration_card',
+            '20': 'voter_card',
+        }[self.identificationTypeId]
 
 
 class Episode(models.Model):
