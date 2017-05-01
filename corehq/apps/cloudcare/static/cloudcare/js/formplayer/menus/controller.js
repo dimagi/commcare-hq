@@ -106,6 +106,10 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 },
             });
 
+            if (model.hideAdvance) {
+                $('#select-case').hide();
+            }
+
             $('#select-case').off('click').click(function () {
                 FormplayerFrontend.trigger("menu:select", caseId);
             });
@@ -198,6 +202,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 maxHeight: menuResponse.maxHeight,
                 maxWidth: menuResponse.maxWidth,
                 useUniformUnits: menuResponse.useUniformUnits,
+                hideAdvance: menuResponse.hideAdvance,
             };
             if (menuResponse.type === "commands") {
                 return new Menus.Views.MenuListView(menuData);

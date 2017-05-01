@@ -36,6 +36,10 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'layoutStyle',
         ],
 
+        detailProperties: [
+            'hideAdvance',
+        ],
+
         parse: function (response, request) {
             _.extend(this, _.pick(response, this.commonProperties));
 
@@ -54,6 +58,7 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             } else if (response.type === "query") {
                 return response.displays;
             } else if (response.details) {
+                _.extend(this, _.pick(response, this.detailProperties));
                 return response.details;
             } else if (response.tree){
                 // form entry time, doggy
