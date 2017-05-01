@@ -1,3 +1,4 @@
+from datetime import datetime
 import corehq.apps.app_manager.util as util
 from corehq.apps.app_manager.models import (
     Module,
@@ -405,6 +406,8 @@ class SchemaTest(SimpleTestCase):
 @patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=True))
 @patch('corehq.apps.app_manager.util.is_usercase_in_use', MagicMock(return_value=True))
 @patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))
+@patch('corehq.apps.domain.models.Domain.get_by_name',
+    staticmethod(lambda name: MagicMock(spec=["date_created"], date_created=datetime(2017, 1, 1))))
 class DisabledUserPropertiesSchemaTest(SimpleTestCase):
     # TODO remove this test when removing USER_PROPERTY_EASY_REFS toggle
 
