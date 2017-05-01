@@ -346,6 +346,8 @@ class LocationExcelValidator(object):
                 extra=", ".join(actual - expected),
             ))
 
+        type_stubs = self._get_types(type_sheet_reader)
+
         # all locations sheets should have correct headers
         location_stubs = []
         optional_headers = [LOCATION_SHEET_HEADERS['custom_data'], LOCATION_SHEET_HEADERS['uncategorized_data']]

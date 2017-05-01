@@ -123,21 +123,18 @@ class EnikshayCaseFactory(object):
         person_structure = self.get_person_case_structure()
         occurrence_structure = self.get_occurrence_case_structure(person_structure)
         episode_structure = self.get_episode_case_structure(occurrence_structure)
-        case_structures_to_create = []
+        test_structures = [
+            self.get_test_case_structure(followup, occurrence_structure)
+            for followup in self._followups
+        ]
         if (
             not self._outcome
             or (not self._outcome.is_treatment_ended and self._outcome.hiv_status in ['unknown', 'reactive'])
         ):
             drtb_hiv_referral_structure = self.get_drtb_hiv_referral_case_structure(episode_structure)
-            case_structures_to_create.append(drtb_hiv_referral_structure)
-        case_structures_to_create.extend([
-            self.get_test_case_structure(followup, episode_structure)
-            for followup in self._followups
-        ])
-        if case_structures_to_create:
-            return case_structures_to_create
+            return [drtb_hiv_referral_structure] + test_structures
         else:
-            return [episode_structure]
+            return [episode_structure] + test_structures
 
     def get_person_case_structure(self):
         kwargs = {
@@ -350,14 +347,21 @@ class EnikshayCaseFactory(object):
             kwargs['attrs']['create'] = True
         return CaseStructure(**kwargs)
 
-    def get_test_case_structure(self, followup, episode_structure):
+    def get_test_case_structure(self, followup, occurrence_structure):
         kwargs = {
             'attrs': {
                 'case_type': TEST_CASE_TYPE,
+                'close': False,
+                'date_opened': followup.TestDate,
+                'owner_id': '-',
                 'update': {
+                    'date_reported': followup.TestDate,
                     'date_tested': followup.TestDate,
-                    'lab_serial_number': followup.LabNo,
+                    'episode_type_at_request': 'presumptive_tb' if followup.IntervalId == 0 else 'confirmed_tb',
+                    'lab_serial_number': followup.LabNo or '',
+                    'name': followup.TestDate,
                     'result_grade': followup.result_grade,
+                    'result_recorded': 'yes',
                     'testing_facility_id': followup.DMC,
 
                     'migration_created_case': 'true',
@@ -366,19 +370,22 @@ class EnikshayCaseFactory(object):
                 }
             },
             'indices': [CaseIndex(
-                episode_structure,
+                occurrence_structure,
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
-                related_type=EPISODE_CASE_TYPE,
+                related_type=OCCURRENCE_CASE_TYPE,
             )],
         }
 
         if followup.IntervalId == 0:
             kwargs['attrs']['update']['diagnostic_test_reason'] = 'presumptive_tb'
+            kwargs['attrs']['update']['purpose_of_testing'] = 'diagnostic'
         elif followup.IntervalId == 1:
             kwargs['attrs']['update']['follow_up_test_reason'] = 'end_of_ip'
+            kwargs['attrs']['update']['purpose_of_testing'] = 'follow_up'
         elif followup.IntervalId == 4:
             kwargs['attrs']['update']['follow_up_test_reason'] = 'end_of_cp'
+            kwargs['attrs']['update']['purpose_of_testing'] = 'follow_up'
 
         existing_test_case = self.existing_test_case(followup)
         if existing_test_case:

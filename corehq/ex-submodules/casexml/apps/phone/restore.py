@@ -66,18 +66,16 @@ from xml.etree import ElementTree
 logger = logging.getLogger(__name__)
 
 
-def restore_cache_key(prefix, user_id, version=None):
-    if version is not None:
-        hashable_key = '{prefix}-{user}-{version}'.format(
-            prefix=prefix,
-            user=user_id,
-            version=version,
-        )
-    else:
-        hashable_key = '{prefix}-{user}'.format(
-            prefix=prefix,
-            user=user_id,
-        )
+def restore_cache_key(domain, prefix, user_id, version=None, sync_log_id=None, device_id=None):
+    response_class = get_restore_response_class(domain)
+    hashable_key = '{response_class}-{prefix}-{user}-{version}-{sync_log_id}-{device_id}'.format(
+        response_class=response_class.__name__,
+        prefix=prefix,
+        user=user_id,
+        version=version or '',
+        sync_log_id=sync_log_id or '',
+        device_id=device_id or '',
+    )
     return hashlib.md5(hashable_key).hexdigest()
 
 
@@ -363,10 +361,9 @@ class AsyncRestoreResponse(object):
         return response
 
 
-class CachedPayload(object):
+class CachedResponse(object):
 
-    def __init__(self, domain, payload_path, is_initial):
-        self.is_initial = is_initial
+    def __init__(self, domain, payload_path):
         self.payload_path = payload_path
         self.restore_class = get_restore_response_class(domain)
         self.payload = self.restore_class.get_payload(self.payload_path) if payload_path else None
@@ -386,44 +383,12 @@ class CachedPayload(object):
     def as_file(self):
         return self.payload
 
-    def finalize(self):
-        # When serving a cached initial payload we should still generate a new sync log
-        # This is to avoid issues with multiple devices ending up syncing to the same
-        # sync log, which causes all kinds of assertion errors when the two devices
-        # touch the same cases
-        if self and self.is_initial:
-            try:
-                file_reference = copy_payload_and_synclog_and_get_new_file(self.payload)
-                self.payload = file_reference.file
-                self.payload_path = file_reference.path
-            except Exception as e:
-                # don't fail hard if anything goes wrong since this is an edge case optimization
-                soft_assert(notify_admins=True)(False, u'Error finalizing cached log: {}'.format(e))
-
-
-class CachedResponse(object):
-
-    def __init__(self, payload):
-        self.payload = payload
-
-    def __nonzero__(self):
-        return bool(self.payload)
-
-    def as_string(self):
-        return self.payload.as_string()
-
     def get_http_response(self):
         headers = {}
-        content_length = self.payload.get_content_length()
+        content_length = self.get_content_length()
         if content_length is not None:
             headers['Content-Length'] = content_length
-        return stream_response(self.payload.as_file(), headers)
-
-    def as_file(self):
-        if self.payload:
-            return self.payload.as_file()
-        else:
-            return None
+        return stream_response(self.payload, headers)
 
 
 class RestoreParams(object):
@@ -436,14 +401,22 @@ class RestoreParams(object):
     :param version:             The version of the restore format
     :param state_hash:          The case state hash string to use to verify the state of the phone
     :param include_item_count:  Set to `True` to include the item count in the response
+    :param device_id:           The Device id of the device restoring
     """
 
-    def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False, app=None):
+    def __init__(self,
+            sync_log_id='',
+            version=V1,
+            state_hash='',
+            include_item_count=False,
+            device_id=None,
+            app=None):
         self.sync_log_id = sync_log_id
         self.version = version
         self.state_hash = state_hash
         self.include_item_count = include_item_count
         self.app = app
+        self.device_id = device_id
 
     @property
     def app_id(self):
@@ -674,11 +647,18 @@ class RestoreConfig(object):
 
     @property
     def async_cache_key(self):
-        return restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id)
+        return restore_cache_key(self.domain, ASYNC_RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id)
 
     @property
-    def _initial_cache_key(self):
-        return restore_cache_key(RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id, self.version)
+    def _restore_cache_key(self):
+        return restore_cache_key(
+            self.domain,
+            RESTORE_CACHE_KEY_PREFIX,
+            self.restore_user.user_id,
+            version=self.version,
+            sync_log_id=self.sync_log._id if self.sync_log else '',
+            device_id=self.params.device_id,
+        )
 
     def validate(self):
         try:
@@ -722,21 +702,11 @@ class RestoreConfig(object):
 
     def get_cached_response(self):
         if self.overwrite_cache:
-            return CachedResponse(None)
+            return None
 
-        if self.sync_log:
-            cache_payload_path = self.sync_log.get_cached_payload_path(self.version)
-        else:
-            cache_payload_path = self.cache.get(self._initial_cache_key)
+        cache_payload_path = self.cache.get(self._restore_cache_key)
 
-        payload = CachedPayload(
-            self.domain,
-            cache_payload_path,
-            is_initial=not bool(self.sync_log)
-        )
-
-        payload.finalize()
-        return CachedResponse(payload)
+        return CachedResponse(self.domain, cache_payload_path)
 
     def _get_asynchronous_payload(self):
         new_task = False
@@ -811,31 +781,15 @@ class RestoreConfig(object):
 
     def set_cached_payload_if_necessary(self, resp, duration):
         cache_payload_path = resp.get_filename()
-        if self.sync_log:
-            # if there is a sync token, always cache
-            self._set_cache_on_synclog(
-                cache_payload_path
-            )
-        else:
-            # on initial sync, only cache if the duration was longer than the threshold
-            if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
-                self._set_cache_in_redis(cache_payload_path)
+        # on initial sync, only cache if the duration was longer than the threshold
+        is_long_restore = duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD)
 
-    def _set_cache_on_synclog(self, cache_payload_path):
-        try:
-            self.sync_log.last_cached = datetime.utcnow()
-            self.sync_log.hash_at_last_cached = str(self.sync_log.get_state_hash())
-            self.sync_log.set_cached_payload(cache_payload_path, self.version)
-            self.sync_log.save()
-        except ResourceConflict:
-            # if one sync takes a long time and another one updates the sync log
-            # this can fail. in this event, don't fail to respond, since it's just
-            # a caching optimization
-            pass
+        if self.force_cache or is_long_restore or self.sync_log:
+            self._set_cache_in_redis(cache_payload_path)
 
     def _set_cache_in_redis(self, cache_payload_path):
-        self.cache.set(self._initial_cache_key, cache_payload_path, self.cache_timeout)
+        self.cache.set(self._restore_cache_key, cache_payload_path, self.cache_timeout)
 
     def delete_cached_payload_if_necessary(self):
-        if self.overwrite_cache and self.cache.get(self._initial_cache_key):
-            self.cache.delete(self._initial_cache_key)
+        if self.overwrite_cache and self.cache.get(self._restore_cache_key):
+            self.cache.delete(self._restore_cache_key)

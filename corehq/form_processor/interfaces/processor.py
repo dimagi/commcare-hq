@@ -130,8 +130,7 @@ class FormProcessorInterface(object):
                 stock_result=stock_result,
             )
         except BulkSaveError as e:
-            logging.error('BulkSaveError saving forms', exc_info=1,
-                          extra={'details': {'errors': e.errors}})
+            logging.exception('BulkSaveError saving forms', extra={'details': {'errors': e.errors}})
             raise
         except Exception as e:
             xforms_being_saved = [form.form_id for form in forms if form]
@@ -140,7 +139,8 @@ class FormProcessorInterface(object):
             )
             from corehq.form_processor.submission_post import handle_unexpected_error
             handle_unexpected_error(self, forms.submitted, e, error_message)
-            raise
+            e.sentry_capture = False  # we've already notified
+            raise e
 
     def hard_delete_case_and_forms(self, case, xforms):
         domain = case.domain
@@ -192,11 +192,7 @@ class FormProcessorInterface(object):
 
         if not couch_sql_migration_in_progress(self.domain):
             # during migration we're copying from one DB to the other so this check will always fail
-            case, _ = self.other_db_processor().get_case_with_lock(
-                case_id, lock=False, strip_history=True, wrap=False
-            )
-            if case:
-                # case exists in other database
+            if self.other_db_processor().case_exists(case_id):
                 raise IllegalCaseId("Bad case id")
 
         return case, lock

@@ -17,16 +17,25 @@ def get_handle_wrapper(result_dict):
 
 class HandlerTest(BaseSMSTest):
 
+    @classmethod
+    def setUpClass(cls):
+        super(HandlerTest, cls).setUpClass()
+        cls.domain = 'ews-handler-test'
+        bootstrap_domain(cls.domain)
+        cls.create_account_and_subscription(cls.domain)
+        cls.domain_obj = Domain.get_by_name(cls.domain)
+        cls.loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=cls.domain)
+        cls.user = bootstrap_user(username='testuser', phone_number='323232', domain=cls.domain,
+                                   home_loc=cls.loc)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super(HandlerTest, cls).tearDownClass()
+
     def setUp(self):
         super(HandlerTest, self).setUp()
         self.backend, self.backend_mapping = setup_default_sms_test_backend()
-        self.domain = 'ews-handler-test'
-        bootstrap_domain(self.domain)
-        self.create_account_and_subscription(self.domain)
-        self.domain_obj = Domain.get_by_name(self.domain)
-        self.loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=self.domain)
-        self.user = bootstrap_user(username='testuser', phone_number='323232', domain=self.domain,
-            home_loc=self.loc)
 
     def tearDown(self):
         delete_domain_phone_numbers(self.domain)
