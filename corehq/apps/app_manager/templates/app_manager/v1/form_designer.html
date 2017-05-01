@@ -25,6 +25,7 @@
 {% block js-inline %}{{ block.super }}
     {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
     <script>
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
         var VELLUM_OPTIONS = {
             core: {
                 dataSourcesEndpoint: '{% url "get_form_data_schema" domain=domain form_unique_id=form.get_unique_id %}',
@@ -52,38 +53,6 @@
                     "meta/location"
                 ].concat({{ scheduler_data_nodes|JSON }}),
                 activityUrl: '{% url "ping" %}',
-                onFormSave: function (data) {
-                    var app_manager = hqImport('app_manager/js/app_manager.js')
-                    app_manager.updateDOM(data.update);
-                    {% if request.couch_user.days_since_created == 0 %}
-                        analytics.workflow('Saved the Form Builder within first 24 hours');
-                    {% endif %}
-                },
-                {% if vellum_debug == "dev" %}
-                onReady: function () {
-                    var less_error_id = "#less-error-message\\:static-style-less-hqstyle-core",
-                        less_error = $(less_error_id);
-                    if (less_error.length) {
-                        console.log("hiding less error:", less_error_id);
-                        console.log(less_error.text());
-                        less_error.hide();
-                    }
-                    {% if request.guided_tour %}
-                    form_tour_start();
-                    {% endif %}
-                    {% if request.couch_user.days_since_created == 0 %}
-                        $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
-                            analytics.workflow('Added question in Form Builder within first 24 hours');
-                        });
-                    {% endif %}
-                },
-                {% else %}
-                onReady: function() {
-                    {% if request.guided_tour %}
-                    form_tour_start();
-                    {% endif %}
-                },
-                {% endif %}
                 sessionid: {{ sessionid|JSON }},
                 externalLinks: {
                     changeSubscription: '{% url "domain_subscription_view" domain=domain %}'
@@ -116,7 +85,34 @@
             csrftoken: $.cookie('csrftoken')
         };
 
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+        VELLUM_OPTIONS.core.onFormSave = function(data) {
+            var app_manager = hqImport('app_manager/js/app_manager.js')
+            app_manager.updateDOM(data.update);
+            if (initial_page_data("days_since_created")) {
+                analytics.workflow('Saved the Form Builder within first 24 hours');
+            }
+        };
+
+        VELLUM_OPTIONS.core.onReady = function() {
+            if (initial_page_data('vellum_debug') === 'dev') {
+                var less_error_id = "#less-error-message\\:static-style-less-hqstyle-core",
+                    less_error = $(less_error_id);
+                if (less_error.length) {
+                    console.log("hiding less error:", less_error_id);
+                    console.log(less_error.text());
+                    less_error.hide();
+                }
+            }
+            if (initial_page_data('guided_tour')) {
+                form_tour_start();
+            }
+            if (initial_page_data('days_since_created') === 0) {
+                $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
+                    analytics.workflow('Added question in Form Builder within first 24 hours');
+                });
+            }
+        };
+
         var CKEDITOR_BASEPATH = initial_page_data('CKEDITOR_BASEPATH');
 
         define("jquery", [], function () { return window.jQuery; });
@@ -167,9 +163,12 @@
 
 {% block form-view %}
     {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
+    {% initial_page_data 'days_since_created' request.couch_user.days_since_created %}
+    {% initial_page_data 'guided_tour' request.guided_tour %}
     {% initial_page_data 'requirejs_args' requirejs_args %}
     {% initial_page_data 'requirejs_url' requirejs_url|static %}
     {% initial_page_data 'notification_options' notification_options %}
+    {% initial_page_data 'vellum_debug' vellum_debug %}
     {% initial_page_data 'vellum_options' vellum_options %}
     <div id="formdesigner" class="clearfix"></div>
 {% endblock %}
