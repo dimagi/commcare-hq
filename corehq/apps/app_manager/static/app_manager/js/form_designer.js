@@ -21,9 +21,9 @@ hqDefine("app_manager/js/form_designer.js", function() {
                 toggleFullScreenCallback: function (isFullscreen) {
                     var $preview = $('#js-appmanager-preview');
                     if (isFullscreen) {
-                      $preview.addClass('fullscreen');
+                        $preview.addClass('fullscreen');
                     } else {
-                      $preview.removeClass('fullscreen');
+                        $preview.removeClass('fullscreen');
                     }
                 },
             },
