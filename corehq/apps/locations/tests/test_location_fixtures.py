@@ -217,13 +217,12 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     def test_flat_sync_format(self):
         with flag_enabled('SYNC_ALL_LOCATIONS'):
-            with flag_enabled('FLAT_LOCATION_FIXTURE'):
-                self._assert_fixture_has_locations(
-                    'expand_from_root_flat',
-                    ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
-                     'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn'],
-                    flat=True,
-                )
+            self._assert_fixture_has_locations(
+                'expand_from_root_flat',
+                ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
+                    'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn'],
+                flat=True,
+            )
 
     def test_include_without_expanding(self):
         self.user._couch_user.set_location(self.locations['Boston'].couch_location)
@@ -266,7 +265,6 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
              'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
         )
 
-    @flag_enabled('FLAT_LOCATION_FIXTURE')
     def test_index_location_fixtures(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'])
         expected_result = self._assemble_expected_fixture(
@@ -288,7 +286,6 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
-@flag_enabled('FLAT_LOCATION_FIXTURE')
 class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     location_type_names = ['state', 'county', 'city']
     location_structure = [

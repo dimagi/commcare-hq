@@ -421,13 +421,6 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     "Advanced Settings on the Organization Levels page and setting the Level to Expand From option."
 )
 
-FLAT_LOCATION_FIXTURE = StaticToggle(
-    'flat_location_fixture',
-    'Sync the location fixture in a flat format. ',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
     'hierarchical_location_fixture',
     'Display Settings To Get Hierarchical Location Fixture',
