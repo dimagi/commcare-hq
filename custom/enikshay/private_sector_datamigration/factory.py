@@ -178,15 +178,17 @@ class BeneficiaryCaseFactory(object):
         }
 
         if self._episode:
-            rxStartDate = self._episode.rxStartDate.date()
-            kwargs['attrs']['date_opened'] = rxStartDate
-            kwargs['attrs']['update']['adherence_schedule_date_start'] = rxStartDate
+            rx_start_date = self._episode.rxStartDate.date()
+            kwargs['attrs']['date_opened'] = rx_start_date
+            kwargs['attrs']['update']['adherence_schedule_date_start'] = rx_start_date
             kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()
             kwargs['attrs']['update']['disease_classification'] = self._episode.disease_classification
-            kwargs['attrs']['update']['episode_pending_registration'] = 'yes' if self._episode.nikshayID is None else 'no'
+            kwargs['attrs']['update']['episode_pending_registration'] = (
+                'yes' if self._episode.nikshayID is None else 'no'
+            )
             kwargs['attrs']['update']['treatment_card_completed_date'] = self._episode.creationDate.date()
             kwargs['attrs']['update']['treatment_initiated'] = 'yes_private'
-            kwargs['attrs']['update']['treatment_initiation_date'] = rxStartDate
+            kwargs['attrs']['update']['treatment_initiation_date'] = rx_start_date
             kwargs['attrs']['update']['weight'] = int(self._episode.patientWeight)
 
             if self._episode.nikshayID:
