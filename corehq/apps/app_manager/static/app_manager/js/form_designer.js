@@ -1,3 +1,4 @@
+/* globals COMMCAREHQ, define, require, analytics, form_tour_start */
 hqDefine("app_manager/js/form_designer.js", function() {
     $(function() {
         var v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
@@ -8,7 +9,7 @@ hqDefine("app_manager/js/form_designer.js", function() {
                     return _.filter(sources, function (source) {
                         return !source.uri || /^jr:\/\/fixture\//.test(source.uri);
                     });
-                }
+                },
             },
             windowManager: {
                 leftOffset: function () {
@@ -18,13 +19,13 @@ hqDefine("app_manager/js/form_designer.js", function() {
                     return $('#hq-navigation').outerHeight();
                 },
                 toggleFullScreenCallback: function (isFullscreen) {
-                  var $preview = $('#js-appmanager-preview');
-                  if (isFullscreen) {
-                    $preview.addClass('fullscreen');
-                  } else {
-                    $preview.removeClass('fullscreen');
-                  }
-                }
+                    var $preview = $('#js-appmanager-preview');
+                    if (isFullscreen) {
+                      $preview.addClass('fullscreen');
+                    } else {
+                      $preview.removeClass('fullscreen');
+                    }
+                },
             },
             csrftoken: $.cookie('csrftoken'),
         });
@@ -45,7 +46,7 @@ hqDefine("app_manager/js/form_designer.js", function() {
         }
         VELLUM_OPTIONS.core = _.extend(VELLUM_OPTIONS.core, {
             onFormSave: function(data) {
-                var app_manager = hqImport('app_manager/js/app_manager.js')
+                var app_manager = hqImport('app_manager/js/app_manager.js');
                 app_manager.updateDOM(data.update);
                 if (v2) {
                     $('.js-preview-toggle').removeAttr('disabled');
@@ -93,7 +94,7 @@ hqDefine("app_manager/js/form_designer.js", function() {
             waitSeconds: 60,
             urlArgs: initial_page_data('requirejs_args'),
             paths: {
-                'jquery.vellum': 'main'
+                'jquery.vellum': 'main',
             },
         });
 
@@ -110,7 +111,7 @@ hqDefine("app_manager/js/form_designer.js", function() {
                 if (notification_options) {
                     var notifications = hqImport('app_manager/js/app-notifications.js');
                     // initialize redis
-                    var ws4redis = WS4Redis({
+                    WS4Redis({
                         uri: notification_options.WEBSOCKET_URI + notification_options.notify_facility + '?subscribe-broadcast',
                         receive_message: notifications.NotifyFunction(notification_options.user_id, $('#notify-bar')),
                         heartbeat_msg: notification_options.WS4REDIS_HEARTBEAT,
@@ -160,7 +161,7 @@ hqDefine("app_manager/js/form_designer.js", function() {
                 initial_page_data("form_comment"),
                 reverse("edit_form_attr", "comment")
             );
-            editDetails.setUpdateCallbackFn(function (name, comment) {
+            editDetails.setUpdateCallbackFn(function (name) {
                 $('#formdesigner .fd-content-left .fd-head-text').text(name);
                 $('#edit-form-name-modal').modal('hide');
             });
