@@ -124,7 +124,7 @@ def iter_bulk_delete_with_doc_type_verification(database, ids, doc_type, chunksi
 
 def is_bigcouch():
     # this is a bit of a hack but we'll use it for now
-    return 'cloudant' in settings.COUCH_DATABASE
+    return 'cloudant' in settings.COUCH_DATABASE or getattr(settings, 'BIGCOUCH', False)
 
 def bigcouch_quorum_count():
     """
