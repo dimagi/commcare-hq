@@ -243,12 +243,36 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
 class BETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
     event_id = VOUCHER_EVENT_ID
 
+    def get_test_payload(self, domain):
+        return json.dumps(VoucherPayload(
+            VoucherID="DUMMY-VOUCHER-ID",
+            Amount=0,
+            EventID="DUMMY-EVENT-ID",
+            EventOccurDate="2017-01-01",
+            BeneficiaryUUID="DUMMY-BENEFICIARY-ID",
+            BeneficiaryType="chemist",
+            location="DUMMY-LOCATION",
+        ).to_json())
+
     def get_payload(self, repeat_record, voucher_case):
         return json.dumps(VoucherPayload.create_voucher_payload(voucher_case).to_json())
 
 
+class IncentivePayloadGenerator(BETSBasePayloadGenerator):
+
+    def get_test_payload(self, domain):
+        return json.dumps(IncentivePayload(
+            EpisodeID="DUMMY-EPISODE-ID",
+            EventID="DUMMY-EVENT-ID",
+            EventOccurDate="2017-01-01",
+            BeneficiaryUUID="DUMMY-BENEFICIARY-ID",
+            BeneficiaryType="chemist",
+            location="DUMMY-LOCATION",
+        ).to_json())
+
+
 @RegisterGenerator(BETS180TreatmentRepeater, "case_json", "JSON", is_default=True)
-class BETS180TreatmentPayloadGenerator(BETSBasePayloadGenerator):
+class BETS180TreatmentPayloadGenerator(IncentivePayloadGenerator):
     event_id = TREATMENT_180_EVENT
 
     def get_payload(self, repeat_record, episode_case):
@@ -256,7 +280,7 @@ class BETS180TreatmentPayloadGenerator(BETSBasePayloadGenerator):
 
 
 @RegisterGenerator(BETSDrugRefillRepeater, "case_json", "JSON", is_default=True)
-class BETSDrugRefillPayloadGenerator(BETSBasePayloadGenerator):
+class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
     event_id = DRUG_REFILL_EVENT
 
     def get_payload(self, repeat_record, voucher_case):
@@ -264,7 +288,7 @@ class BETSDrugRefillPayloadGenerator(BETSBasePayloadGenerator):
 
 
 @RegisterGenerator(BETSSuccessfulTreatmentRepeater, "case_json", "JSON", is_default=True)
-class BETSSuccessfulTreatmentPayloadGenerator(BETSBasePayloadGenerator):
+class BETSSuccessfulTreatmentPayloadGenerator(IncentivePayloadGenerator):
     event_id = SUCCESSFUL_TREATMENT_EVENT
 
     def get_payload(self, repeat_record, episode_case):
@@ -272,7 +296,7 @@ class BETSSuccessfulTreatmentPayloadGenerator(BETSBasePayloadGenerator):
 
 
 @RegisterGenerator(BETSDiagnosisAndNotificationRepeater, "case_json", "JSON", is_default=True)
-class BETSDiagnosisAndNotificationPayloadGenerator(BETSBasePayloadGenerator):
+class BETSDiagnosisAndNotificationPayloadGenerator(IncentivePayloadGenerator):
     event_id = DIAGNOSIS_AND_NOTIFICATION_EVENT
 
     def get_payload(self, repeat_record, episode_case):
@@ -280,7 +304,7 @@ class BETSDiagnosisAndNotificationPayloadGenerator(BETSBasePayloadGenerator):
 
 
 @RegisterGenerator(BETSAYUSHReferralRepeater, "case_json", "JSON", is_default=True)
-class BETSAYUSHReferralPayloadGenerator(BETSBasePayloadGenerator):
+class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
     event_id = AYUSH_REFERRAL_EVENT
 
     def get_payload(self, repeat_record, episode_case):
