@@ -620,7 +620,7 @@ class SQLLocation(MPTTModel):
         return u"SQLLocation(domain='{}', name='{}', location_type='{}')".format(
             self.domain,
             self.name,
-            self.location_type.name,
+            self.location_type.name if hasattr(self, 'location_type') else None,
         ).encode('utf-8')
 
     @property
