@@ -20,6 +20,7 @@ ADHERENCE_CASE_TYPE = 'adherence'
 PRESCRIPTION_CASE_TYPE = 'prescription'
 TEST_CASE_TYPE = 'test'
 
+
 def get_human_friendly_id():
     return datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3]
 
