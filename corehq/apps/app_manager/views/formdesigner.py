@@ -155,10 +155,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             request.couch_user.username,
         ),
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
-        'edit_form_name_url': reverse(
-            'edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
-        'edit_form_comment_url': reverse(
-            'edit_form_attr', args=[app.domain, app.id, form.unique_id, 'comment']),
     })
 
     vellum_options = {

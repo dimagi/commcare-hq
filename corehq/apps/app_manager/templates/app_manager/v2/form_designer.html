@@ -201,43 +201,44 @@
         $(function () {
             var previewApp = hqImport('app_manager/js/preview_app.js');
 
-            {% if form.uses_cases %}
-            // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
-            var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
-                attempts = attempts || 0;
-                if ($(selector).length) {
-                    var $toggleParent = $(selector);
-                    $toggleParent.prepend(layout);
-                    callback();
-                } else if (attempts <= 30) {
-                    // give up appending element after waiting 30 seconds to load
-                    setTimeout(function () {
-                        _prependTemplateToSelector(selector, layout, attempts++, callback);
-                    }, 1000);
-                }
-            };
-            _prependTemplateToSelector(
-                '.fd-form-actions',
-                $('#js-fd-manage-case').html(),
-                0,
-                function () {
-                    previewApp.appendToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
-                }
-            );
-            {% else %}
+            if (initial_page_data('form_uses_cases')) {
+                // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
+                var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
+                    attempts = attempts || 0;
+                    if ($(selector).length) {
+                        var $toggleParent = $(selector);
+                        $toggleParent.prepend(layout);
+                        callback();
+                    } else if (attempts <= 30) {
+                        // give up appending element after waiting 30 seconds to load
+                        setTimeout(function () {
+                            _prependTemplateToSelector(selector, layout, attempts++, callback);
+                        }, 1000);
+                    }
+                };
+                _prependTemplateToSelector(
+                    '.fd-form-actions',
+                    $('#js-fd-manage-case').html(),
+                    0,
+                    function () {
+                        previewApp.appendToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
+                    }
+                );
+            } else {
                 previewApp.appendToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
-            {% endif %}
+            }
 
         });
         $(function () {
-            var editDetails = hqImport('app_manager/js/edit_form_details.js');
+            var reverse = hqImport("hqwebapp/js/urllib.js").reverse,
+                editDetails = hqImport('app_manager/js/edit_form_details.js');
             editDetails.initName(
-                '{{ form.name|trans:app.langs|escapejs }}',
-                '{{ edit_form_name_url }}'
+                initial_page_data("form_name"),
+                reverse("edit_form_attr", "name")
             );
             editDetails.initComment(
-                '{{ form.comment|escapejs }}',
-                '{{ edit_form_comment_url }}'
+                initial_page_data("form_comment"),
+                reverse("edit_form_attr", "comment")
             );
             editDetails.setUpdateCallbackFn(function (name, comment) {
                 $('#formdesigner .fd-content-left .fd-head-text').text(name);
@@ -253,10 +254,14 @@
 
 {% block form-view %}
     {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
+    {% initial_page_data 'form_name' form.name|trans:app.langs %}
+    {% initial_page_data 'form_comment' form.comment %}
+    {% initial_page_data 'form_uses_cases' form.uses_cases %}
     {% initial_page_data 'notification_options' notification_options %}
     {% initial_page_data 'requirejs_args' requirejs_args %}
     {% initial_page_data 'requirejs_url' requirejs_url|static %}
     {% initial_page_data 'vellum_options' vellum_options %}
+    {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
     <div id="formdesigner" class="clearfix app-manager-v2 loading"></div>
 
     {% if can_preview_form %}
