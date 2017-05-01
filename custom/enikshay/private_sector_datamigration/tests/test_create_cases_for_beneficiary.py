@@ -7,20 +7,26 @@ from django.test import TestCase, override_settings
 from mock import patch
 
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
+
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.private_sector_datamigration.models import (
     Adherence,
+    Agency,
     Beneficiary,
     EpisodePrescription,
     LabTest,
-    Episode)
+    Episode,
+    UserDetail,
+)
+from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class TestCreateCasesByBeneficiary(TestCase):
+class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.domain = 'test_domain'
         super(TestCreateCasesByBeneficiary, cls).setUpClass()
         cls.beneficiary = Beneficiary.objects.create(
             addressLineOne='585 Mass Ave',
@@ -39,9 +45,38 @@ class TestCreateCasesByBeneficiary(TestCase):
             lastName='P',
             organisationId=2,
             phoneNumber='5432109876',
+            referredQP='org123'
         )
-        cls.domain = 'test_domain'
         cls.case_accessor = CaseAccessors(cls.domain)
+
+        cls.agency = Agency.objects.create(
+            agencyId=1,
+            creationDate=datetime(2017, 5, 1),
+            dateOfRegn=datetime(2017, 5, 1),
+            modificationDate=datetime(2017, 5, 1),
+            nikshayId='123456',
+            organisationId=2,
+            parentAgencyId=3,
+            subOrganisationId=4,
+        )
+        UserDetail.objects.create(
+            id=0,
+            agencyId=cls.agency.agencyId,
+            isPrimary=True,
+            motechUserName='org123',
+            organisationId=2,
+            passwordResetFlag=False,
+            pincode=3,
+            subOrganisationId=4,
+            userId=5,
+            valid=True,
+        )
+
+    def setUp(self):
+        super(TestCreateCasesByBeneficiary, self).setUp()
+
+        self.pcp.site_code = self.agency.nikshayId
+        self.pcp.save()
 
     @patch('custom.enikshay.private_sector_datamigration.factory.datetime')
     def test_create_cases_for_beneficiary(self, mock_datetime):
@@ -76,7 +111,7 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertFalse(person_case.closed)  # TODO - update by outcome
         self.assertIsNone(person_case.external_id)
         self.assertEqual(person_case.name, 'Nick P')
-        self.assertEqual(person_case.owner_id, '')  # TODO - assign to location
+        self.assertEqual(person_case.owner_id, self.pcp.location_id)
         self.assertEqual(person_case.dynamic_case_properties(), OrderedDict([
             ('aadhaar_number', '98765'),
             ('age', '25'),
@@ -105,7 +140,7 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertFalse(occurrence_case.closed)  # TODO - update by outcome
         self.assertIsNone(occurrence_case.external_id)
         self.assertEqual(occurrence_case.name, 'Occurrence #1')
-        self.assertEqual(occurrence_case.owner_id, '')
+        self.assertEqual(occurrence_case.owner_id, '-')
         self.assertEqual(occurrence_case.dynamic_case_properties(), OrderedDict([
             ('current_episode_type', 'confirmed_tb'),
             ('migration_created_case', 'true'),
@@ -131,7 +166,7 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertEqual(episode_case.external_id, '02139-02215')
         self.assertEqual(episode_case.name, 'Episode #1: Confirmed TB (Patient)')
         self.assertEqual(episode_case.opened_on, datetime(2017, 4, 19))
-        self.assertEqual(episode_case.owner_id, '')
+        self.assertEqual(episode_case.owner_id, '-')
         self.assertEqual(episode_case.dynamic_case_properties(), OrderedDict([
             ('adherence_schedule_date_start', '2017-04-19'),
             ('adherence_schedule_id', 'schedule_mwf'),
@@ -210,7 +245,7 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertIsNone(adherence_case.external_id)
         self.assertEqual(adherence_case.name, None)  # TODO
         # self.assertEqual(adherence_case.opened_on, '')  # TODO
-        self.assertEqual(adherence_case.owner_id, '')
+        self.assertEqual(adherence_case.owner_id, '-')
         self.assertEqual(adherence_case.dynamic_case_properties(), OrderedDict([
             ('adherence_date', '2017-04-22'),
             ('adherence_value', 'directly_observed_dose'),
@@ -302,7 +337,7 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertIsNone(prescription_case.external_id)
         self.assertEqual(prescription_case.name, None)  # TODO
         # self.assertEqual(adherence_case.opened_on, '')  # TODO
-        self.assertEqual(prescription_case.owner_id, '')
+        self.assertEqual(prescription_case.owner_id, '-')
         self.assertEqual(prescription_case.dynamic_case_properties(), OrderedDict([
             ('migration_created_case', 'true'),
         ]))
@@ -394,7 +429,7 @@ class TestCreateCasesByBeneficiary(TestCase):
         self.assertIsNone(test_case.external_id)  # TODO - update with nikshay ID
         self.assertEqual(test_case.name, None)  # TODO
         # self.assertEqual(adherence_case.opened_on, '')  # TODO
-        self.assertEqual(test_case.owner_id, '')
+        self.assertEqual(test_case.owner_id, '-')
         self.assertEqual(test_case.dynamic_case_properties(), OrderedDict([
             ('migration_created_case', 'true'),
         ]))

@@ -3,6 +3,7 @@ from datetime import datetime
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 
+from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.private_sector_datamigration.models import (
     Adherence,
     Episode,
@@ -105,6 +106,17 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['hiv_status'] = self._episode.hiv_status
             kwargs['attrs']['update']['current_patient_type_choice'] = self._episode.current_patient_type_choice
 
+        agency = (
+            self._episode.treating_provider or self.beneficiary.referred_provider
+            if self._episode else self.beneficiary.referred_provider
+        )
+        assert agency is not None
+
+        kwargs['attrs']['owner_id'] = SQLLocation.active_objects.get(
+            domain=self.domain,
+            site_code=agency.nikshayId,
+        ).location_id
+
         return CaseStructure(**kwargs)
 
     def get_occurrence_case_structure(self, person_structure):
@@ -113,6 +125,7 @@ class BeneficiaryCaseFactory(object):
                 'case_type': OCCURRENCE_CASE_TYPE,
                 'close': False,
                 'create': True,
+                'owner_id': '-',
                 'update': {
                     'current_episode_type': self.beneficiary.current_episode_type,
                     'name': 'Occurrence #1',
@@ -137,6 +150,7 @@ class BeneficiaryCaseFactory(object):
                 'case_type': EPISODE_CASE_TYPE,
                 'close': False,
                 'create': True,
+                'owner_id': '-',
                 'update': {
                     'adherence_schedule_id': 'schedule_mwf',
                     'date_of_mo_signature': self.beneficiary.dateOfRegn.date(),
@@ -188,6 +202,7 @@ class BeneficiaryCaseFactory(object):
                 'case_type': ADHERENCE_CASE_TYPE,
                 'close': False,
                 'create': True,
+                'owner_id': '-',
                 'update': {
                     'adherence_date': adherence.doseDate.date(),
                     'adherence_value': adherence.adherence_value,
@@ -210,6 +225,7 @@ class BeneficiaryCaseFactory(object):
                 'case_type': PRESCRIPTION_CASE_TYPE,
                 'close': False,
                 'create': True,
+                'owner_id': '-',
                 'update': {
                     'migration_created_case': 'true',
                 }
@@ -229,6 +245,7 @@ class BeneficiaryCaseFactory(object):
                 'case_type': TEST_CASE_TYPE,
                 'close': False,
                 'create': True,
+                'owner_id': '-',
                 'update': {
                     'migration_created_case': 'true',
                 }

@@ -3,6 +3,17 @@ from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 
 
+def get_agency_by_motech_user_name(motech_user_name):
+    try:
+        return Agency.objects.get(
+            agencyId=UserDetail.objects.get(
+                motechUserName=motech_user_name
+            ).agencyId
+        )
+    except (Agency.DoesNotExist, UserDetail.DoesNotExist):
+        return None
+
+
 class Beneficiary(models.Model):
     id = models.IntegerField(null=True)
     additionalDetails = models.CharField(max_length=500, null=True)
@@ -102,6 +113,10 @@ class Beneficiary(models.Model):
             'patient': 'Episode #1: Confirmed TB (Patient)',
             'suspect': 'Episode #1: Suspected TB (Patient)',
         }[self.caseStatus.strip()]
+
+    @property
+    def referred_provider(self):
+        return get_agency_by_motech_user_name(self.referredQP)
 
     @property
     def sex(self):
@@ -250,6 +265,10 @@ class Episode(models.Model):
             None: '',
             'Select': '',
         }[self.extraPulmonary]
+
+    @property
+    def treating_provider(self):
+        return get_agency_by_motech_user_name(self.treatingQP)
 
 
 class Adherence(models.Model):
@@ -453,7 +472,7 @@ class UserDetail(models.Model):
     mobileNumber = models.CharField(max_length=256, null=True)
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=256, null=True)
-    motechUserName = models.CharField(max_length=256, null=True)
+    motechUserName = models.CharField(max_length=256, unique=True)
     organisationId = models.IntegerField()
     owner = models.CharField(max_length=256, null=True)
     passwordResetFlag = models.BooleanField()
