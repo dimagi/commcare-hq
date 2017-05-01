@@ -353,9 +353,10 @@ def get_prescription_vouchers_from_episode(domain, episode_case_id):
 
 def get_approved_prescription_vouchers_from_episode(domain, episode_case_id):
     vouchers = get_prescription_vouchers_from_episode(domain, episode_case_id)
-    return [
-        v for v in vouchers if
-        (v.dynamic_case_properties().get("type") == "prescription"
+    approved_prescription_vouchers = []
+    for voucher in vouchers:
+        voucher_props = voucher.dynamic_case_properties()
         # TODO: Confirm state == "fulfilled"
-        and v.dynamic_case_properties().get("state") == "fulfilled")
-    ]
+        if voucher_props.get("type") == CASE_TYPE_PRESCRIPTION and voucher_props.get("state") == "fulfilled":
+            approved_prescription_vouchers.append(voucher)
+    return approved_prescription_vouchers
