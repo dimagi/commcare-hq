@@ -426,7 +426,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(len(test_case_ids), 1)
         test_case = self.case_accessor.get_case(test_case_ids[0])
         self.assertFalse(test_case.closed)  # TODO
-        self.assertIsNone(test_case.external_id)  # TODO - update with nikshay ID
+        self.assertIsNone(test_case.external_id)
         self.assertEqual(test_case.name, None)  # TODO
         # self.assertEqual(adherence_case.opened_on, '')  # TODO
         self.assertEqual(test_case.owner_id, '-')
