@@ -74,6 +74,7 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
 
         case_properties = episode_case.dynamic_case_properties()
         treatment_outcome = case_properties.get('treatment_outcome', None)
+        treatment_outcome_transitioned = case_properties_changed(episode_case, ['treatment_outcome'])
         episode_has_outcome = treatment_outcome and (treatment_outcome != 'not_evaluated')
         adherence_total_doses_taken = case_properties.get('adherence_total_doses_taken', "0")
         try:
@@ -84,6 +85,7 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
         not_sent = case_properties.get("event_{}".format(TREATMENT_180_EVENT)) != "sent"
         return (
             episode_has_outcome
+            and treatment_outcome_transitioned
             and not_sent
             and adherence_total_doses_taken >= 180
         )
@@ -136,6 +138,7 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
         not_sent = case_properties.get("event_{}".format(SUCCESSFUL_TREATMENT_EVENT)) != "sent"
         return (
             case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
+            and case_properties_changed(episode_case, ["treatment_outcome"])
             and not_sent
         )
 
