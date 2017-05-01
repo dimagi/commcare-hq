@@ -1722,7 +1722,7 @@ BASE_REPEATERS = (
     'corehq.apps.repeaters.models.AppStructureRepeater',
 )
 
-CUSTOM_REPEATERS = (
+ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsRegisterPatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
@@ -1740,7 +1740,7 @@ CUSTOM_REPEATERS = (
 
 )
 
-REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
+REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + ENIKSHAY_REPEATERS
 
 
 STATIC_UCR_REPORTS = [
