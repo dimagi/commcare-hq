@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import *
+from .models import DjangoPillowCheckpoint, KafkaCheckpoint
 
 
 class PillowCheckpointAdmin(admin.ModelAdmin):
@@ -25,6 +25,7 @@ class KafkaCheckpointAdmin(admin.ModelAdmin):
         'offset',
         'last_modified',
     ]
+    list_filter = ('checkpoint_id', 'topic')
     ordering = ('checkpoint_id', 'topic', 'partition')
 
 
