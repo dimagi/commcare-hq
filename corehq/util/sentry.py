@@ -9,6 +9,7 @@ RATE_LIMITED_EXCEPTIONS = {
     'socket.error': 'rabbitmq',
     'redis.exceptions.ConnectionError': 'redis',
     'restkit.errors.RequestError': 'couchdb',
+    'restkit.errors.RequestFailed': 'couchdb',
 }
 
 
