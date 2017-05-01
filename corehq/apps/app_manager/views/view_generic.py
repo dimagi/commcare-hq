@@ -2,7 +2,7 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render
-from corehq.apps.app_manager.app_schemas import get_all_case_properties, \
+from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties, \
     get_usercase_properties
 from corehq.apps.app_manager.const import APP_V1
 

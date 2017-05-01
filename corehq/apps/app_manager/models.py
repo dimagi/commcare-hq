@@ -49,7 +49,7 @@ from django.core.cache import cache
 from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
-from corehq.apps.app_manager.app_schemas import ParentCasePropertyBuilder
+from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath

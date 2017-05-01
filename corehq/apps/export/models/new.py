@@ -11,7 +11,7 @@ from django.utils.translation import ugettext as _
 from django.urls import reverse
 from django.db import models
 from django.http import Http404
-from corehq.apps.app_manager.app_schemas import ParentCasePropertyBuilder, \
+from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
     get_case_properties
 
 from corehq.apps.reports.models import HQUserType

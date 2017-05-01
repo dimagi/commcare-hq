@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.apps.app_manager.app_schemas import get_case_properties
+from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 
 from corehq.apps.userreports.reports.builder.columns import \
     QuestionColumnOption, ColumnOption, CountColumn, MultiselectQuestionColumnOption

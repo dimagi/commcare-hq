@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 
 from corehq import toggles
-from corehq.apps.app_manager.app_schemas import all_case_properties_by_domain
+from corehq.apps.app_manager.app_schemas.case_properties import all_case_properties_by_domain
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 

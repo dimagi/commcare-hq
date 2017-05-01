@@ -23,7 +23,7 @@ from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.serializers import CommCareCaseSerializer, XFormInstanceSerializer
 from corehq.apps.api.util import get_object_or_not_exist, get_obj
-from corehq.apps.app_manager.app_schemas import get_case_properties
+from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.cloudcare.api import ElasticCaseQuery

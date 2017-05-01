@@ -20,7 +20,7 @@ from django.utils.translation import ugettext_noop
 from jsonfield import JSONField
 
 from sqlalchemy.util import immutabledict
-from corehq.apps.app_manager.app_schemas import get_case_properties
+from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form, RemoteApp

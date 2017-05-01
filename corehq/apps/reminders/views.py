@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 import pytz
 from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
-from corehq.apps.app_manager.app_schemas import get_case_properties
+from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_timepicker, use_select2

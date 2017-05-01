@@ -19,7 +19,7 @@ from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
 from unidecode import unidecode
-from corehq.apps.app_manager.app_schemas import get_all_case_properties, \
+from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties, \
     get_usercase_properties
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
