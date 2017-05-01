@@ -17,7 +17,7 @@ import KISSmetrics
 import logging
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from email_validator import validate_email, EmailNotValidError
 from corehq.toggles import deterministic_random
 from corehq.util.decorators import analytics_task
@@ -32,6 +32,8 @@ from corehq.util.datadog.utils import (
 )
 
 from dimagi.utils.logging import notify_exception
+
+from .utils import analytics_enabled_for_email
 
 _hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
                                                '{}@{}'.format('aphilippot', 'dimagi.com')],
@@ -72,15 +74,47 @@ def _track_on_hubspot(webuser, properties):
     properties is a dictionary mapping property names to values.
     Note that property names must exist on hubspot prior to use.
     """
-    # Note: Hubspot recommends OAuth instead of api key
+    if webuser.analytics_enabled:
+        # Note: Hubspot recommends OAuth instead of api key
+        _hubspot_post(
+            url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+                urllib.quote(webuser.get_email())
+            ),
+            data=json.dumps(
+                {'properties': [
+                    {'property': k, 'value': v} for k, v in properties.items()
+                ]}
+            ),
+        )
 
+
+def _track_on_hubspot_by_email(email, properties):
+    # Note: Hubspot recommends OAuth instead of api key
+    _hubspot_post(
+        url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+            urllib.quote(email)
+        ),
+        data=json.dumps(
+            {'properties': [
+                {'property': k, 'value': v} for k, v in properties.items()
+            ]}
+        ),
+    )
+
+
+def set_analytics_opt_out(webuser, analytics_enabled):
+    """
+    Set 'opted_out' on the user whenever they change that, so we don't have
+    opted out users throwing off metrics. This is handled separately because we
+    (ironically) ignore the analytics_enabled flag.
+    """
     _hubspot_post(
         url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
             urllib.quote(webuser.get_email())
         ),
         data=json.dumps(
             {'properties': [
-                {'property': k, 'value': v} for k, v in properties.items()
+                {'property': 'analytics_disabled', 'value': not analytics_enabled}
             ]}
         ),
     )
@@ -132,7 +166,7 @@ def _send_post_data(url, params, data, headers):
 
 def _get_user_hubspot_id(webuser):
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
-    if api_key:
+    if api_key and webuser.analytics_enabled:
         req = requests.get(
             u"https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
                 urllib.quote(webuser.username)
@@ -160,6 +194,11 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, em
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
     """
+    if ((webuser and not webuser.analytics_enabled)
+            or (not webuser and not analytics_enabled_for_email(email))):
+        # This user has analytics disabled
+        return
+
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     hubspot_cookie = cookies.get(HUBSPOT_COOKIE)
     if hubspot_id and hubspot_cookie:
@@ -261,6 +300,14 @@ def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
 
 
 @analytics_task()
+def track_job_candidate_on_hubspot(user_email):
+    properties = {
+        'job_candidate': True
+    }
+    _track_on_hubspot_by_email(user_email, properties=properties)
+
+
+@analytics_task()
 def track_created_new_project_space_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, webuser, cookies, meta)
 
@@ -308,8 +355,9 @@ def track_workflow(email, event, properties=None):
     :param properties: A dictionary or properties to set on the user.
     :return:
     """
-    timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
-    _track_workflow_task.delay(email, event, properties, timestamp)
+    if analytics_enabled_for_email(email):
+        timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
+        _track_workflow_task.delay(email, event, properties, timestamp)
 
 
 @analytics_task()
@@ -332,7 +380,7 @@ def identify(email, properties):
     :return:
     """
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
-    if api_key:
+    if api_key and analytics_enabled_for_email(email):
         km = KISSmetrics.Client(key=api_key)
         res = km.set(email, properties)
         _log_response("KM", {'email': email, 'properties': properties}, res)
@@ -348,9 +396,10 @@ def track_periodic_data():
     """
     # Start by getting a list of web users mapped to their domains
     six_months_ago = date.today() - timedelta(days=180)
-    users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago)\
-                               .fields(['domains', 'email', 'date_joined'])\
-                               .run().hits
+    users_to_domains = (UserES().web_users()
+                        .last_logged_in(gte=six_months_ago).fields(['domains', 'email', 'date_joined'])
+                        .analytics_enabled()
+                        .run().hits)
     # users_to_domains is a list of dicts
     domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
         .aggregations.domain.counts_by_bucket()
@@ -447,9 +496,9 @@ def submit_data_to_hub_and_kiss(submit_json):
     for (dispatcher, error_message) in [hubspot_dispatch, kissmetrics_dispatch]:
         try:
             dispatcher(submit_json)
-        except requests.exceptions.HTTPError, e:
+        except requests.exceptions.HTTPError as e:
             _hubspot_failure_soft_assert(False, e.response.content)
-        except Exception, e:
+        except Exception as e:
             notify_exception(None, u"{msg}: {exc}".format(msg=error_message, exc=e))
 
 

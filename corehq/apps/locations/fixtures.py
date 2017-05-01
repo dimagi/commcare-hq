@@ -2,6 +2,7 @@ from itertools import groupby
 from collections import defaultdict
 from xml.etree.ElementTree import Element
 from casexml.apps.phone.models import OTARestoreUser
+from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
 from corehq import toggles
 
@@ -78,12 +79,13 @@ class LocationFixtureProvider(object):
         if not should_sync_locations(last_sync, all_locations, restore_user):
             return []
 
-        return self.serializer.get_xml_nodes(self.id, restore_user, all_locations)
+        data_fields = _get_location_data_fields(restore_user.domain)
+        return self.serializer.get_xml_nodes(self.id, restore_user, all_locations, data_fields)
 
 
 class HierarchicalLocationSerializer(object):
 
-    def get_xml_nodes(self, fixture_id, restore_user, all_locations):
+    def get_xml_nodes(self, fixture_id, restore_user, all_locations, data_fields):
         if not should_sync_hierarchical_fixture(restore_user.project):
             return []
 
@@ -91,32 +93,26 @@ class HierarchicalLocationSerializer(object):
         root_locations = all_locations.root_locations
 
         if root_locations:
-            _append_children(root_node, all_locations, root_locations)
+            _append_children(root_node, all_locations, root_locations, data_fields)
         return [root_node]
 
 
 class FlatLocationSerializer(object):
 
-    def get_xml_nodes(self, fixture_id, restore_user, all_locations):
+    def get_xml_nodes(self, fixture_id, restore_user, all_locations, data_fields):
         if not should_sync_flat_fixture(restore_user.project):
             return []
         all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
             'code', flat=True
         )
         location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
+        attrs_to_index = location_type_attrs + ['id', 'type']
 
-        if toggles.INDEX_LOCATIONS_FIXTURE.enabled(restore_user.domain):
-            attrs_to_index = location_type_attrs + ['id', 'type']
-            return [self._get_schema_node(fixture_id, attrs_to_index),
-                    self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs)]
+        return [self._get_schema_node(fixture_id, attrs_to_index),
+                self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs, data_fields)]
 
-        return [self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs)]
-
-    def _get_fixture_node(self, fixture_id, restore_user, all_locations, location_type_attrs):
-        root_attrs = {'id': fixture_id, 'user_id': restore_user.user_id}
-        if toggles.INDEX_LOCATIONS_FIXTURE.enabled(restore_user.domain):
-            root_attrs['indexed'] = 'true'
-        root_node = Element('fixture', root_attrs)
+    def _get_fixture_node(self, fixture_id, restore_user, all_locations, location_type_attrs, data_fields):
+        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id, 'indexed': 'true'})
         outer_node = Element('locations')
         root_node.append(outer_node)
         for location in sorted(all_locations.by_id.values(), key=lambda l: l.site_code):
@@ -132,7 +128,7 @@ class FlatLocationSerializer(object):
                 attrs['{}_id'.format(tmp_location.location_type.code)] = tmp_location.location_id
 
             location_node = Element('location', attrs)
-            _fill_in_location_element(location_node, location)
+            _fill_in_location_element(location_node, location, data_fields)
             outer_node.append(location_node)
 
         return root_node
@@ -261,10 +257,10 @@ def _valid_parent_type(location):
     return parent_type == location.location_type.parent_type
 
 
-def _append_children(node, location_db, locations):
+def _append_children(node, location_db, locations, data_fields):
     for type, locs in _group_by_type(locations):
         locs = sorted(locs, key=lambda loc: loc.name)
-        node.append(_types_to_fixture(location_db, type, locs))
+        node.append(_types_to_fixture(location_db, type, locs, data_fields))
 
 
 def _group_by_type(locations):
@@ -273,30 +269,31 @@ def _group_by_type(locations):
         yield type, list(locs)
 
 
-def _types_to_fixture(location_db, type, locs):
+def _types_to_fixture(location_db, type, locs, data_fields):
     type_node = Element('%ss' % type.code)  # hacky pluralization
     for loc in locs:
-        type_node.append(_location_to_fixture(location_db, loc, type))
+        type_node.append(_location_to_fixture(location_db, loc, type, data_fields))
     return type_node
 
 
-def _get_metadata_node(location):
+def _get_metadata_node(location, data_fields):
     node = Element('location_data')
-    for key, value in location.metadata.items():
+    # add default empty nodes for all known fields: http://manage.dimagi.com/default.asp?247786
+    for key in data_fields:
         element = Element(key)
-        element.text = unicode(value)
+        element.text = unicode(location.metadata.get(key, ''))
         node.append(element)
     return node
 
 
-def _location_to_fixture(location_db, location, type):
+def _location_to_fixture(location_db, location, type, data_fields):
     root = Element(type.code, {'id': location.location_id})
-    _fill_in_location_element(root, location)
-    _append_children(root, location_db, location_db.by_parent[location.location_id])
+    _fill_in_location_element(root, location, data_fields)
+    _append_children(root, location_db, location_db.by_parent[location.location_id], data_fields)
     return root
 
 
-def _fill_in_location_element(xml_root, location):
+def _fill_in_location_element(xml_root, location, data_fields):
     fixture_fields = [
         'name',
         'site_code',
@@ -312,4 +309,15 @@ def _fill_in_location_element(xml_root, location):
         field_node.text = unicode(val if val is not None else '')
         xml_root.append(field_node)
 
-    xml_root.append(_get_metadata_node(location))
+    xml_root.append(_get_metadata_node(location, data_fields))
+
+
+def _get_location_data_fields(domain):
+    from corehq.apps.locations.views import LocationFieldsView
+    fields_definition = get_by_domain_and_type(domain, LocationFieldsView.field_type)
+    if fields_definition:
+        return {
+            f.slug for f in fields_definition.fields
+        }
+    else:
+        return set()

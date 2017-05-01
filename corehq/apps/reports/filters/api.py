@@ -7,7 +7,6 @@ from django.views.generic import View
 
 from braces.views import JSONResponseMixin
 
-from corehq import toggles
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilterUtils
@@ -15,9 +14,11 @@ from corehq.elastic import ESError
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.reports.filters.users import EmwfUtils
+from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils
 from corehq.apps.es import UserES, GroupES, groups
 from corehq.apps.locations.models import SQLLocation
+
+from phonelog.models import DeviceReportEntry
 
 logger = logging.getLogger(__name__)
 
@@ -74,19 +75,12 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     @property
     def data_sources(self):
-        if toggles.LOCATIONS_IN_REPORTS.enabled(self.domain):
-            return [
-                (self.get_static_options_size, self.get_static_options),
-                (self.get_groups_size, self.get_groups),
-                (self.get_locations_size, self.get_locations),
-                (self.get_users_size, self.get_users),
-            ]
-        else:
-            return [
-                (self.get_static_options_size, self.get_static_options),
-                (self.get_groups_size, self.get_groups),
-                (self.get_users_size, self.get_users),
-            ]
+        return [
+            (self.get_static_options_size, self.get_static_options),
+            (self.get_groups_size, self.get_groups),
+            (self.get_locations_size, self.get_locations),
+            (self.get_users_size, self.get_users),
+        ]
 
     def get_options(self):
         page = int(self.request.GET.get('page', 1))
@@ -194,6 +188,24 @@ class LocationRestrictedEmwfOptionsMixin(object):
         return sources
 
 
+class MobileWorkersOptionsView(EmwfOptionsView):
+    """
+    Paginated Options for the Mobile Workers selection tool
+    """
+    urlname = 'users_select2_options'
+
+    @property
+    @memoized
+    def utils(self):
+        return UsersUtils(self.domain)
+
+    @property
+    def data_sources(self):
+        return [
+            (self.get_users_size, self.get_users),
+        ]
+
+
 @location_safe
 class LocationRestrictedEmwfOptions(LocationRestrictedEmwfOptionsMixin, EmwfOptionsView):
     def extra_data_sources(self):
@@ -247,3 +259,29 @@ def paginate_options(data_sources, query, start, size):
         size -= len(objects)  # how many more do we need for this page?
         options.extend(objects)
     return total, options
+
+
+class DeviceLogFilter(LoginAndDomainMixin, JSONResponseMixin, View):
+    field = None
+
+    def get(self, request, domain):
+        q = self.request.GET.get('q', None)
+        field_filter = {self.field + "__startswith": q}
+        values = (
+            DeviceReportEntry.objects
+            .filter(domain=domain)
+            .filter(**field_filter)
+            .distinct(self.field)
+            .values_list(self.field, flat=True)
+        )[:10]
+        return self.render_json_response({
+            'results': [{'id': v, 'text': v} for v in values],
+        })
+
+
+class DeviceLogUsers(DeviceLogFilter):
+    field = 'username'
+
+
+class DeviceLogIds(DeviceLogFilter):
+    field = 'device_id'

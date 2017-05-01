@@ -1,3 +1,4 @@
+from __future__ import print_function
 from copy import copy
 from datetime import datetime
 from itertools import groupby
@@ -7,7 +8,9 @@ from collections import defaultdict, OrderedDict, namedtuple
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
-from django.core.urlresolvers import reverse
+from django.urls import reverse
+from django.db import models
+from django.http import Http404
 
 from corehq.apps.reports.models import HQUserType
 from soil.progress import set_task_progress
@@ -16,6 +19,7 @@ from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.util.timezones.utils import get_timezone_for_domain
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -27,6 +31,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_latest_app_ids_and_versions,
     get_app_ids_in_domain,
+    get_app,
 )
 from corehq.apps.app_manager.models import Application, AdvancedFormActions
 from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
@@ -55,6 +60,7 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_DELETED,
     FORM_EXPORT,
     CASE_EXPORT,
+    SMS_EXPORT,
     TRANSFORM_FUNCTIONS,
     DEID_TRANSFORM_FUNCTIONS,
     PROPERTY_TAG_CASE,
@@ -62,6 +68,7 @@ from corehq.apps.export.const import (
     PLAIN_USER_DEFINED_SPLIT_TYPE,
     CASE_DATA_SCHEMA_VERSION,
     FORM_DATA_SCHEMA_VERSION,
+    SMS_DATA_SCHEMA_VERSION,
     MISSING_VALUE,
     EMPTY_VALUE,
     KNOWN_CASE_PROPERTIES,
@@ -76,8 +83,11 @@ from corehq.apps.export.dbaccessors import (
     get_case_inferred_schema,
     get_form_inferred_schema,
 )
-from corehq.apps.export.utils import is_occurrence_deleted
-
+from corehq.apps.export.utils import (
+    is_occurrence_deleted,
+    domain_has_daily_saved_export_access,
+    domain_has_excel_dashboard_access,
+)
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -107,13 +117,14 @@ class PathNode(DocumentSchema):
     # This is true if this step in the path corresponds with an array (such as a repeat group)
     is_repeat = BooleanProperty(default=False)
 
+    def __key(self):
+        return (type(self), self.doc_type, self.name, self.is_repeat)
+
     def __eq__(self, other):
-        return (
-            type(self) == type(other) and
-            self.doc_type == other.doc_type and
-            self.name == other.name and
-            self.is_repeat == other.is_repeat
-        )
+        return self.__key() == other.__key()
+
+    def __hash__(self):
+        return hash(self.__key())
 
 
 class ExportItem(DocumentSchema):
@@ -135,6 +146,19 @@ class ExportItem(DocumentSchema):
     # False if the item was found in the application structure
     inferred = BooleanProperty(default=False)
     inferred_from = SetProperty(default=set)
+
+    def __key(self):
+        return'{}:{}:{}'.format(
+            _path_nodes_to_string(self.path),
+            self.doc_type,
+            self.transform,
+        )
+
+    def __hash__(self):
+        return hash(self.__key())
+
+    def __eq__(self, other):
+        return self.__key() == other.__key()
 
     @classmethod
     def wrap(cls, data):
@@ -172,6 +196,7 @@ class ExportItem(DocumentSchema):
     @classmethod
     def merge(cls, one, two):
         item = one
+        item.label = two.label  # always take the newest label
         item.last_occurrences = _merge_dicts(one.last_occurrences, two.last_occurrences, max)
         item.inferred = one.inferred or two.inferred
         item.inferred_from |= two.inferred_from
@@ -236,8 +261,11 @@ class ExportColumn(DocumentSchema):
         # <element>value</element>  -> 'value'
         #
         # This line ensures that we grab the actual value instead of the dictionary
-        if isinstance(value, dict) and '#text' in value:
-            value = value.get('#text')
+        if isinstance(value, dict):
+            if '#text' in value:
+                value = value.get('#text')
+            else:
+                return EMPTY_VALUE
 
         if transform_dates:
             value = couch_to_excel_datetime(value, doc)
@@ -606,7 +634,12 @@ class ExportInstance(BlobMixin, Document):
 
     @property
     def defaults(self):
-        return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
+        if self.type == FORM_EXPORT:
+            return FormExportInstanceDefaults
+        elif self.type == SMS_EXPORT:
+            return SMSExportInstanceDefaults
+        else:
+            return CaseExportInstanceDefaults
 
     def get_filters(self):
         """
@@ -718,6 +751,7 @@ class ExportInstance(BlobMixin, Document):
             CASE_HISTORY_PROPERTIES,
             PARENT_CASE_TABLE_PROPERTIES,
             STOCK_COLUMN,
+            SMS_TABLE_PROPERTIES,
         )
 
         nested_repeat_count = len([node for node in table.path if node.is_repeat])
@@ -762,6 +796,9 @@ class ExportInstance(BlobMixin, Document):
             elif table.path == PARENT_CASE_TABLE:
                 cls.__insert_system_properties(table, PARENT_CASE_TABLE_PROPERTIES,
                         **column_initialization_data)
+        elif export_type == SMS_EXPORT:
+            if table.path == MAIN_TABLE:
+                cls.__insert_system_properties(table, SMS_TABLE_PROPERTIES, **column_initialization_data)
 
     @classmethod
     def __insert_system_properties(cls, table, properties, top=True, **column_initialization_data):
@@ -830,6 +867,13 @@ class ExportInstance(BlobMixin, Document):
         Only daily saved exports could have a pre-computed export.
         """
         return self.fetch_attachment(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, stream=stream)
+
+    def copy_export(self):
+        export_json = self.to_json()
+        del export_json['_id']
+        export_json['name'] = u'{} - Copy'.format(self.name)
+        new_export = self.__class__.wrap(export_json)
+        return new_export
 
 
 class CaseExportInstance(ExportInstance):
@@ -920,6 +964,33 @@ class FormExportInstance(ExportInstance):
         return []
 
 
+class SMSExportInstance(ExportInstance):
+    type = SMS_EXPORT
+    identifier = None
+    name = "Messages"
+
+    @classmethod
+    def _new_from_schema(cls, schema):
+        main_table = TableConfiguration(
+            label='Messages',
+            path=MAIN_TABLE,
+            selected=True,
+            columns=[],
+        )
+        if schema.include_metadata:
+            main_table.columns.append(ExportColumn(
+                label="Message Log ID",
+                item=ExportItem(
+                    path=[PathNode(name='_id')]
+                ),
+                selected=True,
+            ))
+
+        instance = cls(domain=schema.domain, tables=[main_table])
+        cls._insert_system_properties(instance.domain, schema.type, instance.tables[0])
+        return instance
+
+
 class ExportInstanceDefaults(object):
     """
     This class is responsible for generating defaults for various aspects of the export instance
@@ -980,6 +1051,19 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
     @staticmethod
     def get_default_instance_name(schema):
         return u'{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%m-%d'))
+
+
+class SMSExportInstanceDefaults(ExportInstanceDefaults):
+    @staticmethod
+    def get_default_table_name(table_path):
+        if table_path == MAIN_TABLE:
+            return _('Messages')
+        else:
+            return _('Unknown')
+
+    @staticmethod
+    def get_default_instance_name(schema):
+        return u'Messages: {}'.format(datetime.now().strftime('%Y-%m-%d'))
 
 
 class ExportRow(object):
@@ -1257,11 +1341,16 @@ class ExportDataSchema(Document):
                 continue
 
             app = Application.wrap(app_doc)
-            current_schema = cls._process_app_build(
-                current_schema,
-                app,
-                identifier,
-            )
+            try:
+                current_schema = cls._process_app_build(
+                    current_schema,
+                    app,
+                    identifier,
+                )
+            except Exception as e:
+                _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
+                _soft_assert(False, 'Failed to process app {}. {}'.format(app._id, e))
+                continue
 
             # Only record the version of builds on the schema. We don't care about
             # whether or not the schema has seen the current build because that always
@@ -1276,6 +1365,12 @@ class ExportDataSchema(Document):
         if inferred_schema:
             current_schema = cls._merge_schemas(current_schema, inferred_schema)
 
+        try:
+            current_schema = cls._reorder_schema_from_app(current_schema, app_id, identifier)
+        except Exception as e:
+            _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
+            _soft_assert(False, 'Failed to process app during reorder {}. {}'.format(app._id, e))
+
         current_schema.domain = domain
         current_schema.app_id = app_id
         current_schema.version = cls.schema_version()
@@ -1286,6 +1381,47 @@ class ExportDataSchema(Document):
             original_id,
             original_rev
         )
+        return current_schema
+
+    @classmethod
+    def _reorder_schema_from_app(cls, current_schema, app_id, identifier):
+        try:
+            app = get_app(current_schema.domain, app_id)
+        except Http404:
+            return current_schema
+
+        ordered_schema = cls._process_app_build(
+            cls(),
+            app,
+            identifier,
+        )
+        return cls._reorder_schema_from_schema(current_schema, ordered_schema)
+
+    @classmethod
+    def _reorder_schema_from_schema(cls, current_schema, ordered_schema):
+        # First create a dictionary that maps item path to order number
+        # {
+        #   (PathNode(), PathNode()): 0
+        #   (PathNode(), PathNode()): 1
+        #   ...
+        # }
+
+        orders = {}
+        for group_schema in ordered_schema.group_schemas:
+            for idx, item in enumerate(group_schema.items):
+                orders[item] = idx
+
+        # Next iterate through current schema and order the ones that have an order
+        # and put the rest at the bottom. The ones not ordered are deleted items
+        for group_schema in current_schema.group_schemas:
+            ordered_items = [None] * len(group_schema.items)
+            unordered_items = []
+            for idx, item in enumerate(group_schema.items):
+                if item in orders:
+                    ordered_items[orders[item]] = item
+                else:
+                    unordered_items.append(item)
+            group_schema.items = filter(None, ordered_items) + unordered_items
         return current_schema
 
     @classmethod
@@ -1302,11 +1438,7 @@ class ExportDataSchema(Document):
         def resolvefn(group_schema1, group_schema2):
 
             def keyfn(export_item):
-                return'{}:{}:{}'.format(
-                    _path_nodes_to_string(export_item.path),
-                    export_item.doc_type,
-                    export_item.transform,
-                )
+                return export_item
 
             group_schema1.last_occurrences = _merge_dicts(
                 group_schema1.last_occurrences,
@@ -1665,7 +1797,7 @@ class CaseExportDataSchema(ExportDataSchema):
             app.copy_of or app._id,  # If not copy, must be current app
             app.version,
         ))
-        if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
+        if any(map(lambda relationship_tuple: relationship_tuple[1] in ['parent', 'host'], parent_types)):
             case_schemas.append(cls._generate_schema_for_parent_case(
                 app.copy_of or app._id,
                 app.version,
@@ -1753,6 +1885,27 @@ class CaseExportDataSchema(ExportDataSchema):
 
         schema.group_schemas.append(group_schema)
         return schema
+
+
+class SMSExportDataSchema(ExportDataSchema):
+    include_metadata = BooleanProperty(default=False)
+
+    @property
+    def type(self):
+        return SMS_EXPORT
+
+    @classmethod
+    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
+            only_process_current_builds=False, task=None):
+        return cls(domain=domain)
+
+    @classmethod
+    def schema_version(cls):
+        return SMS_DATA_SCHEMA_VERSION
+
+    @staticmethod
+    def get_latest_export_schema(domain, include_metadata, identifier=None):
+        return SMSExportDataSchema(domain=domain, include_metadata=include_metadata)
 
 
 def _string_path_to_list(path):
@@ -1958,8 +2111,8 @@ class SplitGPSExportColumn(ExportColumn):
             return super(SplitGPSExportColumn, self).get_headers()
         header = self.label
         header_templates = [
-            _(u'{}: latitude (meters)'),
-            _(u'{}: longitude (meters)'),
+            _(u'{}: latitude (degrees)'),
+            _(u'{}: longitude (degrees)'),
             _(u'{}: altitude (meters)'),
             _(u'{}: accuracy (meters)'),
         ]
@@ -2223,12 +2376,12 @@ class ConversionMeta(DocumentSchema):
     info = ListProperty()
 
     def pretty_print(self):
-        print '---' * 15
-        print '{:<20}| {}'.format('Original Path', self.path)
-        print '{:<20}| {}'.format('Failure Reason', self.failure_reason)
+        print('---' * 15)
+        print('{:<20}| {}'.format('Original Path', self.path))
+        print('{:<20}| {}'.format('Failure Reason', self.failure_reason))
         for idx, line in enumerate(self.info):
             prefix = 'Info' if idx == 0 else ''
-            print '{:<20}| {}'.format(prefix, line)
+            print('{:<20}| {}'.format(prefix, line))
 
 
 class ExportMigrationMeta(Document):
@@ -2265,6 +2418,36 @@ class ExportMigrationMeta(Document):
             args=[self.domain, self.saved_export_id],
         ))
 
+
+class DailySavedExportNotification(models.Model):
+    user_id = models.CharField(max_length=255, db_index=True)
+    domain = models.CharField(max_length=255, db_index=True)
+
+    @classmethod
+    def notified(cls, user_id, domain):
+        return bool(cls.objects.filter(user_id=user_id, domain=domain).count())
+
+    @classmethod
+    def mark_notified(cls, user_id, domain):
+        cls.objects.get_or_create(user_id=user_id, domain=domain)
+
+    @classmethod
+    def user_added_before_feature_release(cls, user_added_on):
+        return user_added_on < datetime(2017, 1, 25)
+
+    @classmethod
+    def user_to_be_notified(cls, domain, user):
+        from corehq.apps.export.views import use_new_daily_saved_exports_ui
+
+        return (
+            use_new_daily_saved_exports_ui(domain) and
+            cls.user_added_before_feature_release(user.created_on) and
+            not DailySavedExportNotification.notified(user.user_id, domain) and
+            (
+                domain_has_daily_saved_export_access(domain) or
+                domain_has_excel_dashboard_access(domain)
+            )
+        )
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []

@@ -3,24 +3,8 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            var ParentSelect = hqImport('app_manager/js/detail-screen-config.js').ParentSelect;
-            var parent_select_model = {{ module.parent_select|JSON }};
-            var parentSelect = new ParentSelect({
-                active: parent_select_model.active,
-                moduleId: parent_select_model.module_id,
-                parentModules: {{ parent_modules|JSON }},
-                lang: {{ lang|JSON }},
-                langs: {{ app.langs|JSON }}
-            });
-            $('#detail-screen-parent').koApplyBindings(parentSelect);
-        });
-    </script>
-{% endblock %}
-
 {% block settings_fields %}
+    {% initial_page_data 'parent_modules' parent_modules %}
     <div id="detail-screen-parent" class="form-group">
         <label class="control-label col-sm-2">{% trans "Attached to" %}</label>
         <div class="col-sm-4">

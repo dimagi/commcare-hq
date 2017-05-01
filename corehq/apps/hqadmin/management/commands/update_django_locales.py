@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import shutil
 from django.conf import settings
@@ -7,9 +8,8 @@ import django
 
 class Command(BaseCommand):
     help = "Update django locales for three-digit codes"
-    args = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         # if we were feeling ambitious we could get this from something more
         # formal/standard, but this seems totally workable for our needs
         HQ_TO_DJANGO_MAP = {
@@ -28,7 +28,7 @@ class Command(BaseCommand):
                 os.path.join(_get_django_home(), 'contrib', 'humanize', 'locale'),
             ]
 
-        print 'updating django locale files for local languages'
+        print('updating django locale files for local languages')
         locale_dirs = _get_django_locale_directories()
         for langcode, display in settings.LANGUAGES:
             for locale_dir in locale_dirs:
@@ -38,6 +38,6 @@ class Command(BaseCommand):
                     mapped_code = HQ_TO_DJANGO_MAP[langcode]
                     django_path = os.path.join(locale_dir, mapped_code)
                     shutil.copytree(django_path, path)
-                    print 'copied {src} to {dst}'.format(src=django_path, dst=path)
+                    print('copied {src} to {dst}'.format(src=django_path, dst=path))
                 else:
-                    print '%s all good' % langcode
+                    print('%s all good' % langcode)

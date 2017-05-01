@@ -1,39 +1,57 @@
 from getpass import getpass
-from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 import requests
 from requests.auth import HTTPDigestAuth
 from corehq.apps.app_manager.models import import_app
 
 
 class Command(BaseCommand):
-    args = 'source_domain app_id'
     help = ("Import an app from another Commcare instance")
-    option_list = (
-        make_option('-u', '--username',
-                    action='store',
-                    dest='username',
-                    help='Username'),
-        make_option('-p', '--password',
-                    action='store',
-                    dest='password',
-                    help='Password'),
-        make_option('-d', '--to_domain',
-                    action='store',
-                    dest='to_domain',
-                    help='The domain to import the app into.'),
-        make_option('-n', '--to_name',
-                    action='store',
-                    dest='to_name',
-                    default=None,
-                    help='The name to give to the imported app'),
-        make_option('--url',
-                    action='store',
-                    dest='url',
-                    default='https://www.commcarehq.org',
-                    help='The URL of the CommCare instance.'),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'domain'
+        )
+        parser.add_argument(
+            'app_id',
+        )
+        parser.add_argument(
+            '-u',
+            '--username',
+            action='store',
+            dest='username',
+            help='Username',
+        )
+        parser.add_argument(
+            '-p',
+            '--password',
+            action='store',
+            dest='password',
+            help='Password',
+        )
+        parser.add_argument(
+            '-d',
+            '--to_domain',
+            action='store',
+            dest='to_domain',
+            help='The domain to import the app into.',
+        )
+        parser.add_argument(
+            '-n',
+            '--to_name',
+            action='store',
+            dest='to_name',
+            default=None,
+            help='The name to give to the imported app',
+        )
+        parser.add_argument(
+            '--url',
+            action='store',
+            dest='url',
+            default='https://www.commcarehq.org',
+            help='The URL of the CommCare instance.',
+        )
 
     def _get_required_option(self, name, options):
         value = options.get(name)
@@ -41,9 +59,7 @@ class Command(BaseCommand):
             raise CommandError("Option: '--{}' must be specified".format(name))
         return value
 
-    def handle(self, *args, **options):
-        domain, app_id = args
-
+    def handle(self, domain, app_id, **options):
         username = self._get_required_option('username', options)
         target_domain = self._get_required_option('to_domain', options)
 

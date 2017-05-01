@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
@@ -147,18 +147,20 @@ class CaseRepeaterForm(GenericRepeaterForm):
     white_listed_case_types = forms.MultipleChoiceField(
         required=False,
         label=_('Case Types'),
+        widget=forms.SelectMultiple(attrs={'class': 'ko-select2'}),
         help_text=_('Only cases of this type will be forwarded. Leave empty to forward all cases')
     )
     black_listed_users = forms.MultipleChoiceField(
         required=False,
         label=_('Users to exclude'),
+        widget=forms.SelectMultiple(attrs={'class': 'ko-select2'}),
         help_text=_('Case creations and updates submitted by these users will not be forwarded')
     )
 
     @property
     @memoized
     def case_type_choices(self):
-        return [(t, t) for t in CaseAccessors(self.domain).get_case_types()]
+        return [(t, t) for t in get_case_types_for_domain_es(self.domain)]
 
     @property
     @memoized

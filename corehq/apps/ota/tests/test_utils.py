@@ -80,9 +80,9 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(RestorePermissionsTest, cls).tearDownClass()
         delete_all_users()
         cls.other_project.delete()
+        super(RestorePermissionsTest, cls).tearDownClass()
 
     def test_commcare_user_permitted(self):
         is_permitted, message = is_permitted_to_restore(
@@ -284,8 +284,8 @@ class GetRestoreUserTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(GetRestoreUserTest, cls).tearDownClass()
         delete_all_users()
+        super(GetRestoreUserTest, cls).tearDownClass()
 
     def test_get_restore_user_web_user(self):
         self.assertIsInstance(get_restore_user(self.domain, self.web_user, None), OTARestoreWebUser)

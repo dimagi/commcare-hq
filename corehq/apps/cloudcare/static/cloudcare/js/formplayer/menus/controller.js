@@ -117,12 +117,14 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         getDetailList: function (detailObject) {
             var headers = detailObject.get('headers');
             var details = detailObject.get('details');
+            var styles = detailObject.get('styles');
             var detailModel = [];
             // we need to map the details and headers JSON to a list for a Backbone Collection
             for (var i = 0; i < headers.length; i++) {
                 var obj = {};
                 obj.data = details[i];
                 obj.header = headers[i];
+                obj.style = styles[i];
                 obj.id = i;
                 detailModel.push(obj);
             }

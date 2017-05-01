@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                 ('use_named_args', models.NullBooleanField()),
                 ('named_args', jsonfield.fields.JSONField(default=dict)),
                 ('named_args_separator', models.CharField(max_length=126, null=True)),
-                ('keyword', models.ForeignKey(to='sms.Keyword')),
+                ('keyword', models.ForeignKey(to='sms.Keyword', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(

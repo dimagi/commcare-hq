@@ -11,8 +11,7 @@ from corehq.pillows.reportxform import get_report_xforms_reindexer
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, get_form_ready_to_save
 from pillowtop.es_utils import initialize_index_and_mapping
-from testapps.test_pillowtop.utils import process_couch_changes
-from testapps.test_pillowtop.utils import process_kafka_changes
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 DOMAIN = 'report-xform-pillowtest-domain'
 
@@ -55,8 +54,8 @@ class ReportXformPillowTest(TestCase):
         self.assertEqual(0, results.total)
 
     def _create_form_and_sync_to_es(self, domain):
-        with process_kafka_changes('ReportXFormToElasticsearchPillow'):
-            with process_couch_changes('DefaultChangeFeedPillow'):
+        with process_pillow_changes('ReportXFormToElasticsearchPillow'):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
                 metadata = TestFormMetadata(domain=domain)
                 form = get_form_ready_to_save(metadata)
                 FormProcessorInterface(domain=domain).save_processed_models([form])

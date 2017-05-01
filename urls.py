@@ -69,6 +69,7 @@ domain_specific = [
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
+    url(r'^motech/', include('corehq.apps.motech.urls')),
     url(r'^fri/', include('custom.fri.urls')),
     url(r'^ilsgateway/', include('custom.ilsgateway.urls')),
     url(r'^ewsghana/', include('custom.ewsghana.urls')),
@@ -78,6 +79,7 @@ domain_specific = [
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     url(r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
+    url(r'^', include('custom.icds.urls')),
     url(r'^', include('custom.icds_reports.urls')),
     url(r'^', include('custom.enikshay.urls')),
     url(r'^_base_template/$', login_and_domain_required(
@@ -91,7 +93,7 @@ urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(
         url=static('hqwebapp/images/favicon2.png'), permanent=True)),
     url(r'^auditcare/', include('auditcare.urls')),
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', admin.site.urls),
     url(r'^analytics/', include('corehq.apps.analytics.urls')),
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),

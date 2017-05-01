@@ -27,7 +27,7 @@ CASE_PROPERTY_MAP = {
 
 def get_column_generator(app, module, detail, column, sort_element=None,
                          order=None, detail_type=None):
-    cls = get_class_for_format(column.format)
+    cls = get_class_for_format(column.format)  # cls will be FormattedDetailColumn or a subclass of it
     return cls(app, module, detail, column, sort_element, order, detail_type=detail_type)
 
 
@@ -47,7 +47,7 @@ class register_format_type(object):
 
 
 def get_column_xpath_generator(app, module, detail, column):
-    cls = get_class_for_type(column.field_type)
+    cls = get_class_for_type(column.field_type)  # cls will be BaseXpathGenerator or a subclass
     return cls(app, module, detail, column)
 
 
@@ -167,6 +167,7 @@ class FormattedDetailColumn(object):
 
             sort.order = self.order
             sort.direction = self.sort_element.direction
+            sort.blanks = self.sort_element.blanks
 
             # Flag field as index by making order "-2"
             # this is for the CACHE_AND_INDEX toggle
@@ -220,25 +221,33 @@ class FormattedDetailColumn(object):
 
     @property
     def fields(self):
+        print_id = None
+        if self.detail.print_template:
+            print_id = self.column.field
+
         if self.app.enable_multi_sort:
             yield sx.Field(
                 header=self.header,
                 template=self.template,
                 sort_node=self.sort_node,
+                print_id=print_id,
             )
         elif self.sort_xpath_function and self.detail.display == 'short':
             yield sx.Field(
                 header=self.header,
                 template=self.hidden_template,
+                print_id=print_id,
             )
             yield sx.Field(
                 header=self.hidden_header,
                 template=self.template,
+                print_id=print_id,
             )
         else:
             yield sx.Field(
                 header=self.header,
                 template=self.template,
+                print_id=print_id,
             )
 
 
@@ -568,11 +577,11 @@ class PropertyXpathGenerator(BaseXpathGenerator):
         property = parts.pop()
         indexes = parts
 
-        use_relative = property != '#owner_name'
-        if use_relative:
-            case = CaseXPath('')
-        else:
+        use_absolute = indexes or property == '#owner_name'
+        if use_absolute:
             case = CaseXPath(u'current()')
+        else:
+            case = CaseXPath('')
 
         if indexes and indexes[0] == 'user':
             case = CaseXPath(UserCaseXPath().case())

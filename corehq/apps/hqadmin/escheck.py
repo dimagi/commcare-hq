@@ -146,7 +146,7 @@ def _get_latest_doc_from_index(es_index, sort_field):
                 result = res['hits']['hits'][0]
                 return result['_source']['_id']
 
-    except Exception, ex:
+    except Exception as ex:
         logging.error("Error querying get_latest_doc_from_index[%s]: %s" % (es_index, ex))
         return None
 
@@ -190,7 +190,7 @@ def _check_es_rev(index, doc_id, couch_revs):
             status = False
             message = "Not in sync - query failed"
             notify_error("%s: %s" % (message, str(res)))
-    except Exception, ex:
+    except Exception as ex:
         message = "ES Error: %s" % ex
         status = False
     return {index: {"index": index, "status": status, "message": message}}

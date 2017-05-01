@@ -2,31 +2,27 @@ from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_da
     compute_consumption_or_default)
 from casexml.apps.stock.tests.mock_consumption import now
 from casexml.apps.stock.tests.base import StockTestBase
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 
 
 class ConsumptionCaseTest(StockTestBase):
 
-    @run_with_all_backends
     def testNoConsumption(self):
         self._stock_report(25, 5)
         self._stock_report(25, 0)
         self.assertAlmostEqual(0., self._compute_consumption())
 
-    @run_with_all_backends
     def testNoConsumptionWithReceipts(self):
         self._stock_report(25, 5)
         self._receipt_report(10, 3)
         self._stock_report(35, 0)
         self.assertAlmostEqual(0., self._compute_consumption())
 
-    @run_with_all_backends
     def testSimpleConsumption(self):
         self._stock_report(25, 5)
         self._stock_report(10, 0)
         self.assertAlmostEqual(3., self._compute_consumption())
 
-    @run_with_all_backends
     def testDefaultValue(self):
         self._stock_report(25, 5)
         self._stock_report(10, 0)
@@ -46,3 +42,8 @@ class ConsumptionCaseTest(StockTestBase):
                 default_monthly_consumption_function=_ten
             )
         ))
+
+
+@use_sql_backend
+class ConsumptionCaseTestSQL(ConsumptionCaseTest):
+    pass

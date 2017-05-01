@@ -77,8 +77,8 @@ class QueryEngine(object):
 
     def resolve(self, param, query_context):
         if param.namespace == GLOBAL_NAMESPACE:
-            template_varaible = self.get_template_variable(slug=param.variable)
-            return self._resolve_from_template(template_varaible, query_context)
+            template_variable = self.get_template_variable(slug=param.variable)
+            return self._resolve_from_template(template_variable, query_context)
         try:
             return self.resolvers[param.namespace].resolve(param.variable, query_context)
         except QueryResolutionError:

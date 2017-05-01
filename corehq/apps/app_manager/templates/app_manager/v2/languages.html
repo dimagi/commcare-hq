@@ -2,6 +2,12 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
+{% initial_page_data 'lang' lang %}
+{% initial_page_data 'translations' translations %}
+{% registerurl "edit_app_langs" domain app.id %}
+{% registerurl "edit_app_ui_translations" domain app.id %}
+{% registerurl "get_app_ui_translations" domain %}
+
 <div class="panel-group" id="language-settings-options">
     <div class="panel panel-appmanager">
       <div class="panel-heading">
@@ -38,20 +44,6 @@
         <div class="panel-collapse collapse" id="commcare-translations">
           <div class="panel-body">
             <section id="translations_ui">
-                <p class="help-block">
-                    {% blocktrans %}
-                    For Java Phone (Nokia), refer to
-                    <a target="_blank" href="https://github.com/dimagi/javarosa/blob/master/j2me/shared-resources/resources/messages_default.txt">JavaRosa translations</a>
-                    and <a target="_blank" href="https://github.com/dimagi/commcare/blob/master/application/resources/messages_cc_default.txt">CommCare translations</a>.
-                    {% endblocktrans %}
-                </p>
-                <p class="help-block">
-                    {% blocktrans %}
-                    For Android, refer to
-                    <a target="_blank" href="https://github.com/dimagi/commcare-odk/blob/master/app/assets/locales/messages_ccodk_default.txt">CommCareODK translations</a>
-                    and <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/CommCare+ODK+Form+Entry+Interface+Strings">ODK Collect translations</a>.
-                    {% endblocktrans %}
-                </p>
             </section>
           </div>
         </div>

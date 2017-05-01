@@ -102,7 +102,7 @@ class ENikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class TestRegisterPatientRepeater(ENikshayRepeaterTestBase):
+class TestRegisterPatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
         super(TestRegisterPatientRepeater, self).setUp()
@@ -117,10 +117,15 @@ class TestRegisterPatientRepeater(ENikshayRepeaterTestBase):
     def test_trigger(self):
         # 99dots not enabled
         self.create_case(self.episode)
+        self.assign_person_to_location(self.phi.location_id)
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # enable 99dots, should register a repeat record
         self._create_99dots_enabled_case()
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        # updating some other random properties shouldn't create a new repeat record
+        self._update_case(self.episode_id, {'some_property': "changed"})
         self.assertEqual(1, len(self.repeat_records().all()))
 
         # set as registered, shouldn't register a new repeat record
@@ -129,7 +134,7 @@ class TestRegisterPatientRepeater(ENikshayRepeaterTestBase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
+class TestUpdatePatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
         super(TestUpdatePatientRepeater, self).setUp()
@@ -143,6 +148,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
     def test_trigger(self):
         self.create_case_structure()
         self._update_case(self.person_id, {PRIMARY_PHONE_NUMBER: '999999999', })
+        self.assign_person_to_location(self.phi.location_id)
         self.assertEqual(0, len(self.repeat_records().all()))
 
         self._create_99dots_registered_case()
@@ -161,6 +167,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
         """Submitting a form with noop case blocks was throwing an exception
         """
         self.create_case_structure()
+        self.assign_person_to_location(self.phi.location_id)
         self._create_99dots_registered_case()
 
         empty_case = CaseStructure(
@@ -186,7 +193,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class TestAdherenceRepeater(ENikshayRepeaterTestBase):
+class TestAdherenceRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
         super(TestAdherenceRepeater, self).setUp()
@@ -201,6 +208,7 @@ class TestAdherenceRepeater(ENikshayRepeaterTestBase):
         self.create_case_structure()
         self._create_99dots_registered_case()
         self._create_99dots_enabled_case()
+        self.assign_person_to_location(self.phi.location_id)
         self.assertEqual(0, len(self.repeat_records().all()))
 
         self.create_adherence_cases([datetime(2017, 2, 17)])
@@ -214,7 +222,7 @@ class TestAdherenceRepeater(ENikshayRepeaterTestBase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class TestTreatmentOutcomeRepeater(ENikshayRepeaterTestBase):
+class TestTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
         super(TestTreatmentOutcomeRepeater, self).setUp()
@@ -229,6 +237,7 @@ class TestTreatmentOutcomeRepeater(ENikshayRepeaterTestBase):
         self.create_case_structure()
         self._create_99dots_registered_case()
         self._create_99dots_enabled_case()
+        self.assign_person_to_location(self.phi.location_id)
         self.assertEqual(0, len(self.repeat_records().all()))
 
         self._update_case(self.episode_id, {TREATMENT_OUTCOME: 'the_end_of_days'})
@@ -264,7 +273,7 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             "phone_numbers": expected_numbers,
             "merm_id": person_case_properties.get(MERM_ID, None),
             "treatment_start_date": episode_case_properties.get(TREATMENT_START_DATE, None),
-            "treatment_supporter_name": "{} {}".format(
+            "treatment_supporter_name": u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
                 episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, ''),
             ),

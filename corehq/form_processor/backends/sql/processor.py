@@ -2,6 +2,7 @@ import datetime
 import logging
 import uuid
 
+import redis
 from PIL import Image
 from django.db import transaction
 from casexml.apps.case.xform import get_case_updates
@@ -33,10 +34,13 @@ class FormProcessorSQL(object):
                 attachment_id=uuid.uuid4(),
                 content_type=attachment.content_type,
             )
-            xform_attachment.write_content(attachment.content_as_file())
+            xform_attachment.write_content(attachment.content)
             if xform_attachment.is_image:
-                img_size = Image.open(attachment.content_as_file()).size
-                xform_attachment.properties = dict(width=img_size[0], height=img_size[1])
+                try:
+                    img_size = Image.open(attachment.content_as_file()).size
+                    xform_attachment.properties = dict(width=img_size[0], height=img_size[1])
+                except IOError:
+                    xform_attachment.content_type = 'application/octet-stream'
             xform_attachments.append(xform_attachment)
 
         xform.unsaved_attachments = xform_attachments
@@ -242,6 +246,25 @@ class FormProcessorSQL(object):
     def get_case_forms(case_id):
         xform_ids = CaseAccessorSQL.get_case_xform_ids(case_id)
         return FormAccessorSQL.get_forms_with_attachments_meta(xform_ids)
+
+    @staticmethod
+    def get_case_with_lock(case_id, lock=False, strip_history=False, wrap=False):
+        try:
+            if lock:
+                try:
+                    return CommCareCaseSQL.get_locked_obj(_id=case_id)
+                except redis.RedisError:
+                    case = CaseAccessorSQL.get_case(case_id)
+            else:
+                case = CaseAccessorSQL.get_case(case_id)
+        except CaseNotFound:
+            return None, None
+
+        return case, None
+
+    @staticmethod
+    def case_exists(case_id):
+        return CaseAccessorSQL.case_exists(case_id)
 
 
 def get_case_transactions(case_id, updated_xforms=None):

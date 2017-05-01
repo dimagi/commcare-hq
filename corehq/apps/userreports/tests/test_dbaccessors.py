@@ -11,6 +11,7 @@ class DBAccessorsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(DBAccessorsTest, cls).setUpClass()
         cls.data_source_id = 'd36c7c934cb84725899cca9a0ef96e3a'
         cls.domain_1 = Domain(name='userreport-dbaccessors')
         cls.domain_1.save()
@@ -33,6 +34,7 @@ class DBAccessorsTest(TestCase):
         ReportConfiguration.get_db().bulk_delete(cls.report_configs)
         cls.domain_1.delete()
         cls.domain_2.delete()
+        super(DBAccessorsTest, cls).tearDownClass()
 
     def test_get_number_of_report_configs_by_data_source(self):
         self.assertEqual(

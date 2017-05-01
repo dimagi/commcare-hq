@@ -86,6 +86,18 @@
         </text>
       </template>
     </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.case_short.case_parent/case_name_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="instance('casedb')/casedb/case[@case_id=current()/index/parent]/case_name"/>
+        </text>
+      </template>
+    </field>
   </detail>
   <detail id="m1_case_long">
     <title>

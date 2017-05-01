@@ -62,6 +62,7 @@ from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
@@ -685,9 +686,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         `report_slug` instead of `config_ids`.
         """
         if self.config_ids:
-            configs = ReportConfig.view('_all_docs', keys=self.config_ids,
-                include_docs=True).all()
-            configs = [c for c in configs if not hasattr(c, 'deleted')]
+            configs = []
+            for config_doc in iter_docs(ReportConfig.get_db(), self.config_ids):
+                config = ReportConfig.wrap(config_doc)
+                if not hasattr(config, 'deleted'):
+                    configs.append(config)
 
             def _sort_key(config_id):
                 if config_id in self.config_ids:
@@ -794,10 +797,12 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             for email in emails:
                 body = render_full_report_notification(None, content, email, self).content
                 send_html_email_async.delay(
-                    title, email, body, email_from=settings.DEFAULT_FROM_EMAIL,
-                    file_attachments=excel_files, ga_track=True,
-                    ga_tracking_info={'cd4': self.domain,
-                                      'cd10': ', '.join(slugs)})
+                    title, email, body,
+                    email_from=settings.DEFAULT_FROM_EMAIL,
+                    file_attachments=excel_files,
+                    ga_track=True,
+                    ga_tracking_info={'cd4': self.domain, 'cd10': ', '.join(slugs)},
+                )
 
     def remove_recipient(self, email):
         try:

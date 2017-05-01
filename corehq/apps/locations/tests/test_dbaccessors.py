@@ -14,6 +14,7 @@ class TestUsersByLocation(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestUsersByLocation, cls).setUpClass()
         delete_all_locations()
         delete_all_users()
         cls.domain = 'test-domain'
@@ -43,6 +44,7 @@ class TestUsersByLocation(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         delete_all_locations()
+        super(TestUsersByLocation, cls).tearDownClass()
 
     def test_get_users_by_location_id(self):
         users = get_users_by_location_id(self.domain, self.meereen._id)

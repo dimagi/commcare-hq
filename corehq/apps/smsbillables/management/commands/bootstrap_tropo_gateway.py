@@ -51,8 +51,6 @@ def bootstrap_tropo_gateway(apps):
 
 class Command(BaseCommand):
     help = "bootstrap Tropo gateway fees"
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         bootstrap_tropo_gateway(None)

@@ -1,5 +1,5 @@
-from django.core.management.base import BaseCommand, CommandError
-from optparse import make_option
+from __future__ import print_function
+from django.core.management.base import BaseCommand
 import simplejson
 from elasticsearch.exceptions import NotFoundError
 
@@ -10,29 +10,31 @@ from pillowtop.es_utils import assume_alias
 
 class Command(BaseCommand):
     help = "."
-    args = ""
-    label = ""
 
-    option_list = (
-        make_option('--flip_all_aliases',
-                    action='store_true',
-                    dest='flip_all',
-                    default=False,
-                    help="Flip all aliases"),
-        make_option('--list',
-                    action='store_true',
-                    dest='list_pillows',
-                    default=False,
-                    help="Print AliasedElasticPillows that can be operated on"),
-        make_option('--code_red',
-                    action='store_true',
-                    dest='code_red',
-                    default=False,
-                    help="Code red! Delete all indices and pillow checkpoints and start afresh."),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--flip_all_aliases',
+            action='store_true',
+            dest='flip_all',
+            default=False,
+            help="Flip all aliases",
+        )
+        parser.add_argument(
+            '--list',
+            action='store_true',
+            dest='list_pillows',
+            default=False,
+            help="Print AliasedElasticPillows that can be operated on",
+        )
+        parser.add_argument(
+            '--code_red',
+            action='store_true',
+            dest='code_red',
+            default=False,
+            help="Code red! Delete all indices and pillow checkpoints and start afresh.",
+        )
 
-    def handle(self, *args, **options):
-        if len(args) != 0: raise CommandError("This command doesn't expect arguments!")
+    def handle(self, **options):
         flip_all = options['flip_all']
         code_red = options['code_red']
 
@@ -51,14 +53,14 @@ class Command(BaseCommand):
                     try:
                         es.indices.delete(index_info.index)
                     except NotFoundError:
-                        print 'elastic index not present: {}'.format(index_info.index)
+                        print('elastic index not present: {}'.format(index_info.index))
                     else:
-                        print 'deleted elastic index: {}'.format(index_info.index)
+                        print('deleted elastic index: {}'.format(index_info.index))
             else:
-                print 'Safety first!'
+                print('Safety first!')
             return
 
         if flip_all:
             for index_info in es_indices:
                 assume_alias(es, index_info.index, index_info.alias)
-            print simplejson.dumps(es.indices.get_aliases(), indent=4)
+            print(simplejson.dumps(es.indices.get_aliases(), indent=4))

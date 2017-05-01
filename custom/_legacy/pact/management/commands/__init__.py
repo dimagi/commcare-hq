@@ -1,13 +1,12 @@
+from __future__ import print_function
 import getpass
 import urllib2
-from django.core.management.base import NoArgsCommand
+from django.core.management.base import BaseCommand
 from pact.management.commands.constants import RETRY_LIMIT
 
 
-class PactMigrateCommand(NoArgsCommand):
+class PactMigrateCommand(BaseCommand):
     help = "OTA restore from pact server"
-    option_list = NoArgsCommand.option_list + (
-    )
 
     def get_credentials(self):
         self.username = raw_input("""\tEnter pact username: """)
@@ -33,9 +32,9 @@ class PactMigrateCommand(NoArgsCommand):
             res = urllib2.urlopen(req)
             payload = res.read()
             return payload
-        except urllib2.HTTPError, e:
-            print "\t\t\tError: %s: %s" % (url, e)
+        except urllib2.HTTPError as e:
+            print("\t\t\tError: %s: %s" % (url, e))
             if retry < RETRY_LIMIT:
-                print "Retry %d/%d" % (retry,RETRY_LIMIT)
+                print("Retry %d/%d" % (retry,RETRY_LIMIT))
                 return self.get_url(url, retry=retry+1)
             return None

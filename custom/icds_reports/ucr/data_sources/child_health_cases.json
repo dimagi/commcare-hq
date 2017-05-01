@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "config": {
     "table_id": "static-child_health_cases",
     "display_name": "Cases - Child Health (Static)",
@@ -157,7 +161,8 @@
         "transform": {},
         "is_nullable": false,
         "type": "expression",
-        "column_id": "awc_id"
+        "column_id": "awc_id",
+        "create_index": true
       },
       {
         "display_name": null,
@@ -177,7 +182,8 @@
           },
           "type": "location_parent_id"
         },
-        "column_id": "supervisor_id"
+        "column_id": "supervisor_id",
+        "create_index": true
       },
       {
         "display_name": null,
@@ -1489,6 +1495,10 @@
         "property_value": true
       }
     },
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

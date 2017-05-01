@@ -4,7 +4,7 @@ from iso8601 import iso8601
 
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
-from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
+from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported, CaseValueError
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
@@ -13,13 +13,31 @@ from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, 
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
+
+def _validate_length(length):
+    def __inner(value):
+        if len(value) > length:
+            raise ValueError('Value exceeds allowed length: {}'.format(length))
+
+        return value
+
+    return __inner
+
+
 PROPERTY_TYPE_MAPPING = {
-    'opened_on': iso8601.parse_date
+    'opened_on': iso8601.parse_date,
+    'name': _validate_length(255),
+    'type': _validate_length(255),
+    'owner_id': _validate_length(255),
+    'external_id': _validate_length(255),
 }
 
 
-def _convert_type(property_name, value):
-    return PROPERTY_TYPE_MAPPING.get(property_name, lambda x: x)(value)
+def _convert_type_check_length(property_name, value):
+    try:
+        return PROPERTY_TYPE_MAPPING.get(property_name, lambda x: x)(value)
+    except ValueError as e:
+        raise CaseValueError('Error processing case update: Field: {}, Error: {}'.format(property_name, str(e)))
 
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
@@ -106,7 +124,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def _update_known_properties(self, action):
         for name, value in action.get_known_properties().items():
             if value:
-                setattr(self.case, name, _convert_type(name, value))
+                setattr(self.case, name, _convert_type_check_length(name, value))
 
     def _apply_create_action(self, case_update, create_action):
         self._update_known_properties(create_action)
@@ -184,9 +202,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def _reset_case_state(self):
         """
         Clear known case properties, and all dynamic properties
-        Note: does not alter case indices or attachments. For indices this isn't an issue
-        since we only allow creating indices at case creation (via the app builder) and also
-        don't support optionally creating indices.
         """
         self.case.case_json = {}
         self.case.deleted = False
@@ -225,6 +240,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
         self._reset_case_state()
 
+        original_indices = {index.identifier: index for index in self.case.indices}
+        original_attachments = {attach.identifier: attach for attach in self.case.get_attachments()}
+
         real_transactions = []
         for transaction in transactions:
             if not transaction.is_relevant:
@@ -233,11 +251,21 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)
 
+        self._delete_old_related_models(original_indices, self.case.get_live_tracked_models(CommCareCaseIndexSQL))
+        self._delete_old_related_models(original_attachments, self.case.get_live_tracked_models(CaseAttachmentSQL))
+
         self.case.deleted = already_deleted or not bool(real_transactions)
 
         self.case.track_create(rebuild_transaction)
         if not self.case.modified_on:
             self.case.modified_on = rebuild_transaction.server_date
+
+    def _delete_old_related_models(self, original_models_by_id, models_to_keep):
+        for model in models_to_keep:
+            original_models_by_id.pop(model.identifier, None)
+
+        for model in original_models_by_id.values():
+            self.case.track_delete(model)
 
     def _apply_form_transaction(self, transaction):
         form = transaction.form

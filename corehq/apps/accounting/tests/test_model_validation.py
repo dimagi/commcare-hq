@@ -17,14 +17,6 @@ from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 
 class TestCreditAdjustmentValidation(BaseAccountingTest):
 
-    def tearDown(self):
-        CreditAdjustment.objects.all().delete()
-        LineItem.objects.all().delete()
-        Invoice.objects.all().delete()
-        generator.delete_all_subscriptions()
-        generator.delete_all_accounts()
-        super(TestCreditAdjustmentValidation, self).tearDown()
-
     def test_clean(self):
         account = BillingAccount.objects.create(
             name='Test Account',
@@ -34,7 +26,7 @@ class TestCreditAdjustmentValidation(BaseAccountingTest):
         subscription = Subscription.objects.create(
             account=account,
             date_start=date.today(),
-            plan_version=generator.subscribable_plan(),
+            plan_version=generator.subscribable_plan_version(),
             subscriber=Subscriber.objects.create(domain='test')
         )
         invoice = Invoice.objects.create(

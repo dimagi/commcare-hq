@@ -1,11 +1,11 @@
 import uuid
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from urllib import urlencode
 
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.submission_post import SubmissionPost
 import django_digest.test
 from django.test import TestCase
@@ -26,9 +26,9 @@ class FakeFile(object):
         return self.data
 
 
-class _AuthTest(TestCase):
+class AuthTestMixin(object):
 
-    def set_up_auth_test(self):
+    def _set_up_auth_test(self):
         self._set_up_domain()
 
         try:
@@ -75,10 +75,6 @@ class _AuthTest(TestCase):
             os.path.dirname(__file__), "data", 'device_log.xml'
         )
 
-    def tearDown(self):
-        self.user.delete()
-        super(_AuthTest, self).tearDown()
-
     def _test_post(self, file_path, authtype=None, client=None,
                    expected_status=201, expected_auth_context=None,
                    submit_mode=None, expected_response=None):
@@ -117,7 +113,9 @@ class _AuthTest(TestCase):
             self.assertEqual(xform.auth_context, expected_auth_context)
             return xform
 
-    @run_with_all_backends
+
+class _AuthTestsCouchOnly(object):
+
     def test_digest(self):
         client = django_digest.test.Client()
         client.set_authorization(self.user.username, '1234',
@@ -171,7 +169,9 @@ class _AuthTest(TestCase):
             expected_response=accepted_response
         )
 
-    @run_with_all_backends
+
+class _AuthTestsBothBackends(object):
+
     def test_basic(self):
         client = django_digest.test.Client()
         client.set_authorization(self.user.username, '1234',
@@ -197,7 +197,6 @@ class _AuthTest(TestCase):
             expected_auth_context=expected_auth_context
         )
 
-    @run_with_all_backends
     def test_noauth_nometa(self):
         self._test_post(
             file_path=self.bare_form,
@@ -205,7 +204,6 @@ class _AuthTest(TestCase):
             expected_status=403,
         )
 
-    @run_with_all_backends
     def test_noauth_demomode(self):
         self._test_post(
             file_path=self.bare_form,
@@ -215,7 +213,6 @@ class _AuthTest(TestCase):
             expected_response=SubmissionPost.submission_ignored_response().content,
         )
 
-    @run_with_all_backends
     def test_noauth_devicelog(self):
         self._test_post(
             file_path=self.device_log,
@@ -223,7 +220,6 @@ class _AuthTest(TestCase):
             expected_status=201,
         )
 
-    @run_with_all_backends
     def test_bad_noauth(self):
         """
         if someone submits a form in noauth mode, but it creates or updates
@@ -236,7 +232,6 @@ class _AuthTest(TestCase):
             expected_status=403,
         )
 
-    @run_with_all_backends
     def test_case_noauth(self):
         self._test_post(
             file_path=self.form_with_demo_case,
@@ -251,7 +246,43 @@ class _AuthTest(TestCase):
         )
 
 
-class AuthTest(_AuthTest):
+class AuthCouchOnlyTest(TestCase, AuthTestMixin, _AuthTestsCouchOnly):
+
+    domain = 'my-crazy-domain'
+
+    def _set_up_domain(self):
+        project = create_domain(self.domain)
+        project.secure_submissions = True
+        project.save()
+
+    def setUp(self):
+        super(AuthCouchOnlyTest, self).setUp()
+        super(AuthCouchOnlyTest, self)._set_up_auth_test()
+
+    def tearDown(self):
+        self.user.delete()
+        super(AuthCouchOnlyTest, self).tearDown()
+
+
+class InsecureAuthCouchOnlyTest(TestCase, AuthTestMixin, _AuthTestsCouchOnly):
+
+    domain = 'my-crazy-domain'
+
+    def _set_up_domain(self):
+        project = create_domain(self.domain)
+        project.secure_submissions = False
+        project.save()
+
+    def setUp(self):
+        super(InsecureAuthCouchOnlyTest, self).setUp()
+        super(InsecureAuthCouchOnlyTest, self)._set_up_auth_test()
+
+    def tearDown(self):
+        self.user.delete()
+        super(InsecureAuthCouchOnlyTest, self).tearDown()
+
+
+class AuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
 
     domain = 'my-crazy-domain'
 
@@ -262,10 +293,14 @@ class AuthTest(_AuthTest):
 
     def setUp(self):
         super(AuthTest, self).setUp()
-        super(AuthTest, self).set_up_auth_test()
+        super(AuthTest, self)._set_up_auth_test()
+
+    def tearDown(self):
+        self.user.delete()
+        super(AuthTest, self).tearDown()
 
 
-class InsecureAuthTest(_AuthTest):
+class InsecureAuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
 
     domain = 'my-crazy-insecure-domain'
 
@@ -276,4 +311,18 @@ class InsecureAuthTest(_AuthTest):
 
     def setUp(self):
         super(InsecureAuthTest, self).setUp()
-        super(InsecureAuthTest, self).set_up_auth_test()
+        super(InsecureAuthTest, self)._set_up_auth_test()
+
+    def tearDown(self):
+        self.user.delete()
+        super(InsecureAuthTest, self).tearDown()
+
+
+@use_sql_backend
+class AuthTestSQL(AuthTest):
+    pass
+
+
+@use_sql_backend
+class InsecureAuthTestSQL(InsecureAuthTest):
+    pass

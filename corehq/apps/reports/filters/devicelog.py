@@ -1,5 +1,8 @@
+from django.urls import reverse
 from django.utils.translation import ugettext_noop, ugettext_lazy
-from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter, BaseTagsFilter
+from corehq.apps.reports.filters.base import (
+    BaseReportFilter, BaseSingleOptionFilter, BaseTagsFilter, BaseMultipleOptionFilter
+)
 from corehq.util.queries import fast_distinct, fast_distinct_in_domain
 from corehq.util.quickcache import quickcache
 from phonelog.models import DeviceReportEntry
@@ -51,28 +54,20 @@ class DeviceLogCommCareVersionFilter(BaseTagsFilter):
     placeholder = ugettext_lazy("Enter the CommCare Version you want e.g '2.28.1'")
 
 
-class BaseDeviceLogFilter(BaseReportFilter):
+class BaseDeviceLogFilter(BaseMultipleOptionFilter):
     slug = "logfilter"
-    template = "reports/filters/devicelog_filter.html"
     field = None
     label = ugettext_noop("Filter Logs By")
     url_param_map = {'Unknown': None}
-
-    @quickcache(['self.domain', 'self.field', 'selected'], timeout=10 * 60)
-    def get_filters(self, selected):
-        show_all = bool(not selected)
-        values = fast_distinct_in_domain(DeviceReportEntry, self.field, self.domain)
-        return [{
-            'name': self.value_to_param(value),
-            'show': bool(show_all or value in selected)
-        } for value in values]
+    endpoint = None
 
     @property
     def filter_context(self):
         selected = self.get_selected(self.request)
+        url = reverse(self.endpoint, args=[self.domain])
         return {
-            'filters': self.get_filters(selected),
             'default_on': bool(not selected),
+            'endpoint': url,
         }
 
     @classmethod
@@ -96,9 +91,11 @@ class DeviceLogUsersFilter(BaseDeviceLogFilter):
     slug = "loguser"
     label = ugettext_noop("Filter Logs by Username")
     field = 'username'
+    endpoint = 'device_log_users'
 
 
 class DeviceLogDevicesFilter(BaseDeviceLogFilter):
     slug = "logdevice"
     label = ugettext_noop("Filter Logs by Device")
     field = 'device_id'
+    endpoint = 'device_log_ids'

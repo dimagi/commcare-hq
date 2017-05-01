@@ -4,6 +4,8 @@ from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from couchdbkit import ResourceConflict, BulkSaveError
 from casexml.apps.case.mock import CaseBlock
@@ -12,6 +14,7 @@ from corehq.form_processor.models import UserArchivedRebuild
 from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
+from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -33,6 +36,47 @@ def bulk_upload_async(domain, user_specs, group_specs):
     DownloadBase.set_progress(task, 100, 100)
     return {
         'messages': results
+    }
+
+
+@task()
+def bulk_download_users_async(domain, download_id):
+    from corehq.apps.users.bulkupload import dump_users_and_groups, GroupNameError
+    DownloadBase.set_progress(bulk_download_users_async, 0, 100)
+    errors = []
+    try:
+        dump_users_and_groups(
+            domain,
+            download_id,
+        )
+    except GroupNameError as e:
+        group_urls = [
+            reverse('group_members', args=[domain, group.get_id])
+            for group in e.blank_groups
+        ]
+
+        def make_link(url, i):
+            return format_html(
+                '<a href="{}" target="_blank">{}</a>',
+                url,
+                _('Blank Group %s') % i
+            )
+
+        group_links = [
+            make_link(url, i + 1)
+            for i, url in enumerate(group_urls)
+        ]
+        errors.append(format_html(
+            _(
+                'The following groups have no name. '
+                'Please name them before continuing: {}'
+            ),
+            mark_safe(', '.join(group_links))
+        ))
+
+    DownloadBase.set_progress(bulk_download_users_async, 100, 100)
+    return {
+        'errors': errors
     }
 
 
@@ -58,7 +102,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
     cases_to_rebuild = set()
 
     for form in FormAccessors(domain).iter_forms(form_id_list):
-        if form.domain != domain:
+        if form.domain != domain or not form.is_normal:
             continue
 
         # rebuild all cases anyways since we don't know if this has run or not if the task was killed
@@ -70,6 +114,33 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
     detail = UserArchivedRebuild(user_id=user_id)
     for case_id in cases_to_rebuild - deleted_cases:
         _rebuild_case_with_retries.delay(domain, case_id, detail)
+
+
+@task(queue='background_queue', ignore_result=True, acks_late=True)
+def tag_system_forms_as_deleted(domain, deleted_forms, deleted_cases, deletion_id, deletion_date):
+    form_ids_to_delete = set()
+    for case_id in deleted_cases:
+        xform_ids = CaseAccessors(domain).get_case_xform_ids(case_id)
+        form_ids_to_delete |= set(xform_ids) - deleted_forms
+
+    def _is_safe_to_delete(form):
+        if form.domain != domain:
+            return False
+
+        case_ids = get_case_ids_from_form(form)
+        cases_touched_by_form_not_deleted = case_ids - deleted_cases
+        for case in CaseAccessors(domain).iter_cases(cases_touched_by_form_not_deleted):
+            if not case.is_deleted:
+                return False
+
+        # all cases touched by this form are deleted
+        return True
+
+    for form in FormAccessors(domain).iter_forms(form_ids_to_delete):
+        if not _is_safe_to_delete(form):
+            form_ids_to_delete.remove(form.form_id)
+
+    FormAccessors(domain).soft_delete_forms(list(form_ids_to_delete), deletion_date, deletion_id)
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)

@@ -37,8 +37,6 @@ def bootstrap_yo_gateway(apps):
 
 class Command(BaseCommand):
     help = "bootstrap Yo global SMS backend gateway fees"
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         bootstrap_yo_gateway(None)

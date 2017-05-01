@@ -35,7 +35,7 @@ import types
 import re
 import datetime
 import uuid
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, OrderedDict
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
@@ -47,6 +47,7 @@ import itertools
 from lxml import etree
 from django.core.cache import cache
 from django.utils.translation import override, ugettext as _, ugettext
+from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
@@ -58,7 +59,7 @@ from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
@@ -70,6 +71,7 @@ from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import get_url_base
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -90,6 +92,7 @@ from dimagi.utils.web import get_url_base, parse_int
 import commcare_translations
 from corehq.util import bitly
 from corehq.util import view_utils
+from corehq.util.string_utils import random_string
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -907,6 +910,8 @@ class FormBase(DocumentSchema):
                 return Form.wrap(data)
             elif doc_type == 'AdvancedForm':
                 return AdvancedForm.wrap(data)
+            elif doc_type == 'ShadowForm':
+                return ShadowForm.wrap(data)
             else:
                 try:
                     return CareplanForm.wrap(data)
@@ -918,6 +923,21 @@ class FormBase(DocumentSchema):
     @property
     def case_references(self):
         return self.case_references_data or CaseReferences()
+
+
+    def requires_case(self):
+        return False
+
+    def get_action_type(self):
+        return ''
+
+    @property
+    def uses_cases(self):
+        return (
+            self.requires_case()
+            or self. get_action_type() == 'open'
+            or self.form_type == 'advanced_form'
+        )
 
     @case_references.setter
     def case_references(self, case_references):
@@ -1015,6 +1035,17 @@ class FormBase(DocumentSchema):
             except ValueError:
                 logging.error("Failed: _parse_xml(string=%r)" % self.source)
                 raise
+
+        try:
+            questions = self.get_questions(self.get_app().langs, include_triggers=True)
+        except XFormException as e:
+            error = {'type': 'validation error', 'validation_message': unicode(e)}
+            error.update(meta)
+            errors.append(error)
+
+        if not errors:
+            if len(questions) == 0:
+                errors.append(dict(type="blank form", **meta))
             else:
                 try:
                     self.validate_form()
@@ -1033,6 +1064,9 @@ class FormBase(DocumentSchema):
                     self.get_app().get_form(form_link.form_id)
                 except FormNotFoundException:
                     errors.append(dict(type='bad form link', **meta))
+        elif self.post_form_workflow == WORKFLOW_PARENT_MODULE:
+            if not module.root_module:
+                errors.append(dict(type='form link to missing root', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self, 'form_filter') and self.form_filter:
@@ -1090,12 +1124,15 @@ class FormBase(DocumentSchema):
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False):
-        return XForm(self.source).get_questions(
-            langs=langs,
-            include_triggers=include_triggers,
-            include_groups=include_groups,
-            include_translations=include_translations,
-        )
+        try:
+            return XForm(self.source).get_questions(
+                langs=langs,
+                include_triggers=include_triggers,
+                include_groups=include_groups,
+                include_translations=include_translations,
+            )
+        except XFormException as e:
+            raise XFormException(u"Error in form {}".format(self.full_path_name), e)
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1146,7 +1183,7 @@ class FormBase(DocumentSchema):
 
     @property
     def full_path_name(self):
-        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
+        return u"%(app_name)s > %(module_name)s > %(form_name)s" % {
             'app_name': self.get_app().name,
             'module_name': self.get_module().default_name(),
             'form_name': self.default_name()
@@ -1982,6 +2019,7 @@ class SortElement(IndexedSchema):
     field = StringProperty()
     type = StringProperty()
     direction = StringProperty()
+    blanks = StringProperty()
     display = DictProperty()
     sort_calculation = StringProperty(default="")
 
@@ -2048,6 +2086,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     persist_tile_on_forms = BooleanProperty()
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
+
+    print_template = DictProperty()
 
     def get_tab_spans(self):
         '''
@@ -2275,7 +2315,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                               'see: https://confluence.dimagi.com/pages/viewpage.action?pageId=38276915'))
                     hierarchy = hierarchy or parent_child(domain)
                     LocationXpath('').validate(column.field_property, hierarchy)
-                except LocationXpathValidationError, e:
+                except LocationXpathValidationError as e:
                     yield {
                         'type': 'invalid location xpath',
                         'details': unicode(e),
@@ -2428,7 +2468,8 @@ class ModuleDetailsMixin():
                 })
         if self.case_list_filter:
             try:
-                case_list_filter = interpolate_xpath(self.case_list_filter)
+                # test filter is valid, while allowing for advanced user hacks like "foo = 1][bar = 2"
+                case_list_filter = interpolate_xpath('dummy[' + self.case_list_filter + ']')
                 etree.XPath(case_list_filter)
             except (etree.XPathSyntaxError, CaseXPathValidationError):
                 errors.append({
@@ -2529,12 +2570,17 @@ class Module(ModuleBase, ModuleDetailsMixin):
         module.get_or_create_unique_id()
         return module
 
-    def new_form(self, name, lang, attachment=''):
+    def new_form(self, name, lang, attachment=Ellipsis):
+        from corehq.apps.app_manager.views.utils import get_blank_form_xml
+        lang = lang if lang else "en"
+        name = name if name else _("Untitled Form")
         form = Form(
-            name={lang if lang else "en": name if name else _("Untitled Form")},
+            name={lang: name},
         )
         self.forms.append(form)
         form = self.get_form(-1)
+        if attachment == Ellipsis:
+            attachment = get_blank_form_xml(name)
         form.source = attachment
         return form
 
@@ -2638,6 +2684,18 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                           "There is probably nothing to worry about, but you could check to make sure "
                           "that there are no issues with this form.".format(error=e, form_id=self.unique_id))
             pass
+
+    def get_action_type(self):
+        actions = self.actions.actions_meta_by_tag
+        by_type = defaultdict(list)
+        action_type = []
+        for action_tag, action_meta in actions.iteritems():
+            by_type[action_meta.get('type')].append(action_tag)
+
+        for type, tag_list in by_type.iteritems():
+            action_type.append(u'{} ({})'.format(type, ', '.join(filter(None, tag_list))))
+
+        return ' '.join(action_type)
 
     def pre_move_hook(self, from_module, to_module):
         if from_module != to_module:
@@ -2934,6 +2992,126 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 meta.add_closer(self.unique_id, action.close_condition)
 
 
+class ShadowForm(AdvancedForm):
+    form_type = 'shadow_form'
+    # The unqiue id of the form we are shadowing
+    shadow_parent_form_id = StringProperty(required=False, default=None)
+
+    # form actions to be merged with the parent actions
+    extra_actions = SchemaProperty(AdvancedFormActions)
+
+    def __init__(self, *args, **kwargs):
+        super(ShadowForm, self).__init__(*args, **kwargs)
+        self._shadow_parent_form = None
+
+    @property
+    def shadow_parent_form(self):
+        if not self.shadow_parent_form_id:
+            return None
+        else:
+            if not self._shadow_parent_form or self._shadow_parent_form.unique_id != self.shadow_parent_form_id:
+                app = self.get_app()
+                try:
+                    self._shadow_parent_form = app.get_form(self.shadow_parent_form_id)
+                except FormNotFoundException:
+                    self._shadow_parent_form = None
+            return self._shadow_parent_form
+
+    @property
+    def source(self):
+        if self.shadow_parent_form:
+            return self.shadow_parent_form.source
+        from corehq.apps.app_manager.views.utils import get_blank_form_xml
+        return get_blank_form_xml("")
+
+    @property
+    def xmlns(self):
+        if not self.shadow_parent_form:
+            return None
+        else:
+            return self.shadow_parent_form.xmlns
+
+    @property
+    def actions(self):
+        if not self.shadow_parent_form:
+            shadow_parent_actions = AdvancedFormActions()
+        else:
+            shadow_parent_actions = self.shadow_parent_form.actions
+        return self._merge_actions(shadow_parent_actions, self.extra_actions)
+
+    def get_shadow_parent_options(self):
+        options = [
+            (form.get_unique_id(), u'{} / {}'.format(form.get_module().default_name(), form.default_name()))
+            for form in self.get_app().get_forms() if form.form_type == "advanced_form"
+        ]
+        if self.shadow_parent_form_id and self.shadow_parent_form_id not in [x[0] for x in options]:
+            options = [(self.shadow_parent_form_id, ugettext_lazy("Unknown, please change"))] + options
+        return options
+
+    @staticmethod
+    def _merge_actions(source_actions, extra_actions):
+
+        new_actions = []
+        source_action_map = {
+            action.case_tag: action
+            for action in source_actions.load_update_cases
+        }
+        overwrite_properties = [
+            "case_type",
+            "details_module",
+            "auto_select",
+            "load_case_from_fixture",
+            "show_product_stock",
+            "product_program",
+            "case_index",
+        ]
+
+        for action in extra_actions.load_update_cases:
+            if action.case_tag in source_action_map:
+                new_action = LoadUpdateAction.wrap(source_action_map[action.case_tag].to_json())
+            else:
+                new_action = LoadUpdateAction(case_tag=action.case_tag)
+
+            for prop in overwrite_properties:
+                setattr(new_action, prop, getattr(action, prop))
+            new_actions.append(new_action)
+
+        return AdvancedFormActions(
+            load_update_cases=new_actions,
+            open_cases=source_actions.open_cases,  # Shadow form is not allowed to specify any open case actions
+        )
+
+    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
+        errors = super(ShadowForm, self).extended_build_validation(error_meta, xml_valid, validate_module)
+        if not self.shadow_parent_form_id:
+            error = {
+                "type": "missing shadow parent",
+            }
+            error.update(error_meta)
+            errors.append(error)
+        elif not self.shadow_parent_form:
+            error = {
+                "type": "shadow parent does not exist",
+            }
+            error.update(error_meta)
+            errors.append(error)
+        return errors
+
+    def check_actions(self):
+        errors = super(ShadowForm, self).check_actions()
+
+        shadow_parent_form = self.shadow_parent_form
+        if shadow_parent_form:
+            case_tags = set(self.extra_actions.get_case_tags())
+            missing_tags = []
+            for action in shadow_parent_form.actions.load_update_cases:
+                if action.case_tag not in case_tags:
+                    missing_tags.append(action.case_tag)
+            if missing_tags:
+                errors.append({'type': 'missing shadow parent tag', 'case_tags': missing_tags})
+        return errors
+
+
 class SchedulePhaseForm(IndexedSchema):
     """
     A reference to a form in a schedule phase.
@@ -3019,7 +3197,7 @@ class SchedulePhase(IndexedSchema):
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
     case_label = DictProperty()
-    forms = SchemaListProperty(AdvancedForm)
+    forms = SchemaListProperty(FormBase)
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
     put_in_root = BooleanProperty(default=False)
@@ -3028,6 +3206,10 @@ class AdvancedModule(ModuleBase):
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
     search_config = SchemaProperty(CaseSearch)
+
+    @property
+    def is_surveys(self):
+        return False
 
     @classmethod
     def wrap(cls, data):
@@ -3073,15 +3255,34 @@ class AdvancedModule(ModuleBase):
         module.get_or_create_unique_id()
         return module
 
-    def new_form(self, name, lang, attachment=''):
+    def new_form(self, name, lang, attachment=Ellipsis):
+        from corehq.apps.app_manager.views.utils import get_blank_form_xml
+        lang = lang if lang else "en"
+        name = name if name else _("Untitled Form")
         form = AdvancedForm(
-            name={lang if lang else "en": name if name else _("Untitled Form")},
+            name={lang: name},
         )
         form.schedule = FormSchedule(enabled=False)
 
         self.forms.append(form)
         form = self.get_form(-1)
+        if attachment == Ellipsis:
+            attachment = get_blank_form_xml(name)
         form.source = attachment
+        return form
+
+    def new_shadow_form(self, name, lang):
+        lang = lang if lang else "en"
+        name = name if name else _("Untitled Form")
+        form = ShadowForm(
+            name={lang: name},
+            no_vellum=True,
+        )
+        form.schedule = FormSchedule(enabled=False)
+
+        self.forms.append(form)
+        form = self.get_form(-1)
+        form.get_unique_id()  # This function sets the unique_id. Normally setting the source sets the id.
         return form
 
     def add_insert_form(self, from_module, form, index=None, with_source=False):
@@ -3993,6 +4194,7 @@ class ReportAppConfig(DocumentSchema):
     localized_description = DictProperty()
     xpath_description = StringProperty()
     use_xpath_description = BooleanProperty(default=False)
+    show_data_table = BooleanProperty(default=True)
     graph_configs = DictProperty(ReportGraphConfig)
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
@@ -4108,6 +4310,11 @@ class ReportModule(ModuleBase):
                 'type': 'report config ref invalid',
                 'module': self.get_module_info()
             })
+        elif not self.reports:
+            errors.append({
+                'type': 'no reports',
+                'module': self.get_module_info(),
+            })
         return errors
 
 
@@ -4141,8 +4348,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def source_module(self):
         if self.source_module_id:
             try:
-                return self._parent.get_module_by_unique_id(self.source_module_id,
-                       error=_("Could not find source module for '{}'.").format(self.default_name()))
+                return self._parent.get_module_by_unique_id(self.source_module_id)
             except ModuleNotFoundException:
                 pass
         return None
@@ -4614,6 +4820,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     case_sharing = BooleanProperty(default=False)
     vellum_case_management = BooleanProperty(default=False)
 
+    # legacy property; kept around to be able to identify (deprecated) v1 apps
+    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
+
+    def assert_app_v2(self):
+        assert self.application_version == APP_V2
+
     build_profiles = SchemaDictProperty(BuildProfile)
 
     # each language is a key and the value is a list of multimedia referenced in that language
@@ -5068,7 +5280,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if not copy._id:
             # I expect this always to be the case
             # but check explicitly so as not to change the _id if it exists
-            copy._id = copy.get_db().server.next_uuid()
+            copy._id = uuid.uuid4().hex
 
         force_new_forms = False
         if previous_version and self.build_profiles != previous_version.build_profiles:
@@ -5216,6 +5428,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
+
+    anonymous_cloudcare_enabled = BooleanProperty(default=False)
+    anonymous_cloudcare_hash = StringProperty(default=random_string)
+
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
@@ -5226,11 +5442,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
 
-    # legacy property; kept around to be able to identify (deprecated) v1 apps
-    application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
+    def has_modules(self):
+        return len(self.modules) > 0 and not self.is_remote_app()
 
-    def assert_app_v2(self):
-        assert self.application_version == APP_V2
+    @property
+    def anonymous_cloudcare_url(self):
+        from corehq.apps.cloudcare.views import SingleAppLandingPageView
+
+        return view_utils.absolute_reverse(SingleAppLandingPageView.urlname, args=[
+            self.domain,
+            self.anonymous_cloudcare_hash
+        ])
 
     @property
     @memoized
@@ -5513,15 +5735,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             files["{prefix}{lang}/app_strings.txt".format(
                 prefix=prefix, lang=lang)] = self.create_app_strings(lang, build_profile_id)
         for form_stuff in self.get_forms(bare=False):
-            filename = prefix + self.get_form_filename(**form_stuff)
-            form = form_stuff['form']
-            try:
-                files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
-            except XFormValidationFailed:
-                raise XFormException(_('Unable to validate the forms due to a server error. '
-                                       'Please try again later.'))
-            except XFormException as e:
-                raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
+            if not isinstance(form_stuff['form'], ShadowForm):
+                filename = prefix + self.get_form_filename(**form_stuff)
+                form = form_stuff['form']
+                try:
+                    files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
+                except XFormValidationFailed:
+                    raise XFormException(_('Unable to validate the forms due to a server error. '
+                                           'Please try again later.'))
+                except XFormException as e:
+                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
         return files
 
     get_modules = IndexedSchema.Getter('modules')
@@ -5540,8 +5763,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if matches(obj):
                 return obj
         if not error:
-            error = _("Could not find '{unique_id}' in app '{app_id}'.").format(
-                app_id=self.id, unique_id=unique_id)
+            error = _(u"Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
+                app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
     def get_forms(self, bare=True):
@@ -5596,7 +5819,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         record.save()
         return record
 
-    def new_form(self, module_id, name, lang, attachment=""):
+    def new_form(self, module_id, name, lang, attachment=Ellipsis):
         module = self.get_module(module_id)
         return module.new_form(name, lang, attachment)
 
@@ -5650,7 +5873,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise RearrangeError()
         self.modules = modules
 
-    def rearrange_forms(self, to_module_id, from_module_id, i, j):
+    def rearrange_forms(self, to_module_id, from_module_id, i, j, app_manager_v2=False):
         """
         The case type of the two modules conflict,
         ConflictingCaseTypeError is raised,
@@ -5666,7 +5889,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             pass
         try:
             form = from_module.forms.pop(j)
-            if toggles.APP_MANAGER_V2.enabled(self.domain):
+            if app_manager_v2:
                 if not to_module.is_surveys and i == 0:
                     # first form is the reg form
                     i = 1
@@ -5682,8 +5905,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             to_module.add_insert_form(from_module, form, index=i, with_source=True)
         except IndexError:
             raise RearrangeError()
-        if to_module.case_type != from_module.case_type \
-                and not toggles.APP_MANAGER_V2.enabled(self.domain):
+        if to_module.case_type != from_module.case_type and not app_manager_v2:
             raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
@@ -5805,13 +6027,20 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not self.modules:
             errors.append({'type': "no modules"})
         for module in self.get_modules():
-            errors.extend(module.validate_for_build())
+            try:
+                errors.extend(module.validate_for_build())
+            except ModuleNotFoundException as ex:
+                errors.append({
+                    "type": "missing module",
+                    "message": ex.message
+                })
 
         for form in self.get_forms():
             errors.extend(form.validate_for_build(validate_module=False))
 
             # make sure that there aren't duplicate xmlns's
-            xmlns_count[form.xmlns] += 1
+            if not isinstance(form, ShadowForm):
+                xmlns_count[form.xmlns] += 1
             for xmlns in xmlns_count:
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})

@@ -8,7 +8,7 @@ from corehq.apps.fixtures.models import (
 )
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import create_test_case
-from custom.ucla.api import ucla_message_bank_content
+from custom.ucla.api import general_health_message_bank_content
 
 Reminder = namedtuple('Reminder', ['domain', 'schedule_iteration_num', 'current_event_sequence_num'])
 Handler = namedtuple('Handler', ['events'])
@@ -18,7 +18,7 @@ Handler = namedtuple('Handler', ['events'])
 class TestUCLACustomHandler(TestCase):
     domain_name = uuid.uuid4().hex
     case_type = 'ucla-reminder'
-    fixture_name = 'message_bank'
+    fixture_name = 'general_health'
 
     @classmethod
     def setUpClass(cls):
@@ -105,7 +105,8 @@ class TestUCLACustomHandler(TestCase):
 
     def test_message_bank_doesnt_exist(self):
         with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
-            self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
+            self.assertRaises(
+                AssertionError, general_health_message_bank_content, self._reminder(), self._handler(), case)
 
     def test_message_bank_doesnt_have_correct_properties(self):
         data_type = FixtureDataType(
@@ -117,34 +118,42 @@ class TestUCLACustomHandler(TestCase):
         data_type.save()
         self.addCleanup(data_type.delete)
         with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
-            self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
+            self.assertRaises(
+                AssertionError, general_health_message_bank_content, self._reminder(), self._handler(), case)
 
     def test_not_passing_case(self):
         self._setup_fixture_type()
-        self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), None)
+        self.assertRaises(
+            AssertionError, general_health_message_bank_content, self._reminder(), self._handler(), None)
 
     def test_passing_case_without_risk_profile(self):
         self._setup_fixture_type()
         with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
-            self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
+            self.assertRaises(
+                AssertionError, general_health_message_bank_content, self._reminder(), self._handler(), case)
 
     def test_no_relevant_message_invalid_risk(self):
         self._setup_fixture_type()
         with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk2'}) as case:
-            self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
+            self.assertRaises(
+                AssertionError, general_health_message_bank_content, self._reminder(), self._handler(), case)
 
     def test_no_relevant_message_invalid_seq_num(self):
         self._setup_fixture_type()
         with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
-            self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(iteration_num=2), self._handler(), case)
+            self.assertRaises(
+                AssertionError, general_health_message_bank_content, self._reminder(iteration_num=2),
+                self._handler(), case)
 
     def test_multiple_relevant_messages(self):
         self._setup_fixture_type()
         self._setup_data_item('risk1', '1', 'message2')
         with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
-            self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
+            self.assertRaises(
+                AssertionError, general_health_message_bank_content, self._reminder(), self._handler(), case)
 
     def test_correct_message(self):
         self._setup_fixture_type()
         with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
-            self.assertEqual(ucla_message_bank_content(self._reminder(), self._handler(), case), 'message1')
+            self.assertEqual(
+                general_health_message_bank_content(self._reminder(), self._handler(), case), 'message1')

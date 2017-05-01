@@ -16,7 +16,7 @@ from casexml.apps.phone.tests.utils import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -45,7 +45,6 @@ class StateHashTest(TestCase):
         delete_all_users()
         super(StateHashTest, cls).tearDownClass()
 
-    @run_with_all_backends
     def testEmpty(self):
         empty_hash = CaseStateHash(EMPTY_HASH)
         wrong_hash = CaseStateHash("thisisntright")
@@ -64,7 +63,7 @@ class StateHashTest(TestCase):
                 version=V2, state_hash=str(wrong_hash)
             )
             self.fail("Call to generate a payload with a bad hash should fail!")
-        except BadStateException, e:
+        except BadStateException as e:
             self.assertEqual(empty_hash, e.server_hash)
             self.assertEqual(wrong_hash, e.phone_hash)
             self.assertEqual(0, len(e.case_ids))
@@ -73,7 +72,6 @@ class StateHashTest(TestCase):
                                              state_hash=str(wrong_hash))
         self.assertEqual(412, response.status_code)
 
-    @run_with_all_backends
     def testMismatch(self):
         self.assertEqual(CaseStateHash(EMPTY_HASH), self.sync_log.get_state_hash())
         
@@ -97,9 +95,14 @@ class StateHashTest(TestCase):
             generate_restore_payload(self.project, self.user, self.sync_log.get_id,
                                      version=V2, state_hash=str(bad_hash))
             self.fail("Call to generate a payload with a bad hash should fail!")
-        except BadStateException, e:
+        except BadStateException as e:
             self.assertEqual(real_hash, e.server_hash)
             self.assertEqual(bad_hash, e.phone_hash)
             self.assertEqual(2, len(e.case_ids))
             self.assertTrue("abc123" in e.case_ids)
             self.assertTrue("123abc" in e.case_ids)
+
+
+@use_sql_backend
+class StateHashTestSQL(StateHashTest):
+    pass

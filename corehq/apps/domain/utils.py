@@ -109,5 +109,5 @@ def guess_domain_language(domain_name):
     the language code of the most common default language across apps.
     """
     domain = Domain.get_by_name(domain_name)
-    counter = Counter([app.default_language for app in domain.applications()])
+    counter = Counter([app.default_language for app in domain.applications() if not app.is_remote_app()])
     return counter.most_common(1)[0][0] if counter else 'en'

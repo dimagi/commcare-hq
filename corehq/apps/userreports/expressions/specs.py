@@ -1,22 +1,22 @@
 from __future__ import absolute_import
-import json
+from jsonobject.base_properties import DefaultProperty
 from simpleeval import InvalidExpression
+import six
+
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
+from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.couch import get_db_by_doc_type
-from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
-from jsonobject.base_properties import DefaultProperty
 from corehq.apps.userreports.expressions.getters import transform_from_datatype, safe_recursive_lookup
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from .utils import eval_statements
-from corehq.util.quickcache import quickcache
-import six
 
 
 class IdentityExpressionSpec(JsonObject):
@@ -49,11 +49,14 @@ class ConstantGetterSpec(JsonObject):
 
 class PropertyNameGetterSpec(JsonObject):
     type = TypeProperty('property_name')
-    property_name = StringProperty(required=True)
+    property_name = DefaultProperty(required=True)
     datatype = DataTypeProperty(required=False)
 
+    def configure(self, property_name_expression):
+        self._property_name_expression = property_name_expression
+
     def __call__(self, item, context=None):
-        raw_value = item.get(self.property_name, None) if isinstance(item, dict) else None
+        raw_value = item.get(self._property_name_expression(item, context)) if isinstance(item, dict) else None
         return transform_from_datatype(self.datatype)(raw_value)
 
 
@@ -76,8 +79,18 @@ class NamedExpressionSpec(JsonObject):
             raise BadSpecError(u'Name {} not found in list of named expressions!'.format(self.name))
         self._context = context
 
+    def _context_cache_key(self):
+        return 'named_expression-{}'.format(self.name)
+
     def __call__(self, item, context=None):
-        return self._context.named_expressions[self.name](item, context)
+        key = self._context_cache_key()
+        if context and context.exists_in_cache(key):
+            return context.get_cache_value(key)
+
+        result = self._context.named_expressions[self.name](item, context)
+        if context:
+            context.set_iteration_cache_value(key, result)
+        return result
 
 
 class ConditionalExpressionSpec(JsonObject):
@@ -277,6 +290,7 @@ class EvalExpressionSpec(JsonObject):
 class FormsExpressionSpec(JsonObject):
     type = TypeProperty('get_case_forms')
     case_id_expression = DefaultProperty(required=True)
+    xmlns = ListProperty(required=False)
 
     def configure(self, case_id_expression):
         self._case_id_expression = case_id_expression
@@ -293,15 +307,37 @@ class FormsExpressionSpec(JsonObject):
     def _get_forms(self, case_id, context):
         domain = context.root_doc['domain']
 
-        cache_key = (self.__class__.__name__, case_id)
+        cache_key = (self.__class__.__name__, case_id, tuple(self.xmlns))
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        xforms = FormProcessorInterface(domain).get_case_forms(case_id)
-        xforms = [f.to_json() for f in xforms if f.domain == domain]
+        xforms = self._get_case_forms(case_id, context)
+        if self.xmlns:
+            xforms = [f for f in xforms if f.xmlns in self.xmlns]
+
+        xforms = [self._get_form_json(f, context) for f in xforms if f.domain == domain]
 
         context.set_cache_value(cache_key, xforms)
         return xforms
+
+    def _get_case_forms(self, case_id, context):
+        cache_key = (self.__class__.__name__, 'helper', case_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        domain = context.root_doc['domain']
+        xforms = FormProcessorInterface(domain).get_case_forms(case_id)
+        context.set_cache_value(cache_key, xforms)
+        return xforms
+
+    def _get_form_json(self, form, context):
+        cache_key = (XFORM_CACHE_KEY_PREFIX, form.get_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        form_json = form.to_json()
+        context.set_cache_value(cache_key, form_json)
+        return form_json
 
 
 class SubcasesExpressionSpec(JsonObject):

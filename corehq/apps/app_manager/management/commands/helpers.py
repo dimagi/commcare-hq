@@ -1,6 +1,5 @@
 from collections import namedtuple
 import logging
-from optparse import make_option
 from django.core.management import BaseCommand
 from corehq.apps.app_manager.models import Application
 from corehq.util.couch import iter_update, DocUpdate
@@ -30,17 +29,21 @@ class AppMigrationCommandBase(BaseCommand):
     Base class for commands that want to migrate apps.
     """
     include_builds = False
-    option_list = (
-        make_option('--failfast',
-                    action='store_true',
-                    dest='failfast',
-                    default=False,
-                    help='Stop processing if there is an error'),
-        make_option('--domain',
-                    help='Migrate only this domain'),
-    )
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--failfast',
+            action='store_true',
+            dest='failfast',
+            default=False,
+            help='Stop processing if there is an error',
+        )
+        parser.add_argument(
+            '--domain',
+            help='Migrate only this domain',
+        )
+
+    def handle(self, **options):
         self.options = options
         app_ids = self.get_app_ids()
         logger.info('migrating {} apps'.format(len(app_ids)))
@@ -54,7 +57,7 @@ class AppMigrationCommandBase(BaseCommand):
                 migrated_app = self.migrate_app(app_doc)
                 if migrated_app:
                     return DocUpdate(migrated_app)
-        except Exception, e:
+        except Exception as e:
             logger.exception("App {id} not properly migrated".format(id=app_doc['_id']))
             if self.options['failfast']:
                 raise e

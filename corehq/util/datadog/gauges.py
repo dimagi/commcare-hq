@@ -1,6 +1,6 @@
 from functools import wraps
 from celery.task import periodic_task
-from corehq.util.datadog import statsd
+from corehq.util.datadog import statsd, datadog_logger
 from corehq.util.soft_assert import soft_assert
 
 
@@ -15,14 +15,26 @@ def datadog_gauge_task(name, fn, run_every, enforce_prefix='commcare'):
                                             run_every=crontab(minute=0))
 
     """
-    soft_assert(fail_if_debug=True).call(
-        not enforce_prefix or name.split('.')[0] == enforce_prefix,
-        "Did you mean to call your gauge 'commcare.{}'? "
-        "If you're sure you want to forgo the prefix, you can "
-        "pass enforce_prefix=None".format(name))
+    _enforce_prefix(name, enforce_prefix)
 
     datadog_gauge = _DatadogGauge(name, fn, run_every)
     return datadog_gauge.periodic_task()
+
+
+def datadog_gauge(name, value, enforce_prefix='commcare', tags=None):
+    _datadog_record(statsd.gauge, name, value, enforce_prefix, tags)
+
+
+def datadog_counter(name, value=1, enforce_prefix='commcare', tags=None):
+    _datadog_record(statsd.increment, name, value, enforce_prefix, tags)
+
+
+def _datadog_record(fn, name, value, enforce_prefix='commcare', tags=None):
+    _enforce_prefix(name, enforce_prefix)
+    try:
+        fn(name, value, tags=tags)
+    except Exception:
+        datadog_logger.exception('Unable to record Datadog stats')
 
 
 class _DatadogGauge(object):
@@ -40,3 +52,11 @@ class _DatadogGauge(object):
             statsd.gauge(self.name, self.fn(*args, **kwargs))
 
         return inner
+
+
+def _enforce_prefix(name, prefix):
+    soft_assert(fail_if_debug=True).call(
+        not prefix or name.split('.')[0] == prefix,
+        "Did you mean to call your gauge 'commcare.{}'? "
+        "If you're sure you want to forgo the prefix, you can "
+        "pass enforce_prefix=None".format(name))

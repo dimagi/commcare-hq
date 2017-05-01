@@ -1,7 +1,8 @@
+from __future__ import print_function
 import json
 from datetime import datetime
 from couchdbkit import ResourceNotFound
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
@@ -10,14 +11,13 @@ from pillowtop.utils import get_pillow_by_name
 
 class Command(BaseCommand):
     help = "Reset a list of pillow checkpoints based on a specified config file."
-    args = "config_file"
-    label = "config file"
 
-    def handle(self, *args, **options):
-        if len(args) != 1:
-            raise CommandError("Usage is ./manage.py pillow_reset [config_file]!")
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'file_path',
+        )
 
-        file_path = args[0]
+    def handle(self, file_path, **options):
         db = get_db()
         checkpoints = []
         with open(file_path) as f:
@@ -27,7 +27,7 @@ class Command(BaseCommand):
                 try:
                     checkpoint_doc = db.get(checkpoint_doc_name)
                 except ResourceNotFound:
-                    print 'ERROR - checkpoint {} not found!'.format(checkpoint_doc_name)
+                    print('ERROR - checkpoint {} not found!'.format(checkpoint_doc_name))
                     continue
 
                 def _fmt(seq_id):
@@ -36,11 +36,11 @@ class Command(BaseCommand):
                     else:
                         return seq_id
 
-                print 'resetting {} from {} to {}...'.format(
+                print('resetting {} from {} to {}...'.format(
                     checkpoint_doc_name,
                     _fmt(checkpoint_doc['seq']),
                     _fmt(config.seq),
-                )
+                ))
                 # add metadata properties in case we need to revert this for any reason
                 checkpoint_doc['reset_from'] = checkpoint_doc['seq']
                 checkpoint_doc['reset_on'] = json_format_datetime(datetime.utcnow())
@@ -50,7 +50,7 @@ class Command(BaseCommand):
         if raw_input('Commit the above resets to the database? (y/n) \n').lower() == 'y':
             db.bulk_save(checkpoints)
         else:
-            print 'pillow checkpoints not saved.'
+            print('pillow checkpoints not saved.')
 
 
 class PillowResetConfig(JsonObject):

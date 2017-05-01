@@ -180,7 +180,7 @@ def _get_ledger_transaction(lazy_original_balance, stock_report_helper, stock_tr
         case_id=stock_trans.case_id,
         section_id=stock_trans.section_id,
         entry_id=stock_trans.product_id,
-        user_defined_type=stock_trans.subaction,
+        user_defined_type=stock_trans.subaction[:20] if stock_trans.subaction else None,
         delta=new_balance - lazy_original_balance(),
         updated_balance=new_balance
     )

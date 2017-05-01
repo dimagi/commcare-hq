@@ -37,25 +37,6 @@ def get_cases_in_domain(domain, type=None):
                                  get_case_ids_in_domain(domain, type=type)))
 
 
-def get_case_types_for_domain(domain):
-    """
-    :return: set of case types
-    """
-    key = [domain]
-    rows = CommCareCase.get_db().view(
-        'case_types_by_domain/view',
-        startkey=key,
-        endkey=key + [{}],
-        group_level=2,
-    ).all()
-    case_types = set()
-    for row in rows:
-        _, case_type = row['key']
-        if case_type:
-            case_types.add(case_type)
-    return case_types
-
-
 def get_case_ids_in_domain_by_owner(domain, owner_id=None, owner_id__in=None,
                                     closed=None):
     """

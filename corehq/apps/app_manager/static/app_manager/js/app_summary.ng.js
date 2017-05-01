@@ -141,6 +141,9 @@
         $scope.getModuleUrl = utils.getModuleUrl;
         $scope.formDownloadURL = summaryConfig.formDownloadURL;
         $scope.appDownloadURL = summaryConfig.appDownloadURL;
+        $scope.appSettingsURL = summaryConfig.appSettingsURL;
+        $scope.appHomeURL = summaryConfig.appHomeURL;
+        $scope.appName = summaryConfig.appName;
 
         self.init = function () {
             $scope.loading = true;
@@ -187,6 +190,32 @@
             return utils.translateName(form_module.name, $scope.lang);
         };
 
+        $scope.getModuleFormIcon = function(form_module) {
+            var formIcon = 'fa fa-file-o appnav-primary-icon';
+            if (form_module.action_type === 'open') {
+                formIcon = 'fcc fcc-app-createform appnav-primary-icon appnav-primary-icon-lg';
+            } else if (form_module.action_type === 'close') {
+                formIcon = 'fcc fcc-app-completeform appnav-primary-icon appnav-primary-icon-lg';
+            } else if (form_module.action_type === 'update') {
+                formIcon = 'fcc fcc-app-updateform appnav-primary-icon appnav-primary-icon-lg';
+            }
+            return formIcon;
+        }
+
+        $scope.getModuleIcon = function(form_module) {
+            var moduleIcon = 'fa fa-folder-open';
+            if (form_module.module_type === 'advanced') {
+                moduleIcon = 'fa fa-flask';
+            } else if (form_module.module_type === 'report') {
+                moduleIcon = 'fa fa-bar-chart';
+            } else if (form_module.module_type === 'shadow') {
+                moduleIcon = 'fa fa-folder-open-o';
+            } else if (!form_module.is_surveys) {
+                moduleIcon = 'fa fa-bars';
+            }
+            return moduleIcon;
+        };
+
         self.init();
     };
 
@@ -210,6 +239,9 @@
         $scope.appLangs = summaryConfig.appLangs;
         $scope.caseDownloadURL = summaryConfig.caseDownloadURL;
         $scope.appDownloadURL = summaryConfig.appDownloadURL;
+        $scope.appSettingsURL = summaryConfig.appSettingsURL;
+        $scope.appHomeURL = summaryConfig.appHomeURL;
+        $scope.appName = summaryConfig.appName;
 
         $scope.filterCaseTypes = function (caseType) {
             $scope.typeSearch = caseType ? {'name': caseType} : null;

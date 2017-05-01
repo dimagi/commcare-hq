@@ -8,13 +8,13 @@ import os
 import yaml
 
 
-def _load_custom_commcare_settings(domain=None):
+def _load_custom_commcare_settings(user=None):
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
     settings = []
     with open(os.path.join(
             path,
             get_app_manager_template(
-                domain,
+                user,
                 'v1/commcare-profile-settings.yaml',
                 'v2/commcare-profile-settings.yaml'
             )
@@ -25,7 +25,7 @@ def _load_custom_commcare_settings(domain=None):
             settings.append(setting)
 
     with open(os.path.join(path, get_app_manager_template(
-        domain,
+        user,
         'v1/commcare-app-settings.yaml',
         'v2/commcare-app-settings.yaml'
     ))) as f:
@@ -41,16 +41,16 @@ def _load_custom_commcare_settings(domain=None):
     return settings
 
 
-def _load_commcare_settings_layout(doc_type, domain):
+def _load_commcare_settings_layout(doc_type, user):
     settings = dict([
         ('{0}.{1}'.format(setting.get('type'), setting.get('id')), setting)
-        for setting in _load_custom_commcare_settings(domain)
+        for setting in _load_custom_commcare_settings(user)
     ])
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
     with open(os.path.join(
             path,
             get_app_manager_template(
-                domain,
+                user,
                 'v1/commcare-settings-layout.yaml',
                 'v2/commcare-settings-layout.yaml'
             ))) as f:
@@ -86,9 +86,9 @@ def get_custom_commcare_settings():
 
 
 @memoized
-def get_commcare_settings_layout(domain):
+def get_commcare_settings_layout(user):
     layout = {
-        doc_type: _load_commcare_settings_layout(doc_type, domain)
+        doc_type: _load_commcare_settings_layout(doc_type, user)
         for doc_type in ('Application', 'RemoteApp', 'LinkedApplication')
     }
     layout.update({'LinkedApplication': {}})

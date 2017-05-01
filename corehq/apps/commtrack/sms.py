@@ -52,7 +52,7 @@ def handle(verified_contact, text, msg):
             return False
     except NotAUserClassError:
         return False
-    except Exception, e: # todo: should we only trap SMSErrors?
+    except Exception as e: # todo: should we only trap SMSErrors?
         if settings.UNIT_TESTING or settings.DEBUG:
             raise
         send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))

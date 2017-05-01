@@ -1,5 +1,7 @@
-from optparse import make_option
-from django.core.management.base import NoArgsCommand, BaseCommand, CommandError
+from __future__ import print_function
+
+from django.core.management.base import BaseCommand, CommandError
+
 from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
@@ -11,14 +13,17 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 
 class Command(BaseCommand):
     help = "Hard delete all cases owned by a given user.  (ID or username)"
-    args = '<user>'
 
-    option_list = NoArgsCommand.option_list + (
-        make_option('--no-prompt',
-                    action='store_true',
-                    dest='no_prompt',
-                    help='Delete cases without prompting for confirmation'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'user',
+        )
+        parser.add_argument(
+            '--no-prompt',
+            action='store_true',
+            dest='no_prompt',
+            help='Delete cases without prompting for confirmation',
+        )
 
     @property
     @memoized
@@ -30,16 +35,13 @@ class Command(BaseCommand):
             self.domain, self.user.user_id)
         iter_bulk_delete(self.db, case_ids)
 
-    def handle(self, *args, **options):
-        if not len(args):
-            print "Usage: ./manage.py delete_cases <user>"
-            return
+    def handle(self, user, **options):
         try:
-            self.user = CouchUser.get_by_username(args[0])
+            self.user = CouchUser.get_by_username(user)
             if not self.user:
-                self.user = CouchUser.get(args[0])
+                self.user = CouchUser.get(user)
         except ResourceNotFound:
-            print "Could not find user {}".format(args[0])
+            print("Could not find user {}".format(user))
             return
 
         if not isinstance(self.user, CommCareUser):
@@ -61,8 +63,8 @@ class Command(BaseCommand):
                 self.user.username,
             )
             if not raw_input(msg) == 'y':
-                print "cancelling"
+                print("cancelling")
                 return
 
         self.delete_all()
-        print "Cases successfully deleted, you monster!"
+        print("Cases successfully deleted, you monster!")

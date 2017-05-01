@@ -12,6 +12,8 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.apps.users.const import ANONYMOUS_USERNAME
+from corehq.apps.users.util import format_username
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db
 from corehq.util.soft_assert import soft_assert
@@ -21,11 +23,11 @@ from dimagi.ext.couchdbkit import (
     DocumentSchema, SchemaProperty, DictProperty,
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
-from corehq.util.quickcache import quickcache, skippable_quickcache
+from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
     iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
@@ -33,15 +35,13 @@ from dimagi.utils.couch.database import (
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.html import format_html
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.name_to_url import name_to_url
+from dimagi.utils.logging import log_signal_errors
 from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
 from importlib import import_module
-from corehq import toggles
 
 from .exceptions import InactiveTransferDomainException, NameUnavailableException
 
@@ -424,8 +424,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return domain and domain.secure_sessions
 
     @staticmethod
-    @skippable_quickcache(['couch_user._id', 'is_active'],
-                          skip_arg='strict', timeout=5*60, memoize_timeout=10)
+    @quickcache(['couch_user._id', 'is_active'],
+                skip_arg='strict', timeout=5*60, memoize_timeout=10)
     def active_for_couch_user(couch_user, is_active=True, strict=False):
         domain_names = couch_user.get_domains()
         return Domain.view(
@@ -450,6 +450,13 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                 couch_user, is_active=is_active, strict=strict)
         else:
             return []
+
+    def get_anonymous_mobile_worker(self):
+        from corehq.apps.users.models import CouchUser
+
+        return CouchUser.get_by_username(
+            format_username(ANONYMOUS_USERNAME, self.name)
+        )
 
     @classmethod
     def field_by_prefix(cls, field, prefix=''):
@@ -538,7 +545,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return self.name
 
     @classmethod
-    @skippable_quickcache(['name'], skip_arg='strict', timeout=30*60)
+    @quickcache(['name'], skip_arg='strict', timeout=30*60)
     def get_by_name(cls, name, strict=False):
         if not name:
             # get_by_name should never be called with name as None (or '', etc)
@@ -651,14 +658,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
-        for result in results:
-            # Second argument is None if there was no error
-            if result[1]:
-                notify_exception(
-                    None,
-                    message="Error occured during domain post_save %s: %s" %
-                            (self.name, str(result[1]))
-                )
+        log_signal_errors(results, "Error occurred during domain post_save (%s)", {'domain': self.name})
 
     def save_copy(self, new_domain_name=None, new_hr_name=None, user=None,
                   copy_by_id=None, share_reminders=True,
@@ -923,7 +923,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         for result in results:
             response = result[1]
             if isinstance(response, Exception):
-                raise DomainDeleteException(u"Error occurred during domain pre_delete {}: {}".format(self.name, str(response)))
+                message = u"Error occurred during domain pre_delete {}".format(self.name)
+                raise DomainDeleteException(message, response)
             elif response:
                 assert isinstance(response, list)
                 dynamic_deletion_operations.extend(response)

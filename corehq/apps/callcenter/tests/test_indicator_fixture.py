@@ -2,10 +2,11 @@ from collections import OrderedDict
 from datetime import datetime, date, time, timedelta
 from xml.etree import ElementTree
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from casexml.apps.phone.models import SyncLog
-from corehq.apps.callcenter.fixturegenerators import gen_fixture, should_sync
+from casexml.apps.phone.models import SyncLog, OTARestoreCommCareUser, OTARestoreWebUser
+from corehq.apps.callcenter.fixturegenerators import gen_fixture, should_sync, \
+    IndicatorsFixturesProvider
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from django.test import SimpleTestCase
 
 
@@ -21,6 +22,11 @@ class MockIndicatorSet(object):
     @property
     def reference_date(self):
         return datetime(2014, 1, 1, 0, 0)
+
+
+mock_indicators_fixture_generator = type('IndicatorsFixturesProviderFake', (IndicatorsFixturesProvider,), {
+    '_should_return_no_fixtures': (lambda self, domain, last_sync: False),
+})()
 
 
 class CallcenterFixtureTests(SimpleTestCase):
@@ -47,6 +53,31 @@ class CallcenterFixtureTests(SimpleTestCase):
             </indicators>
         </fixture>
         """.format(userid=user.user_id), ElementTree.tostring(fixture))
+
+    def test_callcenter_fixture_commcare_user(self):
+        user = CommCareUser(_id='123')
+        indicator_set = MockIndicatorSet(name='test', indicators=OrderedDict([
+            ('user_case1', {'i1': 1, 'i2': 2}),
+            ('user_case2', {'i1': 0, 'i2': 3})
+        ]))
+        restore_user = type('OTARestoreCommCareUserFake', (OTARestoreCommCareUser,), {
+            'project': Domain(name='test', default_timezone='UTC'),
+            'get_call_center_indicators': lambda self, config: indicator_set,
+        })('test', user)
+
+        fixture, = mock_indicators_fixture_generator(restore_user, version='2.0')
+        check_xml_line_by_line(
+            self, ElementTree.tostring(fixture),
+            ElementTree.tostring(gen_fixture(restore_user, indicator_set)))
+
+    def test_callcenter_fixture_web_user(self):
+        user = WebUser(_id='123')
+        restore_user = type('OTARestoreWebUserFake', (OTARestoreWebUser,), {
+            'project': Domain(name='test', default_timezone='UTC'),
+        })('test', user)
+
+        fixtures = mock_indicators_fixture_generator(restore_user, version='2.0')
+        self.assertEqual(fixtures, [])
 
     def test_should_sync_none(self):
         self.assertTrue(should_sync(None, None))

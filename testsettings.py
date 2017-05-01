@@ -21,11 +21,12 @@ NOSE_PLUGINS = [
     'corehq.tests.nose.HqTestFinderPlugin',
     'corehq.tests.noseplugins.dividedwerun.DividedWeRunPlugin',
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
+    'corehq.tests.noseplugins.cmdline_params.CmdLineParametersPlugin',
+    'corehq.tests.noseplugins.uniformresult.UniformTestResultPlugin',
 
     # The following are not enabled by default
     'corehq.tests.noseplugins.logfile.LogFilePlugin',
     'corehq.tests.noseplugins.timing.TimingPlugin',
-    'corehq.tests.noseplugins.uniformresult.UniformTestResultPlugin',
 
     # Uncomment to debug tests. Plugins have nice hooks for inspecting state
     # before/after each test or context setup/teardown, etc.
@@ -73,6 +74,7 @@ ENABLE_PRELOGIN_SITE = True
 # override dev_settings
 CACHE_REPORTS = True
 
+
 def _set_logging_levels(levels):
     import logging
     for path, level in levels.items():
@@ -80,8 +82,11 @@ def _set_logging_levels(levels):
 _set_logging_levels({
     # Quiet down a few really noisy ones.
     # (removing these can be handy to debug couchdb access for failing tests)
+    'boto3': 'WARNING',
+    'botocore': 'INFO',
     'couchdbkit.request': 'INFO',
     'restkit.client': 'INFO',
+    's3transfer': 'INFO',
 })
 
 # use empty LOGGING dict with --debug=nose,nose.plugins to debug test discovery

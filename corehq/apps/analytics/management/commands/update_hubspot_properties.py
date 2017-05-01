@@ -1,3 +1,4 @@
+from __future__ import print_function
 from datetime import date, timedelta
 import json
 
@@ -14,18 +15,23 @@ class Command(BaseCommand):
     help = ("Updates given Hubspot properties for all users active within last 6 months. "
             "Only subscription, domain-membership, and A/B Test properties are supported")
 
-    def handle(self, *args, **options):
-        if not args:
-            raise CommandError('Usage: %s\n%s' % (self.args, self.help))
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'property_names',
+            metavar='property_name',
+            nargs='+',
+        )
 
-        print "Calculating properties for users"
+    def handle(self, property_names, **options):
+        print("Calculating properties for users")
         users = self.get_active_users()
-        data_to_submit = [self.get_user_data(user, args) for user in users if user.email]
+        data_to_submit = [self.get_user_data(user, property_names)
+                          for user in users if user.email and user.analytics_enabled]
         json_data = json.dumps(data_to_submit)
 
-        print "Sending data to Hubspot"
+        print("Sending data to Hubspot")
         batch_track_on_hubspot(json_data)
-        print "Update success!"
+        print("Update success!")
 
     @classmethod
     def get_active_users(cls):

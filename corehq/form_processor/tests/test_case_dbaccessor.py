@@ -3,7 +3,6 @@ from collections import namedtuple
 from datetime import datetime
 
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
@@ -12,7 +11,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo, CaseAcce
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.tests.test_basic_cases import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
 
@@ -20,7 +19,7 @@ DOMAIN = 'test-case-accessor'
 CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@use_sql_backend
 class CaseAccessorTestsSQL(TestCase):
 
     def tearDown(self):
@@ -56,13 +55,6 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(2, len(cases))
         self.assertEqual(case1.case_id, cases[0].case_id)
         self.assertEqual(case2.case_id, cases[1].case_id)
-
-    def test_case_modified_since(self):
-        case = _create_case()
-
-        self.assertFalse(CaseAccessorSQL.case_modified_since(case.case_id, case.server_modified_on))
-
-        self.assertTrue(CaseAccessorSQL.case_modified_since(case.case_id, datetime.utcnow()))
 
     def test_get_case_xform_ids(self):
         form_id1 = uuid.uuid4().hex
@@ -593,7 +585,7 @@ class CaseAccessorTestsSQL(TestCase):
         case2 = _create_case(domain='d2', case_type='t1')
         case2.external_id = '123'
         CaseAccessorSQL.save_case(case2)
-        self.addCleanup(lambda: CaseAccessorSQL.delete_all_cases('d2'))
+        self.addCleanup(lambda: FormProcessorTestUtils.delete_all_cases('d2'))
 
         [case] = CaseAccessorSQL.get_cases_by_external_id(DOMAIN, '123')
         self.assertEqual(case.case_id, case1.case_id)
@@ -602,15 +594,6 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(case.case_id, case2.case_id)
 
         self.assertEqual([], CaseAccessorSQL.get_cases_by_external_id('d2', '123', case_type='t2'))
-
-    def test_get_case_types_for_domain(self):
-        case_types = {'c1', 'c2', 'c3'}
-        for type_ in case_types:
-            for i in range(3):
-                _create_case(case_type=type_)
-
-        types = CaseAccessorSQL.get_case_types_for_domain(DOMAIN)
-        self.assertEqual(case_types, types)
 
     def test_closed_transactions(self):
         case = _create_case()
@@ -662,6 +645,18 @@ class CaseAccessorTestsSQL(TestCase):
         case_ids = CaseAccessorSQL.get_deleted_case_ids_by_owner(DOMAIN, user_id)
         self.assertEqual(set(case_ids), {case1.case_id, case2.case_id})
 
+    def test_get_case_owner_ids(self):
+        _create_case(user_id='user1', case_id='123')  # get's sharded to p1
+        _create_case(user_id='user2', case_id='125')  # get's sharded to p2
+        _create_case(user_id='user1')
+        _create_case(domain='other_domain', user_id='user3')
+
+        owners = CaseAccessorSQL.get_case_owner_ids('other_domain')
+        self.assertEqual({'user3'}, owners)
+
+        owners = CaseAccessorSQL.get_case_owner_ids(DOMAIN)
+        self.assertEqual({'user1', 'user2'}, owners)
+
 
 class CaseAccessorsTests(TestCase):
 
@@ -669,7 +664,6 @@ class CaseAccessorsTests(TestCase):
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
 
-    @run_with_all_backends
     def test_soft_delete(self):
         _submit_case_block(True, 'c1', domain=DOMAIN)
         _submit_case_block(True, 'c2', domain=DOMAIN)
@@ -690,7 +684,12 @@ class CaseAccessorsTests(TestCase):
         self.assertFalse(case.is_deleted)
 
 
-def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed=False):
+@use_sql_backend
+class CaseAccessorsTestsSQL(CaseAccessorsTests):
+    pass
+
+
+def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed=False, case_id=None):
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
@@ -698,7 +697,7 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
     """
     domain = domain or DOMAIN
     form_id = form_id or uuid.uuid4().hex
-    case_id = uuid.uuid4().hex
+    case_id = case_id or uuid.uuid4().hex
     user_id = user_id or 'user1'
     utcnow = datetime.utcnow()
 

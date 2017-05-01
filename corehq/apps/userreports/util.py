@@ -68,6 +68,9 @@ def has_report_builder_trial(request):
 
 
 def can_edit_report(request, report):
+    if not request.can_access_all_locations:
+        return False
+
     ucr_toggle = toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
     report_builder_toggle = toggle_enabled(request, toggles.REPORT_BUILDER)
     report_builder_beta_toggle = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
@@ -131,6 +134,8 @@ def get_table_name(domain, table_id):
     def _hash(domain, table_id):
         return hashlib.sha1('{}_{}'.format(hashlib.sha1(domain).hexdigest(), table_id)).hexdigest()[:8]
 
+    domain = domain.encode('unicode-escape')
+    table_id = table_id.encode('unicode-escape')
     return truncate_value(
         'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
         from_left=False
@@ -148,6 +153,7 @@ def truncate_value(value, max_length=63, from_left=True):
     """
     hash_length = 8
     truncated_length = max_length - hash_length - 1
+    value = value.encode('unicode-escape')
     if from_left:
         truncated_value = value[-truncated_length:]
     else:
@@ -182,3 +188,7 @@ def get_ucr_class_name(id):
     :return: string class name
     """
     return 'corehq.reports.DynamicReport{}'.format(id)
+
+
+def get_async_indicator_modify_lock_key(doc_id):
+    return 'async_indicator_save-{}'.format(doc_id)

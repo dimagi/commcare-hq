@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
@@ -10,15 +11,12 @@ from couchdbkit import ResourceNotFound
 
 class Command(BaseCommand):
     help = "Bootstrap an Application with two modules in a given domain."
-    args = "<domain> <app-name>"
-    label = ""
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('domain_name')
+        parser.add_argument('app_name')
 
-        if len(args) != 2:
-            raise CommandError('Usage: manage.py bootstrap_app <domain> <app-name>')
-        domain_name, app_name = args
-
+    def handle(self, domain_name, app_name, **options):
         try:
             Domain.get_by_name(domain_name)
         except ResourceNotFound:
@@ -45,8 +43,8 @@ class Command(BaseCommand):
 
         app.save()
 
-        print "Application {app_name}: {app_url} created in domain {domain_name}".format(
+        print("Application {app_name}: {app_url} created in domain {domain_name}".format(
             app_name=app_name,
             app_url=reverse('view_app', args=[domain_name, app._id], absolute=True),
             domain_name=domain_name
-        )
+        ))

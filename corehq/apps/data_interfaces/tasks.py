@@ -2,6 +2,7 @@ from celery.schedules import crontab
 from celery.task import task, periodic_task
 from celery.utils.log import get_task_logger
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, AUTO_UPDATE_XMLNS
+from corehq.util.decorators import serial_task
 from datetime import datetime
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
@@ -14,12 +15,14 @@ from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_f
 from corehq.toggles import DATA_MIGRATION
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from .dispatcher import EditDataInterfaceDispatcher
-from dimagi.utils.django.email import send_HTML_email
+from corehq.util.log import send_HTML_email
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.logging import notify_error
 
 
 logger = get_task_logger('data_interfaces')
 ONE_HOUR = 60 * 60
+HALT_AFTER = 23 * 60 * 60
 
 
 @task(ignore_result=True)
@@ -55,7 +58,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
 
 
 @periodic_task(
-    run_every=crontab(hour=0, minute=0, day_of_week='sat'),
+    run_every=crontab(hour=0, minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
     ignore_result=True
 )
@@ -71,21 +74,35 @@ def run_case_update_rules(now=None):
             run_case_update_rules_for_domain.delay(domain, now)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@serial_task(
+    '{domain}',
+    timeout=36 * 60 * 60,
+    max_retries=0,
+    queue='background_queue',
+)
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
+    start_run = datetime.utcnow()
     all_rules = AutomaticUpdateRule.by_domain(domain)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
 
     for case_type, rules in rules_by_case_type.iteritems():
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-        case_ids = AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date)
+        case_id_chunks = AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date)
 
-        for case in CaseAccessors(domain).iter_cases(case_ids):
-            for rule in rules:
-                stop_processing = rule.apply_rule(case, now)
-                if stop_processing:
-                    break
+        for case_ids in case_id_chunks:
+            for case in CaseAccessors(domain).iter_cases(case_ids):
+                time_elapsed = datetime.utcnow() - start_run
+                if time_elapsed.seconds > HALT_AFTER:
+                    notify_error(
+                        "Halting rule run for domain %s as it's been running for more than a day." % domain
+                    )
+                    return
+
+                for rule in rules:
+                    stop_processing = rule.apply_rule(case, now)
+                    if stop_processing:
+                        break
 
         for rule in rules:
             rule.last_run = now

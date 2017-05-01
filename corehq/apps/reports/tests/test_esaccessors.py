@@ -52,6 +52,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
     get_aggregated_ledger_values,
+    get_case_types_for_domain_es,
 )
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
@@ -66,7 +67,7 @@ class BaseESAccessorsTest(SimpleTestCase):
         with trap_extra_setup(ConnectionError):
             self.es = get_es_new()
             self._delete_es_index()
-            self.domain = 'esdomain'
+            self.domain = uuid.uuid4().hex
             if isinstance(self.es_index_info, (list, tuple)):
                 for index_info in self.es_index_info:
                     initialize_index_and_mapping(self.es, index_info)
@@ -1157,6 +1158,38 @@ class TestCaseESAccessors(BaseESAccessorsTest):
 
         results = get_case_counts_opened_by_user(self.domain, datespan, case_types=['not-here'])
         self.assertEqual(results, {})
+
+    def test_get_case_types(self):
+        self._send_case_to_es(case_type='t1')
+        self._send_case_to_es(case_type='t2')
+        self._send_case_to_es(case_type='t3', closed_on=datetime.utcnow())
+        self._send_case_to_es(domain='other', case_type='t4')
+
+        case_types = get_case_types_for_domain_es(self.domain)
+        self.assertEqual(case_types, {'t1', 't2', 't3'})
+        self.assertEqual({'t4'}, get_case_types_for_domain_es('other'))
+        self.assertEqual(set(), get_case_types_for_domain_es('none'))
+
+    def test_get_case_types_case_sensitive(self):
+        self._send_case_to_es(case_type='child')
+        self._send_case_to_es(case_type='Child')
+        case_types = get_case_types_for_domain_es(self.domain)
+        self.assertEqual(case_types, {'child', 'Child'})
+
+    def test_get_case_types_caching(self):
+        self._send_case_to_es(case_type='t1')
+
+        self.assertEqual({'t1'}, get_case_types_for_domain_es(self.domain))
+
+        self._send_case_to_es(case_type='t2')
+        # cached response
+        self.assertEqual({'t1'}, get_case_types_for_domain_es(self.domain))
+
+        # simulate a save
+        from casexml.apps.case.signals import case_post_save
+        case_post_save.send(self, case=CommCareCase(domain=self.domain, type='t2'))
+
+        self.assertEqual({'t1', 't2'}, get_case_types_for_domain_es(self.domain))
 
 
 class TestLedgerESAccessors(BaseESAccessorsTest):

@@ -55,11 +55,11 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=
     )
 
     domain = domain or 'test-domain'
-    _, xform, [case] = submit_form_locally(updated_xml, domain=domain)
-    test_class.assertLessEqual(starttime, case.server_modified_on)
-    test_class.assertGreaterEqual(datetime.utcnow(), case.server_modified_on)
-    test_class.assertEqual(case_id, case.case_id)
-    return xform, case
+    result = submit_form_locally(updated_xml, domain=domain)
+    test_class.assertLessEqual(starttime, result.case.server_modified_on)
+    test_class.assertGreaterEqual(datetime.utcnow(), result.case.server_modified_on)
+    test_class.assertEqual(case_id, result.case.case_id)
+    return result.xform, result.case
 
 
 def _replace_ids_in_xform_xml(xml_data, case_id_override=None):
@@ -137,12 +137,6 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
                         line_by_line=True, restore_id="", version=V2,
                         purge_restore_cache=False, return_single=False):
 
-    if not isinstance(case_blocks, list):
-        case_blocks = [case_blocks]
-        return_single = True
-
-    XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
-
     if restore_id and purge_restore_cache:
         SyncLog.get(restore_id).invalidate_cached_payloads()
 
@@ -151,6 +145,33 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
         restore_user=user, params=RestoreParams(restore_id, version=version)
     )
     payload_string = restore_config.get_payload().as_string()
+
+    return check_payload_has_cases(
+        testcase=testcase,
+        payload_string=payload_string,
+        username=user.username,
+        case_blocks=case_blocks,
+        should_have=should_have,
+        line_by_line=line_by_line,
+        version=version,
+        return_single=return_single,
+        restore_config=restore_config,
+    )
+
+
+def check_payload_has_case_ids(testcase, payload_string, username, case_ids):
+    case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
+    return check_payload_has_cases(testcase, payload_string, username, case_blocks, line_by_line=False)
+
+
+def check_payload_has_cases(testcase, payload_string, username, case_blocks, should_have=True,
+                            line_by_line=True, version=V2, return_single=False, restore_config=None):
+
+    if not isinstance(case_blocks, list):
+        case_blocks = [case_blocks]
+        return_single = True
+
+    XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
     blocks_from_restore = extract_caseblocks_from_xml(payload_string, version)
 
     def check_block(case_block):
@@ -177,16 +198,16 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
                     if n == 2:
                         testcase.fail(
                             "Block for case_id '%s' appears twice"
-                            " in ota restore for user '%s':%s" % (case_id, user.username, extra_info())
+                            " in ota restore for user '%s':%s" % (case_id, username, extra_info())
                         )
                 else:
                     testcase.fail(
                         "User '%s' gets case '%s' "
-                        "but shouldn't:%s" % (user.username, case_id, extra_info())
+                        "but shouldn't:%s" % (username, case_id, extra_info())
                     )
         if not n and should_have:
             testcase.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s':%s"
-                          % (case_id, user.username, extra_info()))
+                          % (case_id, username, extra_info()))
 
         return match
 

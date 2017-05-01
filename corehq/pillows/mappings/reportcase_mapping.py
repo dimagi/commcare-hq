@@ -1,4 +1,3 @@
-from corehq.pillows.base import DEFAULT_META
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
@@ -134,6 +133,5 @@ REPORT_CASE_INDEX_INFO = ElasticsearchIndexInfo(
     index=REPORT_CASE_INDEX,
     alias=REPORT_CASE_ES_ALIAS,
     type=REPORT_CASE_ES_TYPE,
-    meta=DEFAULT_META,
     mapping=REPORT_CASE_MAPPING,
 )

@@ -15,6 +15,11 @@ from corehq.util.dates import get_previous_month_date_range
 
 class TestDomainInvoiceFactory(BaseAccountingTest):
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestDomainInvoiceFactory, cls).setUpClass()
+        generator.bootstrap_test_plans()
+
     def setUp(self):
         super(TestDomainInvoiceFactory, self).setUp()
         self.invoice_start, self.invoice_end = get_previous_month_date_range()
@@ -32,17 +37,18 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
             self.invoice_start, self.invoice_end, self.domain
         )
 
-    def _clean_subs(self):
-        SubscriptionAdjustment.objects.all().delete()
-        Subscription.objects.all().delete()
+    def tearDown(self):
+        self.domain.delete()
+        super(TestDomainInvoiceFactory, self).tearDown()
 
     def test_feature_charges(self):
         domain_under_limits = generator.arbitrary_domain()
         self.assertTrue(self.community.feature_charges_exist_for_domain(self.domain))
         self.assertFalse(self.community.feature_charges_exist_for_domain(domain_under_limits))
+        domain_under_limits.delete()
 
     def test_incomplete_starting_coverage(self):
-        some_plan = generator.subscribable_plan()
+        some_plan = generator.subscribable_plan_version()
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, some_plan,
             date_start=self.invoice_start + datetime.timedelta(days=3)
@@ -52,10 +58,9 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self.assertEqual(len(community_ranges), 1)
         self.assertEqual(community_ranges[0][0], self.invoice_start)
         self.assertEqual(community_ranges[0][1], subscription.date_start)
-        self._clean_subs()
 
     def test_incomplete_ending_coverage(self):
-        some_plan = generator.subscribable_plan()
+        some_plan = generator.subscribable_plan_version()
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, some_plan,
             date_start=self.invoice_start,
@@ -67,10 +72,9 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self.assertEqual(community_ranges[0][0], subscription.date_end)
         self.assertEqual(community_ranges[0][1],
                          self.invoice_end + datetime.timedelta(days=1))
-        self._clean_subs()
 
     def test_patchy_coverage(self):
-        some_plan = generator.subscribable_plan()
+        some_plan = generator.subscribable_plan_version()
         middle_date = self.invoice_end - datetime.timedelta(days=15)
         Subscription.new_domain_subscription(
             self.account, self.domain.name, some_plan,
@@ -94,10 +98,9 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self.assertEqual(len(subscriptions), 3)
         community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
         self.assertEqual(len(community_ranges), 4)
-        self._clean_subs()
 
     def test_full_coverage(self):
-        some_plan = generator.subscribable_plan()
+        some_plan = generator.subscribable_plan_version()
         Subscription.new_domain_subscription(
             self.account, self.domain.name, some_plan,
             date_start=self.invoice_start,
@@ -106,7 +109,6 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         subscriptions = self.invoice_factory._get_subscriptions()
         community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
         self.assertEqual(len(community_ranges), 0)
-        self._clean_subs()
 
     def test_no_coverage(self):
         subscriptions = self.invoice_factory._get_subscriptions()

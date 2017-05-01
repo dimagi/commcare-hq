@@ -46,7 +46,7 @@ from corehq.apps.export.tests.util import (
 from corehq.elastic import send_to_elasticsearch, get_es_new
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
+from corehq.util.test_utils import trap_extra_setup, flag_enabled
 from couchexport.export import get_writer
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
@@ -121,12 +121,59 @@ class WriterTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'Q3', u'Q1'],
                         u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
 
+                    }
+                }
+            )
+
+    @patch('corehq.apps.export.export.MAX_EXPORTABLE_ROWS', 2)
+    @flag_enabled('PAGINATED_EXPORTS')
+    def test_paginated_table(self):
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            tables=[
+                TableConfiguration(
+                    label="My table",
+                    selected=True,
+                    columns=[
+                        ExportColumn(
+                            label="Q3",
+                            item=ScalarItem(
+                                path=[PathNode(name='form'), PathNode(name='q3')],
+                            ),
+                            selected=True
+                        ),
+                        ExportColumn(
+                            label="Q1",
+                            item=ScalarItem(
+                                path=[PathNode(name='form'), PathNode(name='q1')],
+                            ),
+                            selected=True
+                        ),
+                    ]
+                )
+            ]
+        )
+        writer = _get_writer([export_instance])
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, self.docs + self.docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export.read()),
+                {
+                    u'My table_000': {
+                        u'headers': [u'Q3', u'Q1'],
+                        u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
+                    },
+                    u'My table_001': {
+                        u'headers': [u'Q3', u'Q1'],
+                        u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
                     }
                 }
             )
@@ -163,7 +210,7 @@ class WriterTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'MC | one', u'MC | two', 'MC | extra'],
@@ -260,7 +307,7 @@ class WriterTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'StockItem @type', u'StockItem @quantity'],
@@ -302,7 +349,7 @@ class WriterTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'Date'],
@@ -344,7 +391,7 @@ class WriterTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'MC'],
@@ -393,7 +440,7 @@ class WriterTest(SimpleTestCase):
             _write_export_instance(writer, export_instance, self.docs)
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'Q3'],
@@ -440,7 +487,7 @@ class WriterTest(SimpleTestCase):
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, docs)
         with ExportFile(writer.path, writer.format) as export:
-            exported_tables = [table for table in re.findall('<h2>(.*)</h2>', export)]
+            exported_tables = [table for table in re.findall('<h2>(.*)</h2>', export.read())]
 
         expected_tables = [t.label for t in tables]
         self.assertEqual(expected_tables, exported_tables)
@@ -452,7 +499,6 @@ class WriterTest(SimpleTestCase):
         """
         export_instances = [
             FormExportInstance(
-                # export_format=Format.JSON,
                 tables=[
                     TableConfiguration(
                         label="My table",
@@ -471,7 +517,24 @@ class WriterTest(SimpleTestCase):
                 ]
             ),
             FormExportInstance(
-                # export_format=Format.JSON,
+                tables=[
+                    TableConfiguration(
+                        label="My other table",
+                        selected=True,
+                        path=[PathNode(name="form", is_repeat=False), PathNode(name="q2", is_repeat=False)],
+                        columns=[
+                            ExportColumn(
+                                label="Q4",
+                                item=ScalarItem(
+                                    path=[PathNode(name='form'), PathNode(name='q2'), PathNode(name='q4')],
+                                ),
+                                selected=True,
+                            ),
+                        ]
+                    )
+                ]
+            ),
+            FormExportInstance(
                 tables=[
                     TableConfiguration(
                         label="My other table",
@@ -496,19 +559,72 @@ class WriterTest(SimpleTestCase):
         with writer.open(export_instances):
             _write_export_instance(writer, export_instances[0], self.docs)
             _write_export_instance(writer, export_instances[1], self.docs)
+            _write_export_instance(writer, export_instances[2], self.docs)
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'Q3'],
                         u'rows': [[u'baz'], [u'bop']],
 
                     },
-                    u'My other table': {
+                    u'Export2-My other table': {
                         u'headers': [u'Q4'],
                         u'rows': [[u'bar'], [u'boop']],
+                    },
+                    u'Export3-My other table': {
+                        u'headers': [u'Q4'],
+                        u'rows': [[u'bar'], [u'boop']],
+                    },
+                }
+            )
+
+    def test_empty_location(self):
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            tables=[
+                TableConfiguration(
+                    label="My table",
+                    selected=True,
+                    columns=[
+                        ExportColumn(
+                            label="location",
+                            item=ScalarItem(
+                                path=[PathNode(name='form'), PathNode(name='meta'), PathNode(name='location')],
+                            ),
+                            selected=True
+                        ),
+                    ]
+                )
+            ]
+        )
+
+        docs = [
+            {
+                'domain': 'my-domain',
+                '_id': '1234',
+                'form': {
+                    'meta': {
+                        'location': {'xmlns': 'abc'},
+                    }
+                }
+            }
+        ]
+
+        writer = _get_writer([export_instance])
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export.read()),
+                {
+                    u'My table': {
+                        u'headers': [u'location'],
+                        u'rows': [[EMPTY_VALUE]],
+
                     }
                 }
             )
@@ -540,7 +656,7 @@ class WriterTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'Sheet1': {
                         u'headers': [u'Q1'],
@@ -615,7 +731,7 @@ class ExportTest(SimpleTestCase):
         )
         with export_file as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [
@@ -672,7 +788,7 @@ class ExportTest(SimpleTestCase):
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
-                json.loads(export),
+                json.loads(export.read()),
                 {
                     u'My table': {
                         u'headers': [u'case_name'],
@@ -710,7 +826,7 @@ class ExportTest(SimpleTestCase):
             []  # No filters
         )
         with export_file as export:
-            export_dict = json.loads(export)
+            export_dict = json.loads(export.read())
             export_dict['My table']['rows'].sort()
             self.assertEqual(
                 export_dict,
@@ -746,7 +862,7 @@ class ExportTest(SimpleTestCase):
             []  # No filters
         )
         with export_file as export:
-            self.assertEqual(json.loads(export), {})
+            self.assertEqual(json.loads(export.read()), {})
 
     def test_simple_bulk_export(self):
 
@@ -795,13 +911,13 @@ class ExportTest(SimpleTestCase):
         )
 
         expected = {
-            'My table': {
+            'Export1-My table': {
                 "A1": "Foo column",
                 "A2": "apple",
                 "A3": "apple",
                 "A4": "apple",
             },
-            "My table1": {
+            "Export2-My table": {
                 "A1": "Bar column",
                 "A2": "banana",
                 "A3": "banana",
@@ -810,8 +926,8 @@ class ExportTest(SimpleTestCase):
         }
 
         with export_file as export:
-            wb = load_workbook(StringIO(export))
-            self.assertEqual(wb.get_sheet_names(), ["My table", "My table1"])
+            wb = load_workbook(export)
+            self.assertEqual(wb.get_sheet_names(), ["Export1-My table", "Export2-My table"])
 
             for sheet in expected.keys():
                 for cell in expected[sheet].keys():

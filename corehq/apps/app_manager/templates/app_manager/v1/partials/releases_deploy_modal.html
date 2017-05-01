@@ -27,8 +27,10 @@
                             href="#panel-android"
                             aria-expanded="true"
                             aria-controls="panel-android"
-                            data-bind="attr: {'data-parent': '#deploy-accordion_' + id()}"
-                            >
+                            data-bind="
+                                click: get_short_odk_url,
+                                attr: {'data-parent': '#deploy-accordion_' + id()}
+                            ">
                             {% trans "Download to Android" %}
                         </a>
                     </div>
@@ -246,7 +248,7 @@
                                                         </span>
                                                     </label>
                                                 </div>
-                                                <form method="post" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}">{% csrf_token %}
+                                                <form method="post" action="{% url "send_to_recipients" domain %}">{% csrf_token %}
                                                     <div class="form-group">
                                                         <label>{% trans "Send to" %}</label>
                                                         <input type="text" name="recipients" value="" class="form-control"

@@ -1,8 +1,9 @@
 .scrollable-container {
-  transition: width 1s;
+  transition: width @transition-speed;
   overflow-x: hidden;
   overflow-y: scroll;
-  // 15px is the approximate width of the scrollbar. This is how we hide it
+  // 15px is the approximate width of the scrollbar in OSX.
+  // javascript is the most reliable way to hide it when pure css options fail
   width: @preview-phone-width;
   &.has-scrollbar-15 { width: @preview-phone-width + 15px; }
   box-sizing: content-box;
@@ -20,3 +21,8 @@
     &.has-scrollbar-15 { width: @preview-tablet-width + 15px; }
   }
 }
+
+// Hiding scrollbars for the different browsers, generally only works on windows.
+.scrollable-container::-webkit-scrollbar { width: 0 !important }
+.scrollable-container { -ms-overflow-style: none; }
+.scrollable-container { overflow: -moz-scrollbars-none; }

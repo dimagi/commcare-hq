@@ -25,6 +25,12 @@ FormplayerFrontend.module("Apps", function(Apps, FormplayerFrontend, Backbone, M
             });
             FormplayerFrontend.regions.main.show(singleAppView);
         },
+        landingPageApp: function(appId) {
+            var landingPageAppView = new Apps.Views.LandingPageAppView({
+                appId: appId,
+            });
+            FormplayerFrontend.regions.main.show(landingPageAppView);
+        },
         listSettings: function() {
             var settingsView = new FormplayerFrontend.Layout.Views.SettingsView();
             FormplayerFrontend.regions.main.show(settingsView);

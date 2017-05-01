@@ -575,6 +575,8 @@ class TestBlobHelper(BaseTestCase):
             doc = {}
         if "_id" not in doc:
             doc["_id"] = uuid.uuid4().hex
+        if "doc_type" not in doc:
+            doc["doc_type"] = "FakeDoc"
         if doc.get("_attachments"):
             for name, attach in doc["_attachments"].iteritems():
                 self.couch.put_attachment(doc, name=name, **attach)
@@ -616,6 +618,7 @@ class TestBlobHelper(BaseTestCase):
         couch = FakeCouchDatabase()
         couch.fetch_attachment = fetch_fail
         obj = mod.BlobHelper({
+            "doc_type": "FakeDoc",
             "_id": "fetch-fail",
             "external_blobs": {"not-found.txt": {"id": "hahaha"}},
         }, couch)
@@ -625,6 +628,7 @@ class TestBlobHelper(BaseTestCase):
 
     def test_fetch_attachment_not_found_while_migrating(self):
         obj = mod.BlobHelper({
+            "doc_type": "FakeDoc",
             "_id": "fetch-fail",
             "_attachments": {"migrating...": {}},
             "external_blobs": {"not-found.txt": {"id": "nope"}},
@@ -641,6 +645,7 @@ class TestBlobHelper(BaseTestCase):
         self.assertEqual(obj.fetch_attachment("file.txt"), content)
         self.assertFalse(self.couch.data)
         self.assertEqual(self.couch.save_log, [{
+            "doc_type": "FakeDoc",
             "_id": obj._id,
             "external_blobs": {
                 "file.txt": {
@@ -680,6 +685,7 @@ class TestBlobHelper(BaseTestCase):
         with obj.atomic_blobs():
             # save before put
             self.assertEqual(self.couch.save_log, [{
+                "doc_type": "FakeDoc",
                 "_id": obj._id,
                 "_attachments": {},
             }])
@@ -697,6 +703,7 @@ class TestBlobHelper(BaseTestCase):
             self.assertEqual(self.couch.save_log, [])
             obj.put_attachment("test", "file.txt", content_type="text/plain")
         self.assertEqual(self.couch.save_log, [{
+            "doc_type": "FakeDoc",
             "_id": obj._id,
             "_attachments": {},
             "external_blobs": {
@@ -737,6 +744,7 @@ class TestBlobHelper(BaseTestCase):
         # fetch from blob db
         self.assertEqual(obj.fetch_attachment("doc.txt"), "doc")
         self.assertEqual(self.couch.save_log, [{
+            "doc_type": "FakeDoc",
             "_id": obj._id,
             "_attachments": {},
             "external_blobs": {

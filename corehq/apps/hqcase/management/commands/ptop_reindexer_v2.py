@@ -1,6 +1,3 @@
-from copy import deepcopy
-from optparse import make_option
-
 from django.core.management import BaseCommand, CommandError
 
 from corehq.pillows.app_submission_tracker import (

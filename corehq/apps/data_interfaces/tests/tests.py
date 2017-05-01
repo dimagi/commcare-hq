@@ -1,3 +1,4 @@
+from __future__ import print_function
 from os.path import abspath, dirname, join
 
 from django.test import TestCase
@@ -129,7 +130,7 @@ class BulkArchiveFormsUnit(TestCase):
 
         with drop_connected_signals(xform_archived):
             response = archive_forms_old(DOMAIN_NAME, 'user1', self.username, list(uploaded_file.get_worksheet()))
-            print response
+            print(response)
 
         # Need to re-get instance from DB to get updated attributes
         for key, _id in self.XFORMS.iteritems():

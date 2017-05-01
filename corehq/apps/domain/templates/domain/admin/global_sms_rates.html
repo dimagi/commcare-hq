@@ -9,19 +9,6 @@
     <script src="{% static 'smsbillables/js/smsbillables.rate_calc.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        var smsRateCalculator = new PublicSMSRateCalculator({
-            country_code: {
-                fieldName: 'country_code',
-                currentValue: ''
-            }
-        });
-        $('#sms-rate-calculator').koApplyBindings(smsRateCalculator);
-        $("#id_country_code").select2()
-    </script>
-{% endblock %}
-
 {% block title %}{% trans "SMS Pricing" %}{% endblock %}
 
 {% block page_title %}{% trans "SMS Pricing" %}{% endblock page_title %}
@@ -49,7 +36,7 @@
         {% endblocktrans %}
     </p>
     <hr />
-    <div id="sms-rate-calculator">
+    <div class="ko-public-sms-rate-calculator">
         {% crispy rate_calc_form %}
         <div class="alert alert-info" data-bind="visible: calculatingRate">
             {% blocktrans %}

@@ -3,6 +3,10 @@ from datetime import datetime
 import uuid
 from django.conf import settings
 from django.test import TestCase
+from django.test.utils import override_settings
+from mock import patch
+
+from casexml.apps.case.exceptions import CaseValueError
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.util import post_case_blocks
@@ -12,9 +16,11 @@ from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.blobs import get_blob_db
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
@@ -41,7 +47,6 @@ class FundamentalCaseTests(TestCase):
         self.interface = FormProcessorInterface()
         self.casedb = CaseAccessors()
 
-    @run_with_all_backends
     def test_create_case(self):
         case_id = uuid.uuid4().hex
         modified_on = datetime.utcnow()
@@ -66,14 +71,13 @@ class FundamentalCaseTests(TestCase):
         self.assertFalse(case.closed)
         self.assertIsNone(case.closed_on)
 
-        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertIsNone(case.closed_by)
         else:
             self.assertEqual(case.closed_by, '')
 
         self.assertEqual(case.dynamic_case_properties()['dynamic'], '123')
 
-    @run_with_all_backends
     def test_create_case_unicode_name(self):
         """
         Submit case blocks with unicode names
@@ -93,7 +97,6 @@ class FundamentalCaseTests(TestCase):
         case = self.casedb.get_case(case_id)
         self.assertEqual(case.name, case_name)
 
-    @run_with_all_backends
     def test_update_case(self):
         case_id = uuid.uuid4().hex
         opened_on = datetime.utcnow()
@@ -124,7 +127,6 @@ class FundamentalCaseTests(TestCase):
         self.assertIsNone(case.closed_on)
         self.assertEqual(case.dynamic_case_properties()['dynamic'], '1234')
 
-    @run_with_all_backends
     def test_close_case(self):
         # same as update, closed, closed on, closed by
         case_id = uuid.uuid4().hex
@@ -148,7 +150,6 @@ class FundamentalCaseTests(TestCase):
         self.assertEqual(case.closed_by, 'user2')
         self.assertTrue(case.server_modified_on > modified_on)
 
-    @run_with_all_backends
     def test_empty_update(self):
         case_id = uuid.uuid4().hex
         opened_on = datetime.utcnow()
@@ -167,7 +168,6 @@ class FundamentalCaseTests(TestCase):
         case = self.casedb.get_case(case_id)
         self.assertEqual(case.dynamic_case_properties(), {'dynamic': '123'})
 
-    @run_with_all_backends
     def test_case_with_index(self):
         # same as update, indexes
         mother_case_id = uuid.uuid4().hex
@@ -192,7 +192,6 @@ class FundamentalCaseTests(TestCase):
         self.assertEqual(index.referenced_type, 'mother')
         self.assertEqual(index.relationship, 'child')
 
-    @run_with_all_backends
     def test_update_index(self):
         mother_case_id = uuid.uuid4().hex
         _submit_case_block(
@@ -219,7 +218,6 @@ class FundamentalCaseTests(TestCase):
         case = self.casedb.get_case(child_case_id)
         self.assertEqual(case.indices[0].referenced_type, 'other_mother')
 
-    @run_with_all_backends
     def test_delete_index(self):
         mother_case_id = uuid.uuid4().hex
         _submit_case_block(
@@ -246,7 +244,6 @@ class FundamentalCaseTests(TestCase):
         case = self.casedb.get_case(child_case_id)
         self.assertEqual(len(case.indices), 0)
 
-    @run_with_all_backends
     def test_invalid_index(self):
         invalid_case_id = uuid.uuid4().hex
         child_case_id = uuid.uuid4().hex
@@ -260,7 +257,6 @@ class FundamentalCaseTests(TestCase):
         self.assertTrue(form.is_error)
         self.assertTrue('InvalidCaseIndex' in form.problem)
 
-    @run_with_all_backends
     def test_invalid_index_cross_domain(self):
         mother_case_id = uuid.uuid4().hex
         _submit_case_block(
@@ -285,7 +281,6 @@ class FundamentalCaseTests(TestCase):
         # same as update, attachments
         pass
 
-    @run_with_all_backends
     def test_date_opened_coercion(self):
         delete_all_users()
         self.project = Domain(name='some-domain')
@@ -307,10 +302,9 @@ class FundamentalCaseTests(TestCase):
         case.date_opened = case.date_opened.date()
         check_user_has_case(self, user, case.as_xml())
 
-    @run_with_all_backends
     def test_restore_caches_cleared(self):
         cache = get_redis_default_cache()
-        cache_key = restore_cache_key(RESTORE_CACHE_KEY_PREFIX, 'user_id', version="2.0")
+        cache_key = restore_cache_key(DOMAIN, RESTORE_CACHE_KEY_PREFIX, 'user_id', version="2.0")
         cache.set(cache_key, 'test-thing')
         self.assertEqual(cache.get(cache_key), 'test-thing')
         form = """
@@ -327,6 +321,69 @@ class FundamentalCaseTests(TestCase):
         case_id = uuid.uuid4().hex
         with self.assertRaisesMessage(AssertionError, 'Case created without create block'):
             _submit_case_block(False, case_id, user_id='user2', update={})
+
+    def test_globally_unique_form_id(self):
+        form_id = uuid.uuid4().hex
+
+        form = """
+            <data xmlns="http://openrosa.org/formdesigner/blah">
+                <meta>
+                    <userID>123</userID>
+                    <instanceID>{form_id}</instanceID>
+                </meta>
+            </data>
+        """
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False):
+            xform = submit_form_locally(form.format(form_id=form_id), 'domain1').xform
+            self.assertEqual(form_id, xform.form_id)
+
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
+            # form with duplicate ID submitted to different domain gets a new ID
+            xform = submit_form_locally(form.format(form_id=form_id), 'domain2').xform
+            self.assertNotEqual(form_id, xform.form_id)
+
+    def test_globally_unique_case_id(self):
+        case_id = uuid.uuid4().hex
+        case = CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id='user1',
+            owner_id='user1',
+            case_type='demo',
+            case_name='create_case'
+        )
+
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False):
+            post_case_blocks([case.as_xml()], domain='domain1')
+
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
+            xform, cases = post_case_blocks([case.as_xml()], domain='domain2')
+            self.assertEqual(0, len(cases))
+            self.assertTrue(xform.is_error)
+            self.assertIn('IllegalCaseId', xform.problem)
+
+
+@use_sql_backend
+class FundamentalCaseTestsSQL(FundamentalCaseTests):
+    def test_long_value_validation(self):
+        case_id = uuid.uuid4().hex
+        case = CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id='user1',
+            owner_id='user1',
+            case_type='demo',
+            case_name='this is a very long case name that exceeds the 255 char limit' * 5
+        )
+
+        xform, cases = post_case_blocks([case.as_xml()], domain=DOMAIN)
+        self.assertEqual(0, len(cases))
+        self.assertTrue(xform.is_error)
+        self.assertIn('CaseValueError', xform.problem)
+
+    def test_caching_form_attachment_during_submission(self):
+        with patch.object(get_blob_db(), 'get', side_effect=Exception('unexpected blobdb read')):
+            _submit_case_block(True, uuid.uuid4().hex, user_id='user2', update={})
 
 
 def _submit_case_block(create, case_id, **kwargs):

@@ -278,7 +278,7 @@ class DomainWireInvoiceFactory(object):
             date_paid__exact=None,
         ).order_by('-date_start')
 
-        account = BillingAccount.get_or_create_account_by_domain(
+        BillingAccount.get_or_create_account_by_domain(
             self.domain.name,
             created_by=self.__class__.__name__,
             entry_point=EntryPoint.SELF_STARTED,

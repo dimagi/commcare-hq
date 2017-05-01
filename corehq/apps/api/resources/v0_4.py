@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from tastypie import fields
 from tastypie.authentication import Authentication
@@ -17,7 +17,8 @@ from corehq.apps.api.resources import (
     v0_1,
     v0_3,
 )
-from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
+from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication, \
+    LoginAndDomainAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.serializers import CommCareCaseSerializer, XFormInstanceSerializer
@@ -417,7 +418,7 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
         return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_apps)
+        authentication = LoginAndDomainAuthentication()
         object_class = Application
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']

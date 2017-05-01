@@ -1,5 +1,5 @@
 import logging
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import Http404
 import collections
 import itertools
@@ -10,7 +10,7 @@ from corehq import toggles
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from couchforms.analytics import get_exports_by_form
 from dimagi.utils.decorators.memoized import memoized
 
@@ -166,7 +166,7 @@ class ApplicationDataRMIHelper(object):
         self.as_dict = as_dict
         default_form_placeholder = AppFormRMIPlaceholder(
             application=_("Select Application"),
-            module=_("Select Menu" if toggles.APP_MANAGER_V2.enabled(domain)
+            module=_("Select Menu" if toggles.APP_MANAGER_V2.enabled(user.username)
                      else "Select Module"),
             form=_("Select Form"),
         )
@@ -506,7 +506,7 @@ class ApplicationDataRMIHelper(object):
                             case_types = map(lambda c: c._asdict(), case_types)
                     case_types_by_app[app_choice.id] = case_types
 
-        all_case_types = CaseAccessors(self.domain).get_case_types()
+        all_case_types = get_case_types_for_domain_es(self.domain)
         unknown_case_types = all_case_types.difference(used_case_types)
         unknown_case_types = map(lambda c: RMIDataChoice(
             id=c,

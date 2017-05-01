@@ -12,7 +12,7 @@
          <span data-bind="if: valueIsLegal()">
              <select class="col-sm-3 form-control" data-bind="
                  options: options,
-@@ -25,42 +26,42 @@
+@@ -25,7 +26,7 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.bool">
@@ -21,6 +21,7 @@
          <input type="checkbox"
                 data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
      </span>
+@@ -59,35 +60,35 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.customProperty">
@@ -78,7 +79,7 @@
          attr: {
              'data-hqmediapath': path,
              href: href
-@@ -70,27 +71,27 @@
+@@ -97,27 +98,27 @@
              mediaUploadComplete: uploadComplete
          }
      ">
@@ -115,7 +116,7 @@
          <input type="text" class="col-sm-6 form-control" data-bind="
              value: visibleValue,
              valueUpdate: 'textchange',
-@@ -100,7 +101,7 @@
+@@ -127,7 +128,7 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.number">
@@ -124,7 +125,7 @@
          <input type="number" class="col-sm-3 form-control" data-bind="
              value: visibleValue,
              valueUpdate: 'textchange',
-@@ -110,165 +111,175 @@
+@@ -137,166 +138,177 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.textarea">
@@ -176,29 +177,29 @@
 -        <div id="custom-keys-example" style="display: none;">
 -            <h6>Example:</h6>
 -            <div class="row">
--                <div class="col-sm-6">polish.TextField.charactersKey1</div><div class="col-sm-6">.,</div>
--                <div class="col-sm-6">polish.TextField.charactersKey2</div><div class="col-sm-6">abc2</div>
--                <div class="col-sm-6">polish.TextField.charactersKey3</div><div class="col-sm-6">def3</div>
--                <div class="col-sm-6">polish.TextField.charactersKey4</div><div class="col-sm-6">ghi4</div>
--                <div class="col-sm-6">polish.TextField.charactersKey5</div><div class="col-sm-6">jkl5</div>
--                <div class="col-sm-6">polish.TextField.charactersKey6</div><div class="col-sm-6">mno6</div>
--                <div class="col-sm-6">polish.TextField.charactersKey7</div><div class="col-sm-6">pqrs7</div>
--                <div class="col-sm-6">polish.TextField.charactersKey8</div><div class="col-sm-6">tuv8</div>
--                <div class="col-sm-6">polish.TextField.charactersKey9</div><div class="col-sm-6">wxyz9</div>
--                <div class="col-sm-6">polish.TextField.charactersKey0</div><div class="col-sm-6"> 0</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey1</div><div class="col-sm-3">.,</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey2</div><div class="col-sm-3">abc2</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey3</div><div class="col-sm-3">def3</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey4</div><div class="col-sm-3">ghi4</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey5</div><div class="col-sm-3">jkl5</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey6</div><div class="col-sm-3">mno6</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey7</div><div class="col-sm-3">pqrs7</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey8</div><div class="col-sm-3">tuv8</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey9</div><div class="col-sm-3">wxyz9</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey0</div><div class="col-sm-3"> 0</div>
 +    <div id="custom-keys-example" style="display: none;">
 +      <h6>Example:</h6>
 +      <div class="row">
-+        <div class="col-sm-6">polish.TextField.charactersKey1</div><div class="col-sm-6">.,</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey2</div><div class="col-sm-6">abc2</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey3</div><div class="col-sm-6">def3</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey4</div><div class="col-sm-6">ghi4</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey5</div><div class="col-sm-6">jkl5</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey6</div><div class="col-sm-6">mno6</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey7</div><div class="col-sm-6">pqrs7</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey8</div><div class="col-sm-6">tuv8</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey9</div><div class="col-sm-6">wxyz9</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey0</div><div class="col-sm-6"> 0</div>
++        <div class="col-sm-9">polish.TextField.charactersKey1</div><div class="col-sm-3">.,</div>
++        <div class="col-sm-9">polish.TextField.charactersKey2</div><div class="col-sm-3">abc2</div>
++        <div class="col-sm-9">polish.TextField.charactersKey3</div><div class="col-sm-3">def3</div>
++        <div class="col-sm-9">polish.TextField.charactersKey4</div><div class="col-sm-3">ghi4</div>
++        <div class="col-sm-9">polish.TextField.charactersKey5</div><div class="col-sm-3">jkl5</div>
++        <div class="col-sm-9">polish.TextField.charactersKey6</div><div class="col-sm-3">mno6</div>
++        <div class="col-sm-9">polish.TextField.charactersKey7</div><div class="col-sm-3">pqrs7</div>
++        <div class="col-sm-9">polish.TextField.charactersKey8</div><div class="col-sm-3">tuv8</div>
++        <div class="col-sm-9">polish.TextField.charactersKey9</div><div class="col-sm-3">wxyz9</div>
++        <div class="col-sm-9">polish.TextField.charactersKey0</div><div class="col-sm-3"> 0</div>
 +      </div>
 +    </div>
 +  </aside>
@@ -306,7 +307,7 @@
 +        <div class="tab-pane" id="actions">
 +            {% if app.get_doc_type != 'LinkedApplication' %}
 +                {% if copy_app_form %}
-+                    <div class="panel panel-appmanager panel-appmanager-form">
++                    <div class="panel panel-appmanager panel-appmanager-form" id="copy-app-form">
 +                        <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
 +                            {% crispy copy_app_form %}
 +                        </form>
@@ -339,6 +340,18 @@
 -                                {% endblocktrans %}
 -                                </span>
 -                            </p>
+-                        </div>
+-                        <div class="col-sm-2 control-label">
+-                            <div class="pull-left">
+-                                <span class="label label-danger" data-bind="
+-                                    text: $data.warning || $parents[1].warning,
+-                                    visible: !$data.valueIsLegal()">
+-                                </span>
+-                                <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
+-                                <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">
+-                                    <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>
+-                                    <span data-bind="text: disabledMessage()"></span>
+-                                </span>
 +                        <div data-bind="saveButton: saveButton"></div>
 +                        <table class="table">
 +                            <thead>
@@ -358,46 +371,24 @@
 +                    </div>
 +                    </div>
 +                {% endif %}
++                {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
 +                {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-+                    <legend>Export compressed application</legend>
-+                    <form action="{% url "gzip_app" domain app.id %}" method="POST">
-+                        {% csrf_token %}
-+                        <button type="submit" class="btn btn-primary">
-+                            <i class="fa fa-arrow-down"></i>
-+                            {% trans "Download" %}
-+                        </button>
-+                    </form>
-+                    <br>
-+                {% endif %}
-+            {% endif %}
-+            <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
-+                <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
-+                    <form action="{% url "delete_app" domain app.id %}" method="POST">
-+                        {% csrf_token %}
-+                        <legend>{% trans "Delete Application" %}</legend>
-+                        <div class="panel-body">
-+                            <button type="submit" class="btn btn-danger disable-on-submit">
-+                                <i class="fa fa-trash"></i>
-+                                {% trans "Delete this application" %}
-+                            </button>
-                         </div>
--                        <div class="col-sm-2 control-label">
--                            <div class="pull-left">
--                                <span class="label label-danger" data-bind="
--                                    text: $data.warning || $parents[1].warning,
--                                    visible: !$data.valueIsLegal()">
--                                </span>
--                                <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
--                                <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">
--                                    <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>
--                                    <span data-bind="text: disabledMessage()"></span>
--                                </span>
--                            </div>
++                    <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
++                        <form action="{% url "gzip_app" domain app.id %}" method="POST">
++                            {% csrf_token %}
++                            <legend>Export compressed application</legend>
++                            <div class="panel-body">
++                                <button type="submit" class="btn btn-primary">
++                                    <i class="fa fa-arrow-down"></i>
++                                    {% trans "Download" %}
++                                </button>
+                             </div>
 -                        </div>
 -                    </div>
 -                </div>
 -            </fieldset>
 -        </div>
+-        {{ request|toggle_tag_info:"CUSTOM_PROPERTIES" }}
 -        {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
 -        <fieldset>
 -            <legend>
@@ -428,7 +419,20 @@
 -                    <i class="fa fa-plus"></i>
 -                    {% trans "Add Custom Property" %}
 -                </button>
-+                    </form>
++                        </form>
++                    </div>
++                {% endif %}
++            {% endif %}
++            <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
++                <form class="form form-horizontal" method="POST" action="{% url "delete_app" domain app.id %}">
++                    {% csrf_token %}
++                    <legend>{% trans "Delete Application" %}</legend>
++                    <div class="panel-body">
++                        <button type="submit" class="btn btn-danger disable-on-submit">
++                            <i class="fa fa-trash"></i>
++                            {% trans "Delete this application" %}
++                        </button>
++                    </div>
 +                </form>
              </div>
 -        </fieldset>

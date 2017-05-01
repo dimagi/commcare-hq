@@ -1,6 +1,7 @@
 """
 See https://cloudant.com/for-developers/faq/auth/ for cloudant reference
 """
+from __future__ import print_function
 from collections import namedtuple
 from getpass import getpass
 import requests
@@ -113,23 +114,23 @@ class CloudantDatabase(namedtuple('CloudantInstance', 'instance db_name')):
 
 
 def get_cloudant_password(username):
-    print 'Provide password for Cloudant user {}'.format(username)
+    print('Provide password for Cloudant user {}'.format(username))
     return getpass()
 
 
 def ask_user(statement):
     y = raw_input('{}. Ok? (y/n)'.format(statement))
     if y != 'y':
-        print 'Aborting'
+        print('Aborting')
         exit(0)
 
 
 def run_ask_runs(ask_runs):
     for ask_run in ask_runs:
-        print ask_run.ask()
+        print(ask_run.ask())
     ask_user('The preceding steps will be performed')
     for ask_run in ask_runs:
-        print ask_run.run()
+        print(ask_run.run())
 
 
 def authenticate_cloudant_instance(username):

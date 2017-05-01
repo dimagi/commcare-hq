@@ -9,11 +9,13 @@ class TestLocationTypes(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestLocationTypes, cls).setUpClass()
         cls.domain = create_domain('locations-test')
 
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
+        super(TestLocationTypes, cls).tearDownClass()
 
     def tearDown(self):
         LocationType.objects.filter(domain=self.domain.name).delete()
@@ -57,6 +59,7 @@ class TestLocationTypeOwnership(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestLocationTypeOwnership, cls).setUpClass()
         cls.domain = 'locations-test-ownership'
         cls.project = create_domain(cls.domain)
 
@@ -72,6 +75,7 @@ class TestLocationTypeOwnership(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
+        super(TestLocationTypeOwnership, cls).tearDownClass()
 
     def tearDown(self):
         self.user.delete()

@@ -13,15 +13,16 @@ def get_blob_db():
         if db is None:
             db = _get_fs_db(settings)
         elif getattr(settings, "BLOB_DB_MIGRATING_FROM_FS_TO_S3", False):
-            from .migratingdb import MigratingBlobDB
-            db = MigratingBlobDB(db, _get_fs_db(settings))
+            db = _get_migrating_db(db, _get_fs_db(settings))
+        elif getattr(settings, "BLOB_DB_MIGRATING_FROM_S3_TO_S3", False):
+            db = _get_migrating_db(db, _get_s3_db(settings, "OLD_S3_BLOB_DB_SETTINGS"))
         _db.append(db)
     return _db[-1]
 
 
-def _get_s3_db(settings):
+def _get_s3_db(settings, key="S3_BLOB_DB_SETTINGS"):
     from .s3db import S3BlobDB
-    config = getattr(settings, "S3_BLOB_DB_SETTINGS", None)
+    config = getattr(settings, key, None)
     return None if config is None else S3BlobDB(config)
 
 
@@ -32,6 +33,11 @@ def _get_fs_db(settings):
         reason = settings.SHARED_DRIVE_CONF.get_unset_reason("blob_dir")
         raise Error("cannot initialize blob db: %s" % reason)
     return FilesystemBlobDB(blob_dir)
+
+
+def _get_migrating_db(new_db, old_db):
+    from .migratingdb import MigratingBlobDB
+    return MigratingBlobDB(new_db, old_db)
 
 
 class BlobInfo(namedtuple("BlobInfo", ["identifier", "length", "digest"])):

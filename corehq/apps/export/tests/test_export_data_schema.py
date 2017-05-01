@@ -7,6 +7,7 @@ from corehq.apps.export.models.new import MAIN_TABLE, \
     PathNode, _question_path_to_path_nodes
 
 from corehq.util.context_managers import drop_connected_signals
+from corehq.util.test_utils import softer_assert
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.models import (
@@ -28,6 +29,8 @@ from corehq.apps.export.models import (
     CaseInferredSchema,
     ExportGroupSchema,
     ExportItem,
+    GeopointItem,
+    ScalarItem,
     LabelItem,
     PARENT_CASE_TABLE,
 )
@@ -347,6 +350,7 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         group_schema = merged.group_schemas[0]
         self.assertEqual(len(group_schema.items), 3)
+        self.assertEqual(group_schema.items[0].label, 'question1-new')
         self.assertTrue(all(map(
             lambda item: item.last_occurrences[self.app_id] == 2,
             group_schema.items,
@@ -593,6 +597,21 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(len(schema.group_schemas), 1)
+
+    @softer_assert()
+    def test_process_app_failure(self):
+        '''
+        This ensures that the schema generated will not fail if there is an error processing one of the
+        applications.
+        '''
+        with patch(
+                'corehq.apps.export.models.new.FormExportDataSchema._process_app_build',
+                side_effect=Exception('boom')):
+            FormExportDataSchema.generate_schema_from_builds(
+                self.current_app.domain,
+                self.current_app._id,
+                'my_sweet_xmlns'
+            )
 
     def test_build_from_saved_schema(self):
         app = self.current_app
@@ -1113,3 +1132,144 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
         # One for case, one for case history
         self.assertEqual(len(schema.group_schemas), 2)
+
+
+class TestOrderingOfSchemas(SimpleTestCase):
+    case_type = 'ordering'
+    domain = 'ordering'
+
+    def _create_schema(self, items):
+        return CaseExportDataSchema(
+            domain=self.domain,
+            case_type=self.case_type,
+            group_schemas=[
+                ExportGroupSchema(
+                    path=[],
+                    items=items,
+                )
+            ]
+        )
+
+    def _assert_item_order(self, schema, path, items):
+        group_schema = filter(lambda gs: gs.path == path, schema.group_schemas)[0]
+
+        for item in group_schema.items:
+            if not items:
+                break
+
+            self.assertEqual(item, items.pop(0))
+
+    def test_basic_ordering(self):
+        schema = self._create_schema([
+            ScalarItem(path=[PathNode(name='three')]),
+            ScalarItem(path=[PathNode(name='one')]),
+            ScalarItem(path=[PathNode(name='two')]),
+            ScalarItem(path=[PathNode(name='four')]),
+        ])
+
+        ordered_schema = self._create_schema([
+            ScalarItem(path=[PathNode(name='one')]),
+            ScalarItem(path=[PathNode(name='two')]),
+            ScalarItem(path=[PathNode(name='three')]),
+            ScalarItem(path=[PathNode(name='four')]),
+        ])
+
+        schema = CaseExportDataSchema._reorder_schema_from_schema(
+            schema,
+            ordered_schema,
+        )
+        self._assert_item_order(
+            schema,
+            [],
+            [
+                ScalarItem(path=[PathNode(name='one')]),
+                ScalarItem(path=[PathNode(name='two')]),
+                ScalarItem(path=[PathNode(name='three')]),
+                ScalarItem(path=[PathNode(name='four')]),
+            ],
+        )
+
+    def test_no_match_ordering(self):
+        schema = self._create_schema([
+            ExportItem(path=[PathNode(name='two')]),
+            ExportItem(path=[PathNode(name='one')]),
+            ExportItem(path=[PathNode(name='three')]),
+        ])
+
+        ordered_schema = self._create_schema([
+            ExportItem(path=[PathNode(name='four')]),
+            ExportItem(path=[PathNode(name='five')]),
+            ExportItem(path=[PathNode(name='six')]),
+        ])
+
+        schema = CaseExportDataSchema._reorder_schema_from_schema(
+            schema,
+            ordered_schema,
+        )
+        self._assert_item_order(
+            schema,
+            [],
+            [
+                ExportItem(path=[PathNode(name='two')]),
+                ExportItem(path=[PathNode(name='one')]),
+                ExportItem(path=[PathNode(name='three')]),
+            ],
+        )
+
+    def test_partial_match_ordering(self):
+        schema = self._create_schema([
+            ExportItem(path=[PathNode(name='two')]),
+            ExportItem(path=[PathNode(name='one')]),
+            ExportItem(path=[PathNode(name='three')]),
+        ])
+
+        ordered_schema = self._create_schema([
+            ExportItem(path=[PathNode(name='one')]),
+            ExportItem(path=[PathNode(name='four')]),
+            ExportItem(path=[PathNode(name='five')]),
+            ExportItem(path=[PathNode(name='six')]),
+        ])
+
+        schema = CaseExportDataSchema._reorder_schema_from_schema(
+            schema,
+            ordered_schema,
+        )
+        self._assert_item_order(
+            schema,
+            [],
+            [
+                ExportItem(path=[PathNode(name='one')]),
+                ExportItem(path=[PathNode(name='two')]),
+                ExportItem(path=[PathNode(name='three')]),
+            ],
+        )
+
+    def test_different_doc_types_ordering(self):
+        schema = self._create_schema([
+            GeopointItem(path=[PathNode(name='one')]),
+            ScalarItem(path=[PathNode(name='two')]),
+            ScalarItem(path=[PathNode(name='three')]),
+            ScalarItem(path=[PathNode(name='one')]),
+        ])
+
+        ordered_schema = self._create_schema([
+            ScalarItem(path=[PathNode(name='two')]),
+            ScalarItem(path=[PathNode(name='one')]),
+            ScalarItem(path=[PathNode(name='three')]),
+            GeopointItem(path=[PathNode(name='one')]),
+        ])
+
+        schema = CaseExportDataSchema._reorder_schema_from_schema(
+            schema,
+            ordered_schema,
+        )
+        self._assert_item_order(
+            schema,
+            [],
+            [
+                ScalarItem(path=[PathNode(name='two')]),
+                ScalarItem(path=[PathNode(name='one')]),
+                ScalarItem(path=[PathNode(name='three')]),
+                GeopointItem(path=[PathNode(name='one')]),
+            ],
+        )

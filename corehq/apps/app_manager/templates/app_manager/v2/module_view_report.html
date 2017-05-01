@@ -13,13 +13,7 @@
     {% include "app_manager/v2/partials/report_configs_js.html" %}
 {% endblock %}
 {% block form-view %}
-    {% if warnings %}
-        <div class="alert alert-danger" data-bind="visible: !contextVariables.requires_case_details()">
-        {% for warning in warnings %}
-            {{ warning }}
-        {% endfor %}
-        </div>
-    {% endif %}
+    {% registerurl "validate_module_for_build" domain app.id module.id %}
     {% include 'app_manager/v2/partials/module_view_heading.html' %}
     {% include 'app_manager/v2/partials/mobile_report_configs.html' %}
 {% endblock %}

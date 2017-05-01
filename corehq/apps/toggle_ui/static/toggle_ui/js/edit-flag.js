@@ -1,4 +1,5 @@
-$(function(){
+/* globals hqDefine */
+hqDefine('toggle_ui/js/edit-flag.js', function () {
     var PAD_CHAR = '&nbsp;';
     function ToggleView() {
         var self = this;
@@ -84,14 +85,16 @@ $(function(){
 
     }
 
-    var $home = $('#toggle_editing_ko');
-    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
-        view = new ToggleView();
-    view.init({
-        items: initial_page_data('items'),
-        namespaces: initial_page_data('namespaces'),
-        last_used: initial_page_data('last_used'),
+    $(function(){
+        var $home = $('#toggle_editing_ko');
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+            view = new ToggleView();
+        view.init({
+            items: initial_page_data('items'),
+            namespaces: initial_page_data('namespaces'),
+            last_used: initial_page_data('last_used'),
+        });
+        $home.koApplyBindings(view);
+        $home.on('change', 'input', view.change);
     });
-    $home.koApplyBindings(view);
-    $home.on('change', 'input', view.change);
 });

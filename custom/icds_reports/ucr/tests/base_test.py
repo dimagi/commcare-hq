@@ -5,10 +5,12 @@ from dateutil.relativedelta import relativedelta
 from xml.etree import ElementTree
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory
+from corehq.apps.es.fake.forms_fake import FormESFake
 from corehq.util.test_utils import TestFileMixin
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import iteratively_build_table
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
@@ -28,6 +30,7 @@ def add_element(element, element_name, value):
         element.append(elem)
 
 
+@mock.patch('custom.icds_reports.ucr.expressions.FormES', FormESFake)
 class BaseICDSDatasourceTest(TestCase, TestFileMixin):
     dependent_apps = ['corehq.apps.domain', 'corehq.apps.case']
     file_path = ('data_sources', )
@@ -50,22 +53,27 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
             cls.domain,
         )
         cls.casefactory = CaseFactory(domain=cls.domain)
+        cls.adapter = get_indicator_adapter(cls.datasource, can_handle_laboratory=True)
+        cls.adapter.rebuild_table()
 
     @classmethod
     def tearDownClass(cls):
-        super(BaseICDSDatasourceTest, cls).tearDownClass()
         cls._call_center_domain_mock.stop()
+        cls.adapter.drop_table()
+        super(BaseICDSDatasourceTest, cls).tearDownClass()
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        self.adapter.clear_table()
+        FormESFake.reset_docs()
 
-    def _rebuild_table_get_query_object(self):
-        rebuild_indicators(self.datasource._id)
-        adapter = IndicatorSqlAdapter(self.datasource)
-        return adapter.get_query_object()
+    def _get_query_object(self):
+        return self.adapter.get_query_object()
 
     def _run_iterative_monthly_test(self, case_id, cases, start_date=date(2015, 12, 1)):
-        query = self._rebuild_table_get_query_object().filter_by(doc_id=case_id)
+        iteratively_build_table(self.datasource)
+        # TODO(Sheel/J$) filter_by does not work on ES
+        query = self._get_query_object().filter_by(doc_id=case_id)
         self.assertEqual(query.count(), 7)
 
         for index, test_values in cases:
@@ -74,3 +82,7 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
             for key, exp_value in test_values:
                 self.assertEqual(exp_value, row[key],
                                  str(index) + ":" + key + ' ' + str(exp_value) + ' != ' + str(row[key]))
+
+    def _submit_form(self, form):
+        submitted_form = submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        FormESFake.save_doc(submitted_form.xform.to_json())

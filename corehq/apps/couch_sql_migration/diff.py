@@ -62,7 +62,10 @@ PARTIAL_DIFFS = {
         {'diff_type': 'missing', 'path': ('-deletion_id',), 'new_value': Ellipsis},
         {'diff_type': 'missing', 'path': ('-deletion_date',), 'new_value': Ellipsis},
     ],
-    'CommCareCase-Deleted': [],
+    'CommCareCase-Deleted': [
+        {'diff_type': 'missing', 'path': ('-deletion_id',), 'old_value': Ellipsis, 'new_value': None},
+        {'diff_type': 'missing', 'path': ('-deletion_date',), 'old_value': Ellipsis, 'new_value': None},
+    ],
     'CommCareCaseIndex': [
         # SQL JSON has case_id field in indices which couch JSON doesn't
         {'path': ('indices', '[*]', 'case_id')},

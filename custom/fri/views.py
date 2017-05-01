@@ -5,7 +5,7 @@ from custom.fri.models import FRIMessageBankMessage
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.domain.decorators import require_previewer, login_and_domain_required
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib import messages
 from django.utils.translation import ugettext as _
 

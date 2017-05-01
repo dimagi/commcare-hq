@@ -10,7 +10,7 @@ from pillow_retry.models import PillowError
 from pillow_retry.tasks import process_pillow_retry
 from pillowtop import get_all_pillow_configs
 from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.feed.couch import force_to_change
+from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change, ChangeMeta
 from pillowtop.feed.mock import RandomChangeFeed
 from pillowtop.processors import PillowProcessor
@@ -32,7 +32,7 @@ def FakePillow():
 def GetDocPillow():
     return FakeConstructedPillow(
         name='GetDocPillow',
-        checkpoint=PillowCheckpoint('get_doc_processor'),
+        checkpoint=PillowCheckpoint('get_doc_processor', 'text'),
         change_feed=RandomChangeFeed(10),
         processor=GetDocProcessor(),
     )
@@ -49,7 +49,6 @@ class GetDocProcessor(PillowProcessor):
 
 
 def create_error(change, message='message', attempts=0, pillow=None, ex_class=None):
-    change = force_to_change(change)
     change.metadata = ChangeMeta(data_source_type='couch', data_source_name='test_commcarehq', document_id=change.id)
     error = PillowError.get_or_create(change, pillow or FakePillow())
     for n in range(0, attempts):
@@ -74,8 +73,8 @@ class PillowRetryTestCase(TestCase):
 
     def test_id(self):
         id = '12345'
-        change_dict = {'id': id, 'seq': 54321}
-        error = create_error(change_dict)
+        change = Change(id=id, sequence_id=54321)
+        error = create_error(change)
         self.assertEqual(error.doc_id, id)
         self.assertEqual(error.pillow, 'FakePillow')
         self.assertEqual(error.change_object.id, id)
@@ -83,7 +82,7 @@ class PillowRetryTestCase(TestCase):
 
     def test_attempts(self):
         message = 'ex message'
-        error = create_error({'id': '123'}, message=message, attempts=1)
+        error = create_error(_change(id='123'), message=message, attempts=1)
         self.assertEqual(error.total_attempts, 1)
         self.assertEqual(error.current_attempt, 1)
         self.assertTrue(message in error.error_traceback)
@@ -98,16 +97,16 @@ class PillowRetryTestCase(TestCase):
     def test_get_or_create(self):
         message = 'abcd'
         id = '12335'
-        error = create_error({'id': id}, message=message, attempts=2)
+        error = create_error(_change(id=id), message=message, attempts=2)
         error.save()
 
-        get = PillowError.get_or_create({'id': id}, FakePillow())
+        get = PillowError.get_or_create(_change(id=id), FakePillow())
         self.assertEqual(get.total_attempts, 2)
         self.assertEqual(get.current_attempt, 2)
         self.assertTrue(message in error.error_traceback)
 
         another_pillow = make_fake_constructed_pillow('FakePillow1', '')
-        new = PillowError.get_or_create({'id': id}, another_pillow)
+        new = PillowError.get_or_create(_change(id=id), another_pillow)
         self.assertIsNone(new.id)
         self.assertEqual(new.current_attempt, 0)
 
@@ -116,7 +115,7 @@ class PillowRetryTestCase(TestCase):
         # current_attempt < setting.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
         date = datetime.utcnow()
         for i in range(0, 5):
-            error = create_error({'id': i}, attempts=i+1)
+            error = create_error(_change(id=i), attempts=i+1)
             error.date_next_attempt = date.replace(day=i+1)
             error.save()
 
@@ -132,11 +131,11 @@ class PillowRetryTestCase(TestCase):
 
     def test_get_errors_to_process_queued(self):
         date = datetime.utcnow()
-        error = create_error({'id': 1}, attempts=0)
+        error = create_error(_change(id=1), attempts=0)
         error.date_next_attempt = date
         error.save()
 
-        queued_error = create_error({'id': 2}, attempts=0)
+        queued_error = create_error(_change(id=2), attempts=0)
         queued_error.date_next_attempt = date
         queued_error.queued = True
         queued_error.save()
@@ -149,7 +148,7 @@ class PillowRetryTestCase(TestCase):
 
     def test_get_errors_to_process_queued_update(self):
         date = datetime.utcnow()
-        error = create_error({'id': 1}, attempts=0)
+        error = create_error(_change(id=1), attempts=0)
         error.date_next_attempt = date
         error.save()
 
@@ -171,7 +170,7 @@ class PillowRetryTestCase(TestCase):
         date = datetime.utcnow()
 
         def make_error(id, current_attempt, total_attempts):
-            error = create_error({'id': id})
+            error = create_error(_change(id=id))
             error.date_next_attempt = date
             error.current_attempt = current_attempt
             error.total_attempts = total_attempts
@@ -213,7 +212,7 @@ class PillowRetryTestCase(TestCase):
     def test_deleted_doc(self):
         id = 'test_doc'
         change_dict = {'id': id, 'seq': 54321}
-        error = create_error(change_dict)
+        error = create_error(change_from_couch_row(change_dict))
         error.save()
         # this used to error out
         process_pillow_retry(error.id)
@@ -222,7 +221,7 @@ class PillowRetryTestCase(TestCase):
 
     def test_bulk_reset(self):
         for i in range(0, 5):
-            error = create_error({'id': i}, attempts=settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS)
+            error = create_error(_change(id=i), attempts=settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS)
             error.save()
 
         errors = PillowError.get_errors_to_process(datetime.utcnow()).all()
@@ -235,7 +234,7 @@ class PillowRetryTestCase(TestCase):
 
     def test_bulk_reset_cutoff(self):
         for i in range(0, 3):
-            error = create_error({'id': i}, attempts=1)
+            error = create_error(_change(id=i), attempts=1)
             if i >= 1:
                 error.total_attempts = PillowError.multi_attempts_cutoff() + 1
             error.save()
@@ -261,7 +260,7 @@ class PillowRetryTestCase(TestCase):
         self.assertTrue(PillowError.objects.get(pk=error.pk).total_attempts > PillowError.multi_attempts_cutoff())
 
     def test_empty_metadata(self):
-        change = force_to_change({'id': '123'})
+        change = _change(id='123')
         error = PillowError.get_or_create(change, GetDocPillow())
         error.save()
 
@@ -328,3 +327,7 @@ def _pillow_instance_from_config_with_mock_process_change(pillow_config):
 
     instance.process_change = MagicMock(side_effect=Exception(instance.pillow_id))
     return instance
+
+
+def _change(id):
+    return Change(id=id, sequence_id=None)

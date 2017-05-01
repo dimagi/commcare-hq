@@ -45,6 +45,7 @@ class UserES(HQESQuery):
             primary_location,
             location,
             last_logged_in,
+            analytics_enabled,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -62,6 +63,16 @@ def domain(domain):
         filters.term("domain.exact", domain),
         filters.term("domain_memberships.domain.exact", domain)
     )
+
+
+def analytics_enabled(enabled=True):
+    if enabled:
+        return filters.OR(
+            filters.term("analytics_enabled", True),
+            filters.missing("analytics_enabled")
+        )
+    else:
+        return filters.term("analytics_enabled", False)
 
 
 def username(username):

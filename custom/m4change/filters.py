@@ -1,4 +1,5 @@
 from django.utils.translation import ugettext_noop, ugettext as _
+
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 
 
@@ -9,7 +10,8 @@ class FacilityHmisFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        from custom.m4change.reports import all_hmis_report, anc_hmis_report, immunization_hmis_report, ld_hmis_report
+        from custom.m4change.reports import all_hmis_report, anc_hmis_report, immunization_hmis_report, \
+            ld_hmis_report
 
         return [
             ("all", all_hmis_report.AllHmisReport.name),

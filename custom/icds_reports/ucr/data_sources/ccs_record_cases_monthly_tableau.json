@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "config": {
     "table_id": "static-ccs_record_cases_monthly_tableau",
     "display_name": "Cases - CCS Record for Tableau (Monthly) (Static)",
@@ -49,6 +53,7 @@
         },
         "is_nullable": false,
         "is_primary_key": false,
+        "create_index": true,
         "transform": {},
         "type": "expression"
       },
@@ -175,6 +180,7 @@
       },
       {
         "column_id": "supervisor_id",
+        "create_index": true,
         "datatype": "string",
         "display_name": null,
         "expression": {
@@ -195,6 +201,7 @@
       },
       {
         "column_id": "awc_id",
+        "create_index": true,
         "datatype": "string",
         "display_name": null,
         "expression": {
@@ -415,6 +422,31 @@
           ]
         },
         "type": "boolean"
+      },
+      {
+        "column_id": "has_aadhar_id",
+        "type": "boolean",
+        "filter": {
+          "type":"boolean_expression",
+          "operator": "eq",
+          "property_value": "yes",
+          "expression": {
+            "type": "icds_get_last_case_property_update",
+            "case_id_expression": {
+              "type": "icds_parent_id"
+            },
+            "case_property": "has_aadhar",
+            "end_date": {
+              "type": "icds_month_end"
+            },
+            "xmlns": [
+              "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
+              "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731",
+              "http://openrosa.org/formdesigner/991c712a8588b52505d50a6f2262ca962a85e21c"
+            ]
+          }
+        },
+        "comment": "Filter history on add household, add member and edit member"
       },
       {
         "column_id": "trimester",
@@ -1285,8 +1317,8 @@
         "datatype": "string",
         "display_name": null,
         "expression": {
-          "name": "form_count",
-          "type": "named"
+          "constant": "indicator_removed",
+          "type": "constant"
         },
         "is_nullable": true,
         "is_primary_key": false,
@@ -1466,13 +1498,6 @@
     "named_expressions": {
       "month_start": {
         "type": "icds_month_start"
-      },
-      "form_count": {
-        "aggregation_fn": "count",
-        "type": "reduce_items",
-        "items_expression": {
-          "type": "icds_get_case_forms_by_date"
-        }
       },
       "thr_rations": {
         "aggregation_fn": "sum",
@@ -1961,20 +1986,24 @@
         "operator": "gt",
         "property_value": 0,
         "expression": {
-          "type": "reduce_items",
-          "aggregation_fn": "count",
-          "items_expression": {
-            "type": "icds_get_case_forms_by_date",
-            "xmlns": [
-              "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
-            ],
-            "start_date": {
-              "type": "icds_month_start"
+          "type": "icds_get_case_forms_in_date",
+          "case_id_expression": {
+            "expression": {
+                "type": "property_name",
+                "property_name": "_id"
             },
-            "end_date": {
-              "type": "icds_month_end"
-            }
-          }
+            "type": "root_doc"
+          },
+          "xmlns": [
+            "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+          ],
+          "from_date_expression": {
+            "type": "icds_month_start"
+          },
+          "to_date_expression": {
+            "type": "icds_month_end"
+          },
+          "count": true
         }
       },
       "pnc_form_in_month": {
@@ -1982,23 +2011,31 @@
         "operator": "gt",
         "property_value": 0,
         "expression": {
-          "type": "reduce_items",
-          "aggregation_fn": "count",
-          "items_expression": {
-            "type": "icds_get_case_forms_by_date",
-            "xmlns": [
-              "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
-            ],
-            "end_date": {
-              "type": "icds_month_end"
+          "type": "icds_get_case_forms_in_date",
+          "case_id_expression": {
+            "expression": {
+                "type": "property_name",
+                "property_name": "_id"
             },
-            "start_date": {
-              "type": "icds_month_start"
-            }
-          }
+            "type": "root_doc"
+          },
+          "xmlns": [
+            "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
+          ],
+          "from_date_expression": {
+            "type": "icds_month_start"
+          },
+          "to_date_expression": {
+            "type": "icds_month_end"
+          },
+          "count": true
         }
       }
     },
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

@@ -6,3 +6,25 @@
   text-decoration: none;
   outline: 0;
 }
+
+.atwho-view:after {
+  text-align: center;
+  content: attr(data-message);
+  display: block;
+  text-align: center;
+  line-height: 20px;
+}
+
+legend {
+  border: none;
+}
+
+.gr-has-no-questions legend {
+  margin-bottom: 0px;
+}
+
+.gr-has-no-nested-questions legend {
+  > .caption {
+    display: none;
+  }
+}

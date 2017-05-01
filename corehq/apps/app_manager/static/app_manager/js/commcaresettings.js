@@ -1,3 +1,4 @@
+/* globals Clipboard */
 hqDefine('app_manager/js/commcaresettings.js', function () {
     function CommcareSettings(options) {
         var app_manager = hqImport('app_manager/js/app_manager.js');
@@ -398,6 +399,27 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
         });
     };
 
+    CommcareSettings.widgets.share_link = function (self) {
+        CommcareSettings.widgets.bool(self);
+        self.selectText = function(obj, e) {
+            e.currentTarget.select();
+        };
+        self.copyUrl = function(obj, e) {
+            var $btn = $(e.currentTarget);
+            var clipboard = new Clipboard($btn[0], {
+                target: function () {
+                    return $('.js-anonymous-link')[0];
+                },
+            });
+            $btn.tooltip({ title: gettext('Copied!') });
+            clipboard.on('success', function() {
+                $btn.tooltip('show');
+                window.setTimeout(function() { $btn.tooltip('hide'); }, 1000);
+            });
+            clipboard.onClick(e);
+        };
+    };
+
     CommcareSettings.widgets.build_spec = function (self, settingsIndex) {
         var app_manager = hqImport('app_manager/js/app_manager.js');
         function update(appVersion) {
@@ -459,14 +481,12 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
     };
 });
 
-$(function () {
-    ko.bindingHandlers.passwordSetter = {
-        init: function (element, valueAccessor) {
-            var observableValue = valueAccessor();
-            $(element).password_setter();
-            $(element).on('textchange change', function () {
-                observableValue($(element).val());
-            });
-        }
+ko.bindingHandlers.passwordSetter = {
+    init: function (element, valueAccessor) {
+        var observableValue = valueAccessor();
+        $(element).password_setter();
+        $(element).on('textchange change', function () {
+            observableValue($(element).val());
+        });
     }
-});
+};

@@ -1,11 +1,10 @@
-import sys
 from django.conf.urls import url
 from django.contrib.auth.views import (
-    password_reset, password_change, password_change_done, password_reset_done,
+    password_change,
+    password_change_done,
     password_reset_complete,
+    password_reset_done,
 )
-from django.shortcuts import render_to_response
-from django.template import RequestContext
 from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.views.generic import RedirectView
@@ -13,110 +12,101 @@ from django.views.generic import RedirectView
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
 from corehq.apps.domain.views import (
-    EditBasicProjectInfoView, EditPrivacySecurityView,
-    DefaultProjectSettingsView, EditMyProjectSettingsView,
-    ExchangeSnapshotsView, CreateNewExchangeSnapshotView,
-    ManageProjectMediaView, DomainForwardingOptionsView,
-    AddRepeaterView, EditInternalDomainInfoView, EditInternalCalculationsView,
-    DomainSubscriptionView, SelectPlanView, ConfirmSelectedPlanView,
-    SelectedEnterprisePlanView, ConfirmBillingAccountInfoView, ProBonoView,
-    EditExistingBillingAccountView, DomainBillingStatementsView,
+    ActivateTransferDomainView,
+    AddFormRepeaterView,
+    AddRepeaterView,
     BillingStatementPdfView,
-    FeaturePreviewsView, ConfirmSubscriptionRenewalView,
-    InvoiceStripePaymentView, CreditsStripePaymentView, SMSRatesView,
-    AddFormRepeaterView, DomainForwardingRepeatRecords,
-    FeatureFlagsView, TransferDomainView,
-    ActivateTransferDomainView, DeactivateTransferDomainView,
-    BulkStripePaymentView, InternalSubscriptionManagementView,
-    WireInvoiceView, SubscriptionRenewalView, CreditsWireInvoiceView,
-    CardsView, CardView, PasswordResetView,
+    BulkStripePaymentView,
+    CalendarFixtureConfigView,
+    CardView,
+    CardsView,
     CaseSearchConfigView,
+    ConfirmBillingAccountInfoView,
+    ConfirmSelectedPlanView,
+    ConfirmSubscriptionRenewalView,
+    CreateNewExchangeSnapshotView,
+    CreditsStripePaymentView,
+    CreditsWireInvoiceView,
+    DataSetMapView,
+    DeactivateTransferDomainView,
+    DefaultProjectSettingsView,
+    Dhis2ConnectionView,
+    Dhis2LogListView,
+    Dhis2LogDetailView,
+    DomainBillingStatementsView,
+    DomainForwardingOptionsView,
+    DomainSubscriptionView,
+    EditBasicProjectInfoView,
+    EditExistingBillingAccountView,
+    EditInternalCalculationsView,
+    EditInternalDomainInfoView,
+    EditMyProjectSettingsView,
     EditOpenClinicaSettingsView,
-    autocomplete_fields, test_repeater, drop_repeater, set_published_snapshot, cancel_repeat_record,
-    calculated_properties, requeue_repeat_record,
-    toggle_diff,
+    EditPrivacySecurityView,
+    ExchangeSnapshotsView,
+    FeatureFlagsView,
+    FeaturePreviewsView,
+    InternalSubscriptionManagementView,
+    InvoiceStripePaymentView,
+    LocationFixtureConfigView,
+    ManageProjectMediaView,
+    PasswordResetView,
+    ProBonoView,
+    SMSRatesView,
+    SelectPlanView,
+    SelectedEnterprisePlanView,
+    SubscriptionRenewalView,
+    TransferDomainView,
+    WireInvoiceView,
+    autocomplete_fields,
+    calculated_properties,
+    cancel_repeat_record,
+    drop_repeater,
+    exception_safe_password_reset,
+    requeue_repeat_record,
     select,
-    CalendarFixtureConfigView, LocationFixtureConfigView)
+    set_published_snapshot,
+    test_repeater,
+    toggle_diff,
+)
 from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 
-#
-# After much reading, I discovered that Django matches URLs derived from the environment
-# variable PATH_INFO. This is set by your webserver, so any misconfiguration there will
-# mess this up. In Apache, the WSGIScriptAliasMatch pulls off the mount point directory,
-# and puts everything that follows it into PATH_INFO. Those (mount-point-less) paths are
-# what is matched in urlpatterns.
-#
 
-# All of these auth functions have custom templates in registration/, with the default names they expect.
-#
-# Django docs on password reset are weak. See these links instead:
-#
-# http://streamhacker.com/2009/09/19/django-ia-auth-password-reset/
-# http://www.rkblog.rk.edu.pl/w/p/password-reset-django-10/
-# http://blog.montylounge.com/2009/jul/12/django-forgot-password/
-#
-# Note that the provided password reset function raises SMTP errors if there's any
-# problem with the mailserver. Catch that more elegantly with a simple wrapper.
-
-
-def exception_safe_password_reset(request, *args, **kwargs):
-    try:
-        return password_reset(request, *args, **kwargs)
-    except None:
-        vals = {
-            'current_page': {'page_name': _('Oops!')},
-            'error_msg': 'There was a problem with your request',
-            'error_details': sys.exc_info(),
-            'show_homepage_link': 1,
-        }
-        return render_to_response('error.html', vals, context_instance=RequestContext(request))
-
-
-# auth templates are normally in 'registration,'but that's too confusing a name, given that this app has
-# both user and domain registration. Move them somewhere more descriptive.
-
-def auth_pages_path(page):
-    return {'template_name':'login_and_password/' + page}
-
-
-def extend(d1, d2):
-    return dict(d1.items() + d2.items())
-
-urlpatterns =[
+urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
-    url(r'^domain/autocomplete/(?P<field>\w+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
+    url(r'^domain/autocomplete/(?P<field>[\w-]+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
     url(r'^domain/transfer/(?P<guid>\w+)/activate$',
         ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
     url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
         DeactivateTransferDomainView.as_view(), name='deactivate_transfer_domain'),
-] + [
-    url(r'^accounts/password_change/$', password_change, auth_pages_path('password_change_form.html'), name='password_change'),
+
+    url(r'^accounts/password_change/$', password_change,
+        {'template_name': 'login_and_password/password_change_form.html'},
+        name='password_change'),
     url(r'^accounts/password_change_done/$', password_change_done,
-        extend(auth_pages_path('password_change_done.html'),
-               {'extra_context': {'current_page': {'page_name': _('Password Change Complete')}}}),
+        {'template_name': 'login_and_password/password_change_done.html',
+         'extra_context': {'current_page': {'page_name': _('Password Change Complete')}}},
         name='password_change_done'),
 
     url(r'^accounts/password_reset_email/$', exception_safe_password_reset,
-        extend(auth_pages_path('password_reset_form.html'),
-               {'password_reset_form': ConfidentialPasswordResetForm,
-                'from_email': settings.DEFAULT_FROM_EMAIL,
-                'extra_context': {'current_page': {'page_name': _('Password Reset')}}}),
+        {'template_name': 'login_and_password/password_reset_form.html',
+         'password_reset_form': ConfidentialPasswordResetForm, 'from_email': settings.DEFAULT_FROM_EMAIL,
+         'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
         name='password_reset_email'),
     url(r'^accounts/password_reset_email/done/$', password_reset_done,
-        extend(auth_pages_path('password_reset_done.html'),
-               {'extra_context': {'current_page': {'page_name': _('Reset My Password')}}}),
+        {'template_name': 'login_and_password/password_reset_done.html',
+         'extra_context': {'current_page': {'page_name': _('Reset My Password')}}},
         name='password_reset_done'),
 
     url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
-        PasswordResetView.as_view(),  extend(auth_pages_path('password_reset_confirm.html'),
-                                                {'set_password_form': HQSetPasswordForm,
-                                                'extra_context': {'current_page':
-                                                    {'page_name': _('Password Reset Confirmation')}}}),
+        PasswordResetView.as_view(),
+        {'template_name': 'login_and_password/password_reset_confirm.html', 'set_password_form': HQSetPasswordForm,
+         'extra_context': {'current_page': {'page_name': _('Password Reset Confirmation')}}},
         name=PasswordResetView.urlname),
     url(r'^accounts/password_reset_confirm/done/$', password_reset_complete,
-        extend(auth_pages_path('password_reset_complete.html'),
-               {'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}}),
+        {'template_name': 'login_and_password/password_reset_complete.html',
+         'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}},
         name='password_reset_complete')
 ]
 
@@ -175,6 +165,10 @@ domain_settings = [
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
     url(r'^forwarding/test/$', test_repeater, name='test_repeater'),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', drop_repeater, name='drop_repeater'),
+    url(r'^dhis2/conn/$', Dhis2ConnectionView.as_view(), name=Dhis2ConnectionView.urlname),
+    url(r'^dhis2/map/$', DataSetMapView.as_view(), name=DataSetMapView.urlname),
+    url(r'^dhis2/logs/$', Dhis2LogListView.as_view(), name=Dhis2LogListView.urlname),
+    url(r'^dhis2/logs/(?P<pk>\d+)/$', Dhis2LogDetailView.as_view(), name=Dhis2LogDetailView.urlname),
     url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', set_published_snapshot, name='domain_set_published'),
     url(r'^snapshots/set_published/$', set_published_snapshot, name='domain_clear_published'),
     url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),

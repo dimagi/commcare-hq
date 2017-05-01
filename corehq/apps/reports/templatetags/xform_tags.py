@@ -1,9 +1,8 @@
 from collections import OrderedDict
 from functools import partial
 
-from django.template import RequestContext
 from django.template.loader import render_to_string
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django import template
 from django.utils.html import format_html
 from couchdbkit.exceptions import ResourceNotFound
@@ -211,7 +210,7 @@ def render_form(form, domain, options):
         "show_edit_options": show_edit_options,
         "show_edit_submission": show_edit_submission,
         "show_resave": show_resave,
-    }, RequestContext(request))
+    }, request=request)
 
 
 def _top_level_tags(form):

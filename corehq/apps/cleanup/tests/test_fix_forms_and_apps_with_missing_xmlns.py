@@ -51,9 +51,9 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
     def _submit_form(self, xmlns, form_name, app_id, build_id):
         xform_source = self.get_xml('xform_template').format(xmlns=xmlns, name=form_name, id=uuid.uuid4().hex)
-        _, xform, __ = submit_form_locally(xform_source, DOMAIN, app_id=app_id, build_id=build_id)
-        send_to_elasticsearch('forms', transform_xform_for_elasticsearch(xform.to_json()))
-        return xform
+        result = submit_form_locally(xform_source, DOMAIN, app_id=app_id, build_id=build_id)
+        send_to_elasticsearch('forms', transform_xform_for_elasticsearch(result.xform.to_json()))
+        return result.xform
 
     def _refresh_pillow(self):
         self.es.indices.refresh(XFORM_INDEX_INFO.index)

@@ -93,5 +93,33 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
             FormplayerFrontend.trigger("app:select", this.appId);
         },
     });
+
+    Views.LandingPageAppView = Marionette.ItemView.extend({
+        template: "#landing-page-app-template",
+        className: 'landing-page-app-view',
+
+        events: _.extend({
+            'click .js-start-app': 'startApp',
+        }, Views.BaseAppView.events),
+        incompleteSessionsClick: _.extend(Views.BaseAppView.incompleteSessionsClick),
+        syncClick: _.extend(Views.BaseAppView.syncClick),
+        onClickRestoreAs: _.extend(Views.BaseAppView.onClickRestoreAs),
+        onClickSettings: _.extend(Views.BaseAppView.onClickSettings),
+
+        initialize: function(options) {
+            this.appId = options.appId;
+        },
+        templateHelpers: function() {
+            var currentApp = FormplayerFrontend.request("appselect:getApp", this.appId),
+                appName = currentApp.get('name');
+            return {
+                appName: appName,
+            };
+        },
+        startApp: function() {
+            FormplayerFrontend.trigger("app:select", this.appId);
+        },
+    });
+
 })
 ;

@@ -13,7 +13,8 @@ from corehq.apps.userreports.reports.filters.values import (
     ChoiceListFilterValue,
     DateFilterValue,
     NumericFilterValue,
-    QuarterFilterValue)
+    QuarterFilterValue,
+    LocationDrilldownFilterValue)
 from corehq.apps.userreports.specs import TypeProperty
 
 
@@ -38,6 +39,7 @@ class ReportFilter(JsonObject):
             'pre': PreFilterValue,
             'choice_list': ChoiceListFilterValue,
             'dynamic_choice_list': ChoiceListFilterValue,
+            'location_drilldown': LocationDrilldownFilterValue,
         }[self.type](self, value)
 
 
@@ -56,7 +58,7 @@ class FilterSpec(JsonObject):
     """
     type = StringProperty(
         required=True,
-        choices=['date', 'quarter', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list']
+        choices=['date', 'quarter', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list', 'location_drilldown']
     )
     # this shows up as the ID in the filter HTML.
     slug = StringProperty(required=True)
@@ -96,6 +98,10 @@ class DynamicChoiceListFilterSpec(FilterSpec):
     @property
     def choices(self):
         return []
+
+
+class LocationDrilldownFilterSpec(FilterSpec):
+    type = TypeProperty('location_drilldown')
 
 
 class PreFilterSpec(FilterSpec):

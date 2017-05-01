@@ -18,22 +18,18 @@ class TestReports(IntraHealthTestCase):
     @classmethod
     def setUpClass(cls):
         super(TestReports, cls).setUpClass()
-        cls.taux_table = TauxDeSatisfactionFluff._table
-        with cls.engine.begin() as connection:
-            cls.taux_table.create(connection, checkfirst=True)
-
         with open(os.path.join(DATAPATH, 'taux.xml')) as f:
             xml = f.read()
             cls.taux = submit_form_locally(
                 xml, TEST_DOMAIN, auth_context=AuthContext(
                     user_id=cls.mobile_worker.get_id, domain=TEST_DOMAIN, authenticated=True
                 )
-            )[1]
+            ).xform
 
         with real_pillow_settings():
             management.call_command(
                 'ptop_reindexer_fluff',
-                'TauxDeSatisfactionFluffPillow'
+                'IntraHealthFormFluffPillow'
             )
 
     def test_disp_des_products_report(self):

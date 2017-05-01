@@ -20,7 +20,6 @@ from django_prbac.models import Role
 import jsonfield
 import stripe
 
-from couchdbkit import ResourceNotFound
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
@@ -76,6 +75,8 @@ MAX_INVOICE_COMMUNICATIONS = 5
 SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
+
+CONSISTENT_DATES_CHECK = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
 
 _soft_assert_domain_not_loaded = soft_assert(
     to='{}@{}'.format('npellegrino', 'dimagi.com'),
@@ -209,11 +210,13 @@ class SubscriptionAdjustmentMethod(object):
     INTERNAL = "INTERNAL"
     TASK = "TASK"
     TRIAL = "TRIAL"
+    AUTOMATIC_DOWNGRADE = 'AUTOMATIC_DOWNGRADE'
     CHOICES = (
         (USER, "User"),
         (INTERNAL, "Ops"),
         (TASK, "Task (Invoicing)"),
         (TRIAL, "30 Day Trial"),
+        (AUTOMATIC_DOWNGRADE, "Automatic Downgrade"),
     )
 
 
@@ -461,9 +464,10 @@ class BillingAccount(ValidateModelMixin, models.Model):
         old_user = self.auto_pay_user
         subject = _("Your card is no longer being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
-        try:
-            old_user_name = WebUser.get_by_username(old_user).first_name
-        except ResourceNotFound:
+        old_web_user = WebUser.get_by_username(old_user)
+        if old_web_user:
+            old_user_name = old_web_user.first_name
+        else:
             old_user_name = old_user
 
         context = {
@@ -486,10 +490,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         from corehq.apps.domain.views import EditExistingBillingAccountView
         subject = _("Your card is being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
-        try:
-            new_user_name = WebUser.get_by_username(self.auto_pay_user).first_name
-        except ResourceNotFound:
-            new_user_name = self.auto_pay_user
+        web_user = WebUser.get_by_username(self.auto_pay_user)
+        new_user_name = web_user.first_name if web_user else self.auto_pay_user
         try:
             last_4 = self.autopay_card.last4
         except StripePaymentMethod.DoesNotExist:
@@ -767,7 +769,7 @@ class DefaultProductPlan(models.Model):
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError(
-                "No default product plan was set up, did you forget to run cchq_software_plan_bootstrap?"
+                "No default product plan was set up, did you forget to run migrations?"
             )
 
     @classmethod
@@ -1121,21 +1123,18 @@ class Subscription(models.Model):
         """Raises a subscription Adjustment error if the specified date range
         conflicts with other subscriptions related to this subscriber.
         """
+        assert date_start is not None
         for sub in Subscription.objects.filter(
-            subscriber=self.subscriber
-        ).exclude(id=self.id).all():
+            CONSISTENT_DATES_CHECK,
+            subscriber=self.subscriber,
+        ).exclude(
+            id=self.id,
+        ):
             related_has_no_end = sub.date_end is None
             current_has_no_end = date_end is None
-            start_before_related_end = (
-                date_start is not None and sub.date_end is not None
-                and date_start < sub.date_end
-            )
-            start_before_related_start = (
-                date_start is not None and date_start < sub.date_start
-            )
-            start_after_related_start = (
-                date_start is not None and date_start > sub.date_start
-            )
+            start_before_related_end = sub.date_end is not None and date_start < sub.date_end
+            start_before_related_start = date_start < sub.date_start
+            start_after_related_start = date_start > sub.date_start
             end_before_related_end = (
                 date_end is not None and sub.date_end is not None
                 and date_end < sub.date_end
@@ -1144,9 +1143,7 @@ class Subscription(models.Model):
                 date_end is not None and sub.date_end is not None
                 and date_end > sub.date_end
             )
-            end_after_related_start = (
-                date_end is not None and date_end > sub.date_start
-            )
+            end_after_related_start = date_end is not None and date_end > sub.date_start
 
             if (
                 (start_before_related_end and start_after_related_start)
@@ -1155,6 +1152,7 @@ class Subscription(models.Model):
                 or (end_after_related_start and related_has_no_end)
                 or (start_before_related_start and end_after_related_end)
                 or (start_before_related_end and current_has_no_end)
+                or (current_has_no_end and related_has_no_end)
             ):
                 raise SubscriptionAdjustmentError(
                     "The start date of %(start_date)s conflicts with the "
@@ -2092,14 +2090,11 @@ class BillingRecordBase(models.Model):
         for email in contact_emails:
             greeting = _("Hello,")
             can_view_statement = False
-            try:
-                web_user = WebUser.get_by_username(email)
-                if web_user is not None:
-                    if web_user.first_name:
-                        greeting = _("Dear %s,") % web_user.first_name
-                    can_view_statement = web_user.is_domain_admin(domain)
-            except ResourceNotFound:
-                pass
+            web_user = WebUser.get_by_username(email)
+            if web_user is not None:
+                if web_user.first_name:
+                    greeting = _("Dear %s,") % web_user.first_name
+                can_view_statement = web_user.is_domain_admin(domain)
             context['greeting'] = greeting
             context['can_view_statement'] = can_view_statement
             email_html = render_to_string(self.html_template, context)
@@ -2706,6 +2701,13 @@ class CreditLine(ValidateModelMixin, models.Model):
             subscription=subscription,
             feature_type__exact=feature_type,
             product_type__exact=product_type,
+        ).all()
+
+    @classmethod
+    def get_non_general_credits_by_subscription(cls, subscription):
+        return cls.objects.filter(subscription=subscription).filter(
+            Q(product_type__in=[c[0] for c in SoftwareProductType.CHOICES] + [SoftwareProductType.ANY]) |
+            Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
 
     @classmethod

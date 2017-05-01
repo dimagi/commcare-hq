@@ -113,6 +113,8 @@ class GenericReportView(object):
     base_template_async = None
     base_template_filters = None
 
+    print_override_template = "reports/async/print_report.html"
+
     flush_layout = False
     # Todo: maybe make these a little cleaner?
     show_timezone_notice = False
@@ -659,7 +661,7 @@ class GenericReportView(object):
         """
         self.is_rendered_as_email = True
         self.use_datatables = False
-        self.override_template = "reports/async/print_report.html"
+        self.override_template = self.print_override_template
         return HttpResponse(self._async_context()['report'])
 
     @property

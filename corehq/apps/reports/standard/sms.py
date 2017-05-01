@@ -1,7 +1,7 @@
 from collections import namedtuple
 import cgi
 from django.db.models import Q, Count
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
@@ -34,13 +34,8 @@ from corehq.apps.hqwebapp.doc_info import (get_doc_info, get_doc_info_by_id,
     get_object_info, DomainMismatchException)
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import (
-    WORKFLOW_REMINDER,
-    WORKFLOW_KEYWORD,
-    WORKFLOW_BROADCAST,
-    WORKFLOW_CALLBACK,
-    WORKFLOW_DEFAULT,
+    WORKFLOWS_FOR_REPORTS,
     WORKFLOW_FORWARD,
-    WORKFLOW_PERFORMANCE,
     INCOMING,
     OUTGOING,
     MessagingEvent,
@@ -53,6 +48,10 @@ from corehq.apps.sms.models import (
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reminders.models import CaseReminderHandler
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseSQL
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -177,57 +176,49 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
             recipient_id or ""])
         return ret
 
-    def get_orm_recipient_info(self, recipient_type, recipient_id, contact_cache):
-        cache_key = "%s-%s" % (recipient_type, recipient_id)
-        if cache_key in contact_cache:
-            return contact_cache[cache_key]
-
-        obj = None
-        try:
-            if recipient_type == 'SQLLocation':
-                obj = SQLLocation.objects.get(location_id=recipient_id)
-        except Exception:
-            pass
-
-        if obj:
-            obj_info = get_object_info(obj)
-        else:
-            obj_info = None
-
-        contact_cache[cache_key] = obj_info
-        return obj_info
-
-    def get_recipient_info(self, recipient_doc_type, recipient_id, contact_cache):
-        if recipient_doc_type in ['SQLLocation']:
-            return self.get_orm_recipient_info(recipient_doc_type, recipient_id, contact_cache)
+    def get_recipient_info(self, domain, recipient_doc_type, recipient_id, contact_cache):
+        """
+        We need to accept domain as an arg here for admin reports that extend this base.
+        """
 
         if recipient_id in contact_cache:
             return contact_cache[recipient_id]
 
-        doc = None
-        if recipient_id not in [None, ""]:
+        couch_object = None
+        sql_object = None
+
+        if recipient_id:
             try:
                 if recipient_doc_type.startswith('CommCareCaseGroup'):
-                    doc = CommCareCaseGroup.get(recipient_id)
+                    couch_object = CommCareCaseGroup.get(recipient_id)
                 elif recipient_doc_type.startswith('CommCareCase'):
-                    doc = CommCareCase.get(recipient_id)
+                    obj = CaseAccessors(domain).get_case(recipient_id)
+                    if isinstance(obj, CommCareCase):
+                        couch_object = obj
+                    elif isinstance(obj, CommCareCaseSQL):
+                        sql_object = obj
                 elif recipient_doc_type in ('CommCareUser', 'WebUser'):
-                    doc = CouchUser.get_by_user_id(recipient_id)
+                    couch_object = CouchUser.get_by_user_id(recipient_id)
                 elif recipient_doc_type.startswith('Group'):
-                    doc = Group.get(recipient_id)
-            except Exception:
+                    couch_object = Group.get(recipient_id)
+                elif recipient_doc_type == 'SQLLocation':
+                    sql_object = SQLLocation.objects.get(location_id=recipient_id)
+            except (ResourceNotFound, CaseNotFound, ObjectDoesNotExist):
                 pass
 
         doc_info = None
-        if doc:
+        if couch_object:
             try:
-                doc_info = get_doc_info(doc.to_json(), self.domain)
+                doc_info = get_doc_info(couch_object.to_json(), domain)
             except DomainMismatchException:
                 # This can happen, for example, if a WebUser was sent an SMS
                 # and then they unsubscribed from the domain. If that's the
                 # case, we'll just leave doc_info as None and no contact link
                 # will be displayed.
                 pass
+
+        if sql_object:
+            doc_info = get_object_info(sql_object)
 
         contact_cache[recipient_id] = doc_info
 
@@ -282,16 +273,8 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     @staticmethod
     def _get_message_types(message):
-        relevant_workflows = [
-            WORKFLOW_REMINDER,
-            WORKFLOW_KEYWORD,
-            WORKFLOW_BROADCAST,
-            WORKFLOW_CALLBACK,
-            WORKFLOW_PERFORMANCE,
-            WORKFLOW_DEFAULT,
-        ]
         types = []
-        if message.workflow in relevant_workflows:
+        if message.workflow in WORKFLOWS_FOR_REPORTS:
             types.append(message.workflow.lower())
         if message.xforms_session_couch_id is not None:
             types.append(MessageTypeFilter.OPTION_SURVEY.lower())
@@ -327,8 +310,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     @property
     @memoized
     def uses_locations(self):
-        return (toggles.LOCATIONS_IN_REPORTS.enabled(self.domain)
-                and Domain.get_by_name(self.domain).uses_locations)
+        return Domain.get_by_name(self.domain).uses_locations
 
     @property
     @memoized
@@ -344,17 +326,9 @@ class MessageLogReport(BaseCommConnectLogReport):
             if not filtered_types:
                 return data_
 
-            relevant_workflows = (
-                WORKFLOW_REMINDER,
-                WORKFLOW_KEYWORD,
-                WORKFLOW_BROADCAST,
-                WORKFLOW_CALLBACK,
-                WORKFLOW_DEFAULT,
-                WORKFLOW_PERFORMANCE,
-            )
             incl_survey = MessageTypeFilter.OPTION_SURVEY in filtered_types
             incl_other = MessageTypeFilter.OPTION_OTHER in filtered_types
-            is_workflow_relevant = Q(workflow__in=relevant_workflows)
+            is_workflow_relevant = Q(workflow__in=WORKFLOWS_FOR_REPORTS)
             workflow_filter = Q(is_workflow_relevant & Q(workflow__in=filtered_types))
             survey_filter = Q(xforms_session_couch_id__isnull=False)
             other_filter = ~Q(is_workflow_relevant | survey_filter)
@@ -418,7 +392,8 @@ class MessageLogReport(BaseCommConnectLogReport):
             return table_cell['html']
 
         def get_contact_link(couch_recipient, couch_recipient_doc_type, raw=False):
-            doc_info = self.get_recipient_info(couch_recipient_doc_type, couch_recipient, contact_cache)
+            doc_info = self.get_recipient_info(self.domain, couch_recipient_doc_type, couch_recipient,
+                contact_cache)
             table_cell = self._fmt_contact_link(couch_recipient, doc_info)
             return table_cell['raw'] if raw else table_cell['html']
 
@@ -809,7 +784,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
             data = data[self.pagination.start:self.pagination.start + self.pagination.count]
 
         for event in data:
-            doc_info = self.get_recipient_info(event.get_recipient_doc_type(),
+            doc_info = self.get_recipient_info(self.domain, event.get_recipient_doc_type(),
                 event.recipient_id, contact_cache)
 
             timestamp = ServerTime(event.date).user_time(self.timezone).done()
@@ -904,7 +879,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
         result = []
         contact_cache = {}
         for messaging_subevent in self.messaging_subevents:
-            doc_info = self.get_recipient_info(messaging_subevent.get_recipient_doc_type(),
+            doc_info = self.get_recipient_info(self.domain, messaging_subevent.get_recipient_doc_type(),
                 messaging_subevent.recipient_id, contact_cache)
 
             if messaging_subevent.content_type in (MessagingEvent.CONTENT_SMS,
@@ -1184,8 +1159,8 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return domain and toggles.PHONE_NUMBERS_REPORT.enabled(domain)
 
-    def _fmt_owner(self, owner_doc_type, owner_id, owner_cache, link_user=True):
-        doc_info = self.get_recipient_info(owner_doc_type, owner_id, owner_cache)
+    def _fmt_owner(self, domain, owner_doc_type, owner_id, owner_cache, link_user=True):
+        doc_info = self.get_recipient_info(domain, owner_doc_type, owner_id, owner_cache)
         table_cell = self._fmt_contact_link(owner_id, doc_info)
         return table_cell['html'] if link_user else table_cell['raw']
 
@@ -1204,14 +1179,14 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     def _fmt_row(self, number, owner_cache, link_user):
         if isinstance(number, PhoneNumber):
             return [
-                self._fmt_owner(number.owner_doc_type, number.owner_id, owner_cache, link_user),
+                self._fmt_owner(number.domain, number.owner_doc_type, number.owner_id, owner_cache, link_user),
                 number.phone_number,
                 self._fmt_status(number),
                 "Yes" if number.is_two_way else "No",
             ]
 
         return [
-            self._fmt_owner(number.owner_doc_type, number.owner_id, owner_cache, link_user),
+            self._fmt_owner(number.domain, number.owner_doc_type, number.owner_id, owner_cache, link_user),
             '---',
             '---',
             '---',
@@ -1272,8 +1247,8 @@ class PhoneNumberReport(BaseCommConnectLogReport):
         user_ids = set(users_by_id.keys()) - user_ids_with_phone_numbers
         user_types_with_id = sorted([(id, users_by_id[id]['doc_type']) for id in user_ids])
 
-        FakePhoneNumber = namedtuple('FakePhoneNumber', ['owner_id', 'owner_doc_type'])
-        return [FakePhoneNumber(id, type) for id, type in user_types_with_id]
+        FakePhoneNumber = namedtuple('FakePhoneNumber', ['domain', 'owner_id', 'owner_doc_type'])
+        return [FakePhoneNumber(self.domain, id, type) for id, type in user_types_with_id]
 
     @property
     def shared_pagination_GET_params(self):

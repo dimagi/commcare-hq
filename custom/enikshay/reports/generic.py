@@ -1,7 +1,10 @@
 from collections import namedtuple
 
-from sqlagg.filters import IN, AND, GTE, LT, RawFilter
+from datetime import datetime
 
+from sqlagg.filters import IN, AND, GTE, LT, EQ
+
+from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseSingleOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.sqlreport import SqlTabularReport, SqlData
@@ -9,12 +12,15 @@ from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import UCR_ENGINE_ID
-from custom.enikshay.reports.filters import EnikshayLocationFilter, QuarterFilter
+from corehq.util.timezones.utils import get_timezone_for_domain
+from custom.enikshay.reports.filters import EnikshayLocationFilter, EnikshayMigrationFilter
 from custom.utils.utils import clean_IN_filter_value
+
+from django.utils.translation import ugettext as _
 
 TABLE_ID = 'episode'
 
-EnikshayReportConfig = namedtuple('ReportConfig', ['domain', 'locations_id', 'start_date', 'end_date'])
+EnikshayReportConfig = namedtuple('ReportConfig', ['domain', 'locations_id', 'is_migrated', 'start_date', 'end_date'])
 
 
 class MultiReport(CustomProjectReport, GenericReportView):
@@ -43,11 +49,46 @@ class MultiReport(CustomProjectReport, GenericReportView):
 
 
 class EnikshayMultiReport(MultiReport):
-    fields = (DatespanFilter, EnikshayLocationFilter)
+    fields = (DatespanFilter, EnikshayLocationFilter, EnikshayMigrationFilter)
+
+    def _get_filter_values(self):
+        for field in self.fields:
+            field_instance = field(request=self.request, domain=self.domain)
+            if isinstance(field_instance, DatespanFilter):
+                value = field_instance.datespan.default_serialization()
+            elif isinstance(field_instance, BaseMultipleOptionFilter):
+                value = ', '.join(map(lambda s: s.get('text', ''), field_instance.selected))
+            elif isinstance(field_instance, BaseSingleOptionFilter):
+                filter_value = field_instance.selected
+                if not filter_value:
+                    value = unicode(field_instance.default_text)
+                else:
+                    value = [
+                        display_text
+                        for option_value, display_text in field_instance.options
+                        if option_value == filter_value
+                    ][0]
+            else:
+                value = unicode(field_instance.get_value(self.request, self.domain))
+            yield unicode(field.label), value
 
     @property
     def export_table(self):
         export_table = []
+        tz = get_timezone_for_domain(self.domain)
+
+        self._get_filter_values()
+        metadata = [
+            _('metadata'),
+            [
+                [_('Report Name'), self.name],
+                [
+                    _('Generated On'), datetime.now(tz=tz).strftime('%Y-%m-%d %H:%M')
+                ],
+            ] + list(self._get_filter_values())
+        ]
+
+        export_table.append(metadata)
 
         for report in self.reports:
             report_instance = report(self.request, domain=self.domain)
@@ -76,9 +117,13 @@ class EnikshayReport(DatespanMixin, CustomProjectReport, SqlTabularReport):
 
     @property
     def report_config(self):
+        is_migrated = EnikshayMigrationFilter.get_value(self.request, self.domain)
+        if is_migrated is not None:
+            is_migrated = int(is_migrated)
         return EnikshayReportConfig(
             domain=self.domain,
             locations_id=EnikshayLocationFilter.get_value(self.request, self.domain),
+            is_migrated=is_migrated,
             start_date=self.datespan.startdate,
             end_date=self.datespan.end_of_end_day
         )
@@ -99,7 +144,8 @@ class EnikshaySqlData(SqlData):
         filter_values = {
             'start_date': self.config.start_date,
             'end_date': self.config.end_date,
-            'locations_id': self.config.locations_id
+            'locations_id': self.config.locations_id,
+            'is_migrated': self.config.is_migrated,
         }
         clean_IN_filter_value(filter_values, 'locations_id')
         return filter_values
@@ -109,9 +155,13 @@ class EnikshaySqlData(SqlData):
         return []
 
     @property
+    def date_property(self):
+        return 'opened_on'
+
+    @property
     def filters(self):
         filters = [
-            AND([GTE('opened_on', 'start_date'), LT('opened_on', 'end_date')])
+            AND([GTE(self.date_property, 'start_date'), LT(self.date_property, 'end_date')])
         ]
 
         locations_id = filter(lambda x: bool(x), self.config.locations_id)
@@ -120,5 +170,10 @@ class EnikshaySqlData(SqlData):
             filters.append(
                 IN('person_owner_id', get_INFilter_bindparams('locations_id', locations_id))
             )
+
+        is_migrated = self.config.is_migrated
+
+        if is_migrated is not None:
+            filters.append(EQ('case_created_by_migration', 'is_migrated'))
 
         return filters

@@ -6,7 +6,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.loader import render_to_string
 from datetime import timedelta, datetime, time, date
 from django.conf import settings
@@ -502,6 +502,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
             kwargs['initial']['repeat_type'] = repeat_type
 
         super(BaseScheduleCaseReminderForm, self).__init__(data, *args, **kwargs)
+
+        if is_edit:
+            self.fields['case_type'].disabled = True
 
         self.domain = domain
         self.is_edit = is_edit

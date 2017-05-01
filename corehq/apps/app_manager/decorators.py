@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect, HttpResponse
 from couchdbkit.exceptions import ResourceConflict
 from django.views.decorators.http import require_POST
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import AppEditingError
@@ -30,7 +30,7 @@ def safe_download(f):
         try:
             request.app = get_app(domain, app_id, latest=latest, target=target)
             return f(request, *args, **kwargs)
-        except (AppEditingError, CaseError, ValueError), e:
+        except (AppEditingError, CaseError, ValueError) as e:
             logging.exception(e)
             messages.error(request, "Problem downloading file: %s" % e)
             return HttpResponseRedirect(reverse("view_app", args=[domain,app_id]))

@@ -7,26 +7,28 @@ import logging
 import json
 import cStringIO
 import pytz
+import sys
 
 from couchdbkit import ResourceNotFound
 import dateutil
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
+from django.template import RequestContext
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET
-from django.views.generic import View
+from django.views.generic import DetailView, ListView, View
 from django.db.models import Sum
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_decode
 from django.utils.safestring import mark_safe
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, render_to_response
 from django.contrib import messages
-from django.contrib.auth.views import password_reset_confirm
+from django.contrib.auth.views import password_reset_confirm, password_reset
 from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -43,13 +45,21 @@ from corehq.apps.case_search.models import (
     enable_case_search,
     disable_case_search,
 )
+from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
+from corehq.apps.dhis2.forms import (
+    Dhis2ConnectionForm,
+    DataSetMapForm,
+    DataValueMapFormSet,
+    DataValueMapFormSetHelper,
+)
+from corehq.apps.dhis2.models import JsonApiLog
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator
 
 from corehq.const import USER_DATE_FORMAT
-from corehq.tabs.tabclasses import ProjectSettingsTab
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -61,6 +71,7 @@ from corehq.apps.style.decorators import (
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
+    SubscriptionAdjustmentError,
 )
 from corehq.apps.accounting.payment_handlers import (
     BulkStripePaymentHandler,
@@ -306,12 +317,6 @@ class BaseProjectSettingsView(BaseDomainView):
     def main_context(self):
         main_context = super(BaseProjectSettingsView, self).main_context
         main_context.update({
-            'active_tab': ProjectSettingsTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-                project=self.request.project
-            ),
             'is_project_settings': True,
         })
         return main_context
@@ -613,7 +618,7 @@ def test_repeater(request, domain):
                                                 "response": resp.content,
                                                 "status": resp.status_code}))
 
-        except Exception, e:
+        except Exception as e:
             errors = str(e)
         return HttpResponse(json.dumps({"success": False, "response": errors}))
     else:
@@ -626,6 +631,7 @@ def autocomplete_fields(request, field):
     return HttpResponse(json.dumps(results))
 
 
+@location_safe
 def logo(request, domain):
     logo = Domain.get_by_name(domain).get_custom_logo()
     if logo is None:
@@ -701,6 +707,13 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
 
+        if subscription:
+            credit_lines = CreditLine.get_non_general_credits_by_subscription(subscription)
+            credit_lines = [cl for cl in credit_lines if cl.balance > 0]
+            has_credits_in_non_general_credit_line = len(credit_lines) > 0
+        else:
+            has_credits_in_non_general_credit_line = False
+
         info = {
             'products': [self.get_product_summary(plan_version, self.account, subscription)],
             'features': self.get_feature_summary(plan_version, self.account, subscription),
@@ -722,6 +735,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'date_end': date_end,
             'cards': cards,
             'next_subscription': next_subscription,
+            'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line
         }
         info['has_account_level_credit'] = (
             any(
@@ -771,14 +785,16 @@ class DomainSubscriptionView(DomainAccountingSettings):
             usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
             feature_type = feature_rate.feature.feature_type
             if feature_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
-                remaining = _('Unlimited')
+                remaining = limit = _('Unlimited')
             else:
-                remaining = feature_rate.monthly_limit - usage
+                limit = feature_rate.monthly_limit
+                remaining = limit - usage
                 if remaining < 0:
                     remaining = _("%d over limit") % (-1 * remaining)
             return {
                 'name': get_feature_name(feature_type, self.product),
                 'usage': usage,
+                'limit': limit,
                 'remaining': remaining,
                 'type': feature_type,
                 'recurring_interval': get_feature_recurring_interval(feature_type),
@@ -1021,8 +1037,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 }
             except BillingRecord.DoesNotExist:
                 log_accounting_error(
-                    "An invoice was generated for %(invoice_id)d "
-                    "(domain: %(domain)s), but no billing record!" % {
+                    u"An invoice was generated for %(invoice_id)d "
+                    u"(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
                     }
@@ -1159,7 +1175,15 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
                     for pt in SoftwareProductType.CHOICES
                     if Decimal(request.POST.get(pt[0], 0)) > 0]
 
-        return products + features
+        items = products + features
+
+        if Decimal(request.POST.get('general_credit', 0)) > 0:
+            items.append({
+                'type': 'General Credits',
+                'amount': Decimal(request.POST.get('general_credit', 0))
+            })
+
+        return items
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
@@ -1217,7 +1241,7 @@ class WireInvoiceView(View):
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
             wire_invoice_factory.create_wire_invoice(balance)
-        except Exception, e:
+        except Exception as e:
             return json_response({'error': {'message', e}})
 
         return json_response({'success': True})
@@ -1294,8 +1318,15 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             try:
                 form.process_subscription_management()
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
-            except NewSubscriptionError as e:
-                messages.error(self.request, e.message)
+            except (NewSubscriptionError, SubscriptionAdjustmentError) as e:
+                messages.error(self.request, mark_safe(
+                    'This request will require Ops assistance. '
+                    'Please explain to <a href="mailto:%(ops_email)s">%(ops_email)s</a>'
+                    ' what you\'re trying to do and report the following error: <strong>"%(error)s"</strong>' % {
+                        'error': e.message,
+                        'ops_email': settings.ACCOUNTS_EMAIL,
+                    }
+                ))
         return self.get(request, *args, **kwargs)
 
     @property
@@ -2132,7 +2163,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/case_search.html'
 
     @method_decorator(domain_admin_required)
-    @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+    @method_decorator(toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -2189,7 +2220,7 @@ class CalendarFixtureConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/calendar_fixture.html'
 
     @method_decorator(domain_admin_required)
-    @toggles.CUSTOM_CALENDAR_FIXTURE.required_decorator()
+    @method_decorator(toggles.CUSTOM_CALENDAR_FIXTURE.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(CalendarFixtureConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -2215,7 +2246,7 @@ class LocationFixtureConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/location_fixture.html'
 
     @method_decorator(domain_admin_required)
-    @toggles.HIERARCHICAL_LOCATION_FIXTURE.required_decorator()
+    @method_decorator(toggles.HIERARCHICAL_LOCATION_FIXTURE.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFixtureConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -2291,10 +2322,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         </button>
         '''.format(record_id)
 
-    def _make_state_label(self, record):
-        label_cls = ''
-        label_text = ''
-
+    def _get_state(self, record):
         if record.state == RECORD_SUCCESS_STATE:
             label_cls = 'success'
             label_text = _('Success')
@@ -2307,24 +2335,18 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         elif record.state == RECORD_FAILURE_STATE:
             label_cls = 'danger'
             label_text = _('Failed')
+        else:
+            label_cls = ''
+            label_text = ''
 
+        return (label_cls, label_text)
+
+    def _make_state_label(self, record):
         return '''
         <span class="label label-{}">
             {}
         </span>
-        '''.format(label_cls, label_text)
-
-    @property
-    def report_context(self):
-        context = super(DomainForwardingRepeatRecords, self).report_context
-        context.update({
-            'active_tab': ProjectSettingsTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-            )
-        })
-        return context
+        '''.format(*self._get_state(record))
 
     @property
     def total_records(self):
@@ -2339,7 +2361,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
     def _format_date(self, date):
         tz_utc_aware_date = pytz.utc.localize(date)
-        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M %Z')
+        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M:%S %Z')
 
     @property
     def rows(self):
@@ -2352,27 +2374,32 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             repeater_id=self.repeater_id,
             state=self.state
         )
-        return map(
-            lambda record: [
-                self._make_state_label(record),
-                record.url if record.url else _(u'Unable to generate url for record'),
-                self._format_date(record.last_checked) if record.last_checked else None,
-                self._format_date(record.next_check) if record.next_check else None,
-                escape(record.failure_reason) if not record.succeeded else None,
-                record.overall_tries if record.overall_tries > 0 else None,
-                self._make_view_payload_button(record.get_id),
-                self._make_resend_payload_button(record.get_id),
-                self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
-                else self._make_cancel_payload_button(record.get_id) if not record.cancelled
-                and not record.succeeded
-                else None
-            ],
-            records
-        )
+        rows = [self._make_row(record) for record in records]
+        return rows
+
+    def _make_row(self, record):
+        row = [
+            self._make_state_label(record),
+            record.url if record.url else _(u'Unable to generate url for record'),
+            self._format_date(record.last_checked) if record.last_checked else '---',
+            self._format_date(record.next_check) if record.next_check else '---',
+            escape(record.failure_reason) if not record.succeeded else None,
+            record.overall_tries if record.overall_tries > 0 else None,
+            self._make_view_payload_button(record.get_id),
+            self._make_resend_payload_button(record.get_id),
+            self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
+            else self._make_cancel_payload_button(record.get_id) if not record.cancelled
+            and not record.succeeded
+            else None
+        ]
+
+        if toggles.SUPPORT.enabled_for_request(self.request):
+            row.insert(1, record.payload_id)
+        return row
 
     @property
     def headers(self):
-        return DataTablesHeader(
+        columns = [
             DataTablesColumn(_('Status')),
             DataTablesColumn(_('URL')),
             DataTablesColumn(_('Last sent date')),
@@ -2382,7 +2409,11 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
             DataTablesColumn(_('Cancel or Requeue payload'))
-        )
+        ]
+        if toggles.SUPPORT.enabled_for_request(self.request):
+            columns.insert(1, DataTablesColumn(_('Payload ID')))
+
+        return DataTablesHeader(*columns)
 
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
@@ -3055,6 +3086,151 @@ class DeactivateTransferDomainView(View):
         return super(DeactivateTransferDomainView, self).dispatch(*args, **kwargs)
 
 
+class Dhis2ConnectionView(BaseAdminProjectSettingsView):
+    urlname = 'dhis2_connection_view'
+    page_title = ugettext_lazy("DHIS2 Connection Settings")
+    template_name = 'domain/admin/dhis2/connection_settings.html'
+
+    @method_decorator(domain_admin_required)
+    def post(self, request, *args, **kwargs):
+        form = self.dhis2_connection_form
+        if form.is_valid():
+            form.save(self.domain)
+            return HttpResponseRedirect(self.page_url)
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
+            raise Http404()
+        return super(Dhis2ConnectionView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def dhis2_connection_form(self):
+        dhis2_conn = get_dhis2_connection(self.request.domain)
+        initial = dict(dhis2_conn) if dhis2_conn else {}
+        if self.request.method == 'POST':
+            return Dhis2ConnectionForm(self.request.POST, initial=initial)
+        return Dhis2ConnectionForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {'dhis2_connection_form': self.dhis2_connection_form}
+
+
+class DataSetMapView(BaseAdminProjectSettingsView):
+    urlname = 'dataset_map_view'
+    page_title = ugettext_lazy("DHIS2 DataSet Map")
+    template_name = 'domain/admin/dhis2/dataset_map.html'
+
+    @method_decorator(domain_admin_required)
+    def post(self, request, *args, **kwargs):
+        datavalue_maps = []
+        formset = self.datavalue_map_formset
+        if formset.is_valid():
+            for form in formset:
+                form.append_to(datavalue_maps)
+
+        form = self.dataset_map_form
+        if form.is_valid():
+            form.save(self.domain, datavalue_maps)
+            return HttpResponseRedirect(self.page_url)
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
+            raise Http404()
+        return super(DataSetMapView, self).dispatch(request, *args, **kwargs)
+
+    @memoized
+    def get_initial(self):
+        try:
+            dataset_map = get_dataset_maps(self.request.domain)[0]
+        except IndexError:
+            dataset_map = None
+        initial = dict(dataset_map) if dataset_map else {}
+        return initial
+
+    @property
+    def dataset_map_form(self):
+        initial = self.get_initial()
+        if self.request.method == 'POST':
+            return DataSetMapForm(self.request.POST, initial=initial)
+        return DataSetMapForm(initial=initial)
+
+    @property
+    def datavalue_map_formset(self):
+        initial = self.get_initial()
+        datavalue_maps = [dict(m) for m in initial.get('datavalue_maps', [])]
+        if self.request.method == 'POST':
+            return DataValueMapFormSet(self.request.POST, initial=datavalue_maps)
+        return DataValueMapFormSet(initial=datavalue_maps)
+
+    @property
+    def page_context(self):
+        return {
+            'dataset_map_form': self.dataset_map_form,
+            'datavalue_map_formset': self.datavalue_map_formset,
+            'datavalue_map_formset_helper': DataValueMapFormSetHelper(),
+        }
+
+
+class Dhis2LogListView(BaseAdminProjectSettingsView, ListView):
+    urlname = 'dhis2_log_list_view'
+    page_title = ugettext_lazy("DHIS2 Logs")
+    template_name = 'domain/admin/dhis2/logs.html'
+    context_object_name = 'logs'
+    paginate_by = 100
+
+    def get_queryset(self):
+        return JsonApiLog.objects.filter(domain=self.domain).order_by('-timestamp').only(
+            'timestamp',
+            'request_method',
+            'request_url',
+            'response_status',
+        )
+
+    @property
+    def object_list(self):
+        return self.get_queryset()
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
+            raise Http404()
+        return super(Dhis2LogListView, self).dispatch(request, *args, **kwargs)
+
+
+class Dhis2LogDetailView(BaseAdminProjectSettingsView, DetailView):
+    urlname = 'dhis2_log_detail_view'
+    page_title = ugettext_lazy("DHIS2 Logs")
+    template_name = 'domain/admin/dhis2/log_detail.html'
+    context_object_name = 'log'
+
+    def get_queryset(self):
+        return JsonApiLog.objects.filter(domain=self.domain)
+
+    @property
+    def object(self):
+        return self.get_object()
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
+            raise Http404()
+        return super(Dhis2LogDetailView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def page_url(self):
+        pk = self.kwargs['pk']
+        return reverse(self.urlname, args=[self.domain, pk])
+
+
 from corehq.apps.smsbillables.forms import PublicSMSRateCalculatorForm
 from corehq.apps.smsbillables.async_handlers import PublicSMSRatesAsyncHandler
 
@@ -3204,3 +3380,25 @@ class PasswordResetView(View):
         couch_user = CouchUser.from_django_user(user)
         clear_login_attempts(couch_user)
         return response
+
+
+def exception_safe_password_reset(request, *args, **kwargs):
+    """
+    Django's password reset function raises SMTP errors if there's any
+    problem with the mailserver. Catch that more elegantly with a simple wrapper.
+    """
+    # Django docs on password reset are weak. See these links instead:
+    #
+    # http://streamhacker.com/2009/09/19/django-ia-auth-password-reset/
+    # http://www.rkblog.rk.edu.pl/w/p/password-reset-django-10/
+    # http://blog.montylounge.com/2009/jul/12/django-forgot-password/
+    try:
+        return password_reset(request, *args, **kwargs)
+    except None:
+        vals = {
+            'current_page': {'page_name': _('Oops!')},
+            'error_msg': 'There was a problem with your request',
+            'error_details': sys.exc_info(),
+            'show_homepage_link': 1,
+        }
+        return render_to_response('error.html', vals, context_instance=RequestContext(request))

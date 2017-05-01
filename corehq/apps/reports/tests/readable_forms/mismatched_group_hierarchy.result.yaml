@@ -915,28 +915,28 @@
   value: /data/whole_form
 - {calculate: 'instance(''casedb'')/casedb/case[@case_type=''facility''][@status=''open''][facility_id
     = /data/fada_facility_id]/number_usage', comment: null, group: null, hashtagValue: '#form/facility_number_usage',
-  label: '#form/facility_number_usage', relevant: null, repeat: null, required: null,
+  label: '#form/facility_number_usage', relevant: /data/fada_facility_id != '', repeat: null, required: null,
   response: '1', tag: hidden, type: DataBindOnly, value: /data/facility_number_usage}
 - {calculate: 'instance(''casedb'')/casedb/case[@case_type=''current_user_data'']/facility_id',
   comment: null, group: null, hashtagValue: '#form/fada_facility_id', label: '#form/fada_facility_id',
-  relevant: null, repeat: null, required: null, response: '600', tag: hidden, type: DataBindOnly,
-  value: /data/fada_facility_id}
+  relevant: 'count(instance(''casedb'')/casedb/case[@case_type=''current_user_data'']) = 1',
+  repeat: null, required: null, response: '600', tag: hidden, type: DataBindOnly, value: /data/fada_facility_id}
 - {calculate: 'concat(/data/fada_facility_id, format-date(/data/fada_date_admission,
     ''%Y%m''), /data/patient_number_padded)', comment: null, group: null, hashtagValue: '#form/fada_patient_id',
-  label: '#form/fada_patient_id', relevant: null, repeat: null, required: null, response: '2093402934',
+  label: '#form/fada_patient_id', relevant: /data/fada_facility_id != '', repeat: null, required: null, response: '2093402934',
   tag: hidden, type: DataBindOnly, value: /data/fada_patient_id}
 - {calculate: 'instance(''casedb'')/casedb/case[@case_type=''facility''][@status=''open''][facility_id
     = /data/fada_facility_id]/owner_id', comment: null, group: null, hashtagValue: '#form/facility_owner_id',
-  label: '#form/facility_owner_id', relevant: null, repeat: null, required: null,
+  label: '#form/facility_owner_id', relevant: /data/fada_facility_id != '', repeat: null, required: null,
   response: '', tag: hidden, type: DataBindOnly, value: /data/facility_owner_id}
 - {calculate: 'if(/data/patient_number >= 10000, string(/data/patient_number), if(/data/patient_number
     >= 1000, concat(''0'', string(/data/patient_number)), if(/data/patient_number
     >= 100, concat(''00'', string(/data/patient_number)), if(/data/patient_number
     >= 10, concat(''000'', string(/data/patient_number)), concat(''0000'', string(/data/patient_number))))))',
   comment: null, group: null, hashtagValue: '#form/patient_number_padded', label: '#form/patient_number_padded',
-  relevant: null, repeat: null, required: null, response: '01225', tag: hidden, type: DataBindOnly,
+  relevant: /data/fada_facility_id != '', repeat: null, required: null, response: '01225', tag: hidden, type: DataBindOnly,
   value: /data/patient_number_padded}
 - {calculate: 'if(/data/facility_number_usage = 1, /data/fada_monthly_number, /data/fada_yearly_number)',
   comment: null, group: null, hashtagValue: '#form/patient_number', label: '#form/patient_number',
-  relevant: null, repeat: null, required: null, response: '1234', tag: hidden, type: DataBindOnly,
+  relevant: /data/fada_facility_id != '', repeat: null, required: null, response: '1234', tag: hidden, type: DataBindOnly,
   value: /data/patient_number}

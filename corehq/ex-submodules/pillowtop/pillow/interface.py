@@ -1,10 +1,14 @@
 from abc import ABCMeta, abstractproperty, abstractmethod
+from datetime import datetime
 
 import sys
 
 from corehq.util.soft_assert import soft_assert
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from pillowtop.const import CHECKPOINT_MIN_WAIT
+from pillowtop.utils import force_seq_int
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
 
@@ -89,25 +93,34 @@ class PillowBase(object):
         try:
             for change in self.get_change_feed().iter_changes(since=since, forever=forever):
                 if change:
+                    timer = TimingContext()
                     try:
                         context.changes_seen += 1
-                        self.process_with_error_handling(change)
+                        with timer:
+                            self.process_with_error_handling(change)
                     except Exception as e:
                         notify_exception(None, u'processor error in pillow {} {}'.format(
                             self.get_name(), e,
                         ))
+                        self._record_change_exception_in_datadog(change)
                         raise
                     else:
-                        self.fire_change_processed_event(change, context)
+                        updated = self.fire_change_processed_event(change, context)
+                        if updated:
+                            self._record_checkpoint_in_datadog()
+                        self._record_change_success_in_datadog(change)
+                    self._record_change_in_datadog(change, timer)
                 else:
-                    self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
+                    updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
+                    if updated:
+                        self._record_checkpoint_in_datadog()
         except PillowtopCheckpointReset:
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
     def process_with_error_handling(self, change):
         try:
             self.process_change(change)
-        except Exception, ex:
+        except Exception as ex:
             handle_pillow_error(self, change, ex)
 
     @abstractmethod
@@ -116,7 +129,91 @@ class PillowBase(object):
 
     @abstractmethod
     def fire_change_processed_event(self, change, context):
+        """
+        :return: True if checkpoint was updated otherwise False
+        """
         pass
+
+    def _normalize_checkpoint_sequence(self):
+        if self.checkpoint is None:
+            return {}
+
+        sequence = self.get_last_checkpoint_sequence()
+        return self._normalize_sequence(sequence)
+
+    def _normalize_sequence(self, sequence):
+        from pillowtop.feed.couch import CouchChangeFeed
+        change_feed = self.get_change_feed()
+
+        if not isinstance(sequence, dict):
+            if isinstance(change_feed, CouchChangeFeed):
+                topic = change_feed.couch_db
+            else:
+                return {}
+
+            sequence = {topic: force_seq_int(sequence)}
+        return sequence
+
+    def _record_checkpoint_in_datadog(self):
+        datadog_counter('commcare.change_feed.change_feed.checkpoint', tags=[
+            'pillow_name:{}'.format(self.get_name()),
+        ])
+        checkpoint_sequence = self._normalize_checkpoint_sequence()
+        for topic, value in checkpoint_sequence.iteritems():
+            datadog_gauge('commcare.change_feed.checkpoint_offsets', value, tags=[
+                'pillow_name:{}'.format(self.get_name()),
+                'topic:{}'.format(topic),
+            ])
+
+    def _record_change_in_datadog(self, change, timer):
+        from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+        change_feed = self.get_change_feed()
+        current_seq = self._normalize_sequence(change_feed.get_processed_offsets())
+        current_offsets = change_feed.get_latest_offsets()
+
+        tags = [
+            'pillow_name:{}'.format(self.get_name()),
+            'feed_type:{}'.format('kafka' if isinstance(change_feed, KafkaChangeFeed) else 'couch')
+        ]
+        for topic, value in current_seq.iteritems():
+            tags_with_topic = tags + ['topic:{}'.format(topic), ]
+
+            datadog_gauge('commcare.change_feed.processed_offsets', value, tags=tags_with_topic)
+            if topic in current_offsets:
+                needs_processing = current_offsets[topic] - value
+                datadog_gauge('commcare.change_feed.need_processing', needs_processing, tags=tags_with_topic)
+
+        for topic, offset in current_offsets.iteritems():
+            tags_with_topic = tags + ['topic:{}'.format(topic), ]
+            datadog_gauge('commcare.change_feed.current_offsets', offset, tags=tags_with_topic)
+
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change, timer)
+
+    def _record_change_success_in_datadog(self, change):
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change)
+
+    def _record_change_exception_in_datadog(self, change):
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change)
+
+    def __record_change_metric_in_datadog(self, metric, change, timer=None):
+        if change.metadata is not None:
+            tags = [
+                u'datasource:{}'.format(change.metadata.data_source_name),
+                u'document_type:{}'.format(change.metadata.document_type),
+                u'domain:{}'.format(change.metadata.domain),
+                u'is_deletion:{}'.format(change.metadata.is_deletion),
+                u'pillow_name:{}'.format(self.get_name()),
+            ]
+            datadog_counter(metric, tags=tags)
+
+            change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).seconds
+            datadog_gauge('commcare.change_feed.change_lag', change_lag, tags=[
+                u'pillow_name:{}'.format(self.get_name()),
+                u'topic:{}'.format(change.topic),
+            ])
+
+            if timer:
+                datadog_gauge('commcare.change_feed.processing_time', timer.duration, tags=tags)
 
 
 class ChangeEventHandler(object):
@@ -127,6 +224,9 @@ class ChangeEventHandler(object):
 
     @abstractmethod
     def fire_change_processed(self, change, context):
+        """
+        :return: True if checkpoint was updated otherwise False
+        """
         pass
 
 
@@ -141,7 +241,11 @@ class ConstructedPillow(PillowBase):
         self._name = name
         self._checkpoint = checkpoint
         self._change_feed = change_feed
-        self._processor = processor
+        if isinstance(processor, list):
+            self.processors = processor
+        else:
+            self.processors = [processor]
+
         self._change_processed_event_handler = change_processed_event_handler
 
     @property
@@ -152,10 +256,7 @@ class ConstructedPillow(PillowBase):
         return self._name
 
     def document_store(self):
-        # todo: replace with NotImplementedError once it's clear this isn't necessary
-        _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), send_to_ops=False)
-        _assert(False, 'Something is still calling ConstructedPillow.document_store')
-        return None
+        raise NotImplementedError()
 
     @property
     def checkpoint(self):
@@ -165,11 +266,13 @@ class ConstructedPillow(PillowBase):
         return self._change_feed
 
     def process_change(self, change):
-        self._processor.process_change(self, change)
+        for processor in self.processors:
+            processor.process_change(self, change)
 
     def fire_change_processed_event(self, change, context):
         if self._change_processed_event_handler is not None:
-            self._change_processed_event_handler.fire_change_processed(change, context)
+            return self._change_processed_event_handler.fire_change_processed(change, context)
+        return False
 
 
 def handle_pillow_error(pillow, change, exception):

@@ -120,6 +120,7 @@ class DataTablesHeader(object):
     no_sort = False
     complex = True
     span = 0
+    auto_width = False
     custom_sort = None
 
     def __init__(self, *args):

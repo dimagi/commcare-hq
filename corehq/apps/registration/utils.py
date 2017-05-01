@@ -15,7 +15,7 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser, UserRole
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -23,8 +23,6 @@ from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.analytics.tasks import track_created_new_project_space_on_hubspot
 from corehq.apps.analytics.utils import get_meta
-from corehq import toggles
-from toggle.shortcuts import set_toggle
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -112,7 +110,7 @@ def request_new_domain(request, form, is_new_user=True):
 
     dom_req.domain = new_domain.name
 
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         if not current_user:
             current_user = WebUser()
             current_user.sync_from_django_user(request.user)
@@ -202,7 +200,8 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
     try:
         send_html_email_async.delay(subject, recipient, message_html,
                                     text_content=message_plaintext,
-                                    email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True)
+                                    email_from=settings.DEFAULT_FROM_EMAIL,
+                                    ga_track=True)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 

@@ -13,6 +13,12 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
 
     var CaseConfig = function (params) {
         var self = this;
+        self.makePopover = function () {
+            $('.property-description').closest('.read-only').popover({
+                'trigger': 'hover',
+                'placement': 'bottom',
+            });
+        };
 
         self.home = params.home;
         self.questions = ko.observable(params.questions);
@@ -25,11 +31,14 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         self.requires = params.requires;
         self.commtrack = params.commtrack_enabled;
         self.programs = params.commtrack_programs;
+        self.isShadowForm = params.isShadowForm;
 
         self.setPropertiesMap = function (propertiesMap) {
              self.propertiesMap = ko.mapping.fromJS(propertiesMap);
         };
         self.setPropertiesMap(params.propertiesMap);
+
+        self.descriptionDict = params.propertyDescriptions;
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",
@@ -174,8 +183,19 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             });
         };
 
+        self.initAccordion = function() {
+            // Leave all the actions, collapsed, unless there's just
+            // one in the section, and then open it
+            if ($('#case-load-accordion > .panel').length === 1) {
+                self.applyAccordion('load', 0);
+            }
+            if ($('#case-open-accordion > .panel').length === 1) {
+                self.applyAccordion('open', 0);
+            }
+        };
+
         self.init = function () {
-            var $home = $('#case-config-ko');
+            var $home = self.home;
             _.delay(function () {
                 $home.koApplyBindings(self);
                 $home.on('textchange', 'input', self.change)
@@ -185,18 +205,12 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                      .on('change', 'input[type="checkbox"]', self.change);
 
                 // https://gist.github.com/mkelly12/424774/#comment-92080
-                $('#case-config-ko input').on('textchange', self.change);
+                $home.find('input').on('textchange', self.change);
 
                 self.ensureBlankProperties();
+                self.initAccordion();
                 $('#case-configuration-tab').on('click', function () {
-                    // Leave all the actions, collapsed, unless there's just
-                    // one in the section, and then open it
-                    if ($('#case-load-accordion > .panel').length === 1) {
-                        self.applyAccordion('load', 0);
-                    }
-                    if ($('#case-open-accordion > .panel').length === 1) {
-                        self.applyAccordion('open', 0);
-                    }
+                    self.initAccordion();
                 });
 
                 $('.hq-help-template').each(function () {
@@ -206,10 +220,10 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         };
     };
 
-    var CaseConfigViewModel = function (config, params) {
+    var CaseConfigViewModel = function (caseConfig, params) {
         var self = this;
 
-        self.config = config;
+        self.caseConfig = caseConfig;
 
         self.getCaseTags = function (type, action) {
             var tags = [],
@@ -261,11 +275,11 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         };
 
         self.load_update_cases = ko.observableArray(_(params.actions.load_update_cases).map(function (a) {
-            var preload = caseConfigUtils.propertyDictToArray([], a.preload, config, true);
-            var case_properties = caseConfigUtils.propertyDictToArray([], a.case_properties, config);
+            var preload = caseConfigUtils.propertyDictToArray([], a.preload, caseConfig, true);
+            var case_properties = caseConfigUtils.propertyDictToArray([], a.case_properties, caseConfig);
             a.preload = [];
             a.case_properties = [];
-            var action = LoadUpdateAction.wrap(a, config);
+            var action = LoadUpdateAction.wrap(a, caseConfig);
             // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
             // before it is defined
             _(case_properties).each(function (p) {
@@ -283,9 +297,9 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 path: a.name_path,
                 required: true
             }];
-            var case_properties = caseConfigUtils.propertyDictToArray(required_properties, a.case_properties, config);
+            var case_properties = caseConfigUtils.propertyDictToArray(required_properties, a.case_properties, caseConfig);
             a.case_properties = [];
-            var action = OpenCaseAction.wrap(a, config);
+            var action = OpenCaseAction.wrap(a, caseConfig);
             // add these after to avoid errors caused by 'action.suggestedProperties' being accessed
             // before it is defined
             _(case_properties).each(function (p) {
@@ -294,7 +308,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             return action;
         }));
 
-        self.actionOptions = ko.observableArray([
+        var _actions = [
             {
                 display: 'Load / Update / Close a case',
                 value: 'load'
@@ -307,15 +321,20 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 display: 'Load Case From Fixture',
                 value: 'load_case_from_fixture'
             },
-            {
-                display: '---',
-                value: 'separator'
-            },
-            {
-                display: 'Open a Case',
-                value: 'open'
-            }
-        ]);
+        ];
+        if (!self.caseConfig.isShadowForm) {
+            _actions = _actions.concat([
+                {
+                    display: '---',
+                    value: 'separator',
+                },
+                {
+                    display: 'Open a Case',
+                    value: 'open',
+                },
+            ]);
+        }
+        self.actionOptions = ko.observableArray(_actions);
 
         self.renameCaseTag = function (oldTag, newTag, parentOnly) {
             var actions = self.load_update_cases();
@@ -379,9 +398,9 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 index = self.load_update_cases().length;
                 var tag_prefix = action.value === 'auto_select'? 'auto' : '',
                     action_data = {
-                        case_type: config.caseType,
+                        case_type: caseConfig.caseType,
                         details_module: null,
-                        case_tag: tag_prefix + 'load_' + config.caseType + index,
+                        case_tag: tag_prefix + 'load_' + caseConfig.caseType + index,
                         case_index: {
                             tag: '',
                             reference_id: 'parent',
@@ -412,14 +431,14 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                         arbitrary_datum_function: '',
                     };
                 }
-                self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.config));
-                self.config.applyAccordion('load', index);
+                self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.caseConfig));
+                self.caseConfig.applyAccordion('load', index);
             } else if (action.value === 'open') {
                 index = self.open_cases().length;
                 self.open_cases.push(OpenCaseAction.wrap({
-                    case_type: config.caseType,
+                    case_type: caseConfig.caseType,
                     name_path: '',
-                    case_tag: 'open_' + config.caseType + '_' + index,
+                    case_tag: 'open_' + caseConfig.caseType + '_' + index,
                     case_properties: [{
                             path: '',
                             key: 'name',
@@ -429,8 +448,8 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     case_indices: [],
                     open_condition: DEFAULT_CONDITION('always'),
                     close_condition: DEFAULT_CONDITION('never')
-                }, self.config));
-                self.config.applyAccordion('open', index);
+                }, self.caseConfig));
+                self.caseConfig.applyAccordion('open', index);
             }
         };
 
@@ -438,12 +457,12 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             if (action.actionType === 'open') {
                 self.open_cases.remove(action);
             } else if (action.actionType === 'load') {
-                var index = self.config.caseConfigViewModel.load_update_cases.indexOf(action),
+                var index = self.caseConfig.caseConfigViewModel.load_update_cases.indexOf(action),
                     potential_child;
                 self.load_update_cases.remove(action);
 
                 // remove references to deleted action in other load actions
-                var loadUpdateCases = self.config.caseConfigViewModel.load_update_cases();
+                var loadUpdateCases = self.caseConfig.caseConfigViewModel.load_update_cases();
                 for (var i = index; i < loadUpdateCases.length; i++) {
                     potential_child = loadUpdateCases[i];
                     for (var j = 0; j < potential_child.parents.length; j++) {
@@ -455,7 +474,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     }
                 }
             }
-            self.config.saveButton.fire('change');
+            self.caseConfig.saveButton.fire('change');
         };
 
         self.unwrap = function () {
@@ -485,7 +504,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
 
     var  ActionBase = {
         validate: function (self, case_type, case_tag) {
-            if (!self.config.caseConfigViewModel) {
+            if (!self.caseConfig.caseConfigViewModel) {
                 return;
             }
             if (!case_type) {
@@ -496,7 +515,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
                 return "Case Tag: only letters, numbers, '-', and '_' allowed";
             }
-            var tags = self.config.caseConfigViewModel.getCaseTags('all');
+            var tags = self.caseConfig.caseConfigViewModel.getCaseTags('all');
             if (_.where(tags, {value: case_tag}).length > 1) {
                 return "Case Tag already in use";
             }
@@ -514,7 +533,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 },
                 write: function (value) {
                     self.close_condition.type(value ? 'always' : 'never');
-                    self.config.saveButton.fire('change');
+                    self.caseConfig.saveButton.fire('change');
                 }
             };
         },
@@ -560,7 +579,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         },
         suggestedProperties: function(action, allow_parent) {
             var properties = [];
-            var propertiesMap = action.config.propertiesMap;
+            var propertiesMap = action.caseConfig.propertiesMap;
             var caseType = action.case_type();
             if (_(propertiesMap).has(caseType)) {
                 properties = _.filter(propertiesMap[caseType](), function (p) {
@@ -618,9 +637,9 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 }
             };
         },
-        wrap: function (data, config) {
+        wrap: function (data, caseConfig) {
             var self = {
-                config: config,
+                caseConfig: caseConfig,
                 actionType: 'load'
             };
             ko.mapping.fromJS(data, LoadUpdateAction.mapping(self), self);
@@ -634,7 +653,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             };
 
             self.available_modules = ko.computed(function () {
-                return config.getModulesForCaseType(self.case_type(), self.show_product_stock());
+                return caseConfig.getModulesForCaseType(self.case_type(), self.show_product_stock());
             });
 
             if (self.auto_select) {
@@ -662,7 +681,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     self.show_product_stock(value);
                     if (value) {
                         var newTag = 'case_' + self.case_type();
-                        self.config.caseConfigViewModel.renameCaseTag(self.case_tag(), newTag);
+                        self.caseConfig.caseConfigViewModel.renameCaseTag(self.case_tag(), newTag);
                     } else {
                         self.product_program('');
                     }
@@ -675,9 +694,9 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 },
                 write: function (value) {
                     if (value) {
-                        var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
+                        var index = self.caseConfig.caseConfigViewModel.load_update_cases.indexOf(self);
                         if (index > 0) {
-                            var parent = self.config.caseConfigViewModel.load_update_cases()[index - 1];
+                            var parent = self.caseConfig.caseConfigViewModel.load_update_cases()[index - 1];
                             self.case_index.tag(parent.case_tag());
                         }
                     } else {
@@ -688,7 +707,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
 
             self.case_tag.extend({ withPrevious: 1 });
             self.case_tag.subscribe(function (tag) {
-                self.config.caseConfigViewModel.renameCaseTag(self.case_tag.previous(), tag, true);
+                self.caseConfig.caseConfigViewModel.renameCaseTag(self.case_tag.previous(), tag, true);
             });
 
             self.close_case = ko.computed(ActionBase.close_case(self));
@@ -751,7 +770,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
 
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
-                self.config.saveButton.fire('change');
+                self.caseConfig.saveButton.fire('change');
             };
 
             self.addPreload = function () {
@@ -764,7 +783,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
 
             self.removePreload = function (property) {
                 self.preload.remove(property);
-                self.config.saveButton.fire('change');
+                self.caseConfig.saveButton.fire('change');
             };
 
             self.hasPreload = function() {
@@ -784,8 +803,8 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             var add_circular = function() {
                 // hacky way to prevent trying to access caseConfigViewModel before it is defined
                 self.allow_product_stock = ko.computed(function () {
-                    var supported = self.config.case_supports_products(self.case_type());
-                    var loadupdatecases = self.config.caseConfigViewModel.load_update_cases;
+                    var supported = self.caseConfig.case_supports_products(self.case_type());
+                    var loadupdatecases = self.caseConfig.caseConfigViewModel.load_update_cases;
                     return supported && loadupdatecases.indexOf(self) === loadupdatecases().length - 1;
                 });
 
@@ -794,16 +813,16 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 });
 
                 self.auto_select_modes = ko.computed(function () {
-                    return config.getAutoSelectModes(self);
+                    return caseConfig.getAutoSelectModes(self);
                 });
                 self.validate_subcase = ko.computed(function () {
-                    if (!self.config.caseConfigViewModel) {
+                    if (!self.caseConfig.caseConfigViewModel) {
                         return;
                     }
                     if (!self.case_index.tag()) {
                         return null;
                     }
-                    var parent = self.config.caseConfigViewModel.getActionFromTag(self.case_index.tag());
+                    var parent = self.caseConfig.caseConfigViewModel.getActionFromTag(self.case_index.tag());
                     if (!parent) {
                         return "Subcase parent reference is missing";
                     } else if (!self.case_index.reference_id()) {
@@ -822,7 +841,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 });
             };
 
-            if (!self.config.caseConfigViewModel) {
+            if (!self.caseConfig.caseConfigViewModel) {
                 _.delay(add_circular);
             } else {
                 add_circular();
@@ -868,9 +887,9 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 }
             };
         },
-        wrap: function (data, config) {
+        wrap: function (data, caseConfig) {
             var self = {
-                config: config,
+                caseConfig: caseConfig,
                 actionType: 'open'
             };
             ko.mapping.fromJS(data, OpenCaseAction.mapping(self), self);
@@ -944,7 +963,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
 
             self.case_tag.extend({ withPrevious: 1 });
             self.case_tag.subscribe(function (tag) {
-                self.config.caseConfigViewModel.renameCaseTag(self.case_tag.previous(), tag, true);
+                self.caseConfig.caseConfigViewModel.renameCaseTag(self.case_tag.previous(), tag, true);
             });
 
             self.close_case = ko.computed(ActionBase.close_case(self));
@@ -966,7 +985,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             });
 
             self.repeat_context = function () {
-                return self.config.get_repeat_context(self.name_path());
+                return self.caseConfig.get_repeat_context(self.name_path());
             };
 
             self.addProperty = function () {
@@ -979,17 +998,17 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
 
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
-                self.config.saveButton.fire('change');
+                self.caseConfig.saveButton.fire('change');
             };
 
             self.relationshipTypes = ActionBase.relationshipTypes;
 
             var add_circular = function () {
                 self.allow_subcase = ko.computed(function () {
-                    return self.case_indices || self.config.caseConfigViewModel.getCaseTags('subcase', self).length > 0;
+                    return self.case_indices || self.caseConfig.caseConfigViewModel.getCaseTags('subcase', self).length > 0;
                 });
                 self.validate_subcase = ko.computed(function () {
-                    if (!self.config.caseConfigViewModel) {
+                    if (!self.caseConfig.caseConfigViewModel) {
                         return;
                     }
                     if (!self.case_indices) {
@@ -997,7 +1016,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     }
                     for (var i = 0; i < self.case_indices.length; i++) {
                         var caseIndex = self.case_indices[i];
-                        var parent = self.config.caseConfigViewModel.getActionFromTag(caseIndex.tag());
+                        var parent = self.caseConfig.caseConfigViewModel.getActionFromTag(caseIndex.tag());
                         if (!parent) {
                             return "Subcase parent reference is missing";
                         } else if (!caseIndex.reference_id()) {
@@ -1016,7 +1035,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 });
             };
             // hacky way to prevent trying to access caseConfigViewModel before it is defined
-            if (!self.config.caseConfigViewModel) {
+            if (!self.caseConfig.caseConfigViewModel) {
                 _.delay(add_circular);
             } else {
                 add_circular();
@@ -1087,7 +1106,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             self.validate = ko.computed(function () {
                 var case_type = self.case_type,
                     case_tag = self.case_tag;
-                if (!self.config.caseConfigViewModel) {
+                if (!self.caseConfig.caseConfigViewModel) {
                     return;
                 }
                 if (!case_type) {
@@ -1097,7 +1116,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
                         return "Case Tag: only letters, numbers, '-', and '_' allowed";
                     }
-                    var tags = self.config.caseConfigViewModel.getCaseTags('all');
+                    var tags = self.caseConfig.caseConfigViewModel.getCaseTags('all');
                     if (_.where(tags, {value: case_tag}).length > 1) {
                         return "Case Tag already in use";
                     }
@@ -1118,6 +1137,25 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             self.action = action;
             self.isBlank = ko.computed(function () {
                 return !self.key() && !self.path();
+            });
+            self.caseType = ko.computed(function () {
+                return self.action.case_type();
+            });
+            self.updatedDescription = ko.observable('');
+            self.description = ko.computed({
+                read: function () {
+                    if (self.updatedDescription()) {
+                        return self.updatedDescription();
+                    }
+                    var config = self.action.caseConfig;
+                    var type = config.descriptionDict[self.caseType()];
+                    if (type) {
+                        return type[self.key()] || '';
+                    }
+                },
+                write: function (value) {
+                    self.updatedDescription(value);
+                },
             });
             return self;
         }
@@ -1152,13 +1190,13 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                 return value;
             });
             self.repeat_context = function () {
-                return action.config.get_repeat_context(self.path());
+                return action.caseConfig.get_repeat_context(self.path());
             };
             self.validate = ko.computed(function () {
                 if (self.path() || self.key()) {
                     if (action.propertyCounts()[self.key()] > 1) {
                         return "Property updated by two questions";
-                    } else if (action.config.reserved_words.indexOf(self.key()) !== -1) {
+                    } else if (action.caseConfig.reserved_words.indexOf(self.key()) !== -1) {
                         return '<strong>' + self.key() + '</strong> is a reserved word';
                     } else if (self.repeat_context() && self.repeat_context() !== self.action.repeat_context()) {
                         return 'Inside the wrong repeat!';
@@ -1198,7 +1236,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             });
             self.validateProperty = ko.computed(function () {
                 if (self.path() || self.key()) {
-                    if (action.config.reserved_words.indexOf(self.key()) !== -1) {
+                    if (action.caseConfig.reserved_words.indexOf(self.key()) !== -1) {
                         return '<strong>' + self.key() + '</strong> is a reserved word';
                     } else if (action.subcase() && _(self.key()).contains('/')) {
                         return 'Parent property references not allowed for subcases';

@@ -111,13 +111,29 @@ legend .subtext {
     }
 }
 
+.property-descriptions(@width) {
+    width: @width;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+}
+
 #case-config-ko, #usercase-config-ko {
     @select2Width: 210px;
 
     .case-config-select2s(@select2Width);
 
+    .property-description {
+      .property-descriptions(@select2Width);
+    }
+
     .wide-select2s {
-        .case-config-select2s(@select2Width * 1.5);
+      @wideWidth: @select2Width * 1.5;
+      .case-config-select2s(@wideWidth);
+      .property-description {
+        .property-descriptions(@wideWidth);
+      }
     }
 }
 

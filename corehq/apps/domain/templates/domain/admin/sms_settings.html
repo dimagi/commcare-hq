@@ -7,18 +7,9 @@
     <script src="{% static 'commtrack/js/sms.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %} {{ block.super }}
-    <script>
-    $(function () {
-        var settings = {{ settings|JSON }};
-        var other_sms_codes = {{ other_sms_codes|JSON }};
-        var initCommtrackSettingsView = hqImport('commtrack/js/sms.js').initCommtrackSettingsView;
-        initCommtrackSettingsView($('#settings'), settings, other_sms_codes);
-    });
-    </script>
-{% endblock %}
-
 {% block page_content %}
+    {% initial_page_data "settings" settings %}
+    {% initial_page_data "other_sms_codes" other_sms_codes %}
     <form id="settings" class="form form-horizontal" method="post">
         {% csrf_token %}
         <fieldset>

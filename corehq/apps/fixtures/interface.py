@@ -6,7 +6,6 @@ from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
 from corehq.apps.fixtures.models import FixtureDataType, _id_from_doc
-from corehq.tabs.tabclasses import ProjectDataTab
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext as _
 
@@ -104,12 +103,6 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
 
         context.update({
             "selected_table": self.table.get("table_id", ""),
-            'active_tab': ProjectDataTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-                project=self.request.project
-            ),
             'data_tables_options': data_tables_options,
         })
         return context
@@ -146,14 +139,6 @@ class FixtureEditInterface(FixtureInterface):
     def report_context(self):
         context = super(FixtureEditInterface, self).report_context
         context.update(types=self.data_types)
-        context.update({
-            'active_tab': ProjectDataTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-                project=self.request.project
-            )
-        })
         return context
 
     @property

@@ -12,7 +12,7 @@ from tastypie.utils import dict_strip_unicode_keys
 from collections import namedtuple
 
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from tastypie import fields
 from tastypie.bundle import Bundle
@@ -29,6 +29,7 @@ from corehq.apps.es import UserES
 
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration, report_config_id_is_static
@@ -39,7 +40,6 @@ from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_id_username_pairs_by_domain
 from corehq.apps.users.util import raw_username
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 
@@ -853,7 +853,7 @@ class DomainForms(Resource):
         for form_object in forms_objects:
             form = form_object['form']
             module = form_object['module']
-            form_name = '{} > {} > {}'.format(application.name, module.name['en'], form.name['en'])
+            form_name = u'{} > {} > {}'.format(application.name, module.name['en'], form.name['en'])
             results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
         return results
 
@@ -886,7 +886,7 @@ class DomainCases(Resource):
                 HttpForbidden('You are not allowed to get list of case types for this domain')
             )
 
-        case_types = CaseAccessors(domain).get_case_types()
+        case_types = get_case_types_for_domain_es(domain)
         results = [CaseType(case_type=case_type) for case_type in case_types]
         return results
 

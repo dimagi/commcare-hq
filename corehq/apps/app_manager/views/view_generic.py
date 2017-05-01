@@ -1,6 +1,6 @@
 from django.http import Http404
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.shortcuts import render
 from corehq.apps.app_manager.const import APP_V1
 
@@ -14,6 +14,7 @@ from corehq.apps.app_manager.views.forms import \
     get_form_view_context_and_template
 from corehq.apps.app_manager.views.releases import get_releases_context
 from corehq.apps.app_manager.views.utils import bail, encode_if_unicode
+from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
     MultimediaAudioUploadController,
@@ -83,7 +84,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             _assert = soft_assert()
             _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
             template = get_app_manager_template(
-                domain,
+                request.user,
                 'app_manager/v1/no_longer_supported.html',
                 'app_manager/v2/no_longer_supported.html',
             )
@@ -91,11 +92,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 'domain': domain,
                 'app': app,
             })
-        if not app.vellum_case_management:
+        if not app.vellum_case_management and not app.is_remote_app():
             # Soft assert but then continue rendering; template will contain a user-facing warning
             _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
             _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
         if (form is not None and toggles.USER_PROPERTY_EASY_REFS.enabled(domain)
+                and "usercase_preload" in form.actions
                 and form.actions.usercase_preload.preload):
             _assert = soft_assert(['dmiller' + '@' + 'dimagi.com'])
             _assert(False, 'User property easy refs + old-style config = bad', {
@@ -137,11 +139,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         context.update({
             'case_properties': get_all_case_properties(app),
             'usercase_properties': get_usercase_properties(app),
+            'property_descriptions': get_case_property_description_dict(domain)
         })
 
         context.update(form_context)
     elif module:
-        template = get_module_template(domain, module)
+        template = get_module_template(request.user, module)
         # make sure all modules have unique ids
         app.ensure_module_unique_ids(should_save=True)
         module_context = get_module_view_context(app, module, lang)
@@ -154,7 +157,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                        else 'app_manager/v2/app_view_settings.html')
 
         template = get_app_manager_template(
-            domain,
+            request.user,
             'app_manager/v1/app_view.html',
             v2_template
         )
@@ -165,11 +168,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             'is_app_settings_page': not release_manager,
         })
     else:
-        from corehq.apps.dashboard.views import NewUserDashboardView
-        if toggles.APP_MANAGER_V2.enabled(domain):
-            context.update(NewUserDashboardView.get_page_context(domain))
-            template = NewUserDashboardView.template_name
+        if toggles.APP_MANAGER_V2.enabled(request.user.username):
+            from corehq.apps.dashboard.views import DomainDashboardView
+            return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
         else:
+            from corehq.apps.dashboard.views import NewUserDashboardView
             return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.
@@ -249,7 +252,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     domain_names.sort()
     if app and copy_app_form is None:
         toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
-        copy_app_form = CopyApplicationForm(domain, app_id, export_zipped_apps_enabled=toggle_enabled)
+        copy_app_form = CopyApplicationForm(domain, app, export_zipped_apps_enabled=toggle_enabled)
         context.update({
             'domain_names': domain_names,
         })
@@ -265,18 +268,20 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
+        uploaders = [
+            MultimediaLogoUploadController(
+                slug,
+                reverse(
+                    ProcessLogoFileUploadView.name,
+                    args=[domain, app_id, slug],
+                )
+            )
+            for slug in uploader_slugs
+        ]
         context.update({
             "sessionid": request.COOKIES.get('sessionid'),
-            'uploaders': [
-                MultimediaLogoUploadController(
-                    slug,
-                    reverse(
-                        ProcessLogoFileUploadView.name,
-                        args=[domain, app_id, slug],
-                    )
-                )
-                for slug in uploader_slugs
-            ],
+            "uploaders": uploaders,
+            "uploaders_js": [u.js_options for u in uploaders],
             "refs": {
                 slug: ApplicationMediaReference(
                     app.logo_refs.get(slug, {}).get("path", slug),
@@ -293,9 +298,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     domain_obj = Domain.get_by_name(domain)
     context.update({
-        'show_live_preview': should_show_preview_app(
+        'show_live_preview': app and should_show_preview_app(
             request,
-            domain_obj,
+            app,
             request.couch_user.username
         ),
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')

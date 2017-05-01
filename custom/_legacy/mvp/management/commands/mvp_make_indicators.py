@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from corehq.apps.indicators.models import (CaseDataInFormIndicatorDefinition, FormDataAliasIndicatorDefinition,
                                            FormDataInCaseIndicatorDefinition, BaseDocumentIndicatorDefinition)
@@ -10,10 +11,8 @@ from mvp.static_definitions.question_id_mapping import (CHILD_CLOSE_FORM_QUESTIO
 
 class Command(BaseCommand):
     help = "Create the indicator definitions necessary to compute MVP Indicators."
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         for domain in MVP.DOMAINS:
             shared_args=(
                 MVP.NAMESPACE,
@@ -45,7 +44,7 @@ class Command(BaseCommand):
                 case_property="edd_calc",
                 version=1
             )
-            print pregnancy_edd
+            print(pregnancy_edd)
 
             pregnancy_end = CaseDataInFormIndicatorDefinition.increment_or_create_unique(
                 *shared_args,
@@ -54,7 +53,7 @@ class Command(BaseCommand):
                 case_property="closed_on",
                 version=1
             )
-            print pregnancy_end
+            print(pregnancy_end)
 
             child_visit_referral = CHILD_VISIT_QUESTION_IDS.get('referral_type', {}).get(domain)
             if child_visit_referral:
@@ -65,7 +64,7 @@ class Command(BaseCommand):
                     xmlns=MVP.VISIT_FORMS.get('child_visit'),
                     **child_visit_referral
                 )
-                print child_case_referral_type
+                print(child_case_referral_type)
 
             pregnancy_visit_referral = PREGNANCY_VISIT_QUESTION_IDS.get('referral_type', {}).get(domain)
             if pregnancy_visit_referral:
@@ -76,7 +75,7 @@ class Command(BaseCommand):
                     xmlns=MVP.VISIT_FORMS.get('pregnancy_visit'),
                     **pregnancy_visit_referral
                 )
-                print pregnancy_case_referral_type
+                print(pregnancy_case_referral_type)
 
             visit_hospital = CHILD_VISIT_QUESTION_IDS.get('visit_hospital', {}).get(domain)
             if visit_hospital:
@@ -87,7 +86,7 @@ class Command(BaseCommand):
                     xmlns=MVP.VISIT_FORMS.get('child_visit'),
                     **visit_hospital
                 )
-                print visit_hospital_case
+                print(visit_hospital_case)
 
             immediate_danger_sign = CHILD_VISIT_QUESTION_IDS.get('immediate_danger_sign', {}).get(domain)
             if immediate_danger_sign:
@@ -98,7 +97,7 @@ class Command(BaseCommand):
                     xmlns=MVP.VISIT_FORMS.get('child_visit'),
                     **immediate_danger_sign
                 )
-                print immediate_danger_sign_case
+                print(immediate_danger_sign_case)
 
             diarrhea_medication_in_case = CHILD_VISIT_QUESTION_IDS.get('diarrhea_medication', {}).get(domain)
             if diarrhea_medication_in_case:
@@ -109,7 +108,7 @@ class Command(BaseCommand):
                     xmlns=MVP.VISIT_FORMS.get('child_visit'),
                     **diarrhea_medication_in_case
                 )
-                print diarrhea_medication_case
+                print(diarrhea_medication_case)
 
             fever_medication_in_case = CHILD_VISIT_QUESTION_IDS.get('fever_medication', {}).get(domain)
             if fever_medication_in_case:
@@ -120,7 +119,7 @@ class Command(BaseCommand):
                     xmlns=MVP.VISIT_FORMS.get('child_visit'),
                     **fever_medication_in_case
                 )
-                print fever_medication_case
+                print(fever_medication_case)
 
             self.insert_dob_into_form('child_dob', MVP.VISIT_FORMS.get('child_visit'),
                 shared_args)
@@ -136,7 +135,7 @@ class Command(BaseCommand):
             case_property="dob_calc",
             version=version
         )
-        print child_dob
+        print(child_dob)
 
     def create_form_alias_indicators(self, question_ids, xmlns, domain, shared_args):
         for indicator_slug, ids_per_domain in question_ids.items():
@@ -148,10 +147,10 @@ class Command(BaseCommand):
                     xmlns=xmlns,
                     **indicator_info
                 )
-                print form_question
+                print(form_question)
 
     def _delete_existing(self):
-        print "DELETING ALL INDICATORS"
+        print("DELETING ALL INDICATORS")
         all_indicators = BaseDocumentIndicatorDefinition.view("indicators/indicator_definitions",
             reduce=False,
             include_docs=True,

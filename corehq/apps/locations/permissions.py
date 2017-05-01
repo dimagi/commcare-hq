@@ -88,6 +88,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
 from corehq.apps.reports.generic import GenericReportView
+from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser
 from .models import SQLLocation
 
@@ -100,14 +101,25 @@ LOCATION_ACCESS_DENIED = mark_safe(ugettext_lazy(
 LOCATION_SAFE_TASTYPIE_RESOURCES = set()
 
 LOCATION_SAFE_HQ_REPORTS = set()
+CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS = dict()
+
+NOTIFY_EXCEPTION_MSG = (
+    "Someone was just denied access to a page due to location-based "
+    "access restrictions. If this happens a lot, we should investigate."
+)
 
 
 def locations_access_required(view_fn):
-    """
-    Decorator controlling domain-level access to locations.
-    """
-    return login_and_domain_required(
+    """Decorator controlling domain-level access to locations features."""
+    return (login_and_domain_required(
         requires_privilege_raise404(privileges.LOCATIONS)(view_fn)
+    ))
+
+
+def require_can_edit_locations(view_fn):
+    """Decorator verifying that the user has permission to edit individual locations."""
+    return locations_access_required(
+        require_permission('edit_locations')(view_fn)
     )
 
 
@@ -131,7 +143,7 @@ def can_edit_any_location(view_fn):
         if user_can_edit_any_location(request.couch_user, request.project):
             return view_fn(request, domain, *args, **kwargs)
         raise Http404()
-    return locations_access_required(_inner)
+    return require_can_edit_locations(_inner)
 
 
 def get_user_location(user, domain):
@@ -268,17 +280,24 @@ def conditionally_location_safe(conditional_function):
 
     """
     def _inner(view_fn):
-        view_fn._conditionally_location_safe_function = conditional_function
+        if isinstance(view_fn, type) and issubclass(view_fn, GenericReportView):
+            CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS[view_fn.slug] = conditional_function
+        else:
+            view_fn._conditionally_location_safe_function = conditional_function
         return view_fn
     return _inner
 
 
 def location_restricted_response(request):
     from corehq.apps.hqwebapp.views import no_permissions
-    msg = ("Someone was just denied access to a page due to location-based "
-           "access restrictions. If this happens a lot, we should investigate.")
-    notify_exception(request, msg)
+    notify_exception(request, NOTIFY_EXCEPTION_MSG)
     return no_permissions(request, message=LOCATION_ACCESS_DENIED)
+
+
+def location_restricted_exception(request):
+    from corehq.apps.hqwebapp.views import no_permissions_exception
+    notify_exception(request, NOTIFY_EXCEPTION_MSG)
+    return no_permissions_exception(request, message=LOCATION_ACCESS_DENIED)
 
 
 def is_location_safe(view_fn, view_args, view_kwargs):
@@ -294,7 +313,12 @@ def is_location_safe(view_fn, view_args, view_kwargs):
     if getattr(view_fn, '_conditionally_location_safe_function', False):
         return view_fn._conditionally_location_safe_function(view_fn, *view_args, **view_kwargs)
     if getattr(view_fn, 'is_hq_report', False):
-        return view_kwargs['report_slug'] in LOCATION_SAFE_HQ_REPORTS
+        if view_kwargs['report_slug'] in CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS:
+            return CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS[view_kwargs['report_slug']](
+                view_fn, *view_args, **view_kwargs
+            )
+        else:
+            return view_kwargs['report_slug'] in LOCATION_SAFE_HQ_REPORTS
     return False
 
 
@@ -351,4 +375,4 @@ def can_edit_location(view_fn):
             return view_fn(request, domain, loc_id, *args, **kwargs)
         return location_restricted_response(request)
 
-    return locations_access_required(_inner)
+    return require_can_edit_locations(_inner)

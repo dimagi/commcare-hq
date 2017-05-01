@@ -5,6 +5,7 @@ Get server hostname or IP address for the given inventory file and group.
 The server name or IP is printed on stdout on success.
 Errors and help output are printed on stderr.
 """
+from __future__ import print_function
 import os
 import sys
 import argparse
@@ -44,7 +45,7 @@ def main():
     prog = os.environ.get("SCRIPT", sys.argv[0])
     parser = ArgParser(
         prog=prog,
-        usage="{prog} [-h] environment group[:n] [{uprog}_ARGS]".format(
+        usage="{prog} [-h] environment [user@]group[:n] [{uprog}_ARGS]".format(
             prog=prog,
             uprog=prog.rsplit("/", 1)[-1].upper(),
         ),
@@ -54,19 +55,25 @@ def main():
         help="Environment: production, staging, ...")
     parser.add_argument("group",
         help="Server group: postgresql, proxy, webworkers, ... The server "
-             "group may be terminated with ':<n>' to choose one of "
+             "group may be prefixed with 'username@' to login as a specific "
+             "user and may be terminated with ':<n>' to choose one of "
              "multiple servers if there is more than one in the group. "
              "For example: webworkers:0 will pick the first webworker.")
 
     args = parser.parse_args()
-    if ':' in args.group:
-        group, index = args.group.rsplit(':', 1)
+    group = args.group
+    if "@" in group:
+        username, group = group.split('@', 1)
+        username += "@"
+    else:
+        username = ""
+    if ':' in group:
+        group, index = group.rsplit(':', 1)
         try:
             index = int(index)
         except (TypeError, ValueError):
             parser.error("Non-numeric group index: {}".format(index))
     else:
-        group = args.group
         index = None
 
     try:
@@ -95,7 +102,7 @@ def main():
     else:
         server = servers[index or 0]
 
-    print(server)
+    print(username + server)
 
 
 if __name__ == "__main__":

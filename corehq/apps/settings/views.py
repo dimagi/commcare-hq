@@ -17,7 +17,6 @@ from django.contrib import messages
 from django.http import Http404
 from django.views.decorators.http import require_POST
 from corehq.mobile_flags import MULTIPLE_APPS_UNLIMITED
-from corehq.tabs.tabclasses import MySettingsTab
 import langcodes
 
 from django.http import HttpResponseRedirect, HttpResponse
@@ -26,7 +25,7 @@ from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_laz
     activate, LANGUAGE_SESSION_KEY)
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required)
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.util.quickcache import quickcache
@@ -88,11 +87,6 @@ class BaseMyAccountView(BaseSectionPageView):
     def main_context(self):
         context = super(BaseMyAccountView, self).main_context
         context.update({
-            'active_tab': MySettingsTab(
-                self.request,
-                self.urlname,
-                couch_user=self.request.couch_user
-            ),
             'is_my_account_settings': True,
         })
         return context
@@ -134,21 +128,23 @@ class MyAccountSettingsView(BaseMyAccountView):
         language_choices = langcodes.get_all_langs_for_select()
         api_key = self.get_or_create_api_key()
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
-        if self.request.method == 'POST':
-            form = UpdateMyAccountInfoForm(
-                self.request.POST, user=self.request.couch_user,
-                api_key=api_key
-            )
-        else:
-            form = UpdateMyAccountInfoForm(
-                user=self.request.couch_user,
-                api_key=api_key
-            )
         try:
             domain = self.request.domain
         except AttributeError:
             domain = ''
-        form.initialize_form(domain, existing_user=self.request.couch_user)
+        if self.request.method == 'POST':
+            form = UpdateMyAccountInfoForm(
+                self.request.POST,
+                api_key=api_key,
+                domain=domain,
+                existing_user=self.request.couch_user,
+            )
+        else:
+            form = UpdateMyAccountInfoForm(
+                api_key=api_key,
+                domain=domain,
+                existing_user=self.request.couch_user,
+            )
         form.load_language(language_choices)
         return form
 
@@ -214,7 +210,7 @@ class MyAccountSettingsView(BaseMyAccountView):
             return self.form_actions[self.form_type]()
         if self.settings_form.is_valid():
             old_lang = self.request.couch_user.language
-            self.settings_form.update_user(existing_user=self.request.couch_user)
+            self.settings_form.update_user()
             new_lang = self.request.couch_user.language
             if new_lang != old_lang:
                 # update the current session's language setting

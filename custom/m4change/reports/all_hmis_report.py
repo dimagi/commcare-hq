@@ -1,10 +1,11 @@
 from django.utils.translation import ugettext as _
 
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, NumericColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from custom.common.filters import RestrictedAsyncLocationFilter
 from custom.m4change.reports import validate_report_parameters, get_location_hierarchy_by_id
 from custom.m4change.reports.anc_hmis_report import AncHmisReport
 from custom.m4change.reports.immunization_hmis_report import ImmunizationHmisReport
@@ -32,6 +33,7 @@ def _get_rows(row_data, form_data, key):
     return rows
 
 
+@location_safe
 class AllHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
     ajax_pagination = False
     asynchronous = True
@@ -44,7 +46,7 @@ class AllHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
     report_template_path = "m4change/report_content.html"
 
     fields = [
-        AsyncLocationFilter,
+        RestrictedAsyncLocationFilter,
         MonthFilter,
         YearFilter
     ]
@@ -56,13 +58,14 @@ class AllHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
         domain = config["domain"]
         location_id = config["location_id"]
         datespan = config["datespan"]
+        user = config["user"]
         sql_data = [
             AncHmisCaseSqlData(domain=domain, datespan=datespan).data,
             LdHmisCaseSqlData(domain=domain, datespan=datespan).data,
             ImmunizationHmisCaseSqlData(domain=domain, datespan=datespan).data,
             AllHmisCaseSqlData(domain=domain, datespan=datespan).data
         ]
-        locations = get_location_hierarchy_by_id(location_id, domain)
+        locations = get_location_hierarchy_by_id(location_id, domain, user)
         row_data = AllHmisReport.get_initial_row_data()
 
         for data in sql_data:
@@ -262,7 +265,8 @@ class AllHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
         row_data = AllHmisReport.get_report_data({
             "location_id": self.request.GET.get("location_id", None),
             "datespan": self.datespan,
-            "domain": str(self.domain)
+            "domain": str(self.domain),
+            "user": self.request.couch_user
         })
 
         for row in row_data:

@@ -17,7 +17,8 @@ from celery.task import task
 from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
+from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instance_ids
+from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
 from couchexport.files import Temp
@@ -25,7 +26,7 @@ from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.django.email import send_HTML_email
+from corehq.util.log import send_HTML_email
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime
 from soil import DownloadBase
@@ -51,7 +52,6 @@ from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
 )
-from .dbaccessors import get_all_hq_group_export_configs
 from .export import save_metadata_export_to_tempfile
 from .models import (
     FormExportSchema,
@@ -59,31 +59,21 @@ from .models import (
     ReportNotification,
     UnsupportedScheduledReportError,
 )
-from .scheduled import get_scheduled_reports
+from .scheduled import get_scheduled_report_ids
 
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = 60 * 60 * 24
 
 
-def send_delayed_report(report):
+def send_delayed_report(report_id):
     """
     Sends a scheduled report, via  celery background task.
     """
-    send_report.apply_async(args=[report._id], queue=get_report_queue(report))
+    send_report.delay(report_id)
 
 
-def get_report_queue(report):
-    # This is a super-duper hacky, hard coded way to deal with the fact that MVP reports
-    # consistently crush the celery queue for everyone else.
-    # Just send them to their own longrunning background queue
-    if report.domain in get_mvp_domains():
-        return 'background_queue'
-    else:
-        return 'celery'
-
-
-@task(ignore_result=True)
+@task(queue='background_queue', ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
     try:
@@ -115,8 +105,8 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
 def daily_reports():
-    for rep in get_scheduled_reports('daily'):
-        send_delayed_report(rep)
+    for report_id in get_scheduled_report_ids('daily'):
+        send_delayed_report(report_id)
 
 
 @periodic_task(
@@ -124,8 +114,8 @@ def daily_reports():
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
 def weekly_reports():
-    for rep in get_scheduled_reports('weekly'):
-        send_delayed_report(rep)
+    for report_id in get_scheduled_report_ids('weekly'):
+        send_delayed_report(report_id)
 
 
 @periodic_task(
@@ -133,19 +123,19 @@ def weekly_reports():
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
 def monthly_reports():
-    for rep in get_scheduled_reports('monthly'):
-        send_delayed_report(rep)
+    for report_id in get_scheduled_report_ids('monthly'):
+        send_delayed_report(report_id)
 
 
 @periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def saved_exports():
-    for group_config in get_all_hq_group_export_configs():
-        export_for_group_async.delay(group_config)
+    for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
+        export_for_group_async.delay(group_config_id)
 
-    for daily_saved_export in get_all_daily_saved_export_instances():
+    for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
         from corehq.apps.export.tasks import rebuild_export_task
         last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-        rebuild_export_task.delay(daily_saved_export, last_access_cutoff)
+        rebuild_export_task.delay(daily_saved_export_id, last_access_cutoff)
 
 
 @task(queue='background_queue', ignore_result=True)
@@ -156,9 +146,10 @@ def rebuild_export_task(groupexport_id, index, last_access_cutoff=None, filter=N
 
 
 @task(queue='saved_exports_queue', ignore_result=True)
-def export_for_group_async(group_config):
+def export_for_group_async(group_config_id):
     # exclude exports not accessed within the last 7 days
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+    group_config = HQGroupExportConfiguration.get(group_config_id)
     export_for_group(group_config, last_access_cutoff=last_access_cutoff)
 
 
@@ -184,8 +175,8 @@ def update_calculated_properties():
                 del props['cp_last_form']
             if props['cp_300th_form'] is None:
                 del props['cp_300th_form']
-            send_to_elasticsearch("domains", props)
-        except Exception, e:
+            send_to_elasticsearch("domains", props, es_merge_update=True)
+        except Exception as e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 
 

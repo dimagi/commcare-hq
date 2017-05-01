@@ -6,7 +6,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.users.util import raw_username
-from corehq.toggles import PROJECT_HEALTH_DASHBOARD
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.memoized import memoized
@@ -297,10 +296,6 @@ class ProjectHealthDashboard(ProjectReport):
         if self.is_rendered_as_email:
             self.report_template_path = "reports/project_health/project_health_email.html"
         return super(ProjectHealthDashboard, self).template_report
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return domain and PROJECT_HEALTH_DASHBOARD.enabled(domain)
 
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):

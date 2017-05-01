@@ -107,7 +107,7 @@ class DomainLoader(DataLoader):
         else:
             if existing_domain:
                 if force:
-                    self.stderr.write('Loading data for existing domain: {}'.format(domain_name))
+                    self.stderr.write(u'Loading data for existing domain: {}'.format(domain_name))
                 else:
                     raise DataExistsException("Domain: {}".format(domain_name))
 

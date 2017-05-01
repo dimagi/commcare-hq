@@ -93,7 +93,10 @@ hqDefine('app_manager/js/releases.js', function () {
             if (!(ko.utils.unwrapObservable(self[url_type])) || self.build_profile()) {
                 return self.generate_short_url(url_type);
             } else {
-                return ko.utils.unwrapObservable(self[url_type]);
+                var data = ko.utils.unwrapObservable(self[url_type]);
+                var bitly_code = self.parse_bitly_url(data);
+                self.app_code(bitly_code);
+                return data;
             }
         };
 
@@ -161,6 +164,7 @@ hqDefine('app_manager/js/releases.js', function () {
             ga_track_event('App Manager', 'Deploy Button', self.id());
             analytics.workflow('Clicked Deploy');
             $.post(releasesMain.options.urls.hubspot_click_deploy);
+            self.get_short_odk_url();
         };
 
         self.clickScan = function() {
@@ -193,6 +197,7 @@ hqDefine('app_manager/js/releases.js', function () {
     function ReleasesMain(o) {
         /* {fetchUrl, deleteUrl} */
         var AsyncDownloader = hqImport('app_manager/js/download_async_modal.js').AsyncDownloader;
+        var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body');
         var self = this;
         self.options = o;
         self.recipients = self.options.recipient_contacts;
@@ -256,6 +261,17 @@ hqDefine('app_manager/js/releases.js', function () {
                 }
             }
         });
+
+        self.previousBuildId = function(index) {
+            if (self.savedApps()[index + 1]) {
+                return self.savedApps()[index + 1].id();
+            }
+            return null;
+        };
+
+        self.onViewChanges = function(appIdOne, appIdTwo) {
+            appDiff.renderDiff(appIdOne, appIdTwo);
+        };
 
         self.addSavedApp = function (savedApp, toBeginning) {
             if (toBeginning) {

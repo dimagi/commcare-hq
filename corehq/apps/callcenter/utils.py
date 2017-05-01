@@ -6,6 +6,7 @@ from casexml.apps.case.mock import CaseBlock
 import uuid
 from xml.etree import ElementTree
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
@@ -16,6 +17,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime, ServerTime
 from dimagi.utils.couch import CriticalSection
+from django.core.cache import cache
 
 
 class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type use_fixtures')):
@@ -62,12 +64,13 @@ class _UserCaseHelper(object):
             create=True,
             case_id=uuid.uuid4().hex,
             owner_id=self.owner_id,
-            user_id=self.owner_id,
+            user_id=CALLCENTER_USER,
             case_type=case_type,
             case_name=fields.pop('name', None),
             update=fields
         )
         self._submit_case_block(caseblock)
+        self._user_case_changed(fields)
 
     def update_user_case(self, case, case_type, fields):
         caseblock = CaseBlock(
@@ -80,6 +83,7 @@ class _UserCaseHelper(object):
             update=fields
         )
         self._submit_case_block(caseblock)
+        self._user_case_changed(fields)
 
     def close_user_case(self, case, case_type):
         caseblock = CaseBlock(
@@ -90,6 +94,27 @@ class _UserCaseHelper(object):
             close=True,
         )
         self._submit_case_block(caseblock)
+
+    def _user_case_changed(self, fields):
+        field_names = fields.keys()
+        if _domain_has_new_fields(self.domain.name, field_names):
+            add_inferred_export_properties.delay(
+                'UserSave',
+                self.domain.name,
+                USERCASE_TYPE,
+                field_names,
+            )
+
+
+def _domain_has_new_fields(domain, field_names):
+    cache_key = u'user_case_fields_{}'.format(domain)
+    cached_fields = cache.get(cache_key)
+    new_field_set = set(field_names)
+    if cached_fields != new_field_set:
+        cache.set(cache_key, new_field_set)
+        return True
+
+    return False
 
 
 class CallCenterCase(namedtuple('CallCenterCase', 'case_id hq_user_id')):
@@ -155,12 +180,6 @@ def _get_user_case_fields(commcare_user):
         'phone_number': commcare_user.phone_number or ''
     })
 
-    add_inferred_export_properties.delay(
-        'UserSave',
-        commcare_user.domain,
-        USERCASE_TYPE,
-        fields.keys(),
-    )
     return fields
 
 

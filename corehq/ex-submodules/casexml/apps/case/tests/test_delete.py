@@ -7,7 +7,7 @@ from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.apps.change_feed import topics
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
@@ -18,7 +18,6 @@ class TestHardDelete(TestCase):
         self.casedb = CaseAccessors(TEST_DOMAIN_NAME)
         self.formdb = FormAccessors(TEST_DOMAIN_NAME)
 
-    @run_with_all_backends
     def test_simple_delete(self):
         factory = CaseFactory()
         case = factory.create_case()
@@ -47,7 +46,6 @@ class TestHardDelete(TestCase):
             with self.assertRaises(XFormNotFound):
                 self.formdb.get_form(form_id)
 
-    @run_with_all_backends
     def test_delete_with_related(self):
         factory = CaseFactory()
         parent = factory.create_case()
@@ -66,7 +64,6 @@ class TestHardDelete(TestCase):
         with self.assertRaises(CaseNotFound):
             self.casedb.get_case(child.case_id)
 
-    @run_with_all_backends
     def test_delete_sharing_form(self):
         factory = CaseFactory()
         c1, c2 = factory.create_or_update_cases([
@@ -81,3 +78,8 @@ class TestHardDelete(TestCase):
 
         self.assertIsNotNone(self.casedb.get_case(c1.case_id))
         self.assertIsNotNone(self.casedb.get_case(c2.case_id))
+
+
+@use_sql_backend
+class TestHardDeleteSQL(TestHardDelete):
+    pass

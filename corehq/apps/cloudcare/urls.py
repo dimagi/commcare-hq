@@ -8,6 +8,7 @@ from corehq.apps.cloudcare.views import (
     FormplayerMainPreview,
     FormplayerPreviewSingleApp,
     PreviewAppView,
+    SingleAppLandingPageView,
     form_context, get_cases, filter_cases, get_apps_api, get_app_api,
     get_fixtures, get_sessions, get_session_context, get_ledgers, render_form,
     sync_db_api, default,
@@ -24,6 +25,11 @@ app_urls = [
         name=FormplayerPreviewSingleApp.urlname,
     ),
     url(r'^preview_app/(?P<app_id>[\w-]+)/$', PreviewAppView.as_view(), name=PreviewAppView.urlname),
+    url(
+        r'^home/(?P<app_hash>[\w-]+)/$',
+        SingleAppLandingPageView.as_view(),
+        name=SingleAppLandingPageView.urlname
+    ),
     url(r'^(?P<urlPath>.*)$', CloudcareMain.as_view(), name='cloudcare_main'),
 ]
 

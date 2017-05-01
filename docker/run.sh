@@ -47,8 +47,49 @@ function run_tests() {
         exit 1
     fi
     shift
+
+    now=`date +%s`
     setup $TEST
+    delta=$((`date +%s` - $now))
+
+    send_timing_metric_to_datadog "setup" $delta
+
+    now=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
+    delta=$((`date +%s` - $now))
+
+    send_timing_metric_to_datadog "tests" $delta
+    send_counter_metric_to_datadog
+}
+
+function send_timing_metric_to_datadog() {
+    send_metric_to_datadog "travis.timings.$1" $2 "gauge"
+}
+
+function send_counter_metric_to_datadog() {
+    send_metric_to_datadog "travis.count" 1 "counter"
+}
+
+function send_metric_to_datadog() {
+
+    currenttime=$(date +%s)
+    curl  -X POST -H "Content-type: application/json" \
+    -d "{ \"series\" :
+             [{\"metric\":\"$1\",
+              \"points\":[[$currenttime, $2]],
+              \"type\":\"$3\",
+              \"host\":\"travis-ci.org\",
+              \"tags\":[
+                \"environment:travis\",
+                \"travis_build:$TRAVIS_BUILD_ID\",
+                \"travis_number:$TRAVIS_BUILD_NUMBER\",
+                \"travis_job_number:$TRAVIS_JOB_NUMBER\",
+                \"test_type:$TEST\",
+                \"partition:$NOSE_DIVIDED_WE_RUN\"
+              ]}
+            ]
+        }" \
+    "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}"
 }
 
 function _run_tests() {
@@ -57,14 +98,7 @@ function _run_tests() {
     if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript" ]; then
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
-        TESTS=" \
-            corehq.form_processor \
-            corehq.sql_db \
-            couchforms \
-            casexml.apps.case \
-            casexml.apps.phone \
-            corehq.apps.receiverwrapper \
-            corehq.apps.dump_reload.tests.test_sql_dump_load:TestSQLDumpLoadShardedModels"
+        TESTS="--attr=sql_backend"
     else
         TESTS=""
     fi

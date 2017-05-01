@@ -4,18 +4,15 @@ from corehq.apps.locations.bulk_management import new_locations_import
 from corehq.util.decorators import serial_task
 from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 from django.conf import settings
-from soil import DownloadBase
 
 LOCK_LOCATIONS_TIMEOUT = 60 * 60  # seconds
 
-@serial_task('{domain}', default_retry_delay=5 * 60, timeout=LOCK_LOCATIONS_TIMEOUT,
-    max_retries=12, queue=settings.CELERY_MAIN_QUEUE, ignore_result=False)
+
+@serial_task('{domain}', default_retry_delay=5 * 60, timeout=LOCK_LOCATIONS_TIMEOUT, max_retries=12,
+             queue=settings.CELERY_MAIN_QUEUE, ignore_result=False)
 def import_locations_async(domain, file_ref_id):
     importer = MultiExcelImporter(import_locations_async, file_ref_id)
-    task = import_locations_async
-    DownloadBase.set_progress(task, 0, 100)
     results = new_locations_import(domain, importer)
-    DownloadBase.set_progress(task, 100, 100)
     importer.mark_complete()
 
     return {

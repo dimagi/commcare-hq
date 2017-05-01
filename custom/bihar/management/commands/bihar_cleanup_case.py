@@ -56,7 +56,7 @@ class Command(BaseCommand):
     One time command for cleaning up care-bihar data
     """
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         with open('bihar_case_cleanup.csv', 'wb') as f:
             csv_file = csv.writer(f)
             csv_file.writerow(CaseRow.headers)

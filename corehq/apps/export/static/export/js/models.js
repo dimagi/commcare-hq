@@ -83,6 +83,12 @@ hqDefine('export/js/models.js', function () {
             buildSchemaUrl = urls.reverse('build_schema', this.domain()),
             identifier = ko.utils.unwrapObservable(this.case_type) || ko.utils.unwrapObservable(this.xmlns);
 
+        // We've already built the schema and now the user is clicking the button to refresh the page
+        if (this.buildSchemaProgress() === 100) {
+            window.location.reload(false);
+            return;
+        }
+
         this.showBuildSchemaProgressBar(true);
         this.buildSchemaProgress(0);
 
@@ -101,7 +107,11 @@ hqDefine('export/js/models.js', function () {
 
         successHandler = function() {
             $btn.removeSpinnerFromButton();
-            self.schemaProgressText(gettext('Processing Complete. Refresh page.'));
+            $btn.removeClass('disabled');
+            $btn.attr('disabled', false);
+            $btn.removeClass('btn-primary');
+            $btn.addClass('btn-success');
+            self.schemaProgressText(gettext('Refresh page'));
         };
 
         $.ajax({

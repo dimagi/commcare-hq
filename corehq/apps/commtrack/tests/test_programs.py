@@ -1,22 +1,23 @@
-from corehq.apps.commtrack.tests.util import CommTrackTest
+from django.test import TestCase
+from corehq.apps.commtrack.tests.util import bootstrap_domain, bootstrap_products, TEST_DOMAIN
 from corehq.apps.programs.models import Program
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.commtrack.util import make_program
 from couchdbkit import ResourceNotFound
 
 
-class ProgramsTest(CommTrackTest):
-
-    def setUp(self):
-        super(ProgramsTest, self).setUp()
+class ProgramsTest(TestCase):
+    def test_programs(self):
+        self.domain = bootstrap_domain(TEST_DOMAIN)
+        self.addCleanup(self.domain.delete)
+        bootstrap_products(self.domain.name)
+        self.products = sorted(Product.by_domain(self.domain.name), key=lambda p: p._id)
         self.default_program = Program.by_domain(self.domain.name, wrap=True).one()
         self.new_program = make_program(
             self.domain.name,
             'new program',
             'newprogram'
         )
-
-    def test_defaults(self):
         self.assertTrue(self.default_program.default)
         self.assertFalse(self.new_program.default)
 
@@ -25,7 +26,6 @@ class ProgramsTest(CommTrackTest):
 
         self.assertEqual(context.exception.message, 'You cannot delete the default program')
 
-    def test_delete(self):
         # assign some product to the new program
         self.products[0].program_id = self.new_program._id
         self.products[0].save()

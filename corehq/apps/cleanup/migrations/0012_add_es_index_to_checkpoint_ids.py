@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from __future__ import print_function
 
 from django.conf import settings
 from django.db import models, migrations
@@ -39,9 +40,9 @@ def copy_checkpoints(apps, schema_editor):
             checkpoint.save()
         except DjangoPillowCheckpoint.DoesNotExist:
             if not settings.UNIT_TESTING:
-                print 'warning: legacy pillow checkpoint with ID {} not found'.format(old_id)
+                print('warning: legacy pillow checkpoint with ID {} not found'.format(old_id))
         if new_id not in current_checkoint_ids and not settings.UNIT_TESTING:
-            print 'warning: no current pillow found with checkpoint ID {}'.format(new_id)
+            print('warning: no current pillow found with checkpoint ID {}'.format(new_id))
 
 
 def delete_checkpoints(apps, schema_editor):

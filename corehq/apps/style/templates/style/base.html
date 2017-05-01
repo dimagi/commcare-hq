@@ -194,6 +194,16 @@
 
         {% include 'style/includes/analytics_all.html' %}
 
+        {% if is_saas_environment %}
+        {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
+        {% compress js %}
+        <script src="{% static 'style/js/drift.js' %}"></script>
+        <script src="{% static 'style/js/hubspot_drift.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+        {% endif %}
+
+
         {% if less_debug %}
             <script>
                 less = {
@@ -235,7 +245,7 @@
                     {% endif %}
 
                     <div class="navbar-header hq-header">
-                        <a href="{% url "homepage" %}" class="navbar-brand">
+                        <a href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}" class="navbar-brand">
                             {% if CUSTOM_LOGO_URL %}
                                 <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
                             {% else %}
@@ -315,6 +325,7 @@
             {% endblock messages %}
             {% block content %}{% endblock content %}
         </div>
+        {% if not enterprise_mode %}
         {% block footer %}
         <footer>
             <nav id="hq-footer"
@@ -355,6 +366,7 @@
             </nav>
         </footer>
         {% endblock %}
+        {% endif %}
         {# modals #}
         {% block modals %}{% endblock modals %}
 
@@ -372,10 +384,11 @@
         <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
         <script src="{% static 'style/js/hq-bug-report.js' %}"></script>
         <script src="{% static 'style/js/layout.js' %}"></script>
-        <script src="{% static 'style/js/form_tools.js' %}"></script>
         <script src="{% static 'style/js/hq.helpers.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
         <script src="{% static 'style/js/main.js' %}"></script>
         {% endcompress %}
 
@@ -478,6 +491,18 @@
         {% compress js %}
         <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
         {% endcompress %}
+        {% endif %}
+
+        {% if request.use_select2 or request.use_select2_v4 %}
+        {% addtoblock js-inline %}
+        <script>
+            $(function() {
+                _.each($(".ko-select2"), function(element) {
+                    $(element).select2();
+                });
+            });
+        </script>
+        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_nvd3 %}
@@ -608,7 +633,7 @@
         {% endcompress %}
 
         {# EULA #}
-        {% if request.couch_user and not request.couch_user.is_eula_signed %}
+        {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
             {% include 'style/includes/modal_eula.html' with needs_agreement=True %}
         {% endif %}
 

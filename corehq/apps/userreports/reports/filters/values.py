@@ -1,7 +1,7 @@
 import datetime
 from collections import namedtuple
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from sqlagg.filters import (
     BasicFilter,
@@ -335,6 +335,28 @@ class ChoiceListFilterValue(FilterValue):
             return filters.missing(self.filter.field)
         terms = [v.value for v in self.value]
         return filters.term(self.filter.field, terms)
+
+
+class LocationDrilldownFilterValue(FilterValue):
+
+    @property
+    def show_all(self):
+        return not self.value
+
+    def to_sql_filter(self):
+        if self.show_all:
+            return None
+        return EQFilter(self.filter.field, self.filter.slug)
+
+    def to_es_filter(self):
+        if self.show_all:
+            return None
+        return filters.term(self.filter.field, self.value)
+
+    def to_sql_values(self):
+        if self.show_all:
+            return {}
+        return {self.filter.slug: self.value}
 
 
 def dynamic_choice_list_url(domain, report, filter):

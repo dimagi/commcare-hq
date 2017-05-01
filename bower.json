@@ -22,7 +22,7 @@
     "bootstrap-tour": "0.10.2",
     "bootstrap3-typeahead": "~3.1.1",
 
-    "jquery": "3.1.1",
+    "jquery": "3.2.1",
     "jquery-2.2.4": "jquery#2.2.4",
     "jquery-color": "2.1.2",
     "jquery.cookie": "dimagi/jquery-cookie#1.4.1",
@@ -66,18 +66,19 @@
     "At.js": "~1.5.2",
     "clipboard": "1.5.15",
     "fast-levenshtein": "^2.0.5",
-    "intl-tel-input": "9.0.7"
+    "intl-tel-input": "9.0.7",
+    "jsdiff": "~3.2.0"
   },
   "devDependencies": {
     "chai": "3.3.0",
     "mocha": "2.3.3",
-    "sinon": "http://sinonjs.org/releases/sinon-1.17.0.js",
+    "sinon": "http://sinonjs.org/releases/sinon-1.17.7.js",
     "angular-mocks": "1.4.4",
     "jasmine-fixture": "2.0.0"
   },
   "private": true,
   "resolutions": {
-    "jquery": "3.1.1",
+    "jquery": "3.2.1",
     "bootstrap": "3.3.7",
     "select2": "4.0.0",
     "backbone": "0.9.1"

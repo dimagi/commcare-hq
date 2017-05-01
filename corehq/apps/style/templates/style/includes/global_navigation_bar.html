@@ -88,7 +88,11 @@
             <i class="fa fa-question-circle nav-main-icon"></i> <span class="responsive-label">{% trans "Help &amp; Resources" %}</span>
         </a>
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
-            <li class="dropdown-header nav-header">{% trans 'CommCare Help' %}</li>
+            <li class="dropdown-header nav-header">
+            {% blocktrans with cc_name=commcare_hq_names.COMMCARE_NAME %}
+            {{ cc_name }} Help
+            {% endblocktrans %}
+            </li>
             <li>
                 <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" id="menuitem-helpsite" target="_blank">
                     <i class="fa fa-question-circle icon-question-sign dropdown-icon"></i> {% trans "Visit the Help Site" %}

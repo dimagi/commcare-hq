@@ -158,6 +158,7 @@
         self.first_name = data.first_name || '';
         self.last_name = data.last_name || '';
         self.editUrl = data.editUrl || '';
+        self.is_anonymous = data.is_anonymous || false;
         self.location_id = data.location_id || '';
 
         self.password = data.generateStrongPasswords ? generateStrongPassword() : '';
@@ -211,6 +212,22 @@
             );
         };
 
+        $scope.initializeAnonymousMobileWorker = function () {
+            $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
+            $scope.usernameStatusMessage = null;
+
+            $(".select2multiplechoicewidget").select2('data', null);
+            $scope.mobileWorker = new MobileWorker({
+                customFields: customFields,
+                generateStrongPasswords: true,
+                username: 'anonymous_user',
+                first_name: 'Anonymous',
+                last_name: 'User',
+                is_anonymous: true,
+            });
+            ga_track_event('Manage Mobile Workers', 'New Anonymous Mobile Worker', '');
+        };
+
         $scope.initializeMobileWorker = function (mobileWorker) {
             visualFormCtrl.usernameClear();
             $scope.usernameAvailabilityStatus = null;
@@ -234,6 +251,12 @@
 
         $scope.submitNewMobileWorker = function () {
             $("#newMobileWorkerModal").modal('hide');
+            $scope.workers.push($scope.mobileWorker);
+            workerCreationFactory.stageNewMobileWorker($scope.mobileWorker);
+        };
+
+        $scope.submitNewAnonymousMobileWorker = function () {
+            $("#newAnonymousMobileWorkerModal").modal('hide');
             $scope.workers.push($scope.mobileWorker);
             workerCreationFactory.stageNewMobileWorker($scope.mobileWorker);
         };

@@ -14,22 +14,12 @@ class Migration(migrations.Migration):
 
     NOOP_REVERSE = 'SELECT 1'
     operations = [
-        # TODO - remove when django>=1.9
-        HqRunSQL(
-            'DROP INDEX IF EXISTS form_processor_caseattach_attachment_uuid_4c1d2c3ea75567cc_like',
-            NOOP_REVERSE
-        ),
         HqRunSQL(
             'DROP INDEX IF EXISTS form_processor_caseattachmentsql_attachment_uuid_8d145664_like',
             NOOP_REVERSE
         ),
         HqRunSQL(
             'DROP INDEX IF EXISTS form_processor_xforminstancesql_form_uuid_12662b9ceadeeecc_like',
-            NOOP_REVERSE
-        ),
-        # TODO - remove when django>=1.9
-        HqRunSQL(
-            'DROP INDEX IF EXISTS form_processor_xformattac_attachment_uuid_6d1d0a1eff4ada21_like',
             NOOP_REVERSE
         ),
         HqRunSQL(

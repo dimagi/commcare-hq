@@ -184,15 +184,21 @@ hqDefine('commtrack/js/sms.js', function () {
             };
         };
     }
-    return {
-        initCommtrackSettingsView: function ($element, settings, other_sms_codes) {
-            var model = new CommtrackSettingsViewModel(other_sms_codes);
-            $element.submit(function () {
-                return model.presubmit();
-            });
 
-            model.load(settings);
-            $element.koApplyBindings(model);
-        }
-    };
+    function initCommtrackSettingsView($element, settings, other_sms_codes) {
+        var model = new CommtrackSettingsViewModel(other_sms_codes);
+        $element.submit(function () {
+            return model.presubmit();
+        });
+
+        model.load(settings);
+        $element.koApplyBindings(model);
+    }
+
+    $(function () {
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
+        var settings = initial_page_data('settings');
+        var other_sms_codes = initial_page_data('other_sms_codes');
+        initCommtrackSettingsView($('#settings'), settings, other_sms_codes);
+    });
 });

@@ -25,14 +25,12 @@ class CopyApplicationForm(forms.Form):
     # Toggles to enable when copying the app
     toggles = forms.CharField(required=False, widget=forms.HiddenInput, max_length=5000)
 
-    def __init__(self, from_domain, app_id, *args, **kwargs):
+    def __init__(self, from_domain, app, *args, **kwargs):
         export_zipped_apps_enabled = kwargs.pop('export_zipped_apps_enabled', False)
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
         fields = ['domain', 'name', 'toggles']
-        if app_id:
-            app = get_app(from_domain, app_id)
-            if app:
-                self.fields['name'].initial = app.name
+        if app:
+            self.fields['name'].initial = app.name
         if export_zipped_apps_enabled:
             self.fields['gzip'] = forms.FileField(required=False)
             fields.append('gzip')
@@ -47,7 +45,7 @@ class CopyApplicationForm(forms.Form):
                 _('Copy Application'),
                 *fields
             ),
-            Hidden('app', app_id),
+            Hidden('app', app.get_id),
             hqcrispy.FormActions(
                 StrictButton(_('Copy'), type='button', css_class='btn-primary')
             )

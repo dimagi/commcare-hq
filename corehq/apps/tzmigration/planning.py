@@ -4,6 +4,7 @@ from sqlite3 import dbapi2 as sqlite
 
 from sqlalchemy import create_engine, Column, Integer, ForeignKey, String, \
     UnicodeText, Text
+from sqlalchemy import distinct
 from sqlalchemy import func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -125,10 +126,20 @@ class DiffDB(BaseDB):
         return session.query(PlanningDiff).all()
 
     def get_diff_stats(self):
+        """
+        :return: {
+            doc_type: (diff_count, doc_id_count),
+            ...
+        }
+        """
         session = self.Session()
-        results = session.query(PlanningDiff.kind, func.count(PlanningDiff.id)).group_by(PlanningDiff.kind).all()
+        results = session.query(
+            PlanningDiff.kind,
+            func.count(PlanningDiff.id),
+            func.count(distinct(PlanningDiff.doc_id))
+        ).group_by(PlanningDiff.kind).all()
         return {
-            res[0]: res[1]
+            res[0]: (res[1], res[2])
             for res in results
         }
 

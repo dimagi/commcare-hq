@@ -1,7 +1,7 @@
 import json
 from collections import Counter
 from couchdbkit.exceptions import ResourceNotFound
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, \
@@ -119,9 +119,7 @@ class ToggleEditView(ToggleBaseView):
         """
         Returns the corresponding toggle definition from corehq/toggles.py
         """
-        for toggle in all_toggles():
-            if toggle.slug == self.toggle_slug:
-                return toggle
+        return _find_static_toggle(self.toggle_slug)
 
     def get_toggle(self):
         if not self.static_toggle:
@@ -157,23 +155,6 @@ class ToggleEditView(ToggleBaseView):
             context['last_used'] = _get_usage_info(toggle)
         return context
 
-    def call_save_fn_and_clear_cache(self, toggle_slug, changed_entries, currently_enabled):
-        for entry in changed_entries:
-            enabled = entry in currently_enabled
-            namespace, entry = parse_toggle(entry)
-            if namespace == NAMESPACE_DOMAIN:
-                domain = entry
-                if self.static_toggle.save_fn is not None:
-                    self.static_toggle.save_fn(domain, enabled)
-                toggle_js_domain_cachebuster.clear(domain)
-            else:
-                # these are sent down with no namespace
-                assert ':' not in entry, entry
-                username = entry
-                toggle_js_user_cachebuster.clear(username)
-
-            clear_toggle_cache(toggle_slug, entry, namespace=namespace)
-
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()
         item_list = request.POST.get('item_list', [])
@@ -187,7 +168,7 @@ class ToggleEditView(ToggleBaseView):
         toggle.save()
 
         changed_entries = previously_enabled ^ currently_enabled  # ^ means XOR
-        self.call_save_fn_and_clear_cache(toggle.slug, changed_entries, currently_enabled)
+        _call_save_fn_and_clear_cache(toggle.slug, changed_entries, currently_enabled, self.static_toggle)
 
         data = {
             'items': item_list
@@ -195,6 +176,52 @@ class ToggleEditView(ToggleBaseView):
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
         return HttpResponse(json.dumps(data), content_type="application/json")
+
+
+def toggle_app_manager_v2(request):
+    slug = "app_manager_v2"
+    on_or_off = request.POST.get('on_or_off', 'on')
+    try:
+        toggle = Toggle.get(slug)
+    except ResourceNotFound:
+        toggle = Toggle(slug=slug)
+
+    enable = on_or_off == "on"
+    enabled = request.user.username in toggle.enabled_users
+    if enable != enabled:
+        changed_entries = [request.user.username]
+        if enable:
+            toggle.enabled_users.append(request.user.username)
+        else:
+            toggle.enabled_users.remove(request.user.username)
+        toggle.save()
+        _call_save_fn_and_clear_cache(slug, changed_entries, toggle.enabled_users, _find_static_toggle(slug))
+
+    return HttpResponse(json.dumps({'success': True}), content_type="application/json")
+
+
+def _find_static_toggle(slug):
+    for toggle in all_toggles():
+        if toggle.slug == slug:
+            return toggle
+
+
+def _call_save_fn_and_clear_cache(toggle_slug, changed_entries, currently_enabled, static_toggle):
+    for entry in changed_entries:
+        enabled = entry in currently_enabled
+        namespace, entry = parse_toggle(entry)
+        if namespace == NAMESPACE_DOMAIN:
+            domain = entry
+            if static_toggle.save_fn is not None:
+                static_toggle.save_fn(domain, enabled)
+            toggle_js_domain_cachebuster.clear(domain)
+        else:
+            # these are sent down with no namespace
+            assert ':' not in entry, entry
+            username = entry
+            toggle_js_user_cachebuster.clear(username)
+
+        clear_toggle_cache(toggle_slug, entry, namespace=namespace)
 
 
 def _get_usage_info(toggle):

@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
             options={
                 'db_table': 'form_processor_ledgertransaction',
             },
-            bases=(corehq.form_processor.models.DisabledDbMixin, models.Model),
+            bases=(models.Model,),
         ),
         migrations.AlterField(
             model_name='ledgertransaction',

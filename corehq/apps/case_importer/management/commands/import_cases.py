@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 from datetime import datetime
 from django.core.management import BaseCommand, CommandError
@@ -9,15 +10,16 @@ from corehq.apps.users.models import WebUser
 
 class Command(BaseCommand):
     help = "import cases from excel manually."
-    args = '<import_file> <config_file> <domain> <user>'
-    label = "import cases from excel manually."
 
-    def handle(self, *args, **options):
-        if len(args) != 4:
-            raise CommandError('Usage is import_cases %s' % self.args)
+    def add_arguments(self, parser):
+        parser.add_argument('export_file')
+        parser.add_argument('config_file')
+        parser.add_argument('domain')
+        parser.add_argument('user_id')
 
+    def handle(self, export_file, config_file, domain, user_id, **options):
         start = datetime.utcnow()
-        export_file, config_file, domain, user_id = args
+
         if '@' in user_id:
             user = WebUser.get_by_username(user_id)
         else:
@@ -30,6 +32,6 @@ class Command(BaseCommand):
 
         config.couch_user_id = user._id
         with get_spreadsheet(export_file) as spreadsheet:
-            print json.dumps(do_import(spreadsheet, config, domain),
-                             default=json_handler)
-            print 'finished in %s seconds' % (datetime.utcnow() - start).seconds
+            print(json.dumps(do_import(spreadsheet, config, domain),
+                             default=json_handler))
+            print('finished in %s seconds' % (datetime.utcnow() - start).seconds)

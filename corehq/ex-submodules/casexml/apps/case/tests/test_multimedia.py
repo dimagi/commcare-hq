@@ -20,7 +20,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import TestFileMixin, trap_extra_setup
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
@@ -90,20 +90,19 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
         """
         RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
         """
-        response, form, cases = submit_form_locally(
+        result = submit_form_locally(
             xml_data,
             TEST_DOMAIN_NAME,
             attachments=dict_attachments,
             last_sync_token=sync_token,
             received_on=date
         )
-        attachments = form.attachments
+        attachments = result.xform.attachments
         self.assertEqual(set(dict_attachments.keys()),
                          set(attachments.keys()))
-        [case] = cases
-        self.assertEqual(case.case_id, TEST_CASE_ID)
+        self.assertEqual(result.case.case_id, TEST_CASE_ID)
 
-        return response, form, cases
+        return result.response, result.xform, result.cases
 
     def _submit_and_verify(self, doc_id, xml_data, dict_attachments,
                            sync_token=None, date=None):
@@ -140,12 +139,39 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
                                 sync_token, date=date)
 
 
+class CaseMultimediaTestCouch(BaseCaseMultimediaTest):
+
+    def testUpdateWithNoNewAttachment(self):
+        _, case = self._doCreateCaseWithMultimedia()
+        bulk_save = XFormInstance.get_db().bulk_save
+        bulk_save_attachments = []
+
+        # pull out and record attachments to docs being bulk saved
+        def new_bulk_save(docs, *args, **kwargs):
+            for doc in docs:
+                if doc['_id'] == TEST_CASE_ID:
+                    bulk_save_attachments.append(doc._deferred_blobs)
+            bulk_save(docs, *args, **kwargs)
+
+        self._doSubmitUpdateWithMultimedia(
+            new_attachments=[], removes=[])
+
+        with patch('couchforms.models.XFormInstance._db.bulk_save', new_bulk_save):
+            # submit from the 2 min in the past to trigger a rebuild
+            self._doSubmitUpdateWithMultimedia(
+                new_attachments=[], removes=[],
+                date=datetime.utcnow() - timedelta(minutes=2))
+
+        # make sure there's exactly one bulk save recorded
+        # and none of the attachments were re-saved in rebuild
+        self.assertEqual(bulk_save_attachments, [{}])
+
+
 class CaseMultimediaTest(BaseCaseMultimediaTest):
     """
     Tests new attachments for cases and case properties
     Spec: https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI
     """
-    @run_with_all_backends
     def testAttachInCreate(self):
         single_attach = 'fruity_file'
         xform, case = self._doCreateCaseWithMultimedia(attachments=[single_attach])
@@ -156,10 +182,9 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             self._calc_file_hash(single_attach),
             hashlib.md5(case.get_attachment(single_attach)).hexdigest()
         )
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
 
-    @run_with_all_backends
     def testArchiveAfterAttach(self):
         single_attach = 'fruity_file'
         xform, case = self._doCreateCaseWithMultimedia(attachments=[single_attach])
@@ -175,7 +200,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             form = self.formdb.get_form(xform_id)
             self.assertFalse(form.is_archived)
 
-    @run_with_all_backends
     def testAttachRemoveSingle(self):
         self._doCreateCaseWithMultimedia()
         new_attachments = []
@@ -184,13 +208,12 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
         self.assertEqual(0, len(case.case_attachments))
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
             self.assertEqual(2, len(attach_actions))
             last_action = attach_actions[-1]
             self.assertEqual(sorted(removes), sorted(last_action['attachments'].keys()))
 
-    @run_with_all_backends
     def testAttachRemoveMultiple(self):
         self._doCreateCaseWithMultimedia()
 
@@ -200,17 +223,15 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
         self.assertEqual(sorted(new_attachments), sorted(case.case_attachments.keys()))
 
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
             self.assertEqual(2, len(attach_actions))
 
-    @run_with_all_backends
     def testOTARestoreSingle(self):
         _, case = self._doCreateCaseWithMultimedia()
         restore_attachments = ['fruity_file']
         self._validateOTARestore(case.case_id, restore_attachments)
 
-    @run_with_all_backends
     def testOTARestoreMultiple(self):
         _, case = self._doCreateCaseWithMultimedia()
         restore_attachments = ['commcare_logo_file', 'dimagi_logo_file']
@@ -238,7 +259,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
         self.assertEqual(0, len(restore_attachments))
 
-    @run_with_all_backends
     def testAttachInUpdate(self):
         new_attachments = ['commcare_logo_file', 'dimagi_logo_file']
 
@@ -247,7 +267,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
         # 1 plus the 2 we had
         self.assertEqual(len(new_attachments) + 1, len(case.case_attachments))
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
             self.assertEqual(2, len(attach_actions))
             last_action = attach_actions[-1]
@@ -260,32 +280,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
                 hashlib.md5(case.get_attachment(attach_name)).hexdigest()
             )
 
-    def testUpdateWithNoNewAttachment(self):
-        _, case = self._doCreateCaseWithMultimedia()
-        bulk_save = XFormInstance.get_db().bulk_save
-        bulk_save_attachments = []
-
-        # pull out and record attachments to docs being bulk saved
-        def new_bulk_save(docs, *args, **kwargs):
-            for doc in docs:
-                if doc['_id'] == TEST_CASE_ID:
-                    bulk_save_attachments.append(doc._deferred_blobs)
-            bulk_save(docs, *args, **kwargs)
-
-        self._doSubmitUpdateWithMultimedia(
-            new_attachments=[], removes=[])
-
-        with patch('couchforms.models.XFormInstance._db.bulk_save', new_bulk_save):
-            # submit from the 2 min in the past to trigger a rebuild
-            self._doSubmitUpdateWithMultimedia(
-                new_attachments=[], removes=[],
-                date=datetime.utcnow() - timedelta(minutes=2))
-
-        # make sure there's exactly one bulk save recorded
-        # and none of the attachments were re-saved in rebuild
-        self.assertEqual(bulk_save_attachments, [{}])
-
-    @run_with_all_backends
     def test_sync_log_invalidation_bug(self):
         sync_log = FormProcessorInterface().sync_log_model(
             user_id='6dac4940-913e-11e0-9d4b-005056aa7fb5'
@@ -298,6 +292,11 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         # this used to fail before we fixed http://manage.dimagi.com/default.asp?158373
         self._doSubmitUpdateWithMultimedia(new_attachments=['commcare_logo_file'], removes=[],
                                            sync_token=sync_log._id)
+
+
+@use_sql_backend
+class CaseMultimediaTestSQL(CaseMultimediaTest):
+    pass
 
 
 class CaseMultimediaS3DBTest(BaseCaseMultimediaTest):
@@ -318,7 +317,6 @@ class CaseMultimediaS3DBTest(BaseCaseMultimediaTest):
         self.s3db.close()
         super(CaseMultimediaS3DBTest, self).tearDown()
 
-    @run_with_all_backends
     def test_case_attachment(self):
         single_attach = 'fruity_file'
         xform, case = self._doCreateCaseWithMultimedia(attachments=[single_attach])
@@ -329,3 +327,8 @@ class CaseMultimediaS3DBTest(BaseCaseMultimediaTest):
             self._calc_file_hash(single_attach),
             hashlib.md5(case.get_attachment(single_attach)).hexdigest()
         )
+
+
+@use_sql_backend
+class CaseMultimediaS3DBTestSQL(CaseMultimediaS3DBTest):
+    pass

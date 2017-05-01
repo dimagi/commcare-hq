@@ -6,7 +6,7 @@ from django.test import TestCase
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import SuiteMixin
-from corehq.apps.app_manager.translations import escape_output_value
+from corehq.apps.app_manager.app_translations import escape_output_value
 
 import commcare_translations
 

@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+from datetime import timedelta
 from django.utils.translation import ugettext_lazy as _
+from corehq.apps.change_feed import topics
 
 REPORT_BUILDER_EVENTS_KEY = 'REPORT_BUILDER_EVENTS_KEY'
 
@@ -19,3 +21,25 @@ UCR_BACKENDS = [UCR_SQL_BACKEND, UCR_ES_BACKEND]
 DEFAULT_MAXIMUM_EXPANSION = 10
 
 UCR_CELERY_QUEUE = 'ucr_queue'
+UCR_INDICATOR_CELERY_QUEUE = 'ucr_indicator_queue'
+
+KAFKA_TOPICS = (
+    topics.CASE,
+    topics.CASE_SQL,
+    topics.FORM,
+    topics.FORM_SQL,
+    topics.LOCATION,
+    topics.COMMCARE_USER,
+)
+
+VALID_REFERENCED_DOC_TYPES = [
+    'CommCareCase',
+    'CommCareUser',
+    'Location',
+    'XFormInstance',
+]
+
+ASYNC_INDICATOR_QUEUE_TIME = timedelta(minutes=5)
+ASYNC_INDICATOR_CHUNK_SIZE = 20
+
+XFORM_CACHE_KEY_PREFIX = 'xform_to_json_cache'

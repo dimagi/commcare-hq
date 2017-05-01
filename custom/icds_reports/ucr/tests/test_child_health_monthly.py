@@ -1,11 +1,15 @@
-import uuid
 from datetime import datetime, date
-from dateutil.relativedelta import relativedelta
+import uuid
 from xml.etree import ElementTree
+
+from dateutil.relativedelta import relativedelta
 from django.test import override_settings
-from corehq.apps.receiverwrapper.util import submit_form_locally
+import mock
+
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
+from corehq.apps.es.fake.forms_fake import FormESFake
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element
 
 XMNLS_BP_FORM = 'http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB'
@@ -25,6 +29,8 @@ NUTRITION_STATUS_SEVERE = "red"
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
+@mock.patch('custom.icds_reports.ucr.expressions.FormES', FormESFake)
 class TestChildHealthDataSource(BaseICDSDatasourceTest):
     datasource_filename = 'child_health_cases_monthly_tableau'
 
@@ -170,7 +176,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         form.append(case)
         add_element(form, 'zscore_grading_wfa', nutrition_status)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_dailyfeeding_form(
             self, form_date, case_id):
@@ -189,7 +195,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
         form.append(case)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_thr_rations_form(
             self, form_date, case_id, rations_distributed=0, case_id_2=None):
@@ -229,7 +235,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         child_thr.append(child_thr_persons)
         form.append(child_thr)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_delivery_form(
             self, form_date, case_id, nutrition_status=None, case_id_2=None):
@@ -273,7 +279,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             form.append(child_repeat2)
 
         ElementTree.dump(form)
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_ebf_form(
             self, form_date, case_id, is_ebf=None, water_or_milk=None,
@@ -317,7 +323,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             child.append(child_repeat2)
         form.append(child)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_pnc_form(self, form_date, case_id, is_ebf=None, other_milk_to_child=None,
                          counsel_exclusive_bf=None, counsel_increase_food_bf=None,
@@ -358,7 +364,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             child.append(child_repeat2)
         form.append(child)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_cf_form(
             self, form_date, case_id, comp_feeding=None, diet_diversity=None,
@@ -404,7 +410,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             child.append(child_repeat2)
         form.append(child)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def _submit_bp_form(
             self, form_date, case_id, counsel_immediate_bf='no'):
@@ -427,7 +433,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         add_element(bp2, 'immediate_breastfeeding', counsel_immediate_bf)
         form.append(bp2)
 
-        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+        self._submit_form(form)
 
     def test_demographic_data(self):
         case_id = uuid.uuid4().hex

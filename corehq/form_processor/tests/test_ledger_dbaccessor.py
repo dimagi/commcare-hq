@@ -8,10 +8,10 @@ from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.exceptions import LedgerSaveError
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@use_sql_backend
 class LedgerDBAccessorTest(TestCase):
 
     @classmethod
@@ -143,7 +143,7 @@ class LedgerDBAccessorTest(TestCase):
         self.assertEqual(0, len(ledger_values))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@use_sql_backend
 class LedgerAccessorErrorTests(TestCase):
     @classmethod
     def setUpClass(cls):

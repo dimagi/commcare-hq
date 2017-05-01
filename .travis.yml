@@ -15,6 +15,8 @@ env:
     - secure: "LuT0vvsY6RjlEX8Gje74Xl0jcuEfaiN/fOOXpfZd1tf8zC3Xd9E8mNn5vlup/3PBBBv1yIAUmw9LTc03ifWBGzaazqIVAgTfgBoW7XAd8G/lx0/eeZFqheSdpP8wSZwn72Z/XrIhQczFCreZRJHlZA9GopRv7Lfs1SfNEbnMoac="
     # TRAVIS_HQ_PASSWORD
     - secure: "GmJzDwP60bUWKzIWnhg4j8TkA/IQsM5Ulx+frkPkrZmLnmLZN5K6cWqruZLl/mB6VFvnuGNBwaYq5ADMD8LpIt8LYlmHZ/zOaE04ti3rOvaOHxG+ncMkloeeke+82ismFZsI/X15F4yawUKR74lnAS5u8BfY2P+Jqko1D+15WKg="
+    # DATADOG_API_KEY
+    - secure: "IDSCI7WXoTowmqcPM6Ip5I8iNu+utvLgzhpuI55Imi0kT6DEgqhYmRzHGY2AfSNKlhClYiGSGzWfqub3/0KyxXSkJB7VcqPQR6CToRfR9zgnu92e9yqmOwMsi5wXxQ0ZRt8l2Oh+WiTtLjGwkD3bvUAHDq2fk9bU7aE03562MTE="
 before_install:
   # get newer version of docker-compose for variable substitution in compose files
   - curl -L https://github.com/docker/compose/releases/download/1.5.2/docker-compose-`uname -s`-`uname -m` > docker-compose
@@ -29,6 +31,7 @@ script:
   # workaround for env vars
   - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
   - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
+  - export DATADOG_API_KEY=$DATADOG_API_KEY
   - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
 after_success:
   # create symlink so artifacts are available

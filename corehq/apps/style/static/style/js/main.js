@@ -92,7 +92,7 @@ COMMCAREHQ.updateDOM = function (update) {
     var key;
     for (key in update) {
         if (update.hasOwnProperty(key)) {
-            $(key).html(update[key]).val(update[key]);
+            $(key).text(update[key]).val(update[key]);
         }
     }
 };
@@ -204,6 +204,7 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass, barClass) {
                 if (lastParent) {
                     var stillAttached = lastParent.tagName.toLowerCase() == 'html';
                     if (button.state !== 'saved' && stillAttached) {
+                        if ($('.js-unhide-on-unsaved').length > 0) $('.js-unhide-on-unsaved').removeClass('hide');
                         return options.unsavedMessage || "";
                     }
                 }

@@ -8,19 +8,16 @@ EXTERNAL styling of the preview app container in app manager.
 For the styling of the app preview content and layout, please check out
 preview_app/less */
 
-@preview-phone-wrapper-width: 300px;
+@preview-phone-wrapper-width: 310px;
 @preview-phone-width: 250px;
-@preview-tablet-wrapper-width: 500px;
+@preview-tablet-wrapper-width: 515px;
 @preview-tablet-width: 450px;
 @preview-tablet-height: 644px;
 @preview-phone-height: 444px;
 @preview-phone-case-offset-y: 40px;
 @preview-phone-case-offset-x: 15px;
 
-#hq-content {
-  overflow-x: hidden;
-  min-height: @preview-phone-height + 150;
-}
+@transition-speed: .5s;
 
 .preview-phone-container {
   box-sizing: border-box;
@@ -38,15 +35,28 @@ preview_app/less */
   padding-left: @preview-phone-case-offset-x;
 
   .box-shadow(0 0px 10px 3px rgba(0,0,0,.45));
-  .transition(all 1s);
+  .transition(all @transition-speed);
 }
 
-#js-appmanager-body.offset-for-preview {
+#js-appmanager-body.offset-for-preview,
+#formdesigner.offset-for-preview {
   margin-right: @preview-phone-wrapper-width;
+  width: -webkit-calc(~"100% - " @preview-phone-wrapper-width);
+  width: -moz-calc(~"100% - " @preview-phone-wrapper-width);
+  width: calc(~"100% - " @preview-phone-wrapper-width);
+}
+
+#js-appmanager-body.offset-for-tablet,
+#formdesigner.offset-for-tablet {
+  margin-right: @preview-tablet-wrapper-width;
+  width: -webkit-calc(~"100% - " @preview-tablet-wrapper-width);
+  width: -moz-calc(~"100% - " @preview-tablet-wrapper-width);
+  width: calc(~"100% - " @preview-tablet-wrapper-width);
+  .transition(all @transition-speed);
 }
 
 #hq-messages-container > div > div > .alert {
-  .transition(margin-right 1s);
+  .transition(margin-right @transition-speed);
 }
 
 #hq-messages-container.offset-for-preview > div > div > .alert {
@@ -60,14 +70,16 @@ preview_app/less */
   position: fixed;
   z-index: @zindex-app-preview;
   width: 0;
-  background-color: rgba(50, 50, 50, .3);
-  .transition(width 1s);
+  background-color: @cc-light-cool-accent-hi;
+  .transition(width @transition-speed);
   overflow: hidden;
+  border-left: 0px;
 
 
   &.open {
     width: @preview-phone-wrapper-width;
-    .box-shadow(0 0px 10px 3px rgba(0,0,0,.45));
+    .box-shadow(0 0px 10px 3px rgba(0,0,0,.35));
+    border-left: 10px solid @cc-light-cool-accent-mid;
   }
 
   &.open.small-height  {
@@ -80,12 +92,16 @@ preview_app/less */
   &.open > .preview-phone-container {
     right: 10px;
   }
+  &.fullscreen {
+    z-index: 1040 !important;
+    background-color: fade(@cc-light-cool-accent-hi, 50);
+  }
 }
 
 .preview-phone-window {
    height: @preview-phone-height;
    width: @preview-phone-width;
-   transition: all 1s;
+   transition: all @transition-speed;
    background-color: white;
 }
 
@@ -93,6 +109,9 @@ preview_app/less */
 .preview-tablet-mode {
   #js-appmanager-body.offset-for-preview {
     margin-right: @preview-tablet-wrapper-width;
+    width: -webkit-calc(~"100% - " @preview-tablet-wrapper-width);
+    width: -moz-calc(~"100% - " @preview-tablet-wrapper-width);
+    width: calc(~"100% - " @preview-tablet-wrapper-width);
   }
   #hq-messages-container.offset-for-preview > div > div > .alert {
     margin-right: @preview-tablet-wrapper-width + 10;
@@ -135,8 +154,8 @@ preview_app/less */
   display: none;
 }
 
-.appmanager-content-animate-preview {
-  .transition(all 1s);
+.appmanager-content-transition-all {
+  .transition(all @transition-speed);
 }
 
 .btn-preview-toggle {
@@ -188,9 +207,9 @@ preview_app/less */
   background-color: red;
   border-radius: 10px;
 
-  -webkit-animation: pulsate 1s ease-out;
+  -webkit-animation: pulsate @transition-speed ease-out;
   -webkit-animation-iteration-count: infinite;
-  animation: pulsate 1s ease-out;
+  animation: pulsate @transition-speed ease-out;
   animation-iteration-count: infinite;
 }
 
@@ -206,7 +225,7 @@ preview_app/less */
     display: inline-block;
     background-color: transparent;
     color: darken(white, 20);
-    .transition(1s color);
+    .transition(@transition-speed color);
     font-size: 1.8rem;
     width: 25%;
     &:focus {

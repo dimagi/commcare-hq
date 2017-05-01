@@ -26,12 +26,10 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         )
         self.project.save()
 
-        self.admin_user = generator.arbitrary_web_user()
-        self.admin_user.add_domain_membership(self.project.name, is_admin=True)
-        self.admin_user.save()
+        self.admin_username = generator.create_arbitrary_web_user_name()
 
         self.account = BillingAccount.get_or_create_account_by_domain(
-            self.project.name, created_by=self.admin_user.username)[0]
+            self.project.name, created_by=self.admin_username)[0]
         self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
         self._init_pro_with_rb_plan_and_version()
 
@@ -66,7 +64,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
     def _subscribe_to_advanced(self):
         return Subscription.new_domain_subscription(
             self.account, self.project.name, self.advanced_plan,
-            web_user=self.admin_user.username
+            web_user=self.admin_username
         )
 
     def _subscribe_to_pro_with_rb(self):
@@ -75,7 +73,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         new_subscription = subscription.change_plan(
             self.pro_rb_version,
             date_end=None,
-            web_user=self.admin_user,
+            web_user=self.admin_username,
             service_type=SubscriptionType.IMPLEMENTATION,
             pro_bono_status=ProBonoStatus.NO,
             internal_change=True,
@@ -195,7 +193,4 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
 
     def tearDown(self):
         self.project.delete()
-        self.admin_user.delete()
-        generator.delete_all_subscriptions()
-        generator.delete_all_accounts()
         super(TestSubscriptionPermissionsChanges, self).tearDown()

@@ -1,20 +1,21 @@
+from __future__ import print_function
 from corehq.apps.sms.mixin import VerifiedNumber
 from dimagi.utils.couch.database import iter_bulk_delete_with_doc_type_verification
 from django.core.management.base import BaseCommand
-from optparse import make_option
 
 
 class Command(BaseCommand):
-    args = ""
     help = ("Deletes all messaging phone numbers stored in couch")
-    option_list = (
-        make_option("--delete-interval",
-                    action="store",
-                    dest="delete_interval",
-                    type="int",
-                    default=5,
-                    help="The number of seconds to wait between each bulk delete."),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--delete-interval",
+            action="store",
+            dest="delete_interval",
+            type=int,
+            default=5,
+            help="The number of seconds to wait between each bulk delete.",
+        )
 
     def get_couch_ids(self):
         result = VerifiedNumber.view(
@@ -35,7 +36,7 @@ class Command(BaseCommand):
         return [row['id'] for row in result]
 
     def delete_models(self, delete_interval):
-        print 'Deleting VerifiedNumbers...'
+        print('Deleting VerifiedNumbers...')
         count = iter_bulk_delete_with_doc_type_verification(
             VerifiedNumber.get_db(),
             self.get_couch_ids(),
@@ -43,9 +44,9 @@ class Command(BaseCommand):
             wait_time=delete_interval,
             max_fetch_attempts=5
         )
-        print 'Deleted %s documents' % count
+        print('Deleted %s documents' % count)
 
-        print 'Deleting Soft-Deleted VerifiedNumbers...'
+        print('Deleting Soft-Deleted VerifiedNumbers...')
         count = iter_bulk_delete_with_doc_type_verification(
             VerifiedNumber.get_db(),
             self.get_soft_deleted_couch_ids(),
@@ -53,7 +54,7 @@ class Command(BaseCommand):
             wait_time=delete_interval,
             max_fetch_attempts=5
         )
-        print 'Deleted %s documents' % count
+        print('Deleted %s documents' % count)
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         self.delete_models(options['delete_interval'])

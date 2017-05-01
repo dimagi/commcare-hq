@@ -545,3 +545,27 @@ class TestExportInstanceFromSavedInstance(TestCase):
             len(filter(lambda c: c.is_advanced, instance.tables[0].columns)),
             len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.is_advanced])
         )
+
+    def test_copy_instance(self, _):
+        build_ids_and_versions = {
+            self.app_id: 3,
+        }
+        with mock.patch(
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
+                return_value=build_ids_and_versions):
+            instance = FormExportInstance.generate_instance_from_schema(self.schema)
+
+        instance.save()
+        new_export = instance.copy_export()
+        new_export.save()
+        self.assertNotEqual(new_export._id, instance._id)
+        self.assertEqual(new_export.name, '{} - Copy'.format(instance.name))
+        old_json = instance.to_json()
+        del old_json['name']
+        del old_json['_id']
+        del old_json['_rev']
+        new_json = new_export.to_json()
+        del new_json['name']
+        del new_json['_id']
+        del new_json['_rev']
+        self.assertDictEqual(old_json, new_json)

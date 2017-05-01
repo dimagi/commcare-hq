@@ -5,7 +5,7 @@ from couchdbkit import ResourceNotFound
 from collections import OrderedDict
 
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
@@ -127,6 +127,9 @@ def update_tables(request, domain, data_type_id, test_patch=None):
                 validation_errors.append(field_name)
         validation_errors = map(lambda e: _("\"%s\" cannot include special characters or "
                                             "begin with \"xml\" or a number.") % e, validation_errors)
+        if len(data_tag) > 31:
+            validation_errors.append(_("Table ID can not be longer than 31 characters."))
+
         if validation_errors:
             return json_response({
                 'validation_errors': validation_errors,
@@ -202,7 +205,7 @@ def update_items(fields_patches, domain, data_type_id, transaction):
                 )
         setattr(item, "fields", updated_fields)
         transaction.save(item)
-    data_items = FixtureDataItem.by_data_type(domain, data_type_id)
+    data_items = FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
 
 
 def create_types(fields_patches, domain, data_tag, is_global, transaction):

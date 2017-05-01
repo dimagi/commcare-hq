@@ -1,48 +1,59 @@
+from __future__ import print_function
 from django.core.management.base import CommandError, BaseCommand
-from optparse import make_option
 import os
 from dimagi.utils.post import post_data
 
 
 class Command(BaseCommand):
-    option_list = (
-        make_option('--method', action='store',
-                    dest='method', default='curl',
-                    help='Method to upload (curl, pyton), defaults to curl', type='string'),
-        make_option('--chunked', action='store_true', dest='use_chunked', default=False,
-                    help='Use chunked encoding (default=False)'),
-        make_option('--odk', action='store_true', dest='is_odk', default=False,
-                    help='Simulate ODK submission (default=False)'),
-    )
     help = "Submits a single form to a url with options."
-    args = '<filename> <url> [file1 file2 ...]'
-    label = "Submit a single form with various options"
 
-    def handle(self, *args, **options):
-        if len(args) < 2:
-            raise CommandError('Usage is submit_form %s' % self.args)
-        file = args[0]
-        url = args[1]
-        rest = args[2:]
-        method = options.get('method', 'curl')
-        use_chunked = options.get('use_chunked', False)
-        is_odk = options.get('is_odk', False)
-        if file is None or url is None:
-            raise CommandError('Usage is submit_form %s' % self.args)
-        if not os.path.exists(file):
-            raise CommandError("File does not exist")
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'filename',
+        )
+        parser.add_argument(
+            'url',
+        )
+        parser.add_argument(
+            'file',
+            dest='files',
+            nargs='*',
+        )
+        parser.add_argument(
+            '--method',
+            action='store',
+            choices=['curl', 'python'],
+            dest='method',
+            default='curl',
+            help='Method to upload (curl, python), defaults to curl',
+            type=str,
+        )
+        parser.add_argument(
+            '--chunked',
+            action='store_true',
+            dest='use_chunked',
+            default=False,
+            help='Use chunked encoding (default=False)',
+        )
+        parser.add_argument(
+            '--odk',
+            action='store_true',
+            dest='is_odk',
+            default=False,
+            help='Simulate ODK submission (default=False)',
+        )
+
+    def handle(self, filename, url, files, **options):
+        use_curl = options['method'] == 'curl'
+        use_chunked = options['use_chunked']
+        is_odk = options['is_odk']
 
         attachments = []
-        for attach_path in rest:
+        for attach_path in files:
             if not os.path.exists(attach_path):
                 raise CommandError("Error, additional file path does not exist: %s" % attach_path)
             else:
                 attachments.append((attach_path.replace('.', '_'), attach_path))
 
-        if method == 'curl':
-            use_curl = True
-        elif method == 'python':
-            use_curl = False
-        
-        print post_data(None, url, path=file, use_curl=use_curl, use_chunked=use_chunked,
-                        is_odk=is_odk, attachments=attachments)
+        print(post_data(None, url, path=file, use_curl=use_curl, use_chunked=use_chunked,
+                        is_odk=is_odk, attachments=attachments))

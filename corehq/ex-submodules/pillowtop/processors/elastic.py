@@ -38,7 +38,7 @@ class ElasticProcessor(PillowProcessor):
         ensure_document_exists(change)
         ensure_matched_revisions(change)
 
-        if self.doc_filter_fn and self.doc_filter_fn(doc):
+        if doc is None or (self.doc_filter_fn and self.doc_filter_fn(doc)):
             return
 
         # prepare doc for es
@@ -63,9 +63,13 @@ class ElasticProcessor(PillowProcessor):
 
 
 def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,
-                          except_on_failure=False, update=False, delete=False):
+                          except_on_failure=False, update=False, delete=False, es_merge_update=False):
     """
     More fault tolerant es.put method
+    kwargs:
+        es_merge_update: Set this to True to use Elasticsearch.update instead of Elasticsearch.index
+            which merges existing ES doc and current update. If this is set to False, the doc will be replaced
+
     """
     data = data if data is not None else {}
     current_tries = 0
@@ -75,11 +79,14 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
                 es_getter().delete(index, doc_type, doc_id)
             elif update:
                 params = {'retry_on_conflict': 2}
-                es_getter().update(index, doc_type, doc_id, body={"doc": data}, params=params)
+                if es_merge_update:
+                    es_getter().update(index, doc_type, doc_id, body={"doc": data}, params=params)
+                else:
+                    es_getter().index(index, doc_type, body=data, id=doc_id, params=params)
             else:
                 es_getter().create(index, doc_type, body=data, id=doc_id)
             break
-        except ConnectionError, ex:
+        except ConnectionError as ex:
             current_tries += 1
             pillow_logging.error("[%s] put_robust error %s attempt %d/%d" % (
                 name, ex, current_tries, retries))

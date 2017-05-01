@@ -1,4 +1,4 @@
-from optparse import make_option
+import uuid
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -45,11 +45,12 @@ class Command(BaseCommand):
     args = "<existing_domain> <new_domain>"
     help = help_text
 
-    option_list = (
-        make_option("-i", "--include", dest="include", action="append", choices=types),
-        make_option("-e", "--exclude", dest="exclude", action="append", choices=types),
-        make_option("--check", dest="nocommit", action="store_true", default=False),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument('existing_domain')
+        parser.add_argument('new_domain')
+        parser.add_argument("-i", "--include", dest="include", action="append", choices=types)
+        parser.add_argument("-e", "--exclude", dest="exclude", action="append", choices=types)
+        parser.add_argument("--check", dest="nocommit", action="store_true", default=False)
 
     _report_map = None
 
@@ -58,10 +59,11 @@ class Command(BaseCommand):
                    not options['include'] or type_ in options['include']
                ) and type_ not in (options['exclude'] or [])
 
-    def handle(self, *args, **options):
-        self.no_commmit = options['nocommit']
+    def handle(self, existing_domain, new_domain, **options):
+        self.no_commit = options['nocommit']
 
-        self.existing_domain, self.new_domain = args
+        self.existing_domain = existing_domain
+        self.new_domain = new_domain
         self.clone_domain_and_settings()
 
         if self._clone_type(options, 'feature_flags'):
@@ -124,13 +126,13 @@ class Command(BaseCommand):
         for toggle in all_toggles():
             if toggle.enabled(self.existing_domain):
                 self.stdout.write('Setting flag: {}'.format(toggle.slug))
-                if not self.no_commmit:
+                if not self.no_commit:
                     toggle.set(self.new_domain, True, NAMESPACE_DOMAIN)
 
         for preview in all_previews():
             if preview.enabled(self.existing_domain):
                 self.stdout.write('Setting preview: {}'.format(preview.slug))
-                if not self.no_commmit:
+                if not self.no_commit:
                     preview.set(self.new_domain, True, NAMESPACE_DOMAIN)
                     if preview.save_fn is not None:
                         preview.save_fn(self.new_domain, True)
@@ -223,7 +225,7 @@ class Command(BaseCommand):
                     for config in module.report_configs:
                         config.report_id = self.report_map[config.report_id]
 
-            if self.no_commmit:
+            if self.no_commit:
                 new_app = Application.from_source(app.export_json(dump_json=False), self.new_domain)
                 new_app['_id'] = 'new-{}'.format(app._id)
             else:
@@ -343,12 +345,12 @@ class Command(BaseCommand):
             # fetch attachments before assigning new _id
             attachments = {k: doc.fetch_attachment(k) for k in attachemnt_stubs}
 
-        doc._id = doc.get_db().server.next_uuid()
+        doc._id = uuid.uuid4().hex
         del doc['_rev']
         if new_domain:
             doc.domain = new_domain
 
-        if self.no_commmit:
+        if self.no_commit:
             doc['_id'] = 'new-{}'.format(old_id)
         else:
             doc.save()
@@ -364,7 +366,7 @@ class Command(BaseCommand):
         model.pk = None
         model.domain = new_domain
 
-        if self.no_commmit:
+        if self.no_commit:
             model.pk = 'new-{}'.format(old_pk)
         else:
             model.save()

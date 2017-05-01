@@ -1,23 +1,27 @@
 from __future__ import absolute_import
+import datetime
 import functools
 import json
-import datetime
+
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
+import six
+
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
-    ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
-    IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
-    NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec, \
-    IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec, \
-    CaseSharingGroupsExpressionSpec, ReportingGroupsExpressionSpec, CoalesceExpressionSpec
+from corehq.apps.userreports.expressions.specs import (
+    PropertyNameGetterSpec, PropertyPathGetterSpec,
+    ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec,
+    IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec,
+    NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec,
+    IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec,
+    CaseSharingGroupsExpressionSpec, ReportingGroupsExpressionSpec, CoalesceExpressionSpec,
+)
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
 from corehq.apps.userreports.expressions.list_specs import FilterItemsExpressionSpec, \
     MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec, SortItemsExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler
-import six
 
 
 def _make_filter(spec, context):
@@ -36,6 +40,14 @@ _constant_expression = functools.partial(_simple_expression_generator, ConstantG
 _property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
 _iteration_number_expression = functools.partial(_simple_expression_generator, IterationNumberExpressionSpec)
+
+
+def _property_name_expression(spec, context):
+    expression = PropertyNameGetterSpec.wrap(spec)
+    expression.configure(
+        ExpressionFactory.from_spec(expression.property_name, context=context)
+    )
+    return expression
 
 
 def _named_expression(spec, context):
@@ -91,7 +103,7 @@ def _related_doc_expression(spec, context):
 def _iterator_expression(spec, context):
     wrapped = IteratorExpressionSpec.wrap(spec)
     wrapped.configure(
-        expressions=[ExpressionFactory.from_spec(e) for e in wrapped.expressions],
+        expressions=[ExpressionFactory.from_spec(e, context) for e in wrapped.expressions],
         test=_make_filter(wrapped.test, context) if wrapped.test else None
     )
     return wrapped
@@ -108,7 +120,7 @@ def _nested_expression(spec, context):
 
 def _dict_expression(spec, context):
     wrapped = DictExpressionSpec.wrap(spec)
-    compiled_properties = {key: ExpressionFactory.from_spec(value) for key, value in wrapped.properties.items()}
+    compiled_properties = {key: ExpressionFactory.from_spec(value, context) for key, value in wrapped.properties.items()}
     wrapped.configure(
         compiled_properties=compiled_properties,
     )

@@ -5,7 +5,6 @@
 
 {% block js %}{{ block.super }}
     {% compress js %}
-        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
         <script src="{% static 'hqwebapp/js/base_list_view_model.js' %}"></script>
         <script src="{% static 'commtrack/js/products_and_programs.async.js' %}"></script>
     {% endcompress %}

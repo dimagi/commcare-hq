@@ -2,6 +2,7 @@ import logging
 from collections import namedtuple
 from django.conf import settings
 from django.db import IntegrityError
+from celery.result import GroupResult
 
 
 TaskProgress = namedtuple('TaskProgress',
@@ -127,7 +128,7 @@ def get_task_status(task, is_multiple_download_task=False):
         state = STATES.failed
     elif is_ready:
         state = STATES.success
-    elif task.state == 'PENDING':
+    elif _is_task_pending(task):
         state = STATES.missing
     elif progress.percent is None:
         state = STATES.not_started
@@ -140,6 +141,13 @@ def get_task_status(task, is_multiple_download_task=False):
         error=context_error,
         progress=progress,
     )
+
+
+def _is_task_pending(task):
+    if isinstance(task, GroupResult):
+        return any(map(lambda async_task: async_task.state == 'PENDING', task.children))
+    else:
+        return task.state == 'PENDING'
 
 
 def _get_download_context_multiple_tasks(task):

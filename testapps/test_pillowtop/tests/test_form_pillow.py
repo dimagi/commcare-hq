@@ -10,7 +10,7 @@ from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.tests.utils import doc_to_change
-from corehq.pillows.app_submission_tracker import get_app_form_submission_tracker_pillow
+from corehq.pillows.app_submission_tracker import get_form_submission_metadata_tracker_pillow
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata, get_simple_form_xml
 
@@ -21,7 +21,7 @@ class FormPillowTest(TestCase):
     def setUp(self):
         super(FormPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_xforms()
-        self.pillow = get_app_form_submission_tracker_pillow()
+        self.pillow = get_form_submission_metadata_tracker_pillow()
 
         factory = AppFactory(domain=self.domain)
         self.app = factory.app
@@ -118,12 +118,12 @@ class FormPillowTest(TestCase):
     def _make_form(self, build_id=None):
         metadata = TestFormMetadata(domain=self.domain)
         form_xml = get_simple_form_xml(uuid.uuid4().hex, metadata=metadata)
-        _, form, _ = submit_form_locally(
+        result = submit_form_locally(
             form_xml,
             self.domain,
             build_id=build_id or self.app._id
         )
-        return form
+        return result.xform
 
     def _get_kafka_seq(self):
         # KafkaChangeFeed listens for multiple topics (form, form-sql) in the form pillow,

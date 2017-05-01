@@ -12,7 +12,7 @@ def create_user_cases(domain_name):
         sync_usercase(user)
 
 
-@serial_task('{app._id}', max_retries=0, timeout=60*60)
+@serial_task('{app._id}-{app.version}', max_retries=0, timeout=60*60)
 def make_async_build(app):
     latest_build = app.get_latest_app(released_only=False)
     if latest_build.version == app.version:

@@ -1,8 +1,8 @@
+from __future__ import print_function
 import json
 import requests
-from optparse import make_option
 from collections import defaultdict
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from django.conf import settings
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
 from jsonobject.base import DefaultProperty
@@ -49,24 +49,27 @@ from jsonobject.base import DefaultProperty
 # CI_DIMAGI003_CLOUDANT_COM_PASSWORD = '***'
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = ("Run couch views on docs from different database instances."
             "See couch_integrity/basic.json for example config")
     label = "config file"
 
-    option_list = LabelCommand.option_list + (
-        make_option(
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'filename',
+        )
+        parser.add_argument(
             '--wiggle',
             dest='wiggle',
             default=0,
-            type="int",
-            help='Define how much doc counts can be off by'
-        ),
-    )
+            type=int,
+            help='Define how much doc counts can be off by',
+        )
 
-    def handle_label(self, *labels, **options):
+
+    def handle_label(self, filename, **options):
         wiggle = options['wiggle']
-        with open(labels[0]) as f:
+        with open(filename) as f:
             integrity_config = IntegrityConfig.wrap(json.loads(f.read()))
             integrity_check(integrity_config, wiggle)
 
@@ -90,8 +93,8 @@ def integrity_check(config, wiggle=0):
                 try:
                     total_rows = content['total_rows']
                 except KeyError:
-                    print "Problem getting `total_rows`. Is this a valid couch database?  {}"\
-                        .format(suite.database)
+                    print("Problem getting `total_rows`. Is this a valid couch database?  {}"\
+                        .format(suite.database))
                 else:
                     matched = False
                     for wiggle_range, couches in matches.items():
@@ -111,18 +114,18 @@ def print_result(matches, view, database):
         return
 
     if len(matches) == 1:
-        print u"{}All is consistent in {} for view {}{}".format(Colors.OKGREEN, database, view, Colors.ENDC)
+        print(u"{}All is consistent in {} for view {}{}".format(Colors.OKGREEN, database, view, Colors.ENDC))
         return
 
-    print "{}{} - {}{}".format(Colors.WARNING, database, view, Colors.ENDC)
+    print("{}{} - {}{}".format(Colors.WARNING, database, view, Colors.ENDC))
     for wiggle_range, match_tuples in matches.items():
-        print u"Couches for wiggle range {}: ".format(wiggle_range)
+        print(u"Couches for wiggle range {}: ".format(wiggle_range))
         for couch_uri, rows in match_tuples:
-            print u"\t{}".format(couch_uri)
-            print u"\tHad this many {}{}{} rows for this view".format(
+            print(u"\t{}".format(couch_uri))
+            print(u"\tHad this many {}{}{} rows for this view".format(
                 Colors.BOLD,
                 rows,
-                Colors.ENDC)
+                Colors.ENDC))
 
 
 class CouchConfig(JsonObject):

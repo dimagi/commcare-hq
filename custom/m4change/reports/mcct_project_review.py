@@ -1,10 +1,10 @@
 from datetime import date
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.models import Location
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.apps.locations.permissions import location_safe
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -13,6 +13,7 @@ from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.elastic import es_query
 from corehq.util.dates import iso_string_to_datetime
+from custom.common.filters import RestrictedAsyncLocationFilter
 from custom.m4change.constants import REJECTION_REASON_DISPLAY_NAMES, MCCT_SERVICE_TYPES
 from custom.m4change.filters import ServiceTypeFilter
 from custom.m4change.models import McctStatus
@@ -107,7 +108,7 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
         include_inactive = True
 
         fields = [
-            AsyncLocationFilter,
+            RestrictedAsyncLocationFilter,
             'custom.m4change.fields.DateRangeField',
             'custom.m4change.fields.CaseSearchField',
             ServiceTypeFilter
@@ -170,6 +171,7 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
             ) if add_link else service_type
 
 
+@location_safe
 class McctProjectReview(BaseReport):
     name = 'mCCT Beneficiary list view'
     slug = 'mcct_project_review_page'
@@ -203,14 +205,22 @@ class McctProjectReview(BaseReport):
                 start_date = dates[0]
                 end_date = dates[1]
             filtered_case_ids = self._get_filtered_cases(start_date, end_date)
-            exclude_form_ids = [mcct_status.form_id for mcct_status in McctStatus.objects.filter(
-                domain=self.domain, received_on__range=(start_date, end_date))
-                                if (mcct_status.status != "eligible" or
-                                    (mcct_status.immunized == False and
-                                    (date.today() - mcct_status.registration_date).days < 272 and
-                                     mcct_status.is_booking == False and mcct_status.is_stillbirth == False))]
-            location_ids = get_location_hierarchy_by_id(self.request_params.get("location_id", None), self.domain,
-                                                        CCT_only=True)
+            exclude_form_ids = [
+                mcct_status.form_id
+                for mcct_status in McctStatus.objects.filter(
+                    domain=self.domain,
+                    received_on__range=(start_date, end_date)
+                )
+                if (mcct_status.status != "eligible" or (
+                    not mcct_status.immunized and (date.today() - mcct_status.registration_date).days < 272 and
+                    not mcct_status.is_booking and not mcct_status.is_stillbirth))
+            ]
+            location_ids = get_location_hierarchy_by_id(
+                self.request_params.get("location_id", None),
+                self.domain,
+                self.request.couch_user,
+                CCT_only=True
+            )
             q = _get_report_query(start_date, end_date, filtered_case_ids, location_ids)
             if len(exclude_form_ids) > 0:
                 q["filter"]["and"].append({"not": {"ids": {"values": exclude_form_ids}}})
@@ -276,6 +286,7 @@ class McctProjectReview(BaseReport):
         return [[self.export_sheet_name, table]]
 
 
+@location_safe
 class McctClientApprovalPage(McctProjectReview):
     name = 'mCCT Beneficiary Approval Page'
     slug = 'mcct_client_approval_page'
@@ -288,8 +299,12 @@ class McctClientApprovalPage(McctProjectReview):
             if not getattr(self, 'es_response', None):
                 date_tuple = _get_date_range(self.request_params.get('range', None))
                 filtered_case_ids = self._get_filtered_cases(date_tuple[0], date_tuple[1])
-                location_ids = get_location_hierarchy_by_id(self.request_params.get("location_id", None), self.domain,
-                                                            CCT_only=True)
+                location_ids = get_location_hierarchy_by_id(
+                    self.request_params.get("location_id", None),
+                    self.domain,
+                    self.request.couch_user,
+                    CCT_only=True
+                )
                 q = _get_report_query(date_tuple[0], date_tuple[1], filtered_case_ids, location_ids)
 
                 if len(reviewed_form_ids) > 0:
@@ -307,6 +322,7 @@ class McctClientApprovalPage(McctProjectReview):
         return self.es_response
 
 
+@location_safe
 class McctClientPaymentPage(McctClientApprovalPage):
     name = 'mCCT Beneficiary Payment Page'
     slug = 'mcct_client_payment_page'
@@ -380,6 +396,7 @@ class McctRejectedClientPage(McctClientApprovalPage):
         return [[self.export_sheet_name, table]]
 
 
+@location_safe
 class McctClientLogPage(McctProjectReview):
     name = 'mCCT Beneficiary Log Page'
     slug = 'mcct_client_log_page'
@@ -405,8 +422,12 @@ class McctClientLogPage(McctProjectReview):
         if not getattr(self, 'es_response', None):
             date_tuple = _get_date_range(self.request_params.get('range', None))
             filtered_case_ids = self._get_filtered_cases(date_tuple[0], date_tuple[1])
-            location_ids = get_location_hierarchy_by_id(self.request_params.get("location_id", None), self.domain,
-                                                        CCT_only=True)
+            location_ids = get_location_hierarchy_by_id(
+                self.request_params.get("location_id", None),
+                self.domain,
+                self.request.couch_user,
+                CCT_only=True
+            )
             q = _get_report_query(date_tuple[0], date_tuple[1], filtered_case_ids, location_ids)
 
             xmlnss = _get_relevant_xmlnss_for_service_type(self.request.GET.get("service_type_filter"))
@@ -458,6 +479,7 @@ class McctClientLogPage(McctProjectReview):
         return [[self.export_sheet_name, table]]
 
 
+@location_safe
 class McctPaidClientsPage(McctClientApprovalPage):
     name = 'mCCT Paid Beneficiary Page'
     slug = 'mcct_paid_clients_page'

@@ -139,17 +139,16 @@ class AutomaticCaseUpdateTest(TestCase):
         super(AutomaticCaseUpdateTest, self).tearDown()
 
     def _get_case_ids(self, *args, **kwargs):
-        return [self.case_id]
+        return [[self.case_id]]
 
     def _get_case(self):
         return self.case_db.get_case(self.case_id)
 
     def _assert_case_revision(self, rev_number, last_modified, expect_modified=False):
         if should_use_sql_backend(self.domain):
-            self.assertEqual(
-                expect_modified,
-                CaseAccessorSQL.case_modified_since(self.case_id, last_modified)
-            )
+            modified_on = CaseAccessorSQL.get_last_modified_dates(self.domain, [self.case_id])[self.case_id]
+            has_been_modified = modified_on != last_modified
+            self.assertEqual(expect_modified, has_been_modified)
         else:
             doc = self._get_case()
             self.assertTrue(doc['_rev'].startswith('%s-' % rev_number))

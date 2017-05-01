@@ -121,6 +121,12 @@ WebFormSession.prototype.load = function($form, initLang) {
     }
 };
 
+WebFormSession.prototype.isOneQuestionPerScreen = function() {
+    if (self.displayOptions === undefined) {
+        return false;
+    }
+    return ko.utils.unwrapObservable(self.displayOptions.oneQuestionPerScreen);
+};
 /**
  * Sends a request to the touchforms server
  * @param {Object} requestParams - request parameters to be sent
@@ -290,7 +296,7 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
         'nav': 'fao',
         'uses_sql_backend': this.uses_sql_backend,
         'post_url': this.post_url,
-        'oneQuestionPerScreen': true
+        'oneQuestionPerScreen': this.isOneQuestionPerScreen(),
     };
 
     args[this.formSpec.type] = this.formSpec.val;
@@ -318,7 +324,7 @@ WebFormSession.prototype.answerQuestion = function(q) {
     var self = this;
     var ix = getIx(q);
     var answer = q.answer();
-    var oneQuestionPerScreen = (self.displayOptions === undefined) ? false : ko.utils.unwrapObservable(self.displayOptions.oneQuestionPerScreen);
+    var oneQuestionPerScreen = self.isOneQuestionPerScreen();
 
     this.serverRequest({
             'action': Formplayer.Const.ANSWER,
@@ -339,7 +345,7 @@ WebFormSession.prototype.nextQuestion = function(opts) {
             'action': Formplayer.Const.NEXT_QUESTION,
         },
         function(resp) {
-            opts.callback(parseInt(resp.currentIndex), resp.isAtLastIndex);
+            opts.callback(parseInt(resp.currentIndex), resp.isAtFirstIndex, resp.isAtLastIndex);
             resp.title = opts.title;
             $.publish('session.reconcile', [resp, {}]);
         });
@@ -350,7 +356,7 @@ WebFormSession.prototype.prevQuestion = function(opts) {
             'action': Formplayer.Const.PREV_QUESTION,
         },
         function(resp) {
-            opts.callback(parseInt(resp.currentIndex), false);
+            opts.callback(parseInt(resp.currentIndex), resp.isAtFirstIndex, resp.isAtLastIndex);
             resp.title = opts.title;
             $.publish('session.reconcile', [resp, {}]);
         });

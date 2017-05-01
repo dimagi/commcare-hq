@@ -41,8 +41,6 @@ def add_moz_zero_charge(apps):
 
 class Command(BaseCommand):
     help = "bootstrap MOZ global SMS backend gateway default fees"
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         add_moz_zero_charge(None)

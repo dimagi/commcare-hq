@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,251 +1,246 @@
+@@ -1,284 +1,276 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  
@@ -53,6 +53,7 @@
 +  </div>
 +  <div class="panel-body">
 +    <div data-bind="with: shortScreen">
++        {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
 +        {% if request|toggle_enabled:'CASE_LIST_TILE' %}
          <div class="row">
              <div class="col-sm-6">
@@ -74,6 +75,7 @@
 -</legend>
 -
 -<div data-bind="with: shortScreen">
+-    {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
 -    {% if request|toggle_enabled:'CASE_LIST_TILE' %}
 -    <div class="row">
 -        <div class="col-sm-6">
@@ -82,6 +84,7 @@
 -                <option value="yes">{% trans "Use Case Tiles" %}</option>
 -            </select>
 +        {% endif %}
++        {{ request|toggle_tag_info:"SHOW_PERSIST_CASE_CONTEXT_SETTING" }}
 +        {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
 +        <div data-bind="visible: useCaseTiles() == 'no'">
 +            <div class="checkbox">
@@ -100,6 +103,7 @@
 -    </div>
 -    {% endif %}
 -
+-    {{ request|toggle_tag_info:"SHOW_PERSIST_CASE_CONTEXT_SETTING" }}
 -    {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
 -    <div data-bind="visible: useCaseTiles() == 'no'">
 -        <div class="checkbox">
@@ -107,6 +111,8 @@
 -                <input type="checkbox" data-bind="checked: persistCaseContext">
 -                {% trans "Show some information about the case at the top of the screen when filling out forms" %}
 -            </label>
+-
+-            {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
 +        {% endif %}
 +        <div data-bind="visible: useCaseTiles() == 'yes' || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
 +            <div class="checkbox">
@@ -170,41 +176,52 @@
 -                    <th></th>
 -                    <th>
 -                        {% trans "Sort Property" %}
--                        <span style="font-size: 13px">
--                            <span class="hq-help-template"
--                                  data-title="{% trans "Sort Properties" %}"
--                                  data-content=
--                                      "{% blocktrans %}
--                                          Properties in this list determine how
--                                          cases are ordered in your case list. This
--                                          is useful if for example you want higher
--                                          priority cases to appear closer to the
--                                          top of the list. The case list will sort
--                                          by the first property, then the second,
--                                          etc.
--                                      {% endblocktrans %}" >
--                            </span>
+-                        <span class="hq-help-template"
+-                              data-title="{% trans "Sort Properties" %}"
+-                              data-content=
+-                                  "{% blocktrans %}
+-                                      Properties in this list determine how
+-                                      cases are ordered in your case list. This
+-                                      is useful if for example you want higher
+-                                      priority cases to appear closer to the
+-                                      top of the list. The case list will sort
+-                                      by the first property, then the second,
+-                                      etc.
+-                                  {% endblocktrans %}" >
 -                        </span>
 -                    </th>
 -                    <th>{% trans "Direction" %}</th>
+-                    {% if app.enable_case_list_sort_blanks %}
+-                        <th>
+-                            {% trans "Display Blanks" %}
+-                            <span class="hq-help-template"
+-                                  data-title="{% trans "Display Blanks" %}"
+-                                  data-content=
+-                                      "{% blocktrans %}
+-                                          Should cases that don't have a value for the sort property
+-                                          appear at the top or the bottom of the case list?
+-                                      {% endblocktrans %}" >
+-                            </span>
+-                        </th>
+-                    {% endif %}
 -                    {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
--                        <th>{% trans "Sort Calculation" %}</th>
+-                        <th>{% trans "Sort Calculation" %}{{ request|toggle_tag_info:"SORT_CALCULATION_IN_CASE_LIST" }}</th>
+-                    {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
+-                        <th>{{ request|toggle_tag_info:"SORT_CALCULATION_IN_CASE_LIST" }}</th>
 -                    {% endif %}
 -                    <th>{% trans "Format" %}</th>
 -                    <th>
 -                        {% trans "Display Text" %}
--                        <span style="font-size: 13px">
--                            <span class="hq-help-template"
--                                  data-title="{% trans "Display Text" %}"
--                                  data-content=
--                                      "{% blocktrans %}
--                                          The 'Display Text' is used for properties that are only listed as
--                                          Sort Properties and not as Display Properties above. The text appears
--                                          in the 'Sort By' menu on the mobile to allow the user to change the
--                                          sort ordering. If the display text is left blank then the option
--                                          for that sort property will not appear in the 'Sort By' menu.
--                                      {% endblocktrans %}" >
--                            </span>
+-                        <span class="hq-help-template"
+-                              data-title="{% trans "Display Text" %}"
+-                              data-content=
+-                                  "{% blocktrans %}
+-                                      The 'Display Text' is used for properties that are only listed as
+-                                      Sort Properties and not as Display Properties above. The text appears
+-                                      in the 'Sort By' menu on the mobile to allow the user to change the
+-                                      sort ordering. If the display text is left blank then the option
+-                                      for that sort property will not appear in the 'Sort By' menu.
+-                                  {% endblocktrans %}" >
 -                        </span>
 -                    </th>
 -                    <th></th>
@@ -213,7 +230,7 @@
 -            <tbody data-bind="foreach: sortRows(), sortableList: sortRows">
 -                <tr>
 -                    <td>
--                        <i class="grip fa fa-arrows-v icon-blue" style="cursor: move"></i>
+-                        <i class="grip fa fa-arrows-v icon-blue"></i>
 -                    </td>
 -
 -                    <td class="form-group" data-bind="css: {'has-error': showWarning}">
@@ -236,10 +253,25 @@
 -                        </select>
 -                    </td>
 -
+-                    {% if app.enable_case_list_sort_blanks %}
+-                        <td>
+-                            <select class="form-control" data-bind="value: blanks">
+-                                <option value="last">
+-                                    {% trans "Bottom of list" %}
+-                                </option>
+-                                <option value="first">
+-                                    {% trans "Top of list" %}
+-                                </option>
+-                            </select>
+-                        </td>
+-                    {% endif %}
+-
 -                    {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
--                    <td>
--                        <input class="form-control" type='text' data-bind='value: sortCalculation'/>
--                    </td>
+-                      <td>
+-                          <input class="form-control" type='text' data-bind='value: sortCalculation'/>
+-                      </td>
+-                    {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
+-                      <td></td>
 -                    {% endif %}
 -
 -                    <td>
@@ -259,47 +291,12 @@
 -                            <option value="distance">
 -                                {% trans "Distance from current location" %}
 -                            </option>
+-                            {{ request|toggle_tag_info:"CACHE_AND_INDEX" }}
 -                            {% if request|toggle_enabled:'CACHE_AND_INDEX' %}
 -                                <option value="index">
 -                                    {% trans "Cache and Index" %}
 -                                </option>
-+<div class="panel panel-appmanager">
-+  <div class="panel-heading">
-+    <h4 class="panel-title panel-title-nolink">
-+      {% trans "Filtering and Sorting" %}
-+    </h4>
-+  </div>
-+  <div class="panel-body">
-+    {% include 'app_manager/v2/partials/case_list_filtering.html' %}
-+    <div data-bind="with: sortRows">
-+        {% if app.enable_multi_sort %}
-+            <div class="ui-sortable">
-+                <table class="table table-condensed" data-bind="visible: showing">
-+                    <thead>
-+                        <tr>
-+                            <th></th>
-+                            <th>
-+                                {% trans "Sort Property" %}
-+                                <span style="font-size: 13px">
-+                                    <span class="hq-help-template"
-+                                          data-title="{% trans "Sort Properties" %}"
-+                                          data-content=
-+                                              "{% blocktrans %}
-+                                                  Properties in this list determine how
-+                                                  cases are ordered in your case list. This
-+                                                  is useful if for example you want higher
-+                                                  priority cases to appear closer to the
-+                                                  top of the list. The case list will sort
-+                                                  by the first property, then the second,
-+                                                  etc.
-+                                              {% endblocktrans %}" >
-+                                    </span>
-+                                </span>
-+                            </th>
-+                            <th>{% trans "Direction" %}</th>
-+                            {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
-+                            <th>{% trans "Sort Calculation" %}</th>
-                             {% endif %}
+-                            {% endif %}
 -                        </select>
 -                    </td>
 -                    <td>
@@ -317,7 +314,7 @@
 -
 -    <div class="form-group">
 -        <button class="btn btn-default btn-sm" data-bind="
--            click: function(data){data.addSortRow('', '', '', '', true, '');}"
+-            click: function(data){data.addSortRow('', '', '', '', '', true, '');}"
 -        >
 -            <i class="fa fa-plus"></i>
 -            {% trans "Add sort property" %}
@@ -354,21 +351,69 @@
 -        </div>
 -        <div class="spacer"></div>
 -    </div>
++<div class="panel panel-appmanager">
++  <div class="panel-heading">
++    <h4 class="panel-title panel-title-nolink">
++      {% trans "Filtering and Sorting" %}
++    </h4>
++  </div>
++  <div class="panel-body">
++    {% include 'app_manager/v2/partials/case_list_filtering.html' %}
++    <div data-bind="with: sortRows">
++        {% if app.enable_multi_sort %}
++            <div class="ui-sortable">
++                <table class="table table-condensed" data-bind="visible: showing">
++                    <thead>
++                        <tr>
++                            <th></th>
++                            <th>
++                                {% trans "Sort Property" %}
++                                <span class="hq-help-template"
++                                      data-title="{% trans "Sort Properties" %}"
++                                      data-content=
++                                          "{% blocktrans %}
++                                              Properties in this list determine how
++                                              cases are ordered in your case list. This
++                                              is useful if for example you want higher
++                                              priority cases to appear closer to the
++                                              top of the list. The case list will sort
++                                              by the first property, then the second,
++                                              etc.
++                                          {% endblocktrans %}" >
++                                </span>
++                            </th>
++                            <th>{% trans "Direction" %}</th>
++                            {% if app.enable_case_list_sort_blanks %}
++                                <th>
++                                    {% trans "Display Blanks" %}
++                                    <span class="hq-help-template"
++                                          data-title="{% trans "Display Blanks" %}"
++                                          data-content=
++                                              "{% blocktrans %}
++                                                  Should cases that don't have a value for the sort property
++                                                  appear at the top or the bottom of the case list?
++                                              {% endblocktrans %}" >
++                                    </span>
++                                </th>
++                            {% endif %}
++                            {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
++                            <th>{% trans "Sort Calculation" %}</th>
++                            {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
++                              <th>{{ request|toggle_tag_info:"SORT_CALCULATION_IN_CASE_LIST" }}</th>
++                            {% endif %}
 +                            <th>{% trans "Format" %}</th>
 +                            <th>
 +                                {% trans "Display Text" %}
-+                                <span style="font-size: 13px">
-+                                    <span class="hq-help-template"
-+                                          data-title="{% trans "Display Text" %}"
-+                                          data-content=
-+                                              "{% blocktrans %}
-+                                                  The 'Display Text' is used for properties that are only listed as
-+                                                  Sort Properties and not as Display Properties above. The text appears
-+                                                  in the 'Sort By' menu on the mobile to allow the user to change the
-+                                                  sort ordering. If the display text is left blank then the option
-+                                                  for that sort property will not appear in the 'Sort By' menu.
-+                                              {% endblocktrans %}" >
-+                                    </span>
++                                <span class="hq-help-template"
++                                      data-title="{% trans "Display Text" %}"
++                                      data-content=
++                                          "{% blocktrans %}
++                                              The 'Display Text' is used for properties that are only listed as
++                                              Sort Properties and not as Display Properties above. The text appears
++                                              in the 'Sort By' menu on the mobile to allow the user to change the
++                                              sort ordering. If the display text is left blank then the option
++                                              for that sort property will not appear in the 'Sort By' menu.
++                                          {% endblocktrans %}" >
 +                                </span>
 +                            </th>
 +                            <th></th>
@@ -377,7 +422,7 @@
 +                    <tbody data-bind="foreach: sortRows(), sortableList: sortRows">
 +                        <tr>
 +                            <td>
-+                                <i class="grip fa fa-arrows-v icon-blue" style="cursor: move"></i>
++                                <i class="grip fa fa-arrows-v icon-blue"></i>
 +                            </td>
 +                            <td class="form-group" data-bind="css: {'has-error': showWarning}">
 +                                <div data-bind="jqueryElement: textField.ui"></div>
@@ -398,11 +443,25 @@
 +                                </select>
 +                            </td>
 +
++                            {% if app.enable_case_list_sort_blanks %}
++                                <td>
++                                    <select class="form-control" data-bind="value: blanks">
++                                        <option value="last">
++                                            {% trans "Bottom of list" %}
++                                        </option>
++                                        <option value="first">
++                                            {% trans "Top of list" %}
++                                        </option>
++                                    </select>
++                                </td>
++                            {% endif %}
 +
 +                            {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
 +                            <td>
 +                                <input class="form-control" type='text' data-bind='value: sortCalculation'/>
 +                            </td>
++                            {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
++                              <td></td>
 +                            {% endif %}
 +
 +
@@ -423,6 +482,7 @@
 +                                    <option value="distance">
 +                                        {% trans "Distance from current location" %}
 +                                    </option>
++                                    {{ request|toggle_tag_info:"CACHE_AND_INDEX" }}
 +                                    {% if request|toggle_enabled:'CACHE_AND_INDEX' %}
 +                                        <option value="index">
 +                                            {% trans "Cache and Index" %}
@@ -444,7 +504,7 @@
 +            </div>
 +            <div class="form-group">
 +                <button class="btn btn-default btn-sm" data-bind="
-+                    click: function(data){data.addSortRow('', '', '', '', true, '');}"
++                    click: function(data){data.addSortRow('', '', '', '', '', true, '');}"
 +                >
 +                    <i class="fa fa-plus"></i>
 +                    {% trans "Add sort property" %}
@@ -456,18 +516,20 @@
  </div>
  {% endif %}
  
+ {{ request|toggle_tag_info:"CASE_LIST_LOOKUP" }}
  {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
 -    {% include "app_manager/v1/partials/case_list_lookup.html" %}
 -    <div class="spacer"></div>
 +    {% include "app_manager/v2/partials/case_list_lookup.html" %}
  {% endif %}
  
+ {{ request|toggle_tag_info:"FIXTURE_CASE_SELECTION" }}
  {% if detail.fixture_select and request|toggle_enabled:"FIXTURE_CASE_SELECTION" %}
 -    {% include "app_manager/v1/partials/fixture_case_selection.html" %}
 +    {% include "app_manager/v2/partials/fixture_case_selection.html" %}
  {% endif %}
  
- {% if detail.type == 'case' and is_search_enabled %}
+ {% if detail.type == 'case' and js_options.is_search_enabled %}
 -{% include 'app_manager/v1/partials/case_search_properties.html' %}
 -{% endif %}
 +{% include 'app_manager/v2/partials/case_search_properties.html' %}

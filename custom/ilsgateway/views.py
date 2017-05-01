@@ -2,7 +2,7 @@ import base64
 import StringIO
 from datetime import datetime
 import json
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.db.models import Count
 from django.http.response import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404
@@ -252,7 +252,7 @@ def end_report_run(request, domain):
         rr.complete = True
         rr.has_error = True
         rr.save()
-    except ReportRun.DoesNotExist, ReportRun.MultipleObjectsReturned:
+    except (ReportRun.DoesNotExist, ReportRun.MultipleObjectsReturned) as e:
         pass
     return HttpResponseRedirect(reverse(ILSConfigView.urlname, kwargs={'domain': domain}))
 

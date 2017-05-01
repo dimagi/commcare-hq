@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "config": {
     "table_id": "static-ccs_record_cases",
     "display_name": "Cases - CCS Record (Static)",
@@ -64,6 +68,7 @@
         "is_nullable": false,
         "is_primary_key": false,
         "column_id": "awc_id",
+        "create_index": true,
         "type": "expression"
       },
       {
@@ -74,6 +79,7 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "supervisor_id",
+        "create_index": true,
         "expression": {
           "location_id_expression": {
             "expression": {
@@ -1744,6 +1750,10 @@
         "property_value": "st"
       }
     },
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

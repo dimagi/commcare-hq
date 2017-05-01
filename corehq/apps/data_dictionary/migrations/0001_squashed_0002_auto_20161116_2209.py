@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
             name='CaseProperty',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('case_type', models.ForeignKey(to='data_dictionary.CaseType')),
+                ('case_type', models.ForeignKey(to='data_dictionary.CaseType', on_delete=models.CASCADE)),
                 ('name', models.CharField(max_length=255)),
                 ('description', models.TextField()),
                 ('deprecated', models.BooleanField(default=False)),
@@ -40,6 +40,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='caseproperty',
             name='case_type',
-            field=models.ForeignKey(related_query_name=b'property', related_name='properties', to='data_dictionary.CaseType'),
+            field=models.ForeignKey(related_query_name=b'property', related_name='properties', to='data_dictionary.CaseType', on_delete=models.CASCADE),
         ),
     ]

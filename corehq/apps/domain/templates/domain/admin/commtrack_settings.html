@@ -1,16 +1,10 @@
 {% extends "style/base_section.html" %}
+{% load hq_shared_tags %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block js-inline %} {{ block.super }}
-<script>
-    $("#id_use_auto_consumption").change(function () {
-        $("#id_consumption_min_transactions, " +
-          "#id_consumption_min_window, " +
-          "#id_consumption_optimal_window"
-        ).prop('disabled', !$(this).prop('checked'));
-    }).change();
-</script>
+{% block js %} {{ block.super }}
+    <script src="{% static "domain/js/commtrack_settings.js" %}"></script>
 {% endblock %}
 
 {% block page_content %}

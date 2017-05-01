@@ -1,3 +1,4 @@
+from __future__ import print_function
 import jsonobject
 import yaml
 
@@ -91,16 +92,16 @@ def test_pillow_settings(env_name, pillows_by_group, extra_debugging=False):
         return yaml.safe_dump(names, default_flow_style=False)
 
     if extra_debugging:
-        print 'Pillow settings overview for {}'.format(env_name)
-        print dump_yaml([action.to_json()
-                         for action in get_pillow_actions_for_env(env_name)])
+        print('Pillow settings overview for {}'.format(env_name))
+        print(dump_yaml([action.to_json()
+                         for action in get_pillow_actions_for_env(env_name)]))
 
     from fab.utils import get_pillow_env_config
     pillows = list(get_pillows_for_env([get_pillow_env_config(env_name)], pillows_by_group=pillows_by_group))
 
-    print 'Included Pillows'
-    print dump_yaml(sorted(pillows))
+    print('Included Pillows')
+    print(dump_yaml(sorted(pillows)))
 
-    print 'Excluded Pillows'
+    print('Excluded Pillows')
     pillow_configs = list(_get_pillow_configs_from_settings_dict(pillows_by_group))
-    print dump_yaml(sorted(set(pillow_configs) - set(pillows)))
+    print(dump_yaml(sorted(set(pillow_configs) - set(pillows))))

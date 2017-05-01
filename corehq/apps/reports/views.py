@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, date
 import itertools
 import json
 from wsgiref.util import FileWrapper
+from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.utils import get_domain_module_map
@@ -55,7 +56,7 @@ from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
-from casexml.apps.case.xform import extract_case_blocks
+from casexml.apps.case.xform import extract_case_blocks, get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
@@ -232,7 +233,7 @@ class BaseProjectReportSectionView(BaseDomainView):
 @location_safe
 class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
-    page_title = _("My Saved Reports")
+    page_title = ugettext_noop("My Saved Reports")
     template_name = 'reports/reports_home.html'
 
     @use_jquery_ui
@@ -262,9 +263,13 @@ class MySavedReportsView(BaseProjectReportSectionView):
             # the _id check is for weird bugs we've seen in the wild that look like
             # oddities in couch.
             return (
-                hasattr(rn, "_id") and rn._id
-                and (not hasattr(rn, 'report_slug')
-                     or rn.report_slug != 'admin_domains')
+                hasattr(rn, "_id")
+                and rn._id
+                and rn.configs
+                and (
+                    not hasattr(rn, 'report_slug')
+                    or rn.report_slug != 'admin_domains'
+                )
             )
 
         scheduled_reports = [
@@ -459,7 +464,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
                 return HttpResponseForbidden()
         except ResourceNotFound:
             raise Http404()
-        except BadExportConfiguration, e:
+        except BadExportConfiguration as e:
             return HttpResponseBadRequest(str(e))
 
     elif safe_only:
@@ -503,7 +508,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
     else:
         try:
             resp = export_object.download_data(format, filter=filter, limit=limit)
-        except SchemaMismatchException, e:
+        except SchemaMismatchException as e:
             rebuild_schemas.delay(export_object.index)
             messages.error(
                 request,
@@ -523,8 +528,9 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
-    saved_export = SavedBasicExport.get(export_id)
-    return _download_saved_export(req, domain, saved_export)
+    with CriticalSection(['saved-export-{}'.format(export_id)]):
+        saved_export = SavedBasicExport.get(export_id)
+        return _download_saved_export(req, domain, saved_export)
 
 
 @csrf_exempt
@@ -532,10 +538,11 @@ def hq_download_saved_export(req, domain, export_id):
 @require_form_deid_export_permission
 @require_GET
 def hq_deid_download_saved_export(req, domain, export_id):
-    saved_export = SavedBasicExport.get(export_id)
-    if not saved_export.is_safe:
-        raise Http404()
-    return _download_saved_export(req, domain, saved_export)
+    with CriticalSection(['saved-export-{}'.format(export_id)]):
+        saved_export = SavedBasicExport.get(export_id)
+        if not saved_export.is_safe:
+            raise Http404()
+        return _download_saved_export(req, domain, saved_export)
 
 
 def _download_saved_export(req, domain, saved_export):
@@ -789,7 +796,8 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
         send_html_email_async.delay(
             subject, email, body,
-            email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+            email_from=settings.DEFAULT_FROM_EMAIL,
+            ga_track=True,
             ga_tracking_info={
                 'cd4': request.domain,
                 'cd10': report_slug
@@ -800,7 +808,8 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
             body = render_full_report_notification(request, content).content
             send_html_email_async.delay(
                 subject, recipient, body,
-                email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+                email_from=settings.DEFAULT_FROM_EMAIL,
+                ga_track=True,
                 ga_tracking_info={
                     'cd4': request.domain,
                     'cd10': report_slug
@@ -1106,12 +1115,11 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
 
     user_id = request.couch_user._id
 
-    notification = ReportNotification.get(scheduled_report_id)
     user = CouchUser.get_by_user_id(user_id, domain)
 
     try:
-        send_delayed_report(notification)
-    except Exception, e:
+        send_delayed_report(scheduled_report_id)
+    except Exception as e:
         import logging
         logging.exception(e)
         messages.error(request, "An error occured, message unable to send")
@@ -1281,6 +1289,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
                     self.request.user.username),
             },
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
+            "can_edit_data": self.request.couch_user.can_edit_data,
             'is_usercase': self.case_instance.type == USERCASE_TYPE,
         }
 
@@ -1726,7 +1735,7 @@ class EditFormInstance(View):
         instance_id = self.kwargs.get('instance_id', None)
 
         def _error(msg):
-            messages.error(request, msg)
+            messages.error(request, mark_safe(msg))
             url = reverse('render_form_data', args=[domain, instance_id])
             return HttpResponseRedirect(url)
 
@@ -1753,7 +1762,7 @@ class EditFormInstance(View):
             edit_session_data[USERCASE_ID] = usercase_id
 
         case_blocks = extract_case_blocks(instance, include_path=True)
-        if form.form_type == 'advanced_form':
+        if form.form_type == 'advanced_form' or form.form_type == "shadow_form":
             datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
             for case_block in case_blocks:
                 path = case_block.path[0]  # all case blocks in advanced forms are nested one level deep
@@ -1768,6 +1777,17 @@ class EditFormInstance(View):
             non_parents = filter(lambda cb: cb.path == [], case_blocks)
             if len(non_parents) == 1:
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
+                case = CaseAccessors(domain).get_case(edit_session_data['case_id'])
+                if case.closed:
+                    return _error(_(
+                        u'Case <a href="{case_url}">{case_name}</a> is closed. Please reopen the '
+                        u'case before editing the form'
+                    ).format(
+                        case_url=reverse('case_details', args=[domain, case.case_id]),
+                        case_name=case.name,
+                    ))
+                elif case.is_deleted:
+                    return _error(_(u'Case <a href="{}" is deleted. Cannot edit this form.').format(case.case_id))
 
         edit_session_data['is_editing'] = True
         edit_session_data['function_context'] = {
@@ -1839,16 +1859,25 @@ def download_attachment(request, domain, instance_id):
 def archive_form(request, domain, instance_id):
     instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
+    case_id_from_request, redirect = _get_case_id_and_redirect_url(domain, request)
+
+    notify_level = messages.SUCCESS
     if instance.is_normal:
-        instance.archive(user_id=request.couch_user._id)
-        notif_msg = _("Form was successfully archived.")
+        cases_with_other_forms = _get_cases_with_other_forms(domain, instance)
+        if cases_with_other_forms:
+            notify_msg = _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_request)
+            notify_level = messages.ERROR
+        else:
+            instance.archive(user_id=request.couch_user._id)
+            notify_msg = _("Form was successfully archived.")
     elif instance.is_archived:
-        notif_msg = _("Form was already archived.")
+        notify_msg = _("Form was already archived.")
     else:
-        notif_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
+        notify_msg = _("Can't archive documents of type %s. How did you get here??") % instance.doc_type
+        notify_level = messages.ERROR
 
     params = {
-        "notif": notif_msg,
+        "notif": notify_msg,
         "undo": _("Undo"),
         "url": reverse('unarchive_form', args=[domain, instance_id]),
         "id": "restore-%s" % instance_id,
@@ -1859,26 +1888,60 @@ def archive_form(request, domain, instance_id):
         <form id="{id}" action="{url}" method="POST">{csrf_inline}</form>""" \
         if instance.is_archived else u'{notif}'
     msg = msg_template.format(**params)
-    messages.success(request, mark_safe(msg), extra_tags='html')
+    messages.add_message(request, notify_level, mark_safe(msg), extra_tags='html')
 
+    return HttpResponseRedirect(redirect)
+
+
+def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_request):
+    def _get_case_link(case_id, name):
+        if case_id == case_id_from_request:
+            return _(u"%(case_name)s (this case)") % {'case_name': name}
+        else:
+            return u'<a href="{}#!history">{}</a>'.format(reverse('case_details', args=[domain, case_id]), name)
+
+    case_links = ', '.join([
+        _get_case_link(case_id, name)
+        for case_id, name in cases_with_other_forms.items()
+    ])
+    msg = _("""Form cannot be archived as it creates cases that are updated by other forms.
+        All other forms for these cases must be archived first:""")
+    notify_msg = u"""{} {}""".format(msg, case_links)
+    return notify_msg
+
+
+def _get_cases_with_other_forms(domain, xform):
+    """Get all cases touched by this form which also have other forms associated with them.
+    :returns: Dict of Case ID -> Case"""
+    cases_created = {u.id for u in get_case_updates(xform) if u.creates_case()}
+    cases = {}
+    for case in CaseAccessors(domain).iter_cases(list(cases_created)):
+        if not case.is_deleted and case.xform_ids != [xform.form_id]:
+            # case has other forms that need to be archived before this one
+            cases[case.case_id] = case.name
+    return cases
+
+
+def _get_case_id_and_redirect_url(domain, request):
+    case_id = None
     redirect = request.META.get('HTTP_REFERER')
     if not redirect:
         redirect = inspect.SubmitHistory.get_url(domain)
-
-    # check if referring URL was a case detail view, then make sure
-    # the case still exists before redirecting.
-    template = reverse('case_details', args=[domain, 'fake_case_id'])
-    template = template.replace('fake_case_id', '([^/]*)')
-    case_id = re.findall(template, redirect)
-    if case_id:
-        try:
-            case = CaseAccessors(domain).get_case(case_id[0])
-            if case.is_deleted:
-                raise CaseNotFound
-        except CaseNotFound:
-            redirect = reverse('project_report_dispatcher', args=[domain, 'case_list'])
-
-    return HttpResponseRedirect(redirect)
+    else:
+        # check if referring URL was a case detail view, then make sure
+        # the case still exists before redirecting.
+        template = reverse('case_details', args=[domain, 'fake_case_id'])
+        template = template.replace('fake_case_id', '([^/]*)')
+        case_id = re.findall(template, redirect)
+        if case_id:
+            case_id = case_id[0]
+            try:
+                case = CaseAccessors(domain).get_case(case_id)
+                if case.is_deleted:
+                    raise CaseNotFound
+            except CaseNotFound:
+                redirect = reverse('project_report_dispatcher', args=[domain, 'case_list'])
+    return case_id, redirect
 
 
 @require_form_view_permission

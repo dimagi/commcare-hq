@@ -763,12 +763,12 @@
             "kenya": {
               "default": 0,
               "cases": {
-                "awendo": 34320,
-                "nyatike": 49571,
-                "rongo": 26969,
-                "suna_east": 32161,
-                "suna_west": 41020,
-                "uriri": 42786
+                "awendo": 36511,
+                "nyatike": 51064,
+                "rongo": 34127,
+                "suna_east": 32021,
+                "suna_west": 30664,
+                "uriri": 42440
               },
               "type": "switch",
               "switch_on": {
@@ -1241,7 +1241,7 @@
                 "Mnekezi": 2267,
                 "Mombasa": 4457,
                 "Mtundu": 1862,
-                "Mugango ": 6707,
+                "Mugango": 6707,
                 "Muganza": 2321,
                 "Murangi": 5446,
                 "Murusagamba": 6121,
@@ -1258,7 +1258,29 @@
                 "Nyakanga": 7119,
                 "Nyakisasa": 5641,
                 "Nyamatongo": 8100,
-                "Nyambiti": 6340,
+                "Nyambiti": {
+                  "type": "switch",
+                  "cases": {
+                    "Kwimba": 4300,
+                    "Chato": 2040
+                  },
+                  "switch_on": {
+                    "value_expression": {
+                      "type": "property_path",
+                      "property_path": [
+                        "user_data",
+                        "level_2_name"
+                      ]
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                      "type": "property_name",
+                      "property_name": "owner_id"
+                    }
+                  },
+                  "default": 0
+                },
                 "Nyamikoma": 5900,
                 "Nyamilama": 7400,
                 "Nyampande": 6400,
@@ -1318,7 +1340,7 @@
                 "migori_county_referral_hospital": 9435,
                 "minyenya_dispensary": 6233,
                 "muhuru_health_centre": 8220,
-                "nyamaranga_health_centre": 8492,
+                "nyamaranga_health_centre": 6640,
                 "ongo_health_centre": 9008,
                 "osingo_dispensary": 4945,
                 "othoro_sub_county_hospital": 12901,
@@ -1326,7 +1348,7 @@
                 "rabondo_dispensary": 9409,
                 "rongo_sub_county_hospital": 12877,
                 "suna_rabuor_health_centre": 5596,
-                "suna_ragana_dispensary": 6640,
+                "suna_ragana_dispensary": 8492,
                 "uriri_health_centre": 5734,
                 "wath_onger_dispensary": 8122
               },
@@ -1637,7 +1659,7 @@
                 "migori_county_referral_hospital": 9435,
                 "minyenya_dispensary": 6233,
                 "muhuru_health_centre": 8220,
-                "nyamaranga_health_centre": 8492,
+                "nyamaranga_health_centre": 6640,
                 "ongo_health_centre": 9008,
                 "osingo_dispensary": 4945,
                 "othoro_sub_county_hospital": 12901,
@@ -1645,7 +1667,7 @@
                 "rabondo_dispensary": 9409,
                 "rongo_sub_county_hospital": 12877,
                 "suna_rabuor_health_centre": 5596,
-                "suna_ragana_dispensary": 6640,
+                "suna_ragana_dispensary": 8492,
                 "uriri_health_centre": 5734,
                 "wath_onger_dispensary": 8122
               },

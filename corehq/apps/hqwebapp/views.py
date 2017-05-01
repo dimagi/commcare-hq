@@ -22,7 +22,6 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.template import loader
-from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
@@ -30,6 +29,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
+from djangular.views.mixins import JSONResponseMixin
 
 import httpagentparser
 from couchdbkit import ResourceNotFound
@@ -45,6 +45,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
+from no_exceptions.exceptions import Http403
 from soil import DownloadBase
 from soil import views as soil_views
 
@@ -93,12 +94,15 @@ def server_error(request, template_name='500.html'):
     traceback_key = uuid.uuid4().hex
     cache.cache.set(traceback_key, traceback_text, 60*60)
 
-    return HttpResponseServerError(t.render(RequestContext(request,
-        {'MEDIA_URL': settings.MEDIA_URL,
-         'STATIC_URL': settings.STATIC_URL,
-         'domain': domain,
-         '500traceback': traceback_key,
-        })))
+    return HttpResponseServerError(t.render(
+        context={
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_URL': settings.STATIC_URL,
+            'domain': domain,
+            '500traceback': traceback_key,
+        },
+        request=request,
+    ))
 
 
 def not_found(request, template_name='404.html'):
@@ -106,16 +110,19 @@ def not_found(request, template_name='404.html'):
     404 error handler.
     """
     t = loader.get_template(template_name)
-    return HttpResponseNotFound(t.render(RequestContext(request,
-        {'MEDIA_URL': settings.MEDIA_URL,
-         'STATIC_URL': settings.STATIC_URL
-        })))
+    return HttpResponseNotFound(t.render(
+        context={
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_URL': settings.STATIC_URL,
+        },
+        request=request,
+    ))
 
 
 @require_GET
 @location_safe
 def redirect_to_default(req, domain=None):
-    if not req.user.is_authenticated():
+    if not req.user.is_authenticated:
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
@@ -263,32 +270,44 @@ def server_up(req):
         return HttpResponse("success")
 
 
+def _no_permissions_message(request, template_name="403.html", message=None):
+    t = loader.get_template(template_name)
+    return t.render(
+        context={
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_URL': settings.STATIC_URL,
+            'message': message,
+        },
+        request=request,
+    )
+
+
 def no_permissions(request, redirect_to=None, template_name="403.html", message=None):
     """
     403 error handler.
     """
-    t = loader.get_template(template_name)
-    return HttpResponseForbidden(t.render(RequestContext(request, {
-        'MEDIA_URL': settings.MEDIA_URL,
-        'STATIC_URL': settings.STATIC_URL,
-        'message': message,
-    })))
+    return HttpResponseForbidden(_no_permissions_message(request, template_name, message))
+
+
+def no_permissions_exception(request, template_name="403.html", message=None):
+    return Http403(_no_permissions_message(request, template_name, message))
 
 
 def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
     t = loader.get_template(template_name)
-    return HttpResponseForbidden(
-        t.render(RequestContext(
-            request,
-            {'MEDIA_URL': settings.MEDIA_URL,
-             'STATIC_URL': settings.STATIC_URL
-             })))
+    return HttpResponseForbidden(t.render(
+        context={
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_URL': settings.STATIC_URL,
+        },
+        request=request,
+    ))
 
 
 @sensitive_post_parameters('auth-password')
 def _login(req, domain_name, template_name):
 
-    if req.user.is_authenticated() and req.method == "GET":
+    if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
         if redirect_to:
             return HttpResponseRedirect(redirect_to)
@@ -337,6 +356,7 @@ def login(req):
     return _login(req, domain, "login_and_password/login.html")
 
 
+@location_safe
 def domain_login(req, domain, template_name="login_and_password/login.html"):
     project = Domain.get_by_name(domain)
     if not project:
@@ -554,6 +574,7 @@ def bug_report(req):
 
         message += ((
             u"software plan: {software_plan}\n"
+            u"Is self start: {self_started}\n"
             u"Feature Flags: {feature_flags}\n"
             u"Feature Previews: {feature_previews}\n"
             u"Is scale backend: {scale_backend}\n"
@@ -563,6 +584,7 @@ def bug_report(req):
             u"Sentry Error: {sentry_error}\n"
         ).format(
             software_plan=software_plan,
+            self_started=domain_object.internal.self_started,
             feature_flags=toggles.toggles_dict(username=report['username'], domain=domain).keys(),
             feature_previews=feature_previews.previews_dict(domain).keys(),
             scale_backend=should_use_sql_backend(domain),
@@ -1174,3 +1196,16 @@ def couch_doc_counts(request, domain):
         cls.__name__: get_doc_count_in_domain_by_class(domain, cls, start, end)
         for cls in [CommCareCase, XFormInstance]
     })
+
+
+# Use instead of djangular's base JSONResponseMixin
+# Adds djng_current_rmi to view context
+class HQJSONResponseMixin(JSONResponseMixin):
+    # Add the output of djng_current_rmi to view context, which requires having
+    # the rest of the context, specifically context['view'], available.
+    # See https://github.com/jrief/django-angular/blob/master/djng/templatetags/djng_tags.py
+    def get_context_data(self, **kwargs):
+        context = super(HQJSONResponseMixin, self).get_context_data(**kwargs)
+        from djangular.templatetags.djangular_tags import djng_current_rmi
+        context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
+        return context

@@ -1,7 +1,7 @@
 from datetime import timedelta
 import dateutil
 from django import forms
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext as _, ugettext_lazy
 from unidecode import unidecode
 
@@ -9,7 +9,7 @@ from corehq.apps.export.filters import (
     ReceivedOnRangeFilter,
     GroupFormSubmittedByFilter,
     OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
-    ModifiedOnRangeFilter, FormSubmittedByFilter, NOT
+    ModifiedOnRangeFilter, FormSubmittedByFilter, NOT, SmsReceivedRangeFilter
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.dbaccessors import (
@@ -1056,6 +1056,13 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
         return OR(OwnerFilter(accessible_ids), LastModifiedByFilter(accessible_user_ids))
 
 
+class SmsExportFilterBuilder(AbstractExportFilterBuilder):
+    date_filter_class = SmsReceivedRangeFilter
+
+    def get_filters(self, datespan):
+        return [self._get_datespan_filter(datespan)]
+
+
 class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloadForm):
     """
     Generic Filter form including dynamic filters using LocationRestrictedMobileWorkerFilter
@@ -1212,6 +1219,49 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
             self._get_locations_ids(mobile_user_and_group_slugs),
             self._get_user_ids(mobile_user_and_group_slugs),
         )
+
+    @property
+    def extra_fields(self):
+        return [
+            crispy.Field(
+                'date_range',
+                ng_model='formData.date_range',
+                ng_required='true',
+            ),
+        ]
+
+
+class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
+    date_range = DateSpanField(
+        label=ugettext_lazy("Date Range"),
+        required=True,
+        help_text="Export messages sent in this date range",
+    )
+
+    def __init__(self, domain_object, timezone, *args, **kwargs):
+        self.timezone = timezone
+        self.skip_layout = True
+        super(FilterSmsESExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
+
+        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
+        # update date_range filter's initial values to span the entirety of
+        # the domain's submission range
+        default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
+        self.fields['date_range'].widget = DateRangePickerWidget(
+            default_datespan=default_datespan
+        )
+        self.helper.layout = Layout(
+            *self.extra_fields
+        )
+
+    def get_edit_url(self, export):
+        return None
+
+    def get_filter(self):
+        filter_builder = SmsExportFilterBuilder(self.domain_object, self.timezone)
+        datespan = self.cleaned_data['date_range']
+        return filter_builder.get_filters(datespan)
 
     @property
     def extra_fields(self):

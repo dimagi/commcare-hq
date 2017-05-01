@@ -3,32 +3,13 @@
 {% load hq_shared_tags %}
 {% block js %}{{ block.super }}
     <script src="{% static 'userreports/js/expression_evaluator.js' %}"></script>
-{% endblock %}
-{% block js-inline %}{{ block.super }}
-<script type="text/javascript">
-    $(function () {
-        var ExpressionModel = hqImport('userreports/js/expression_evaluator.js').ExpressionModel;
-        var submitUrl = "{% url 'expression_evaluator' domain %}";
-        var expressionEditor = $('.CodeMirror')[0].CodeMirror;  // http://stackoverflow.com/a/24987585/8207
-        var sampleExpression = {
-            "type": "property_name",
-            "property_name": "name"
-        };
-        var sampleText = JSON.stringify(sampleExpression, null, 2);
-        expressionEditor.setValue(sampleText);
-        var initialData = {
-            documentType: '{{ request.GET.type }}',
-            documentId: '{{ request.GET.id }}',
-            dataSourceId: '{{ request.GET.data_source }}',
-        };
-        ko.applyBindings(
-            new ExpressionModel(expressionEditor, submitUrl, initialData),
-            document.getElementById('expression-debugger')
-        );
-    });
-</script>
+    <script src="{% static 'userreports/js/expression_debugger.js' %}"></script>
 {% endblock %}
 {% block page_content %}
+    {% registerurl "expression_evaluator" domain %}
+    {% initial_page_data "document_type" request.GET.type %}
+    {% initial_page_data "document_id" request.GET.id %}
+    {% initial_page_data "data_source_id" request.GET.data_source %}
     <h1>{% trans "UCR Expression Debugger" %}</h1>
     <p>{% trans "Paste an expression and document information below to see the result of that expression evaluated on the document." %}</p>
     <form id="expression-debugger" class="form-horizontal" data-bind="submit: evaluateExpression">

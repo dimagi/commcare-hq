@@ -1,10 +1,8 @@
 from celery.task import task
-from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.core.mail import send_mail, mail_admins
-from dimagi.utils.django.email import send_HTML_email
-
-logger = get_task_logger(__name__)
+from corehq.util.log import send_HTML_email
+from dimagi.utils.logging import notify_exception
 
 
 @task(queue="email_queue",
@@ -22,13 +20,15 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
                   fail_silently=fail_silently, auth_user=auth_user,
                   auth_password=auth_password, connection=connection)
     except Exception as e:
-        logger.error(
-            "Encountered error while sending email titled %(subject)s"
-            "to %(recipients)s: %(error)s" % {
+        notify_exception(
+            None,
+            message="Encountered error while sending email",
+            details={
                 'subject': subject,
                 'recipients': ', '.join(recipient_list),
                 'error': e,
-            })
+            }
+        )
         self.retry(exc=e)
 
 
@@ -50,13 +50,15 @@ def send_html_email_async(self, subject, recipient, html_content,
                         ga_tracking_info=ga_tracking_info)
     except Exception as e:
         recipient = list(recipient) if not isinstance(recipient, basestring) else [recipient]
-        logger.error(
-            "Encountered error while sending email titled %(subject)s"
-            "to %(recipients)s: %(error)s" % {
+        notify_exception(
+            None,
+            message="Encountered error while sending email",
+            details={
                 'subject': subject,
                 'recipients': ', '.join(recipient),
                 'error': e,
-            })
+            }
+        )
         self.retry(exc=e)
 
 
@@ -67,10 +69,12 @@ def mail_admins_async(self, subject, message, fail_silently=False, connection=No
     try:
         mail_admins(subject, message, fail_silently, connection, html_message)
     except Exception as e:
-        logger.error(
-            "Encountered error while sending email titled %(subject)s"
-            "to admins: %(error)s" % {
+        notify_exception(
+            None,
+            message="Encountered error while sending email to admins",
+            details={
                 'subject': subject,
                 'error': e,
-            })
+            }
+        )
         self.retry(exc=e)

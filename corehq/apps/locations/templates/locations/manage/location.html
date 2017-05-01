@@ -15,12 +15,7 @@
         // Multiselect widget
         $(function () {
             var multiselect_utils = hqImport('style/js/multiselect_utils');
-            multiselect_utils.createFullMultiselectWidget(
-                'id_users-selected_ids',
-                django.gettext("Available Workers"),
-                django.gettext("Workers in Location"),
-                django.gettext("Search Workers...")
-            );
+
             multiselect_utils.createFullMultiselectWidget(
                 'id_products-selected_ids',
                 django.gettext("Available Products"),
@@ -28,9 +23,6 @@
                 django.gettext("Search Products...")
             );
         });
-    </script>
-    <script>
-        var LOAD_LOCS_URL = '{{ api_root }}';
     </script>
 {% endblock %}
 
@@ -43,10 +35,18 @@
         };
         $(function() {
 
+          var location_url = '{{ api_root }}';
           var loc_id = {{ location.get_id|JSON }};
           var hierarchy = {{ hierarchy|JSON }};
-          model = new LocationSelectViewModel(hierarchy, '\u2026', false, function(loc) {
-              return loc.uuid() != loc_id && loc.can_have_children();
+
+          model = new LocationSelectViewModel({
+              "hierarchy": hierarchy,
+              "default_caption": "\u2026",
+              "auto_drill": false,
+              "loc_filter": function(loc) {
+                  return loc.uuid() != loc_id && loc.can_have_children();
+              },
+              "loc_url": location_url
           });
 
           model.editing = ko.observable(false);

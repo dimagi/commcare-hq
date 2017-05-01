@@ -1,20 +1,36 @@
+import datetime
 import random
 import string
 from xml.etree import ElementTree
 
+from django.test import TestCase
+
 from casexml.apps.case.xml import V1
+from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.tests.utils import generate_restore_payload, create_restore_user
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.programs.fixtures import program_fixture_generator
 from corehq.apps.products.fixtures import product_fixture_generator
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
-from corehq.apps.commtrack.tests.util import CommTrackTest
-from casexml.apps.phone.models import SyncLog
-import datetime
+from corehq.apps.commtrack.tests import util
 
 
-class FixtureTest(CommTrackTest, TestXmlMixin):
+class FixtureTest(TestCase, TestXmlMixin):
+    domain = "fixture-test"
+
+    @classmethod
+    def setUpClass(cls):
+        super(FixtureTest, cls).setUpClass()
+        cls.domain_obj = util.bootstrap_domain(cls.domain)
+        util.bootstrap_location_types(cls.domain)
+        util.bootstrap_products(cls.domain)
+        cls.user = create_restore_user(cls.domain)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super(FixtureTest, cls).tearDownClass()
 
     def _random_string(self, length):
         return ''.join(random.choice(string.ascii_lowercase)
@@ -109,7 +125,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         )
 
     def test_product_fixture(self):
-        user = create_restore_user(self.domain.name)
+        user = self.user
         xml = self.generate_product_fixture_xml(user)
         fixture = product_fixture_generator(user, V1)
 
@@ -119,7 +135,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         )
 
     def test_selective_product_sync(self):
-        user = create_restore_user(self.domain.name)
+        user = self.user
 
         expected_xml = self.generate_product_fixture_xml(user)
 
@@ -127,7 +143,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         self._initialize_product_names(len(product_list))
 
         fixture_original = product_fixture_generator(user, V1)
-        generate_restore_payload(self.domain, user)
+        generate_restore_payload(self.domain_obj, user)
         self.assertXmlEqual(
             expected_xml,
             ElementTree.tostring(fixture_original[0])
@@ -146,7 +162,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         # second sync is before any changes are made, so there should
         # be no products synced
         fixture_pre_change = product_fixture_generator(user, V1, last_sync=first_sync)
-        generate_restore_payload(self.domain, user)
+        generate_restore_payload(self.domain_obj, user)
         self.assertEqual(
             [],
             fixture_pre_change,
@@ -202,7 +218,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         )
 
     def test_program_fixture(self):
-        user = create_restore_user(self.domain.name)
+        user = self.user
         Program(
             domain=user.domain,
             name="test1",
@@ -220,7 +236,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         )
 
     def test_selective_program_sync(self):
-        user = create_restore_user(self.domain.name)
+        user = self.user
         Program(
             domain=user.domain,
             name="test1",
@@ -232,7 +248,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
 
         fixture_original = program_fixture_generator(user, V1)
 
-        generate_restore_payload(self.domain, user)
+        generate_restore_payload(self.domain_obj, user)
         self.assertXmlEqual(
             program_xml,
             ElementTree.tostring(fixture_original[0])
@@ -251,7 +267,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         # second sync is before any changes are made, so there should
         # be no programs synced
         fixture_pre_change = program_fixture_generator(user, V1, last_sync=first_sync)
-        generate_restore_payload(self.domain, user)
+        generate_restore_payload(self.domain_obj, user)
         self.assertEqual(
             [],
             fixture_pre_change,

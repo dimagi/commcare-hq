@@ -5,6 +5,7 @@ from StringIO import StringIO
 from collections import Counter
 from datetime import datetime
 
+from nose.plugins.attrib import attr
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
 from django.db.models.signals import post_save
@@ -45,7 +46,6 @@ class BaseDumpLoadTest(TestCase):
         cls.domain.delete()
         super(BaseDumpLoadTest, cls).tearDownClass()
 
-    @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
     def delete_sql_data(self):
         for model_class, queryset in get_querysets_to_dump(self.domain_name, []):
             collector = NestedObjects(using=queryset.db)
@@ -58,7 +58,6 @@ class BaseDumpLoadTest(TestCase):
         self.delete_sql_data()
         super(BaseDumpLoadTest, self).tearDown()
 
-    @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
     def _dump_and_load(self, expected_object_counts):
         expected_object_counts.update(self.default_objects_counts)
 
@@ -109,6 +108,7 @@ class BaseDumpLoadTest(TestCase):
                 self.assertIn('raw', args, message)
 
 
+@attr(sql_backend=True)
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     maxDiff = None
@@ -222,6 +222,12 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             pre_json = serializers.serialize('python', [pre])[0]
             post_json = serializers.serialize('python', [post])[0]
             self.assertDictEqual(pre_json, post_json)
+
+    def tearDown(self):
+        from corehq.apps.data_interfaces.models import AutomaticUpdateAction, AutomaticUpdateRuleCriteria
+        AutomaticUpdateAction.objects.all().delete()
+        AutomaticUpdateRuleCriteria.objects.all().delete()
+        super(TestSQLDumpLoad, self).tearDown()
 
     def test_case_search_config(self):
         from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchConfigJSON

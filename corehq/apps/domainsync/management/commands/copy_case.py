@@ -1,4 +1,5 @@
-from optparse import make_option
+from __future__ import print_function
+
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from casexml.apps.case.models import CommCareCase
@@ -11,30 +12,38 @@ from couchforms.models import XFormInstance
 
 class Command(BaseCommand):
     help = "Copy a case and all related forms"
-    args = '<sourcedb> <case_id> <domain>'
-    option_list = (
-        make_option('--postgres-db',
-                    action='store',
-                    dest='postgres_db',
-                    default='',
-                    help="Name of postgres database to pull additional data from. This should map to a "
-                         "key in settings.DATABASES. If not specified no additional postgres data will be "
-                         "copied. This is currently used to pull CommCare Supply models."),
-    )
 
-    def handle(self, *args, **options):
-        if len(args) < 2:
-            raise CommandError('Usage is copy_case, %s' % self.args)
-        source_couch = CouchConfig(args[0])
-        case_id = args[1]
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'sourcedb',
+        )
+        parser.add_argument(
+            'case_id',
+        )
+        parser.add_argument(
+            'domain',
+            nargs='?',
+        )
+        parser.add_argument(
+            '--postgres-db',
+            action='store',
+            dest='postgres_db',
+            default='',
+            help="Name of postgres database to pull additional data from. This should map to a "
+                 "key in settings.DATABASES. If not specified no additional postgres data will be "
+                 "copied. This is currently used to pull CommCare Supply models.",
+        )
+
+    def handle(self, sourcedb, case_id, domain, **options):
+        # FIXME broken b/c https://github.com/dimagi/commcare-hq/pull/15896
+        source_couch = CouchConfig(sourcedb)
         doc_ids = [case_id]
 
-        domain = args[2] if len(args) > 2 else None
         if should_use_sql_backend(domain):
             raise CommandError('This command only works for couch-based domains.')
 
         def _migrate_case(case_id):
-            print 'getting case %s' % case_id
+            print('getting case %s' % case_id)
             case = CommCareCase.wrap(source_couch.get_db_for_class(CommCareCase).get(case_id))
             original_domain = case.domain
             if domain is not None:
@@ -43,7 +52,7 @@ class Command(BaseCommand):
             return case, original_domain
 
         case, orig_domain = _migrate_case(case_id)
-        print 'copying %s parent cases' % len(case.indices)
+        print('copying %s parent cases' % len(case.indices))
         for index in case.indices:
             _migrate_case(index.referenced_id)
             doc_ids.append(index.referenced_id)
@@ -52,12 +61,12 @@ class Command(BaseCommand):
         case.domain = orig_domain
         with OverrideDB(CommCareCase, source_couch.get_db_for_class(CommCareCase)):
             child_indices = get_reverse_indices(case)
-        print 'copying %s child cases' % len(child_indices)
+        print('copying %s child cases' % len(child_indices))
         for index in child_indices:
             _migrate_case(index.referenced_id)
             doc_ids.append(index.referenced_id)
 
-        print 'copying %s xforms' % len(case.xform_ids)
+        print('copying %s xforms' % len(case.xform_ids))
 
         def form_wrapper(row):
             doc = row['doc']
@@ -74,7 +83,7 @@ class Command(BaseCommand):
             if domain is not None:
                 form.domain = domain
             form.save(force_update=True)
-            print 'saved %s' % form._id
+            print('saved %s' % form._id)
             doc_ids.append(form._id)
 
         if options['postgres_db']:

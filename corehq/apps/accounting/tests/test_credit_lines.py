@@ -167,7 +167,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         )
 
         # other account credit that shouldn't count toward this invoice
-        other_account = generator.billing_account(self.dimagi_user, generator.arbitrary_web_user())
+        other_account = generator.billing_account(self.dimagi_user, generator.create_arbitrary_web_user_name())
 
         self._generate_subscription_and_account_invoice_credits(
             invoice_monthly_total, other_subscription, other_account
@@ -177,6 +177,7 @@ class TestCreditLines(BaseInvoiceTestCase):
 
         self._test_credit_use(subscription_credit)
         self._test_credit_use(account_credit)
+        other_domain.delete()
 
     def test_combined_credits(self):
         """
@@ -287,16 +288,12 @@ class TestCreditTransfers(BaseAccountingTest):
         cls.account = BillingAccount.get_or_create_account_by_domain(
             cls.domain, created_by="biyeun@dimagi.com",
         )[0]
-        cls.web_user = generator.arbitrary_web_user()
-        # TODO - refactor interface to generator.billing_account so web user object is not required
-        cls.other_account = generator.billing_account(cls.web_user, cls.web_user)
+        cls.web_user_name = generator.create_arbitrary_web_user_name()
+        cls.other_account = generator.billing_account(cls.web_user_name, cls.web_user_name)
 
     @classmethod
     def tearDownClass(cls):
-        CreditAdjustment.objects.all().delete()
-        CreditLine.objects.all().delete()
-        generator.delete_all_subscriptions()
-        cls.web_user.delete()
+        cls.domain.delete()
         super(TestCreditTransfers, cls).tearDownClass()
 
     def _ensure_transfer(self, original_credits):

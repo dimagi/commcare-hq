@@ -1,6 +1,19 @@
 --- 
 +++ 
-@@ -44,9 +44,11 @@
+@@ -18,11 +18,11 @@
+         )
+         var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
+         var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
++        // init releases
+         var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
+         $('#recent-changes-btn').on('click', function (e) {
+             appDiff.renderDiff({{ app.id|JSON }}, {{ latest_build_id|JSON }});
+         })
+-        // init releases
+         {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
+         var urls = {
+             fetch: '{% url "paginate_releases" domain app.id %}',
+@@ -52,20 +52,28 @@
              fetchLimit: {{ fetchLimit }},
          };
          var el = $('#releases-table');
@@ -15,7 +28,10 @@
  
          var app_langs = {{ app.langs|JSON }};
          var app_profiles = {{ app.build_profiles|JSON }}
-@@ -56,8 +58,14 @@
+ 
+-        {% if build_profile_access %}
++        {% if not intro_only and build_profile_access %}
+         var profileManager = new ProfileManager(app_profiles, app_langs);
          $('#profiles-tab').koApplyBindings(profileManager);
          {% endif %}
      });
@@ -24,7 +40,7 @@
 +    {% if intro_only %}
 +    $(function () {
 +        var previewApp = hqImport('app_manager/js/preview_app.js');
-+        previewApp.makePreviewHidden();
++        previewApp.forceShowPreview();
 +    });
 +    {% endif %}
 +
@@ -32,29 +48,45 @@
  </script>
  <script>
      $(function () {
-@@ -65,7 +73,19 @@
+@@ -73,7 +81,27 @@
      });
  </script>
  
 -{% if build_profile_access %}
 +{% if intro_only %}
-+  <p class="lead">
-+    <i class="fa fa-arrow-left"></i>
++  <div class="helpbubble helpbubble-primary helpbubble-left pull-left" style="max-width: 300px;">
 +  {% blocktrans %}
-+    Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to the left to start building your Application!
++    <p class="lead">
++      Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to start building your App!
++    </p>
++    <p class="alert alert-info">
++      <i class="fa fa-info-circle"></i> Use AppBuilder to <strong>create</strong> and <strong>customize</strong> your CommCare Application for Mobile and Web.
++    </p>
 +  {% endblocktrans %}
-+  </p>
-+  <p class="alert alert-info">
-+    <i class="fa fa-info-circle"></i> Use AppBuilder to <strong>create</strong> and <strong>customize</strong> your CommCare Application for Mobile and Web.
-+  </p>
++  </div>
++  <div class="helpbubble helpbubble-secondary helpbubble-right pull-right" style="max-width: 300px;">
++  {% blocktrans %}
++    <p class="lead">
++      As you build your App, check out the <strong>App Preview</strong> to demo it in real time!
++    </p>
++  {% endblocktrans %}
++  </div>
 +{% else %}
 +
-+{% if intro_only and build_profile_access %}
++{% if not intro_only and build_profile_access %}
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -102,7 +122,7 @@
+@@ -108,7 +136,6 @@
+                     attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
+                     css: {disabled: !buildButtonEnabled()}
                  ">{% trans 'Make New Version' %}</button>
+-
+                 {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+                 <button class="btn btn-primary" id="recent-changes-btn" data-toggle="modal" data-target="#app-diff-modal">
+                     {% trans 'View changes' %}
+@@ -116,7 +143,7 @@
+                 {% endif %}
  
      <div id="build-errors-wrapper"></div>
 -    <table class="table">
@@ -62,7 +94,18 @@
          <tr>
              <th colspan="2">{% trans "Version" %}</th>
              <th colspan="2">{% trans "Date &amp; Time" %}</th>
-@@ -197,7 +217,7 @@
+@@ -126,8 +153,8 @@
+             <th>{% trans "Comments" %}</th>
+             {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
+                 <th>Errors</th>
+-            {% elif request|toggle_enabled:"SHOW_DEV_TOGGLE_INFO" %}
+-                <th>{{ request|toggle_tag_info:"APPLICATION_ERROR_REPORT" }}</th>
++            {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
++              <th>{{ request|toggle_tag_info:"APPLICATION_ERROR_REPORT" }}</th>
+             {% endif %}
+             <th>
+                 {% trans "Released" %}
+@@ -222,7 +249,7 @@
                  </td>
                  <td>
                      <b data-bind="text: comment_user_name"></b>
@@ -71,7 +114,7 @@
                          value: build_comment,
                          rows: 1,
                          placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
-@@ -205,7 +225,7 @@
+@@ -230,15 +257,15 @@
                          saveParams: {'build_id': id},
                          saveValueName: 'comment',
                          errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
@@ -80,7 +123,17 @@
                  </td>
                  {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
                  <td>
-@@ -290,17 +310,18 @@
+                     <a data-bind="text: num_errors,
+                                   attr: {href: $root.url('application_errors', version())}" />
+                 </td>
+-                {% elif request|toggle_enabled:"SHOW_DEV_TOGGLE_INFO" %}
+-                <td>{{ request|toggle_tag_info:"APPLICATION_ERROR_REPORT" }}</td>
++                {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
++                  <td></td>
+                 {% endif %}
+                 <td class="build-is-released">
+                     <div data-bind="starred: is_released, click: $root.toggleRelease"></div>
+@@ -317,18 +344,19 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">
@@ -97,8 +150,11 @@
       </div>
  </div>
  {% endif %}
+-
+-{% include 'app_manager/v1/partials/app_diff_modal.html' %}
 +{% endif %}
- 
++
++{% include 'app_manager/v2/partials/app_diff_modal.html' %}
  <!-- Async Download Modals -->
 -{% include 'app_manager/v1/partials/download_async_modal.html' with element_id='download-zip-modal' %}
 +{% include 'app_manager/v2/partials/download_async_modal.html' with element_id='download-zip-modal' %}

@@ -3,7 +3,7 @@ import copy
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from fakecouch import FakeCouchDb
 from simpleeval import InvalidExpression
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
@@ -176,6 +176,26 @@ class ExpressionFromSpecTest(SimpleTestCase):
                     'type': 'property_path',
                     'property_path': empty_path,
                 })
+
+
+class PropertyNameExpressionTest(SimpleTestCase):
+    def test_basic(self):
+        wrapped_expression = ExpressionFactory.from_spec({
+            'type': 'property_name',
+            'property_name': 'foo'
+        })
+        self.assertEqual(wrapped_expression({'foo': 'foo_value'}), 'foo_value')
+        self.assertEqual(wrapped_expression({'no': 'value'}), None)
+
+    def test_property_name_expression_with_expression(self):
+        wrapped_expression = ExpressionFactory.from_spec({
+            'type': 'property_name',
+            'property_name': {
+                'type': 'constant',
+                'constant': 'foo',
+            }
+        })
+        self.assertEqual(wrapped_expression({'foo': 'foo_value'}), 'foo_value')
 
 
 class PropertyPathExpressionTest(SimpleTestCase):
@@ -970,43 +990,68 @@ class TestEvaluatorTypes(SimpleTestCase):
         self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), int)
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
 class TestFormsExpressionSpec(TestCase):
 
-    def setUp(self):
-        super(TestFormsExpressionSpec, self).setUp()
-        self.domain = uuid.uuid4().hex
-        factory = CaseFactory(domain=self.domain)
-        [self.case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
-        self.forms = [f.to_json() for f in FormAccessors(self.domain).get_forms(self.case.xform_ids)]
-        #  redundant case to create extra forms that shouldn't be in the results for self.case
-        [self.case_b] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
+    @classmethod
+    def setUpClass(cls):
+        super(TestFormsExpressionSpec, cls).setUpClass()
+        cls.domain = uuid.uuid4().hex
+        factory = CaseFactory(domain=cls.domain)
+        [cls.case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
+        cls.forms = [f.to_json() for f in FormAccessors(cls.domain).get_forms(cls.case.xform_ids)]
+        #  redundant case to create extra forms that shouldn't be in the results for cls.case
+        [cls.case_b] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
 
-        self.expression = ExpressionFactory.from_spec({
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_xforms()
+        delete_all_cases()
+        super(TestFormsExpressionSpec, cls).tearDownClass()
+
+    def _make_expression(self, xmlns=None):
+        spec = {
             "type": "get_case_forms",
             "case_id_expression": {
                 "type": "property_name",
                 "property_name": "_id"
             },
-        })
+        }
+        if xmlns:
+            spec['xmlns'] = [xmlns]
+        return ExpressionFactory.from_spec(spec)
 
-    def tearDown(self):
-        delete_all_xforms()
-        delete_all_cases()
-        super(TestFormsExpressionSpec, self).tearDown()
-
-    @run_with_all_backends
     def test_evaluation(self):
+        expression = self._make_expression()
         context = EvaluationContext({"domain": self.domain}, 0)
-        forms = self.expression(self.case.to_json(), context)
+        forms = expression(self.case.to_json(), context)
 
         self.assertEqual(len(forms), 1)
         self.assertEqual(forms, self.forms)
 
-    @run_with_all_backends
     def test_wrong_domain(self):
+        expression = self._make_expression()
         context = EvaluationContext({"domain": "wrong-domain"}, 0)
-        forms = self.expression(self.case.to_json(), context)
+        forms = expression(self.case.to_json(), context)
         self.assertEqual(forms, [])
+
+    def test_correct_xmlns(self):
+        expression = self._make_expression('http://commcarehq.org/case')
+        context = EvaluationContext({"domain": self.domain}, 0)
+        forms = expression(self.case.to_json(), context)
+        self.assertEqual(len(forms), 1)
+        self.assertEqual(forms, self.forms)
+
+    def test_incorrect_xmlns(self):
+        expression = self._make_expression('silly-xmlns')
+        context = EvaluationContext({"domain": self.domain}, 0)
+        forms = expression(self.case.to_json(), context)
+        self.assertEqual(forms, [])
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestFormsExpressionSpecSQL(TestCase):
+    pass
 
 
 class TestGetSubcasesExpression(TestCase):

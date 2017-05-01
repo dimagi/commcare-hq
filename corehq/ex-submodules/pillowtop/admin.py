@@ -14,3 +14,18 @@ class PillowCheckpointAdmin(admin.ModelAdmin):
 
 admin.site.register(DjangoPillowCheckpoint, PillowCheckpointAdmin)
 
+
+class KafkaCheckpointAdmin(admin.ModelAdmin):
+
+    model = KafkaCheckpoint
+    list_display = [
+        'checkpoint_id',
+        'topic',
+        'partition',
+        'offset',
+        'last_modified',
+    ]
+    ordering = ('checkpoint_id', 'topic', 'partition')
+
+
+admin.site.register(KafkaCheckpoint, KafkaCheckpointAdmin)

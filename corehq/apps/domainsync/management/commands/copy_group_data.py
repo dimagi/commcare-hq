@@ -1,5 +1,6 @@
+from __future__ import print_function
 import logging
-from optparse import make_option
+
 from couchdbkit import Database, BulkSaveError
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.models import CommCareCase
@@ -19,16 +20,29 @@ CHUNK_SIZE = 100
 
 class Command(BaseCommand):
     help = "Copy all data (users, forms, cases) associated with a single group"
-    args = '<sourcedb> <group_id>'
-    label = ""
-    option_list = (
-        make_option('--exclude-user-owned',
-            action='store_true', dest='exclude_user_owned', default=False,
-            help="In addition to getting cases owned by the group itself, also get those owned by all users in the group"),
-        make_option('--include-sync-logs',
-            action='store_true', dest='include_sync_logs', default=False,
-            help="Get sync logs for all users in the group"),
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'sourcedb',
         )
+        parser.add_argument(
+            'group_id',
+        )
+        parser.add_argument(
+            '--exclude-user-owned',
+            action='store_true',
+            dest='exclude_user_owned',
+            default=False,
+            help="In addition to getting cases owned by the group itself, also get those owned by all users in the group",
+        )
+        parser.add_argument(
+            '--include-sync-logs',
+            action='store_true',
+            dest='include_sync_logs',
+            default=False,
+            help="Get sync logs for all users in the group",
+        )
+
 
     def lenient_bulk_save(self, cls, docs):
         try:
@@ -39,25 +53,21 @@ class Command(BaseCommand):
                 logging.exception(other)
                 raise
 
-    def handle(self, *args, **options):
+    def handle(self, sourcedb, group_id, **options):
         raise CommandError(
             'copy_group_data is currently broken. '
             'Ask Danny or Ethan to fix it along the lines of '
             'https://github.com/dimagi/commcare-hq/pull/9180/files#diff-9d976dc051a36a028c6604581dfbce5dR95'
         )
 
-        if len(args) != 2:
-            raise CommandError('Usage is copy_group_data %s' % self.args)
-
-        sourcedb = Database(args[0])
-        group_id = args[1]
+        sourcedb = Database(sourcedb)
         exclude_user_owned = options["exclude_user_owned"]
 
-        print 'getting group'
+        print('getting group')
         group = Group.wrap(sourcedb.get(group_id))
         group.save(force_update=True)
 
-        print 'getting domain'
+        print('getting domain')
         domain = Domain.wrap(
             sourcedb.view('domain/domains', key=group.domain, include_docs=True,
                           reduce=False, limit=1).one()['doc']
@@ -69,7 +79,7 @@ class Command(BaseCommand):
         if not exclude_user_owned:
             owners.extend(group.users)
 
-        print 'getting case ids'
+        print('getting case ids')
 
         with OverrideDB(CommCareCase, sourcedb):
             case_ids = get_case_ids_in_domain_by_owner(
@@ -77,10 +87,10 @@ class Command(BaseCommand):
 
         xform_ids = set()
 
-        print 'copying %s cases' % len(case_ids)
+        print('copying %s cases' % len(case_ids))
 
         for i, subset in enumerate(chunked(case_ids, CHUNK_SIZE)):
-            print i * CHUNK_SIZE
+            print(i * CHUNK_SIZE)
             cases = [CommCareCase.wrap(case['doc']) for case in sourcedb.all_docs(
                 keys=list(subset),
                 include_docs=True,
@@ -101,7 +111,7 @@ class Command(BaseCommand):
                     reduce=False
                 ))
 
-        print 'copying %s xforms' % len(xform_ids)
+        print('copying %s xforms' % len(xform_ids))
         user_ids = set(group.users)
 
         def form_wrapper(row):
@@ -110,7 +120,7 @@ class Command(BaseCommand):
             doc.pop('external_blobs', None)
             return XFormInstance.wrap(doc)
         for i, subset in enumerate(chunked(xform_ids, CHUNK_SIZE)):
-            print i * CHUNK_SIZE
+            print(i * CHUNK_SIZE)
             xforms = sourcedb.all_docs(
                 keys=list(subset),
                 include_docs=True,
@@ -122,7 +132,7 @@ class Command(BaseCommand):
                 user_id = xform.metadata.userID
                 user_ids.add(user_id)
 
-        print 'copying %s users' % len(user_ids)
+        print('copying %s users' % len(user_ids))
 
         def wrap_user(row):
             try:
@@ -151,7 +161,7 @@ class Command(BaseCommand):
                 role_ids.add(user.domain_membership.role_id)
             user.save(force_update=True)
 
-        print 'copying %s roles' % len(role_ids)
+        print('copying %s roles' % len(role_ids))
         for i, subset in enumerate(chunked(role_ids, CHUNK_SIZE)):
             roles = [UserRole.wrap(role['doc']) for role in sourcedb.all_docs(
                 keys=list(subset),
@@ -160,7 +170,7 @@ class Command(BaseCommand):
             self.lenient_bulk_save(UserRole, roles)
 
         if options['include_sync_logs']:
-            print 'copying sync logs'
+            print('copying sync logs')
             for user_id in user_ids:
                 log_ids = [res['id'] for res in sourcedb.view("phone/sync_logs_by_user",
                     startkey=[user_id, {}],
@@ -169,9 +179,9 @@ class Command(BaseCommand):
                     reduce=False,
                     include_docs=True
                 )]
-                print 'user: %s, logs: %s' % (user_id, len(log_ids))
+                print('user: %s, logs: %s' % (user_id, len(log_ids)))
                 for i, subset in enumerate(chunked(log_ids, CHUNK_SIZE)):
-                    print i * CHUNK_SIZE
+                    print(i * CHUNK_SIZE)
                     logs = [SyncLog.wrap(log['doc']) for log in sourcedb.all_docs(
                         keys=list(subset),
                         include_docs=True,

@@ -4,13 +4,12 @@ from django.test.utils import override_settings
 from couchexport.models import SavedExportSchema
 
 from corehq.apps.reports.dbaccessors import (
-    get_all_hq_group_export_configs,
     hq_group_export_configs_by_domain,
     stale_get_exports_json,
     stale_get_export_count,
 )
 from corehq.apps.reports.models import HQGroupExportConfiguration
-from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
+from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type, get_doc_ids_by_class
 
 
 class HQGroupExportConfigurationDbAccessorsTest(TestCase):
@@ -32,7 +31,7 @@ class HQGroupExportConfigurationDbAccessorsTest(TestCase):
         self.assertEqual(len(hq_group_export_configs_by_domain('domain2')), 2)
 
     def test_get_all_hq_group_export_configs(self):
-        self.assertEqual(len(list(get_all_hq_group_export_configs())), 3)
+        self.assertEqual(len(get_doc_ids_by_class(HQGroupExportConfiguration)), 3)
 
 
 @override_settings(COUCH_STALE_QUERY=None)

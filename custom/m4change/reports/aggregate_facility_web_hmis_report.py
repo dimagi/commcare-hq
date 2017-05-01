@@ -1,10 +1,11 @@
 from django.utils.translation import ugettext as _
 
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, NumericColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.standard import MonthYearMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from custom.common.filters import RestrictedAsyncLocationFilter
 from custom.m4change.filters import FacilityHmisFilter
 from custom.m4change.reports.all_hmis_report import AllHmisReport
 from custom.m4change.reports.anc_hmis_report import AncHmisReport
@@ -13,6 +14,7 @@ from custom.m4change.reports.ld_hmis_report import LdHmisReport
 from custom.m4change.reports.reports import M4ChangeReport
 
 
+@location_safe
 class AggregateFacilityWebHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
     ajax_pagination = False
     asynchronous = True
@@ -25,7 +27,7 @@ class AggregateFacilityWebHmisReport(MonthYearMixin, CaseListReport, M4ChangeRep
     report_template_path = "m4change/report_content.html"
 
     fields = [
-        AsyncLocationFilter,
+        RestrictedAsyncLocationFilter,
         MonthFilter,
         YearFilter,
         FacilityHmisFilter
@@ -52,7 +54,8 @@ class AggregateFacilityWebHmisReport(MonthYearMixin, CaseListReport, M4ChangeRep
             row_data = report_map[facility_hmis_filter].get_report_data({
                 "location_id": self.request.GET.get("location_id", None),
                 "datespan": self.datespan,
-                "domain": str(self.domain)
+                "domain": str(self.domain),
+                "user": self.request.couch_user
             })
 
         for row in row_data:

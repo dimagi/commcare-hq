@@ -38,8 +38,6 @@ def bootstrap_smsgh_gateway(apps=None):
 
 class Command(BaseCommand):
     help = "bootstrap SMSGH backend gateway fees"
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         bootstrap_smsgh_gateway()

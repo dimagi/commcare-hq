@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import traceback
 from collections import defaultdict, namedtuple
@@ -352,10 +353,10 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False):
         raise IterUpdateError(results, msg)
 
     if verbose:
-        print "couldn't find {} docs".format(len(results.not_found_ids))
-        print "ignored {} docs".format(len(results.ignored_ids))
-        print "deleted {} docs".format(len(results.deleted_ids))
-        print "updated {} docs".format(len(results.updated_ids))
+        print("couldn't find {} docs".format(len(results.not_found_ids)))
+        print("ignored {} docs".format(len(results.ignored_ids)))
+        print("deleted {} docs".format(len(results.deleted_ids)))
+        print("updated {} docs".format(len(results.updated_ids)))
     return results
 
 

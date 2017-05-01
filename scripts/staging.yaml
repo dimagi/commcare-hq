@@ -45,39 +45,20 @@
 trunk: master
 name: autostaging
 branches:
-  - app_manager.translations  # Danny 2/3
-  - general-credits-sr # sreddy 1/10
-  - vellum-staging # J$ 11/13  
-  - bmb/currentind-string # Biyeun 11/12
+  - vellum-staging # J$ 11/13
+#  - nh/240812/mw_pwd_reset  # Norman 3/23
   - nh/new_rb  # Norman 11/22
-  #- refresh-to-same-tab # Jenny 2/9
-  - je/sms-export-final # emord 2/9
-
-  # django 1.10 dependencies - NP 2/10
-  - np/110/two-factor
-  - revert-14997-revert-14712-br/anonymous-formplayer  # BR 2/16
-
-  # django 1.10 mgmt cmd updates - NP 2/10
-  - np/110/make_supervisor_conf
-  - np/110/preindex_everything
-  - np/110/ptop_es_manage
-  - np/110/ptop_reset_checkpoint
-  - np/110/record_deploy_success
-  - np/110/reset_pillow_seq_store
-  - np/110/run_form_websocket_feed.py
-  - np/110/run_ptop
-  - np/110/shutdown_celery_worker_by_hostname
-  - np/110/update_manifest-same
-
-  - np/django1.10 # NP 2/12
-  - sk/sentry  # SK 2/13
-  - xmlns-overflow  # Jenny 2/16
+#  - mk-nikshay-audit-cookie-safe # Manish 3/3
+  - mk-add-password-encoder # Manish 3/3
+  - gc/case-close-refactor # Giovanni 4/7
+#  - np/update/twofactor # NP 4/21
+  - ce/hide-reports # Cal 4/26
+  - es/location-user  # Ethan 4/27
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - commcare_2.33 # WSP 2/8
+    branches: []
   submodules/formtranslate-src:
     branches:
       - commcare_2.33 # WSP 2/8
@@ -94,5 +75,4 @@ submodules:
   deployment/commcare-hq-deploy:
     branches: []
   submodules/commcare-translations:
-    branches:
-      - commcare-versioned-translations
+    branches: []

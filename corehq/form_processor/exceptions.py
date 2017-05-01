@@ -37,10 +37,6 @@ class LedgerSaveError(Exception):
     pass
 
 
-class AccessRestricted(Exception):
-    pass
-
-
 class InvalidAttachment(Exception):
     pass
 

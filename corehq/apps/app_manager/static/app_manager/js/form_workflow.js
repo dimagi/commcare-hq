@@ -14,23 +14,26 @@ hqDefine('app_manager/js/form_workflow.js', function() {
         // Workflow type. See FormWorkflow.Values for available types
         self.workflow = ko.observable(options.workflow);
 
+        self.hasError = ko.observable(self.workflow() === FormWorkflow.Values.ERROR);
+
         self.workflow.subscribe(function(value) {
             self.showFormLinkUI(value === FormWorkflow.Values.FORM);
+            self.hasError(value === FormWorkflow.Values.ERROR);
         });
-
 
         // Element used to trigger a change when form link is removed
         self.$changeEl = options.$changeEl || $('#form-workflow .workflow-change-trigger');
-
-        self.workflowDisplay = ko.computed(function() {
-            return self.labels[self.workflow()];
-        });
 
         /* Form linking */
         self.showFormLinkUI = ko.observable(self.workflow() === FormWorkflow.Values.FORM);
         self.forms = _.map(options.forms, function(f) {
             return new FormWorkflow.Form(f);
         });
+
+        // If original value isn't recognized, display an error
+        if (!self.labels[self.workflow()]) {
+            self.workflow(FormWorkflow.Values.ERROR);
+        }
 
         var formIds = _.pluck(self.forms,  'uniqueId');
         self.formLinks = ko.observableArray(_.map(_.filter(options.formLinks, function(link) {
@@ -47,6 +50,7 @@ hqDefine('app_manager/js/form_workflow.js', function() {
         MODULE: 'module',
         PREVIOUS_SCREEN: 'previous_screen',
         FORM: 'form',
+        ERROR: 'error',
     };
 
     FormWorkflow.Errors = {
@@ -55,12 +59,19 @@ hqDefine('app_manager/js/form_workflow.js', function() {
 
 
     FormWorkflow.prototype.workflowOptions = function() {
-        return _.map(this.labels, function(label, value) {
+        var options = _.map(this.labels, function(label, value) {
             return {
                 value: value,
-                label: (value === FormWorkflow.Values.DEFAULT ? '* ' + label : label)
+                label: (value === FormWorkflow.Values.DEFAULT ? '* ' + label : label),
             };
         });
+        if (this.hasError()) {
+            options = options.concat({
+                value: FormWorkflow.Values.ERROR,
+                label: gettext("Unrecognized value"),
+            });
+        }
+        return options;
     };
 
     FormWorkflow.prototype.onAddFormLink = function(workflow, event) {

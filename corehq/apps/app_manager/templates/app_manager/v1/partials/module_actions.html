@@ -1,17 +1,10 @@
 {% load i18n %}
-{% load app_manager_extras %}
-{% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
-    {% if available_modules %}
-        <h2>{% trans "Overwrite Case List/Detail from Existing Module" %}</h2>
-        <p class="help-block">{% trans "This will <strong>overwrite</strong> the current case list/details screen with the configuration from the selected module." %}</p>
-        {% with detail_type="short" %}
-            {% include 'app_manager/v1/partials/case_list_module_overwrite.html' %}
-        {% endwith %}
-        <hr>
-        {% with detail_type="long" %}
-            {% include 'app_manager/v1/partials/case_list_module_overwrite.html' %}
-        {% endwith %}
-    {% else %}
-        <p><em>{% trans "Actions are only available if you have other modules with the same case type as this one."%}</em></p>
-    {% endif %}
+<h2>{% trans "Overwrite Case List/Detail from Existing Module" %}</h2>
+<p class="help-block">{% trans "This will <strong>overwrite</strong> the current case list/details screen with the configuration from the selected module." %}</p>
+{% with detail_type="short" %}
+    {% include 'app_manager/v1/partials/case_list_module_overwrite.html' %}
+{% endwith %}
+<hr>
+{% with detail_type="long" %}
+    {% include 'app_manager/v1/partials/case_list_module_overwrite.html' %}
 {% endwith %}

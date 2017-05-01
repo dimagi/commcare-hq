@@ -4,7 +4,7 @@ import json
 from urllib import urlencode
 import uuid
 from django import forms
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.forms import Widget
 from django.forms.utils import flatatt
 from django.template.loader import render_to_string
@@ -468,7 +468,7 @@ def _legend(title, subtext):
     Return a string to be used in a crispy form Fieldset legend.
     This function is just a light wrapped around some simple templating.
     """
-    return '{title}</br><div class="subtext"><small>{subtext}</small></div>'.format(
+    return u'{title}</br><div class="subtext"><small>{subtext}</small></div>'.format(
         title=title, subtext=subtext
     )
 
@@ -1188,7 +1188,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         widget=forms.HiddenInput,
         error_messages={"required": ugettext_lazy("At least one column is required")},
     )
-    column_legend_fine_print = ugettext_noop("Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
+    column_legend_fine_print = ugettext_noop(u"Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
 
     @property
     def container_fieldset(self):
@@ -1284,7 +1284,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
-    column_legend_fine_print = ugettext_noop('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
+    column_legend_fine_print = ugettext_noop(u'Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
     group_by = forms.ChoiceField(label=_("Show one row for each"))
 
     @property
@@ -1297,7 +1297,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
                     _("Rows"),
                     _('Choose which property this report will group its results by. Each value of this property will be a row in the table. For example, if you choose a yes or no question, the report will show a row for "yes" and a row for "no."'),
                 ),
-                'group_by',
+                crispy.Field('group_by', required=True),
             ),
             self.user_filter_fieldset,
             self.default_filter_fieldset
@@ -1380,7 +1380,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 class ConfigureWorkerReportForm(ConfigureTableReportForm):
     # This is a ConfigureTableReportForm, but with a predetermined aggregation
     report_type = 'worker'
-    column_legend_fine_print = ugettext_noop('Add columns for this report to aggregate. Each property you add will create a column for every value of that property. For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
+    column_legend_fine_print = ugettext_noop(u'Add columns for this report to aggregate. Each property you add will create a column for every value of that property. For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
 
     def __init__(self, *args, **kwargs):
         super(ConfigureWorkerReportForm, self).__init__(*args, **kwargs)

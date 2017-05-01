@@ -1,33 +1,24 @@
 from datetime import datetime
-from django.test import TestCase
 from lxml import etree
 
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms, delete_all_ledgers
-from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
-from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
-from casexml.apps.stock.models import StockReport, StockTransaction
 from dimagi.utils.couch.database import get_safe_write_kwargs
+from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import Location, LocationType, SQLLocation
+from corehq.apps.locations.models import Location, LocationType
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 from corehq.util.decorators import require_debug_true
-from dimagi.utils.parsing import json_format_datetime
 
 from ..const import StockActions
-from ..models import CommtrackConfig, ConsumptionConfig
 from ..sms import to_instance
-from ..util import (get_default_requisition_config,
-                    get_or_create_default_program,
+from ..util import (get_or_create_default_program,
                     get_supply_point_and_location)
 
 
@@ -139,66 +130,6 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, paren
     return loc
 
 
-class CommTrackTest(TestCase):
-    requisitions_enabled = False  # can be overridden
-    user_definitions = []
-
-    def setUp(self):
-        super(CommTrackTest, self).setUp()
-        # might as well clean house before doing anything
-        delete_all_xforms()
-        delete_all_cases()
-        delete_all_sync_logs()
-
-        StockReport.objects.all().delete()
-        StockTransaction.objects.all().delete()
-
-        self.backend, self.backend_mapping = setup_default_sms_test_backend()
-
-        self.domain = bootstrap_domain(TEST_DOMAIN)
-        bootstrap_location_types(self.domain.name)
-        bootstrap_products(self.domain.name)
-        self.ct_settings = CommtrackConfig.for_domain(self.domain.name)
-        self.ct_settings.consumption_config = ConsumptionConfig(
-            min_transactions=0,
-            min_window=0,
-            optimal_window=60,
-            min_periods=0,
-        )
-        # todo: remove?
-        if self.requisitions_enabled:
-            self.ct_settings.requisition_config = get_default_requisition_config()
-
-        self.ct_settings.save()
-
-        self.domain = Domain.get(self.domain._id)
-
-        self.loc = make_loc('loc1')
-        self.sp = self.loc.linked_supply_point()
-        self.users = [bootstrap_user(self, **user_def) for user_def in self.user_definitions]
-
-        # everyone should be in a group.
-        self.group = Group(domain=TEST_DOMAIN, name='commtrack-folks',
-                           users=[u._id for u in self.users],
-                           case_sharing=True)
-        self.group._id = self.sp.owner_id
-        self.group.save()
-        self.products = sorted(Product.by_domain(self.domain.name), key=lambda p: p._id)
-        self.assertEqual(3, len(self.products))
-
-    def tearDown(self):
-        SQLLocation.objects.all().delete()
-        self.backend_mapping.delete()
-        self.backend.delete()
-        delete_all_xforms()
-        delete_all_ledgers()
-        delete_all_cases()
-        delete_all_sync_logs()
-        delete_all_users()
-        self.domain.delete()  # domain delete cascades to everything else
-        super(CommTrackTest, self).tearDown()
-
-
 def get_ota_balance_xml(project, user):
     xml = generate_restore_payload(project, user.to_ota_restore_user(), version=V2)
     return extract_balance_xml(xml)
@@ -211,13 +142,14 @@ def extract_balance_xml(xml_payload):
     return []
 
 
-def get_single_balance_block(case_id, product_id, quantity, date_string=None, section_id='stock'):
+def get_single_balance_block(case_id, product_id, quantity, date_string=None, section_id='stock', type=None):
     date_string = date_string or json_format_datetime(datetime.utcnow())
     return """
-<balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="{date}" section-id="{section_id}">
+<balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="{date}" section-id="{section_id}"{type}>
     <entry id="{product_id}" quantity="{quantity}" />
 </balance>""".format(
-        case_id=case_id, product_id=product_id, quantity=quantity, date=date_string, section_id=section_id
+        case_id=case_id, product_id=product_id, quantity=quantity, date=date_string, section_id=section_id,
+        type=' type="{}"'.format(type) if type else ''
     ).strip()
 
 

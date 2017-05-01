@@ -8,7 +8,7 @@ from django.db import models
 from django.db.models.aggregates import Count
 from jsonfield.fields import JSONField
 
-from pillowtop.feed.couch import change_from_couch_row, force_to_change
+from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import ChangeMeta
 
 ERROR_MESSAGE_LENGTH = 512
@@ -81,7 +81,6 @@ class PillowError(models.Model):
 
     @classmethod
     def get_or_create(cls, change, pillow):
-        change = force_to_change(change)
         change.document = None
         doc_id = change.id
         try:

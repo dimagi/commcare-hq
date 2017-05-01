@@ -10,7 +10,7 @@ from corehq.messaging.smsbackends.telerivet.models import IncomingRequest, SQLTe
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.db import transaction
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST

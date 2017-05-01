@@ -9,6 +9,7 @@ import django.db.models.deletion
 
 import jsonfield.fields
 
+from corehq.apps.accounting.bootstrap.config.enterprise import BOOTSTRAP_CONFIG as enterprise_config
 from corehq.apps.accounting.bootstrap.config.report_builder_v0 import BOOTSTRAP_CONFIG as report_builder_config
 from corehq.apps.accounting.bootstrap.config.resellers_and_managed_hosting import BOOTSTRAP_CONFIG as resellers_config
 from corehq.apps.accounting.bootstrap.config.user_buckets_jan_2017 import BOOTSTRAP_CONFIG as self_service_config
@@ -20,14 +21,13 @@ import corehq.util.mixin
 
 def _cchq_software_plan_bootstrap(apps, schema_editor):
     pricing_config = self_service_config
+    pricing_config.update(enterprise_config)
     pricing_config.update(report_builder_config)
     pricing_config.update(resellers_config)
-    ensure_plans(pricing_config, dry_run=False, verbose=True, apps=apps)
+    ensure_plans(pricing_config, verbose=True, apps=apps)
 
 
 class Migration(migrations.Migration):
-
-    replaces = [(b'accounting', '0001_initial'), (b'accounting', '0002_update_pricing_table'), (b'accounting', '0003_bootstrap'), (b'accounting', '0004_subscription_no_invoice_reason'), (b'accounting', '0003_auto_20150903_1855'), (b'accounting', '0004_merge'), (b'accounting', '0005_merge'), (b'accounting', '0006_remove_organization_field'), (b'accounting', '0007_make_subscriber_domain_required'), (b'accounting', '0008_auto_20151120_1652'), (b'accounting', '0009_add_extended_trial_subscription_type'), (b'accounting', '0010_add_do_not_email'), (b'accounting', '0011_subscription_is_hidden_to_ops'), (b'accounting', '0012_billing_metadata_data_migration'), (b'accounting', '0013_forbid_feature_type_any'), (b'accounting', '0014_billingcontactinfo_email_list'), (b'accounting', '0015_datamigration_email_list'), (b'accounting', '0016_remove_billingcontactinfo_emails'), (b'accounting', '0017_add_product_rate'), (b'accounting', '0018_datamigration_product_rates_to_product_rate'), (b'accounting', '0019_remove_softwareplanversion_product_rates'), (b'accounting', '0020_nonnullable_product_rate'), (b'accounting', '0021_remove_old_roles'), (b'accounting', '0022_bootstrap_prbac_roles'), (b'accounting', '0023__simplify__credit_line__product_type'), (b'accounting', '0024_date_created_to_datetime'), (b'accounting', '0025_creditadjustment_permit_blank_fields'), (b'accounting', '0026_subscriber_domain_unique'), (b'accounting', '0027_auto_20160422_1744'), (b'accounting', '0028_bootstrap_new_editions'), (b'accounting', '0027_remove_subscriptionadjustmentmethod_trial_internal'), (b'accounting', '0029_merge'), (b'accounting', '0030_remove_softwareplan_visibility_trial_internal'), (b'accounting', '0031_credit_line_feature_type_blank'), (b'accounting', '0031_create_report_builder_roles'), (b'accounting', '0032_merge'), (b'accounting', '0027_more_prbac_bootstrap'), (b'accounting', '0031_merge'), (b'accounting', '0033_merge'), (b'accounting', '0034_do_not_email_reminders'), (b'accounting', '0035_kill_date_received'), (b'accounting', '0036_subscription_skip_invoicing_if_no_feature_charges'), (b'accounting', '0037_assign_explicit_community_subscriptions'), (b'accounting', '0038_bootstrap_new_user_buckets'), (b'accounting', '0039_auto_20160829_0828'), (b'accounting', '0040_community_v1'), (b'accounting', '0041_grandfather_export_privs'), (b'accounting', '0042_bootstrap_prbac_roles'), (b'accounting', '0043_bootstrap_location_restrictions'), (b'accounting', '0044_subscription_skip_auto_downgrade'), (b'accounting', '0045_dimagi_contact_email_field'), (b'accounting', '0046_created_by_blank'), (b'accounting', '0047_ensure_default_product_plans'), (b'accounting', '0048_remove_defaultproductplan_product_type'), (b'accounting', '0049_update_user_buckets'), (b'accounting', '0050_fix_product_rates'), (b'accounting', '0051_add_report_builder_flag'), (b'accounting', '0052_ensure_report_builder_plans')]
 
     initial = True
 

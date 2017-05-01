@@ -7,6 +7,7 @@
     <script src="{% static 'accounting/js/accounting.payment_method_handler.js' %}"></script>
     <script src="{% static 'accounting/js/accounting.credits.js' %}"></script>
     <script src="https://js.stripe.com/v2/"></script>
+    {% include 'domain/partials/schedule_once.html' %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -159,29 +160,26 @@
                 <legend>{% trans 'Subscription Credit' %}</legend>
                 {% endif %}
                 <div class="form form-horizontal">
+                    {% if plan.has_credits_in_non_general_credit_line %}
                     <div data-bind="foreach: products">
                         <div class="form-group">
-                            <label class="control-label col-sm-2">{% trans 'Plan Credit' %}</label>
+                            <label class="control-label col-sm-2">
+                                {% trans 'Plan Credit' %}
+                            </label>
                             <div class="col-sm-10">
                                 <p class="form-control-text" data-bind="text: amount"></p>
                             </div>
                         </div>
                     </div>
-                    {% if plan.general_credit and plan.general_credit.is_visible %}
+                    {% endif %}
+                    {% if plan.general_credit and plan.general_credit.is_visible or not plan.has_credits_in_non_general_credit_line %}
                     <div class="form-group">
                         <label class="control-label col-sm-2">
-                            {% trans 'General Credit' %}
-                            <div class="hq-help">
-                                <a href="#"
-                                   data-content="This is credit that can be applied to either your software
-                                    plan or the features below. It's likely that someone from Dimagi added
-                                    these credits for you."
-                                   data-title="General Credit"
-                                   data-original-title=""
-                                   title="">
-                                    <i class="fa fa-question-circle"></i>
-                                </a>
-                            </div>
+                            {% if plan.has_credits_in_non_general_credit_line %}
+                                {% trans 'General Credit' %}
+                            {% else %}
+                                {% trans 'Credits Remaining' %}
+                            {% endif %}
                         </label>
                         <div class="col-sm-10">
                             <p class="form-control-text">{{ plan.general_credit.amount }}</p>
@@ -266,34 +264,59 @@
                 {% endif %}
             {% endif %}
             <legend>{% trans 'Usage Summary' %}</legend>
-            <table class="table table-bordered table-striped">
-                <thead>
-                    <tr>
-                        <th>{% trans "Feature" %}</th>
-                        <th>{% trans "Current Use" %}</th>
-                        <th>{% trans "Remaining" %}</th>
-                        {% if not plan.is_trial %}
-                        <th>{% trans "Credits Available" %}</th>
-                        {% if show_account_credits %}
-                        <th>{% trans "Account Credits Available" %}</th>
-                        {% endif %}
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody data-bind="foreach: features">
-                    <tr>
-                        <td data-bind="text: name"></td>
-                        <td data-bind="text: usage"></td>
-                        <td data-bind="text: remaining"></td>
-                        {% if not plan.is_trial %}
-                        <td data-bind="text: amount"></td>
-                        {% if show_account_credits %}
-                        <td data-bind="text: accountAmount"></td>
-                        {% endif %}
-                        {% endif %}
-                    </tr>
-                </tbody>
-            </table>
+            {% if plan.has_credits_in_non_general_credit_line %}
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Feature" %}</th>
+                            <th>{% trans "Current Use" %}</th>
+                            <th>{% trans "Remaining" %}</th>
+                            {% if not plan.is_trial %}
+                            <th>{% trans "Credits Available" %}</th>
+                            {% if show_account_credits %}
+                            <th>{% trans "Account Credits Available" %}</th>
+                            {% endif %}
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody data-bind="foreach: features">
+                        <tr>
+                            <td data-bind="text: name"></td>
+                            <td data-bind="text: usage"></td>
+                            <td data-bind="text: remaining"></td>
+                            {% if not plan.is_trial %}
+                            <td data-bind="text: amount"></td>
+                            {% if show_account_credits %}
+                            <td data-bind="text: accountAmount"></td>
+                            {% endif %}
+                            {% endif %}
+                        </tr>
+                    </tbody>
+                </table>
+            {% else %}
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Feature" %}</th>
+                            <th>{% trans "Included in Software Plan" %}</th>
+                            <th>{% trans "Current Usage" %}</th>
+                            {% if not plan.is_trial and show_account_credits %}
+                            <th>{% trans "Account Credits Available" %}</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody data-bind="foreach: features">
+                        <tr>
+                            <td data-bind="text: name"></td>
+                            <td data-bind="text: limit"></td>
+                            <td data-bind="text: usage"></td>
+                            {% if not plan.is_trial and show_account_credits %}
+                            <td data-bind="text: accountAmount"></td>
+                            {% endif %}
+                        </tr>
+                    </tbody>
+                </table>
+            {% endif %}
         </article>
     </div>
 </div>
@@ -307,37 +330,10 @@
             </legend>
 
             <div class="alert alert-info">
-                One credit is equivalent to one USD.
-            </div>
-            <div data-bind="foreach: products">
-                <div class="form-group">
-                    <label class="control-label col-sm-2">
-                        {% trans 'Software Plan' %}
-                    </label>
-                    <div class="col-sm-10">
-                        <div class="input-group">
-                            <span class="input-group-addon">$</span>
-                            <input type="text"
-                                   class="form-control"
-                                   name="product_credits"
-                                   data-bind="
-                                   attr:{name: creditType},
-                                   value: addAmount" />
-                        </div>
-                        <div class="alert alert-danger"
-                        data-bind="visible: !addAmountValid()">
-                           <i class="fa fa-exclamation-triangle"></i>
-                           <span>
-                               {% blocktrans %}
-                               Please enter an amount that's either $0 or  greater than $0.5
-                              {% endblocktrans %}
-                          </span>
-                        </div>
-                    </div>
-                </div>
+                {% trans 'One credit is equivalent to one USD. Credits are applied to monthly invoices' %}
             </div>
 
-            <div data-bind="foreach: features">
+            <div data-bind="with: general_credit">
                 <div class="form-group">
                     <label class="control-label col-sm-2">
                         <span data-bind="text: name"></span>

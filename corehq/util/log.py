@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 from collections import defaultdict
 from itertools import islice
@@ -10,11 +11,13 @@ from pygments.lexers import PythonLexer
 from pygments.formatters import HtmlFormatter
 
 from celery.utils.mail import ErrorMail
+from dimagi.utils.django.email import send_HTML_email as _send_HTML_email
 from django.core import mail
 from django.http import HttpRequest
 from django.utils.log import AdminEmailHandler
 from django.views.debug import SafeExceptionReporterFilter, get_exception_reporter_filter
 from django.template.loader import render_to_string
+from corehq.apps.analytics.utils import analytics_enabled_for_email
 from corehq.util.view_utils import get_request
 from corehq.util.datadog.utils import log_counter, get_url_group, sanitize_url
 from corehq.util.datadog.metrics import ERROR_COUNT
@@ -112,7 +115,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
             })
 
             context.update({
-                'get': request.GET,
+                'get': request.GET.items(),
                 'post': SafeExceptionReporterFilter().get_post_parameters(request),
                 'method': request.method,
                 'username': request.user.username if getattr(request, 'user', None) else "",
@@ -268,22 +271,27 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
         remaining = (display_seconds((elapsed / percent) * (1 - percent))
                      if position > 0 else "-:--:--")
 
-        print prefix,
-        print "[{}{}]".format("." * dots, " " * spaces),
-        print "{}/{}".format(position, length),
-        print "{:.0%}".format(percent),
-        print "{} remaining".format(remaining),
-        print ("\r" if oneline else "\n"),
+        print(prefix, end=' ')
+        print("[{}{}]".format("." * dots, " " * spaces), end=' ')
+        print("{}/{}".format(position, length), end=' ')
+        print("{:.0%}".format(percent), end=' ')
+        print("{} remaining".format(remaining), end=' ')
+        print(("\r" if oneline else "\n"), end=' ')
         sys.stdout.flush()
 
-    print "Started at {:%Y-%m-%d %H:%M:%S}".format(start)
+    print("Started at {:%Y-%m-%d %H:%M:%S}".format(start))
     checkpoints = {length*i/granularity for i in range(length)}
     for i, x in enumerate(iterable):
         yield x
         if i in checkpoints:
             draw(i)
     draw(length)
-    print ""
+    print("")
     end = datetime.now()
-    print "Finished at {:%Y-%m-%d %H:%M:%S}".format(end)
-    print "Elapsed time: {}".format(display_seconds((end - start).total_seconds()))
+    print("Finished at {:%Y-%m-%d %H:%M:%S}".format(end))
+    print("Elapsed time: {}".format(display_seconds((end - start).total_seconds())))
+
+
+def send_HTML_email(subject, recipient, html_content, *args, **kwargs):
+    kwargs['ga_track'] = kwargs.get('ga_track', False) and analytics_enabled_for_email(recipient)
+    return _send_HTML_email(subject, recipient, html_content, *args, **kwargs)

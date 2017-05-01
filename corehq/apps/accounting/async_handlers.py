@@ -170,7 +170,7 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
     def active_accounts_response(self):
         accounts = BillingAccount.objects.filter(is_active=True)
         if self.search_string:
-            accounts = accounts.filter(name__contains=self.search_string)
+            accounts = accounts.filter(name__icontains=self.search_string)
         return [(a.id, a.name) for a in accounts]
 
     @property
@@ -185,7 +185,7 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
     def account_response(self):
         accounts = BillingAccount.objects
         if self.search_string:
-            accounts = accounts.filter(name__contains=self.search_string)
+            accounts = accounts.filter(name__icontains=self.search_string)
         return [(a.id, a.name) for a in accounts.order_by('name')]
 
     @property
@@ -197,7 +197,7 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         ).filter(product_rate__product__product_type=product)
         if self.search_string:
             plan_versions = plan_versions.filter(
-                plan__name__contains=self.search_string)
+                plan__name__icontains=self.search_string)
         return [(p.id, p.__str__()) for p in plan_versions.order_by('plan__name')]
 
     @property

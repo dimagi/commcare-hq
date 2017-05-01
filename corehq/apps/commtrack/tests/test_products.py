@@ -1,18 +1,32 @@
-from corehq.apps.commtrack.tests.util import CommTrackTest
+from django.test import TestCase
+from corehq.apps.commtrack.tests.util import bootstrap_products, bootstrap_domain, make_product
 from corehq.apps.products.models import Product, SQLProduct
 
 
-class ProductsTest(CommTrackTest):
+class ProductsTest(TestCase):
+    domain = 'products-test'
+
+    @classmethod
+    def setUpClass(cls):
+        super(ProductsTest, cls).setUpClass()
+        cls.domain_obj = bootstrap_domain(cls.domain)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super(ProductsTest, cls).tearDownClass()
 
     def test_archive(self):
-        original_list = Product.by_domain(self.domain.name, wrap=False)
+        bootstrap_products(self.domain)
+        products = sorted(Product.by_domain(self.domain), key=lambda p: p._id)
+        original_list = Product.by_domain(self.domain, wrap=False)
 
-        self.products[0].archive()
+        products[0].archive()
 
-        new_list = Product.by_domain(self.domain.name, wrap=False)
+        new_list = Product.by_domain(self.domain, wrap=False)
 
         self.assertTrue(
-            self.products[0]._id not in [p['_id'] for p in new_list],
+            products[0]._id not in [p['_id'] for p in new_list],
             "Archived product still returned by Product.by_domain()"
         )
 
@@ -22,24 +36,24 @@ class ProductsTest(CommTrackTest):
         )
 
         self.assertEqual(
-            len(Product.by_domain(self.domain.name, wrap=False, include_archived=True)),
+            len(Product.by_domain(self.domain, wrap=False, include_archived=True)),
             len(original_list)
         )
 
         self.assertEqual(
-            SQLProduct.objects.filter(domain=self.domain.name, is_archived=True).count(),
+            SQLProduct.objects.filter(domain=self.domain, is_archived=True).count(),
             1
         )
 
-        self.products[0].unarchive()
+        products[0].unarchive()
 
         self.assertEqual(
             len(original_list),
-            len(Product.by_domain(self.domain.name, wrap=False))
+            len(Product.by_domain(self.domain, wrap=False))
         )
 
     def test_sync(self):
-        product = self.products[1]
+        product = make_product(self.domain, 'Sample Product 3', 'pr', '')
 
         product.name = "new_name"
         product.domain = "new_domain"

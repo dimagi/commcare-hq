@@ -12,9 +12,11 @@ ICDS_UCR_ENGINE_ID = 'icds-ucr'
 
 
 def create_engine(connection_string=None):
-    # todo: this function is just a proxy for the sqlalchemy version and should be removed
     connection_string = connection_string or settings.SQL_REPORTING_DATABASE_URL
-    return sqlalchemy.create_engine(connection_string)
+    # paramstyle='format' allows you to use column names that include the ')' character
+    # otherwise queries will sometimes be misformated/error when formatting
+    # https://github.com/zzzeek/sqlalchemy/blob/ff20903/lib/sqlalchemy/dialects/postgresql/psycopg2.py#L173
+    return sqlalchemy.create_engine(connection_string, paramstyle='format')
 
 
 class SessionHelper(object):

@@ -56,5 +56,5 @@ class DropboxUploadHelperTest(TestCase):
 
         try:
             DropboxUploadHelper.create('my_bogus_token', **kwargs)
-        except Exception, e:
+        except Exception as e:
             self.fail(e)

@@ -13,7 +13,11 @@
                             $("#display_{{ download_id }}").html(data);
                         },
                         error: function(data) {
-                            $("#display_{{ download_id }}").html('<p class="alert alert-danger">{{ error_text }}</p>');
+                            var message = '{{ error_text }}';
+                            if (data.responseText !== undefined && data.responseText !== ''){
+                                message = data.responseText;
+                            }
+                            $("#display_{{ download_id }}").html('<p class="alert alert-danger">' + message + '</p>');
                             clearInterval(autoRefresh);
                         }
                     });

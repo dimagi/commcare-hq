@@ -1,0 +1,15 @@
+{% extends 'reports/async/print_report.html' %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% block content %}
+<html>
+    <head>
+        <link type="text/css"
+              rel="stylesheet"
+              href="{% static 'bootstrap/dist/css/bootstrap.css' %}" />
+    </head>
+    <body>
+    {{ block.super }}
+    </body>
+</html>
+{% endblock %}

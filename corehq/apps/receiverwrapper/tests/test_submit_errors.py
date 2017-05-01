@@ -3,11 +3,11 @@ from django.test import TestCase
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
 from django.test.client import Client
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 import os
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
 from corehq.util.test_utils import flag_enabled
 from dimagi.utils.post import tmpfile
 from couchforms.signals import successful_form_received
@@ -38,7 +38,6 @@ class SubmissionErrorTest(TestCase):
             })
             return file_path, res
 
-    @run_with_all_backends
     def testSubmitBadAttachmentType(self):
         res = self.client.post(self.url, {
                 "xml_submission_file": "this isn't a file"
@@ -46,7 +45,6 @@ class SubmissionErrorTest(TestCase):
         self.assertEqual(400, res.status_code)
         #self.assertIn("xml_submission_file", res.content)
 
-    @run_with_all_backends
     def testSubmitDuplicate(self):
         file, res = self._submit('simple_form.xml')
         self.assertEqual(201, res.status_code)
@@ -64,7 +62,6 @@ class SubmissionErrorTest(TestCase):
         with open(file) as f:
             self.assertEqual(f.read(), log.get_xml())
 
-    @run_with_all_backends
     def testSubmissionError(self):
         evil_laugh = "mwa ha ha!"
 
@@ -89,7 +86,6 @@ class SubmissionErrorTest(TestCase):
         finally:
             successful_form_received.disconnect(fail)
 
-    @run_with_all_backends
     def testSubmitBadXML(self):
         f, path = tmpfile()
         with f:
@@ -109,7 +105,6 @@ class SubmissionErrorTest(TestCase):
         self.assertEqual("this isn't even close to xml", log.get_xml())
         self.assertEqual(log.form_data, {})
 
-    @run_with_all_backends
     def test_missing_xmlns(self):
         file, res = self._submit('missing_xmlns.xml')
         self.assertEqual(500, res.status_code)
@@ -124,10 +119,14 @@ class SubmissionErrorTest(TestCase):
         with open(file) as f:
             self.assertEqual(f.read(), log.get_xml())
 
-    @run_with_all_backends
     @flag_enabled('DATA_MIGRATION')
     def test_data_migration(self):
         file, res = self._submit('simple_form.xml')
         self.assertEqual(503, res.status_code)
         message = "Service Temporarily Unavailable"
         self.assertIn(message, res.content)
+
+
+@use_sql_backend
+class SubmissionErrorTestSQL(SubmissionErrorTest):
+    pass

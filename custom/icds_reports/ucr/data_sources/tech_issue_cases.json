@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "config": {
     "table_id": "static-tech_issue_cases",
     "display_name": "Cases - Tech Issue (Static)",
@@ -50,6 +54,7 @@
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "supervisor_id",
+        "create_index": true,
         "expression": {
           "type": "named",
           "name": "supervisor_id"
@@ -412,6 +417,10 @@
         "property_value": "ls"
       }
     },
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

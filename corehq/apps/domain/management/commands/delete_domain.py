@@ -1,4 +1,4 @@
-from optparse import make_option
+from __future__ import print_function
 
 from django.core.management.base import BaseCommand
 
@@ -7,21 +7,23 @@ from corehq.apps.domain.models import Domain
 
 class Command(BaseCommand):
     help = "Deletes the given domain and its contents"
-    args = '<domain>'
 
-    option_list = (
-        make_option('--noinput',
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'domain_name',
+        )
+        parser.add_argument(
+            '--noinput',
             action='store_true',
             dest='noinput',
             default=False,
-            help='Skip important confirmation warnings.'),
-    )
+            help='Skip important confirmation warnings.',
+        )
 
-    def handle(self, *args, **options):
-        domain_name = args[0].strip()
+    def handle(self, domain_name, **options):
         domain = Domain.get_by_name(domain_name)
         if not domain:
-            print u'domain with name "{}" not found'.format(domain_name)
+            print(u'domain with name "{}" not found'.format(domain_name))
             return
         if not options['noinput']:
             confirm = raw_input(
@@ -33,8 +35,8 @@ class Command(BaseCommand):
                 """.format(domain_name)
             )
             if confirm != domain_name:
-                print "\n\t\tDomain deletion cancelled."
+                print("\n\t\tDomain deletion cancelled.")
                 return
-        print u"Deleting domain {}".format(domain_name)
+        print(u"Deleting domain {}".format(domain_name))
         domain.delete()
-        print "Operation completed"
+        print("Operation completed")

@@ -91,6 +91,7 @@ EntrySingleAnswer = function(question, options) {
     Entry.call(self, question, options);
     self.valueUpdate = undefined;
     self.rawAnswer = ko.observable(question.answer() || Formplayer.Const.NO_ANSWER);
+    self.placeholderText = '';
 
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 
@@ -341,6 +342,7 @@ function ComboboxEntry(question, options) {
     self.matchType = options.matchType;
     self.lengthLimit = Infinity;
     self.templateType = 'str';
+    self.placeholderText = gettext('Type to filter answers');
 
     self.options = ko.computed(function() {
         return _.map(question.choices(), function(choice, idx) {
@@ -364,7 +366,9 @@ function ComboboxEntry(question, options) {
     }
 
     self.renderAtwho = function() {
-        var $input = $('#' + self.entryId);
+        var $input = $('#' + self.entryId),
+            limit = Infinity,
+            $atwhoView;
         $input.atwho('destroy');
         $input.atwho('setIframe', window.frameElement, true);
         $input.atwho({
@@ -372,12 +376,18 @@ function ComboboxEntry(question, options) {
             data: self.options(),
             maxLen: Infinity,
             tabSelectsMatch: false,
+            limit: limit,
             suffix: '',
             callbacks: {
                 filter: function(query, data) {
-                    return _.filter(data, function(item) {
+                    var results = _.filter(data, function(item) {
                         return ComboboxEntry.filter(query, item, self.matchType);
                     });
+                    $atwhoView = $('.atwho-container .atwho-view');
+                    $atwhoView.attr({
+                        'data-message': 'Showing ' + Math.min(limit, results.length) + ' of ' + results.length,
+                    });
+                    return results;
                 },
                 matcher: function() {
                     return $input.val();
@@ -613,7 +623,7 @@ function GeoPointEntry(question, options) {
         self.rawAnswer([]);
     };
 
-    window.gMapsCallback = function() {
+    self.gMapsCallback = function() {
         self.geocoder = new google.maps.Geocoder();
         self.map = new google.maps.Map($('#' + self.entryId)[0], {
             mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -625,12 +635,19 @@ function GeoPointEntry(question, options) {
             self.map.setZoom(self.DEFAULT.anszoom);
         }
         google.maps.event.addListener(self.map, "center_changed", self.updateCenter.bind(self));
-    }
+    };
+
     self.afterRender = function() {
-        if (typeof google === "undefined") {
-            $.getScript(self.apiKey + '&callback=gMapsCallback');
+        if (typeof google === "undefined" && !window.gMapsRequested) {
+            // First entry to attempt to load google
+            window.gMapsRequested = true;
+            $.getScript(self.apiKey, self.gMapsCallback);
+        } else if (typeof google === "undefined" && window.gMapsRequested) {
+            // Waiting for gmaps to load, recursively call afterRender
+            setTimeout(self.afterRender, 400);
         } else {
-            window.gMapsCallback();
+            // google has already been loaded
+            self.gMapsCallback();
         }
     };
 

@@ -22,12 +22,10 @@ class TestRenewSubscriptions(BaseAccountingTest):
         )
         self.domain.save()
 
-        self.admin_user = generator.arbitrary_web_user()
-        self.admin_user.add_domain_membership(self.domain.name, is_admin=True)
-        self.admin_user.save()
+        self.admin_username = generator.create_arbitrary_web_user_name()
 
         self.account = BillingAccount.get_or_create_account_by_domain(
-            self.domain.name, created_by=self.admin_user.username)[0]
+            self.domain.name, created_by=self.admin_username)[0]
 
         self.standard_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.STANDARD)
 
@@ -39,7 +37,7 @@ class TestRenewSubscriptions(BaseAccountingTest):
             self.account,
             self.domain.name,
             self.standard_plan,
-            web_user=self.admin_user.username,
+            web_user=self.admin_username,
             date_start=yesterday,
             date_end=tomorrow,
         )
@@ -47,10 +45,8 @@ class TestRenewSubscriptions(BaseAccountingTest):
         self.subscription.save()
 
     def tearDown(self):
-        generator.delete_all_subscriptions()
-        generator.delete_all_accounts()
+        self.domain.delete()
         super(TestRenewSubscriptions, self).tearDown()
-        self.admin_user.delete()
 
     def test_simple_renewal(self):
         self.renewed_subscription = self.subscription.renew_subscription()

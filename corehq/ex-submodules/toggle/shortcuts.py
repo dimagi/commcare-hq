@@ -70,3 +70,25 @@ def parse_toggle(entry):
     if entry.startswith(NAMESPACE_DOMAIN):
         namespace, entry = entry.split(":")
     return namespace, entry
+
+
+def find_with_toggle_enabled(toggle, namespace):
+    from corehq.toggles import ALL_NAMESPACES
+
+    if namespace not in ALL_NAMESPACES:
+        raise ValueError('Unknown toggle namespace "{}"'.format(namespace))
+    try:
+        doc = Toggle.get(toggle.slug)
+    except ResourceNotFound:
+        return []
+    return [user[len(namespace) + 1:] for user in doc.enabled_users if user.startswith(namespace)]
+
+
+def find_users_with_toggle_enabled(toggle):
+    from corehq.toggles import NAMESPACE_USER
+    return find_with_toggle_enabled(toggle, namespace=NAMESPACE_USER)
+
+
+def find_domains_with_toggle_enabled(toggle):
+    from corehq.toggles import NAMESPACE_DOMAIN
+    return find_with_toggle_enabled(toggle, namespace=NAMESPACE_DOMAIN)

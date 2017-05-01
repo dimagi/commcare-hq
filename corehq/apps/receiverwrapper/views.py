@@ -1,13 +1,12 @@
 import logging
 from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.loading import get_db
 from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.decorators import (
-    check_domain_migration, login_or_digest_ex, login_or_basic_ex
+    check_domain_migration, login_or_digest_ex, login_or_basic_ex, login_or_token_ex,
 )
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.receiverwrapper.auth import (
@@ -25,7 +24,7 @@ from corehq.apps.receiverwrapper.util import (
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
-from corehq.util import datadog
+from corehq.util.datadog.gauges import datadog_gauge, datadog_counter
 from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
 from corehq.util.datadog.utils import log_counter
 from corehq.util.timer import TimingContext
@@ -67,7 +66,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             "form_meta": meta,
         }
         log_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, details)
-        notify_exception(None, "Received a submission with POST.keys()", details)
+        notify_exception(request, "Received a submission with POST.keys()", details)
         return HttpResponseBadRequest(e.message)
 
     app_id, build_id = get_app_and_build_ids(domain, app_id)
@@ -91,12 +90,16 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         openrosa_headers=couchforms.get_openrosa_headers(request),
     )
     with TimingContext() as timer:
-        response, instance, cases = submission_post.run()
+        result = submission_post.run()
 
-    backend_tag = ('backend:sql' if should_use_sql_backend(domain) else
-                   'backend:couch')
-    counter_name = 'commcare.xform_submissions.{}'.format(response.status_code)
-    datadog.statsd.increment(counter_name, tags=[backend_tag])
+    response = result.response
+
+    tags = [
+        'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
+        'submission_type:{}'.format(result.submission_type),
+        u'domain:{}'.format(domain),
+    ]
+    datadog_counter('commcare.xform_submissions.count', tags=tags + ['status_code:{}'.format(response.status_code)])
 
     if response.status_code == 400:
         logging.error(
@@ -105,12 +108,12 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         )
     elif response.status_code == 201:
 
-        datadog.statsd.gauge(
-            'commcare.xform_submissions.timings', timer.duration, tags=[backend_tag])
+        datadog_gauge('commcare.xform_submissions.timings', timer.duration, tags=tags)
         # normalize over number of items (form or case) saved
-        datadog.statsd.gauge(
-            'commcare.xform_submissions.normalized_timings',
-            timer.duration/(1 + len(cases)), tags=[backend_tag])
+        normalized_time = timer.duration / (1 + len(result.cases))
+        datadog_gauge('commcare.xform_submissions.normalized_timings', normalized_time, tags=tags)
+        datadog_counter('commcare.xform_submissions.case_count', len(result.cases), tags=tags)
+        datadog_counter('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=tags)
 
     return response
 
@@ -227,6 +230,19 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 
+@handle_401_response
+@login_or_token_ex(allow_cc_users=True)
+def _secure_post_token(request, domain, app_id=None):
+    """only ever called from secure post"""
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=app_id,
+        user_id=request.couch_user.get_id,
+        authenticated=True,
+    )
+
+
 @location_safe
 @csrf_exempt
 @require_POST
@@ -237,6 +253,8 @@ def secure_post(request, domain, app_id=None):
         'basic': _secure_post_basic,
         'noauth': _noauth_post,
     }
+    if toggles.ANONYMOUS_WEB_APPS_USAGE.enabled(domain):
+        authtype_map['token'] = _secure_post_token
 
     try:
         decorated_view = authtype_map[determine_authtype(request)]

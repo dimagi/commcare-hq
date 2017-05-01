@@ -32,16 +32,22 @@
 
 <script>
 
-  var LOAD_LOCS_URL = '{{ api_root }}';
-
   $.getScript("{% static 'locations/js/location_drilldown.async.js' %}", function() {
 
+      var location_url = '{{ api_root }}';
       var locs = {{ locations|JSON }};
       var selected = '{{ loc_id }}';
       var hierarchy = {{ hierarchy|JSON }};
+      var auto_drill = {{ auto_drill | JSON }};
 
       var show_location_filter = {% if make_optional and not loc_id %}'n'{% else %}'y'{% endif%};
-      var model = new LocationSelectViewModel(hierarchy, undefined, undefined, undefined, undefined, show_location_filter);
+
+      var model = new LocationSelectViewModel({
+        "hierarchy": hierarchy,
+        "show_location_filter": show_location_filter,
+        "loc_url": location_url,
+        "auto_drill": auto_drill,
+      });
       $('#group_{{ control_slug }}').koApplyBindings(model);
       model.load(locs, selected);
 

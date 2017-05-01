@@ -1,4 +1,3 @@
-from optparse import make_option
 from django.core.management.base import BaseCommand
 from corehq.apps.domain.models import Domain
 
@@ -8,14 +7,19 @@ DOMS_TO_IGNORE = ['bug-reports']  # we don't care about updating media to includ
 class Command(BaseCommand):
     help = 'Adds domains that have apps w/ media to that media files list of valid domains'
 
-    option_list = (
-        make_option('-s', '--since',
-            help="Begin at this domain. (Alphabetically Descending"),
-        make_option('-d', '--domain',
-            help="Check only this domain"),
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-s',
+            '--since',
+            help="Begin at this domain. (Alphabetically Descending",
+        )
+        parser.add_argument(
+            '-d',
+            '--domain',
+            help="Check only this domain",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         if options.get('domain'):
             domains = [Domain.get_by_name(options.get('domain'))]
         else:

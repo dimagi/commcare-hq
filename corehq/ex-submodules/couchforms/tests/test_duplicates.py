@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends, post_xform
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend, post_xform
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -16,7 +16,6 @@ class DuplicateFormTest(TestCase, TestFileMixin):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
 
-    @run_with_all_backends
     def test_basic_duplicate(self):
         xml_data = self.get_xml('duplicate')
         xform = post_xform(xml_data)
@@ -28,10 +27,9 @@ class DuplicateFormTest(TestCase, TestFileMixin):
         self.assertNotEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_duplicate)
         self.assertTrue(self.ID in xform.problem)
-        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(self.ID, xform.orig_id)
 
-    @run_with_all_backends
     def test_wrong_doc_type(self):
         domain = 'test-domain'
         instance = self.get_xml('duplicate')
@@ -45,24 +43,28 @@ class DuplicateFormTest(TestCase, TestFileMixin):
         self.assertTrue(xform1.is_archived)
 
         # Post an xform with that has different doc_type but same id
-        _, xform2, _ = submit_form_locally(
+        result = submit_form_locally(
             instance,
             domain=domain,
         )
 
-        self.assertNotEqual(xform1.form_id, xform2.form_id)
+        self.assertNotEqual(xform1.form_id, result.xform.form_id)
 
-    @run_with_all_backends
     def test_wrong_domain(self):
         domain = 'test-domain'
         instance = self.get_xml('duplicate')
 
-        _, xform1, _ = submit_form_locally(
+        result1 = submit_form_locally(
             instance,
             domain='wrong-domain',
         )
-        _, xform2, _ = submit_form_locally(
+        result2 = submit_form_locally(
             instance,
             domain=domain,
         )
-        self.assertNotEqual(xform1.form_id, xform2.form_id)
+        self.assertNotEqual(result1.xform.form_id, result2.xform.form_id)
+
+
+@use_sql_backend
+class DuplicateFormTestSQL(DuplicateFormTest):
+    pass

@@ -2,11 +2,8 @@ import re
 import logging
 from functools import wraps
 
-from datadog.api.exceptions import DatadogException
-
 from corehq.util.datadog import statsd, COMMON_TAGS, datadog_logger
 from datadog import api
-
 
 from corehq.util.datadog.const import ALERT_INFO
 
@@ -49,8 +46,8 @@ def create_datadog_event(title, text, alert_type=ALERT_INFO, tags=None, aggregat
                 title=title, text=text, tags=tags,
                 alert_type=alert_type, aggregation_key=aggregation_key,
             )
-        except DatadogException:
-            datadog_logger.exception('Error creating Datadog event')
+        except Exception as e:
+            datadog_logger.exception('Error creating Datadog event', e)
     else:
         datadog_logger.debug('Datadog event: (%s) %s\n%s', alert_type, title, text)
 

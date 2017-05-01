@@ -1,3 +1,4 @@
+import uuid
 import warnings
 from functools import partial
 
@@ -232,12 +233,8 @@ class LocationType(models.Model):
             return []
 
         cls._pre_bulk_save(objects)
-        domain = objects[0].domain
-        names = [o.name for o in objects]
         cls.objects.bulk_create(objects)
-        # we can return 'objects' directly without the below extra DB call after django 1.10,
-        # which autosets 'id' attribute of all objects that are bulk created
-        return list(cls.objects.filter(domain=domain, name__in=names))
+        return list(objects)
 
     @classmethod
     def bulk_update(cls, objects):
@@ -374,7 +371,7 @@ class OnlyUnarchivedLocationManager(LocationManager):
 
 class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
-    name = models.CharField(max_length=100, null=True)
+    name = models.CharField(max_length=255, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
     _migration_couch_id_name = "location_id"  # Used for SyncSQLToCouchMixin
     location_type = models.ForeignKey(LocationType, on_delete=models.CASCADE)
@@ -883,7 +880,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
 
         # Set the UUID here so we can save to SQL first (easier to rollback)
         if not self._id:
-            self._id = self.get_db().server.next_uuid()
+            self._id = uuid.uuid4().hex
 
         sync_to_sql = kwargs.pop('sync_to_sql', True)
         kwargs['sync_to_sql'] = False  # only sync here

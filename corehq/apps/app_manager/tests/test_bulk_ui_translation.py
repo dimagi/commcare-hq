@@ -1,8 +1,9 @@
+from distutils.version import StrictVersion
 from django.test import SimpleTestCase
 from StringIO import StringIO
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.views.translations import process_ui_translation_upload,\
-    get_default_translations_for_download
+from corehq.apps.app_manager.ui_translations import \
+    process_ui_translation_upload, get_default_translations_for_download
 from couchexport.export import export_raw
 
 
@@ -17,7 +18,7 @@ class BulkUiTranslation(SimpleTestCase):
     def _build_translation_download_file(self, headers, data=None):
         if data is None:
             data = []
-            translations = get_default_translations_for_download(self.app)
+            translations = get_default_translations_for_download(self.app, 'latest')
             for translation_key, translation_value in translations.iteritems():
                 data.append((translation_key, translation_value))
 
@@ -73,7 +74,7 @@ class BulkUiTranslation(SimpleTestCase):
         )
         self.assertEqual(len(error_properties), 0)
         # There should be a warning that 'unknown_string' is not a CommCare string
-        self.assertEqual(len(warnings), 1)
+        self.assertEqual(len(warnings), 1, warnings)
 
         # test existing translations get updated correctly
         data = (('home.start.demo', 'change_1', 'change_2'))

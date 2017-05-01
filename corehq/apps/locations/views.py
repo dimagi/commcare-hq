@@ -31,8 +31,8 @@ from corehq.apps.custom_data_fields import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.permissions import location_safe
 from corehq.util import reverse
@@ -47,12 +47,15 @@ from .permissions import (
     locations_access_required,
     is_locations_admin,
     can_edit_location,
+    require_can_edit_locations,
+    user_can_edit_location_types,
     can_edit_location_types,
     user_can_edit_any_location,
     can_edit_any_location,
 )
 from .models import LocationType, SQLLocation, filter_for_archived
 from .forms import LocationForm, UsersAtLocationForm
+from .signals import clean_location
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
@@ -60,9 +63,14 @@ from .util import load_locs_json, location_hierarchy_config, dump_locations
 logger = logging.getLogger(__name__)
 
 
+@location_safe
 @locations_access_required
 def default(request, domain):
-    return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
+    if request.couch_user.can_edit_locations():
+        return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
+    elif user_can_edit_location_types(request.couch_user, request.project):
+        return HttpResponseRedirect(reverse(LocationTypesView.urlname, args=[domain]))
+    return no_permissions(request)
 
 
 def lock_locations(func):
@@ -70,7 +78,7 @@ def lock_locations(func):
     def func_wrapper(request, *args, **kwargs):
         key = location_lock_key(request.domain)
         client = get_redis_client()
-        lock = client.lock(key, LOCK_LOCATIONS_TIMEOUT)
+        lock = client.lock(key, timeout=LOCK_LOCATIONS_TIMEOUT)
         if lock.acquire(blocking=False):
             try:
                 return func(request, *args, **kwargs)
@@ -143,7 +151,7 @@ def check_pending_locations_import(redirect=False):
 class BaseLocationView(BaseDomainView):
     section_name = ugettext_lazy("Locations")
 
-    @method_decorator(locations_access_required)
+    @method_decorator(require_can_edit_locations)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -174,7 +182,6 @@ class LocationsListView(BaseLocationView):
     template_name = 'locations/manage/locations.html'
 
     @use_jquery_ui
-    @method_decorator(require_can_edit_commcare_users)
     @method_decorator(check_pending_locations_import())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationsListView, self).dispatch(request, *args, **kwargs)
@@ -236,10 +243,15 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
 
 
-class LocationTypesView(BaseLocationView):
+class LocationTypesView(BaseDomainView):
     urlname = 'location_types'
     page_title = ugettext_noop("Organization Levels")
     template_name = 'locations/location_types.html'
+    section_name = ugettext_lazy("Locations")
+
+    @property
+    def section_url(self):
+        return reverse(LocationsListView.urlname, args=[self.domain])
 
     @method_decorator(can_edit_location_types)
     @use_jquery_ui
@@ -499,6 +511,14 @@ class NewLocationView(BaseLocationView):
         )
 
     def settings_form_post(self, request, *args, **kwargs):
+        self.location_form.is_valid()
+        clean_location.send(
+            self.__class__.__name__,
+            domain=self.domain,
+            request_user=self.request.couch_user,
+            location=self.location,
+            forms={self.location_form.__class__.__name__: self.location_form},
+        )
         if self.location_form.is_valid():
             self.location_form.save()
             return self.form_valid()
@@ -662,7 +682,8 @@ class EditLocationView(NewLocationView):
     @property
     @memoized
     def users_form(self):
-        if not self.can_access_all_locations:
+        if (not self.request.couch_user.can_edit_commcare_users()
+                or not self.can_access_all_locations):
             return None
         form = UsersAtLocationForm(
             domain_object=self.domain_object,
@@ -726,52 +747,6 @@ class EditLocationView(NewLocationView):
             return self.products_form_post(request, *args, **kwargs)
         else:
             raise Http404()
-
-
-class BaseSyncView(BaseLocationView):
-    source = ""
-    sync_urlname = None
-    section_name = ugettext_lazy("Project Settings")
-
-    @property
-    def page_context(self):
-        return {
-            'settings': self.settings_context,
-            'source': self.source,
-            'sync_url': self.sync_urlname
-        }
-
-    @property
-    def settings_context(self):
-        key = "%s_config" % self.source
-        if hasattr(self.domain_object.commtrack_settings, key):
-            return {
-                "source_config": getattr(self.domain_object.commtrack_settings, key)._doc,
-            }
-        else:
-            return {}
-
-    def post(self, request, *args, **kwargs):
-        payload = json.loads(request.POST.get('json'))
-
-        #TODO add server-side input validation here (currently validated on client)
-        key = "%s_config" % self.source
-        if "source_config" in payload:
-            for item in payload['source_config']:
-                if hasattr(self.domain_object.commtrack_settings, key):
-                    setattr(
-                        getattr(self.domain_object.commtrack_settings, key),
-                        item,
-                        payload['source_config'][item]
-                    )
-
-        self.domain_object.commtrack_settings.save()
-
-        return self.get(request, *args, **kwargs)
-
-    @property
-    def section_url(self):
-        return reverse('settings_default', args=(self.domain,))
 
 
 class LocationImportStatusView(BaseLocationView):
@@ -864,7 +839,7 @@ class LocationImportView(BaseLocationView):
         )
 
 
-@locations_access_required
+@require_can_edit_locations
 def location_importer_job_poll(request, domain, download_id,
                                template="style/partials/download_status.html"):
     template = "locations/manage/partials/locations_upload_status.html"
@@ -881,7 +856,7 @@ def location_importer_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
-@locations_access_required
+@require_can_edit_locations
 def location_export(request, domain):
     if not LocationType.objects.filter(domain=domain).exists():
         messages.error(request, _("You need to define organization levels before "

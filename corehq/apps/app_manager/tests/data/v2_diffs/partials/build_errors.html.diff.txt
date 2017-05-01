@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,80 +1,75 @@
+@@ -1,68 +1,66 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  {% load xforms_extras %}{% if build_errors %}
@@ -25,9 +25,9 @@
 -                                Try adding questions to the form
 -                            {% endif %}
 -                            {% include "app_manager/v1/partials/form_error_message.html" %}
-+                                <i class="fa fa-plus"></i> <strong>Add Question</strong> to the
++                                <strong>Add a Question</strong> to the
 +                            {% endif %}
-+                            {% include "app_manager/v2/partials/form_error_message.html" %}.
++                            {% include "app_manager/v2/partials/form_error_message.html" %}
                          {% case "invalid xml" %}
                              {% if not error.message %}
                                  If you don't know why this happened, please report an issue.
@@ -50,6 +50,13 @@
                              {% endblocktrans %}
 -                            {% include "app_manager/v1/partials/form_error_message.html" %}
 +                            {% include "app_manager/v2/partials/form_error_message.html" %}
+                         {% case "form link to missing root" %}
+                             {% blocktrans %}
+                             Please check that end of form navigation is correct. It appears to be pointing
+-                            to a parent module form, but the module doesn't have a parent.
++                            to a parent menu form, but the menu doesn't have a parent.
+                             {% endblocktrans %}
+                             {% include "app_manager/v1/partials/form_error_message.html" %}
                          {% case "no ref detail" %}
 -                            Module
                              <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
@@ -78,9 +85,11 @@
 +                            <i class="fa fa-plus"></i> <strong>Add...</strong> to create
 +                            some menus.
                          {% case "missing module" %}
--                            This application is missing a module. If you have deleted any modules recently, make sure that
-+                            This application is missing a menu. If you have deleted any menu recently, make sure that
-                             you have removed all references to them. If you continue to experience problems, please report an issue.
+                             {% blocktrans %}
+                             This application is missing a module. If you have deleted any modules recently, make sure that
+@@ -73,24 +71,20 @@
+                             {{ error.message }}
+                             {% endif %}
                          {% case "no forms" %}
 -                            Module
                              <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
@@ -89,6 +98,10 @@
 -                            Module
                              <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                              has no forms or case list.
+                         {% case "no reports" %}
+-                            Report module
+                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                             has no reports.
                          {% case "circular case hierarchy" %}
                              {% url "view_module" domain app.id error.module.id as module_url %}
                              {% blocktrans with module_name=error.module.name|trans:langs %}
@@ -100,7 +113,7 @@
                              <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                              uses cases but doesn't have a
                              case type defined.
-@@ -83,29 +78,28 @@
+@@ -99,29 +93,28 @@
                              {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
                              {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
                              You have selected the <a href="{{ form_url }}">{{ form_name }}</a> form
@@ -137,7 +150,7 @@
                              {% endblocktrans %}
                          {% case "form filter has xpath error" %}
                              {% url "view_module" domain app.id error.module.id as module_url %}
-@@ -113,72 +107,72 @@
+@@ -129,72 +122,72 @@
                              {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
                              Display Condition has syntax errors
                              in the <a href="{{ form_url }}">{{ form_name }}</a> form
@@ -235,7 +248,7 @@
                              <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                              has an invalid case tile configuration. Reason: {{ error.reason }}
                          {% case "no source module id" %}
-@@ -186,49 +180,49 @@
+@@ -202,49 +195,49 @@
                              <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                              doesn't have a source module specified.
                          {% case "no parent select id" %}
@@ -286,7 +299,8 @@
 -                            {% if not not_actual_build %}in form {% include "app_manager/v1/partials/form_error_message.html" %}{% endif %}
 +                            {% if not not_actual_build %}in form {% include "app_manager/v2/partials/form_error_message.html" %}{% endif %}
                          {% case "case_name required" %}
-                             Every case must have a name. Please specify a value for the name property under
+-                            Every case must have a name. Please specify a value for the name property under
++                            <strong>Every case must have a name.</strong> Please specify a value for the name property under
                              "Save data to the following case properties" {% if error.case_tag %} for action "{{ error.case_tag }}"{% endif %}
 -                            {% if not not_actual_build %}in form {% include "app_manager/v1/partials/form_error_message.html" %}{% endif %}
 +                            {% if not not_actual_build %}in form {% include "app_manager/v2/partials/form_error_message.html" %}{% endif %}
@@ -299,7 +313,7 @@
                                  references a question that no longer exists: "{{ error.path }}". It is likely that
                                  this question has been renamed or deleted. Please update or delete this question
                                  reference before you make a new version.
-@@ -243,40 +237,40 @@
+@@ -259,40 +252,40 @@
                              One of your languages is empty. Check your <a href="{% url "view_app" domain app.id %}">app settings</a>.
                          {% case "missing parent tag" %}
                              A subcase is referencing a parent case tag that does not exist: "{{ error.case_tag }}"
@@ -352,7 +366,7 @@
                                  {% endblocktrans %}
                              {% endif %}
                          {% case "invalid user property xpath reference" %}
-@@ -325,14 +319,14 @@
+@@ -353,14 +346,14 @@
                  </li>
              {% endfor %}
          </ul>

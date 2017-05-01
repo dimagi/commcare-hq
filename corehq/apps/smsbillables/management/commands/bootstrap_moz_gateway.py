@@ -121,8 +121,6 @@ def bootstrap_moz_gateway(apps):
 
 class Command(BaseCommand):
     help = "bootstrap MOZ global SMS backend gateway fees"
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         bootstrap_moz_gateway(None)

@@ -3,18 +3,40 @@
   margin-left: @app-manager-sidebar-width;
   background-color: @cc-brand-low;
   position:relative;
-  padding: 10px 20px;
   box-sizing: border-box;
   background-image: url('img/loading.gif');
   background-repeat: no-repeat;
   background-position: center 100px;
   background-size: 25% auto;
 
+  width: -webkit-calc(~"100% - " @app-manager-sidebar-width);
+  width: -moz-calc(~"100% - " @app-manager-sidebar-width);
+  width: calc(~"100% - " @app-manager-sidebar-width);
+
+  min-height: 100%;
+
   .transition(all 1s);
   .box-shadow(0 0 20px 0 rgba(0, 0, 0, .20));
 
   &.formdesigner-content-wrapper {
     padding: 0;
+  }
+  #formdesigner {
+    background-color: @cc-brand-low !important;
+    opacity: 100;
+    .transition(opacity 1s);
+
+    &.loading {
+      opacity: 0;
+    }
+
+    .fd-content-right .fd-head,
+    .fd-content-right .fd-form-actions {
+      // There is a 2px white line between the right edge of form player and the
+      // right edge of the screen. This gets rid of it. If I make the container
+      // 2px bigger, all of formplayer bumps down to the next line --B
+      margin-right: -2px;
+    }
   }
 }
 
@@ -23,15 +45,17 @@
   position: relative;
 }
 
-#js-appmanager-body.appmanager-content-not-formdesigner {
+#js-appmanager-body.appmanager-settings-content {
+  .box-shadow(0 0 20px 0 rgba(0, 0, 0, .20));
   background-color: white;
-  margin-top: -9px;
-  margin-left: -20px;
-  margin-right: -20px;
-  margin-bottom: -30px;
   padding-top: 9px;
   padding-left: 20px;
   padding-right: 20px;
+  padding-bottom: 60px;
+  min-height:  100%;
+  position: absolute;
+  width: 100%;
+  top: 0;
 }
 
 .appmanager-loading-container {
@@ -127,4 +151,25 @@
   color: @cc-text;
   vertical-align: top;
   margin-top: 6px;
+}
+
+.appmanager-content-row {
+  background-color: @cc-brand-low;
+}
+
+.app-preview-icon::before {
+  font-size: 2.3rem;
+  vertical-align: middle;
+  top: -15px;
+  left: -1px;
+  position: absolute;
+}
+.app-preview-icon {
+  position: relative;
+  width: 10px;
+}
+
+.appmanager-content-single-page {
+  background: white;
+  padding: 20px 20px;
 }

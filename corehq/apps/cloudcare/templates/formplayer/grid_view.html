@@ -86,7 +86,6 @@
           </div>
         </div>
         {% endif %}
-        {% if request.couch_user.is_dimagi or request|toggle_enabled:"SHOW_PREVIEW_APP_SETTINGS" %}
         <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
           <div class="js-settings appicon appicon-settings">
             <i class="fa fa-gear appicon-icon" aria-hidden="true"></i>
@@ -95,11 +94,32 @@
             </div>
           </div>
         </div>
-        {% endif %}
     </div>
   </div>
 </script>
 
+
+<script id="landing-page-app-template" type="text/template">
+  <div class="container">
+    <h1>Welcome to <%= appName %></h1>
+    <div class="row">
+        <div class="lead col-xs-12">
+          Ready to start using CommCare now?
+        </div>
+        <div class="lead col-xs-12">
+          <button class="btn btn-success js-start-app">Start!</button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="lead col-xs-12">
+          Already have an account with CommCare? Please use your login.
+        </div>
+        <div class="lead col-xs-12">
+          <button class="btn btn-default js-start-app">Login</button>
+        </div>
+    </div>
+  </div>
+</script>
 
 <script id="row-template" type="text/template">
   <div class="appicon appicon-default">

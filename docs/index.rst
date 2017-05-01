@@ -19,10 +19,12 @@ Welcome to CommCareHQ's documentation!
 
    reporting
    change_feeds
+   pillows
    api
    maps
    ui_helpers
    class_views
+   testing
    forms
    management_commands
    commtrack

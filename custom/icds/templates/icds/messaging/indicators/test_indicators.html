@@ -1,0 +1,34 @@
+{% extends 'style/base_section.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block js-inline %}
+    <script>
+    $('#id_users').select2({
+        ajax: {
+            url: "{% url 'icds_user_lookup' request.domain %}",
+            dataType: 'json',
+            data: function (term) {
+                return { term: term };
+            },
+            results: function (data, params) {
+                return {
+                    results: _.map(data.results, function(result) {
+                        return {
+                            'id': result._id,
+                            'text': result.base_username
+                        }
+                    })
+                }
+            },
+        }
+    });
+    </script>
+
+{% endblock %}
+
+
+{% block page_content %}
+    {% crispy form %}
+{% endblock %}

@@ -1,6 +1,8 @@
 import datetime
 import logging
+import uuid
 
+import redis
 from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case import const
@@ -9,6 +11,7 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.blobs.mixin import bulk_atomic_blobs
+from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.exceptions import CaseNotFound
 from couchforms.util import fetch_and_wrap_form
 from couchforms.models import (
@@ -31,7 +34,7 @@ class FormProcessorCouch(object):
 
     @classmethod
     def new_xform(cls, form_data):
-        _id = extract_meta_instance_id(form_data) or XFormInstance.get_db().server.next_uuid()
+        _id = extract_meta_instance_id(form_data) or uuid.uuid4().hex
         assert _id
         xform = XFormInstance(
             # form has to be wrapped
@@ -95,8 +98,7 @@ class FormProcessorCouch(object):
     @classmethod
     def assign_new_id(cls, xform):
         assert not xform.persistent_blobs, "some blobs would be lost"
-        new_id = XFormInstance.get_db().server.next_uuid()
-        xform._id = new_id
+        xform._id = uuid.uuid4().hex
         return xform
 
     @classmethod
@@ -133,7 +135,7 @@ class FormProcessorCouch(object):
         return touched_cases
 
     @staticmethod
-    def hard_rebuild_case(domain, case_id, detail):
+    def hard_rebuild_case(domain, case_id, detail, save=True):
         try:
             case = CommCareCase.get(case_id)
             assert case.domain == domain
@@ -163,7 +165,8 @@ class FormProcessorCouch(object):
 
         # add a "rebuild" action
         case.actions.append(_rebuild_action())
-        case.save()
+        if save:
+            case.save()
         return case
 
     @staticmethod
@@ -174,6 +177,30 @@ class FormProcessorCouch(object):
         """
         form_ids = get_case_xform_ids(case_id)
         return [fetch_and_wrap_form(id) for id in form_ids]
+
+    @staticmethod
+    def get_case_with_lock(case_id, lock=False, strip_history=False, wrap=False):
+        try:
+            if strip_history:
+                case_doc = CommCareCase.get_lite(case_id, wrap=wrap)
+            elif lock:
+                try:
+                    return CommCareCase.get_locked_obj(_id=case_id)
+                except redis.RedisError:
+                    case_doc = CommCareCase.get(case_id)
+            else:
+                if wrap:
+                    case_doc = CommCareCase.get(case_id)
+                else:
+                    case_doc = CommCareCase.get_db().get(case_id)
+        except ResourceNotFound:
+            return None, None
+
+        return case_doc, None
+
+    @staticmethod
+    def case_exists(case_id):
+        return CaseAccessorCouch.case_exists(case_id)
 
 
 def _get_actions_from_forms(domain, sorted_forms, case_id):

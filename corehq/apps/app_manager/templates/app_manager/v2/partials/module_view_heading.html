@@ -4,14 +4,11 @@
 
 <div class="appmanager-page-actions">
   {% if can_preview_form %}
-  <button type="button" class="btn btn-info js-preview-toggle" style="display: none;">
-    <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
-    <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
-  </button>
+    {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
   {% endif %}
 </div>
 <div class="appmanager-edit-title">
-  {% if module.case_type == '' %}
+  {% if module.is_surveys %}
       {% inline_edit_trans_v2 module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-folder-open' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
   {% else %}
       {% inline_edit_trans_v2 module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-bars' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
@@ -24,7 +21,7 @@
     id:'comment-id',
     containerClass: 'app-comment',
     value: '{{ module.comment|escapejs }}',
-    placeholder: 'Enter {% if module.case_type != '' %}case list{% endif %} description here',
+    placeholder: 'Enter {% if not module.is_surveys %}case list{% endif %} description here',
     url: '{% url "edit_module_attr" domain app.id module.id 'comment' %}',
     saveValueName: 'comment',
     cols: 50,

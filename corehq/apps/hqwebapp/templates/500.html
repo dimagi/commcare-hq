@@ -17,13 +17,20 @@
         });
     </script>
 {% endblock %}
-{% block page_name %}500 <small>{% trans "Sorry, something unexpected just went wrong, and we're very sorry about it." %}</small>{% endblock %}
+{% block page_name %}<h2>{% trans "Sorry, something unexpected just went wrong, and we're very sorry about it." %}</h2>{% endblock %}
 {% block page_content %}
     <div class="row">
+        {% if not enterprise_mode %}
         <div class="col-sm-4">
             <p><img id="sad-danny" src="{% static 'hqwebapp/images/sad_danny.jpg' %}" alt="{% trans "Sad Danny is Sad" %}" /></p>
         </div>
+        {% endif %}
+
+        {% if not enterprise_mode %}
         <div class="col-sm-8">
+        {% else %}
+        <div class="col-sm-12">
+        {% endif %}
             <div class="well">
                 <form>
                     <fieldset>
@@ -61,13 +68,13 @@
                     {% trans "We would appreciate it a lot if you could provide us with any additional info about what happened before you encountered this problem." %}<br><br>
                     <div class="form-group">
                         <label class="col-sm-3 control-label" for="bug-report-500-subject">{% trans "Short Description" %}</label>
-                        <div class="col-sm-9">
+                        <div class="col-sm-6">
                             <input type="text" class="form-control" name="subject" id="bug-report-500-subject">
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="col-sm-3 control-label" for="bug-report-500-message">{% trans "Full Description" %}</label>
-                        <div class="col-sm-9">
+                        <div class="col-sm-6">
                             <textarea class="form-control" name="message" id="bug-report-500-message" rows="5"></textarea>
                         </div>
                     </div>

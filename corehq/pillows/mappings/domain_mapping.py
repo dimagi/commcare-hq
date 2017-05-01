@@ -258,29 +258,9 @@ DOMAIN_MAPPING = {'_meta': {'comment': '',
                 'yt_id': {'type': 'string'}}}
 
 
-DOMAIN_META = {
-    "settings": {
-        "analysis": {
-            "analyzer": {
-                "default": {
-                    "type": "custom",
-                    "tokenizer": "whitespace",
-                    "filter": ["lowercase"]
-                },
-                "comma": {
-                    "type": "pattern",
-                    "pattern": "\s*,\s*"
-                },
-            }
-        }
-    }
-}
-
-
 DOMAIN_INDEX_INFO = ElasticsearchIndexInfo(
     index=DOMAIN_INDEX,
     alias='hqdomains',
     type='hqdomain',
-    meta=DOMAIN_META,
     mapping=DOMAIN_MAPPING,
 )

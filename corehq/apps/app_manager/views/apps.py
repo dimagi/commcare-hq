@@ -13,7 +13,7 @@ from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.contrib import messages
@@ -27,7 +27,7 @@ from corehq import toggles, privileges
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
-from corehq.apps.dashboard.views import NewUserDashboardView
+from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.tour import tours
@@ -94,8 +94,8 @@ def delete_app(request, domain, app_id):
     app.save()
     clear_app_cache(request, domain)
 
-    if toggles.APP_MANAGER_V2.enabled(domain):
-        return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
+    if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
     return back_to_main(request, domain)
 
 
@@ -123,12 +123,12 @@ def default_new_app(request, domain):
     """
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
-    if tours.NEW_APP.is_enabled(request.user):
+    if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(request.user.username):
         identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
 
-    if not toggles.APP_MANAGER_V2.enabled(domain):
+    if not toggles.APP_MANAGER_V2.enabled(request.user.username):
         # APP MANAGER V2 is completely blank on new app
         module = Module.new_module(_("Untitled Module"), lang)
         app.add_module(module)
@@ -138,18 +138,17 @@ def default_new_app(request, domain):
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
-    if toggles.APP_MANAGER_V2.enabled(request.domain):
+    if toggles.APP_MANAGER_V2.enabled(request.user.username):
         return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
     return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, 0, 0]))
 
 
 def get_app_view_context(request, app):
 
-    is_cloudcare_allowed = has_privilege(request, privileges.CLOUDCARE)
     context = {}
 
     settings_layout = copy.deepcopy(
-        get_commcare_settings_layout(request.domain)[app.get_doc_type()]
+        get_commcare_settings_layout(request.user)[app.get_doc_type()]
     )
     for section in settings_layout:
         new_settings = []
@@ -166,15 +165,26 @@ def get_app_view_context(request, app):
             new_settings.append(setting)
         section['settings'] = new_settings
 
+    app_view_options = {
+        'permissions': {
+            'cloudcare': has_privilege(request, privileges.CLOUDCARE),
+        },
+        'sections': settings_layout,
+        'urls': {
+            'save': reverse("edit_commcare_settings", args=(app.domain, app.id)),
+        },
+        'user': {
+            'is_previewer': request.couch_user.is_previewer(),
+        },
+        'values': get_settings_values(app),
+        'warning': _("This is not an allowed value for this field"),
+    }
     if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in app.profile:
         custom_properties_array = map(lambda p: {'key': p[0], 'value': p[1]},
                                       app.profile.get('custom_properties').items())
-        context.update({'custom_properties': custom_properties_array})
-
+        app_view_options.update({'customProperties': custom_properties_array})
     context.update({
-        'settings_layout': settings_layout,
-        'settings_values': get_settings_values(app),
-        'is_cloudcare_allowed': is_cloudcare_allowed,
+        'app_view_options': app_view_options,
     })
 
     build_config = CommCareBuildConfig.fetch()
@@ -192,9 +202,9 @@ def get_app_view_context(request, app):
 
     (build_spec_setting,) = filter(
         lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
-        [setting for section in context['settings_layout']
+        [setting for section in settings_layout
             for setting in section['settings']]
-    ) if context['settings_layout'] else (None,)
+    ) if settings_layout else (None,)
     if build_spec_setting:
         build_spec_setting['options_map'] = options_map
         build_spec_setting['default_app_version'] = app.application_version
@@ -263,7 +273,7 @@ def get_apps_base_context(request, domain, app):
         'app_subset': {
             'commcare_minor_release': app.commcare_minor_release,
             'doc_type': app.get_doc_type(),
-            'form_counts_by_module': [len(m.forms) for m in app.modules],
+            'form_counts_by_module': [len(m.forms) for m in app.modules] if not app.is_remote_app() else [],
             'version': app.version,
         } if app else {},
         'timezone': timezone,
@@ -271,17 +281,19 @@ def get_apps_base_context(request, domain, app):
 
     if app and not app.is_remote_app():
         app.assert_app_v2()
+        show_advanced = (
+            toggles.APP_BUILDER_ADVANCED.enabled(domain)
+            or getattr(app, 'commtrack_enabled', False)
+        )
         context.update({
             'show_care_plan': (
                 not app.has_careplan_module
                 and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)
             ),
-            'show_advanced': (
-                toggles.APP_BUILDER_ADVANCED.enabled(domain)
-                or getattr(app, 'commtrack_enabled', False)
-            ),
+            'show_advanced': show_advanced,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
+            'show_shadow_forms': show_advanced,
         })
 
     return context
@@ -297,8 +309,9 @@ def app_source(request, domain, app_id):
 @require_can_edit_apps
 def copy_app(request, domain):
     app_id = request.POST.get('app')
+    app = get_app(domain, app_id)
     form = CopyApplicationForm(
-        domain, app_id, request.POST,
+        domain, app, request.POST,
         export_zipped_apps_enabled=toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
     )
     if form.is_valid():
@@ -316,23 +329,21 @@ def copy_app(request, domain):
                 for slug in data['toggles'].split(","):
                     set_toggle(slug, domain, True, namespace=toggles.NAMESPACE_DOMAIN)
             extra_properties = {'name': data['name']}
-            if data.get('linked'):
+            linked = data.get('linked')
+            if linked:
                 extra_properties['master'] = app_id
                 extra_properties['doc_type'] = 'LinkedApplication'
-                app = get_app(None, app_id)
                 if domain not in app.linked_whitelist:
                     app.linked_whitelist.append(domain)
                     app.save()
             app_copy = import_app_util(app_id_or_source, domain, extra_properties)
-            mobile_ucrs = False
-            for module in app_copy.modules:
-                if isinstance(module, ReportModule):
-                    mobile_ucrs = True
-                    break
-            if mobile_ucrs:
-                messages.error(request, _('This linked application uses mobile UCRs '
-                                          'which are currently not supported. For this application '
-                                          'to function correctly, you will need to remove those modules.'))
+            if linked:
+                for module in app_copy.modules:
+                    if isinstance(module, ReportModule):
+                        messages.error(request, _('This linked application uses mobile UCRs which '
+                                                  'are currently not supported. For this application to '
+                                                  'function correctly, you will need to remove those modules.'))
+                        break
             return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
         return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
@@ -345,7 +356,7 @@ def copy_app(request, domain):
 def app_from_template(request, domain, slug):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
-    if tours.NEW_APP.is_enabled(request.user):
+    if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(request.user.username):
         identify.delay(request.couch_user.username, {'First Template App Chosen': '%s' % slug})
     clear_app_cache(request, domain)
     template = load_app_template(slug)
@@ -382,7 +393,7 @@ def export_gzip(req, domain, app_id):
 @require_can_edit_apps
 def import_app(request, domain):
     template = get_app_manager_template(
-        domain,
+        request.user,
         "app_manager/v1/import_app.html",
         "app_manager/v2/import_app.html",
     )
@@ -450,7 +461,7 @@ def app_settings(request, domain, app_id=None):
 def view_app(request, domain, app_id=None):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id,
-                        release_manager=toggles.APP_MANAGER_V2.enabled(domain))
+                        release_manager=toggles.APP_MANAGER_V2.enabled(request.user.username))
 
 
 @no_conflict_require_POST
@@ -635,6 +646,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'use_j2me_endpoint',
         # Application only
         'cloudcare_enabled',
+        'anonymous_cloudcare_enabled',
         'case_sharing',
         'translation_strategy',
         'auto_gps_capture',
@@ -653,6 +665,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('build_spec', BuildSpec.from_string),
         ('case_sharing', None),
         ('cloudcare_enabled', None),
+        ('anonymous_cloudcare_enabled', None),
         ('commtrack_requisition_mode', lambda m: None if m == 'disabled' else m),
         ('manage_urls', None),
         ('name', None),
@@ -699,6 +712,12 @@ def edit_app_attr(request, domain, app_id, attr):
         if not has_privilege(request, privileges.CLOUDCARE):
             app.cloudcare_enabled = False
 
+    if should_edit("anonymous_cloudcare_enabled"):
+        if app.get_doc_type() not in ("Application",):
+            raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
+        if not has_privilege(request, privileges.CLOUDCARE):
+            app.anonymous_cloudcare_enabled = False
+
     def require_remote_app():
         if app.get_doc_type() not in ("RemoteApp",):
             raise Exception("App type %s does not support profile url" % app.get_doc_type())
@@ -739,13 +758,14 @@ def rearrange(request, domain, app_id, key):
             to_module_id = int(request.POST['to_module_id'])
             from_module_id = int(request.POST['from_module_id'])
             try:
-                app.rearrange_forms(to_module_id, from_module_id, i, j)
+                app_manager_v2 = toggles.APP_MANAGER_V2.enabled(request.user.username)
+                app.rearrange_forms(to_module_id, from_module_id, i, j, app_manager_v2=app_manager_v2)
             except ConflictingCaseTypeError:
                 messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
         elif "modules" == key:
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException:
-        if toggles.APP_MANAGER_V2.enabled(domain):
+        if toggles.APP_MANAGER_V2.enabled(request.user.username):
             messages.error(request, _(
                 'The form cannot be moved into the desired menu.'
             ))
@@ -842,7 +862,7 @@ def drop_user_case(request, domain, app_id):
     messages.success(
         request,
         _('You have successfully removed User Properties from this application.')
-        if toggles.APP_MANAGER_V2.enabled(domain) else
+        if toggles.APP_MANAGER_V2.enabled(request.user.username) else
         _('You have successfully removed User Case properties from this application.')
     )
     return back_to_main(request, domain, app_id=app_id)

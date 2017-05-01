@@ -1,3 +1,4 @@
+from __future__ import print_function
 from datetime import datetime, timedelta, time
 from dateutil.parser import parser
 from django.core.cache import cache
@@ -127,7 +128,7 @@ def dots_submissions_by_case(case_id, query_date, username=None):
     query['size'] = 1
     query['from'] = 0
     res = xform_es.run_query(query)
-    print json.dumps(res, indent=2)
+    print(json.dumps(res, indent=2))
     return res
 
 

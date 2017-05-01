@@ -1,3 +1,4 @@
+from __future__ import print_function
 from multiprocessing import Process, Queue
 import sys
 import os
@@ -12,7 +13,6 @@ from corehq.util.couchdb_management import CouchConfig
 from corehq.util.dates import iso_string_to_date
 from dimagi.utils.couch.database import iter_docs
 from corehq.apps.domainsync.config import DocumentTransform, save
-from optparse import make_option
 
 # doctypes we want to be careful not to copy, which must be explicitly
 # specified with --include
@@ -31,73 +31,101 @@ class Command(BaseCommand):
     help = "Copies the contents of a domain to another database. " \
            "If targetdb is not specified, the target is the database " \
            "specified by COUCH_DATABASE in your settings."
-    args = '<sourcedb> <domain> [<targetdb>]'
-    option_list = (
-        make_option('--include',
-                    action='store',
-                    dest='doc_types',
-                    default='',
-                    help='Comma-separated list of Document Types to copy'),
-        make_option('--exclude',
-                    action='store',
-                    dest='doc_types_exclude',
-                    default='',
-                    help='Comma-separated list of Document Types to NOT copy.'),
-        make_option('--exclude-attachments',
-                    action='store_true',
-                    dest='exclude_attachments',
-                    default=False,
-                    help="Don't copy document attachments, just the docs themselves."),
-        make_option('--since',
-                    action='store',
-                    dest='since',
-                    default='',
-                    help='Only copy documents newer than this date. Format: yyyy-MM-dd. Only '),
-        make_option('--list-types',
-                    action='store_true',
-                    dest='list_types',
-                    default=False,
-                    help='Don\'t copy anything, just list all the available document types.'),
-        make_option('--simulate',
-                    action='store_true',
-                    dest='simulate',
-                    default=False,
-                    help='Don\'t copy anything, print what would be copied.'),
-        make_option('--id-file',
-                    action='store',
-                    dest='id_file',
-                    default='',
-                    help="File containing one document ID per line. Only docs with these ID's will be copied"),
-        make_option('--postgres-db',
-                    action='store',
-                    dest='postgres_db',
-                    default='',
-                    help="Name of postgres database to pull additional data from. This should map to a "
-                         "key in settings.DATABASES. If not specified no additional postgres data will be "
-                         "copied. This is currently used to pull CommCare Supply models."),
-        make_option('--postgres-password',
-                    action='store',
-                    dest='postgres_password',
-                    default='',
-                    help="Password for postgres database to pull additional data from. If not specified will "
-                         "default to the value in settings.DATABASES"),
-        make_option('--dont-run-multi-process',
-                    action='store_false',
-                    dest='run_multi_process',
-                    default=True,
-                    help="If set to true this spawn multiple processes which should speed up the time taken to "
-                         "copy. This must be false if running in a supervised process")
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'sourcedb',
+        )
+        parser.add_argument(
+            'domain',
+        )
+        parser.add_argument(
+            'targetdb',
+            nargs='?',
+        )
+        parser.add_argument(
+            '--include',
+            action='store',
+            dest='doc_types',
+            default='',
+            help='Comma-separated list of Document Types to copy',
+        )
+        parser.add_argument(
+            '--exclude',
+            action='store',
+            dest='doc_types_exclude',
+            default='',
+            help='Comma-separated list of Document Types to NOT copy.',
+        )
+        parser.add_argument(
+            '--exclude-attachments',
+            action='store_true',
+            dest='exclude_attachments',
+            default=False,
+            help="Don't copy document attachments, just the docs themselves.",
+        )
+        parser.add_argument(
+            '--since',
+            action='store',
+            dest='since',
+            default='',
+            help='Only copy documents newer than this date. Format: yyyy-MM-dd. Only ',
+        )
+        parser.add_argument(
+            '--list-types',
+            action='store_true',
+            dest='list_types',
+            default=False,
+            help='Don\'t copy anything, just list all the available document types.',
+        )
+        parser.add_argument(
+            '--simulate',
+            action='store_true',
+            dest='simulate',
+            default=False,
+            help='Don\'t copy anything, print what would be copied.',
+        )
+        parser.add_argument(
+            '--id-file',
+            action='store',
+            dest='id_file',
+            default='',
+            help="File containing one document ID per line. Only docs with these ID's will be copied",
+        )
+        parser.add_argument(
+            '--postgres-db',
+            action='store',
+            dest='postgres_db',
+            default='',
+            help="Name of postgres database to pull additional data from. This should map to a "
+                 "key in settings.DATABASES. If not specified no additional postgres data will be "
+                 "copied. This is currently used to pull CommCare Supply models.",
+        )
+        parser.add_argument(
+            '--postgres-password',
+            action='store',
+            dest='postgres_password',
+            default='',
+            help="Password for postgres database to pull additional data from. If not specified will "
+                 "default to the value in settings.DATABASES",
+        )
+        parser.add_argument(
+            '--dont-run-multi-process',
+            action='store_false',
+            dest='run_multi_process',
+            default=True,
+            help="If set to true this spawn multiple processes which should speed up the time taken to "
+                 "copy. This must be false if running in a supervised process",
+        )
 
     def iter_source_dbs(self):
         for sourcedb_name, sourcedb in self.source_couch.all_dbs_by_slug.items():
             if sourcedb_name not in self.exclude_dbs:
-                print "In {} db".format(sourcedb_name or "the main")
+                print("In {} db".format(sourcedb_name or "the main"))
                 yield sourcedb_name, sourcedb
 
-    def handle(self, *args, **options):
-        if len(args) not in [2, 3]:
-            raise CommandError('Usage is copy_domain %s' % self.args)
+    def handle(self, sourcedb, domain, targetdb, **options):
+        # FIXME broken b/c https://github.com/dimagi/commcare-hq/pull/15896
         self.exclude_dbs = (
             # these have data we don't want to copy
             'receiverwrapper', 'auditcare', 'fluff-bihar', 'fluff-opm',
@@ -105,8 +133,7 @@ class Command(BaseCommand):
             # todo: missing domain/docs, but probably want to add back
             'meta',
         )
-        self.source_couch = source_couch = CouchConfig(args[0])
-        domain = args[1].strip()
+        self.source_couch = source_couch = CouchConfig(sourcedb)
         simulate = options['simulate']
         exclude_attachments = options['exclude_attachments']
         self.run_multi_process = options['run_multi_process']
@@ -119,12 +146,12 @@ class Command(BaseCommand):
             sys.exit(0)
 
         if simulate:
-            print "\nSimulated run, no data will be copied.\n"
+            print("\nSimulated run, no data will be copied.\n")
 
         if options['postgres_db'] and options['postgres_password']:
             settings.DATABASES[options['postgres_db']]['PASSWORD'] = options['postgres_password']
 
-        self.targetdb = CouchConfig(args[2]) if len(args) == 3 else CouchConfig()
+        self.targetdb = CouchConfig(targetdb) if targetdb else CouchConfig()
 
         try:
             domain_doc = Domain.get_by_name(domain)
@@ -145,14 +172,14 @@ class Command(BaseCommand):
         elif options['id_file']:
             path = options['id_file']
             if not os.path.isfile(path):
-                print "Path '%s' does not exist or is not a file" % path
+                print("Path '%s' does not exist or is not a file" % path)
                 sys.exit(1)
 
             with open(path) as input:
                 doc_ids = [line.rstrip('\n') for line in input]
 
             if not doc_ids:
-                print "Path '%s' does not contain any document ID's" % path
+                print("Path '%s' does not contain any document ID's" % path)
                 sys.exit(1)
 
             for sourcedb_name, sourcedb in self.iter_source_dbs():
@@ -176,10 +203,10 @@ class Command(BaseCommand):
                 num_since = sourcedb.view("by_domain_doc_type_date/view", startkey=[domain, doc_type, since],
                                           endkey=[domain, doc_type, {}], reduce=True).all()
                 num = num_since[0]['value'] if num_since else 0
-                print "{0:<30}- {1:<6} total {2}".format(doc_type, num, doc_count[doc_type])
+                print("{0:<30}- {1:<6} total {2}".format(doc_type, num, doc_count[doc_type]))
         else:
             for doc_type in sorted(doc_count.iterkeys()):
-                print "{0:<30}- {1}".format(doc_type, doc_count[doc_type])
+                print("{0:<30}- {1}".format(doc_type, doc_count[doc_type]))
 
     def copy_docs(self, sourcedb, domain, simulate, startkey=None, endkey=None, doc_ids=None,
                   doc_type=None, since=None, exclude_types=None, postgres_db=None, exclude_attachments=False):
@@ -189,10 +216,10 @@ class Command(BaseCommand):
                                                                 endkey=endkey, reduce=False)]
         total = len(doc_ids)
         count = 0
-        msg = "Found %s matching documents in domain: %s" % (total, domain)
+        msg = u"Found %s matching documents in domain: %s" % (total, domain)
         msg += " of type: %s" % (doc_type) if doc_type else ""
         msg += " since: %s" % (since) if since else ""
-        print msg
+        print(msg)
 
         err_log = self._get_err_log()
 
@@ -218,13 +245,13 @@ class Command(BaseCommand):
         if os.stat(err_log.name)[6] == 0:
             os.remove(err_log.name)
         else:
-            print 'Failed document IDs written to %s' % err_log.name
+            print('Failed document IDs written to %s' % err_log.name)
 
         if postgres_db:
             copy_postgres_data_for_docs(postgres_db, doc_ids=doc_ids, simulate=simulate)
 
     def copy_domain(self, source_couch, domain):
-        print "Copying domain doc"
+        print("Copying domain doc")
         sourcedb = source_couch.get_db_for_class(Domain)
         result = sourcedb.view(
             "domain/domains",
@@ -238,7 +265,7 @@ class Command(BaseCommand):
             dt = DocumentTransform(domain_doc._obj, sourcedb)
             save(dt, self.targetdb.get_db_for_doc_type(domain_doc['doc_type']))
         else:
-            print "Domain doc not found for domain %s." % domain
+            print("Domain doc not found for domain %s." % domain)
 
     def _get_err_log(self):
         name = 'copy_domain.err.%s'
@@ -267,15 +294,15 @@ class Worker(Process):
                 target = self.targetdb.get_db_for_doc_type(doc['doc_type'])
                 copy_doc(doc, count, self.sourcedb, target, self.exclude_types, self.total, self.simulate,
                          self.exclude_attachments)
-            except Exception, e:
+            except Exception as e:
                 self.err_log.write('%s\n' % doc["_id"])
-                print "     Document %s failed! Error is: %s %s" % (doc["_id"], e.__class__.__name__, e)
+                print("     Document %s failed! Error is: %s %s" % (doc["_id"], e.__class__.__name__, e))
 
 
 def copy_doc(doc, count, sourcedb, targetdb, exclude_types, total, simulate, exclude_attachments):
     if exclude_types and doc["doc_type"] in exclude_types:
-        print "     SKIPPED (excluded type: %s). Synced %s/%s docs (%s: %s)" % \
-              (doc["doc_type"], count, total, doc["doc_type"], doc["_id"])
+        print("     SKIPPED (excluded type: %s). Synced %s/%s docs (%s: %s)" % \
+              (doc["doc_type"], count, total, doc["doc_type"], doc["_id"]))
     else:
         if not simulate:
             for i in reversed(range(5)):
@@ -292,4 +319,4 @@ def copy_doc(doc, count, sourcedb, targetdb, exclude_types, total, simulate, exc
                 except (ResourceConflict, ParserError, TypeError):
                     if i == 0:
                         raise
-    print "     Synced %s/%s docs (%s: %s)" % (count, total, doc["doc_type"], doc["_id"])
+    print("     Synced %s/%s docs (%s: %s)" % (count, total, doc["doc_type"], doc["_id"]))

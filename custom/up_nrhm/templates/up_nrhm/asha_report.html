@@ -1,9 +1,13 @@
 {% extends "reports/async/tabular.html" %}
 {% load i18n %}
+{% load compress %}
 {% load hq_shared_tags %}
 
 {% block js %}
     {{ block.super }}
+    {% if rendered_as == 'print' %}
+        <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+    {% endif %}
     <style>
         @page {
             size: A4 landscape;
@@ -12,8 +16,13 @@
                 page-break-inside: avoid;
             }
         @media print {
+            .table {
+                border-collapse: collapse !important;
+            }
+
             .table th, .table td {
-                border-right: 1px solid #dddddd;
+                border: 1px solid #dddddd;
+                padding: 2px;
             }
         }
         .hideImportant {

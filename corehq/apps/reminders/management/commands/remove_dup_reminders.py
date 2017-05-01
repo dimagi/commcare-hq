@@ -1,9 +1,9 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from corehq.apps.reminders.models import (CaseReminder, CaseReminderHandler,
     CASE_CRITERIA)
 from corehq.apps.reminders.signals import case_changed_receiver
 from casexml.apps.case.models import CommCareCase
-from optparse import make_option
 
 
 class Command(BaseCommand):
@@ -14,17 +14,19 @@ class Command(BaseCommand):
         python manage.py remove_dup_reminders --fix
             - displays and removes all duplicate reminders
     """
-    args = ""
+
     help = ("A command which removes duplicate reminder instances created due "
         "to race conditions")
-    option_list = (
-        make_option("--fix",
-                    action="store_true",
-                    dest="fix",
-                    default=False,
-                    help="Include this option to automatically fix any "
-                    "duplicates where possible."),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--fix",
+            action="store_true",
+            dest="fix",
+            default=False,
+            help="Include this option to automatically fix any "
+                 "duplicates where possible.",
+        )
 
     def reminder_to_json(self, r):
         j = r.to_json()
@@ -39,7 +41,7 @@ class Command(BaseCommand):
         json2 = self.reminder_to_json(r2)
         return json1 == json2
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         num_dups = 0
         make_fixes = options["fix"]
         ids = {}
@@ -59,7 +61,7 @@ class Command(BaseCommand):
             if len(v) > 1:
                 num_dups += 1
                 split_key = k.split("|")
-                print "Duplicate found: ", split_key
+                print("Duplicate found: ", split_key)
 
                 handler = CaseReminderHandler.get(split_key[1])
                 if handler.start_condition_type != CASE_CRITERIA:
@@ -73,13 +75,13 @@ class Command(BaseCommand):
                     all_match = all_match and self.reminders_match(reminders[0], r)
                 if all_match:
                     if make_fixes:
-                        print "Removing duplicate(s)..."
+                        print("Removing duplicate(s)...")
                         for r in reminders[1:]:
                             r.retire()
                         c = CommCareCase.get(split_key[2])
                         case_changed_receiver(None, c)
                 else:
-                    print "ERROR: Not all of the reminders with the above key match"
+                    print("ERROR: Not all of the reminders with the above key match")
 
-        print "%s Duplicate(s) were found" % num_dups
+        print("%s Duplicate(s) were found" % num_dups)
 

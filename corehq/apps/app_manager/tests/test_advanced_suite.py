@@ -44,6 +44,12 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         clinic_module.case_details.short.filter = "(filter = 'danny')"
         clinic_module_id = clinic_module.unique_id
         app.get_module(1).get_form(0).actions.load_update_cases[0].details_module = clinic_module_id
+
+        req_module = app.get_module(2)
+        req_module.case_details.short.filter = "filter = 'this'][other = 'that'"
+        req_module_id = req_module.unique_id
+        app.get_module(2).get_form(0).actions.load_update_cases[0].details_module = req_module_id
+
         self.assertXmlEqual(self.get_xml('suite-advanced-filter'), app.create_suite())
 
     @commtrack_enabled(True)

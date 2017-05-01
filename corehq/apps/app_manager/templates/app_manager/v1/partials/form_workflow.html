@@ -9,11 +9,14 @@
         ></span>
     </label>
     <div id="form-workflow" class="col-sm-4 commcare-feature" data-since-version="2.10">
-        <div class="form-group">
+        <div class="form-group" data-bind="css: {'has-error': hasError}">
             <select name="post_form_workflow" class="form-control" data-bind="
                 optstr: workflowOptions(),
                 value: workflow
                 "></select>
+            <div data-bind="visible: hasError" class="help-block">
+                {% trans "This is an unknown value, possibly a deleted form. Please change this value." %}
+            </div>
             {% if is_case_list_form %}
                 <!-- ko if: workflow() !== 'default' -->
                 <p class="alert alert-warning">{% blocktrans %}

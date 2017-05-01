@@ -1,4 +1,5 @@
-from optparse import make_option
+from __future__ import print_function
+
 from gevent import monkey; monkey.patch_all()
 from corehq.pillows.utils import get_all_expected_es_indices
 
@@ -53,7 +54,7 @@ def get_reindex_commands(alias_name):
 
 
 def do_reindex(alias_name, reset):
-    print "Starting pillow preindex %s" % alias_name
+    print("Starting pillow preindex %s" % alias_name)
     reindex_commands = get_reindex_commands(alias_name)
     for reindex_command in reindex_commands:
         if isinstance(reindex_command, basestring):
@@ -62,36 +63,41 @@ def do_reindex(alias_name, reset):
             kwargs = {"reset": True} if reset else {}
             reindex_command, command_kwargs = reindex_command
             kwargs.update(command_kwargs)
-            call_command(reindex_command, **kwargs)
+            if reindex_command == 'ptop_reindexer_v2':
+                index = kwargs.pop('index')
+                call_command(reindex_command, index, **kwargs)
+            else:
+                call_command(reindex_command, **kwargs)
         else:
             reindex_command()
-    print "Pillow preindex finished %s" % alias_name
+    print("Pillow preindex finished %s" % alias_name)
 
 
 class Command(BaseCommand):
     help = ("Preindex ES pillows. "
             "Only run reindexer if the index doesn't exist.")
 
-    option_list = (
-        make_option('--reset',
-                    action='store_true',
-                    dest='reset',
-                    default=False,
-                    help='Reset resumable indices.'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--reset',
+            action='store_true',
+            dest='reset',
+            default=False,
+            help='Reset resumable indices.',
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         runs = []
         all_es_indices = get_all_expected_es_indices()
         es = get_es_new()
         indices_needing_reindex = [info for info in all_es_indices if not es.indices.exists(info.index)]
 
         if not indices_needing_reindex:
-            print 'Nothing needs to be reindexed'
+            print('Nothing needs to be reindexed')
             return
 
-        print "Reindexing:\n\t",
-        print '\n\t'.join(map(unicode, indices_needing_reindex))
+        print("Reindexing:\n\t", end=' ')
+        print('\n\t'.join(map(unicode, indices_needing_reindex)))
 
         preindex_message = """
         Heads up!
@@ -119,7 +125,7 @@ class Command(BaseCommand):
                 )
 
         for index_info in indices_needing_reindex:
-            print index_info.alias
+            print(index_info.alias)
             g = gevent.spawn(do_reindex, index_info.alias, options['reset'])
             runs.append(g)
 
@@ -142,4 +148,4 @@ class Command(BaseCommand):
                     )
                 )
 
-        print "All pillowtop reindexing jobs completed"
+        print("All pillowtop reindexing jobs completed")

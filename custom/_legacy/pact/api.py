@@ -153,7 +153,7 @@ class PactFormAPI(DomainAPI):
                         .replace("<?xml version=\'1.0\' ?>", '')
                         .replace("<?xml version='1.0' encoding='UTF-8' ?>", ''))
                     yield xml_str
-                except Exception, ex:
+                except Exception as ex:
                     logging.error("for downloader: error fetching attachment: %s" % ex)
             yield "</restoredata>"
 
@@ -265,7 +265,7 @@ def get_all_providers(invalidate=False):
             json_data = json.loads(raw_cached_fixtures)
             #not necessary in the grand scheme of things - we could really just use raw JSON
             return [FixtureDataItem.wrap(x) for x in json_data]
-        except Exception, ex:
+        except Exception as ex:
             logging.error("Error loading json from cache key %s: %s" % (PACT_PROVIDERS_FIXTURE_CACHE_KEY, ex))
             return []
 
@@ -393,13 +393,13 @@ class PactAPI(DomainAPI):
                         pdoc.update_providers(self.request.couch_user, submitted_provider_ids)
                         resp.write("success")
                         resp.status_code=204
-                    except Exception, ex:
+                    except Exception as ex:
                         resp.write("Error submitting: %s" % ex)
                         resp.status_code=500
                 else:
                     resp.write("")
                     resp.status_code=304
-            except Exception, ex:
+            except Exception as ex:
                 resp.write("Error submitting: %s" % ex)
                 resp.status_code=500
             return resp

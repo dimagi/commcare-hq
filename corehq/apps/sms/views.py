@@ -4,7 +4,7 @@ import base64
 from datetime import datetime, timedelta, time
 import re
 import json
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render

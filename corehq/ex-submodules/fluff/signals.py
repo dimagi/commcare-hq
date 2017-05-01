@@ -1,13 +1,14 @@
-import logging
-from collections import namedtuple
+from __future__ import print_function
+from collections import namedtuple, defaultdict
 from functools import partial
+import logging
 
-import sqlalchemy
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
+import sqlalchemy
 
 from fluff.util import metadata as fluff_metadata
 
@@ -38,8 +39,9 @@ class DiffTypes(object):
 
     ADD_INDEX = 'add_index'
     REMOVE_INDEX = 'remove_index'
+    INDEX_TYPES = (ADD_INDEX, REMOVE_INDEX)
 
-    CONSTRAINT_TYPES = (ADD_CONSTRAINT, REMOVE_CONSTRAINT, ADD_INDEX, REMOVE_INDEX)
+    CONSTRAINT_TYPES = (ADD_CONSTRAINT, REMOVE_CONSTRAINT) + INDEX_TYPES
 
     ALL = TABLE_TYPES + COLUMN_TYPES + MODIFY_TYPES + CONSTRAINT_TYPES
 
@@ -58,14 +60,15 @@ def catch_signal(sender, **kwargs):
     table_pillow_map = {}
     for config in get_fluff_pillow_configs():
         pillow = config.get_instance()
-        doc = pillow.indicator_class()
-        if doc.save_direct_to_sql:
-            table_pillow_map[doc._table.name] = {
-                'doc': doc,
-                'pillow': pillow
-            }
+        for processor in pillow.processors:
+            doc = processor.indicator_class()
+            if doc.save_direct_to_sql:
+                table_pillow_map[doc._table.name] = {
+                    'doc': doc,
+                    'pillow': pillow
+                }
 
-    print '\tchecking fluff SQL tables for schema changes'
+    print('\tchecking fluff SQL tables for schema changes')
     engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
 
     with engine.begin() as connection:
@@ -83,6 +86,7 @@ def catch_signal(sender, **kwargs):
 
 
 SimpleDiff = namedtuple('SimpleDiff', 'type table_name item_name')
+SimpleIndexDiff = namedtuple('SimpleIndexDiff', 'action index')
 
 
 def reformat_alembic_diffs(raw_diffs):
@@ -132,6 +136,57 @@ def get_tables_to_rebuild(diffs, table_names):
         for diff in diffs
         if diff.table_name in table_names and diff.type in DiffTypes.TYPES_FOR_REBUILD
     }
+
+
+def get_tables_with_index_changes(diffs, table_names):
+    return {
+        diff.table_name
+        for diff in diffs
+        if diff.table_name in table_names and diff.type in DiffTypes.INDEX_TYPES
+    }
+
+
+def _get_indexes_to_change(raw_diffs, table_names):
+    # raw diffs come in as a list of (action, index)
+    index_diffs = [
+        SimpleIndexDiff(action=diff[0], index=diff[1])
+        for diff in raw_diffs if diff[0] in DiffTypes.INDEX_TYPES
+    ]
+    index_diffs_by_table_and_col = defaultdict(list)
+
+    for index_diff in index_diffs:
+        index = index_diff.index
+        if index.table.name not in table_names:
+            continue
+
+        column_names = tuple(index.columns.keys())
+        index_diffs_by_table_and_col[(index.table.name, column_names)].append(index_diff)
+
+    indexes_to_change = []
+
+    for index_diffs in index_diffs_by_table_and_col.values():
+        if len(index_diffs) == 1:
+            indexes_to_change.append(index_diffs[0])
+        else:
+            # tests when alembic tries to remove/add the same index
+            assert len(index_diffs) == 2
+            actions = [diff.action for diff in index_diffs]
+            assert DiffTypes.ADD_INDEX in actions
+            assert DiffTypes.REMOVE_INDEX in actions
+
+    return indexes_to_change
+
+
+def apply_index_changes(engine, raw_diffs, table_names):
+    indexes = _get_indexes_to_change(raw_diffs, table_names)
+    remove_indexes = [index.index for index in indexes if index.action == DiffTypes.REMOVE_INDEX]
+    add_indexes = [index.index for index in indexes if index.action == DiffTypes.ADD_INDEX]
+
+    with engine.begin() as conn:
+        for index in add_indexes:
+            index.create(conn)
+        for index in remove_indexes:
+            index.drop(conn)
 
 
 def rebuild_table(engine, pillow, indicator_doc):

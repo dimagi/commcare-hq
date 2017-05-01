@@ -1,24 +1,37 @@
-from optparse import make_option
-import elasticsearch
+from __future__ import print_function
+
 from django.core.management import BaseCommand
+import elasticsearch
+
+from corehq.apps.userreports.util import get_ucr_es_indices
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
-from corehq.apps.userreports.util import get_ucr_es_indices
 
 
 class Command(BaseCommand):
     help = 'Close all unreferenced elasticsearch indices.'
 
-    option_list = (
-        make_option('--verbose', help='Additional logging.', action='store_true',
-                    default=False),
-        make_option('--noinput', help='Do not prompt user for input', action='store_true',
-                    default=False),
-        make_option('--delete', help='Delete the indices', action='store_true',
-                    default=False),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--verbose',
+            action='store_true',
+            default=False,
+            help='Additional logging.',
+        )
+        parser.add_argument(
+            '--noinput',
+            action='store_true',
+            default=False,
+            help='Do not prompt user for input',
+        )
+        parser.add_argument(
+            '--delete',
+            action='store_true',
+            default=False,
+            help='Delete the indices',
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         es = get_es_new()
         # call this before getting existing indices because apparently getting the pillow will create the index
         # if it doesn't exist
@@ -27,15 +40,15 @@ class Command(BaseCommand):
         pillow_indices = {info.index for info in get_all_expected_es_indices()}
         ucr_indices = {index for index in get_ucr_es_indices()}
         expected_indices = pillow_indices | ucr_indices
-        print expected_indices
+        print(expected_indices)
 
         if options['verbose']:
             if expected_indices - found_indices:
-                print 'the following indices were not found:\n{}\n'.format(
+                print('the following indices were not found:\n{}\n'.format(
                     '\n'.join(expected_indices - found_indices)
-                )
-            print 'expecting {} indices:\n{}\n'.format(len(expected_indices),
-                                                       '\n'.join(sorted(expected_indices)))
+                ))
+            print('expecting {} indices:\n{}\n'.format(len(expected_indices),
+                                                       '\n'.join(sorted(expected_indices))))
 
         unref_indices = set([index for index in found_indices if index not in expected_indices])
         if unref_indices:
@@ -44,7 +57,7 @@ class Command(BaseCommand):
             else:
                 _close_indices(es, unref_indices, options['noinput'])
         else:
-            print 'no indices need pruning'
+            print('no indices need pruning')
 
 
 def _delete_indices(es, to_delete):
@@ -65,7 +78,7 @@ def _delete_indices(es, to_delete):
                 pass
             es.indices.delete(index)
     else:
-        print 'aborted'
+        print('aborted')
 
 
 def _close_indices(es, to_close, noinput):
@@ -85,4 +98,4 @@ def _close_indices(es, to_close, noinput):
                 pass
             es.indices.close(index)
     else:
-        print 'aborted'
+        print('aborted')

@@ -30,7 +30,7 @@ class PublicSMSRateCalculatorForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Field(
                 'country_code',
-                css_class="input-xxlarge",
+                css_class="input-xxlarge ko-select2",
                 data_bind="value: country_code",
                 placeholder=_("Please Select a Country Code"),
             ),

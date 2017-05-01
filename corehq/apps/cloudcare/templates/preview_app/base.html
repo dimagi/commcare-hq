@@ -1,225 +1,88 @@
+{% extends "formplayer-common/base.html" %}
 {% load hq_shared_tags %}
 {% load compress %}
 {% load statici18n %}
-<!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE }}">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="HandheldFriendly" content="True">
 
-        {% if less_debug %}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'style/less/bootstrap.debug.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'style/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'cloudcare/less/font-formplayer.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'style/less/style.debug.less' %}" />
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'cloudcare/css/webforms.css' %}">
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'cloudcare/less/formplayer-common.debug.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'preview_app/less/preview_app.debug.less' %}"/>
-        {% else %}
-          {% compress css %}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'style/less/bootstrap.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'cloudcare/less/font-formplayer.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'style/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'style/less/style.less' %}" />
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'cloudcare/css/webforms.css' %}">
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'preview_app/less/preview_app.less' %}"/>
-            <link rel="stylesheet"
-                  href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}" />
-          {% endcompress %}
+{% block css %}
+
+{% if less_debug %}
+<link type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'preview_app/less/preview_app.debug.less' %}"/>
+
+{% else %}
+{% compress css %}
+<link type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'preview_app/less/preview_app.less' %}"/>
+{% endcompress %}
+{% endif %}
+
+{% endblock %}
+
+{% block body %}
+
+<section id="case-crumbs" style="width: 800px"></section>
+<section id="cases"></section>
+<div id="menu-container">
+    <div id="formplayer-progress-container"></div>
+    <section id="cloudcare-notifications" class="notifications-container"></section>
+    <div id="restore-as-region"></div>
+    <div id="breadcrumb-region"></div>
+    <div class="scrollable-container dragscroll menu-scrollable-container">
+      <div id="menu-region" class="content menu-content"></div>
+      <small id="version-info"></small>
+    </div>
+    <div class="scrollable-container dragscroll form-scrollable-container">
+      <section id="webforms" data-bind="
+          template: {
+              name: 'form-fullform-ko-template',
+              afterRender: afterRender
+          }">
+      </section>
+    </div>
+    {% if request.couch_user.can_edit_data %}
+    <section id="cloudcare-debugger" data-bind="
+        template: {
+            name: 'instance-viewer-ko-template',
+            afterRender: adjustWidth
+        }
+    "></section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="{% static 'cloudcare/js/preview_app/preview_app.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}
+<script>
+    window.GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
+    hqImport('cloudcare/js/preview_app/preview_app.js').start({
+        apps: [{{ app|JSON }}],
+        language: "{{ request.user.language|default:'en' }}",
+        username: "{{ request.user.username  }}",
+        domain: "{{ request.domain }}",
+        formplayer_url: "{{ formplayer_url }}",
+        singleAppMode: true,
+        phoneMode: true,
+        oneQuestionPerScreen: !{{ request.couch_user.is_dimagi|JSON }},
+        allowedHost: "{{ request.get_host }}",
+        environment: {{ environment|JSON }},
+        {% if request.couch_user.can_edit_data %}
+        debuggerEnabled: true,
         {% endif %}
-        <link rel="stylesheet"
-              href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
-        <link type="text/css"
-              rel="stylesheet"
-              media="screen"
-              href="{% static "jquery-ui/themes/redmond/jquery-ui.min.css" %}" />
-
-        <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
-        <link rel="stylesheet" href="{% static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
-        <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
-        <link type="text/css"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
-        <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"/>
-
-        {% if less_debug %}
-        <script>
-            less = {
-                env: "development",
-                useFileCache: true,
-                logLevel: 2,
-                errorReporting: 'console',
-                async: false,
-                fileAsync: false,
-                poll: 1000,
-                functions: {},
-                dumpLineNumbers: "comments",
-                relativeUrls: false
-            };
-        </script>
-        <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
-        {% if less_watch %}<script>less.watch();</script>{% endif %}
-        {% endif %}
-
-        <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-        <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
-        <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
-        <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
-
-        {% compress js %}
-        <!-- UI libraries needed for all other widgets and interactions -->
-        <script src="{% static 'jquery-ui/ui/core.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/mouse.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
-
-        <!-- Individual widgets and interactions -->
-        <script src="{% static 'jquery-ui/ui/menu.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/autocomplete.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/button.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/datepicker.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/draggable.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/resizable.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/droppable.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
-        {% endcompress %}
-
-        {% compress js %}
-        <script src="{% static 'cloudcare/js/preview_app/dragscroll.js' %}"></script>
-        {% endcompress %}
-
-        <style id="list-cell-layout-style"></style>
-        <!-- For Formplayer's app preview -->
-
-    </head>
-    <body>
-        <section id="case-crumbs" style="width: 800px"></section>
-        <section id="cases"></section>
-        <div id="menu-container">
-            <div id="formplayer-progress-container"></div>
-            <section id="cloudcare-notifications" class="notifications-container"></section>
-            <div id="restore-as-region"></div>
-            <div id="breadcrumb-region"></div>
-            <div class="scrollable-container dragscroll menu-scrollable-container">
-              <div id="menu-region" class="content menu-content"></div>
-              <small id="version-info"></small>
-            </div>
-            <div class="scrollable-container dragscroll form-scrollable-container">
-              <section id="webforms" data-bind="
-                  template: {
-                      name: 'form-fullform-ko-template',
-                      afterRender: afterRender
-                  }">
-              </section>
-              {% if request.couch_user.can_edit_data %}
-              <section id="cloudcare-debugger" data-bind="
-                  template: {
-                      name: 'instance-viewer-ko-template',
-                      afterRender: adjustWidth
-                  }
-              "></section>
-              {% endif %}
-            </div>
-        </div>
-
-        {% include 'form_entry/templates.html' %}
-        {% include 'formplayer/grid_view.html' %}
-        {% include 'formplayer/settings_view.html' %}
-        {% include 'formplayer/case_detail.html' %}
-        {% include 'formplayer/case_list.html' %}
-        {% include 'formplayer/menu_list.html' %}
-        {% include 'formplayer/session_list.html' %}
-        {% include 'formplayer/confirmation_modal.html' %}
-        {% include 'formplayer/users.html' %}
-        {% include 'formplayer/progress.html' %}
-        {% include 'formplayer/dependencies.html' %}
-        {% include 'formplayer/query_view.html' %}
-        {% include "style/includes/ko.html" %}
-        {% include 'style/includes/analytics_all.html' %}
-        <script src="{% static 'cloudcare/js/preview_app/preview_app.js' %}"></script>
-        {% block js-inline %}{% endblock %}
-        <script>
-            window.GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
-            hqImport('cloudcare/js/preview_app/preview_app.js').start({
-                apps: [{{ app|JSON }}],
-                language: "{{ request.user.language|default:'en' }}",
-                username: "{{ request.user.username  }}",
-                domain: "{{ request.domain }}",
-                formplayer_url: "{{ formplayer_url }}",
-                singleAppMode: true,
-                phoneMode: true,
-                oneQuestionPerScreen: !{{ request.couch_user.is_dimagi|JSON }},
-                allowedHost: "{{ request.get_host }}",
-                environment: {{ environment|JSON }},
-                {% if request.couch_user.can_edit_data %}
-                debuggerEnabled: true,
-                {% endif %}
-            });
-            $('.dragscroll').on('scroll', function () {
-              $('.form-control').blur();
-            });
-            // Adjust for those pesky scrollbars
-            _.each($('.scrollable-container'), function (sc) {
-              var scrollWidth = $(sc).prop('offsetWidth') - $(sc).prop('clientWidth');
-              $(sc).addClass('has-scrollbar-'+scrollWidth);
-            });
-        </script>
-    </body>
-</html>
+    });
+    $('.dragscroll').on('scroll', function () {
+      $('.form-control').blur();
+    });
+    // Adjust for those pesky scrollbars
+    _.each($('.scrollable-container'), function (sc) {
+      var scrollWidth = $(sc).prop('offsetWidth') - $(sc).prop('clientWidth');
+      $(sc).addClass('has-scrollbar-'+scrollWidth);
+    });
+</script>
+{% endblock %}

@@ -5,7 +5,8 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.performance_sms import parser
 from corehq.apps.performance_sms.exceptions import InvalidParameterException
-from corehq.apps.performance_sms.models import TemplateVariable, ScheduleConfiguration, SCHEDULE_CHOICES
+from corehq.apps.performance_sms.models import TemplateVariable, ScheduleConfiguration, SCHEDULE_CHOICES, \
+    PerformanceConfiguration
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.ui.fields import JsonField
 from crispy_forms.bootstrap import StrictButton
@@ -14,9 +15,41 @@ from crispy_forms.layout import Layout
 import corehq.apps.style.crispy as hqcrispy
 
 
-class PerformanceMessageEditForm(forms.Form):
+class PerformanceFormMixin(object):
+
+    def clean_template(self):
+        return _clean_template(self.cleaned_data['template'])
+
+    def clean(self):
+        cleaned_data = super(PerformanceFormMixin, self).clean()
+        if self.errors:
+            # don't bother processing if there are already errors
+            return cleaned_data
+        config = PerformanceConfiguration.wrap(self.config.to_json())
+        self._apply_updates_to_config(config, cleaned_data)
+        try:
+            config.validate()
+        except InvalidParameterException as e:
+            raise forms.ValidationError(unicode(e))
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        self._apply_updates_to_config(self.config, self.cleaned_data)
+        if commit:
+            self.config.save()
+        return self.config
+
+    def _apply_updates_to_config(self, config, cleaned_data):
+        # overridden by subclasses
+        raise NotImplementedError()
+
+
+class PerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
     recipient_id = forms.CharField()
-    schedule = forms.ChoiceField(choices=[(choice, ugettext_lazy(choice)) for choice in SCHEDULE_CHOICES])
+    schedule_interval = forms.ChoiceField(
+        choices=[(choice, ugettext_lazy(choice)) for choice in SCHEDULE_CHOICES]
+    )
     template = forms.CharField(widget=forms.Textarea)
     time_range = forms.ChoiceField(
         choices=[(choice.slug, choice.description) for choice in get_simple_dateranges()]
@@ -28,7 +61,7 @@ class PerformanceMessageEditForm(forms.Form):
 
         def _to_initial(config):
             initial = copy.copy(config._doc)
-            initial['schedule'] = config.schedule.interval
+            initial['schedule_interval'] = config.schedule.interval
             if config.template_variables:
                 initial['application'] = config.template_variables[0].app_id
                 initial['source'] = config.template_variables[0].source_id
@@ -59,27 +92,18 @@ class PerformanceMessageEditForm(forms.Form):
             *form_layout
         )
 
-    def clean_template(self):
-        return _clean_template(self.cleaned_data['template'])
-
-    def clean_schedule(self):
-        # todo: support other scheduling options
-        return ScheduleConfiguration(interval=self.cleaned_data['schedule'])
-
-    def save(self, commit=True):
-        self.config.recipient_id = self.cleaned_data['recipient_id']
-        self.config.schedule = self.cleaned_data['schedule']
-        self.config.template = self.cleaned_data['template']
+    def _apply_updates_to_config(self, config, cleaned_data):
+        config.recipient_id = cleaned_data['recipient_id']
+        config.schedule = ScheduleConfiguration(interval=cleaned_data['schedule_interval'])
+        config.template = cleaned_data['template']
         template_variable = TemplateVariable(
-            type=self.cleaned_data['source_type'],
-            time_range=self.cleaned_data['time_range'],
-            source_id=self.cleaned_data['source'],
-            app_id=self.cleaned_data['application'],
+            type=cleaned_data['source_type'],
+            time_range=cleaned_data['time_range'],
+            source_id=cleaned_data['source'],
+            app_id=cleaned_data['application'],
         )
-        self.config.template_variables = [template_variable]
-        if commit:
-            self.config.save()
-        return self.config
+        config.template_variables = [template_variable]
+        return config
 
     @property
     def app_id(self):
@@ -112,9 +136,9 @@ def _clean_template(template):
     return template
 
 
-class AdvancedPerformanceMessageEditForm(forms.Form):
+class AdvancedPerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
     recipient_id = forms.CharField()
-    schedule = forms.ChoiceField(choices=[(choice, ugettext_lazy(choice)) for choice in SCHEDULE_CHOICES])
+    schedule = JsonField()
     template = forms.CharField(widget=forms.Textarea)
     template_variables = JsonField(expected_type=list)
 
@@ -140,21 +164,15 @@ class AdvancedPerformanceMessageEditForm(forms.Form):
             *form_layout
         )
 
-    def clean_template(self):
-        return _clean_template(self.cleaned_data['template'])
-
     def clean_schedule(self):
-        # todo: support other scheduling options
-        return ScheduleConfiguration(interval=self.cleaned_data['schedule'])
+        return ScheduleConfiguration.wrap(self.cleaned_data['schedule'])
 
-    def save(self, commit=True):
-        self.config.recipient_id = self.cleaned_data['recipient_id']
-        self.config.schedule = self.cleaned_data['schedule']
-        self.config.template = self.cleaned_data['template']
-        self.config.template_variables = self.cleaned_data['template_variables']
-        if commit:
-            self.config.save()
-        return self.config
+    def _apply_updates_to_config(self, config, cleaned_data):
+        config.recipient_id = cleaned_data['recipient_id']
+        config.schedule = cleaned_data['schedule']
+        config.template = cleaned_data['template']
+        config.template_variables = cleaned_data['template_variables']
+        return config
 
     def clean_template_variables(self):
         template_vars = self.cleaned_data['template_variables']

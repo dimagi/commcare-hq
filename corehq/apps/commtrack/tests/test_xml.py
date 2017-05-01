@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.test import TestCase
 from django.test.utils import override_settings
 from lxml import etree
 import os
@@ -21,8 +22,8 @@ from dimagi.utils.parsing import json_format_datetime, json_format_date
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER, extract_balance_xml, \
-    get_single_balance_block, get_single_transfer_block
+from corehq.apps.commtrack.models import CommtrackConfig
+from corehq.apps.commtrack.tests import util
 from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_case
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc
@@ -39,24 +40,50 @@ from corehq.apps.commtrack.tests.data.balances import (
     receipts_enumerated,
     balance_enumerated,
     products_xml, SohReport)
-from testapps.test_pillowtop.utils import process_kafka_changes
+from corehq.apps.groups.models import Group
+from corehq.apps.products.models import Product
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 
-class CommTrackOTATest(CommTrackTest):
-    user_definitions = [FIXED_USER]
+class XMLTest(TestCase):
+    user_definitions = [util.FIXED_USER]
 
     def setUp(self):
-        super(CommTrackOTATest, self).setUp()
+        super(XMLTest, self).setUp()
+        self.domain = util.bootstrap_domain(util.TEST_DOMAIN)
+        util.bootstrap_location_types(self.domain.name)
+        util.bootstrap_products(self.domain.name)
+        self.products = sorted(Product.by_domain(self.domain.name), key=lambda p: p._id)
+        self.ct_settings = CommtrackConfig.for_domain(self.domain.name)
+        self.ct_settings.consumption_config = ConsumptionConfig(
+            min_transactions=0,
+            min_window=0,
+            optimal_window=60,
+            min_periods=0,
+        )
+        self.ct_settings.save()
+        self.domain = Domain.get(self.domain._id)
+
+        self.loc = make_loc('loc1')
+        self.sp = self.loc.linked_supply_point()
+        self.users = [util.bootstrap_user(self, **user_def) for user_def in self.user_definitions]
         self.user = self.users[0]
+
+    def tearDown(self):
+        delete_all_users()
+        self.domain.delete()
+        super(XMLTest, self).tearDown()
+
+
+class CommTrackOTATest(XMLTest):
 
     @run_with_all_backends
     def test_ota_blank_balances(self):
-        user = self.user
-        self.assertFalse(get_ota_balance_xml(self.domain, user))
+        self.assertFalse(util.get_ota_balance_xml(self.domain, self.user))
 
     @run_with_all_backends
     def test_ota_basic(self):
-        user = self.user
         amounts = [
             SohReport(section_id='stock', product_id=p._id, amount=i*10)
             for i, p in enumerate(self.products)
@@ -70,12 +97,11 @@ class CommTrackOTATest(CommTrackTest):
                 amounts,
                 datestring=report_date,
             ),
-            get_ota_balance_xml(self.domain, user)[0],
+            util.get_ota_balance_xml(self.domain, self.user)[0],
         )
 
     @run_with_all_backends
     def test_ota_multiple_stocks(self):
-        user = self.user
         section_ids = sorted(('stock', 'losses', 'consumption'))
         amounts = [
             SohReport(section_id=section_id, product_id=p._id, amount=i * 10)
@@ -83,7 +109,7 @@ class CommTrackOTATest(CommTrackTest):
             for i, p in enumerate(self.products)
         ]
         report_date = _report_soh(amounts, self.sp.case_id, self.domain.name)
-        balance_blocks = get_ota_balance_xml(self.domain, user)
+        balance_blocks = util.get_ota_balance_xml(self.domain, self.user)
         self.assertEqual(3, len(balance_blocks))
         for i, section_id in enumerate(section_ids):
             reports = [
@@ -183,17 +209,15 @@ class CommTrackOTATest(CommTrackTest):
         self.domain = Domain.get(self.domain._id)
 
 
-class CommTrackSubmissionTest(CommTrackTest):
-    user_definitions = [FIXED_USER]
+class CommTrackSubmissionTest(XMLTest):
 
     def setUp(self):
         super(CommTrackSubmissionTest, self).setUp()
-        self.user = self.users[0]
         loc2 = make_loc('loc2')
         self.sp2 = loc2.linked_supply_point()
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-    @process_kafka_changes('LedgerToElasticsearchPillow')
+    @process_pillow_changes('LedgerToElasticsearchPillow')
     def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime, **submit_extras):
         instance_id = uuid.uuid4().hex
         instance = submission_wrap(
@@ -427,7 +451,11 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
     @run_with_all_backends
     def test_blank_case_id_in_balance(self):
         form = submit_case_blocks(
-            case_blocks=get_single_balance_block(case_id='', product_id=self.products[0]._id, quantity=100),
+            case_blocks=util.get_single_balance_block(
+                case_id='',
+                product_id=self.products[0]._id,
+                quantity=100
+            ),
             domain=self.domain.name,
         )[0]
         instance = FormAccessors(self.domain.name).get_form(form.form_id)
@@ -437,7 +465,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
     @run_with_all_backends
     def test_blank_case_id_in_transfer(self):
         form = submit_case_blocks(
-            case_blocks=get_single_transfer_block(
+            case_blocks=util.get_single_transfer_block(
                 src_id='', dest_id='', product_id=self.products[0]._id, quantity=100,
             ),
             domain=self.domain.name,
@@ -450,7 +478,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
 class BugSubmissionsTest(CommTrackSubmissionTest):
 
     @run_with_all_backends
-    @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
     def test_device_report_submissions_ignored(self):
         """
         submit a device report with a stock block and make sure it doesn't
@@ -458,7 +485,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         """
         def _assert_no_stock_transactions():
             if should_use_sql_backend(self.domain):
-                self.assertEqual(0, LedgerTransaction.objects.count())
+                self.assertEqual(0, LedgerTransaction.objects.using('default').count())
             else:
                 self.assertEqual(0, StockTransaction.objects.count())
 
@@ -538,23 +565,15 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
 
     def setUp(self):
         super(CommTrackSyncTest, self).setUp()
-        # reused stuff
+        self.group = Group(domain=util.TEST_DOMAIN, name='commtrack-folks',
+                           users=[self.user._id], case_sharing=True)
+        self.group._id = self.sp.owner_id
+        self.group.save()
+
         self.restore_user = self.user.to_ota_restore_user()
         self.sp_block = CaseBlock(
             case_id=self.sp.case_id,
         ).as_xml()
-
-        # bootstrap ota stuff
-        self.ct_settings.consumption_config = ConsumptionConfig(
-            min_transactions=0,
-            min_window=0,
-            optimal_window=60,
-        )
-        self.ct_settings.ota_restore_config = StockRestoreConfig(
-            section_to_consumption_types={'stock': 'consumption'}
-        )
-        set_default_monthly_consumption_for_domain(self.domain.name, 5)
-        self.ota_settings = self.ct_settings.get_ota_restore_settings()
 
         # get initial restore token
         restore_config = RestoreConfig(
@@ -578,7 +597,6 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
                             restore_id=self.sync_log_id, version=V2, line_by_line=False)
 
 
-@override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
 class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
     def setUp(self):
@@ -600,7 +618,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         ledger_accessors = LedgerAccessors(self.domain.name)
         def _assert_initial_state():
             if should_use_sql_backend(self.domain):
-                self.assertEqual(3, LedgerTransaction.objects.filter(form_id=second_form_id).count())
+                self.assertEqual(3, LedgerTransaction.objects.using('default').filter(form_id=second_form_id).count())
             else:
                 self.assertEqual(1, StockReport.objects.filter(form_id=second_form_id).count())
                 # 6 = 3 stockonhand and 3 inferred consumption txns
@@ -620,11 +638,11 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
         # archive and confirm commtrack data is deleted
         form = FormAccessors(self.domain.name).get_form(second_form_id)
-        with process_kafka_changes('LedgerToElasticsearchPillow'):
+        with process_pillow_changes('LedgerToElasticsearchPillow'):
             form.archive()
 
         if should_use_sql_backend(self.domain):
-            self.assertEqual(0, LedgerTransaction.objects.filter(form_id=second_form_id).count())
+            self.assertEqual(0, LedgerTransaction.objects.using('default').filter(form_id=second_form_id).count())
         else:
             self.assertEqual(0, StockReport.objects.filter(form_id=second_form_id).count())
             self.assertEqual(0, StockTransaction.objects.filter(report__form_id=second_form_id).count())
@@ -638,7 +656,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
             self.assertIsNone(state.daily_consumption)
 
         # unarchive and confirm commtrack data is restored
-        with process_kafka_changes('LedgerToElasticsearchPillow'):
+        with process_pillow_changes('LedgerToElasticsearchPillow'):
             form.unarchive()
         _assert_initial_state()
 
@@ -655,7 +673,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         # check that we made stuff
         def _assert_initial_state():
             if should_use_sql_backend(self.domain):
-                self.assertEqual(3, LedgerTransaction.objects.filter(form_id=form_id).count())
+                self.assertEqual(3, LedgerTransaction.objects.using('default').filter(form_id=form_id).count())
             else:
                 self.assertEqual(1, StockReport.objects.filter(form_id=form_id).count())
                 self.assertEqual(3, StockTransaction.objects.filter(report__form_id=form_id).count())
@@ -672,7 +690,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         form.archive()
         self.assertEqual(0, len(ledger_accessors.get_ledger_values_for_case(self.sp.case_id)))
         if should_use_sql_backend(self.domain):
-            self.assertEqual(0, LedgerTransaction.objects.filter(form_id=form_id).count())
+            self.assertEqual(0, LedgerTransaction.objects.using('default').filter(form_id=form_id).count())
         else:
             self.assertEqual(0, StockReport.objects.filter(form_id=form_id).count())
             self.assertEqual(0, StockTransaction.objects.filter(report__form_id=form_id).count())
@@ -685,7 +703,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 def _report_soh(soh_reports, case_id, domain):
     report_date = json_format_datetime(datetime.utcnow())
     balance_blocks = [
-        get_single_balance_block(
+        util.get_single_balance_block(
             case_id,
             report.product_id,
             report.amount,
@@ -704,4 +722,4 @@ def _get_ota_balance_blocks(project, user):
         restore_user=user.to_ota_restore_user(),
         params=RestoreParams(version=V2),
     )
-    return extract_balance_xml(restore_config.get_payload().as_string())
+    return util.extract_balance_xml(restore_config.get_payload().as_string())

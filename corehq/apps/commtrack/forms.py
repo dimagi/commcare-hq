@@ -9,7 +9,7 @@ from corehq.apps.hqwebapp.forms import FormListForm
 from corehq.apps.products.models import Product
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_product, get_default_monthly_consumption
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 
 class CommTrackSettingsForm(forms.Form):

@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.domain.shortcuts import create_domain
@@ -38,6 +39,8 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
             ))
 
     def setUp(self):
+        for domain in Domain.get_all():
+            domain.delete()
         super(TimeZoneMigrationTest, self).setUp()
         self.domain = 'foo'
         self.domain_object = create_domain(self.domain)

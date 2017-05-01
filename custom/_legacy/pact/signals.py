@@ -26,7 +26,7 @@ def process_dots_submission(sender, xform, **kwargs):
         last_sync_token = getattr(xform, 'last_sync_token', None)
         recalculate_dots_data(case_id, cc_user, sync_token=last_sync_token)
 
-    except Exception, ex:
+    except Exception as ex:
         tb = traceback.format_exc()
         notify_exception(None, message="Error processing PACT DOT submission due to an unknown error: %s\n\tTraceback: %s" % (ex, tb))
 

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.locations.models import SQLLocation
 
@@ -8,7 +9,8 @@ class Command(BaseCommand):
             "this script you should make sure this operation is ok to do "
             "given your use case.")
 
-    def get_location(self, location_id):
+    @staticmethod
+    def get_location(location_id):
         location = SQLLocation.by_location_id(location_id)
 
         if not location:
@@ -16,10 +18,7 @@ class Command(BaseCommand):
 
         return location
 
-    def validate_locations(self, location_id_to_update, new_parent_location_id):
-        loc_to_update = self.get_location(location_id_to_update)
-        new_parent_loc = self.get_location(new_parent_location_id)
-
+    def validate_locations(self, loc_to_update, new_parent_loc):
         if loc_to_update.domain != new_parent_loc.domain:
             raise CommandError("Locations must be belong to the same domain")
 
@@ -31,28 +30,34 @@ class Command(BaseCommand):
 
         return (loc_to_update, new_parent_loc)
 
-    def handle(self, *args, **options):
-        if len(args) < 2:
-            raise CommandError("Usage: python manage.py update_parent_location "
-                               "<location_id_to_update> <new_parent_location_id>")
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'loc_to_update',
+            type=self.get_location,
+        )
+        parser.add_argument(
+            'new_parent_loc',
+            type=self.get_location,
+        )
 
-        print 'Validating locations...'
-        loc_to_update, new_parent_loc = self.validate_locations(args[0], args[1])
-        print 'done'
+    def handle(self, loc_to_update, new_parent_loc, **options):
+        print('Validating locations...')
+        loc_to_update, new_parent_loc = self.validate_locations(loc_to_update, new_parent_loc)
+        print('done')
 
-        print 'Updating new parent...'
+        print('Updating new parent...')
         loc_to_update.parent = new_parent_loc
         loc_to_update.save()
-        print 'done'
+        print('done')
 
-        print 'Updating lineage for all couch locations...'
+        print('Updating lineage for all couch locations...')
         for descendant in loc_to_update.get_descendants(include_self=False):
             # We have to do this to sync the lineage to the couch Location
             descendant.save()
-        print 'done'
+        print('done')
 
-        print 'Double-checking location types...'
+        print('Double-checking location types...')
         for descendant in loc_to_update.get_descendants(include_self=True):
             if descendant.location_type.parent_type != descendant.parent.location_type:
-                print 'Mismatch found in location type hierarchy for location %s' % descendant.location_id
-        print 'done'
+                print('Mismatch found in location type hierarchy for location %s' % descendant.location_id)
+        print('done')

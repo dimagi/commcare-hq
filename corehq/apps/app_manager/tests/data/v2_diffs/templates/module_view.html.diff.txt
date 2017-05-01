@@ -6,10 +6,10 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -9,32 +9,33 @@
-     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
-     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
-     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
+@@ -22,30 +22,30 @@
+         <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+     {% endif %}
+     <script src="{% static 'app_manager/js/module-view.js' %}"></script>
 -    {% include "app_manager/v1/partials/xpathValidator.html" %}
 +    {% include "app_manager/v2/partials/xpathValidator.html" %}
  {% endblock %}
@@ -24,15 +24,20 @@
      <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
  
      {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
-         {% for detail in details %}
-             {% if detail.type == 'case' %}
--                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+-      {% for detail in details %}
+-          {% if detail.type == 'case' %}
+-              {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+-          {% else %}
+-              {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+-          {% endif %}
+-      {% endfor %}
++        {% for detail in details %}
++            {% if detail.type == 'case' %}
 +                {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
-             {% else %}
--                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
++            {% else %}
 +                {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
-             {% endif %}
-         {% endfor %}
++            {% endif %}
++        {% endfor %}
      {% endif %}
  
      {% if case_list_form_options %}
@@ -44,43 +49,8 @@
 +    {% include 'app_manager/v2/partials/graph_configuration_modal.html' %}
  
      <script>
-+        {% if module.case_type != "" %}
-         $(function () {
-             var state = hqImport('app_manager/js/detail-screen-config.js').state;
-             var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
-@@ -88,6 +89,7 @@
-                 }
-             }
-         });
-+        {% endif %}
-         $(function () {
-             var moduleType = {{ module.module_type|JSON }};
-             var showCaseTypeError = function(message) {
-@@ -104,6 +106,15 @@
-                 if (value !== valueNoSpaces) {
-                     $(this).val(valueNoSpaces);
-                 }
-+
-+                if (!valueNoSpaces) {
-+                    $(this).closest('.form-group').addClass('has-error');
-+                    showCaseTypeError(
-+                        gettext("Case type is required.")
-+                    );
-+                    return;
-+                }
-+
-                 if (!valueNoSpaces.match(/^[\w-]*$/g)) {
-                     $(this).closest('.form-group').addClass('has-error');
-                     showCaseTypeError(
-@@ -114,7 +125,6 @@
-                     showCaseTypeError(
-                         gettext("'commcare-user' is a reserved case type. Please change the case type")
-                     );
--
-                 } else {
-                     $(this).closest('.form-group').removeClass('has-error');
-                     hideCaseTypeError();
-@@ -232,71 +242,77 @@
+     var print_ref;
+@@ -99,78 +99,83 @@
      </script>
  {% endblock %}
  
@@ -89,6 +59,16 @@
 +{% endblock %}
 +
  {% block form-view %}
+-    {% initial_page_data 'module_brief' module_brief %}
+-    {% initial_page_data 'details' details %}
+-    {% initial_page_data 'js_options' js_options %}
+-    {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
+-    {% initial_page_data 'case_list_form_options' case_list_form_options %}
+-    {% initial_page_data 'case_list_form_not_allowed_reason' case_list_form_not_allowed_reason  %}
+-    {% initial_page_data 'parent_modules' parent_modules %}
+-    {% initial_page_data 'shadow_module_options' shadow_module_options %}
+-    {% registerurl "edit_module_detail_screens" domain app.id module.id %}
+-    {% registerurl "validate_module_for_build" domain app.id module.id %}
 -    {% include 'app_manager/v1/partials/module_view_heading.html' %}
 -<div class="tabbable">
 -<ul class="nav nav-tabs" id="module-view-tabs">
@@ -96,38 +76,7 @@
 -    <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
 -    {% if module.module_type != 'shadow' %}
 -    <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
-+  <div class="tabbable appmanager-tabs-container">
-+
-+    {% if module.case_type != "" %}
-+      <ul class="nav nav-tabs" id="module-view-tabs">
-+        {% block tab-headers %}
-+          <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-+          {% if module.module_type == 'shadow' %}
-+            <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
-+          {% endif %}
-+          {% if module.case_type != "" %}
-+            {% for detail in details %}
-+              <li>
-+                <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
-+                  {{ detail.label }}
-+                </a>
-+              </li>
-+              {% if detail.long %}
-+                <li>
-+                  <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
-+                    {{ detail.detail_label }}
-+                  </a>
-+                </li>
-+              {% endif %}
-+            {% endfor %}
-+            {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
-+                <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-+            {% endif %}{% endif %}
-+          {% endif %}
-+        {% endblock %}{# endblock tab-headers #}
-+      </ul>
-+      <div class="spacer"></div>
-     {% endif %}
+-    {% endif %}
 -    {% for detail in details %}
 -    <li>
 -        <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
@@ -142,9 +91,9 @@
 -    </li>
 -    {% endif %}
 -    {% endfor %}
--    {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
+-    {% if details and app|get_available_modules_for_case_list_configuration:module %}
 -        <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
--    {% endif %}{% endif %}
+-    {% endif %}
 -    {% endblock %}{# endblock tab-headers #}
 -</ul>
 -<div class="spacer"></div>
@@ -152,6 +101,46 @@
 -    {% block tab-content %}
 -    <div class="tab-pane active" id="module-settings">
 -        {% include "app_manager/v1/partials/module_view_settings.html" %}
++  {% initial_page_data 'module_brief' module_brief %}
++  {% initial_page_data 'details' details %}
++  {% initial_page_data 'js_options' js_options %}
++  {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
++  {% initial_page_data 'case_list_form_options' case_list_form_options %}
++  {% initial_page_data 'case_list_form_not_allowed_reason' case_list_form_not_allowed_reason  %}
++  {% initial_page_data 'parent_modules' parent_modules %}
++  {% initial_page_data 'shadow_module_options' shadow_module_options %}
++  {% registerurl "edit_module_detail_screens" domain app.id module.id %}
++  {% registerurl "validate_module_for_build" domain app.id module.id %}
++  <div class="tabbable appmanager-tabs-container">
++
++    {% if not module.is_surveys %}
++      <ul class="nav nav-tabs" id="module-view-tabs">
++        {% block tab-headers %}
++          <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
++          {% if module.module_type == 'shadow' %}
++            <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
++          {% endif %}
++          {% for detail in details %}
++            <li>
++              <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
++                {{ detail.label }}
++              </a>
++            </li>
++            {% if detail.long %}
++              <li>
++                <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
++                  {{ detail.detail_label }}
++                </a>
++              </li>
++            {% endif %}
++          {% endfor %}
++          {% if details and app.advanced_app_builder and app|get_available_modules_for_case_list_configuration:module %}
++              <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
++          {% endif %}
++        {% endblock %}{# endblock tab-headers #}
++      </ul>
++      <div class="spacer"></div>
++    {% endif %}
 +
 +    <div class="tab-content">
 +      {% block tab-content %}
@@ -159,7 +148,7 @@
 +          {% include "app_manager/v2/partials/module_view_settings.html" %}
 +        </div>
 +
-+        {% if module.case_type != "" %}
++        {% if not module.is_surveys %}
 +          {% for detail in details %}
 +            <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
 +              {% include 'app_manager/v2/partials/case_list.html' %}
@@ -170,11 +159,15 @@
 +              </div>
 +            {% endif %}
 +          {% endfor %}
-+          {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
++          {% if details and app.advanced_app_builder%}
++            {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
++            {% if available_modules %}
 +            <div class="tab-pane" id="module-actions">
 +                {% include 'app_manager/v2/partials/module_actions.html' %}
 +            </div>
-+          {% endif %}{% endif %}
++            {% endif %}
++            {% endwith %}
++          {% endif %}
 +        {% endif %}
 +      {% endblock %}
      </div>
@@ -194,20 +187,32 @@
 -    </div>
 -    {% endif %}
 -    {% endfor %}
--    {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
--        <div class="tab-pane" id="module-actions">
--            {% include 'app_manager/v1/partials/module_actions.html' %}
--        </div>
--    {% endif %}{% endif %}
+-    {% if details %}
+-        {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
+-        {% if available_modules %}
+-            <div class="tab-pane" id="module-actions">
+-                {% include 'app_manager/v1/partials/module_actions.html' %}
+-            </div>
+-        {% endif %}
+-        {% endwith %}
+-    {% endif %}
 -    {% endblock %}{# endblock tab-content #}
  </div>
 -</div>
++
+ <script type="text/html" id="module-forms-template">
+     <div class="checkbox">
+         <label>
+@@ -184,7 +189,7 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
 -{% include "app_manager/v1/partials/nav_menu_media_modals.html" %}
 +{% include "app_manager/v2/partials/nav_menu_media_modals.html" %}
- {% endblock modals %}
+ {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
+     {% with print_uploader as uploader %}
+         {% include 'hqmedia/partials/multimedia_uploader.html' %}
+@@ -194,5 +199,5 @@
  
  {% block breadcrumbs %}
      {{ block.super }}

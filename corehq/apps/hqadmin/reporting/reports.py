@@ -322,7 +322,7 @@ def get_active_dimagi_owned_gateway_projects(domains, datespan, interval,
         SQLMobileBackend.SMS,
         couch_id=True
     )
-    backend_filter = {'terms': {'backend_id': dimagi_owned_backend_ids}}
+    backend_filter = {'terms': {'backend_id': list(dimagi_owned_backend_ids)}}
 
     histo_data = []
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):

@@ -7,7 +7,7 @@ from copy import deepcopy
 from datetime import datetime
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import QueryDict
 from django.test import TestCase
 from django.utils.http import urlencode
@@ -36,7 +36,6 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment
 )
-from corehq.apps.accounting.tests import generator
 from corehq.apps.api.es import ElasticAPIQuerySet
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api.resources import v0_4, v0_5
@@ -119,7 +118,6 @@ class APIResourceTest(TestCase):
         super(APIResourceTest, cls).setUpClass()
 
         Role.get_cache().clear()
-        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.list_endpoint = cls._get_list_endpoint()
         cls.username = 'rudolph@qwerty.commcarehq.org'
@@ -686,6 +684,7 @@ class TestWebUserResource(APIResourceTest):
         "permissions": {
             "edit_apps": True,
             "edit_commcare_users": True,
+            "edit_locations": True,
             "edit_data": True,
             "edit_web_users": True,
             "view_reports": True
@@ -700,8 +699,8 @@ class TestWebUserResource(APIResourceTest):
         role = user.get_role(self.domain.name)
         self.assertEqual(role.name, json_user['role'])
         self.assertEqual(user.is_domain_admin(self.domain.name), json_user['is_admin'])
-        for perm in ['edit_web_users', 'edit_commcare_users', 'edit_data',
-                     'edit_apps', 'view_reports']:
+        for perm in ['edit_web_users', 'edit_commcare_users', 'edit_locations',
+                     'edit_data', 'edit_apps', 'view_reports']:
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])
 
     def test_get_list(self):
@@ -1500,7 +1499,6 @@ class TestBulkUserAPI(APIResourceTest):
     @classmethod
     def setUpClass(cls):
         Role.get_cache().clear()
-        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'

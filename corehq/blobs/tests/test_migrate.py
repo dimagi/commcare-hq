@@ -1,5 +1,9 @@
 # coding=utf-8
+from __future__ import print_function
 import json
+import os
+import uuid
+from cStringIO import StringIO
 from os.path import join
 
 import corehq.blobs.migrate as mod
@@ -7,8 +11,11 @@ from corehq.blobs import get_blob_db
 from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.s3db import maybe_not_found
 from corehq.blobs.tests.util import (
-    TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB, TemporaryS3BlobDB
+    install_blob_db,
+    TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB
 )
+from corehq.blobs.util import random_url_id
+from corehq.sql_db.models import PartitionedModel
 from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict
 from corehq.util.test_utils import trap_extra_setup
 
@@ -48,10 +55,12 @@ class BaseMigrationTest(TestCase):
     @staticmethod
     def discard_migration_state(slug):
         migrator = mod.MIGRATIONS[slug]
-        iterator = CouchDocumentProvider(
-            migrator.iteration_key, migrator.doc_types
-        ).get_document_iterator(1)
-        iterator.discard_state()
+        if hasattr(migrator, "migrators"):
+            providers = [m._get_document_provider() for m in migrator.migrators]
+        else:
+            providers = [migrator._get_document_provider()]
+        for provider in providers:
+            provider.get_document_iterator(1).discard_state()
         mod.BlobMigrationState.objects.filter(slug=slug).delete()
 
     # abstract property, must be overridden in base class
@@ -433,37 +442,147 @@ class TestCommCareCaseMigrations(BaseMigrationTest):
 class TestMigrateBackend(TestCase):
 
     slug = "migrate_backend"
-    test_size = 5
+    couch_doc_types = {
+        "Application": mod.apps.Application,
+        "LinkedApplication": mod.apps.LinkedApplication,
+        "RemoteApp": mod.apps.RemoteApp,
+        "Application-Deleted": mod.apps.Application,
+        "RemoteApp-Deleted": mod.apps.RemoteApp,
+        "SavedBasicExport": mod.SavedBasicExport,
+        "CommCareAudio": mod.hqmedia.CommCareAudio,
+        "CommCareImage": mod.hqmedia.CommCareImage,
+        "CommCareVideo": mod.hqmedia.CommCareVideo,
+        "CommCareMultimedia": mod.hqmedia.CommCareMultimedia,
+        "XFormInstance": mod.xform.XFormInstance,
+        "XFormInstance-Deleted": mod.xform.XFormInstance,
+        "XFormArchived": mod.xform.XFormArchived,
+        "XFormDeprecated": mod.xform.XFormDeprecated,
+        "XFormDuplicate": mod.xform.XFormDuplicate,
+        "XFormError": mod.xform.XFormError,
+        "SubmissionErrorLog": mod.xform.SubmissionErrorLog,
+        "HQSubmission": mod.xform.XFormInstance,
+        "CommCareCase": mod.cases.CommCareCase,
+        'CommCareCase-deleted': mod.cases.CommCareCase,
+        'CommCareCase-Deleted': mod.cases.CommCareCase,
+        'CommCareCase-Deleted-Deleted': mod.cases.CommCareCase,
+        "CaseExportInstance": mod.exports.CaseExportInstance,
+        "FormExportInstance": mod.exports.FormExportInstance,
+    }
+    sql_reindex_accessors = [
+        mod.CaseUploadFileMetaReindexAccessor,
+        mod.CaseAttachmentSQLReindexAccessor,
+        mod.XFormAttachmentSQLReindexAccessor,
+        mod.DemoUserRestoreReindexAccessor,
+    ]
+
+    def _sql_save(self, obj, rex):
+        if rex.is_sharded():
+            # HACK why does it have to be so hard to use form_processor
+            # even just for testing...
+            obj.save(using='default')
+        else:
+            obj.save()
+
+    def CaseAttachmentSQL_save(self, obj, rex):
+        obj.attachment_id = uuid.uuid4()
+        obj.case_id = "not-there"
+        obj.name = "name"
+        obj.identifier = "what is this?"
+        obj.md5 = "blah"
+        self._sql_save(obj, rex)
+
+    def XFormAttachmentSQL_save(self, obj, rex):
+        obj.attachment_id = uuid.uuid4()
+        obj.form_id = "not-there"
+        obj.name = "name"
+        obj.identifier = "what is this?"
+        obj.md5 = "blah"
+        self._sql_save(obj, rex)
+
+    def DemoUserRestore_save(self, obj, rex):
+        obj.attachment_id = uuid.uuid4()
+        obj.demo_user_id = "not-there"
+        self._sql_save(obj, rex)
 
     def setUp(self):
-        with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
-            config = settings.S3_BLOB_DB_SETTINGS
+        lost_db = TemporaryFilesystemBlobDB()  # must be created before other dbs
+        db1 = TemporaryFilesystemBlobDB()
+        assert get_blob_db() is db1, (get_blob_db(), db1)
+        missing = "found.not"
+        name = "blob.bin"
+        data = b'binary data not valid utf-8 \xe4\x94'
 
-        fsdb = TemporaryFilesystemBlobDB()
-        assert get_blob_db() is fsdb, (get_blob_db(), fsdb)
-        self.migrate_docs = docs = []
-        for i in range(self.test_size):
-            doc = SavedBasicExport(configuration=_mk_config("config-%s" % i))
-            doc.save()
-            doc.set_payload(("content %s" % i).encode('utf-8'))
-            docs.append(doc)
+        self.not_founds = set()
+        self.couch_docs = []
+        with lost_db:
+            for doc_type, model_class in self.couch_doc_types.items():
+                item = model_class()
+                item.doc_type = doc_type
+                item.save()
+                item.put_attachment(data, name)
+                with install_blob_db(lost_db):
+                    item.put_attachment(data, missing)
+                    self.not_founds.add((
+                        doc_type,
+                        item._id,
+                        item.external_blobs[missing].id,
+                        item._blobdb_bucket(),
+                    ))
+                item.save()
+                self.couch_docs.append(item)
 
-        s3db = TemporaryS3BlobDB(config)
-        self.db = TemporaryMigratingBlobDB(s3db, fsdb)
+        def create_obj(rex):
+            ident = random_url_id(8)
+            args = {rex.blob_helper.id_attr: ident}
+            fields = {getattr(f, "attname", "")
+                for f in rex.model_class._meta.get_fields()}
+            if "content_length" in fields:
+                args["content_length"] = len(data)
+            elif "length" in fields:
+                args["length"] = len(data)
+            item = rex.model_class(**args)
+            save_attr = rex.model_class.__name__ + "_save"
+            if hasattr(self, save_attr):
+                getattr(self, save_attr)(item, rex)
+            else:
+                item.save()
+            return item, ident
+        self.sql_docs = []
+        for rex in (x() for x in self.sql_reindex_accessors):
+            item, ident = create_obj(rex)
+            helper = rex.blob_helper({"_obj_not_json": item})
+            db1.put(StringIO(data), ident, helper._blobdb_bucket())
+            self.sql_docs.append(item)
+            lost, lost_blob_id = create_obj(rex)
+            self.sql_docs.append(lost)
+            self.not_founds.add((
+                rex.model_class.__name__,
+                lost.id,
+                lost_blob_id,
+                rex.blob_helper({"_obj_not_json": lost})._blobdb_bucket(),
+            ))
+
+        self.test_size = len(self.couch_docs) + len(self.sql_docs)
+        db2 = TemporaryFilesystemBlobDB()
+        self.db = TemporaryMigratingBlobDB(db2, db1)
         assert get_blob_db() is self.db, (get_blob_db(), self.db)
         BaseMigrationTest.discard_migration_state(self.slug)
 
     def tearDown(self):
         self.db.close()
         BaseMigrationTest.discard_migration_state(self.slug)
-        for doc in self.migrate_docs:
+        for doc in self.couch_docs:
             doc.get_db().delete_doc(doc._id)
+        for doc in self.sql_docs:
+            if isinstance(doc, PartitionedModel):
+                doc.delete(using='default')
+            else:
+                doc.delete()
 
     def test_migrate_backend(self):
-        # verify: attachment is in couch and migration not complete
+        # verify: migration not complete
         with maybe_not_found():
-            s3_blobs = sum(1 for b in self.db.new_db._s3_bucket().objects.all())
-            self.assertEqual(s3_blobs, 0)
+            self.assertEqual(os.listdir(self.db.new_db.rootdir), [])
 
         with tempdir() as tmp:
             filename = join(tmp, "file.txt")
@@ -475,22 +594,32 @@ class TestMigrateBackend(TestCase):
             # verify: migration state recorded
             mod.BlobMigrationState.objects.get(slug=self.slug)
 
-            # verify: migrated data was written to the file
-            with open(filename) as fh:
-                lines = list(fh)
-            ids = {d._id for d in self.migrate_docs}
-            migrated = {d["_id"] for d in (json.loads(x) for x in lines)}
-            self.assertEqual(len(ids.intersection(migrated)), self.test_size)
+            # verify: missing blobs written to log files
+            missing_log = set()
+            fields = ["doc_type", "doc_id", "blob_identifier", "blob_bucket"]
+            for n, ignore in enumerate(mod.MIGRATIONS[self.slug].migrators):
+                with open("{}.{}".format(filename, n)) as fh:
+                    for line in fh:
+                        doc = json.loads(line)
+                        missing_log.add(tuple(doc[x] for x in fields))
+            self.assertEqual(
+                len(self.not_founds.intersection(missing_log)),
+                len(self.not_founds)
+            )
 
-        # verify: attachment was copied to new blob db
-        for doc in self.migrate_docs:
-            exp = SavedBasicExport.get(doc._id)
+        # verify: couch attachments were copied to new blob db
+        for doc in self.couch_docs:
+            exp = type(doc).get(doc._id)
             self.assertEqual(exp._rev, doc._rev)  # rev should not change
             self.assertTrue(doc.blobs)
             bucket = doc._blobdb_bucket()
-            for meta in doc.blobs.values():
+            for name, meta in doc.blobs.items():
+                if name == "found.not":
+                    continue
                 content = self.db.new_db.get(meta.id, bucket)
-                self.assertEqual(len(content.read()), meta.content_length)
+                data = content.read()
+                self.assertEqual(data, b'binary data not valid utf-8 \xe4\x94')
+                self.assertEqual(len(data), meta.content_length)
 
 
 def _mk_config(name='some export name', index='dummy_index'):

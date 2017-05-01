@@ -10,6 +10,9 @@
         "enikshay-aks-audit",
         "np-migration-3"
     ],
+    "server_environment": [
+        "softlayer"
+    ],
     "data_source_table": "test",
     "report_id": "tb_lab_register",
     "config": {
@@ -24,7 +27,7 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "display": "Case Open Date",
+                "display": "Date of Test Result Update",
                 "field": "date_reported",
                 "type": "date",
                 "slug": "date_reported"
@@ -37,7 +40,9 @@
                 "field": "referring_facility_id",
                 "choice_provider": {
                     "include_descendants": true,
-                    "type": "location"
+                    "type": "location",
+                    "show_full_path": true,
+                    "order_by_hierarchy": true
                 },
                 "display": "Location"
             }
@@ -138,6 +143,18 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "known_patient_contact": "Contact of known TB patient",
+                        "prison_inmate": "Prison inmate",
+                        "miner": "Miner",
+                        "migrant": "Migrant",
+                        "refugee": "Refugee",
+                        "slum_dweller": "Slum dweller",
+                        "health_care_worker": "Health care worker",
+                        "tribal_population": "Tribal population",
+                        "other": "Other"
+                    }
                 },
                 "calculate_total": false
             },
@@ -162,6 +179,16 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "phi": "PHI",
+                        "dmc": "DMC",
+                        "ictc": "ICTC",
+                        "art": "ART",
+                        "medical_college": "Medical College",
+                        "drtb_centre": "DRTB Centre",
+                        "private_others": "Private Others"
+                    }
                 },
                 "calculate_total": false
             },
@@ -226,9 +253,9 @@
                 "calculate_total": false
             },
             {
-                "display": "Nikshay ID",
+                "display": "Follow up Nikshay ID",
                 "type": "field",
-                "field": "nikshay_id",
+                "field": "follow_up_nikshay_id",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -238,9 +265,9 @@
                 "calculate_total": false
             },
             {
-                "display": "Regimen - New (N) / Previously treated (PT)",
+                "display": "Follow up regimen - New (N) / Previously treated (PT)",
                 "type": "field",
-                "field": "regimen",
+                "field": "follow_up_regimen",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -250,14 +277,16 @@
                 "calculate_total": false
             },
             {
-                "display": "Month",
+                "display": "Follow up month",
                 "type": "field",
-                "field": "treatment_initiation_date",
+                "field": "follow_up_treatment_initiation_date_month",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "custom",
+                    "custom_type": "month_display"
                 },
                 "calculate_total": false
             },

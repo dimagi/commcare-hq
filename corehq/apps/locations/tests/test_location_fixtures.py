@@ -2,6 +2,9 @@ import uuid
 import mock
 import os
 from xml.etree import ElementTree
+from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import CustomDataField
+from corehq.apps.locations.views import LocationFieldsView
 
 from corehq.util.test_utils import flag_enabled
 
@@ -19,14 +22,15 @@ from casexml.apps.case.xml import V2
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from .util import (
-    LocationHierarchyPerTest,
     setup_location_types_with_structure,
     setup_locations_with_structure,
     LocationStructure,
     LocationTypeStructure,
+    LocationHierarchyTestCase
 )
 from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
-    flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchical_fixture
+    flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchical_fixture, \
+    _get_location_data_fields
 from ..models import SQLLocation, LocationType, Location, LocationFixtureConfiguration
 
 
@@ -58,7 +62,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
-class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     location_type_names = ['state', 'county', 'city']
     location_structure = [
         ('Massachusetts', [
@@ -82,8 +86,19 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
 
     def setUp(self):
         super(LocationFixturesTest, self).setUp()
-        delete_all_users()
         self.user = create_restore_user(self.domain, 'user', '123')
+
+    def tearDown(self):
+        self.user._couch_user.delete()
+        for lt in self.location_types.values():
+            lt.expand_to = None
+            lt._expand_from_root = False
+            lt._expand_from = None
+            lt.include_without_expanding = None
+            lt.save()
+        for loc in self.locations.values():
+            loc.location_type.refresh_from_db()
+        super(LocationFixturesTest, self).tearDown()
 
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
@@ -105,7 +120,8 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             },
         )
         location_db = LocationSet([location])
-        fixture = _location_to_fixture(location_db, location, location_type)
+        data_fields = ['best_swordsman', 'in_westeros', 'appeared_in_num_episodes']
+        fixture = _location_to_fixture(location_db, location, location_type, data_fields)
         location_data = {
             e.tag: e.text for e in fixture.find('location_data')
         }
@@ -236,7 +252,21 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             ['Massachusetts', 'New York', 'Middlesex', 'Suffolk', 'New York City', 'Boston', 'Revere']
         )  # (New York City is of type "county")
 
-    @flag_enabled('INDEX_LOCATIONS_FIXTURE')
+    def test_include_without_expanding_lower_level(self):
+        # I want all all the cities, but am at the state level
+        self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
+        location_type = self.locations['Massachusetts'].location_type
+
+        # Get all the cities
+        location_type.include_without_expanding = self.locations['Revere'].location_type
+        location_type.save()
+        self._assert_fixture_has_locations(
+            'expand_from_root',  # This is the same as expanding from root / getting all locations
+            ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
+             'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
+        )
+
+    @flag_enabled('FLAT_LOCATION_FIXTURE')
     def test_index_location_fixtures(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'])
         expected_result = self._assemble_expected_fixture(
@@ -258,7 +288,102 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
-class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+@flag_enabled('FLAT_LOCATION_FIXTURE')
+class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
+    location_type_names = ['state', 'county', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+            ('Suffolk', [
+                ('Boston', []),
+                ('Revere', []),
+            ])
+        ]),
+    ]
+
+    @classmethod
+    def setUpClass(cls):
+        super(LocationFixturesDataTest, cls).setUpClass()
+        cls.user = create_restore_user(cls.domain, 'user', '123')
+        cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
+        cls.loc_fields.fields = [
+            CustomDataField(slug='baseball_team'),
+            CustomDataField(slug='favorite_passtime'),
+        ]
+        cls.loc_fields.save()
+        cls.field_slugs = {f.slug for f in cls.loc_fields.fields}
+
+    def setUp(self):
+        # this works around the fact that get_locations_to_sync is memoized on OTARestoreUser
+        self.user = self.user._couch_user.to_ota_restore_user()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.loc_fields.delete()
+        cls.user._couch_user.delete()
+        super(LocationFixturesDataTest, cls).tearDownClass()
+
+    def test_utility_method(self):
+        self.assertEqual(self.field_slugs, _get_location_data_fields(self.domain))
+
+    def test_utility_method_empty(self):
+        self.assertEqual(set(), _get_location_data_fields('no-fields-defined'))
+
+    def test_metadata_added_to_all_nodes(self):
+        mass = self.locations['Massachusetts']
+        self.user._couch_user.set_location(mass)
+        fixture = flat_location_fixture_generator(self.user, V2)[1]  # first node is index
+        location_nodes = fixture.findall('locations/location')
+        self.assertEqual(7, len(location_nodes))
+        for location_node in location_nodes:
+            location_data_nodes = [child for child in location_node.find('location_data')]
+            self.assertEqual(2, len(location_data_nodes))
+            tags = {n.tag for n in location_data_nodes}
+            self.assertEqual(tags, self.field_slugs)
+
+    def test_additional_metadata_not_included(self):
+        mass = self.locations['Massachusetts']
+        mass.metadata = {'driver_friendliness': 'poor'}
+        mass.save()
+
+        def _clear_metadata():
+            mass.metadata = {}
+            mass.save()
+
+        self.addCleanup(_clear_metadata)
+        self.user._couch_user.set_location(mass)
+        fixture = flat_location_fixture_generator(self.user, V2)[1]  # first node is index
+        mass_data = [
+            field for field in fixture.find('locations/location[@id="{}"]/location_data'.format(mass.location_id))
+        ]
+        self.assertEqual(2, len(mass_data))
+        self.assertEqual(self.field_slugs, set([f.tag for f in mass_data]))
+
+    def test_existing_metadata_works(self):
+        mass = self.locations['Massachusetts']
+        mass.metadata = {'baseball_team': 'Red Sox'}
+        mass.save()
+
+        def _clear_metadata():
+            mass.metadata = {}
+            mass.save()
+
+        self.addCleanup(_clear_metadata)
+        self.user._couch_user.set_location(mass)
+        fixture = flat_location_fixture_generator(self.user, V2)[1]  # first node is index
+        self.assertEqual(
+            'Red Sox',
+            fixture.find(
+                'locations/location[@id="{}"]/location_data/baseball_team'.format(mass.location_id)
+            ).text
+        )
+
+
+@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
+class WebUserLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     location_type_names = ['state', 'county', 'city']
     location_structure = [
@@ -315,7 +440,7 @@ class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsM
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
-class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+class ForkedHierarchyLocationFixturesTest(TestCase, FixtureHasLocationsMixin):
     """
     - State
         - County
@@ -323,6 +448,7 @@ class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLo
         - Region
             - Town
     """
+    domain = 'forked-hierarchy-domain'
     location_type_structure = [
         LocationTypeStructure('state', [
             LocationTypeStructure('county', [
@@ -359,6 +485,9 @@ class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLo
         self.location_types = setup_location_types_with_structure(self.domain, self.location_type_structure)
         self.locations = setup_locations_with_structure(self.domain, self.location_structure)
 
+    def tearDown(self):
+        self.domain_obj.delete()
+
     def test_forked_locations(self, *args):
         self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
         location_type = self.locations['Massachusetts'].location_type
@@ -374,6 +503,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ShouldSyncLocationFixturesTest, cls).setUpClass()
         delete_all_users()
         cls.domain = "Erebor"
         cls.domain_obj = create_domain(cls.domain)
@@ -391,6 +521,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
+        super(ShouldSyncLocationFixturesTest, cls).tearDownClass()
 
     def test_should_sync_locations_change_location_type(self):
         """

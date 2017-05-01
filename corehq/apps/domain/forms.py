@@ -21,7 +21,7 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import transaction
 from django.db.models import F
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
@@ -563,8 +563,8 @@ class DomainGlobalSettingsForm(forms.Form):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper[3] = twbscrispy.PrependedText('delete_logo', '')
-        self.helper[4] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper[4] = twbscrispy.PrependedText('delete_logo', '')
+        self.helper[5] = twbscrispy.PrependedText('call_center_enabled', '')
         self.helper.all().wrap_together(crispy.Fieldset, 'Edit Basic Information')
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -706,7 +706,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
                 domain.cloudcare_releases = cloudcare_releases
             domain.save()
             return True
-        except Exception, e:
+        except Exception as e:
             logging.exception("couldn't save project settings - error is %s" % e)
             return False
 
@@ -2038,7 +2038,8 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
     end_date = forms.DateField(
         help_text=ugettext_noop(
-            '1 year after the deployment date (date the project goes live).'
+            'Specify the End Date based on the Start Date plus number of '
+            'months of software plan in the contract with the Client.'
         ),
         label=ugettext_noop('End Date'),
     )

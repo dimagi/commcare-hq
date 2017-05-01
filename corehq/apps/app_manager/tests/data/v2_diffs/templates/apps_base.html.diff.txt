@@ -1,15 +1,15 @@
 --- 
 +++ 
-@@ -1,10 +1,19 @@
+@@ -1,4 +1,4 @@
 -{% extends 'style/base_section.html' %}
 +{% extends 'style/two_column.html' %}
  {% load xforms_extras %}
  {% load url_extras %}
  {% load hq_shared_tags %}
- {% load timezone_tags %}
+@@ -6,38 +6,19 @@
  {% load i18n %}
  {% load compress %}
-+
+ 
 +{% block page_sidebar_classes %}
 +appmanager-sidebar
 +{% endblock %}
@@ -18,13 +18,18 @@
 +{% block page_content_classes %}
 +appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% endif %}
 +{% endblock %}
- 
++
  {% block title %}{% trans "Applications" %}{% endblock %}
  
-@@ -17,25 +26,33 @@
-   {% endcompress %}
- 
-   {% if less_debug %}
+ {% block stylesheets %}{{ block.super }}
+-  {% compress css %}
+-  {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
+-  <link type="text/css" rel="stylesheet" media="screen" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
+-  <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2.css' %}" />
+-  <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
+-  {% endcompress %}
+-
+-  {% if less_debug %}
 -  <link type="text/less"
 -        rel="stylesheet"
 -        media="all"
@@ -44,48 +49,20 @@
 -            media="all"
 -            href="{% static 'app_manager/less/preview_app.less' %}"/>
 -  {% endcompress %}
-+    <link type="text/less"
-+          rel="stylesheet"
-+          media="all"
-+          href="{% static 'app_manager/less/font-workflow.less' %}" />
-+    <link type="text/less"
-+          rel="stylesheet"
-+          media="all"
-+          href="{% static 'app_manager/less/new_appmanager.debug.less' %}" />
-+    <link type="text/less"
-+          rel="stylesheet"
-+          media="all"
-+          href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
-+    {% else %}
-+    {% compress css %}
-+        <link type="text/less"
-+              rel="stylesheet"
-+              media="all"
-+              href="{% static 'app_manager/less/font-workflow.less' %}" />
-+        <link type="text/less"
-+              rel="stylesheet"
-+              media="all"
-+              href="{% static 'app_manager/less/new_appmanager.less' %}" />
-+        <link type="text/less"
-+              rel="stylesheet"
-+              media="all"
-+              href="{% static 'app_manager/less/preview_app.less' %}"/>
-+    {% endcompress %}
-   {% endif %}
- 
+-  {% endif %}
+-
++  {% include 'app_manager/v2/partials/apps_stylesheets.html' %}
  {% endblock %}
-@@ -66,37 +83,23 @@
+ 
+ {% block js %}{{ block.super }}
+@@ -64,37 +45,17 @@
+     <script src="{% static 'style/js/ui-element.js' %}"></script>
+     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-     <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
-     <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
 -    {% if show_live_preview %}
-+
-+
-     <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
+-    <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
 -    {% endif %}
-     <script src="{% static 'app_manager/js/apps_base.js' %}"></script>
-+
-+
+-    <script src="{% static 'app_manager/js/apps_base.js' %}"></script>
  {% endblock %}
  
 -{% block page_breadcrumbs %}
@@ -115,12 +92,12 @@
 -    <i class="fa fa-spin fa-spinner"></i>
 -  </div>
 -</div>
--<div class="appmanager-content appmanager-content-animate-preview"
-+<div class="appmanager-content appmanager-content-animate-preview{% if not formdesigner %} appmanager-content-not-formdesigner{% endif %}"
+-<div class="appmanager-content appmanager-content-transition-all"
++<div class="js-unhide-on-unsaved appmanager-content appmanager-content-transition-all{% if not formdesigner %} appmanager-settings-content {% endif %}"
       id="js-appmanager-body">
      {% if app %}
          {% if error %}
-@@ -121,7 +124,7 @@
+@@ -119,7 +80,7 @@
                  {% endblocktrans %}
              </p>
              <br>
@@ -129,3 +106,9 @@
          </div>
      {% endif %}
  </div>
+@@ -153,3 +114,5 @@
+     </div>
+     {% endif %}
+ {% endblock modals %}
++
++{% block page_row_classes %}appmanager-content-row{% endblock %}

@@ -1,8 +1,10 @@
 import json
+import uuid
 from urllib import urlencode
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.template.loader import render_to_string
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -54,7 +56,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
             1: 'default_app',
             2: 'view_app',
             3: 'view_module',
-            4: 'form_source' if toggles.APP_MANAGER_V2.enabled(domain) else 'view_form',
+            4: 'form_source' if toggles.APP_MANAGER_V2.enabled(request.user.username) else 'view_form',
         }[len(args)]
 
     return HttpResponseRedirect(
@@ -110,3 +112,10 @@ def validate_langs(request, existing_langs):
             assert(new not in existing_langs)
 
     return (langs, rename)
+
+
+def get_blank_form_xml(form_name):
+    return render_to_string("app_manager/blank_form.xml", context={
+        'xmlns': str(uuid.uuid4()).upper(),
+        'name': form_name,
+    })

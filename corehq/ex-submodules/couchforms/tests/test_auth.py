@@ -5,16 +5,20 @@ from corehq.util.test_utils import TestFileMixin
 from couchforms.models import DefaultAuthContext
 import os
 
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 
 
 class AuthTest(TestCase, TestFileMixin):
     file_path = ('data', 'posts')
     root = os.path.dirname(__file__)
 
-    @run_with_all_backends
     def test_auth_context(self):
         xml_data = self.get_xml('meta')
 
-        _, xform, _ = submit_form_locally(xml_data, 'test-domain', auth_context=DefaultAuthContext())
-        self.assertEqual(xform.auth_context, {'doc_type': 'DefaultAuthContext'})
+        result = submit_form_locally(xml_data, 'test-domain', auth_context=DefaultAuthContext())
+        self.assertEqual(result.xform.auth_context, {'doc_type': 'DefaultAuthContext'})
+
+
+@use_sql_backend
+class AuthTestSQL(AuthTest):
+    pass

@@ -2,13 +2,15 @@ from __future__ import absolute_import
 import uuid
 
 from sqlagg import SumWhen
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.columns import get_distinct_values
-from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
+from corehq.apps.userreports.const import (
+    DEFAULT_MAXIMUM_EXPANSION, UCR_SQL_BACKEND, UCR_ES_BACKEND
+)
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
@@ -17,7 +19,6 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
 from corehq.apps.userreports.sql.columns import expand_column
-from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 
@@ -79,15 +80,19 @@ class TestFieldColumn(SimpleTestCase):
             })
 
 
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class ChoiceListColumnDbTest(TestCase):
 
-    @run_with_all_ucr_backends
     def test_column_uniqueness_when_truncated(self):
         problem_spec = {
             "display_name": "practicing_lessons",
             "property_name": "long_column",
             "choices": [
-                "duplicate_choice_1",
+                # test for regression:
+                # with sqlalchemy paramstyle='pyformat' (default)
+                # some queries that included columns with ')' in the column name
+                # would fail with a very cryptic message
+                "duplicate_choice_1(s)",
                 "duplicate_choice_2",
             ],
             "select_style": "multiple",
@@ -109,7 +114,7 @@ class ChoiceListColumnDbTest(TestCase):
             '_id': uuid.uuid4().hex,
             'domain': 'test',
             'doc_type': 'CommCareCase',
-            'long_column': 'duplicate_choice_1',
+            'long_column': 'duplicate_choice_1(s)',
         })
         adapter.refresh_table()
         # and query it back
@@ -117,6 +122,12 @@ class ChoiceListColumnDbTest(TestCase):
         self.assertEqual(1, q.count())
 
 
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
+class ChoiceListColumnDbTestES(ChoiceListColumnDbTest):
+    pass
+
+
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class TestExpandedColumn(TestCase):
     domain = 'foo'
     case_type = 'person'
@@ -130,7 +141,9 @@ class TestExpandedColumn(TestCase):
             update=properties,
         ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})
-        return CommCareCase.get(id)
+        case = CommCareCase.get(id)
+        self.addCleanup(case.delete)
+        return case
 
     def _build_report(self, vals, field='my_field', build_data_source=True):
         """
@@ -148,43 +161,14 @@ class TestExpandedColumn(TestCase):
             update_props = {field: v} if v is not None else {}
             self._new_case(update_props).save()
 
-        # Create report
-        data_source_config = DataSourceConfiguration(
-            domain=self.domain,
-            display_name='foo',
-            referenced_doc_type='CommCareCase',
-            table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
-            configured_filter={
-                "type": "boolean_expression",
-                "operator": "eq",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": "type"
-                },
-                "property_value": self.case_type,
-            },
-            configured_indicators=[{
-                "type": "expression",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": field
-                },
-                "column_id": field,
-                "display_name": field,
-                "datatype": "string"
-            }],
-        )
-        data_source_config.validate()
-        data_source_config.save()
-        self.addCleanup(data_source_config.delete)
         if build_data_source:
-            tasks.rebuild_indicators(data_source_config._id)
-            adapter = get_indicator_adapter(data_source_config)
+            tasks.rebuild_indicators(self.data_source_config._id)
+            adapter = get_indicator_adapter(self.data_source_config)
             adapter.refresh_table()
 
         report_config = ReportConfiguration(
             domain=self.domain,
-            config_id=data_source_config._id,
+            config_id=self.data_source_config._id,
             title='foo',
             aggregation_columns=['doc_id'],
             columns=[{
@@ -199,22 +183,50 @@ class TestExpandedColumn(TestCase):
         report_config.save()
         self.addCleanup(report_config.delete)
         data_source = ReportFactory.from_spec(report_config)
-        adapter = get_indicator_adapter(data_source_config)
-        if build_data_source:
-            adapter.refresh_table()
 
         return data_source, data_source.top_level_columns[0]
 
-    def setUp(self):
-        super(TestExpandedColumn, self).setUp()
-        delete_all_cases()
+    @classmethod
+    def setUpClass(cls):
+        super(TestExpandedColumn, cls).setUpClass()
+        cls.data_source_config = DataSourceConfiguration(
+            domain=cls.domain,
+            display_name='foo',
+            referenced_doc_type='CommCareCase',
+            table_id=_clean_table_name(cls.domain, str(uuid.uuid4().hex)),
+            configured_filter={
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                },
+                "property_value": cls.case_type,
+            },
+            configured_indicators=[{
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": field
+                },
+                "column_id": field,
+                "display_name": field,
+                "datatype": "string"
+            } for field in ['my_field', 'field_name_with_CAPITAL_letters']],
+        )
+        cls.data_source_config.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.data_source_config.delete()
+        super(TestExpandedColumn, cls).tearDownClass()
 
     def tearDown(self):
-        delete_all_cases()
+        adapter = get_indicator_adapter(self.data_source_config)
+        adapter.drop_table()
         connection_manager.dispose_engine(UCR_ENGINE_ID)
         super(TestExpandedColumn, self).tearDown()
 
-    @run_with_all_ucr_backends
     def test_getting_distinct_values(self):
         data_source, column = self._build_report([
             'apple',
@@ -225,13 +237,11 @@ class TestExpandedColumn(TestCase):
         vals = get_distinct_values(data_source.config, column)[0]
         self.assertListEqual(vals, ['apple', 'banana', 'blueberry'])
 
-    @run_with_all_ucr_backends
     def test_no_distinct_values(self):
         data_source, column = self._build_report([])
         distinct_vals, too_many_values = get_distinct_values(data_source.config, column)
         self.assertListEqual(distinct_vals, [])
 
-    @run_with_all_ucr_backends
     def test_too_large_expansion(self):
         vals = ['foo' + str(i) for i in range(DEFAULT_MAXIMUM_EXPANSION + 1)]
         data_source, column = self._build_report(vals)
@@ -239,7 +249,6 @@ class TestExpandedColumn(TestCase):
         self.assertTrue(too_many_values)
         self.assertEqual(len(distinct_vals), DEFAULT_MAXIMUM_EXPANSION)
 
-    @run_with_all_ucr_backends
     def test_allowed_expansion(self):
         num_columns = DEFAULT_MAXIMUM_EXPANSION + 1
         vals = ['foo' + str(i) for i in range(num_columns)]
@@ -253,14 +262,12 @@ class TestExpandedColumn(TestCase):
         self.assertFalse(too_many_values)
         self.assertEqual(len(distinct_vals), num_columns)
 
-    @run_with_all_ucr_backends
     def test_unbuilt_data_source(self):
         data_source, column = self._build_report(['apple'], build_data_source=False)
         distinct_vals, too_many_values = get_distinct_values(data_source.config, column)
         self.assertListEqual(distinct_vals, [])
         self.assertFalse(too_many_values)
 
-    @run_with_all_ucr_backends
     def test_expansion(self):
         column = ReportColumnFactory.from_spec(dict(
             type="expanded",
@@ -275,7 +282,6 @@ class TestExpandedColumn(TestCase):
         self.assertEqual(type(cols[0].view), SumWhen)
         self.assertEqual(cols[1].view.whens, {'negative': 1})
 
-    @run_with_all_ucr_backends
     def test_none_in_values(self):
         """
         Confirm that expanded columns work when one of the distinct values is None.
@@ -304,6 +310,11 @@ class TestExpandedColumn(TestCase):
         expected_rows = [get_expected_row(v, set(submitted_vals)) for v in submitted_vals]
         data = data_source.get_data()
         self.assertEqual(sorted(expected_rows), sorted(data))
+
+
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
+class TestExpandedColumnES(TestExpandedColumn):
+    pass
 
 
 class TestAggregateDateColumn(SimpleTestCase):

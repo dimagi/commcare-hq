@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import redirect_to_login
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -19,7 +19,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
 from django_otp.plugins.otp_static.models import StaticToken
-from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
+from djangular.views.mixins import allow_remote_invocation
 
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
@@ -44,7 +44,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
-from corehq.apps.hqwebapp.views import BasePageView, logout
+from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin, logout
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.registration.forms import AdminInvitesUserForm, WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user
@@ -73,6 +73,7 @@ from corehq.apps.users.forms import (
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
                                       DomainRemovalRecord, UserRole, AdminUserRole, Invitation,
                                       DomainMembershipError)
+from corehq.apps.users.signals import clean_commcare_user
 from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
 from corehq import toggles
@@ -207,10 +208,10 @@ class BaseEditUserView(BaseUserSettingsView):
             raise NotImplementedError("You must specify a form to update the user!")
 
         if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
-            form = self.user_update_form_class(data=self.request.POST)
+            form = self.user_update_form_class(
+                data=self.request.POST, domain=self.domain, existing_user=self.editable_user)
         else:
-            form = self.user_update_form_class()
-            form.initialize_form(domain=self.request.domain, existing_user=self.editable_user)
+            form = self.user_update_form_class(domain=self.domain, existing_user=self.editable_user)
 
         if self.can_change_user_roles:
             form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
@@ -261,7 +262,7 @@ class BaseEditUserView(BaseUserSettingsView):
     def update_user(self):
         if self.form_user_update.is_valid():
             old_lang = self.request.couch_user.language
-            if self.form_user_update.update_user(existing_user=self.editable_user, domain=self.domain):
+            if self.form_user_update.update_user():
                 # if editing our own account we should also update the language in the session
                 if self.editable_user._id == self.request.couch_user._id:
                     new_lang = self.request.couch_user.language
@@ -276,9 +277,29 @@ class BaseEditUserView(BaseUserSettingsView):
         saved = False
         if self.request.POST['form_type'] == "commtrack":
             if self.commtrack_form.is_valid():
-                self.commtrack_form.save(self.editable_user)
-                saved = True
+                clean_commcare_user.send(
+                    'BaseEditUserView.commtrack',
+                    domain=self.domain,
+                    request_user=self.request.couch_user,
+                    user=self.editable_user,
+                    forms={self.commtrack_form.__class__.__name__: self.commtrack_form}
+                )
+                if self.commtrack_form.is_valid():
+                    self.commtrack_form.save(self.editable_user)
+                    saved = True
         elif self.request.POST['form_type'] == "update-user":
+            self.form_user_update.is_valid()
+            forms = {self.form_user_update.__class__.__name__: self.form_user_update}
+            if hasattr(self, 'custom_data'):
+                self.custom_data.is_valid()
+                forms[self.custom_data.__class__.__name__] = self.custom_data
+            clean_commcare_user.send(
+                'BaseEditUserView.update_user',
+                domain=self.domain,
+                request_user=self.request.couch_user,
+                user=self.editable_user,
+                forms=forms
+            )
             if all([self.update_user(), self.custom_user_is_valid()]):
                 messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
                 saved = True
@@ -367,7 +388,7 @@ def get_domain_languages(domain):
     return sorted(domain_languages) or langcodes.get_all_langs_for_select()
 
 
-class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
+class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/web_users.html'
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'
@@ -658,7 +679,7 @@ class UserInvitationView(object):
             context['current_page'] = {'page_name': _('Project Invitation')}
         else:
             context['current_page'] = {'page_name': _('Project Invitation, Account Required')}
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
                 if is_invited_user:
@@ -907,7 +928,7 @@ class DomainRequestView(BasePageView):
         domain = Domain.get_by_name(self.request.domain)
         if self.request_form is None:
             initial = {'domain': domain.name}
-            if self.request.user.is_authenticated():
+            if self.request.user.is_authenticated:
                 initial.update({
                     'email': self.request.user.get_username(),
                     'full_name': self.request.user.get_full_name(),

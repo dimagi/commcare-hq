@@ -1,14 +1,17 @@
+from __future__ import print_function
 from datetime import datetime
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
+from dimagi.utils.couch import CriticalSection
 from toggle.shortcuts import set_toggle
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.toggles import OLD_EXPORTS, NAMESPACE_DOMAIN, ALLOW_USER_DEFINED_EXPORT_COLUMNS
 from corehq.util.log import with_progress_bar
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.reports.dbaccessors import (
-    stale_get_exports_json,
+    get_exports_json,
     stale_get_export_count,
 )
 from corehq.apps.reports.models import (
@@ -35,6 +38,8 @@ from .const import (
     TRANSFORM_FUNCTIONS,
     SKIPPABLE_PROPERTIES,
 )
+
+from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 
 
 def is_occurrence_deleted(last_occurrences, app_ids_and_versions):
@@ -229,7 +234,7 @@ def convert_saved_export_to_export_instance(
                     new_column.deid_transform = transform
                     info.append('Column has deid_transform: {}'.format(transform))
                 ordering.append(new_column)
-            except SkipConversion, e:
+            except SkipConversion as e:
                 if is_remote_app_migration or force_convert_columns or column.index in SKIPPABLE_PROPERTIES:
                     # In the event that we skip a column and it's a remote application,
                     # add it to the inferred schema
@@ -586,7 +591,7 @@ def revert_migrate_domain(domain, dryrun=False):
         toggle_js_domain_cachebuster.clear(domain)
 
     for reverted_export in reverted_exports:
-        print 'Reverted export: {}'.format(reverted_export._id)
+        print('Reverted export: {}'.format(reverted_export._id))
 
 
 def migrate_domain(domain, dryrun=False, force_convert_columns=False):
@@ -595,21 +600,22 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
     metas = []
     if export_count:
         for old_export in with_progress_bar(
-                stale_get_exports_json(domain),
+                get_exports_json(domain),
                 length=export_count,
                 prefix=domain):
-            try:
-                _, migration_meta = convert_saved_export_to_export_instance(
-                    domain,
-                    SavedExportSchema.wrap(old_export),
-                    dryrun=dryrun,
-                    force_convert_columns=force_convert_columns,
-                )
-            except Exception, e:
-                print 'Failed parsing {}: {}'.format(old_export['_id'], e)
-                raise e
-            else:
-                metas.append(migration_meta)
+            with CriticalSection(['saved-export-{}'.format(old_export['_id'])], timeout=120):
+                try:
+                    _, migration_meta = convert_saved_export_to_export_instance(
+                        domain,
+                        SavedExportSchema.get(old_export['_id']),
+                        dryrun=dryrun,
+                        force_convert_columns=force_convert_columns,
+                    )
+                except Exception as e:
+                    print('Failed parsing {}: {}'.format(old_export['_id'], e))
+                    raise
+                else:
+                    metas.append(migration_meta)
 
     if not dryrun:
         set_toggle(OLD_EXPORTS.slug, domain, False, namespace=NAMESPACE_DOMAIN)
@@ -631,20 +637,28 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
 
         output = '* Export information for export: {} *'.format(meta.old_export_url)
         schema_id_output = 'Generated schema: {}'.format(meta.generated_schema_id)
-        print ''
-        print '*' * len(output)
-        print output
-        print '* {}{} *'.format(schema_id_output, ' ' * (len(output) - len(schema_id_output) - 4))
-        print '*' * len(output)
-        print ''
+        print('')
+        print('*' * len(output))
+        print(output)
+        print('* {}{} *'.format(schema_id_output, ' ' * (len(output) - len(schema_id_output) - 4)))
+        print('*' * len(output))
+        print('')
 
         if meta.skipped_tables:
-            print '# Skipped tables #'
+            print('# Skipped tables #')
             for table_meta in meta.skipped_tables:
                 table_meta.pretty_print()
 
         if meta.skipped_columns:
-            print '# Skipped columns #'
+            print('# Skipped columns #')
             for column_meta in meta.skipped_columns:
                 column_meta.pretty_print()
     return metas
+
+
+def domain_has_excel_dashboard_access(domain):
+    return domain_has_privilege(domain, EXCEL_DASHBOARD)
+
+
+def domain_has_daily_saved_export_access(domain):
+    return domain_has_privilege(domain, DAILY_SAVED_EXPORT)

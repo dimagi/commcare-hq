@@ -5,6 +5,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 FORM_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.ExcelExportReport'
 DEID_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.DeidExportReport'
 CASE_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.CaseExportReport'
+SMS_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.SMSExportReport'
 
 EXPORT_PERMISSIONS = {FORM_EXPORT_PERMISSION, DEID_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION}
 
@@ -12,7 +13,9 @@ ReportPermission = namedtuple('ReportPermission', ['slug', 'title', 'is_visible'
 
 
 def get_extra_permissions():
-    from corehq.apps.export.views import FormExportListView, DeIdFormExportListView, CaseExportListView
+    from corehq.apps.export.views import (
+        FormExportListView, DeIdFormExportListView, CaseExportListView, DownloadNewSmsExportView
+    )
     yield ReportPermission(
         FORM_EXPORT_PERMISSION, FormExportListView.page_title, lambda domain: True)
     yield ReportPermission(
@@ -20,6 +23,8 @@ def get_extra_permissions():
         lambda domain: domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA))
     yield ReportPermission(
         CASE_EXPORT_PERMISSION, CaseExportListView.page_title, lambda domain: True)
+    yield ReportPermission(
+        SMS_EXPORT_PERMISSION, DownloadNewSmsExportView.page_title, lambda domain: True)
 
 
 def can_view_form_exports(couch_user, domain):
@@ -31,6 +36,12 @@ def can_view_form_exports(couch_user, domain):
 def can_view_case_exports(couch_user, domain):
     return couch_user.can_edit_data(domain) or has_permission_to_view_report(
         couch_user, domain, CASE_EXPORT_PERMISSION
+    )
+
+
+def can_view_sms_exports(couch_user, domain):
+    return couch_user.can_edit_data(domain) or has_permission_to_view_report(
+        couch_user, domain, SMS_EXPORT_PERMISSION
     )
 
 

@@ -9,7 +9,7 @@ from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, validate_email
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.forms.widgets import PasswordInput
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, string_concat
@@ -18,11 +18,13 @@ from django.template import Context
 from django_countries.data import COUNTRIES
 
 from corehq import toggles
+from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.users.models import CouchUser
+from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
@@ -122,6 +124,8 @@ class LanguageField(forms.CharField):
 class BaseUpdateUserForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain')
+        self.existing_user = kwargs.pop('existing_user')
         super(BaseUpdateUserForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
@@ -132,6 +136,9 @@ class BaseUpdateUserForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
+        for prop in self.direct_properties:
+            self.initial[prop] = getattr(self.existing_user, prop, "")
+
     @property
     def direct_properties(self):
         return []
@@ -139,59 +146,34 @@ class BaseUpdateUserForm(forms.Form):
     def clean_email(self):
         return self.cleaned_data['email'].lower()
 
-    def update_user(self, existing_user=None, save=True, **kwargs):
+    def update_user(self, save=True):
         is_update_successful = False
 
-        # From what I can tell, everything that invokes this method invokes it
-        # with a value for existing_user. It also looks like the code below is
-        # not behaving properly for mobile workers when existing_user is None.
-        # If the soft asserts confirm this isn't ever being passed existing_user=None,
-        # I propose making existing_user a required arg and removing the code below
-        # that creates the user.
-        _assert = soft_assert('@'.join(['gcapalbo', 'dimagi.com']), exponential_backoff=False)
-        _assert(existing_user is not None, "existing_user is None")
-
-        if not existing_user and 'email' in self.cleaned_data:
-            from django.contrib.auth.models import User
-            django_user = User()
-            django_user.username = self.cleaned_data['email']
-            django_user.save()
-            existing_user = CouchUser.from_django_user(django_user)
-            existing_user.save()
-            is_update_successful = True
-
         for prop in self.direct_properties:
-            setattr(existing_user, prop, self.cleaned_data[prop])
+            setattr(self.existing_user, prop, self.cleaned_data[prop])
             is_update_successful = True
 
         if is_update_successful and save:
-            existing_user.save()
+            self.existing_user.save()
         return is_update_successful
-
-    def initialize_form(self, domain, existing_user=None):
-        if existing_user is None:
-            return
-
-        for prop in self.direct_properties:
-            self.initial[prop] = getattr(existing_user, prop, "")
 
 
 class UpdateUserRoleForm(BaseUpdateUserForm):
     role = forms.ChoiceField(choices=(), required=False)
 
-    def update_user(self, existing_user=None, domain=None, **kwargs):
-        is_update_successful = super(UpdateUserRoleForm, self).update_user(existing_user, save=False)
+    def update_user(self):
+        is_update_successful = super(UpdateUserRoleForm, self).update_user(save=False)
 
-        if domain and 'role' in self.cleaned_data:
+        if self.domain and 'role' in self.cleaned_data:
             role = self.cleaned_data['role']
             try:
-                existing_user.set_role(domain, role)
-                existing_user.save()
+                self.existing_user.set_role(self.domain, role)
+                self.existing_user.save()
                 is_update_successful = True
             except KeyError:
                 pass
         elif is_update_successful:
-            existing_user.save()
+            self.existing_user.save()
 
         return is_update_successful
 
@@ -218,8 +200,8 @@ class UpdateUserPermissionForm(forms.Form):
 
 
 class BaseUserInfoForm(forms.Form):
-    first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=50, required=False)
-    last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=50, required=False)
+    first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=30, required=False)
+    last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=30, required=False)
     email = forms.EmailField(label=ugettext_lazy("E-Mail"), max_length=75, required=False)
     language = forms.ChoiceField(
         choices=(),
@@ -246,19 +228,22 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         required=False,
         label=ugettext_lazy("Opt out of emails about CommCare updates."),
     )
-
-    class MyAccountInfoFormException(Exception):
-        pass
+    analytics_enabled = forms.BooleanField(
+        required=False,
+        label=ugettext_lazy("Enable Tracking"),
+        help_text=ugettext_lazy(
+            "Allow Dimagi to collect usage information to improve CommCare. "
+            "You can learn more about the information we collect and the ways "
+            "we use it in our "
+            '<a href="http://www.dimagi.com/policy/">privacy policy</a>'
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
-        if not self.user:
-            raise UpdateMyAccountInfoForm.MyAccountInfoFormException("Expected to be passed a user kwarg")
-
-        self.username = self.user.username
+        self.user = kwargs['existing_user']
         api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
-
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
+        self.username = self.user.username
 
         username_controls = []
         if self.username:
@@ -295,6 +280,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             hqcrispy.Field('first_name'),
             hqcrispy.Field('last_name'),
             hqcrispy.Field('email'),
+            twbscrispy.PrependedText('analytics_enabled', ''),
         ]
 
         if self.set_email_opt_out:
@@ -334,6 +320,13 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             result.remove('email_opt_out')
         return result
 
+    def update_user(self, save=True, **kwargs):
+        if save:
+            analytics_enabled = self.cleaned_data['analytics_enabled']
+            if self.user.analytics_enabled != analytics_enabled:
+                set_analytics_opt_out(self.user, analytics_enabled)
+        return super(UpdateMyAccountInfoForm, self).update_user(save=save, **kwargs)
+
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     loadtest_factor = forms.IntegerField(
@@ -350,16 +343,13 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
             '<a href="https://wiki.commcarehq.org/display/commcarepublic/Web+Apps">'
             'Web Apps</a>'
         ))
+        if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
+            self.fields['loadtest_factor'].widget = forms.TextInput()
 
     @property
     def direct_properties(self):
         indirect_props = ['role']
         return [k for k in self.fields.keys() if k not in indirect_props]
-
-    def initialize_form(self, domain, existing_user=None):
-        if toggles.ENABLE_LOADTEST_USERS.enabled(domain):
-            self.fields['loadtest_factor'].widget = forms.TextInput()
-        super(UpdateCommCareUserInfoForm, self).initialize_form(domain, existing_user)
 
 
 class RoleForm(forms.Form):
@@ -376,7 +366,7 @@ class RoleForm(forms.Form):
 class SetUserPasswordForm(SetPasswordForm):
 
     new_password1 = forms.CharField(
-        label=ugettext_lazy("New password"),
+        label=ugettext_noop("New password"),
         widget=forms.PasswordInput(),
     )
 
@@ -522,12 +512,12 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Username"),
     )
     first_name = forms.CharField(
-        max_length=50,
+        max_length=30,
         required=False,
         label=ugettext_noop("First Name")
     )
     last_name = forms.CharField(
-        max_length=50,
+        max_length=30,
         required=False,
         label=ugettext_noop("Last Name")
     )
@@ -608,13 +598,13 @@ class NewMobileWorkerForm(forms.Form):
                     'first_name',
                     ng_required="false",
                     ng_model='mobileWorker.first_name',
-                    ng_maxlength="50",
+                    ng_maxlength="30",
                 ),
                 crispy.Field(
                     'last_name',
                     ng_required="false",
                     ng_model='mobileWorker.last_name',
-                    ng_maxlength="50",
+                    ng_maxlength="30",
                 ),
                 location_field,
                 crispy.Field(
@@ -642,6 +632,60 @@ class NewMobileWorkerForm(forms.Form):
         if self.project.strong_mobile_passwords:
             return clean_password(self.cleaned_data.get('password'))
         return self.cleaned_data.get('password')
+
+
+class NewAnonymousMobileWorkerForm(forms.Form):
+    location_id = forms.CharField(
+        label=ugettext_noop("Location"),
+        required=False,
+    )
+    username = forms.CharField(
+        max_length=50,
+        label=ugettext_noop("Username"),
+        initial=ANONYMOUS_USERNAME,
+    )
+    password = forms.CharField(
+        required=True,
+        min_length=1,
+    )
+
+    def __init__(self, project, user, *args, **kwargs):
+        super(NewAnonymousMobileWorkerForm, self).__init__(*args, **kwargs)
+        self.project = project
+        self.user = user
+        self.can_access_all_locations = user.has_permission(self.project.name, 'access_all_locations')
+        if not self.can_access_all_locations:
+            self.fields['location_id'].required = True
+
+        if project.uses_locations:
+            self.fields['location_id'].widget = AngularLocationSelectWidget(
+                require=not self.can_access_all_locations)
+            location_field = crispy.Field(
+                'location_id',
+                ng_model='mobileWorker.location_id',
+            )
+        else:
+            location_field = crispy.Hidden(
+                'location_id',
+                '',
+                ng_model='mobileWorker.location_id',
+            )
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-4'
+        self.helper.field_class = 'col-sm-8'
+        self.helper.layout = Layout(
+            Fieldset(
+                _('Basic Information'),
+                crispy.Field(
+                    'username',
+                    readonly=True,
+                ),
+                location_field,
+                crispy.Hidden('is_anonymous', 'yes'),
+            )
+        )
 
 
 class MultipleSelectionForm(forms.Form):

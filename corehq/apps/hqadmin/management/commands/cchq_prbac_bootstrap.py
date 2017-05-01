@@ -3,7 +3,6 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 # Standard library imports
 import logging
-from optparse import make_option
 
 # Django imports
 from django.core.management import call_command
@@ -32,19 +31,27 @@ def cchq_prbac_bootstrap(apps, schema_editor):
 class Command(BaseCommand):
     help = 'Populate a fresh database with some sample roles and grants'
 
-    option_list = (
-        make_option('--dry-run', action='store_true',  default=False,
-                    help='Do not actually modify the database, just verbosely log what happen'),
-        make_option('--verbose', action='store_true',  default=False,
-                    help='Enable debug output'),
-        make_option('--fresh-start', action='store_true',  default=False,
-                    help='We changed the core v0 plans, wipe all existing plans and start over. USE CAUTION.'),
-        make_option('--testing', action='store_true',  default=False,
-                    help='Run this command for tests.'),
-    )
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            default=False,
+            help='Do not actually modify the database, just verbosely log what happen',
+        )
+        parser.add_argument(
+            '--verbose',
+            action='store_true',
+            default=False,
+            help='Enable debug output',
+        )
+        parser.add_argument(
+            '--fresh-start',
+            action='store_true',
+            default=False,
+            help='We changed the core v0 plans, wipe all existing plans and start over. USE CAUTION.',
+        )
 
-    def handle(self, dry_run=False, verbose=False, fresh_start=False, testing=False, *args, **options):
-
+    def handle(self, dry_run=False, verbose=False, fresh_start=False, **options):
         self.verbose = verbose
 
         if fresh_start:
@@ -88,12 +95,7 @@ class Command(BaseCommand):
                 logger.info('Role already exists: %s', role.name)
         if roles_to_save:
             roles = Role.objects.bulk_create(roles_to_save)
-            if roles[0].id is None:
-                # pre Django 1.10
-                self.roles_by_slug = {role.slug: role for role in Role.objects.all()}
-            else:
-                # Django 1.10 (omit extra query)
-                self.roles_by_slug.update((role.slug, role) for role in roles)
+            self.roles_by_slug.update((role.slug, role) for role in roles)
 
     BOOTSTRAP_PRIVILEGES = [
         Role(slug=privileges.API_ACCESS, name='API Access', description=''),
@@ -142,7 +144,9 @@ class Command(BaseCommand):
         Role(slug=privileges.DAILY_SAVED_EXPORT, name='DAILY_SAVED_EXPORT',
              description="Allows domains to create Daily Saved Exports"),
         Role(slug=privileges.ZAPIER_INTEGRATION, name='Zapier Integration',
-             description='Allows domains to use zapier (zapier.com) integration')
+             description='Allows domains to use zapier (zapier.com) integration'),
+        Role(slug=privileges.LOGIN_AS, name='Login As for App Preview',
+                     description='Allows domains to use the login as feature of app preview')
     ]
 
     BOOTSTRAP_PLANS = [
@@ -178,7 +182,8 @@ class Command(BaseCommand):
         privileges.ALLOW_EXCESS_USERS,
         privileges.LOCATIONS,
         privileges.USER_CASE,
-        privileges.ZAPIER_INTEGRATION
+        privileges.ZAPIER_INTEGRATION,
+        privileges.LOGIN_AS
     ]
 
     pro_plan_features = standard_plan_features + [

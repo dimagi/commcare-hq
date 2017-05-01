@@ -3,7 +3,7 @@ import datetime
 from django.utils.translation import ugettext_noop
 from django.utils import html
 from casexml.apps.case.models import CommCareCase
-from django.core.urlresolvers import reverse, NoReverseMatch
+from django.urls import reverse, NoReverseMatch
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 

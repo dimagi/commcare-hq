@@ -21,7 +21,13 @@ def turn_on_secure_submissions_for_all_apps(domain):
 
 class Command(BaseCommand):
 
-    def handle(self, *args, **options):
-        domains = list(args)
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'domains',
+            metavar='domain',
+            nargs='*',
+        )
+
+    def handle(self, domains, **options):
         for domain in domains:
             turn_on_secure_submissions_for_all_apps(domain)

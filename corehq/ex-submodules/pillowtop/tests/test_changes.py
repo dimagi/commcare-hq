@@ -1,7 +1,7 @@
 import uuid
 from django.test import SimpleTestCase
 from pillowtop.dao.mock import MockDocumentStore
-from pillowtop.feed.couch import change_from_couch_row, force_to_change
+from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
 from pillowtop.feed.mock import RandomChangeFeed, MockChangeFeed
 
@@ -17,8 +17,6 @@ class TestCouchChange(SimpleTestCase):
         }
         ways_to_make_change_object = [
             change_from_couch_row(couch_row),
-            force_to_change(couch_row),
-            force_to_change(force_to_change(couch_row)),  # tests passing an already converted object
         ]
         for change in ways_to_make_change_object:
             self.assertTrue(isinstance(change, Change))

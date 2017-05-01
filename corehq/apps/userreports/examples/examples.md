@@ -523,6 +523,22 @@ This will return the difference in seconds between two times (i.e. start and end
 }
 ```
 
+## Getting forms submitted from specific forms for a case
+
+```json
+{
+    "type": "get_case_forms",
+    "case_id_expression": {
+        "type": "property_name",
+        "property_name": "case_id"
+    },
+    "xmlns": [
+        "http://openrosa.org/formdesigner/D8EED5E3-88CD-430E-984F-45F14E76A551",
+        "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
+    ]
+}
+```
+
 ## Filter, Map, Reduce, Flatten and Sort expressions
 
 ### Getting number of forms of a particular type

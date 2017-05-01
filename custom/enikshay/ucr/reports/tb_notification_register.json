@@ -10,6 +10,9 @@
         "enikshay-aks-audit",
         "np-migration-3"
     ],
+    "server_environment": [
+        "softlayer"
+    ],
     "data_source_table": "episode",
     "report_id": "tb_notification_register",
     "config": {
@@ -24,8 +27,8 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "display": "Case Open Date",
-                "field": "opened_on",
+                "display": "Date of Diagnosis",
+                "field": "date_of_diagnosis",
                 "slug": "date",
                 "type": "date"
             },
@@ -37,9 +40,30 @@
                 "field": "person_owner_id",
                 "choice_provider": {
                     "include_descendants": true,
-                    "type": "location"
+                    "type": "location",
+                    "show_full_path": true,
+                    "order_by_hierarchy": true
                 },
                 "display": "Location"
+            },
+            {
+                "slug": "is_migrated",
+                "required": false,
+                "datatype": "integer",
+                "show_all": true,
+                "choices": [
+                    {
+                        "display": "Show only migrated from Nikshay",
+                        "value": 1
+                    },
+                    {
+                        "display": "Show only eNikshay",
+                        "value": 0
+                    }
+                ],
+                "field": "case_created_by_migration",
+                "type": "choice_list",
+                "display": "Filter migrated data"
             },
             {
                 "type": "pre",
@@ -47,13 +71,6 @@
                 "slug": "episode_type",
                 "datatype": "string",
                 "pre_value": "confirmed_tb"
-            },
-            {
-                "type": "pre",
-                "field": "closed",
-                "slug": "closed",
-                "datatype": "integer",
-                "pre_value": 0
             }
         ],
         "columns": [
@@ -161,6 +178,18 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "known_patient_contact": "Contact of known TB patient",
+                        "prison_inmate": "Prison inmate",
+                        "miner": "Miner",
+                        "migrant": "Migrant",
+                        "refugee": "Refugee",
+                        "slum_dweller": "Slum dweller",
+                        "health_care_worker": "Health care worker",
+                        "tribal_population": "Tribal population",
+                        "other": "Other"
+                    }
                 },
                 "calculate_total": false
             },
@@ -181,7 +210,7 @@
                         "treatment_after_failure": "Treatment After Failure",
                         "treatment_after_lfu": "Treatment After Loss to Follow-up",
                         "transfer_in": "Transferred In",
-                        "other_previously_treated": "Others Previously Treated"
+                        "other_previously_treated": "Other Previously Treated"
                     }
                 },
                 "calculate_total": false
@@ -198,7 +227,7 @@
                     "type": "translation",
                     "translations": {
                         "pulmonary": "P",
-                        "extra_pulonary": "EP"
+                        "extra_pulmonary": "EP"
                     }
                 },
                 "calculate_total": false
@@ -217,6 +246,18 @@
                         "microbiological": "Microbiologically confirmed",
                         "clinical": "Clinically Diagnosed"
                     }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Date of Diagnosis",
+                "type": "field",
+                "field": "date_of_diagnosis",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
                 },
                 "calculate_total": false
             },
@@ -307,6 +348,12 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "reactive": "Reactive",
+                        "non_reactive": "Non-Reactive",
+                        "unknown": "Unknown"
+                    }
                 },
                 "calculate_total": false
             },
@@ -319,6 +366,12 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "diabetic": "Diabetic",
+                        "non_diabetic": "Non-diabetic",
+                        "unknown": "Unknown"
+                    }
                 },
                 "calculate_total": false
             },
@@ -361,7 +414,7 @@
             {
                 "display": "Health Facility for Treatment",
                 "type": "field",
-                "field": "phi_assigned_to",
+                "field": "phi",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -373,7 +426,7 @@
             {
                 "display": "Date of Treatment Initiation",
                 "type": "field",
-                "field": "ip_initiation_date",
+                "field": "treatment_initiation_date",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -409,12 +462,18 @@
             {
                 "display": "Dosage Frequency",
                 "type": "field",
-                "field": "dosage_frequency",
+                "field": "adherence_schedule_id",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "schedule_mwf": "Intermittent (MWF)",
+                        "schedule_trs": "Intermittent (TTS)",
+                        "schedule_daily": "Daily"
+                    }
                 },
                 "calculate_total": false
             },
@@ -499,6 +558,16 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "cured": "Cured",
+                        "treatment_complete": "Treatment complete",
+                        "died": "Patient died",
+                        "failure": "Treatment Failure",
+                        "loss_to_follow_up": "Loss to follow up",
+                        "regimen_changed": "Regimen changed (switched to CAT4)",
+                        "not_evaluated": "Not evaluated"
+                    }
                 },
                 "calculate_total": false
             },
@@ -607,6 +676,17 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "tbhv": "TBHV",
+                        "asha": "ASHA",
+                        "aww": "AWW",
+                        "private_medical_pracitioner": "Private Medical Practitioner",
+                        "health_worker": "Health worker",
+                        "ngo_volunteer": "NGO volunteer",
+                        "other_community_volunteer": "Other community volunteer",
+                        "patient_family_member": "Patient's family member"
+                    }
                 },
                 "calculate_total": false
             }

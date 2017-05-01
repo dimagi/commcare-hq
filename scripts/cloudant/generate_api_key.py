@@ -1,3 +1,4 @@
+from __future__ import print_function
 from manage_cloudant import authenticate_cloudant_instance, run_ask_runs
 
 if __name__ == '__main__':
@@ -13,9 +14,9 @@ if __name__ == '__main__':
 
     cloudant_instance = authenticate_cloudant_instance(args.username)
     api_key, api_password = cloudant_instance.generate_api_key().ask_and_run()
-    print 'New API key generated.'
-    print 'API Key:', api_key
-    print 'API Password:', api_password
+    print('New API key generated.')
+    print('API Key:', api_key)
+    print('API Password:', api_password)
 
     ask_runs = []
 

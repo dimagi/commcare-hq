@@ -1,9 +1,10 @@
+/* globals COMMCAREHQ */
 var hqLayout = {};
 
 hqLayout.selector = {
     navigation: '#hq-navigation',
     content: '#hq-content',
-    appmanager: '#js-appmanager-body.appmanager-content-not-formdesigner',
+    appmanager: '#js-appmanager-body.appmanager-content',
     footer: '#hq-footer',
     sidebar: '#hq-sidebar',
     breadcrumbs: '#hq-breadcrumbs',
@@ -27,16 +28,24 @@ hqLayout.utils = {
         var $sidebar = $(hqLayout.selector.sidebar);
         // todo fix extra 10 px padding needed when sidebar suddenly disappears
         // on modal.
-        var absorbedWidth = $sidebar.outerWidth() + 12;
+        var absorbedWidth = $sidebar.outerWidth();
         return $(window).outerWidth() - absorbedWidth;
     },
     getAvailableContentHeight: function () {
         var $navigation = $(hqLayout.selector.navigation),
             $footer = $(hqLayout.selector.footer),
-            $breadcrumbs = $(hqLayout.selector.breadcrumbs);
-        var absorbedHeight = $navigation.outerHeight() + $footer.outerHeight();
+            $breadcrumbs = $(hqLayout.selector.breadcrumbs),
+            $messages = $(hqLayout.selector.messages);
+
+        var absorbedHeight = $navigation.outerHeight();
+        if ($footer.length) {
+            absorbedHeight += $footer.outerHeight();
+        }
         if ($breadcrumbs.length) {
             absorbedHeight += $breadcrumbs.outerHeight();
+        }
+        if ($messages.length) {
+            absorbedHeight += $messages.outerHeight();
         }
         return $(window).height() - absorbedHeight;
     },
@@ -63,9 +72,25 @@ hqLayout.actions = {
             $content = $(hqLayout.selector.content),
             $appmanager = $(hqLayout.selector.appmanager);
 
-        if ($content.length) {
+
+        if ($appmanager.length) {
+            var availableHeight = hqLayout.utils.getAvailableContentHeight(),
+                contentHeight = $appmanager.outerHeight();
+
+            if ($sidebar.length) {
+                var newSidebarHeight = Math.max(availableHeight, contentHeight);
+                $sidebar.css('min-height', newSidebarHeight + 'px');
+
+                if ($sidebar.outerHeight() >  $appmanager.outerHeight()) {
+                    $content.css('min-height', $sidebar.outerHeight() + 'px');
+                    $appmanager.css('min-height', $sidebar.outerHeight() + 'px');
+                }
+            }
+
+        } else if ($content.length) {
             var availableHeight = hqLayout.utils.getAvailableContentHeight(),
                 contentHeight = $content.innerHeight();
+
             if (contentHeight > availableHeight) {
                 $content.css('padding-bottom', 15 + 'px');
                 contentHeight = $content.outerHeight();
@@ -79,15 +104,19 @@ hqLayout.actions = {
                     $content.css('min-height', $sidebar.outerHeight() + 'px');
                 }
             }
-        }
-        if ($appmanager.length && $content.length) {
-            $appmanager.css('min-height', $content.outerHeight() + 'px');
+
+            if ($content.find("#formdesigner").length && !COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+                $content.css("padding-left", 0);
+                $content.css("padding-right", 0);
+            }
         }
     },
     balanceWidths: function () {
         var $content = $(hqLayout.selector.content),
-            $sidebar = $(hqLayout.selector.sidebar);
-        if ($content.length && $sidebar.length) {
+            $sidebar = $(hqLayout.selector.sidebar),
+            $appmanager = $(hqLayout.selector.appmanager);
+
+        if ($content.length && $sidebar.length && $appmanager.length === 0) {
             $content.css('width', hqLayout.utils.getAvailableContentWidth() + 'px');
         }
 

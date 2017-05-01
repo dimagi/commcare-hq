@@ -22,7 +22,7 @@ def api_auth(view_func):
     def _inner(req, domain, *args, **kwargs):
         try:
             return view_func(req, domain, *args, **kwargs)
-        except Http404, ex:
+        except Http404 as ex:
             if ex.message:
                 return HttpResponse(json.dumps({"error": ex.message}),
                                 content_type="application/json",

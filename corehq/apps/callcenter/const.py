@@ -83,3 +83,5 @@ PER_DOMAIN_FORM_INDICATORS = {
         'HomeVisitForms': {'type': TYPE_SUM, 'xmlns': CDC_NormalVisit},
     },
 }
+
+CALLCENTER_USER = 'callcenter-system'

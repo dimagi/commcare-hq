@@ -22,7 +22,6 @@ class Migration(migrations.Migration):
         migrator.get_migration('get_case_ids_in_domain_2.sql'),
         migrator.get_migration('get_case_ids_modified_with_owner_since_1.sql'),
         migrator.get_migration('get_case_by_external_id_1.sql'),
-        migrator.get_migration('get_case_types_for_domain_1.sql'),
         HqRunSQL(
             "DROP FUNCTION IF EXISTS get_deleted_case_ids_by_owner(TEXT, TEXT)",
             "SELECT 1"

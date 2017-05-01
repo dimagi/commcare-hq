@@ -1,6 +1,6 @@
 from lxml import etree
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse
 
 from corehq.apps.app_manager.dbaccessors import get_app

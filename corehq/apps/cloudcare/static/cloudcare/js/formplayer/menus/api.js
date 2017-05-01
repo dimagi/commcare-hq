@@ -22,10 +22,10 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                         FormplayerFrontend.trigger('retry', response, function() {
                             menus.fetch($.extend(true, {}, options));
                         }, gettext('Waiting for server progress'));
-                    } else if (response.exception){
+                    } else if (response.hasOwnProperty('exception')){
                         FormplayerFrontend.trigger(
                             'showError',
-                            response.exception,
+                            response.exception || FormplayerFrontend.Constants.GENERIC_ERROR,
                             response.type === 'html'
                         );
                         FormplayerFrontend.trigger('navigation:back');
@@ -49,7 +49,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "restoreAs": user.restoreAs,
                 "domain": user.domain,
                 "app_id": params.appId,
-                "locale": user.language,
+                "locale": displayOptions.language,
                 "selections": params.steps,
                 "offset": params.page * 10,
                 "search_text": params.search,

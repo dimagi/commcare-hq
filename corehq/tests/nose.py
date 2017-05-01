@@ -15,21 +15,23 @@ import logging
 import os
 import sys
 import threading
-import types
 from fnmatch import fnmatch
-
-from django.apps import apps
 
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
 from django.core.management import call_command
 from mock import patch, Mock
 from nose.plugins import Plugin
-from django.apps import AppConfig
+from nose.tools import nottest
 from django.conf import settings
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.db.utils import OperationalError
 from django_nose.plugin import DatabaseContext
+from dimagi.utils.parsing import string_to_boolean
+
+from corehq.tests.noseplugins.cmdline_params import CmdLineParametersPlugin
+from corehq.util.couchdb_management import couch_config
+from corehq.util.test_utils import unit_testing_only
 
 log = logging.getLogger(__name__)
 
@@ -170,33 +172,21 @@ class HqdbContext(DatabaseContext):
     database in `settings.DATABASES` all databases will be re-created
     and migrated.
 
-    Other supported `REUSE_DB` values:
-
-    - `REUSE_DB=reset` : drop existing, then create and migrate new test
-      databses, but do not teardown after running tests. This is
-      convenient when the existing databases are outdated and need to be
-      rebuilt.
-    - `REUSE_DB=teardown` : skip database setup; do normal teardown after
-      running tests.
-    - `REUSE_DB=migrate` : same as `REUSE_DB=1` except migrate databases
-      before running tests.
+    When using REUSE_DB=1, you may also want to provide a value for the
+    --reusedb option, either reset, flush, migrate, or teardown.
+    ./manage.py test --help will give you a description of these.
     """
 
     def __init__(self, tests, runner):
-        self.reuse_db = reuse_db = os.environ.get("REUSE_DB")
+        reuse_db = (CmdLineParametersPlugin.get('reusedb')
+                    or string_to_boolean(os.environ.get("REUSE_DB") or "0"))
+        self.reuse_db = reuse_db
         self.skip_setup_for_reuse_db = reuse_db and reuse_db != "reset"
         self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown"
         super(HqdbContext, self).__init__(tests, runner)
 
-    @classmethod
-    def verify_test_db(cls, app, uri):
-        if '/test_' not in uri:
-            raise ValueError("not a test db url: app=%s url=%r" % (app, uri))
-        return app, uri
-
     def should_skip_test_setup(self):
-        # FRAGILE look in sys.argv; can't get nose config from here
-        return "--collect-only" in sys.argv
+        return CmdLineParametersPlugin.get('collect_only')
 
     def setup(self):
         if self.should_skip_test_setup():
@@ -205,16 +195,11 @@ class HqdbContext(DatabaseContext):
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
         self.blob_db = TemporaryFilesystemBlobDB()
 
-        # get/verify list of apps with databases to be deleted on teardown
-        databases = getattr(settings, "COUCHDB_DATABASES", [])
-        if isinstance(databases, (list, tuple)):
-            # Convert old style to new style
-            databases = {app_name: uri for app_name, uri in databases}
-        self.apps = [self.verify_test_db(*item) for item in databases.items()]
-
         if self.skip_setup_for_reuse_db and self._databases_ok():
             if self.reuse_db == "migrate":
                 call_command('migrate_multi', interactive=False)
+            if self.reuse_db == "flush":
+                flush_databases()
             return  # skip remaining setup
 
         if self.reuse_db == "reset":
@@ -241,19 +226,13 @@ class HqdbContext(DatabaseContext):
         return True
 
     def delete_couch_databases(self):
-        deleted_databases = []
-        for app, uri in self.apps:
-            if uri in deleted_databases:
-                continue
-            app_label = app.split('.')[-1]
-            db = loading.get_db(app_label)
+        for db in get_all_test_dbs():
             try:
                 db.server.delete_db(db.dbname)
-                deleted_databases.append(uri)
-                log.info("deleted database %s for %s", db.dbname, app_label)
+                log.info("deleted database %s", db.dbname)
             except ResourceNotFound:
-                log.info("database %s not found for %s! it was probably already deleted.",
-                         db.dbname, app_label)
+                log.info("database %s not found! it was probably already deleted.",
+                         db.dbname)
 
     def teardown(self):
         if self.should_skip_test_setup():
@@ -296,6 +275,33 @@ def print_imports_until_thread_change():
 
     # Register the import hook. See https://www.python.org/dev/peps/pep-0302/
     sys.meta_path.append(InfoImporter())
+
+
+@nottest
+@unit_testing_only
+def get_all_test_dbs():
+    all_dbs = couch_config.all_dbs_by_db_name.values()
+    for db in all_dbs:
+        if '/test_' not in db.uri:
+            raise ValueError("not a test db url: db=%s url=%r" % (db.dbname, db.uri))
+    return all_dbs
+
+
+@unit_testing_only
+def flush_databases():
+    """
+    Best effort at emptying all documents from all databases.
+    Useful when you break a test and it doesn't clean up properly. This took
+    about 5 seconds to run when trying it out.
+    """
+    sys.__stdout__.write("Flushing test databases, check yourself before you wreck yourself!\n")
+    for db in get_all_test_dbs():
+        try:
+            db.flush()
+        except ResourceNotFound:
+            pass
+    call_command('flush', interactive=False)
+
 
 if os.environ.get("HQ_TESTS_PRINT_IMPORTS"):
     print_imports_until_thread_change()

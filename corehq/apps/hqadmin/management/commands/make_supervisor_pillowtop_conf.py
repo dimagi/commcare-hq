@@ -5,7 +5,6 @@ from corehq.apps.hqadmin.pillow_settings import get_pillows_for_env
 
 class Command(SupervisorConfCommand):
     help = "Make pillowtop supervisord conf - multiple configs per the PILLOWTOPS setting"
-    args = ""
 
     def render_configuration_file(self, conf_template_string, params):
         """

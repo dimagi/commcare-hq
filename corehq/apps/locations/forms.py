@@ -1,6 +1,8 @@
 import re
 
+from crispy_forms.layout import Submit
 from django import forms
+from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.template import Context
 from django.template.loader import get_template
@@ -10,6 +12,8 @@ from django.utils.translation import ugettext_lazy
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
+
+from corehq.apps.style.forms.widgets import Select2Ajax
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 
@@ -17,10 +21,10 @@ from corehq.apps.commtrack.util import generate_code
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.custom_data_fields.edit_entity import get_prefixed
 from corehq.apps.es import UserES
-from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import raw_username, user_display_string
+from corehq.apps.users.util import user_display_string
+from corehq.apps.style import crispy as hqcrispy
 
 from .models import SQLLocation, LocationType, LocationFixtureConfiguration
 from .permissions import user_can_access_location_id
@@ -57,7 +61,7 @@ class LocationForm(forms.Form):
     )
     name = forms.CharField(
         label=ugettext_lazy('Name'),
-        max_length=100,
+        max_length=255,
     )
     location_type = forms.CharField(
         label=ugettext_lazy('Organization Level'),
@@ -333,38 +337,60 @@ class LocationForm(forms.Form):
         return location
 
 
-class UsersAtLocationForm(MultipleSelectionForm):
+class UsersAtLocationForm(forms.Form):
+    selected_ids = forms.Field(
+        label=ugettext_lazy("Group Membership"),
+        required=False,
+        widget=Select2Ajax(multiple=True),
+    )
 
     def __init__(self, domain_object, location, *args, **kwargs):
         self.domain_object = domain_object
         self.location = location
+        fieldset_title = kwargs.pop('fieldset_title',
+                                    ugettext_lazy("Edit Group Membership"))
+        submit_label = kwargs.pop('submit_label',
+                                  ugettext_lazy("Update Membership"))
+
         super(UsersAtLocationForm, self).__init__(
             initial={'selected_ids': self.users_at_location},
             *args, **kwargs
         )
-        self.fields['selected_ids'].choices = self.get_all_users()
-        self.fields['selected_ids'].label = ugettext_lazy("Workers at Location")
 
-    def get_all_users(self):
-        user_query = (UserES()
-                      .domain(self.domain_object.name)
-                      .mobile_users()
-                      .fields(['_id', 'username', 'first_name', 'last_name']))
-        return [
-            (u['_id'], user_display_string(u['username'],
-                                           u.get('first_name', ''),
-                                           u.get('last_name', '')))
-            for u in user_query.run().hits
-        ]
+        from corehq.apps.reports.filters.api import MobileWorkersOptionsView
+        self.fields['selected_ids'].widget.set_url(
+            reverse(MobileWorkersOptionsView.urlname, args=(self.domain_object.name,))
+        )
+        self.fields['selected_ids'].widget.set_initial(self.users_at_location)
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_tag = False
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                fieldset_title,
+                crispy.Field('selected_ids'),
+            ),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', submit_label)
+                )
+            )
+        )
 
     @property
     @memoized
     def users_at_location(self):
-        return (UserES()
-                .domain(self.domain_object.name)
-                .mobile_users()
-                .location(self.location.location_id)
-                .get_ids())
+        user_query = UserES().domain(
+            self.domain_object.name
+        ).mobile_users().location(
+            self.location.location_id
+        ).fields(['_id', 'username', 'first_name', 'last_name'])
+        return [
+            dict(id=u['_id'], text=user_display_string(
+                u['username'], u.get('first_name', ''), u.get('last_name', '')
+            )) for u in user_query.run().hits]
 
     def unassign_users(self, users):
         for doc in iter_docs(CommCareUser.get_db(), users):
@@ -377,11 +403,10 @@ class UsersAtLocationForm(MultipleSelectionForm):
             CommCareUser.wrap(doc).add_to_assigned_locations(self.location)
 
     def save(self):
-        selected_users = set(self.cleaned_data['selected_ids'])
-        previous_users = set(self.users_at_location)
+        selected_users = set(self.cleaned_data['selected_ids'].split(','))
+        previous_users = set([u['id'] for u in self.users_at_location])
         to_remove = previous_users - selected_users
         to_add = selected_users - previous_users
-
         self.unassign_users(to_remove)
         self.assign_users(to_add)
 

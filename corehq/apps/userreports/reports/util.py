@@ -15,11 +15,12 @@ def get_expanded_columns(column_configs, data_source_config):
 
 
 def has_location_filter(view_fn, *args, **kwargs):
-    """check that the report has at least one location choice provider filter
+    """check that the report has at least one location based filter or
+    location choice provider filter
     """
     report, _ = get_report_config(config_id=kwargs.get('subreport_slug'), domain=kwargs.get('domain'))
     return any(
-        filter_.choice_provider.location_safe
-        if hasattr(filter_, 'choice_provider') else False
+        getattr(getattr(filter_, 'choice_provider', None), 'location_safe', False) or
+        getattr(filter_, 'location_filter', False)
         for filter_ in report.ui_filters
     )

@@ -12,6 +12,7 @@ from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath,
 from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB, SAFENAME
+from corehq.blobs.util import set_blob_expire_object
 
 CHUNK_SIZE = 4096
 
@@ -24,7 +25,7 @@ class FilesystemBlobDB(AbstractBlobDB):
         assert isabs(rootdir), rootdir
         self.rootdir = rootdir
 
-    def put(self, content, identifier, bucket=DEFAULT_BUCKET):
+    def put(self, content, identifier, bucket=DEFAULT_BUCKET, timeout=None):
         path = self.get_path(identifier, bucket)
         dirpath = dirname(path)
         if not isdir(dirpath):
@@ -40,6 +41,8 @@ class FilesystemBlobDB(AbstractBlobDB):
                 length += len(chunk)
                 digest.update(chunk)
         b64digest = base64.b64encode(digest.digest())
+        if timeout is not None:
+            set_blob_expire_object(bucket, identifier, length, timeout)
         return BlobInfo(identifier, length, "md5-" + b64digest)
 
     def get(self, identifier, bucket=DEFAULT_BUCKET):
@@ -47,6 +50,12 @@ class FilesystemBlobDB(AbstractBlobDB):
         if not exists(path):
             raise NotFound(identifier, bucket)
         return open(path, "rb")
+
+    def size(self, identifier, bucket=DEFAULT_BUCKET):
+        path = self.get_path(identifier, bucket)
+        if not exists(path):
+            raise NotFound(identifier, bucket)
+        return os.path.getsize(path)
 
     def exists(self, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
@@ -75,7 +84,16 @@ class FilesystemBlobDB(AbstractBlobDB):
         return success
 
     def copy_blob(self, content, info, bucket):
-        raise NotImplementedError
+        path = self.get_path(info.identifier, bucket)
+        dirpath = dirname(path)
+        if not isdir(dirpath):
+            os.makedirs(dirpath)
+        with openfile(path, "xb") as fh:
+            while True:
+                chunk = content.read(CHUNK_SIZE)
+                if not chunk:
+                    break
+                fh.write(chunk)
 
     def get_path(self, identifier=None, bucket=DEFAULT_BUCKET):
         bucket_path = safejoin(self.rootdir, bucket)

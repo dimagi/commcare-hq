@@ -1,3 +1,4 @@
+from __future__ import print_function
 import argparse
 import sh
 import yaml
@@ -74,4 +75,4 @@ if __name__ == '__main__':
     if args.command == 'check':
         check_merges(config, print_details=False)
     elif args.command == 'remote-branches':
-        print yaml.safe_dump(config.to_json())
+        print(yaml.safe_dump(config.to_json()))

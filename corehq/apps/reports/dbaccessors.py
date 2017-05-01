@@ -1,10 +1,8 @@
-from itertools import imap
 import json
 
 from django.conf import settings
 
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
-from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types
 
 
 def _get_exports(domain, include_docs=True, reduce=False, **kwargs):
@@ -21,6 +19,13 @@ def _get_exports(domain, include_docs=True, reduce=False, **kwargs):
         reduce=reduce,
         **kwargs
     )
+
+
+def get_exports_json(domain):
+    for res in _get_exports(domain):
+        # workaround for http://manage.dimagi.com/default.asp?223471
+        if res['doc'] is not None:
+            yield res['doc']
 
 
 def stale_get_exports_json(domain):
@@ -47,14 +52,3 @@ def touch_exports(domain):
 def hq_group_export_configs_by_domain(domain):
     from corehq.apps.reports.models import HQGroupExportConfiguration
     return get_docs_in_domain_by_class(domain, HQGroupExportConfiguration)
-
-
-def get_all_hq_group_export_configs():
-    from corehq.apps.reports.models import HQGroupExportConfiguration
-    return imap(
-        HQGroupExportConfiguration.wrap,
-        get_all_docs_with_doc_types(
-            HQGroupExportConfiguration.get_db(),
-            ('HQGroupExportConfiguration',)
-        )
-    )

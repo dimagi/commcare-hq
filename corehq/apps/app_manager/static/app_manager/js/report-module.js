@@ -234,7 +234,7 @@ hqDefine('app_manager/js/report-module.js', function () {
 
     function ReportConfig(report_id, display,
                           localizedDescription, xpathDescription, useXpathDescription,
-                          uuid, availableReportIds,
+                          showDataTable, uuid, availableReportIds,
                           reportCharts, graph_configs,
                           filterValues, reportFilters,
                           language, changeSaveButton) {
@@ -250,12 +250,14 @@ hqDefine('app_manager/js/report-module.js', function () {
         this.localizedDescription = ko.observable(this.fullLocalizedDescription[this.lang]);
         this.xpathDescription = ko.observable(xpathDescription);
         this.useXpathDescription = ko.observable(useXpathDescription);
+        this.showDataTable = ko.observable(showDataTable);
 
         this.reportId.subscribe(changeSaveButton);
         this.display.subscribe(changeSaveButton);
         this.localizedDescription.subscribe(changeSaveButton);
         this.xpathDescription.subscribe(changeSaveButton);
         this.useXpathDescription.subscribe(changeSaveButton);
+        this.showDataTable.subscribe(changeSaveButton);
 
         this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);
         this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);
@@ -271,6 +273,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                 localized_description: self.fullLocalizedDescription,
                 xpath_description: self.xpathDescription(),
                 use_xpath_description: self.useXpathDescription(),
+                show_data_table: self.showDataTable(),
                 uuid: self.uuid,
             };
         };
@@ -377,6 +380,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                 options.localized_description,
                 options.xpath_description,
                 options.use_xpath_description,
+                options.show_data_table,
                 options.uuid,
                 self.availableReportIds,
                 self.reportCharts,
@@ -409,6 +413,12 @@ hqDefine('app_manager/js/report-module.js', function () {
             self.reports.push(report);
         }
     }
+
+    $(function () {
+        var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
+        setupValidation(hqImport('hqwebapp/js/urllib.js').reverse('validate_module_for_build'));
+    });
+
     return {
         ReportModule: ReportModule,
         StaticFilterData: StaticFilterData,

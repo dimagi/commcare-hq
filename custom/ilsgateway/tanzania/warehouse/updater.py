@@ -222,7 +222,11 @@ def _get_test_locations(domain):
 
 
 def populate_report_data(start_date, end_date, domain, runner, strict=True):
-    facilities = Location.filter_by_type(domain, 'FACILITY')
+    facilities = SQLLocation.objects.filter(
+        location_type__name='FACILITY',
+        domain=domain,
+        created_at__lt=end_date
+    ).order_by('pk').couch_locations()
     non_facilities = list(Location.filter_by_type(domain, 'DISTRICT'))
     non_facilities += list(Location.filter_by_type(domain, 'REGION'))
     non_facilities += list(Location.filter_by_type(domain, 'MSDZONE'))
@@ -473,23 +477,25 @@ def process_facility_transactions(facility_id, transactions, start_date, end_dat
         product_data.save()
 
 
-def get_non_archived_facilities_below(location):
+def get_non_archived_facilities_below(location, end_date):
     return list(location.sql_location
                 .get_descendants(include_self=True)
                 .filter(is_archived=False,
-                        location_type__name='FACILITY')
+                        location_type__name='FACILITY',
+                        created_at__lt=end_date)
                 .couch_locations())
 
 
 @task(queue='logistics_background_queue')
 def process_non_facility_warehouse_data(location, start_date, end_date, runner=None, strict=True):
+    facs = get_non_archived_facilities_below(location, end_date)
+
     start_date = datetime(start_date.year, start_date.month, 1)
     end_date = datetime(end_date.year, end_date.month, 1)
 
     if runner:
         runner.location = location.sql_location
         runner.save()
-    facs = get_non_archived_facilities_below(location)
     fac_ids = [f._id for f in facs]
     logging.info("processing non-facility %s (%s), %s children"
                  % (location.name, str(location.location_id), len(facs)))

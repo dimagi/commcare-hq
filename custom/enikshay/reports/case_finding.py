@@ -3,6 +3,7 @@
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from custom.enikshay.reports.const import AGE_RANGES, PATIENT_TYPES
+from custom.enikshay.reports.filters import DateOfDiagnosisFilter, EnikshayLocationFilter, EnikshayMigrationFilter
 from custom.enikshay.reports.generic import EnikshayReport, EnikshayMultiReport
 from custom.enikshay.reports.sqldata.case_finding_sql_data import CaseFindingSqlData
 
@@ -104,8 +105,8 @@ class LaboratoryDiagnosticActivity(EnikshayReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(_('Patients with presumptive TB undergoing bacteriological examination (a)')),
-            DataTablesColumn(_('Of (a) Patients with bacteriological positive result (b)')),
+            DataTablesColumn(_('Cases with presumptive TB undergoing bacteriological examination (a)')),
+            DataTablesColumn(_('Of (a) Cases with bacteriological positive result (b)')),
         )
 
     @property
@@ -155,8 +156,9 @@ class TBHIVCollaboration(EnikshayReport):
 
 @location_safe
 class CaseFindingReport(EnikshayMultiReport):
+    fields = (DateOfDiagnosisFilter, EnikshayLocationFilter, EnikshayMigrationFilter)
 
-    name = ugettext_lazy('Case Finding')
+    name = ugettext_lazy('Summary of Case Finding')
     slug = 'case_finding'
     exportable = True
 

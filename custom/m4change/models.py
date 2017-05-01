@@ -11,7 +11,10 @@ from couchforms.models import XFormInstance
 
 import fluff
 from fluff.filters import ORFilter
+from fluff.pillow import get_multi_fluff_pillow
 from corehq.fluff.calculators.xform import FormPropertyFilter
+from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
+from corehq.apps.change_feed.topics import get_topic
 from custom.m4change.user_calcs import anc_hmis_report_calcs, ld_hmis_report_calcs, immunization_hmis_report_calcs,\
     all_hmis_report_calcs, project_indicators_report_calcs, mcct_monthly_aggregate_report_calcs, \
     form_passes_filter_date_delivery
@@ -88,9 +91,6 @@ class AncHmisCaseFluff(BaseM4ChangeCaseFluff):
 
     class Meta:
         app_label = 'm4change'
-
-
-AncHmisCaseFluffPillow = AncHmisCaseFluff.pillow()
 
 
 class LdHmisCaseFluff(BaseM4ChangeCaseFluff):
@@ -272,8 +272,6 @@ class LdHmisCaseFluff(BaseM4ChangeCaseFluff):
     class Meta:
         app_label = 'm4change'
 
-LdHmisCaseFluffPillow = LdHmisCaseFluff.pillow()
-
 
 class ImmunizationHmisCaseFluff(BaseM4ChangeCaseFluff):
     group_by = ("domain",)
@@ -304,8 +302,6 @@ class ImmunizationHmisCaseFluff(BaseM4ChangeCaseFluff):
 
     class Meta:
         app_label = 'm4change'
-
-ImmunizationHmisCaseFluffPillow = ImmunizationHmisCaseFluff.pillow()
 
 
 def _get_form_mother_id(form):
@@ -342,8 +338,6 @@ class ProjectIndicatorsCaseFluff(BaseM4ChangeCaseFluff):
 
     class Meta:
         app_label = 'm4change'
-
-ProjectIndicatorsCaseFluffPillow = ProjectIndicatorsCaseFluff.pillow()
 
 
 class McctStatus(models.Model):
@@ -392,8 +386,6 @@ class McctMonthlyAggregateFormFluff(BaseM4ChangeCaseFluff):
 
     class Meta:
         app_label = 'm4change'
-
-McctMonthlyAggregateFormFluffPillow = McctMonthlyAggregateFormFluff.pillow()
 
 
 class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
@@ -502,7 +494,21 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
     class Meta:
         app_label = 'm4change'
 
-AllHmisCaseFluffPillow = AllHmisCaseFluff.pillow()
+
+def M4ChangeFormFluffPillow(delete_filtered=False):
+    return get_multi_fluff_pillow(
+        indicator_classes=[
+            AncHmisCaseFluff,
+            LdHmisCaseFluff,
+            ImmunizationHmisCaseFluff,
+            ProjectIndicatorsCaseFluff,
+            McctMonthlyAggregateFormFluff,
+            AllHmisCaseFluff,
+        ],
+        name='M4ChangeFormFluff',
+        kafka_topic=get_topic(get_doc_meta_object_from_document(XFormInstance().to_json())),
+        delete_filtered=delete_filtered
+    )
 
 
 class FixtureReportResult(Document, QueryMixin):

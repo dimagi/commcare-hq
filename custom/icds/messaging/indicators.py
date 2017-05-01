@@ -1,18 +1,74 @@
-import pytz
+from collections import defaultdict
 from datetime import datetime, timedelta
-from corehq.apps.reports.analytics.esaccessors import get_last_submission_time_for_users
-from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.memoized import memoized
+
+import pytz
+
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 
+from casexml.apps.phone.models import OTARestoreCommCareUser
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import string_to_datetime
+
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProvider
+from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.locations.dbaccessors import (
+    get_user_ids_from_primary_location_ids,
     get_users_location_ids,
-    user_ids_at_locations,
+    get_users_by_location_id,
 )
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.analytics.esaccessors import (
+    get_last_submission_time_for_users,
+    get_last_form_submissions_by_user,
+)
+from corehq.util.quickcache import quickcache
+from custom.icds.const import (
+    CHILDREN_WEIGHED_REPORT_ID,
+    DAYS_AWC_OPEN_REPORT_ID,
+    HOME_VISIT_REPORT_ID,
+    SUPERVISOR_APP_ID,
+    THR_REPORT_ID,
+    VHND_SURVEY_XMLNS,
+)
 
 DEFAULT_LANGUAGE = 'hin'
+
+REPORT_IDS = [
+    HOME_VISIT_REPORT_ID,
+    THR_REPORT_ID,
+    CHILDREN_WEIGHED_REPORT_ID,
+    DAYS_AWC_OPEN_REPORT_ID,
+]
+
+
+@quickcache(['domain'], timeout=4 * 60 * 60, memoize_timeout=4 * 60 * 60)
+def get_report_configs(domain):
+    app = get_app(domain, SUPERVISOR_APP_ID, latest=True)
+    return {
+        report_config.report_id: report_config
+        for module in app.modules if isinstance(module, ReportModule)
+        for report_config in module.report_configs
+        if report_config.report_id in REPORT_IDS
+    }
+
+
+@quickcache(['domain', 'report_id', 'ota_user.user_id'], timeout=12 * 60 * 60)
+def get_report_fixture_for_user(domain, report_id, ota_user):
+    """
+    :param domain: the domain
+    :param report_id: the index to the result from get_report_configs()
+    :param ota_user: the OTARestoreCommCareUser for which to get the report fixture
+    """
+    return ReportFixturesProvider.report_config_to_fixture(
+        get_report_configs(domain)[report_id], ota_user
+    )
+
+
+class IndicatorError(Exception):
+    pass
 
 
 class SMSIndicator(object):
@@ -64,11 +120,95 @@ class SMSIndicator(object):
 
 
 class AWWIndicator(SMSIndicator):
-    pass
+    @property
+    @memoized
+    def supervisor(self):
+        """
+        Returns None if there is a misconfiguration (i.e., if the AWW's location
+        has no parent location, or if there are no users at the parent location).
+        """
+        supervisor_location = self.user.sql_location.parent
+        if supervisor_location is None:
+            return None
+
+        return get_users_by_location_id(self.domain, supervisor_location.location_id).first()
 
 
 class LSIndicator(SMSIndicator):
-    pass
+    @property
+    @memoized
+    def child_locations(self):
+        return self.user.sql_location.child_locations()
+
+    @property
+    @memoized
+    def awc_locations(self):
+        return {l.location_id: l.name for l in self.child_locations}
+
+    @property
+    @memoized
+    def locations_by_user_id(self):
+        return get_user_ids_from_primary_location_ids(self.domain, set(self.awc_locations))
+
+    @property
+    @memoized
+    def aww_user_ids(self):
+        return set(self.locations_by_user_id.keys())
+
+    @property
+    @memoized
+    def user_ids_by_location_id(self):
+        user_ids_by_location_id = defaultdict(set)
+        for u_id, loc_id in self.locations_by_user_id.items():
+            user_ids_by_location_id[loc_id].add(u_id)
+
+        return user_ids_by_location_id
+
+    def location_names_from_user_id(self, user_ids):
+        loc_ids = {self.locations_by_user_id.get(u) for u in user_ids}
+        return {self.awc_locations[l] for l in loc_ids}
+
+
+class AWWAggregatePerformanceIndicator(AWWIndicator):
+    template = 'aww_aggregate_performance.txt'
+
+    def get_value_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="False"]'
+        rows = fixture.findall(xpath)
+        location_name = self.user.sql_location.name
+        for row in rows:
+            owner_id = row.find('./column[@id="owner_id"]')
+            if owner_id.text == location_name:
+                try:
+                    return row.find('./column[@id="{}"]'.format(attribute)).text
+                except:
+                    raise IndicatorError(
+                        "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
+                    )
+
+        raise IndicatorError("AWC {} not found in the restore".format(location_name))
+
+    def get_messages(self, language_code=None):
+        if self.supervisor is None:
+            return []
+
+        agg_perf = LSAggregatePerformanceIndicator(self.domain, self.supervisor)
+
+        visits = self.get_value_from_fixture(agg_perf.visits_fixture, 'count')
+        thr_gte_21 = self.get_value_from_fixture(agg_perf.thr_fixture, 'open_ccs_thr_gte_21')
+        thr_count = self.get_value_from_fixture(agg_perf.thr_fixture, 'open_count')
+        num_weigh = self.get_value_from_fixture(agg_perf.weighed_fixture, 'open_weighed')
+        num_weigh_avail = self.get_value_from_fixture(agg_perf.weighed_fixture, 'open_count')
+        num_days_open = self.get_value_from_fixture(agg_perf.days_open_fixture, 'awc_opened_count')
+
+        context = {
+            "visits": visits,
+            "thr_distribution": "{} / {}".format(thr_gte_21, thr_count),
+            "children_weighed": "{} / {}".format(num_weigh, num_weigh_avail),
+            "days_open": num_days_open,
+        }
+
+        return [self.render_template(context, language_code=language_code)]
 
 
 class AWWSubmissionPerformanceIndicator(AWWIndicator):
@@ -115,8 +255,6 @@ class LSSubmissionPerformanceIndicator(LSIndicator):
     def __init__(self, domain, user):
         super(LSSubmissionPerformanceIndicator, self).__init__(domain, user)
 
-        child_locations = [l.location_id for l in self.user.sql_location.child_locations()]
-        self.aww_user_ids = user_ids_at_locations(child_locations)
         self.last_submission_dates = get_last_submission_time_for_users(
             self.domain, self.aww_user_ids, self.get_datespan()
         )
@@ -143,19 +281,119 @@ class LSSubmissionPerformanceIndicator(LSIndicator):
                     one_week_user_ids.append(user_id)
 
         if one_week_user_ids:
-            one_week_loc_ids = get_users_location_ids(self.domain, one_week_user_ids)
-            one_week_loc_names = (
-                SQLLocation.objects.filter(location_id__in=one_week_loc_ids).values_list('name', flat=True)
-            )
+            one_week_loc_names = self.location_names_from_user_id(one_week_user_ids)
             week_context = {'location_names': ', '.join(one_week_loc_names), 'timeframe': 'week'}
             messages.append(self.render_template(week_context, language_code=language_code))
 
         if one_month_user_ids:
-            one_month_loc_ids = get_users_location_ids(self.domain, one_month_user_ids)
-            one_month_loc_names = (
-                SQLLocation.objects.filter(location_id__in=one_month_loc_ids).values_list('name', flat=True)
-            )
+            one_month_loc_names = self.location_names_from_user_id(one_month_user_ids)
             month_context = {'location_names': ','.join(one_month_loc_names), 'timeframe': 'month'}
             messages.append(self.render_template(month_context, language_code=language_code))
 
         return messages
+
+
+class LSVHNDSurveyIndicator(LSIndicator):
+    template = 'ls_vhnd_survey.txt'
+
+    def __init__(self, domain, user):
+        super(LSVHNDSurveyIndicator, self).__init__(domain, user)
+
+        self.forms = get_last_form_submissions_by_user(
+            domain, self.aww_user_ids, xmlns=VHND_SURVEY_XMLNS
+        )
+
+    def get_messages(self, language_code=None):
+        def convert_to_date(date):
+            return string_to_datetime(date).date() if date else None
+
+        now_date = self.now.date()
+        user_ids_with_forms_in_time_frame = set()
+        for user_id, forms in self.forms.items():
+            vhnd_date = convert_to_date(forms[0]['form']['vhsnd_date_past_month'])
+            if (now_date - vhnd_date).days < 37:
+                user_ids_with_forms_in_time_frame.add(user_id)
+
+        awc_ids = {
+            loc
+            for loc, user_ids in self.user_ids_by_location_id.items()
+            if user_ids.isdisjoint(user_ids_with_forms_in_time_frame)
+        }
+        messages = []
+
+        if awc_ids:
+            awc_names = {self.awc_locations[awc] for awc in awc_ids}
+            context = {'location_names': ', '.join(awc_names)}
+            messages.append(self.render_template(context, language_code=language_code))
+
+        return messages
+
+
+class LSAggregatePerformanceIndicator(LSIndicator):
+    template = 'ls_aggregate_performance.txt'
+
+    @property
+    @memoized
+    def restore_user(self):
+        return OTARestoreCommCareUser(self.domain, self.user)
+
+    def get_report_fixture(self, report_id):
+        return get_report_fixture_for_user(self.domain, report_id, self.restore_user)
+
+    def clear_caches(self):
+        get_report_configs.clear(self.domain)
+        for report_id in REPORT_IDS:
+            get_report_fixture_for_user.clear(self.domain, report_id, self.restore_user)
+
+    @property
+    @memoized
+    def visits_fixture(self):
+        return self.get_report_fixture(HOME_VISIT_REPORT_ID)
+
+    @property
+    @memoized
+    def thr_fixture(self):
+        return self.get_report_fixture(THR_REPORT_ID)
+
+    @property
+    @memoized
+    def weighed_fixture(self):
+        return self.get_report_fixture(CHILDREN_WEIGHED_REPORT_ID)
+
+    @property
+    @memoized
+    def days_open_fixture(self):
+        return self.get_report_fixture(DAYS_AWC_OPEN_REPORT_ID)
+
+    def get_value_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="True"]/column[@id="{}"]'.format(attribute)
+        try:
+            return fixture.findall(xpath)[0].text
+        except:
+            raise IndicatorError("{} not found in fixture {} for user {}".format(
+                attribute, fixture, self.user.get_id
+            ))
+
+    def get_messages(self, language_code=None):
+        visit_on_time = self.get_value_from_fixture(self.visits_fixture, 'visit_on_time')
+        visits = self.get_value_from_fixture(self.visits_fixture, 'count')
+        thr_gte_21 = self.get_value_from_fixture(self.thr_fixture, 'open_ccs_thr_gte_21')
+        thr_count = self.get_value_from_fixture(self.thr_fixture, 'open_count')
+        num_weigh = self.get_value_from_fixture(self.weighed_fixture, 'open_weighed')
+        num_weigh_avail = self.get_value_from_fixture(self.weighed_fixture, 'open_count')
+        num_days_open = int(self.get_value_from_fixture(self.days_open_fixture, 'awc_opened_count'))
+        num_awc_locations = len(self.days_open_fixture.findall('./rows/row[@is_total_row="False"]'))
+        if num_awc_locations:
+            avg_days_open = int(round(1.0 * num_days_open / num_awc_locations))
+        else:
+            # catch div by 0
+            avg_days_open = 0
+
+        context = {
+            "visits": "{} / {}".format(visit_on_time, visits),
+            "thr_distribution": "{} / {}".format(thr_gte_21, thr_count),
+            "children_weighed": "{} / {}".format(num_weigh, num_weigh_avail),
+            "days_open": "{}".format(avg_days_open),
+        }
+
+        return [self.render_template(context, language_code=language_code)]

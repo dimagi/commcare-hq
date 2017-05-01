@@ -9,7 +9,7 @@ from casexml.apps.case.tests.util import assert_user_doesnt_have_cases, \
     assert_user_has_cases
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import softer_assert
 
 
@@ -36,15 +36,16 @@ def test_generator(test_name, skip=False):
         if skip:
             self.skipTest(skip)
         self.build_case_structures(test_name)
-        desired_cases = self._get_test(test_name).get('outcome', [])
-        undesired_cases = [case for case in self.ALL_CASES if case not in desired_cases]
+        test = self._get_test(test_name)
+        desired_cases = test.get('outcome', [])
+        undesired_cases = [case for case in self.get_all_case_names(test) if case not in desired_cases]
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         self.assertEqual(sync_log.case_ids_on_phone, set(desired_cases))
         assert_user_has_cases(self, self.user, desired_cases)
         assert_user_doesnt_have_cases(self, self.user, undesired_cases)
 
     test.__name__ = get_test_name(test_name)
-    return run_with_all_backends(test)
+    return test
 
 
 class TestSequenceMeta(type):
@@ -78,8 +79,6 @@ class IndexTreeTest(SyncBaseTest):
     """
     __metaclass__ = TestSequenceMeta
 
-    ALL_CASES = ['a', 'b', 'c', 'd', 'e']
-
     @property
     def all_tests(self):
         """All the test cases in a dict"""
@@ -92,10 +91,20 @@ class IndexTreeTest(SyncBaseTest):
     def _get_test(self, test_name):
         return self.all_tests[test_name]
 
+    def get_all_case_names(self, test):
+        case_names = set([])
+
+        case_names |= set([subcase for subcases in test.get('subcases', []) for subcase in subcases])
+        case_names |= set([extension for extensions in test.get('extensions', []) for extension in extensions])
+        case_names |= set(test.get('owned', []))
+        case_names |= set(test.get('closed', []))
+        case_names |= set(test.get('outcome', []))
+        return case_names
+
     def build_case_structures(self, test_name):
         test = self._get_test(test_name)
         case_structures = []
-        indices = {case: [] for case in self.ALL_CASES}
+        indices = {case: [] for case in self.get_all_case_names(test)}
 
         for i, subcase in enumerate(test.get('subcases', [])):
             indices[subcase[0]].append(CaseIndex(
@@ -126,7 +135,7 @@ class IndexTreeTest(SyncBaseTest):
                 identifier='extension_{}'.format(i),
             ))
 
-        for case in self.ALL_CASES:
+        for case in self.get_all_case_names(test):
             case_structures.append(CaseStructure(
                 attrs={
                     'create': True,
@@ -138,3 +147,8 @@ class IndexTreeTest(SyncBaseTest):
             ))
 
         self.factory.create_or_update_cases(case_structures)
+
+
+@use_sql_backend
+class IndexTreeTestSQL(IndexTreeTest):
+    pass
