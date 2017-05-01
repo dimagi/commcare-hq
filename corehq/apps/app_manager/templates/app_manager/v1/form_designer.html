@@ -146,21 +146,23 @@
         
         require(["jquery", "jquery.vellum", "moment"], function ($) {
             $(function () {
+                var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+
                 $("#edit").hide();
                 $('#hq-footer').hide();
 
-                $('#formdesigner').vellum(_.extend(VELLUM_OPTIONS, hqImport("hqwebapp/js/initial_page_data.js").get("vellum_options")));
+                $('#formdesigner').vellum(_.extend(VELLUM_OPTIONS, initial_page_data("vellum_options")));
 
-                {% if notifications_enabled %}
-                var userId = '{{ request.couch_user.get_id }}';
-                var notifications = hqImport('app_manager/js/app-notifications.js');
-                // initialize redis
-                var ws4redis = WS4Redis({
-                    uri: '{{ WEBSOCKET_URI }}{{ notify_facility }}?subscribe-broadcast',
-                    receive_message: notifications.NotifyFunction(userId, $('#notify-bar')),
-                    heartbeat_msg: {{ WS4REDIS_HEARTBEAT }},
-                });
-                {% endif %}
+                var notification_options = initial_page_data("notification_options");
+                if (notification_options) {
+                    var notifications = hqImport('app_manager/js/app-notifications.js');
+                    // initialize redis
+                    var ws4redis = WS4Redis({
+                        uri: notification_options.WEBSOCKET_URI + notification_options.notify_facility + '?subscribe-broadcast',
+                        receive_message: notifications.NotifyFunction(notification_options.user_id, $('#notify-bar')),
+                        heartbeat_msg: notification_options.WS4REDIS_HEARTBEAT,
+                    });
+                }
             });
         });
         analytics.workflow('Entered the Form Builder');
@@ -171,6 +173,7 @@
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
 
 {% block form-view %}
+    {% initial_page_data 'notification_options' notification_options %}
     {% initial_page_data 'vellum_options' vellum_options %}
     <div id="formdesigner" class="clearfix"></div>
 {% endblock %}

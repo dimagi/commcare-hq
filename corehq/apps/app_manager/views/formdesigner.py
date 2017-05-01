@@ -46,6 +46,7 @@ from corehq.apps.analytics.utils import get_meta
 from corehq.apps.tour import tours
 from corehq.apps.analytics import ab_tests
 from corehq.apps.domain.models import Domain
+from corehq.util.context_processors import websockets_override
 
 
 logger = logging.getLogger(__name__)
@@ -142,8 +143,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'formdesigner': True,
         'scheduler_data_nodes': scheduler_data_nodes,
         'include_fullstory': include_fullstory,
-        'notifications_enabled': request.user.is_superuser,
-        'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
     })
     notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
 
@@ -186,6 +185,14 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     context.update({
         'vellum_options': vellum_options,
     })
+
+    if request.user.is_superuser:
+        notification_options = websockets_override(request)
+        notification_options.update({
+            'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
+            'user_id': request.couch_user.get_id,
+        })
+        context.update({'notification_options': notification_options})
 
     template = get_app_manager_template(
         request.user,
