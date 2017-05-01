@@ -130,8 +130,7 @@ class FormProcessorInterface(object):
                 stock_result=stock_result,
             )
         except BulkSaveError as e:
-            logging.error('BulkSaveError saving forms', exc_info=1,
-                          extra={'details': {'errors': e.errors}})
+            logging.exception('BulkSaveError saving forms', extra={'details': {'errors': e.errors}})
             raise
         except Exception as e:
             xforms_being_saved = [form.form_id for form in forms if form]
