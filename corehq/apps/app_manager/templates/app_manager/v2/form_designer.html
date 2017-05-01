@@ -164,12 +164,11 @@
         define("moment", [], function () { return window.moment; });
         
         require.config({
-            {% comment %} 
-            to use non-built files in HQ:
+            /* to use non-built files in HQ:
                 * clone Vellum into submodules/formdesigner
                 * Run make in that directory (requires node.js)
                 * set settings.VELLUM_DEBUG to "dev" or "dev-min"
-            {% endcomment %}
+            */
             {% if not vellum_debug %}
             baseUrl: "{% static "app_manager/js/vellum/src" %}",
             {% elif vellum_debug == "dev-min" %}
@@ -252,7 +251,14 @@
             $('#edit-form-name-modal').koApplyBindings(editDetails);
         });
 
-    </script>
+    </script> 
+{% endblock %}
+
+{% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
+
+{% block form-view %}
+    {% initial_page_data 'vellum_options' vellum_options %}
+    <div id="formdesigner" class="clearfix app-manager-v2 loading"></div>
 
     {% if can_preview_form %}
     <script type="text/html" id="js-fd-app-preview-btn-template">
@@ -304,14 +310,6 @@
         <i class="fa fa-pencil"></i>
       </a>
     </script>
-
-{% endblock %}
-
-{% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
-
-{% block form-view %}
-    {% initial_page_data 'vellum_options' vellum_options %}
-    <div id="formdesigner" class="clearfix app-manager-v2 loading"></div>
 {% endblock %}
 
 {% block column_style %}hq-flush-content{% endblock %}
