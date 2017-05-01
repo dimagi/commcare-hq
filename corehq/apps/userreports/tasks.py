@@ -248,6 +248,9 @@ def save_document(doc_ids):
 
     with CriticalSection(lock_keys):
         indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids)
+        if not indicators:
+            return
+
         first_indicator = indicators[0]
 
         for i in indicators:
