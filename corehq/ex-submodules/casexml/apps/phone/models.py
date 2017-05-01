@@ -114,6 +114,9 @@ class OTARestoreUser(object):
     def get_ucr_filter_value(self, ucr_filter, ui_filter):
         return ucr_filter.get_filter_value(self._couch_user, ui_filter)
 
+    def get_mobile_ucr_sync_interval(self):
+        return None
+
     @memoized
     def get_locations_to_sync(self):
         from corehq.apps.locations.fixtures import get_all_locations_to_sync
@@ -204,6 +207,11 @@ class OTARestoreCommCareUser(OTARestoreUser):
         from corehq.apps.fixtures.models import UserFixtureType
 
         return self._couch_user.fixture_status(UserFixtureType.LOCATION)
+
+    def get_mobile_ucr_sync_interval(self):
+        return self._couch_user.mobile_ucr_sync_interval or (
+            self.project and self.project.defaul_mobile_ucr_sync_interval
+        )
 
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 from lxml.builder import E
 from django.conf import settings
@@ -18,6 +18,13 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
 
+def _should_sync(restore_user, last_sync_log):
+    sync_interval = restore_user.get_mobile_ucr_sync_interval()
+    return not last_sync_log or (
+        sync_interval and (datetime.utcnow() - last_sync_log.date).total_seconds() > sync_interval
+    )
+
+
 class ReportFixturesProvider(object):
     id = 'commcare:reports'
 
@@ -27,7 +34,7 @@ class ReportFixturesProvider(object):
         """
         assert isinstance(restore_user, OTARestoreUser)
 
-        if not toggles.MOBILE_UCR.enabled(restore_user.domain):
+        if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_user, last_sync):
             return []
 
         apps = [app] if app else [a for a in get_apps_in_domain(restore_user.domain, include_remote=False)]

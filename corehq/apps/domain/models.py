@@ -371,6 +371,9 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     requested_report_builder_trial = StringListProperty()
     requested_report_builder_subscription = StringListProperty()
 
+    # seconds between sending mobile UCRs to users. Can be overridden per user
+    defaul_mobile_ucr_sync_interval = IntegerProperty()
+
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc

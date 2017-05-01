@@ -4,6 +4,7 @@ from django.test import SimpleTestCase, TestCase
 import mock
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.app_manager.fixtures import report_fixture_generator
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportModule, \
