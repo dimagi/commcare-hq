@@ -197,7 +197,6 @@ class FormsInDateExpressionSpec(JsonObject):
 
         forms = (
             FormES()
-            .domain(context.root_doc['domain'])
             .doc_id(xform_ids)
             .source(['form.meta.timeEnd', 'xmlns', '_id'])
         ).run().hits
