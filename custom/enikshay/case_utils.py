@@ -341,8 +341,14 @@ def get_person_case_from_voucher(domain, voucher_case_id):
 
 def get_prescription_vouchers_from_episode(domain, episode_case_id):
     case_accessor = CaseAccessors(domain)
-    prescription_cases = case_accessor.get_reverse_indexed_cases([episode_case_id])
-    return case_accessor.get_reverse_indexed_cases([case.case_id for case in prescription_cases])
+    prescription_cases = [
+        case for case in case_accessor.get_reverse_indexed_cases([episode_case_id])
+        if case.type == CASE_TYPE_PRESCRIPTION
+    ]
+    return [
+        c for c in case_accessor.get_reverse_indexed_cases([case.case_id for case in prescription_cases])
+        if c.type == CASE_TYPE_VOUCHER
+    ]
 
 
 def get_approved_prescription_vouchers_from_episode(domain, episode_case_id):
