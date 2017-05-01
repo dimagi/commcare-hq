@@ -11,7 +11,8 @@ from corehq.util.test_utils import flag_enabled
 
 
 @flag_enabled('USER_PROPERTY_EASY_REFS')
-@patch('corehq.apps.app_manager.app_schemas.casedb_schema.get_case_property_description_dict', MagicMock(return_value={}))
+@patch('corehq.apps.app_manager.app_schemas.casedb_schema.get_case_property_description_dict',
+       MagicMock(return_value={}))
 @patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=False))
 @patch('corehq.apps.app_manager.app_schemas.casedb_schema.is_usercase_in_use', MagicMock(return_value=False))
 @patch('corehq.apps.app_manager.app_schemas.session_schema.is_usercase_in_use', MagicMock(return_value=False))
@@ -223,7 +224,8 @@ class SchemaTest(SimpleTestCase):
         self.assertEqual(session_schema['structure'], expected_session_schema_structure)
 
     def test_get_case_sharing_hierarchy(self):
-        with patch('corehq.apps.app_manager.app_schemas.case_properties.get_case_sharing_apps_in_domain') as mock_sharing:
+        with patch('corehq.apps.app_manager.app_schemas.case_properties.get_case_sharing_apps_in_domain')\
+                as mock_sharing:
             mock_sharing.return_value = [self.factory.app, self.factory_2.app]
             self.factory.app.case_sharing = True
             self.factory_2.app.case_sharing = True
@@ -326,7 +328,8 @@ class SchemaTest(SimpleTestCase):
         return form
 
 
-@patch('corehq.apps.app_manager.app_schemas.casedb_schema.get_case_property_description_dict', MagicMock(return_value={}))
+@patch('corehq.apps.app_manager.app_schemas.casedb_schema.get_case_property_description_dict',
+       MagicMock(return_value={}))
 @patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=True))
 @patch('corehq.apps.app_manager.app_schemas.casedb_schema.is_usercase_in_use', MagicMock(return_value=True))
 @patch('corehq.apps.app_manager.app_schemas.session_schema.is_usercase_in_use', MagicMock(return_value=True))
