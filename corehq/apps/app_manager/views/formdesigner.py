@@ -41,6 +41,7 @@ from corehq.apps.app_manager.models import (
     ModuleNotFoundException,
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
@@ -142,7 +143,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'vellum_debug': settings.VELLUM_DEBUG,
         'nav_form': form,
         'formdesigner': True,
-        'scheduler_data_nodes': scheduler_data_nodes,
         'include_fullstory': include_fullstory,
     })
     notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
@@ -157,7 +157,64 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
     })
 
+    core = {
+        'dataSourcesEndpoint': reverse('get_form_data_schema',
+            kwargs={'domain': domain, 'form_unique_id': form.get_unique_id()}),
+        'dataSource': [
+            # DEPRECATED. Use dataSourcesEndpoint
+            {
+                'key': 'fixture',
+                'name': 'Fixtures',
+                'endpoint': reverse('fixture_metadata', kwargs={'domain': domain}),
+            },
+        ],
+        'form': form.source,
+        'formId': form.get_unique_id(),
+        'formName': trans(form.name, app.langs),
+        'saveType': 'patch',
+        'saveUrl': reverse('edit_form_attr', args=[domain, app.id, form.get_unique_id(), 'xform']),
+        'patchUrl': reverse('patch_xform', args=[domain, app.id, form.get_unique_id()]),
+        'allowedDataNodeReferences': [
+            "meta/deviceID",
+            "meta/instanceID",
+            "meta/username",
+            "meta/userID",
+            "meta/timeStart",
+            "meta/timeEnd",
+            "meta/location",
+        ] + scheduler_data_nodes,
+        'activityUrl': reverse('ping'),
+        'sessionid': request.COOKIES.get('sessionid'),
+        'externalLinks': {
+            'changeSubscription': reverse("domain_subscription_view", kwargs={'domain': domain}),
+        },
+        'invalidCaseProperties': ['name'],
+    }
+
+    if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        if form.get_action_type() == 'open':
+            core.update({
+                'defaultHelpTextTemplateId': '#fd-hq-helptext-registration',
+                'formIconClass': 'fcc fcc-app-createform',
+            })
+        elif form.get_action_type() == 'close':
+            core.update({
+                'defaultHelpTextTemplateId': '#fd-hq-helptext-close',
+                'formIconClass': 'fcc fcc-app-completeform',
+            })
+        elif form.get_action_type() == 'update':
+            core.update({
+                'defaultHelpTextTemplateId': '#fd-hq-helptext-followup',
+                'formIconClass': 'fcc fcc-app-updateform',
+            })
+        else:
+            core.update({
+                'defaultHelpTextTemplateId': '#fd-hq-helptext-survey',
+                'formIconClass': 'fa fa-file-o',
+            })
+
     vellum_options = {
+        'core': core,
         'plugins': vellum_plugins,
         'features': vellum_features,
         #'core': ...

@@ -37,58 +37,6 @@
     <script>
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
         var VELLUM_OPTIONS = _.extend(initial_page_data("vellum_options"), {
-            core: {
-                defaultHelpTextTemplateId:
-                  {% if form.get_action_type == 'open' %}
-                      '#fd-hq-helptext-registration'
-                  {% elif form.get_action_type == 'close' %}
-                      '#fd-hq-helptext-close'
-                  {% elif form.get_action_type == 'update' %}
-                      '#fd-hq-helptext-followup'
-                  {% else %}
-                      '#fd-hq-helptext-survey'
-                  {% endif %},
-                dataSourcesEndpoint: '{% url "get_form_data_schema" domain=domain form_unique_id=form.get_unique_id %}',
-                dataSources: [
-                    {% comment %} DEPRECATED. Use dataSourcesEndpoint {% endcomment %}
-                    {
-                        key: 'fixture',
-                        name: 'Fixtures',
-                        endpoint: '{% url 'fixture_metadata' domain=domain %}'
-                    }
-                ],
-                form: {{ form.source|JSON }},
-                formId: '{{ form.get_unique_id }}',
-                formIconClass:
-                  {% if form.get_action_type == 'open' %}
-                      "fcc fcc-app-createform"
-                  {% elif form.get_action_type == 'close' %}
-                      "fcc fcc-app-completeform"
-                  {% elif form.get_action_type == 'update' %}
-                      "fcc fcc-app-updateform"
-                  {% else %}
-                      "fa fa-file-o"
-                  {% endif %},
-                formName: "{{ form.name|trans:app.langs|escapejs }}",
-                saveType: 'patch',
-                saveUrl: '{% url "edit_form_attr" domain app.id form.get_unique_id "xform" %}',
-                patchUrl: '{% url "patch_xform" domain app.id form.get_unique_id %}',
-                allowedDataNodeReferences: [
-                    "meta/deviceID",
-                    "meta/instanceID",
-                    "meta/username",
-                    "meta/userID",
-                    "meta/timeStart",
-                    "meta/timeEnd",
-                    "meta/location"
-                ].concat({{ scheduler_data_nodes|JSON }}),
-                activityUrl: '{% url "ping" %}',
-                sessionid: {{ sessionid|JSON }},
-                externalLinks: {
-                    changeSubscription: '{% url "domain_subscription_view" domain=domain %}'
-                },
-                invalidCaseProperties: ['name'],
-            },
             itemset: {
                 dataSourcesFilter: function (sources) {
                     return _.filter(sources, function (source) {
