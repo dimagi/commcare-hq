@@ -30,6 +30,7 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'maxWidth',
             'maxHeight',
             'widthHints',
+            'useUniformUnits',
         ],
 
         commandProperties: [
