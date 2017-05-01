@@ -156,37 +156,31 @@
             csrftoken: $.cookie('csrftoken')
         };
 
-        var CKEDITOR_BASEPATH = "{% static "app_manager/js/vellum/lib/ckeditor/" %}";
-        
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+        var CKEDITOR_BASEPATH = initial_page_data('CKEDITOR_BASEPATH');
+
         define("jquery", [], function () { return window.jQuery; });
         define("jquery.bootstrap", ["jquery"], function () {});
         define("underscore", [], function () { return window._; });
         define("moment", [], function () { return window.moment; });
-        
+
         require.config({
             /* to use non-built files in HQ:
                 * clone Vellum into submodules/formdesigner
                 * Run make in that directory (requires node.js)
                 * set settings.VELLUM_DEBUG to "dev" or "dev-min"
             */
-            {% if not vellum_debug %}
-            baseUrl: "{% static "app_manager/js/vellum/src" %}",
-            {% elif vellum_debug == "dev-min" %}
-            baseUrl: "{% static 'formdesigner/_build/src' %}",
-            {% else %}
-            baseUrl: "{% static 'formdesigner/src' %}",
-            {% endif %}
+            baseUrl: initial_page_data('requirejs_url'),
             // handle very bad connections
             waitSeconds: 60,
-            urlArgs: 'version={% cachebuster "app_manager/js/vellum/src/main-components.js" %}{% cachebuster "app_manager/js/vellum/src/local-deps.js" %}',
+            urlArgs: initial_page_data('requirejs_args'),
             paths: {
                 'jquery.vellum': 'main'
-            }
+            },
         });
 
         require(["jquery", "jquery.vellum", "moment"], function ($) {
             $(function () {
-                var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
                 $("#edit").hide();
 
                 $('#formdesigner').vellum(_.extend(VELLUM_OPTIONS, initial_page_data("vellum_options")));
@@ -252,13 +246,16 @@
             $('#edit-form-name-modal').koApplyBindings(editDetails);
         });
 
-    </script> 
+    </script>
 {% endblock %}
 
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
 
 {% block form-view %}
+    {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
     {% initial_page_data 'notification_options' notification_options %}
+    {% initial_page_data 'requirejs_args' requirejs_args %}
+    {% initial_page_data 'requirejs_url' requirejs_url|static %}
     {% initial_page_data 'vellum_options' vellum_options %}
     <div id="formdesigner" class="clearfix app-manager-v2 loading"></div>
 

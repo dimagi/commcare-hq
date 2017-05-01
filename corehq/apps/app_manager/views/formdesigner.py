@@ -43,6 +43,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
 from corehq.apps.tour import tours
 from corehq.apps.analytics import ab_tests
 from corehq.apps.domain.models import Domain
@@ -184,6 +185,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     }
     context.update({
         'vellum_options': vellum_options,
+        'CKEDITOR_BASEPATH': "app_manager/js/vellum/lib/ckeditor/",
     })
 
     if request.user.is_superuser:
@@ -193,6 +195,19 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             'user_id': request.couch_user.get_id,
         })
         context.update({'notification_options': notification_options})
+
+    if not settings.VELLUM_DEBUG:
+        context.update({'requirejs_url': "app_manager/js/vellum/src"})
+    elif settings.VELLUM_DEBUG == "dev-min":
+        context.update({'requirejs_url': "formdesigner/_build/src"})
+    else:
+        context.update({'requirejs_url': "formdesigner/src"})
+    context.update({
+        'requirejs_args': 'version={}{}'.format(
+            cachebuster("app_manager/js/vellum/src/main-components.js"),
+            cachebuster("app_manager/js/vellum/src/local-deps.js")
+        ),
+    })
 
     template = get_app_manager_template(
         request.user,
