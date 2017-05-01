@@ -53,7 +53,7 @@ class BETSPayload(jsonobject.JsonObject):
                     related_case_type=related_case_type,
                     related_case_id=related_case_id,
                 )
-        raise NikshayLocationNotFound(msg)
+            raise NikshayLocationNotFound(msg)
 
 
 class IncentivePayload(BETSPayload):
