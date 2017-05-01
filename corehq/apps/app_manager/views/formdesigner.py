@@ -217,7 +217,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'core': core,
         'plugins': vellum_plugins,
         'features': vellum_features,
-        #'core': ...
         'intents': {
             'templates': next(app_callout_templates),
         },

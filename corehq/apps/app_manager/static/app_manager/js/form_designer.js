@@ -1,9 +1,9 @@
-/* globals COMMCAREHQ, define, require, analytics, form_tour_start */
+/* globals CKEDITOR_BASEPATH, COMMCAREHQ, define, require, analytics, form_tour_start */
 hqDefine("app_manager/js/form_designer.js", function() {
     $(function() {
         var v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
             initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
-        var VELLUM_OPTIONS = _.extend(initial_page_data("vellum_options"), {
+        var VELLUM_OPTIONS = _.extend({}, initial_page_data("vellum_options"), {
             itemset: {
                 dataSourcesFilter: function (sources) {
                     return _.filter(sources, function (source) {
@@ -76,7 +76,7 @@ hqDefine("app_manager/js/form_designer.js", function() {
             },
         });
 
-        var CKEDITOR_BASEPATH = initial_page_data('CKEDITOR_BASEPATH');
+        CKEDITOR_BASEPATH = initial_page_data('CKEDITOR_BASEPATH');
 
         define("jquery", [], function () { return window.jQuery; });
         define("jquery.bootstrap", ["jquery"], function () {});
