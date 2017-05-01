@@ -8,7 +8,7 @@ from corehq.toggles import BETS_INTEGRATION
 from corehq.util import reverse
 from custom.enikshay.case_utils import get_episode_case_from_voucher, get_prescription_vouchers_from_episode, \
     get_approved_prescription_vouchers_from_episode
-from custom.enikshay.const import TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT, \
+from custom.enikshay.integrations.bets.const import TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT, \
     DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, VOUCHER_EVENT_ID
 from custom.enikshay.integrations.utils import case_properties_changed
 

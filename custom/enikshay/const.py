@@ -57,20 +57,3 @@ DATE_FULFILLED = "date_fulfilled"
 VOUCHER_ID = "voucher_id"
 FULFILLED_BY_ID = "fulfilled_by_id"
 AMOUNT_APPROVED = "amount_approved"
-
-# BETS event names
-VOUCHER_EVENT_ID = "VOUCHER_EVENT_ID"  # TODO: Get this from BETS
-TREATMENT_180_EVENT = "TREATMENT_180_EVENT"  # TODO: Get this from BETS
-DRUG_REFILL_EVENT = "DRUG_REFILL_EVENT"  # TODO: Get this from BETS
-SUCCESSFUL_TREATMENT_EVENT = "SUCCESSFUL_TREATMENT_EVENT"  # TODO: Get this from BETS
-DIAGNOSIS_AND_NOTIFICATION_EVENT = "DIAGNOSIS_AND_NOTIFICATION_EVENT"  # TODO: Get this from BETS
-AYUSH_REFERRAL_EVENT = "AYUSH_REFERRAL_EVENT"  # TODO: Get this from BETS
-
-LOCATION_TYPE_MAP = {
-    "pcc": "chemist",
-    "pcp": "mbbs",
-    "plc": "lab",
-    "pac": "ayush_other",
-    # TODO: ?? -> dots_provider
-    # TODO: ?? -> compounder
-}

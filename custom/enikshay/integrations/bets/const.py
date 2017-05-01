@@ -1,3 +1,20 @@
+# BETS event names
+VOUCHER_EVENT_ID = "VOUCHER_EVENT_ID"  # TODO: Get this from BETS
+TREATMENT_180_EVENT = "104"
+DRUG_REFILL_EVENT = "109"
+SUCCESSFUL_TREATMENT_EVENT = "SUCCESSFUL_TREATMENT_EVENT"  # TODO: Get this from BETS
+DIAGNOSIS_AND_NOTIFICATION_EVENT = "103"
+AYUSH_REFERRAL_EVENT = "AYUSH_REFERRAL_EVENT"  # TODO: Get this from BETS
+
+LOCATION_TYPE_MAP = {
+    "pcc": "chemist",
+    "pcp": "mbbs",
+    "plc": "lab",
+    "pac": "ayush_other",
+    # TODO: ?? -> dots_provider
+    # TODO: ?? -> compounder
+}
+
 # maps an internal slug to BETS "parent event ID"
 BETS_EVENT_IDS = {
     # e-Voucher payout to chemists (reimbursement of drug cost + additional x% top up)
@@ -7,10 +24,10 @@ BETS_EVENT_IDS = {
     'lab_voucher': '102',
 
     # To provider for diagnosis and notification of TB case
-    'tb_diagnosis': '103',
+    'tb_diagnosis': DIAGNOSIS_AND_NOTIFICATION_EVENT,
 
     # 6 months (180 days) of private OR govt. FDCs with "Treatment Outcome" reported
-    'outcome_reported': '104',
+    'outcome_reported': TREATMENT_180_EVENT,
 
     # Registering and referral of a presumptive TB case in UATBC/eNikshay,
     # and patient subsequently gets notified
@@ -28,7 +45,7 @@ BETS_EVENT_IDS = {
 
     # Cash transfer on subsequent drug refill (~at every drug voucher validation,
     # starting after 2nd voucher)
-    'drug_refill': '109',
+    'drug_refill': DRUG_REFILL_EVENT,
 
     # Honorarium to public DOT providers
     'provider_honorarium': '110',
