@@ -23,6 +23,7 @@ CASE_TYPE_LAB_REFERRAL = "lab_referral"
 CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 CASE_TYPE_TEST = "test"
 CASE_TYPE_VOUCHER = "voucher"
+CASE_TYPE_PRESCRIPTION = "prescription"
 
 
 def get_all_parents_of_case(domain, case_id):
@@ -300,11 +301,11 @@ def _get_voucher_parent(domain, voucher_case_id):
     test = None
 
     try:
-        prescription = get_first_parent_of_case(domain, voucher_case_id, "prescription")
+        prescription = get_first_parent_of_case(domain, voucher_case_id, CASE_TYPE_PRESCRIPTION)
     except ENikshayCaseNotFound:
         pass
     try:
-        test = get_first_parent_of_case(domain, voucher_case_id, "test")
+        test = get_first_parent_of_case(domain, voucher_case_id, CASE_TYPE_TEST)
     except ENikshayCaseNotFound:
         pass
     if not (prescription or test):
@@ -317,8 +318,8 @@ def _get_voucher_parent(domain, voucher_case_id):
 
 def get_episode_case_from_voucher(domain, voucher_case_id):
     voucher_parent = _get_voucher_parent(domain, voucher_case_id)
-    assert voucher_parent.type == "prescription"
-    episode = get_first_parent_of_case(domain, voucher_parent.case_id, "episode")
+    assert voucher_parent.type == CASE_TYPE_PRESCRIPTION
+    episode = get_first_parent_of_case(domain, voucher_parent.case_id, CASE_TYPE_EPISODE)
     return episode
 
 
@@ -327,11 +328,11 @@ def get_person_case_from_voucher(domain, voucher_case_id):
     #   person <- occurrence <- episode <- prescription <- voucher
     #   person <- occurrence <- test <- voucher
     voucher_parent = _get_voucher_parent(domain, voucher_case_id)
-    if voucher_parent.type == "prescription":
-        episode = get_first_parent_of_case(domain, voucher_parent.case_id, "episode")
+    if voucher_parent.type == CASE_TYPE_PRESCRIPTION:
+        episode = get_first_parent_of_case(domain, voucher_parent.case_id, CASE_TYPE_EPISODE)
         return get_person_case_from_episode(domain, episode.case_id)
     else:
-        assert voucher_parent.type == "test"
+        assert voucher_parent.type == CASE_TYPE_TEST
         occurrence = get_occurrence_case_from_test(domain, voucher_parent.case_id)
         return get_person_case_from_occurrence(domain, occurrence.case_id)
 
