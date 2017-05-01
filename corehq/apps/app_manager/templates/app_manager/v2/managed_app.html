@@ -14,6 +14,7 @@
     <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
     <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -65,6 +66,22 @@
           </div>
         {% endif %}
 
+      <div class="appnav-toggle-label">
+          <div class="btn-group pull-right">
+            <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
+            <button type="button"
+                    class="btn btn-xs btn-default"
+                    data-toggle="modal"
+                    data-target="#rollout-revert-modal"
+                    data-redirect="{% url "view_app" domain app.id %}"
+            >{% trans "Off" %}</button>
+          </div>
+          {% trans "New App Builder" %}
+          <span class="hq-help-template"
+                data-title="New App Builder"
+                data-content="{% trans "Turn off new app builder for now." %}"></span>
+      </div>
+
         {% if app.advanced_app_builder %}
           <div class="appnav-advanced-label">
             {% trans "Advanced App Builder" %}
@@ -84,6 +101,7 @@
     {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
     {% initial_page_data 'app_subset' app_subset %}
     {% initial_page_data 'formdesigner' formdesigner %}
+    {% registerurl "toggle_app_manager_v2" %}
     {% block pre_form_content %}{% endblock %}
     {% block form-view %}{% endblock %}
     <script type="text/html" id="js-popover-template-add-item">
@@ -130,7 +148,8 @@
         {% endif %}
         {% if show_care_plan %}
           <div class="pull-left">
-            <button type="button" class="popover-additem-option new-module" data-toggle="modal" href="#careplan-module-modal">
+            <button type="button" class="popover-additem-option new-module"
+                    data-toggle="modal" data-stopsubmit="yes" href="#careplan-module-modal">
               <i class="fa fa-clipboard"></i> {% trans "Care Plan" %}
               <p>{% blocktrans %}Tasks and goals.{% endblocktrans %}</p>
             </button>
@@ -138,4 +157,8 @@
         {% endif %}
       </div>
     </script>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% include "hqwebapp/rollout_revert_modal.html" %}
 {% endblock %}

@@ -11,12 +11,15 @@ from corehq.util.soft_assert import soft_assert
 from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 from dimagi.utils.couch.database import get_db
 from casexml.apps.case import const
+from casexml.apps.case.xml import V1, V2
+from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
 from casexml.apps.phone.utils import get_restore_response_class
@@ -275,11 +278,6 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
 
     strict = True  # for asserts
 
-    @classmethod
-    def get(cls, doc_id):
-        doc = get_sync_log_doc(doc_id)
-        return cls.wrap(doc)
-
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
             _get_logger().warn("assertion failed: %s" % msg)
@@ -294,6 +292,10 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         if hasattr(ret, 'has_assert_errors'):
             ret.strict = False
         return ret
+
+    @property
+    def response_class(self):
+        return get_restore_response_class(self.domain)
 
     def case_count(self):
         """
@@ -321,18 +323,22 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         """
         raise NotImplementedError()
 
-    def set_cached_payload(self, payload_path, version):
-        self.cache_payload_paths[version] = payload_path
+    def _cache_key(self, version):
+        from casexml.apps.phone.restore import restore_cache_key
 
-    def get_cached_payload(self, version, stream=False):
-        response_class = get_restore_response_class(self.domain)
-        if version in self.cache_payload_paths:
-            return response_class.get_payload(self.cache_payload_paths[version])
-        return None
+        return restore_cache_key(
+            self.domain,
+            RESTORE_CACHE_KEY_PREFIX,
+            self.user_id,
+            version=version,
+            sync_log_id=self._id,
+        )
 
     def invalidate_cached_payloads(self):
-        self.cache_payload_paths = {}
-        self.save()
+        keys = [self._cache_key(version) for version in [V1, V2]]
+
+        for key in keys:
+            get_redis_default_cache().delete(key)
 
     @classmethod
     def from_other_format(cls, other_sync_log):
@@ -1186,21 +1192,12 @@ def _domain_has_legacy_toggle_set():
     return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 
-def get_sync_log_doc(doc_id):
-    try:
-        return SyncLog.get_db().get(doc_id)
-    except ResourceNotFound:
-        legacy_doc = get_db(None).get(doc_id, attachments=True)
-        del legacy_doc['_rev']  # remove the rev so we can save this to the new DB
-        return legacy_doc
-
-
 def get_properly_wrapped_sync_log(doc_id):
     """
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
     """
-    return properly_wrap_sync_log(get_sync_log_doc(doc_id))
+    return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
 
 
 def properly_wrap_sync_log(doc):

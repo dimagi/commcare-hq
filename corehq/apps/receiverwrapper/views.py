@@ -96,7 +96,8 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
     tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
-        u'domain:{}'.format(domain)
+        'submission_type:{}'.format(result.submission_type),
+        u'domain:{}'.format(domain),
     ]
     datadog_counter('commcare.xform_submissions.count', tags=tags + ['status_code:{}'.format(response.status_code)])
 

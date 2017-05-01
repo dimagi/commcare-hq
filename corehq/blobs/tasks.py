@@ -3,6 +3,7 @@ from datetime import datetime
 from celery.task import periodic_task
 from celery.schedules import crontab
 
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.blobs.models import BlobExpiration
 from corehq.blobs import get_blob_db
 
@@ -18,6 +19,10 @@ def delete_expired_blobs():
 
     db.bulk_delete(paths)
     blob_expirations.update(deleted=True)
+    datadog_counter(
+        'commcare.temp_blobs.bytes_deleted',
+        value=sum(map(lambda be: be.length, blob_expirations))
+    )
 
 
 def _utcnow():

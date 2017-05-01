@@ -236,7 +236,11 @@ def _get_data_detail(config, domain):
                     )
                 return word_eval
 
-            transform = col['transform']
+            try:
+                transform = col['transform']
+            except KeyError:
+                transform = {}
+
             if transform.get('type') == 'translation':
                 default_val = "column[@id='{column_id}']"
                 xpath_function = default_val

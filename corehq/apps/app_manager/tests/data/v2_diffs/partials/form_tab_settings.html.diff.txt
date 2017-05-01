@@ -1,11 +1,11 @@
 --- 
 +++ 
-@@ -1,92 +1,116 @@
+@@ -1,96 +1,120 @@
  {% load i18n %}
  {% load xforms_extras %}
  {% load hq_shared_tags %}
 -<div class="tab-pane active" id="form-settings">
-+<div class="tab-pane{% if not form.requires_case and not form.get_action_type == 'open' %} active{% endif %}" id="form-settings">
++<div class="tab-pane{% if not form.uses_cases %} active{% endif %}" id="form-settings">
      <form class="form-horizontal save-button-form" action="{% url "edit_form_attr" domain app.id form.get_unique_id 'all' %}">
          {% csrf_token %}
          <div class="save-button-holder clearfix"></div>
@@ -87,9 +87,8 @@
 +                </div>
              </div>
  
--            {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
--            {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
--                {% include "app_manager/v1/partials/custom_instances.html" %}
+-            {% if form.doc_type == "ShadowForm" %}
+-                {% include "app_manager/v1/partials/shadow_parent_select.html" %}
 -            {% endif %}
 +            <div class="panel panel-appmanager">
 +                <div class="panel-heading">
@@ -108,21 +107,10 @@
 +                        visible: visible,
 +                        css: {error: hasError()}">
  
--            {{ request|toggle_tag_info:"NO_VELLUM" }}
--            {% if request|toggle_enabled:'NO_VELLUM' %}
--            <div class="form-group">
--                <label class="control-label col-sm-2">
--                    {% trans "Disallow editing form in Form Builder" %}
--                    <span class="hq-help-template"
--                          data-title="{% trans "Disallow editing form in Form Builder" %}"
--                          data-content="{% blocktrans %}For custom forms that the Form Builder breaks,
--                                        use this option to disallow editing in the Form Builder.{% endblocktrans %}"
--                    ></span>
--                </label>
--                <div class="col-sm-4" id="no-vellum">
--                     <input type="checkbox" value="true"
--                            data-bind="checked: no_vellum"/>
--                     <input type="hidden" name="no_vellum" data-bind="value: no_vellum"/>
+-            {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
+-            {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
+-                {% include "app_manager/v1/partials/custom_instances.html" %}
+-            {% endif %}
 +                        {% if allow_form_filtering %}
 +                            {% include "app_manager/v2/partials/form_filter/form_filter.html" %}
 +                        {% else  %}
@@ -137,7 +125,22 @@
 +                                <div class="alert alert-info">{% trans 'Form workflows are disabled for this form' %}</div>
 +                            </div>
 +                        {% endif %}
-+
+ 
+-            {{ request|toggle_tag_info:"NO_VELLUM" }}
+-            {% if request|toggle_enabled:'NO_VELLUM' and form.form_type != "shadow_form"%}
+-            <div class="form-group">
+-                <label class="control-label col-sm-2">
+-                    {% trans "Disallow editing form in Form Builder" %}
+-                    <span class="hq-help-template"
+-                          data-title="{% trans "Disallow editing form in Form Builder" %}"
+-                          data-content="{% blocktrans %}For custom forms that the Form Builder breaks,
+-                                        use this option to disallow editing in the Form Builder.{% endblocktrans %}"
+-                    ></span>
+-                </label>
+-                <div class="col-sm-4" id="no-vellum">
+-                     <input type="checkbox" value="true"
+-                            data-bind="checked: no_vellum"/>
+-                     <input type="hidden" name="no_vellum" data-bind="value: no_vellum"/>
 +                    </div>
                  </div>
              </div>
@@ -164,7 +167,11 @@
 +
 +                    </div>
 +
-+                    {% if request|toggle_enabled:'NO_VELLUM' %}
++                    {% if form.doc_type == "ShadowForm" %}
++                        {% include "app_manager/v2/partials/shadow_parent_select.html" %}
++                    {% endif %}
++
++                    {% if request|toggle_enabled:'NO_VELLUM' and form.form_type != "shadow_form"%}
 +                    <div class="form-group">
 +                        <label class="control-label col-sm-2">
 +                            {% trans "Disallow editing form in Form Builder" %}

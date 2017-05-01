@@ -93,7 +93,7 @@
 -  </div>
 -</div>
 -<div class="appmanager-content appmanager-content-transition-all"
-+<div class="appmanager-content appmanager-content-transition-all{% if not formdesigner %} appmanager-settings-content {% endif %}"
++<div class="js-unhide-on-unsaved appmanager-content appmanager-content-transition-all{% if not formdesigner %} appmanager-settings-content {% endif %}"
       id="js-appmanager-body">
      {% if app %}
          {% if error %}

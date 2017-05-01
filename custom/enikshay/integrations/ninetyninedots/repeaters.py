@@ -34,11 +34,6 @@ class Base99DOTSRepeater(CaseRepeater):
     def available_for_domain(cls, domain):
         return NINETYNINE_DOTS.enabled(domain)
 
-    def allow_retries(self, response):
-        if response is not None and response.status_code == 500:
-            return True
-        return False
-
 
 class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
     """Register a patient in 99DOTS
@@ -69,7 +64,12 @@ class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
             case_properties.get('dots_99_registered') == 'false' or
             case_properties.get('dots_99_registered') is None
         )
-        return enabled and not_registered and is_valid_episode_submission(episode_case)
+        return (
+            enabled
+            and not_registered
+            and is_valid_episode_submission(episode_case)
+            and case_properties_changed(episode_case, ['dots_99_enabled'])
+        )
 
 
 class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):

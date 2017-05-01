@@ -14,16 +14,17 @@ class CouchConfig(object):
 
     """
 
-    def __init__(self, db_uri=None):
-        if db_uri:
+    def __init__(self, config=None):
+        if config:
             self._settings_helper = (
-                settings.COUCH_SETTINGS_HELPER._replace(couch_database_url=db_uri))
+                settings.COUCH_SETTINGS_HELPER._replace(couch_database_configs=config)
+            )
         else:
             self._settings_helper = settings.COUCH_SETTINGS_HELPER
 
     @property
     def db_uri(self):
-        return self._settings_helper.couch_database_url
+        return self._settings_helper.main_db_url
 
     @property
     @memoized

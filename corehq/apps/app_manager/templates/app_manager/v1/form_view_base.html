@@ -217,6 +217,13 @@
             auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
         });
 
+        var $shadowParent = $('#shadow-parent');
+        if ($shadowParent.length) {
+            $shadowParent.koApplyBindings({
+                shadow_parent: ko.observable({{ form.shadow_parent_form_id|JSON }})
+            });
+        }
+
         {% if request|toggle_enabled:'NO_VELLUM' %}
         $('#no-vellum').koApplyBindings({
             no_vellum: ko.observable({{ form.no_vellum|JSON }})
@@ -318,17 +325,19 @@
     </div>
 
     <div class="btn-group">
-        {% if not form.no_vellum %}
-        <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
-            <i class="fa fa-pencil"></i>
-            {% trans "Edit" %}
-        </a>
-        {% else %}
-        <button class="btn btn-primary disabled" disabled="disabled"
-                title="{% trans "Your administrator has locked this form from edits through the form builder"|force_escape %}">
-            <i class="fa fa-pencil"></i>
-            {% trans "Edit" %}
-        </button>
+        {% if not form.form_type == "shadow_form" %}
+            {% if not form.no_vellum %}
+            <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
+                <i class="fa fa-pencil"></i>
+                {% trans "Edit" %}
+            </a>
+            {% else %}
+            <button class="btn btn-primary disabled" disabled="disabled"
+                    title="{% trans "Your administrator has locked this form from edits through the form builder"|force_escape %}">
+                <i class="fa fa-pencil"></i>
+                {% trans "Edit" %}
+            </button>
+            {% endif %}
         {% endif %}
         {% if can_preview_form and allow_cloudcare %}
             {% if form.source %}
@@ -363,18 +372,23 @@
                 </a>
             </li>
             {% endif %}{% endif %}
-            {% if form.form_type == 'advanced_form' and module.has_schedule %}
-                 <li>
-                     <a href="#visit-scheduler" data-toggle="tab">
-                         {% trans "Visit Scheduler" %}
-                     </a>
-                 </li>
+            {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
+                {% if module.has_schedule %}
+                     <li>
+                         <a href="#visit-scheduler" data-toggle="tab">
+                             {% trans "Visit Scheduler" %}
+                         </a>
+                     </li>
+                {% endif %}
             {% endif %}
+            {% if form.form_type != "shadow_form" %}
             <li>
                 <a href="#advanced" data-toggle="tab">{% trans "Advanced" %}</a>
             </li>
+            {% endif %}
         </ul>
         <br>
+        {% include 'app_manager/v2/partials/case_config_ko_templates.html' %}
         <div class="tab-content">
             {% if nav_form %}
                 {% include "app_manager/v1/partials/form_tab_settings.html" %}
@@ -385,6 +399,19 @@
                     <p class="alert alert-warning">
                         {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
                     </p>
+                {% endif %}
+                {% if form.form_type == "shadow_form" %}
+                    <div class="alert alert-warning">
+                        {% trans "You are viewing a shadow form, therefore:" %}
+                        <ul>
+                            <li>{% trans 'You will be unable to add "Open case" action' %}</li>
+                            <li>{% trans 'Load/Update actions will be "merged" with the source form actions'%}</li>
+                            <li>{% trans 'Every case tag in the source form load/update action configuration must appear in this configuration'%}</li>
+                            <li>{% trans 'You are not allowed to specify load or save case properties'%}</li>
+                            <li>{% trans 'The load and save case property behaviors specified in the shadow source form actions will be used for the actions with matching case tags specified here.'%}</li>
+                            <li>{% trans 'You are not allowed to specify case closures here'%}</li>
+                        </ul>
+                    </div>
                 {% endif %}
                 {% if form_errors or xform_validation_errored %}
                     <p class="alert alert-warning">
@@ -493,10 +520,14 @@
                 {% endif %}
             </div>
 
-            {% if form.form_type == 'advanced_form' and module.has_schedule %}
-                {% include "app_manager/v1/partials/form_tab_visit_scheduler.html" %}
+            {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
+                {% if module.has_schedule  %}
+                    {% include "app_manager/v1/partials/form_tab_visit_scheduler.html" %}
+                {% endif %}
             {% endif %}
-            {% include "app_manager/v1/partials/form_tab_advanced.html" %}
+            {% if form.form_type != "shadow_form" %}
+                {% include "app_manager/v1/partials/form_tab_advanced.html" %}
+            {% endif %}
         </div>
     </div>
     <div id="questions"></div>

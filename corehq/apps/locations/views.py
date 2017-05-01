@@ -78,7 +78,7 @@ def lock_locations(func):
     def func_wrapper(request, *args, **kwargs):
         key = location_lock_key(request.domain)
         client = get_redis_client()
-        lock = client.lock(key, LOCK_LOCATIONS_TIMEOUT)
+        lock = client.lock(key, timeout=LOCK_LOCATIONS_TIMEOUT)
         if lock.acquire(blocking=False):
             try:
                 return func(request, *args, **kwargs)
