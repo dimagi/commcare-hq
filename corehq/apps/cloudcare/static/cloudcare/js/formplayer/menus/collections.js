@@ -37,7 +37,7 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
         ],
 
         detailProperties: [
-            'hideAdvance',
+            'isPersistentDetail',
         ],
 
         parse: function (response, request) {
