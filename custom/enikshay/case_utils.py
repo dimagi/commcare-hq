@@ -292,6 +292,8 @@ def get_person_case(domain, case_id):
         return get_person_case_from_occurrence(domain, occurrence_case.case_id).case_id
     elif case_type == CASE_TYPE_OCCURRENCE:
         return get_person_case_from_occurrence(domain, case.case_id).case_id
+    elif case_type == CASE_TYPE_VOUCHER:
+        return get_person_case_from_voucher(domain, case.case_id)
     else:
         raise ENikshayCaseNotFound(u"Unknown case type: {}".format(case_type))
 
