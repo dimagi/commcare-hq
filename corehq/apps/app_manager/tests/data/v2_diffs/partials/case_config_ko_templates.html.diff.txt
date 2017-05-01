@@ -128,7 +128,7 @@
 -    </table>
 +    <div class="panel-heading">
 +      <h4 class="panel-title panel-title-nolink">
-+        <i class="fa fa-save"></i> {% trans "Save Question Answers to Case Properties" %}
++        <i class="fa fa-save"></i> {% trans "Save Questions to Case Properties" %}
 +      </h4>
 +    </div>
      <div class="panel-body">
