@@ -232,7 +232,8 @@ def _queue_indicators(indicators):
             _queue_chunk(to_queue)
             to_queue = []
 
-    _queue_chunk(to_queue)
+    if to_queue:
+        _queue_chunk(to_queue)
 
 
 @quickcache(['config_id'])
