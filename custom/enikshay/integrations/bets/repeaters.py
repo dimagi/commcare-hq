@@ -6,8 +6,10 @@ from corehq.apps.repeaters.signals import create_repeat_records
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import BETS_INTEGRATION
 from corehq.util import reverse
-from custom.enikshay.case_utils import get_episode_case_from_voucher, get_prescription_vouchers_from_episode, \
-    get_approved_prescription_vouchers_from_episode
+from custom.enikshay.case_utils import (
+    get_episode_case_from_voucher,
+    get_approved_prescription_vouchers_from_episode,
+)
 from custom.enikshay.integrations.bets.const import TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT, \
     DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, VOUCHER_EVENT_ID
 from custom.enikshay.integrations.utils import case_properties_changed
@@ -57,7 +59,10 @@ class BETSVoucherRepeater(BaseBETSRepeater):
 
 
 class BETS180TreatmentRepeater(BaseBETSRepeater):
-    friendly_name = _("BETS - MBBS+ Providers: 180 days of private OR govt. FDCs with treatment outcome reported (episode case type)")
+    friendly_name = _(
+        "BETS - MBBS+ Providers: 180 days of private OR govt. "
+        "FDCs with treatment outcome reported (episode case type)"
+    )
 
     @classmethod
     def get_custom_url(cls, domain):

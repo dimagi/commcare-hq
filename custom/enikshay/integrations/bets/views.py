@@ -159,7 +159,8 @@ class BETSVoucherRepeaterView(AddCaseRepeaterView):
 class BETS180TreatmentRepeaterView(AddCaseRepeaterView):
     urlname = "bets_180_treatment_repeater"
     page_title = "MBBS+ Providers: 6 months (180 days) of private OR govt. FDCs with treatment outcome reported"
-    page_name = "MBBS+ Providers: 6 months (180 days) of private OR govt. FDCs with treatment outcome reported (episode case type)"
+    page_name = "MBBS+ Providers: 6 months (180 days) of private OR govt. " \
+                "FDCs with treatment outcome reported (episode case type)"
 
 
 class BETSDrugRefillRepeaterView(AddCaseRepeaterView):
@@ -183,4 +184,5 @@ class BETSDiagnosisAndNotificationRepeaterView(AddCaseRepeaterView):
 class BETSAYUSHReferralRepeaterView(AddCaseRepeaterView):
     urlname = "bets_ayush_referral_repeater"
     page_title = "AYUSH/Other provider: Registering and referral of a presumptive TB case in UATBC/e-Nikshay"
-    page_name = "AYUSH/Other provider: Registering and referral of a presumptive TB case in UATBC/e-Nikshay (episode case type)"
+    page_name = "AYUSH/Other provider: Registering and referral of a presumptive TB " \
+                "case in UATBC/e-Nikshay (episode case type)"

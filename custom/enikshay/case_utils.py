@@ -305,7 +305,7 @@ def _get_voucher_parent(domain, voucher_case_id):
         pass
     try:
         test = get_first_parent_of_case(domain, voucher_case_id, "test")
-    except ENikshayCaseNotFound as e:
+    except ENikshayCaseNotFound:
         pass
     if not (prescription or test):
         raise ENikshayCaseNotFound(

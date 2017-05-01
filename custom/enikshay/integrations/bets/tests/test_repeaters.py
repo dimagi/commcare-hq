@@ -127,7 +127,7 @@ class BETSDrugRefillRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeate
         self.assertEqual(2, len(self.repeat_records().all()))
 
         # Don't trigger on other update to voucher
-        update_case(self.domain, voucher.case_id, {"foo": "bar",})
+        update_case(self.domain, voucher.case_id, {"foo": "bar"})
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
@@ -228,7 +228,9 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # Meet trigger
-        update_case(self.domain, case.case_id, {"nikshay_registered": "true", 'presumptive_referral_by_ayush': "123"})
+        update_case(
+            self.domain, case.case_id, {"nikshay_registered": "true", 'presumptive_referral_by_ayush': "123"}
+        )
         self.assertEqual(1, len(self.repeat_records().all()))
 
         # Make sure same case doesn't trigger event again
