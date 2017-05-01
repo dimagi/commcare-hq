@@ -198,6 +198,3 @@ def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(BETSAYUSHReferralRepeater, case)
 
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
-
-# TODO: Remove this when eNikshay gets migrated to SQL
-case_post_save.connect(create_case_repeat_records, CommCareCase)

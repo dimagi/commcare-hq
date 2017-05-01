@@ -226,7 +226,3 @@ def create_hiv_test_repeat_records(sender, case, **kwargs):
 
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
 case_post_save.connect(create_hiv_test_repeat_records, CommCareCaseSQL)
-
-# TODO: Remove this when eNikshay gets migrated to SQL
-case_post_save.connect(create_case_repeat_records, CommCareCase)
-case_post_save.connect(create_hiv_test_repeat_records, CommCareCase)
