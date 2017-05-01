@@ -34,6 +34,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             age=25,
             caseId='3',
             caseStatus='patient',
+            creationDate=datetime(2017, 1, 1),
             dateOfRegn=datetime(2017, 4, 17),
             dob=datetime(1992, 1, 2),
             emergencyContactNo='1234567890',

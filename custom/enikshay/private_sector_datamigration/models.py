@@ -30,7 +30,7 @@ class Beneficiary(models.Model):
     caseReferredBy = models.CharField(max_length=18, null=True)
     caseStatus = models.CharField(max_length=20, null=True)
     configureAlert = models.CharField(max_length=5, null=True)
-    creationDate = models.DateTimeField(null=True)
+    creationDate = models.DateTimeField()
     creator = models.CharField(max_length=255, null=True)
     dateOfIdentification = models.DateTimeField(null=True)
     dateOfRegn = models.DateTimeField()

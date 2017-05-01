@@ -1,4 +1,6 @@
-from datetime import datetime
+from datetime import date, datetime
+
+from dateutil.relativedelta import relativedelta
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
@@ -79,7 +81,9 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['age_entered'] = self.beneficiary.age_entered
         else:
             if self.beneficiary.dob is not None:
-                kwargs['attrs']['update']['age'] = None # TODO - calculate from dob
+                kwargs['attrs']['update']['age'] = relativedelta(
+                    self.beneficiary.creationDate, self.beneficiary.dob
+                ).years
             else:
                 kwargs['attrs']['update']['age'] = ''
             kwargs['attrs']['update']['age_entered'] = ''
@@ -89,7 +93,7 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['dob_known'] = 'yes'
         else:
             if self.beneficiary.age_entered is not None:
-                kwargs['attrs']['update']['dob'] = None # TODO - do math
+                kwargs['attrs']['update']['dob'] = date(date.today().year - self.beneficiary.age_entered, 7, 1),
             else:
                 kwargs['attrs']['update']['dob'] = ''
             kwargs['attrs']['update']['dob_known'] = 'no'
