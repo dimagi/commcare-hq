@@ -281,7 +281,7 @@ class ENikshayCaseStructureMixin(object):
 
             indices=[CaseIndex(
                 CaseStructure(case_id=self.episode.case_id, attrs={"create": False}),
-                identifier="host",  # TODO: confirm this should be host
+                identifier="episode_of_prescription",
                 relationship=CASE_INDEX_EXTENSION,
                 related_type="episode"
             )]
@@ -311,7 +311,7 @@ class ENikshayCaseStructureMixin(object):
             },
             indices=[CaseIndex(
                 prescription_structure,
-                identifier="host",  # TODO: Confirm that this should be host
+                identifier="prescription_of_voucher",
                 relationship=CASE_INDEX_EXTENSION,
                 related_type="prescription"
             )]
