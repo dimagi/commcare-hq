@@ -6,6 +6,7 @@ from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
 from django.utils.translation import ugettext as _
+from restkit import RequestError
 
 from corehq import toggles
 from corehq.apps.userreports.const import (
@@ -24,8 +25,8 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
+from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
-from corehq.util.couch import get_document_or_not_found
 from corehq.util.datadog.gauges import datadog_gauge
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
@@ -249,6 +250,7 @@ def save_document(doc_ids):
     with CriticalSection(lock_keys):
         indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids)
         first_indicator = indicators[0]
+        processed_indicators = []
 
         for i in indicators:
             assert i.domain == first_indicator.domain
@@ -260,10 +262,16 @@ def save_document(doc_ids):
             indicator = indicator_by_doc_id[doc['_id']]
 
             eval_context = EvaluationContext(doc)
-            for config_id in indicator.indicator_config_ids:
-                config = _get_config(config_id)
-                adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-                adapter.best_effort_save(doc, eval_context)
-                eval_context.reset_iteration()
+            try:
+                for config_id in indicator.indicator_config_ids:
+                    config = _get_config(config_id)
+                    adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+                    adapter.best_effort_save(doc, eval_context)
+                    eval_context.reset_iteration()
+            except (ESError, RequestError):
+                # couch or es had an issue
+                pass
+            else:
+                processed_indicators.append(indicator.pk)
 
-        indicators.delete()
+        AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
