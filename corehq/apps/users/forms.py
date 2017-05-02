@@ -331,9 +331,18 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     loadtest_factor = forms.IntegerField(
         required=False, min_value=1, max_value=50000,
-        help_text=ugettext_lazy(u"Multiply this user's case load by a number for load testing on phones. "
-                    u"Leave blank for normal users."),
+        help_text=ugettext_lazy(
+            u"Multiply this user's case load by a number for load testing on phones. "
+            u"Leave blank for normal users."
+        ),
         widget=forms.HiddenInput())
+
+    mobile_ucr_sync_interval = forms.IntegerField(
+        label=ugettext_lazy("Mobile report sync delay"),
+        required=False,
+        help_text=ugettext_lazy("Time to wait between sending updated mobile report data to users (hours)."),
+        widget=forms.HiddenInput()
+    )
 
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
@@ -345,6 +354,15 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         ))
         if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
             self.fields['loadtest_factor'].widget = forms.TextInput()
+
+        if toggles.MOBIE_UCR_SYNC_DELAY_CONFIG.enabled(self.domain):
+            self.fields['mobile_ucr_sync_interval'].widget = forms.NumberInput()
+
+        self.initial['mobile_ucr_sync_interval'] /= 3600  # convert seconds to hours
+
+    def clean_mobile_ucr_sync_interval(self):
+        if self.cleaned_data['mobile_ucr_sync_interval']:
+            return self.cleaned_data['mobile_ucr_sync_interval'] * 3600
 
     @property
     def direct_properties(self):
