@@ -67,18 +67,15 @@ class ItemListsProvider(object):
             items_by_type[global_fixture._id] = items
 
         other_items = restore_user.get_fixture_data_items()
-        data_types = {}
 
         for item in other_items:
             if item.data_type_id in global_types:
                 continue  # was part of the global type so no need to add here
-            if item.data_type_id not in data_types:
-                try:
-                    data_types[item.data_type_id] = all_types[item.data_type_id]
-                except (AttributeError, KeyError):
-                    continue
+            try:
+                _set_cached_type(item, all_types[item.data_type_id])
+            except (AttributeError, KeyError):
+                continue
             items_by_type[item.data_type_id].append(item)
-            _set_cached_type(item, data_types[item.data_type_id])
 
         fixtures = []
         types_sorted_by_tag = sorted(all_types.iteritems(), key=lambda (id_, type_): type_.tag)
