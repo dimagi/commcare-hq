@@ -1836,11 +1836,12 @@ def restore_edit(request, domain, instance_id):
 @login_or_digest
 @require_form_view_permission
 @require_GET
+@location_safe
 def download_attachment(request, domain, instance_id):
+    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     attachment = request.GET.get('attachment', False)
     if not attachment:
         return HttpResponseBadRequest("Invalid attachment.")
-    instance = _get_form_or_404(domain, instance_id)
     assert(domain == instance.domain)
 
     try:
