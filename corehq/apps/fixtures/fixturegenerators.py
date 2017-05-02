@@ -82,7 +82,7 @@ class ItemListsProvider(object):
         fixtures = []
         types_sorted_by_tag = sorted(all_types.iteritems(), key=lambda (id_, type_): type_.tag)
         for data_type_id, data_type in types_sorted_by_tag:
-            items = items_by_type.get(data_type_id, [])
+            items = sorted(items_by_type.get(data_type_id, []), key=lambda x: x.sort_key)
             fixtures.append(self._get_fixture_element(data_type.tag, restore_user.user_id, items))
         return fixtures
 
