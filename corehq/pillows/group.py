@@ -11,7 +11,7 @@ from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
 
-def get_group_pillow(pillow_id='GroupPillow'):
+def get_group_pillow(pillow_id='GroupPillow', **kwargs):
     """
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
