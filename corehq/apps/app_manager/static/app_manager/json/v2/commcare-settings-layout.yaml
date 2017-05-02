@@ -79,6 +79,7 @@
     - properties.log_prop_daily  # Daily Log Sending Frequency
     - hq.secure_submissions
     - hq.translation_strategy
+    - properties.cc-use-pw-obfuscation
 
 - title: 'Disabled'
   id: app-settings-disabled
