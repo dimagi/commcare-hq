@@ -81,7 +81,8 @@ class ItemListsProvider(object):
             _set_cached_type(item, data_types[item.data_type_id])
 
         fixtures = []
-        for data_type_id, data_type in all_types.iteritems():
+        types_sorted_by_tag = sorted(all_types.iteritems(), key=lambda (id_, type_): type_.tag)
+        for data_type_id, data_type in types_sorted_by_tag:
             items = items_by_type.get(data_type_id, [])
             fixtures.append(self._get_fixture_element(data_type.tag, restore_user.user_id, items))
         return fixtures

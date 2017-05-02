@@ -194,6 +194,9 @@ class FixtureDataTest(TestCase):
             self,
             """
             <f>
+            <fixture id="item-list:blank" user_id="{0}">
+              <blank_list/>
+            </fixture>
             <fixture id="item-list:district" user_id="{0}">
               <district_list>
                 <district>
@@ -203,9 +206,6 @@ class FixtureDataTest(TestCase):
                   <district_id>Delhi_id</district_id>
                 </district>
               </district_list>
-            </fixture>
-            <fixture id="item-list:blank" user_id="{0}">
-              <blank_list/>
             </fixture>
             </f>
             """.format(self.user.user_id),
