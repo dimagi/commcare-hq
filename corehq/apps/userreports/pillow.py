@@ -7,11 +7,11 @@ import hashlib
 
 from alembic.autogenerate.api import compare_metadata
 from django.conf import settings
-from django.core.mail import send_mail
 from kafka.util import kafka_bytestring
 import six
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.userreports.const import (
     KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
 )
@@ -196,7 +196,7 @@ class ConfigurableReportTableManagerMixin(object):
                             RAW DIFFS:
                             {raw_diffs}
 
-                            REFORMATTED DIFFS
+                            REFORMATTED DIFFS:
                             {reformatted_diffs}
                             """.format(
                                 table_id=sql_adapter.config.get_id,
@@ -204,7 +204,7 @@ class ConfigurableReportTableManagerMixin(object):
                                 reformatted_diffs=pprint.pprint(diffs, indent=2, width=40),
                             )
 
-                            send_mail(
+                            send_mail_async(
                                 subject="UCR Data source rebuild",
                                 message=msg,
                                 from_email=settings.DEFAULT_FROM_EMAIL,
