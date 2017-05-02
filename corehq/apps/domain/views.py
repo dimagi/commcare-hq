@@ -394,7 +394,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     @property
     @memoized
     def basic_info_form(self):
-        sync_interval = self.domain_object.defaul_mobile_ucr_sync_interval
+        sync_interval = self.domain_object.default_mobile_ucr_sync_interval
         if sync_interval:
             sync_interval /= 3600
 

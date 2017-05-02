@@ -213,7 +213,7 @@ class OTARestoreCommCareUser(OTARestoreUser):
 
     def get_mobile_ucr_sync_interval(self):
         return self._couch_user.mobile_ucr_sync_interval or (
-            self.project and self.project.defaul_mobile_ucr_sync_interval
+            self.project and self.project.default_mobile_ucr_sync_interval
         )
 
 

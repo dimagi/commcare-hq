@@ -683,7 +683,7 @@ class DomainGlobalSettingsForm(forms.Form):
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
-        domain.defaul_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
+        domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
         self._save_logo_configuration(domain)
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
