@@ -92,7 +92,7 @@ def wrapped_language_validation(value):
                                     "enter a valid two or three digit code." % value)
 
 
-def _generate_strong_password():
+def generate_strong_password():
     import string
     import random
     possible = string.punctuation + string.ascii_lowercase + string.ascii_uppercase + string.digits
@@ -382,7 +382,7 @@ class SetUserPasswordForm(EncodedPasswordChangeForm, SetPasswordForm):
                  ugettext_lazy("This password is automatically generated. Please copy it or create your own. It will not be shown again."),
                  '<br /><span data-bind="text: passwordHelp, css: color">'
             ))
-            initial_password = _generate_strong_password()
+            initial_password = generate_strong_password()
 
         self.helper = FormHelper()
 
@@ -543,8 +543,9 @@ class NewMobileWorkerForm(forms.Form):
         email_string = u"@{}.commcarehq.org".format(project.name)
         max_chars_username = 80 - len(email_string)
         self.project = project
+        self.domain = self.project.name
         self.user = user
-        self.can_access_all_locations = user.has_permission(self.project.name, 'access_all_locations')
+        self.can_access_all_locations = user.has_permission(self.domain, 'access_all_locations')
         if not self.can_access_all_locations:
             self.fields['location_id'].required = True
 
@@ -624,7 +625,7 @@ class NewMobileWorkerForm(forms.Form):
 
     def clean_location_id(self):
         location_id = self.cleaned_data['location_id']
-        if not user_can_access_location_id(self.project.name, self.user, location_id):
+        if not user_can_access_location_id(self.domain, self.user, location_id):
             raise forms.ValidationError("You do not have access to that location.")
         return location_id
 
@@ -632,7 +633,7 @@ class NewMobileWorkerForm(forms.Form):
         username = self.cleaned_data['username']
         if username == 'admin' or username == 'demo_user':
             raise forms.ValidationError("The username %s is reserved for CommCare." % username)
-        return username
+        return clean_mobile_worker_username(self.domain, username)
 
     def clean_password(self):
         if self.project.strong_mobile_passwords:
