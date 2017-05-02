@@ -115,7 +115,10 @@ class FormProcessorInterface(object):
             return (
                 self.processor.is_duplicate(xform_id) or
                 # don't bother checking other DB if there's only one active domain
-                not ENTERPRISE_OPTIMIZATIONS.enabled(self.domain) and self.other_db_processor().is_duplicate(xform_id)
+                (
+                    not ENTERPRISE_OPTIMIZATIONS.enabled(self.domain) and
+                    self.other_db_processor().is_duplicate(xform_id)
+                )
             )
 
     def new_xform(self, form_json):
