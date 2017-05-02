@@ -1,11 +1,13 @@
 import datetime
 from xml.etree.ElementTree import Element
 from django.utils.translation import ugettext as _
+
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.toggles import CUSTOM_CALENDAR_FIXTURE
 
 
-class CalendarFixtureProvider(object):
+class CalendarFixtureProvider(FixtureProvider):
     id = 'enikshay:calendar'
 
     def __call__(self, restore_state):

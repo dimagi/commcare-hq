@@ -1,5 +1,7 @@
 from collections import defaultdict
 from xml.etree import ElementTree
+
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
@@ -44,7 +46,7 @@ def item_lists_by_domain(domain):
     return ret
 
 
-class ItemListsProvider(object):
+class ItemListsProvider(FixtureProvider):
     id = 'item-list'
 
     def __call__(self, restore_state):

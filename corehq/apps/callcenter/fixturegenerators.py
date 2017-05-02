@@ -2,6 +2,7 @@ from xml.etree import ElementTree
 from datetime import datetime
 import pytz
 
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
@@ -36,7 +37,7 @@ def should_sync(domain, last_sync, utcnow=None):
     return False
 
 
-class IndicatorsFixturesProvider(object):
+class IndicatorsFixturesProvider(FixtureProvider):
     id = 'indicators'
 
     def __call__(self, restore_state):

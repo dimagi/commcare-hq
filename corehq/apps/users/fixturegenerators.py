@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from xml.etree import ElementTree
+
+from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.xml import get_data_element
 
 
-class UserGroupsFixtureProvider(object):
+class UserGroupsFixtureProvider(FixtureProvider):
     """
     Generate user-based fixtures used in OTA restore
     """

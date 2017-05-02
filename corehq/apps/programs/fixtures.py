@@ -1,3 +1,4 @@
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.programs.models import Program
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
 
@@ -30,7 +31,7 @@ def program_fixture_generator_json(domain):
     }
 
 
-class ProgramFixturesProvider(object):
+class ProgramFixturesProvider(FixtureProvider):
     id = 'commtrack:programs'
 
     def __call__(self, restore_state):

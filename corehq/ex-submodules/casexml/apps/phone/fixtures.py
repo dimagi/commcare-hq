@@ -1,9 +1,18 @@
-from collections import namedtuple
+from abc import ABCMeta, abstractmethod
+
+import six
+
 from casexml.apps.phone.models import OTARestoreUser
 from casexml.apps.case.xml import V1
 from django.conf import settings
 from dimagi.utils.modules import to_function
 import itertools
+
+
+class FixtureProvider(six.with_metaclass(ABCMeta)):
+    @abstractmethod
+    def __call__(self, restore_state):
+        raise NotImplementedError
 
 
 class FixtureGenerator(object):

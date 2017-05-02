@@ -1,9 +1,10 @@
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.locations.models import Location
 from custom.m4change.constants import M4CHANGE_DOMAINS
 from lxml import etree as ElementTree
 
 
-class LocationFixtureProvider(object):
+class LocationFixtureProvider(FixtureProvider):
     id = 'user-locations'
 
     def __call__(self, restore_state):

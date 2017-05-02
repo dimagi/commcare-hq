@@ -4,6 +4,7 @@ import logging
 from lxml.builder import E
 from django.conf import settings
 
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
@@ -27,7 +28,7 @@ def _should_sync(restore_state):
     )
 
 
-class ReportFixturesProvider(object):
+class ReportFixturesProvider(FixtureProvider):
     id = 'commcare:reports'
 
     def __call__(self, restore_state):
