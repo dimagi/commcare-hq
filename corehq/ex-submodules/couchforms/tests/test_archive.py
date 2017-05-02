@@ -116,14 +116,14 @@ class TestFormArchivingSQL(TestFormArchiving):
         )
 
         xform = result.xform
-        with capture_kafka_changes_context(topics.FORM_SQL) as change_context:
+        with capture_kafka_changes_context((topics.FORM_SQL, 0)) as change_context:
             with drop_connected_signals(xform_archived):
                 xform.archive()
         self.assertEqual(1, len(change_context.changes))
         self.assertEqual(change_context.changes[0].id, xform.form_id)
 
         xform = self.formdb.get_form(xform.form_id)
-        with capture_kafka_changes_context(topics.FORM_SQL) as change_context:
+        with capture_kafka_changes_context((topics.FORM_SQL, 0)) as change_context:
             with drop_connected_signals(xform_unarchived):
                 xform.unarchive()
         self.assertEqual(1, len(change_context.changes))

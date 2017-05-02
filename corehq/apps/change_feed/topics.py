@@ -68,18 +68,17 @@ def get_multi_topic_first_available_offsets(topics):
     return _get_topic_offsets(topics, latest=False)
 
 
-def _get_topic_offsets(topics, latest):
+def _get_topic_offsets(topic_partitions, latest):
     """
-    :param topics: list of topics
+    :param topics: list of topics, partition
     :param latest: True to fetch latest offsets, False to fetch earliest available
     :return: dict: { (topic, partition): offset, ... }
     """
 
     # https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol#AGuideToTheKafkaProtocol-OffsetRequest
     # https://cfchou.github.io/blog/2015/04/23/a-closer-look-at-kafka-offsetrequest/
-    assert set(topics) <= set(ALL)
+    assert {t[0] for t in topic_partitions} <= set(ALL)
     client = get_kafka_client()
-    partition_meta = client.topic_partitions
 
     # only return the offset of the latest message in the partition
     num_offsets = 1
@@ -87,11 +86,9 @@ def _get_topic_offsets(topics, latest):
 
     offsets = {}
     offset_requests = []
-    for topic in topics:
-        partitions = list(partition_meta.get(topic, {}))
-        for partition in partitions:
-            offsets[(topic, partition)] = None
-            offset_requests.append(OffsetRequest(topic, partition, time_value, num_offsets))
+    for topic, partition in topic_partitions:
+        offsets[(topic, partition)] = None
+        offset_requests.append(OffsetRequest(topic, partition, time_value, num_offsets))
 
     responses = client.send_offset_request(offset_requests)
     for r in responses:
@@ -106,8 +103,8 @@ def validate_offsets(expected_offsets):
     in the current kafka feed
     """
     if expected_offsets:
-        topics = [kafka_bytestring(x[0]) for x in expected_offsets.keys()]
-        available_offsets = get_multi_topic_first_available_offsets(topics)
+        topic_partitions = [(kafka_bytestring(x[0]), x[1]) for x in expected_offsets.keys()]
+        available_offsets = get_multi_topic_first_available_offsets(topic_partitions)
         for topic_partition, offset in expected_offsets.items():
             topic, partition = topic_partition
             if topic_partition not in available_offsets:

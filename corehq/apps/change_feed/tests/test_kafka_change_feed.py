@@ -33,23 +33,9 @@ class KafkaChangeFeedTest(SimpleTestCase):
             self.assertTrue(unexpected.document_id not in found_change_ids)
 
     @trap_extra_setup(KafkaUnavailableError)
-    def test_multiple_topics_with_partial_checkpoint(self):
-        feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed')
-        self.assertEqual(0, len(list(feed.iter_changes(since=None, forever=False))))
-        offsets = {('form', 0): feed.get_latest_offsets()[('form', 0)]}
-        expected_metas = [publish_stub_change(topics.FORM), publish_stub_change(topics.CASE)]
-        changes = list(feed.iter_changes(since=offsets, forever=False))
-        # should include at least the form and the case (may have more than one case since not
-        # specifying a checkpoint rewinds it to the beginning of the feed)
-        self.assertTrue(len(changes) > 1)
-        found_change_ids = set([change.id for change in changes])
-        for expected_id in set([meta.document_id for meta in expected_metas]):
-            self.assertTrue(expected_id in found_change_ids)
-
-    @trap_extra_setup(KafkaUnavailableError)
     def test_expired_checkpoint_iteration_strict(self):
         feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed', strict=True)
-        first_available_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
+        first_available_offsets = get_multi_topic_first_available_offsets([(topics.FORM, 0), (topics.CASE, 0)])
         since = {
             topic_partition: offset - 1
             for topic_partition, offset in first_available_offsets.items()
@@ -60,7 +46,7 @@ class KafkaChangeFeedTest(SimpleTestCase):
     @trap_extra_setup(KafkaUnavailableError)
     def test_non_expired_checkpoint_iteration_strict(self):
         feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed', strict=True)
-        first_available_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
+        first_available_offsets = get_multi_topic_first_available_offsets([(topics.FORM, 0), (topics.CASE, 0)])
         feed.iter_changes(since=first_available_offsets, forever=False).next()
 
 

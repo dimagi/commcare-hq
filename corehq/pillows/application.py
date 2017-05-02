@@ -17,15 +17,16 @@ def transform_app_for_es(doc_dict):
     return doc.to_json()
 
 
-def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'):
+def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow', params=None):
     assert pillow_id == 'ApplicationToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, APP_INDEX_INFO)
+    kafka_topics = [topics.APP]
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, APP_INDEX_INFO, kafka_topics)
     app_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=APP_INDEX_INFO,
         doc_prep_fn=transform_app_for_es
     )
-    change_feed = KafkaChangeFeed(topics=[topics.APP], group_id='apps-to-es')
+    change_feed = KafkaChangeFeed(topics=kafka_topics, group_id=checkpoint.checkpoint_id)
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

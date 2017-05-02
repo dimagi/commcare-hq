@@ -77,13 +77,14 @@ class UnknownUsersProcessor(PillowProcessor):
         update_unknown_user_from_form_if_necessary(self._es, change.get_document())
 
 
-def get_unknown_users_pillow(pillow_id='unknown-users-pillow'):
+def get_unknown_users_pillow(pillow_id='unknown-users-pillow', params=None):
     """
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
+    topics = [FORM, FORM_SQL]
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics)
     processor = UnknownUsersProcessor()
-    change_feed = KafkaChangeFeed(topics=[FORM, FORM_SQL], group_id='unknown-users')
+    change_feed = KafkaChangeFeed(topics=topics, group_id=checkpoint.checkpoint_id)
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
@@ -102,15 +103,16 @@ def add_demo_user_to_user_index():
     )
 
 
-def get_user_pillow(pillow_id='UserPillow'):
+def get_user_pillow(pillow_id='UserPillow', params=None):
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
+    topics = [COMMCARE_USER, WEB_USER]
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics)
     user_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=USER_INDEX_INFO,
         doc_prep_fn=transform_user_for_elasticsearch,
     )
-    change_feed = KafkaChangeFeed(topics=[COMMCARE_USER, WEB_USER], group_id='users-to-es')
+    change_feed = KafkaChangeFeed(topics=topics, group_id=checkpoint.checkpoint_id)
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

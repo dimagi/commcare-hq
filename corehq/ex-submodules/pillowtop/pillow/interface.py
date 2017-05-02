@@ -89,6 +89,7 @@ class PillowBase(object):
         """
         Process changes from the changes stream.
         """
+        print("processing changes from: {}", since)
         context = PillowRuntimeContext(changes_seen=0, do_set_checkpoint=True)
         try:
             for change in self.get_change_feed().iter_changes(since=since, forever=forever):

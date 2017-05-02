@@ -32,16 +32,17 @@ def transform_case_to_report_es(doc_dict):
     return doc_ret
 
 
-def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearchPillow'):
+def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearchPillow', params=None):
     assert pillow_id == 'ReportCaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_CASE_INDEX_INFO)
+    kafka_topics = [topics.CASE, topics.CASE_SQL]
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_CASE_INDEX_INFO, kafka_topics)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=REPORT_CASE_INDEX_INFO,
         doc_prep_fn=transform_case_to_report_es,
         doc_filter_fn=report_case_filter,
     )
-    kafka_change_feed = KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='report-cases-to-es')
+    kafka_change_feed = KafkaChangeFeed(topics=kafka_topics, group_id=checkpoint.checkpoint_id)
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

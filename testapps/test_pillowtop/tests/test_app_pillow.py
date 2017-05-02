@@ -41,7 +41,7 @@ class AppPillowTest(TestCase):
     def test_app_pillow_kafka(self):
         consumer = get_test_kafka_consumer(topics.APP)
         # have to get the seq id before the change is processed
-        kafka_seq = get_topic_offset(topics.APP)
+        kafka_seq = get_topic_offset((topics.APP, 0))
         couch_seq = get_current_seq(Application.get_db())
 
         app_name = 'app-{}'.format(uuid.uuid4().hex)

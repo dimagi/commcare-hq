@@ -7,6 +7,7 @@ import hashlib
 
 from alembic.autogenerate.api import compare_metadata
 from django.conf import settings
+from kafka import KafkaConsumer
 from kafka.util import kafka_bytestring
 import six
 
@@ -31,8 +32,9 @@ from fluff.signals import (
     get_tables_to_rebuild,
     reformat_alembic_diffs
 )
-from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.logger import pillow_logging
+from pillowtop.models import KafkaCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
@@ -293,7 +295,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
     def __init__(self, processor, pillow_name, topics):
         change_feed = KafkaChangeFeed(topics, group_id=pillow_name)
-        checkpoint = PillowCheckpoint(pillow_name, change_feed.sequence_format)
+        checkpoint = KafkaPillowCheckpoint(pillow_name, topics)
         event_handler = KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
         )
@@ -317,11 +319,40 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self._processor.rebuild_table(sql_adapter)
 
 
-# TODO(Emord) make other pillows support params dictionary
-def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
-                         include_ucrs=None, exclude_ucrs=None, topics=None):
-    topics = topics or KAFKA_TOPICS
+def _get_topic_partitions(pillow_id, topics, num_processes):
+    # split topics and partitions evenly between processes
+    topic_partitions = list(
+        KafkaCheckpoint.objects
+        .filter(checkpoint_id=pillow_id, topic__in=topics)
+        .values_list('topic', 'partition')
+        .order_by('topic', 'partition')
+    )
+    if not topic_partitions:
+        consumer = KafkaConsumer(
+            *topics,
+            group_id=pillow_id,
+            bootstrap_servers=[settings.KAFKA_URL]
+        )
+        offsets = consumer.offsets('fetch')
+        topic_partitions = offsets.keys()
+    return [
+        topic_partitions[num::num_processes]
+        for num in range(num_processes)
+    ]
+
+
+def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', params=None):
+    params = params or {}
+    ucr_division = params.get('ucr_division')
+    include_ucrs = params.get('include_ucrs')
+    exclude_ucrs = params.get('exclude_ucrs')
+
+    num_processes = params.get('num_processes', 1)
+    process_num = params.get('process_num', 0)
+    topics = params.get('topics', KAFKA_TOPICS)
     topics = [kafka_bytestring(t) for t in topics]
+    topics = _get_topic_partitions(pillow_id, topics, num_processes)[process_num]
+
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
@@ -335,10 +366,18 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
     )
 
 
-def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
-                                include_ucrs=None, exclude_ucrs=None, topics=None):
-    topics = topics or KAFKA_TOPICS
+def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', params=None):
+    params = params or {}
+    ucr_division = params.get('ucr_division')
+    include_ucrs = params.get('include_ucrs')
+    exclude_ucrs = params.get('exclude_ucrs')
+
+    num_processes = params.get('num_processes', 1)
+    process_num = params.get('process_num', 0)
+    topics = params.get('topics', KAFKA_TOPICS)
     topics = [kafka_bytestring(t) for t in topics]
+    topics = _get_topic_partitions(pillow_id, topics, num_processes)[process_num]
+
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),

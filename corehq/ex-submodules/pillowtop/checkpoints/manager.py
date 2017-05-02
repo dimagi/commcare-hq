@@ -7,7 +7,7 @@ from django.db import transaction
 
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
-from pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str
+from pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str, str_to_kafka_seq
 from pillowtop.pillow.interface import ChangeEventHandler
 
 MAX_CHECKPOINT_DELAY = 300
@@ -150,6 +150,70 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
         return False
 
 
-def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info):
+def get_or_create_kafka_checkpoints(checkpoint_id, topic_partitions):
+    checkpoints = KafkaCheckpoint.objects.filter(checkpoint_id=checkpoint_id)
+    if not checkpoints:
+        checkpoints = KafkaCheckpoint.create_for_checkpoint_id(checkpoint_id, topic_partitions)
+
+    def _check(checkpoint):
+        if isinstance(topic_partitions[0], tuple):
+            return (checkpoint.topic, checkpoint.partition) in topic_partitions
+        else:
+            return checkpoint.topic in topic_partitions
+
+    checkpoints = [
+        checkpoint
+        for checkpoint in checkpoints
+        if _check(checkpoint)
+    ]
+    return checkpoints
+
+
+class WrappedCheckpoint(object):
+    def __init__(self, checkpoint_str):
+        self.checkpoint_str = checkpoint_str
+
+    @property
+    def wrapped_sequence(self):
+        return str_to_kafka_seq(self.checkpoint_str)
+
+
+class KafkaPillowCheckpoint(PillowCheckpoint):
+
+    def __init__(self, checkpoint_id, topics):
+        self.checkpoint_id = checkpoint_id
+        self.sequence_format = 'json'
+        self.topics = topics
+        get_or_create_kafka_checkpoints(checkpoint_id, topics)
+
+    def get_or_create_wrapped(self, verify_unchanged=None):
+        checkpoints = get_or_create_kafka_checkpoints(self.checkpoint_id, self.topics)
+        ret = {}
+        for checkpoint in checkpoints:
+            ret[(checkpoint.topic, checkpoint.partition)] = checkpoint.offset
+
+        return WrappedCheckpoint(kafka_seq_to_str(ret))
+
+    def update_to(self, seq):
+        kafka_seq = seq
+        seq = kafka_seq_to_str(seq)
+        pillow_logging.info(
+            "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
+        )
+        with transaction.atomic():
+            if kafka_seq:
+                for topic_partition, offset in kafka_seq.items():
+                    KafkaCheckpoint.objects.update_or_create(
+                        checkpoint_id=self.checkpoint_id,
+                        topic=topic_partition[0],
+                        partition=topic_partition[1],
+                        defaults={'offset': offset}
+                    )
+
+    def touch(self, min_interval):
+        return False
+
+
+def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics):
     checkpoint_id = u'{}-{}'.format(pillow_id, index_info.index)
-    return PillowCheckpoint(checkpoint_id, 'json')  # all ES pillows use json checkpoints
+    return KafkaPillowCheckpoint(checkpoint_id, topics)

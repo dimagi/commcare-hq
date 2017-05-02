@@ -76,3 +76,19 @@ class KafkaCheckpoint(models.Model):
 
     class Meta:
         unique_together = ('checkpoint_id', 'topic', 'partition')
+
+    @classmethod
+    def create_for_checkpoint_id(cls, checkpoint_id, topics):
+        tps = list(
+            cls.objects
+            .filter(topic__in=topics)
+            .distinct('topic', 'partition')
+            .values_list('topic', 'partition')
+        )
+        checkpoints = [
+            cls(checkpoint_id=checkpoint_id, topic=topic, partition=partition, offset=0)
+            for topic, partition in tps
+        ]
+        cls.objects.bulk_create(checkpoints)
+
+        return checkpoints

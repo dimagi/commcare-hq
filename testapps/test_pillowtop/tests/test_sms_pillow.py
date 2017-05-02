@@ -115,7 +115,7 @@ class SqlSMSPillowTest(TestCase):
         consumer = get_test_kafka_consumer(topics.SMS)
 
         # get the seq id before the change is published
-        kafka_seq = get_topic_offset(topics.SMS)
+        kafka_seq = get_topic_offset((topics.SMS, 0))
 
         # create an sms
         self._create_sms()

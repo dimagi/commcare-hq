@@ -16,6 +16,19 @@ from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 MIN_TIMEOUT = 100
 
 
+def normalize_topics(topics, group_id):
+    if isinstance(topics[0], tuple):
+        return topics
+
+    consumer = KafkaConsumer(
+        *topics,
+        group_id=group_id,
+        bootstrap_servers=[settings.KAFKA_URL]
+    )
+    offsets = consumer.offsets('fetch')
+    return offsets.keys()
+
+
 class KafkaChangeFeed(ChangeFeed):
     """
     Kafka-based implementation of a ChangeFeed
@@ -28,7 +41,7 @@ class KafkaChangeFeed(ChangeFeed):
 
         See http://kafka.apache.org/documentation.html#introduction for a description of what these are.
         """
-        self._topics = topics
+        self._topics = normalize_topics(topics, group_id)
         self._group_id = group_id
         self._processed_topic_offsets = {}
         self.strict = strict
@@ -64,7 +77,7 @@ class KafkaChangeFeed(ChangeFeed):
             if self.strict:
                 validate_offsets(since)
 
-            checkpoint_topics = {tp[0] for tp in since}
+            checkpoint_topics = {tp for tp in since}
             extra_topics = checkpoint_topics - set(self._topics)
             if extra_topics:
                 raise ValueError("'since' contains extra topics: {}".format(list(extra_topics)))
@@ -75,8 +88,10 @@ class KafkaChangeFeed(ChangeFeed):
                 copy(self._processed_topic_offsets)
             ]
             topics_missing = set(self._topics) - checkpoint_topics
-            for topic in topics_missing:
-                offsets.append(topic)  # consume all available partitions
+            if topics_missing:
+                raise ValueError(
+                    "topics are missing known {}, attempted {}".format(self._topics, checkpoint_topics)
+                )
 
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions(*offsets)

@@ -10,18 +10,17 @@ from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.django_model import DjangoModelChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
-SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID = 'sql-sms-to-es'
 
-
-def get_sql_sms_pillow(pillow_id='SqlSMSPillow'):
+def get_sql_sms_pillow(pillow_id='SqlSMSPillow', params=None):
     assert pillow_id == 'SqlSMSPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, SMS_INDEX_INFO)
+    kafka_topics = [topics.SMS]
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, SMS_INDEX_INFO, kafka_topics)
     processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=SMS_INDEX_INFO,
         doc_prep_fn=lambda x: x
     )
-    change_feed = KafkaChangeFeed(topics=[topics.SMS], group_id=SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID)
+    change_feed = KafkaChangeFeed(topics=kafka_topics, group_id=checkpoint.checkpoint_id)
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

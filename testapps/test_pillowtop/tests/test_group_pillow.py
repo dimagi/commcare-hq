@@ -34,7 +34,7 @@ class GroupPillowTest(TestCase):
         group.save()
 
         # send to kafka
-        since = get_topic_offset(GROUP)
+        since = get_topic_offset((GROUP, 0))
         change_meta = change_meta_from_doc(
             document=group.to_json(),
             data_source_type=data_sources.COUCH,

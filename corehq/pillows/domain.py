@@ -29,15 +29,16 @@ def transform_domain_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow'):
+def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', params=None):
     assert pillow_id == 'KafkaDomainPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, DOMAIN_INDEX_INFO)
+    topics = [DOMAIN]
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, DOMAIN_INDEX_INFO, topics)
     domain_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=DOMAIN_INDEX_INFO,
         doc_prep_fn=transform_domain_for_elasticsearch
     )
-    change_feed = KafkaChangeFeed(topics=[DOMAIN], group_id='domains-to-es')
+    change_feed = KafkaChangeFeed(topics=topics, group_id=checkpoint.checkpoint_id)
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

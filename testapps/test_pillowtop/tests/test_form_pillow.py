@@ -128,4 +128,4 @@ class FormPillowTest(TestCase):
     def _get_kafka_seq(self):
         # KafkaChangeFeed listens for multiple topics (form, form-sql) in the form pillow,
         # so we need to provide a dict of seqs to kafka
-        return get_multi_topic_offset([topics.FORM, topics.FORM_SQL])
+        return get_multi_topic_offset([(topics.FORM, 0), (topics.FORM_SQL, 0)])

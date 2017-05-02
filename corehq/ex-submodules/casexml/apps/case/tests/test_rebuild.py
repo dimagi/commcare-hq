@@ -346,7 +346,7 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
         # todo: should this be the behavior for archiving the create form?
         form_acessors = FormAccessors(REBUILD_TEST_DOMAIN)
         f1_doc = form_acessors.get_form(f1)
-        with capture_kafka_changes_context(topics.CASE_SQL) as change_context:
+        with capture_kafka_changes_context((topics.CASE_SQL, 0)) as change_context:
             f1_doc.archive()
 
         if should_use_sql_backend(case.domain):
