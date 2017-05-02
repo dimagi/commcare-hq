@@ -6,26 +6,12 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "AppDbChangeFeedPillow"
     },
-    "ApplicationBlobDeletionPillow": {
-        "advertised_name": "ApplicationBlobDeletionPillow",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "ApplicationBlobDeletionPillow",
-        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
-        "name": "ApplicationBlobDeletionPillow"
-    },
     "ApplicationToElasticsearchPillow": {
         "advertised_name": "ApplicationToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "ApplicationToElasticsearchPillow-test_hqapps_2016-10-20_1835",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "ApplicationToElasticsearchPillow"
-    },
-    "BlobDeletionPillow": {
-        "advertised_name": "BlobDeletionPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "kafka-blob-deletion-pillow-checkpoint",
-        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
-        "name": "BlobDeletionPillow"
     },
     "CacheInvalidatePillow": {
         "advertised_name": "CacheInvalidatePillow",
@@ -271,19 +257,5 @@
         "checkpoint_id": "kafka-ucr-static",
         "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
         "name": "kafka-ucr-static"
-    },
-    "kafka-ucr-static-08": {
-        "advertised_name": "kafka-ucr-static-08",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "kafka-ucr-static-08",
-        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
-        "name": "kafka-ucr-static-08"
-    },
-    "kafka-ucr-static-9f": {
-        "advertised_name": "kafka-ucr-static-9f",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "kafka-ucr-static-9f",
-        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
-        "name": "kafka-ucr-static-9f"
     }
 }
