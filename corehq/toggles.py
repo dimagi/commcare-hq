@@ -76,6 +76,10 @@ class StaticToggle(object):
         elif item in self.always_disabled:
             return False
 
+        if namespace is not Ellipsis and namespace not in self.namespaces:
+            # short circuit if we're checking an item that isn't supported by this toggle
+            return False
+
         enabled_after = self.enabled_for_new_domains_after
         if (enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
             and was_domain_created_after(item, enabled_after)):
