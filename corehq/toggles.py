@@ -1,3 +1,4 @@
+from datetime import datetime
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -51,7 +52,7 @@ class StaticToggle(object):
 
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
-                 always_disabled=None):
+                 always_disabled=None, enabled_for_new_domains_after=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -63,6 +64,7 @@ class StaticToggle(object):
         self.save_fn = save_fn
         self.always_enabled = always_enabled or set()
         self.always_disabled = always_disabled or set()
+        self.enabled_for_new_domains_after = enabled_for_new_domains_after
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -73,6 +75,11 @@ class StaticToggle(object):
             return True
         elif item in self.always_disabled:
             return False
+
+        enabled_after = self.enabled_for_new_domains_after
+        if (enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
+            and was_domain_created_after(item, enabled_after)):
+            return True
 
         namespaces = self.namespaces if namespace is Ellipsis else [namespace]
         return any([toggle_enabled(self.slug, item, namespace=n) for n in namespaces])
@@ -85,7 +92,7 @@ class StaticToggle(object):
         ) or (
             NAMESPACE_DOMAIN in self.namespaces
             and hasattr(request, 'domain')
-            and self.enabled(request.user.username, namespace=NAMESPACE_DOMAIN)
+            and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN)
         )
 
     def set(self, item, enabled, namespace=None):
@@ -127,6 +134,22 @@ class StaticToggle(object):
         domains |= self.always_enabled
         domains -= self.always_disabled
         return list(domains)
+
+
+def was_domain_created_after(domain, checkpoint):
+    """
+    Return true if domain was created after checkpoint
+
+    :param domain: Domain name (string).
+    :param checkpoint: datetime object.
+    """
+    from corehq.apps.domain.models import Domain
+    domain_obj = Domain.get_by_name(domain)
+    return (
+        domain_obj is not None and
+        domain_obj.date_created is not None and
+        domain_obj.date_created > checkpoint
+    )
 
 
 def deterministic_random(input_string):
@@ -379,7 +402,7 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     description=(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
-    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting', 
+    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
 )
 
 EXPORT_NO_SORT = StaticToggle(
@@ -440,7 +463,9 @@ HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
     description=(
-        "Do not turn this feature flag.  It is only used for providing compatability for old projects.  We are actively trying to remove projects from this list."
+        "Do not turn this feature flag.  It is only used for providing "
+        "compatability for old projects.  We are actively trying to remove "
+        "projects from this list."
     ),
 )
 
@@ -879,7 +904,8 @@ TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
-    'Allow specifying a custom base URL for an application. Main use case is to allow migrating ICDS to a new cluster.',
+    'Allow specifying a custom base URL for an application. Main use case is '
+    'to allow migrating ICDS to a new cluster.',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
@@ -1041,7 +1067,8 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     'user_property_easy_refs',
     'Easy-reference user properties in the form builder.',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    enabled_for_new_domains_after=datetime(2017, 5, 3, 12),  # noon UTC
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
