@@ -1,9 +1,13 @@
 from __future__ import absolute_import
+
+import pprint
 from collections import defaultdict
 from datetime import datetime, timedelta
 import hashlib
 
 from alembic.autogenerate.api import compare_metadata
+from django.conf import settings
+from django.core.mail import send_mail
 from kafka.util import kafka_bytestring
 import six
 
@@ -182,6 +186,33 @@ class ConfigurableReportTableManagerMixin(object):
                     except TableRebuildError as e:
                         _notify_rebuild(six.text_type(e), sql_adapter.config.to_json())
                 else:
+                    try:
+                        if sql_adapter.config.get_id in ("static-enikshay-episode", "static-np-migration-3-episode"):
+
+                            msg = """
+                            ID:
+                            {table_id}
+
+                            RAW DIFFS:
+                            {raw_diffs}
+
+                            REFORMATTED DIFFS
+                            {reformatted_diffs}
+                            """.format(
+                                table_id=sql_adapter.config.get_id,
+                                raw_diffs=pprint.pprint(raw_diffs, indent=2, width=40),
+                                reformatted_diffs=pprint.pprint(diffs, indent=2, width=40),
+                            )
+
+                            send_mail(
+                                subject="UCR Data source rebuild",
+                                message=msg,
+                                from_email=settings.DEFAULT_FROM_EMAIL,
+                                recipient_list=["ncarnahan" + "{}".format("@") + "dimagi.com"],
+                            )
+                    except:
+                        # Don't break task for this debugging code
+                        pass
                     self.rebuild_table(sql_adapter)
 
             tables_with_index_changes = get_tables_with_index_changes(diffs, table_names)
