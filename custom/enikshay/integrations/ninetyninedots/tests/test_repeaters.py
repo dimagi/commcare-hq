@@ -29,6 +29,7 @@ from custom.enikshay.const import (
     WEIGHT_BAND,
     CURRENT_ADDRESS,
     TREATMENT_SUPPORTER_PHONE,
+    ENROLLED_IN_PRIVATE,
 )
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
@@ -256,30 +257,35 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
     def _get_actual_payload(self, casedb):
         raise NotImplementedError()
 
-    def _assert_payload_equal(self, casedb, expected_numbers):
+    def _assert_payload_equal(self, casedb, expected_numbers=False, sector=u'public'):
         person_case = casedb[self.person_id]
         episode_case = casedb[self.episode_id]
         person_case_properties = person_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
         person_locations = get_person_locations(person_case)
+        expected_numbers = u"+91{}, +91{}".format(
+            self.primary_phone_number.replace("0", ""),
+            self.secondary_phone_number.replace("0", "")
+        ) if expected_numbers is False else expected_numbers
         expected_payload = {
-            "beneficiary_id": self.person_id,
-            "first_name": person_case_properties.get(PERSON_FIRST_NAME, None),
-            "last_name": person_case_properties.get(PERSON_LAST_NAME, None),
-            "state_code": person_locations.sto,
-            "district_code": person_locations.dto,
-            "tu_code": person_locations.tu,
-            "phi_code": person_locations.phi,
-            "phone_numbers": expected_numbers,
-            "merm_id": person_case_properties.get(MERM_ID, None),
-            "treatment_start_date": episode_case_properties.get(TREATMENT_START_DATE, None),
-            "treatment_supporter_name": u"{} {}".format(
+            u"beneficiary_id": self.person_id,
+            u"first_name": person_case_properties.get(PERSON_FIRST_NAME, None),
+            u"last_name": person_case_properties.get(PERSON_LAST_NAME, None),
+            u"state_code": person_locations.sto,
+            u"district_code": person_locations.dto,
+            u"tu_code": person_locations.tu,
+            u"phi_code": person_locations.phi,
+            u"phone_numbers": expected_numbers,
+            u"merm_id": person_case_properties.get(MERM_ID, None),
+            u"treatment_start_date": episode_case_properties.get(TREATMENT_START_DATE, None),
+            u"treatment_supporter_name": u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
                 episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, ''),
             ),
-            "treatment_supporter_phone_number": "+91{}".format(self.treatment_supporter_phone[1:]),
-            "weight_band": episode_case_properties.get(WEIGHT_BAND),
-            "address": person_case_properties.get(CURRENT_ADDRESS),
+            u"treatment_supporter_phone_number": u"+91{}".format(self.treatment_supporter_phone[1:]),
+            u"weight_band": episode_case_properties.get(WEIGHT_BAND),
+            u"address": person_case_properties.get(CURRENT_ADDRESS),
+            u"sector": sector,
         }
         actual_payload = json.loads(self._get_actual_payload(casedb))
         self.assertDictEqual(expected_payload, actual_payload)
@@ -294,12 +300,7 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
     def test_get_payload(self):
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
-
-        expected_numbers = u"+91{}, +91{}".format(
-            self.primary_phone_number.replace("0", ""),
-            self.secondary_phone_number.replace("0", "")
-        )
-        self._assert_payload_equal(cases, expected_numbers)
+        self._assert_payload_equal(cases)
 
     def test_get_payload_no_numbers(self):
         self.primary_phone_number = None
@@ -313,6 +314,13 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         self._assert_payload_equal(cases, u"+91{}".format(self.secondary_phone_number.replace("0", "")))
+
+    def test_get_payload_private_sector(self):
+        self.person.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'
+        self.maxDiff = None
+        cases = self.create_case_structure()
+        cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
+        self._assert_payload_equal(cases, sector='private')
 
     def test_handle_success(self):
         cases = self.create_case_structure()

@@ -25,6 +25,7 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_LAST_NAME,
     TREATMENT_SUPPORTER_PHONE,
     WEIGHT_BAND,
+    ENROLLED_IN_PRIVATE,
 )
 from corehq.apps.users.models import CommCareUser
 
@@ -161,6 +162,7 @@ class ENikshayCaseStructureMixin(object):
         self.secondary_phone_number = "0999999999"
         self.treatment_supporter_phone = "066000666"
         self._episode = None
+        self._person = None
 
     def tearDown(self):
         delete_all_users()
@@ -168,14 +170,17 @@ class ENikshayCaseStructureMixin(object):
 
     @property
     def person(self):
-        return get_person_case_structure(
-            self.person_id,
-            self.user.user_id,
-            extra_update={
-                PRIMARY_PHONE_NUMBER: self.primary_phone_number,
-                BACKUP_PHONE_NUMBER: self.secondary_phone_number,
-            }
-        )
+        if not self._person:
+            self._person = get_person_case_structure(
+                self.person_id,
+                self.user.user_id,
+                extra_update={
+                    PRIMARY_PHONE_NUMBER: self.primary_phone_number,
+                    BACKUP_PHONE_NUMBER: self.secondary_phone_number,
+                    ENROLLED_IN_PRIVATE: 'false',
+                }
+            )
+        return self._person
 
     @property
     def occurrence(self):

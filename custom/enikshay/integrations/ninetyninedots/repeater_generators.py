@@ -41,6 +41,7 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME_DATE,
     WEIGHT_BAND,
     CURRENT_ADDRESS,
+    ENROLLED_IN_PRIVATE,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
@@ -90,6 +91,7 @@ class PatientPayload(jsonobject.JsonObject):
             ),
             weight_band=episode_case_properties.get(WEIGHT_BAND),
             address=person_case_properties.get(CURRENT_ADDRESS),
+            sector='private' if person_case_properties.get(ENROLLED_IN_PRIVATE) == 'true' else 'public',
         )
 
 
