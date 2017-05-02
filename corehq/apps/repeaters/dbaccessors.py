@@ -39,7 +39,7 @@ def get_repeat_record_count(domain, repeater_id=None, state=None):
         if not ids:
             return 0
         startkey = [domain, ids[0], state]
-        endkey = [domain, ids[-1], state]
+        endkey = [domain, ids[-1], state, {}]
 
     result = RepeatRecord.get_db().view('receiverwrapper/repeat_records',
         startkey=startkey,
