@@ -151,7 +151,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                                 lambda domain, include_remote: [cls.app]):
                     with mock_sql_backend():
                         with mock_datasource_config():
-                            fixture, = report_fixture_generator(cls.user, '2.0')
+                            fixture, = report_fixture_generator.call(cls.user)
         cls.fixture = ElementTree.tostring(fixture)
 
     @classmethod

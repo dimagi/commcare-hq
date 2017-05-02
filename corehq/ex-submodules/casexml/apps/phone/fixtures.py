@@ -10,6 +10,7 @@ import itertools
 
 
 class FixtureProvider(six.with_metaclass(ABCMeta)):
+
     @abstractmethod
     def __call__(self, restore_state):
         raise NotImplementedError

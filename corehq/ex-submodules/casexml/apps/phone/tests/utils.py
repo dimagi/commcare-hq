@@ -1,5 +1,5 @@
 from xml.etree import ElementTree
-from casexml.apps.case.xml import V1
+from casexml.apps.case.xml import V1, V2
 from casexml.apps.phone.models import (
     get_properly_wrapped_sync_log,
     get_sync_log_class_by_format,
@@ -108,3 +108,24 @@ def generate_restore_response(project, user, restore_id="", version=V1, state_ha
 
 def has_cached_payload(sync_log, version):
     return bool(sync_log.get_cached_payload(version))
+
+
+def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=None):
+    """
+    Convenience function for use in unit tests
+    """
+    from casexml.apps.phone.restore import RestoreState
+    from casexml.apps.phone.restore import RestoreParams
+    from corehq.apps.domain.models import Domain
+    params = RestoreParams(version=V2, app=app)
+    restore_state = RestoreState(
+        project or Domain(name=restore_user.domain),
+        restore_user,
+        params,
+        async=False,
+        overwrite_cache=False
+    )
+    if last_sync:
+        params.sync_log_id = last_sync._id
+        restore_state._last_sync_log = last_sync
+    return gen(restore_state)

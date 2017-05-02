@@ -494,6 +494,7 @@ class RestoreState(object):
         self.current_sync_log = None
         self.async = async
         self.overwrite_cache = overwrite_cache
+        self._last_sync_log = Ellipsis
 
     def validate_state(self):
         check_version(self.params.version)
@@ -515,31 +516,32 @@ class RestoreState(object):
                     )
 
     @property
-    @memoized
     def last_sync_log(self):
-        if self.params.sync_log_id:
-            try:
-                sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
-                if settings.SERVER_ENVIRONMENT == "production":
-                    self._check_for_date_opened_bug(sync_log)
-            except ResourceNotFound:
-                # if we are in loose mode, return an HTTP 412 so that the phone will
-                # just force a fresh sync
-                raise MissingSyncLog('No sync log with ID {} found'.format(self.params.sync_log_id))
-            if sync_log.doc_type != 'SyncLog':
-                raise InvalidSyncLogException('Bad sync log doc type for {}'.format(self.params.sync_log_id))
-            elif sync_log.user_id != self.restore_user.user_id:
-                raise SyncLogUserMismatch('Sync log {} does not match user id {} (was {})'.format(
-                    self.params.sync_log_id, self.restore_user.user_id, sync_log.user_id
-                ))
+        if self._last_sync_log is Ellipsis:
+            if self.params.sync_log_id:
+                try:
+                    sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
+                    if settings.SERVER_ENVIRONMENT == "production":
+                        self._check_for_date_opened_bug(sync_log)
+                except ResourceNotFound:
+                    # if we are in loose mode, return an HTTP 412 so that the phone will
+                    # just force a fresh sync
+                    raise MissingSyncLog('No sync log with ID {} found'.format(self.params.sync_log_id))
+                if sync_log.doc_type != 'SyncLog':
+                    raise InvalidSyncLogException('Bad sync log doc type for {}'.format(self.params.sync_log_id))
+                elif sync_log.user_id != self.restore_user.user_id:
+                    raise SyncLogUserMismatch('Sync log {} does not match user id {} (was {})'.format(
+                        self.params.sync_log_id, self.restore_user.user_id, sync_log.user_id
+                    ))
 
-            # convert to the right type if necessary
-            if not isinstance(sync_log, self.sync_log_class):
-                # this call can fail with an IncompatibleSyncLogType error
-                sync_log = self.sync_log_class.from_other_format(sync_log)
-            return sync_log
-        else:
-            return None
+                # convert to the right type if necessary
+                if not isinstance(sync_log, self.sync_log_class):
+                    # this call can fail with an IncompatibleSyncLogType error
+                    sync_log = self.sync_log_class.from_other_format(sync_log)
+                self._last_sync_log = sync_log
+            else:
+                self._last_sync_log = None
+        return self._last_sync_log
 
     def _check_for_date_opened_bug(self, sync_log):
         introduced_date = datetime(2016, 7, 19, 19, 15)
