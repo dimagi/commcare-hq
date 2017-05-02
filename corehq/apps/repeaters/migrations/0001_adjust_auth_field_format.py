@@ -1,7 +1,7 @@
 from django.db import migrations
 
-from corehq.apps.repeaters.migrations.util import migrate_repeater
 from corehq.apps.repeaters.models import Repeater
+from corehq.apps.repeaters.utils import migrate_repeater
 from corehq.sql_db.operations import HqRunPython
 from corehq.util.couch import iter_update, DocUpdate
 

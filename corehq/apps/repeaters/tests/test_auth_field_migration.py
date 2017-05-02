@@ -2,7 +2,7 @@ import uuid
 
 from django.test import SimpleTestCase
 
-from corehq.apps.repeaters.migrations.util import migrate_repeater
+from corehq.apps.repeaters.utils import migrate_repeater
 
 
 class TestAuthFieldMigration(SimpleTestCase):
