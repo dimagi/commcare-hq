@@ -58,6 +58,7 @@ class Command(BaseCommand):
             dest='num_processes',
             default=1,
             type=int,
+            help="The number of processes that are expected to be run for this pillow",
         )
         parser.add_argument(
             '--process-number',
@@ -65,6 +66,8 @@ class Command(BaseCommand):
             dest='process_number',
             default=0,
             type=int,
+            help="The process number of this pillow process. Should be between 0 and num-processes. "
+                 "It's expected that there will only be one process for each number running at once",
         )
 
     def handle(self, **options):
@@ -75,6 +78,7 @@ class Command(BaseCommand):
         pillow_key = options['pillow_key']
         num_processes = options['num_processes']
         process_number = options['process_number']
+        assert 0 <= process_number < num_processes
         if list_all:
             print("\nPillows registered in system:")
             for config in get_all_pillow_configs():
