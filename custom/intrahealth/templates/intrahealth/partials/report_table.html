@@ -62,6 +62,7 @@
 
 <script type="text/javascript">
    {% if report_table and report_table.datatables %}
+   $(function() {
         var reportTables = new HQReportDataTables({
             dataTableElem: '#report_table_{{ report_table.slug }}',
             defaultRows: {{ report_table.default_rows|default:10 }},
@@ -87,10 +88,11 @@
             fixColsNumLeft: 1,
             fixColsWidth: 130
         });
+        var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
         if (typeof standardHQReport !== 'undefined') {
             standardHQReport.handleTabularReportCookies(reportTables);
         }
         reportTables.render();
-
+    });
     {% endif %}
 </script>

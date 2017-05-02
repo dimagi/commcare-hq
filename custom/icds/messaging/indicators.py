@@ -123,7 +123,14 @@ class AWWIndicator(SMSIndicator):
     @property
     @memoized
     def supervisor(self):
+        """
+        Returns None if there is a misconfiguration (i.e., if the AWW's location
+        has no parent location, or if there are no users at the parent location).
+        """
         supervisor_location = self.user.sql_location.parent
+        if supervisor_location is None:
+            return None
+
         return get_users_by_location_id(self.domain, supervisor_location.location_id).first()
 
 
@@ -182,6 +189,9 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
         raise IndicatorError("AWC {} not found in the restore".format(location_name))
 
     def get_messages(self, language_code=None):
+        if self.supervisor is None:
+            return []
+
         agg_perf = LSAggregatePerformanceIndicator(self.domain, self.supervisor)
 
         visits = self.get_value_from_fixture(agg_perf.visits_fixture, 'count')
@@ -300,14 +310,9 @@ class LSVHNDSurveyIndicator(LSIndicator):
         now_date = self.now.date()
         user_ids_with_forms_in_time_frame = set()
         for user_id, forms in self.forms.items():
-            try:
-                vhnd_date = convert_to_date(forms[0]['form']['vhsnd_date_planned'])
-            except KeyError:
-                # the form will not have this date if it is not known
-                continue
-            else:
-                if (now_date - vhnd_date).days < 37:
-                    user_ids_with_forms_in_time_frame.add(user_id)
+            vhnd_date = convert_to_date(forms[0]['form']['vhsnd_date_past_month'])
+            if (now_date - vhnd_date).days < 37:
+                user_ids_with_forms_in_time_frame.add(user_id)
 
         awc_ids = {
             loc

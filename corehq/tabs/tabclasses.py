@@ -793,7 +793,7 @@ class ApplicationsTab(UITab):
 
     @property
     def view(self):
-        if toggles.APP_MANAGER_V2.enabled(self.domain):
+        if toggles.APP_MANAGER_V2.enabled(self.couch_user.username):
             return "default_new_app"
         return "default_app"
 
@@ -835,7 +835,7 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])
-                     if toggles.APP_MANAGER_V2.enabled(self.domain)
+                     if toggles.APP_MANAGER_V2.enabled(self.couch_user.username)
                      else reverse('default_app', args=[self.domain])),
             ))
         return submenu_context
@@ -1777,20 +1777,22 @@ class AdminTab(UITab):
                      'url': reverse('system_info')},
                 ])]
 
-        admin_operations = []
+        admin_operations = [
+            {'title': _('Look up user by email'),
+             'url': reverse('web_user_lookup')},
+        ]
 
         if self.couch_user and self.couch_user.is_staff:
             from corehq.apps.hqadmin.views import (
                 AuthenticateAs, ReprocessMessagingCaseUpdatesView
             )
-            admin_operations.extend([
+            admin_operations = [
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
                                 args=('pillow_errors',))},
                 {'title': _('Login as another user'),
                  'url': reverse(AuthenticateAs.urlname)},
-                {'title': _('Look up user by email'),
-                 'url': reverse('web_user_lookup')},
+            ] + admin_operations + [
                 {'title': _('View raw couch documents'),
                  'url': reverse('raw_couch')},
                 {'title': _('Check Call Center UCR tables'),
@@ -1799,7 +1801,7 @@ class AdminTab(UITab):
                  'url': reverse('superuser_management')},
                 {'title': _('Reprocess Messaging Case Updates'),
                  'url': reverse(ReprocessMessagingCaseUpdatesView.urlname)},
-            ])
+            ]
         return [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),

@@ -29,7 +29,7 @@ import re
 from django.utils.safestring import mark_safe
 from django.views.generic import View
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djangular.views.mixins import allow_remote_invocation
 import pytz
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -965,7 +965,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
         return filter_form
 
 
-class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProjectDataView):
+class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/export_list.html'
     allow_bulk_export = True
     is_deid = False
@@ -2394,10 +2394,23 @@ class GenerateSchemaFromAllBuildsView(View):
         })
 
 
+def can_download_daily_saved_export(export, domain, couch_user):
+    if (export.is_deidentified
+        and user_can_view_deid_exports(domain, couch_user)
+    ):
+        return True
+    elif export.type == FORM_EXPORT and has_permission_to_view_report(
+            couch_user, domain, FORM_EXPORT_PERMISSION):
+        return True
+    elif export.type == CASE_EXPORT and has_permission_to_view_report(
+            couch_user, domain, CASE_EXPORT_PERMISSION):
+        return True
+    return False
+
+
 @location_safe
 @csrf_exempt
 @login_or_digest_or_basic_or_apikey(default='digest')
-@require_form_export_permission
 @require_GET
 def download_daily_saved_export(req, domain, export_instance_id):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
@@ -2412,6 +2425,9 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
     if not export_instance.filters.is_location_safe_for_user(req):
         return location_restricted_response(req)
+
+    if not can_download_daily_saved_export(export_instance, domain, req.couch_user):
+        raise Http404
 
     if should_update_export(export_instance.last_accessed):
         try:

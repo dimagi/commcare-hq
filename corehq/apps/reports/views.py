@@ -1762,7 +1762,7 @@ class EditFormInstance(View):
             edit_session_data[USERCASE_ID] = usercase_id
 
         case_blocks = extract_case_blocks(instance, include_path=True)
-        if form.form_type == 'advanced_form':
+        if form.form_type == 'advanced_form' or form.form_type == "shadow_form":
             datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
             for case_block in case_blocks:
                 path = case_block.path[0]  # all case blocks in advanced forms are nested one level deep
@@ -1836,11 +1836,12 @@ def restore_edit(request, domain, instance_id):
 @login_or_digest
 @require_form_view_permission
 @require_GET
+@location_safe
 def download_attachment(request, domain, instance_id):
+    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     attachment = request.GET.get('attachment', False)
     if not attachment:
         return HttpResponseBadRequest("Invalid attachment.")
-    instance = _get_form_or_404(domain, instance_id)
     assert(domain == instance.domain)
 
     try:

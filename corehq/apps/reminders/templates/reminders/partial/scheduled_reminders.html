@@ -2,64 +2,11 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            var reminders = [
-                {% for data in reminder_data %}
-                    {
-                        nickname: "{{ data.handler_name }}",
-                        date: "{{ data.next_fire.date }}",
-                        time: "{{ data.next_fire.time }}",
-                        case_name: "{{ data.case_name|escapejs }}",
-                        case_url: "{% if data.case_id %}{% url "case_details" domain data.case_id %}{% endif %}",
-                        recipient_desc: "{{ data.recipient_desc|escapejs }}",
-                        recipient_type: "{{ data.recipient_type }}",
-                    },
-                {% endfor %}
-                    null
-                ],
-                i,
-                reminder;
-            for (i = 0; i < reminders.length; i += 1) {
-                reminder = reminders[i];
-                if (reminder) {
-                    var recipient_text;
-                    if (reminder.recipient_type == "USER" || reminder.recipient_type == "OWNER" || reminder.recipient_type == "CASE" || reminder.recipient_type == "PARENT_CASE" || reminder.recipient_type == "SUBCASE") {
-                        var case_url = '<a href="' + reminder.case_url + '">' + reminder.case_name + '</a>';
-                        if (reminder.recipient_type == "CASE") {
-                            recipient_text = case_url;
-                        } else {
-                            recipient_text = reminder.recipient_desc + " for " + case_url;
-                        }
-                    } else {
-                        recipient_text = reminder.recipient_desc;
-                    }
-                    $('.calendar [data-date="' + reminder.date + '"]').append(
-                        $('<li/>').append(
-                            $('<span/>').text(reminder.time).addClass('time-header')
-                        ).append(
-                            $('<span/>').html(
-                                " <b>" + reminder.nickname + "</b> to " + recipient_text
-                            )
-                        )
-                    );
-                }
-            }
-            $('.calendar-first').each(function () {
-                var i = 0, className = 'calendar-first-week', day = $(this);
-                for (i = 0; i < 7; i += 1) {
-                    day.addClass(className);
-                    if (day.next().length) {
-                        day = day.next();
-                    } else if (day.parent().next().find('> td')) {
-                        day = day.parent().next().find('> td').first();
-                    }
-                }
-            });
-        });
-    </script>
+{% block js %}{{ block.super }}
+    <script src="{% static 'moment/moment.js' %}"></script>
+    <script src="{% static 'reminders/js/scheduled_reminders.js' %}"></script>
 {% endblock %}
+
 {% block stylesheets %}{{ block.super }}
     <style>
         #scheduled-reminders-container {
@@ -151,6 +98,8 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'reminder_data' reminder_data %}
+    {% registerurl "case_details" domain "---" %}
     {% include "style/partials/time_notice.html" %}
     <div id='scheduled-reminders-container'>
         <table class="calendar">
@@ -172,7 +121,7 @@
                     {% if date.day == 1 %}class="calendar-first"{% endif %}>
                     <div class="calendar-cell">
                         <p class="date-header">{{ date }}</p>
-                        <ol data-date="{{ date }}" class="scheduled-reminders"></ol>
+                        <ol data-date="{{ date|date:'Y-m-d' }}" class="scheduled-reminders"></ol>
                     </div>
                 </td>
             {% if date.weekday == 6 %}

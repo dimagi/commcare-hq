@@ -31,7 +31,7 @@ class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, App
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         self.template_name = get_app_manager_template(
-            self.domain,
+            request.user,
             self.template_name,
             'app_manager/v2/summary.html',
         )

@@ -1,3 +1,4 @@
+from datetime import datetime
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -50,7 +51,8 @@ ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, T
 class StaticToggle(object):
 
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
-                 description=None, save_fn=None, always_enabled=None):
+                 description=None, save_fn=None, always_enabled=None,
+                 always_disabled=None, enabled_for_new_domains_after=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -61,15 +63,26 @@ class StaticToggle(object):
         # two parameters, `domain_name` and `toggle_is_enabled`
         self.save_fn = save_fn
         self.always_enabled = always_enabled or set()
+        self.always_disabled = always_disabled or set()
+        self.enabled_for_new_domains_after = enabled_for_new_domains_after
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
 
-    def enabled(self, item, **kwargs):
+    def enabled(self, item, namespace=None):
         if item in self.always_enabled:
             return True
-        return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in self.namespaces])
+        elif item in self.always_disabled:
+            return False
+        enabled_after = self.enabled_for_new_domains_after
+        if (enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
+                and was_domain_created_after(item, enabled_after)):
+            return True
+        if namespace is not None:
+            ns = None if namespace == NAMESPACE_USER else namespace
+            return toggle_enabled(self.slug, item, ns)
+        return any([toggle_enabled(self.slug, item, namespace=n) for n in self.namespaces])
 
     def enabled_for_request(self, request):
         return (
@@ -79,7 +92,7 @@ class StaticToggle(object):
         ) or (
             NAMESPACE_DOMAIN in self.namespaces
             and hasattr(request, 'domain')
-            and toggle_enabled(self.slug, request.domain, NAMESPACE_DOMAIN)
+            and self.enabled(request.domain, NAMESPACE_DOMAIN)
         )
 
     def set(self, item, enabled, namespace=None):
@@ -119,6 +132,22 @@ class StaticToggle(object):
             return []
 
 
+def was_domain_created_after(domain, checkpoint):
+    """
+    Return true if domain was created after checkpoint
+
+    :param domain: Domain name (string).
+    :param checkpoint: datetime object.
+    """
+    from corehq.apps.domain.models import Domain
+    domain_obj = Domain.get_by_name(domain)
+    return (
+        domain_obj is not None and
+        domain_obj.date_created is not None and
+        domain_obj.date_created > checkpoint
+    )
+
+
 def deterministic_random(input_string):
     """
     Returns a deterministically random number between 0 and 1 based on the
@@ -148,11 +177,11 @@ class PredictablyRandomToggle(StaticToggle):
             description=None,
             always_disabled=None):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
-                                                      help_link=help_link, description=description)
+                                                      help_link=help_link, description=description,
+                                                      always_disabled=always_disabled)
         assert namespaces, 'namespaces must be defined!'
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
         self.randomness = randomness
-        self.always_disabled = always_disabled or set()
 
     @property
     def randomness_percent(self):
@@ -244,7 +273,8 @@ def toggle_values_by_name(username=None, domain=None):
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     'custom-parent-ref',
     'Custom case parent reference',
-    TAG_ONE_OFF
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 APP_BUILDER_CAREPLAN = StaticToggle(
@@ -368,7 +398,14 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     description=(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
-    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting', 
+    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
+)
+
+EXPORT_NO_SORT = StaticToggle(
+    'export_no_sort',
+    'Do not sort exports',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -422,7 +459,9 @@ HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
     description=(
-        "Do not turn this feature flag.  It is only used for providing compatability for old projects.  We are actively trying to remove projects from this list."
+        "Do not turn this feature flag.  It is only used for providing "
+        "compatability for old projects.  We are actively trying to remove "
+        "projects from this list."
     ),
 )
 
@@ -587,6 +626,7 @@ MOBILE_UCR = StaticToggle(
      'through the app builder'),
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )
 
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
@@ -700,6 +740,13 @@ NINETYNINE_DOTS = StaticToggle(
     'Enable access to 99DOTS',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
+)
+
+ENIKSHAY_API = StaticToggle(
+    'enikshay_api',
+    'Enable access to eNikshay api endpoints',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER]
 )
 
 NIKSHAY_INTEGRATION = StaticToggle(
@@ -853,7 +900,8 @@ TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
-    'Allow specifying a custom base URL for an application. Main use case is to allow migrating ICDS to a new cluster.',
+    'Allow specifying a custom base URL for an application. Main use case is '
+    'to allow migrating ICDS to a new cluster.',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
@@ -973,7 +1021,7 @@ DATA_MIGRATION = StaticToggle(
 
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
-    'Make the Worker Activity Report use the Groups or Users (EMWF) filter',
+    'Make the Worker Activity Report use the Groups or Users or Locations (LocationRestrictedEMWF) filter',
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
     description=(
@@ -1015,7 +1063,8 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     'user_property_easy_refs',
     'Easy-reference user properties in the form builder.',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    enabled_for_new_domains_after=datetime(2017, 5, 3, 12),  # noon UTC
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
@@ -1030,6 +1079,7 @@ ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
     'Allow anonymous users to access web apps applications',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
@@ -1064,19 +1114,26 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     }
 )
 
-BLOBDB_EXPORTS = PredictablyRandomToggle(
-    'blobdb_exports',
-    'Use the blobdb to do exports',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-    randomness=0.3,
-)
-
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
+)
+
+LOGIN_AS_ALWAYS_OFF = StaticToggle(
+    'always_turn_login_as_off',
+    'Always turn login as off',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+BLOBDB_RESTORE = PredictablyRandomToggle(
+    'blobdb_restore',
+    "Blobdb restore",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    randomness=0,
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
@@ -1105,4 +1162,12 @@ MOTECH = StaticToggle(
     "Show Motech tab",
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
+)
+
+MARK_LATEST_SUBMISSION_ON_USER = StaticToggle(
+    'user_last_submission',
+    "Marks the latest submssion on user model",
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )

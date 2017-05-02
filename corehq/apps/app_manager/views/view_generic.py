@@ -84,7 +84,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             _assert = soft_assert()
             _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
             template = get_app_manager_template(
-                domain,
+                request.user,
                 'app_manager/v1/no_longer_supported.html',
                 'app_manager/v2/no_longer_supported.html',
             )
@@ -144,7 +144,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
         context.update(form_context)
     elif module:
-        template = get_module_template(domain, module)
+        template = get_module_template(request.user, module)
         # make sure all modules have unique ids
         app.ensure_module_unique_ids(should_save=True)
         module_context = get_module_view_context(app, module, lang)
@@ -157,7 +157,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                        else 'app_manager/v2/app_view_settings.html')
 
         template = get_app_manager_template(
-            domain,
+            request.user,
             'app_manager/v1/app_view.html',
             v2_template
         )
@@ -168,7 +168,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             'is_app_settings_page': not release_manager,
         })
     else:
-        if toggles.APP_MANAGER_V2.enabled(domain):
+        if toggles.APP_MANAGER_V2.enabled(request.user.username):
             from corehq.apps.dashboard.views import DomainDashboardView
             return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
         else:
@@ -268,18 +268,20 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
+        uploaders = [
+            MultimediaLogoUploadController(
+                slug,
+                reverse(
+                    ProcessLogoFileUploadView.name,
+                    args=[domain, app_id, slug],
+                )
+            )
+            for slug in uploader_slugs
+        ]
         context.update({
             "sessionid": request.COOKIES.get('sessionid'),
-            'uploaders': [
-                MultimediaLogoUploadController(
-                    slug,
-                    reverse(
-                        ProcessLogoFileUploadView.name,
-                        args=[domain, app_id, slug],
-                    )
-                )
-                for slug in uploader_slugs
-            ],
+            "uploaders": uploaders,
+            "uploaders_js": [u.js_options for u in uploaders],
             "refs": {
                 slug: ApplicationMediaReference(
                     app.logo_refs.get(slug, {}).get("path", slug),

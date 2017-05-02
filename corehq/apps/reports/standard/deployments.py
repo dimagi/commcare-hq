@@ -10,7 +10,7 @@ from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
 
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, LocationRestrictedMobileWorkerFilter
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -35,7 +35,8 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
-from corehq.apps.reports.util import format_datatables_data, numcell
+from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.reports.util import format_datatables_data, numcell, is_query_too_big
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -85,7 +86,7 @@ class ApplicationStatusReport(DeploymentsReport):
     @property
     @memoized
     def users(self):
-        mobile_user_and_group_slugs = self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+        mobile_user_and_group_slugs = self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
 
         limit_user_ids = []
         if self.selected_app_id:
@@ -102,6 +103,11 @@ class ApplicationStatusReport(DeploymentsReport):
     @property
     def rows(self):
         rows = []
+
+        if is_query_too_big(self.domain, self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)):
+            raise BadRequestError(
+                _('Query selects too many users. Please modify your filters to select fewer users')
+            )
 
         user_ids = map(lambda user: user.user_id, self.users)
         user_xform_dicts_map = get_last_form_submissions_by_user(self.domain, user_ids, self.selected_app_id)

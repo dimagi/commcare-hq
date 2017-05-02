@@ -232,6 +232,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         return user
 
     @classmethod
+    @mock.patch('corehq.apps.groups.models.Group.by_user', mock.Mock(return_value=[]))
     def setUpClass(cls):
         super(UserChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
@@ -283,6 +284,7 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         return group
 
     @classmethod
+    @mock.patch('corehq.apps.groups.models.Group.by_user', mock.Mock(return_value=[]))
     def setUpClass(cls):
         super(GroupChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)

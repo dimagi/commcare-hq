@@ -763,14 +763,6 @@ ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 ELASTICSEARCH_VERSION = 1.7
 
-####### Couch Config #######
-# for production this ought to be set to true on your configured couch instance
-COUCH_HTTPS = False
-COUCH_SERVER_ROOT = 'localhost:5984'  # 6984 for https couch
-COUCH_USERNAME = ''
-COUCH_PASSWORD = ''
-COUCH_DATABASE_NAME = 'commcarehq'
-
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
 
@@ -929,6 +921,45 @@ except ImportError as error:
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
+
+
+def _determine_couch_databases(couch_databases):
+    from dev_settings import COUCH_DATABASES as DEFAULT_COUCH_DATABASES_VALUE
+    if 'COUCH_SERVER_ROOT' in globals() and \
+            couch_databases in (None, DEFAULT_COUCH_DATABASES_VALUE):
+        import warnings
+        couch_databases = {
+            'default': {
+                'COUCH_HTTPS': COUCH_HTTPS,
+                'COUCH_SERVER_ROOT': COUCH_SERVER_ROOT,
+                'COUCH_USERNAME': COUCH_USERNAME,
+                'COUCH_PASSWORD': COUCH_PASSWORD,
+                'COUCH_DATABASE_NAME': COUCH_DATABASE_NAME,
+            },
+        }
+        warnings.warn("""COUCH_SERVER_ROOT and related variables are deprecated
+
+Please replace your COUCH_* settings with
+
+COUCH_DATABASES = {
+    'default': {
+        'COUCH_HTTPS': %(COUCH_HTTPS)r,
+        'COUCH_SERVER_ROOT': %(COUCH_SERVER_ROOT)r,
+        'COUCH_USERNAME': %(COUCH_USERNAME)r,
+        'COUCH_PASSWORD': %(COUCH_PASSWORD)r,
+        'COUCH_DATABASE_NAME': %(COUCH_DATABASE_NAME)r,
+    },
+}
+""" % globals(), DeprecationWarning)
+
+    return couch_databases
+
+
+try:
+    COUCH_DATABASES = _determine_couch_databases(COUCH_DATABASES)
+except NameError:
+    COUCH_DATABASES = _determine_couch_databases(None)
+
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
@@ -1124,6 +1155,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
+            # gets overridden in ansible, in environment specific way
             'handlers': ['notify_exception', 'sentry'],
             'level': 'ERROR',
             'propagate': True,
@@ -1252,18 +1284,6 @@ INDICATOR_CONFIG = {
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
-COUCH_DATABASE_NAME = helper.get_db_name(COUCH_DATABASE_NAME, UNIT_TESTING)
-_dynamic_db_settings = helper.get_dynamic_db_settings(
-    COUCH_SERVER_ROOT,
-    COUCH_USERNAME,
-    COUCH_PASSWORD,
-    COUCH_DATABASE_NAME,
-    use_https=COUCH_HTTPS,
-)
-
-# create local server and database configs
-COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
-
 NEW_USERS_GROUPS_DB = 'users'
 USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
@@ -1277,6 +1297,8 @@ NEW_APPS_DB = 'apps'
 APPS_DB = NEW_APPS_DB
 
 SYNCLOGS_DB = 'synclogs'
+
+META_DB = 'meta'
 
 
 COUCHDB_APPS = [
@@ -1341,10 +1363,10 @@ COUCHDB_APPS = [
     'ilsgateway',
     'ewsghana',
     ('auditcare', 'auditcare'),
-    ('performance_sms', 'meta'),
+    ('performance_sms', META_DB),
     ('repeaters', 'receiverwrapper'),
-    ('userreports', 'meta'),
-    ('custom_data_fields', 'meta'),
+    ('userreports', META_DB),
+    ('custom_data_fields', META_DB),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
@@ -1352,8 +1374,8 @@ COUCHDB_APPS = [
     ('fluff', 'fluff-opm'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
-    ('export', 'meta'),
-    ('callcenter', 'meta'),
+    ('export', META_DB),
+    ('callcenter', META_DB),
 
     # users and groups
     ('groups', USERS_GROUPS_DB),
@@ -1375,10 +1397,12 @@ COUCHDB_APPS = [
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
-    COUCH_DATABASE,
+    COUCH_DATABASES,
     COUCHDB_APPS,
     [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB, NEW_APPS_DB],
+    UNIT_TESTING
 )
+COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url
 COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
 EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
@@ -1609,22 +1633,6 @@ PILLOWTOPS = {
             }
         },
         {
-            'name': 'kafka-ucr-static-08',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
-            'params': {
-                'ucr_division': '08'
-            }
-        },
-        {
-            'name': 'kafka-ucr-static-9f',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
-            'params': {
-                'ucr_division': '9f'
-            }
-        },
-        {
             'name': 'ReportCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
@@ -1667,29 +1675,7 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
-    'mvp_indicators': [
-        {
-            'name': 'MVPCaseIndicatorPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'mvp_docs.pillows.get_mvp_case_indicator_pillow',
-        },
-        {
-            'name': 'MVPFormIndicatorPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'mvp_docs.pillows.get_mvp_form_indicator_pillow',
-        },
-    ],
     'experimental': [
-        {
-            'name': 'BlobDeletionPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_main_blob_deletion_pillow',
-        },
-        {
-            'name': 'ApplicationBlobDeletionPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_application_blob_deletion_pillow',
-        },
         {
             'name': 'CaseSearchToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1739,6 +1725,9 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_lactating.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_pregnancies.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_4_6_infrastructure.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_block.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_district.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_individual.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_individual_issues.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_block.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_ticket_level.json'),
@@ -1800,7 +1789,9 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patients_due_to_follow_up.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_treatment_outcome_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_treatment_outcome.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_treatment_outcome.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_general.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_tb_hiv.json')
 ]
 
 
@@ -1827,6 +1818,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
@@ -2036,3 +2028,4 @@ _raven_config = helper.configure_sentry(
 if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
+    SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'

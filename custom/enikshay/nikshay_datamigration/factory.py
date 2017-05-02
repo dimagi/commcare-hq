@@ -12,13 +12,16 @@ from custom.enikshay.case_utils import (
     get_open_drtb_hiv_case_from_episode,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound, ENikshayLocationNotFound
-from custom.enikshay.nikshay_datamigration.models import Outcome
-
+from custom.enikshay.nikshay_datamigration.models import (
+    Followup,
+    Outcome,
+)
 
 PERSON_CASE_TYPE = 'person'
 OCCURRENCE_CASE_TYPE = 'occurrence'
 EPISODE_CASE_TYPE = 'episode'
 DRTB_HIV_REFERRAL_CASE_TYPE = 'drtb-hiv-referral'
+TEST_CASE_TYPE = 'test'
 
 MockLocation = namedtuple('MockLocation', 'name location_id location_type')
 MockLocationType = namedtuple('MockLocationType', 'name code')
@@ -111,18 +114,27 @@ class EnikshayCaseFactory(object):
             except ENikshayCaseNotFound:
                 return None
 
+    @memoized
+    def existing_test_case(self, followup):
+        #  TODO
+        return None
+
     def get_case_structures_to_create(self):
         person_structure = self.get_person_case_structure()
-        ocurrence_structure = self.get_occurrence_case_structure(person_structure)
-        episode_structure = self.get_episode_case_structure(ocurrence_structure)
+        occurrence_structure = self.get_occurrence_case_structure(person_structure)
+        episode_structure = self.get_episode_case_structure(occurrence_structure)
+        test_structures = [
+            self.get_test_case_structure(followup, occurrence_structure)
+            for followup in self._followups
+        ]
         if (
             not self._outcome
             or (not self._outcome.is_treatment_ended and self._outcome.hiv_status in ['unknown', 'reactive'])
         ):
             drtb_hiv_referral_structure = self.get_drtb_hiv_referral_case_structure(episode_structure)
-            return [drtb_hiv_referral_structure]
+            return [drtb_hiv_referral_structure] + test_structures
         else:
-            return [episode_structure]
+            return [episode_structure] + test_structures
 
     def get_person_case_structure(self):
         kwargs = {
@@ -335,6 +347,54 @@ class EnikshayCaseFactory(object):
             kwargs['attrs']['create'] = True
         return CaseStructure(**kwargs)
 
+    def get_test_case_structure(self, followup, occurrence_structure):
+        kwargs = {
+            'attrs': {
+                'case_type': TEST_CASE_TYPE,
+                'close': False,
+                'date_opened': followup.TestDate,
+                'owner_id': '-',
+                'update': {
+                    'date_reported': followup.TestDate,
+                    'date_tested': followup.TestDate,
+                    'episode_type_at_request': 'presumptive_tb' if followup.IntervalId == 0 else 'confirmed_tb',
+                    'lab_serial_number': followup.LabNo or '',
+                    'name': followup.TestDate,
+                    'result_grade': followup.result_grade,
+                    'result_recorded': 'yes',
+                    'testing_facility_id': followup.DMC,
+
+                    'migration_created_case': 'true',
+                    'migration_created_from_id': followup.id,
+                    'migration_created_from_record': self.patient_detail.PregId,
+                }
+            },
+            'indices': [CaseIndex(
+                occurrence_structure,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=OCCURRENCE_CASE_TYPE,
+            )],
+        }
+
+        if followup.IntervalId == 0:
+            kwargs['attrs']['update']['diagnostic_test_reason'] = 'presumptive_tb'
+            kwargs['attrs']['update']['purpose_of_testing'] = 'diagnostic'
+        elif followup.IntervalId == 1:
+            kwargs['attrs']['update']['follow_up_test_reason'] = 'end_of_ip'
+            kwargs['attrs']['update']['purpose_of_testing'] = 'follow_up'
+        elif followup.IntervalId == 4:
+            kwargs['attrs']['update']['follow_up_test_reason'] = 'end_of_cp'
+            kwargs['attrs']['update']['purpose_of_testing'] = 'follow_up'
+
+        existing_test_case = self.existing_test_case(followup)
+        if existing_test_case:
+            kwargs['case_id'] = existing_test_case.case_id
+            kwargs['attrs']['create'] = False
+        else:
+            kwargs['attrs']['create'] = True
+        return CaseStructure(**kwargs)
+
     @property
     @memoized
     def _outcome(self):
@@ -343,6 +403,11 @@ class EnikshayCaseFactory(object):
             return zero_or_one_outcomes[0]
         else:
             return None
+
+    @property
+    @memoized
+    def _followups(self):
+        return list(Followup.objects.filter(PatientID=self.patient_detail))
 
     @property
     def tu(self):

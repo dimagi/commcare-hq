@@ -4,11 +4,9 @@
     <!--ko with: condition -->
     <span data-bind="text: $parent.actionType"></span>
 
-    {% if app.advanced_app_builder or form.get_action_type != 'open' %}
-      <div data-bind="visible: type() === 'always'">
-          <a href="#" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
-      </div>
-    {% endif %}
+    <div data-bind="visible: type() === 'always'">
+        <a href="#" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
+    </div>
 
     <div class="form-inline" data-bind="visible: type() === 'if'">
         <a href="#" data-bind="click: function () {type('always')}">
@@ -132,7 +130,7 @@
 <script type="text/html" id="case-config:case-transaction:case-properties">
     <div class="panel-heading">
       <h4 class="panel-title panel-title-nolink">
-        <i class="fa fa-save"></i> {% trans "Save Question Answers to Case Properties" %}
+        <i class="fa fa-save"></i> {% trans "Save Questions to Case Properties" %}
       </h4>
     </div>
     <div class="panel-body">
@@ -140,7 +138,7 @@
             <thead>
                 <tr>
                     <th class="col-sm-1"></th>
-                    <th class="col-sm-5">{% trans "Question Answer" %}</th>
+                    <th class="col-sm-5">{% trans "Question" %}</th>
                     <th class="col-sm-1"></th>
                     <th class="col-sm-5">{% trans "Case Property" %}</th>
                 </tr>

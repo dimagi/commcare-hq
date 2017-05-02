@@ -1,6 +1,7 @@
 from django.conf import settings
 import django.core.exceptions
 from corehq.apps.users.models import CouchUser, InvalidUser, AnonymousCouchUser
+from corehq.apps.users.util import username_to_user_id
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE, PUBLISH_CUSTOM_REPORTS
 
 SESSION_USER_KEY_PREFIX = "session_user_doc_%s"
@@ -38,8 +39,8 @@ class UsersMiddleware(object):
             if ANONYMOUS_WEB_APPS_USAGE.enabled(view_kwargs['domain']):
                 request.couch_user = CouchUser.get_anonymous_mobile_worker(request.domain)
         if request.user and request.user.is_authenticated:
-            request.couch_user = CouchUser.get_by_username(
-                request.user.username, strict=False)
+            user_id = username_to_user_id(request.user.username)
+            request.couch_user = CouchUser.get_by_user_id(user_id)
             if not request.couch_user.analytics_enabled:
                 request.analytics_enabled = False
             if 'domain' in view_kwargs:

@@ -287,8 +287,6 @@ class Outcome(models.Model):
     )
     InitiatedDate = models.CharField(max_length=255, null=True)  # dates, None, and NULL
     userName = models.CharField(max_length=255)
-    # loginDate = models.DateTimeField()
-    # OutcomeDate1 = models.CharField(max_length=255)  # datetimes and NULL
 
     @property
     def hiv_status(self):
@@ -339,3 +337,37 @@ class Outcome(models.Model):
                 except ValueError:
                     date_string = self.OutcomeDate[:-2] + '20' + self.OutcomeDate[-2:]
                     return datetime.strptime(date_string, format).date()
+
+
+class Followup(models.Model):
+    id = models.AutoField(primary_key=True)
+    PatientID = models.ForeignKey(PatientDetail, on_delete=models.CASCADE)  # requires trimming whitespace in excel
+    IntervalId = models.IntegerField()
+    TestDate = models.DateField()
+    DMC = models.IntegerField()
+    LabNo = models.CharField(max_length=255, null=True)
+    SmearResult = models.IntegerField()
+    PatientWeight = models.IntegerField(null=True)
+    DmcStoCode = models.CharField(max_length=255, null=True)
+    DmcDtoCode = models.CharField(max_length=255, null=True)
+    DmcTbuCode = models.CharField(max_length=255, null=True)
+    RegBy = models.CharField(max_length=255, null=True)
+
+    @property
+    def result_grade(self):
+        return {
+            99: 'Neg',
+            1: 'SC-1',
+            2: 'SC-2',
+            4: 'SC-4',
+            5: 'SC-5',
+            6: 'SC-6',
+            7: 'SC-7',
+            8: 'SC-8',
+            9: 'SC-9',
+            11: '1+',
+            12: '2+',
+            13: '3+',
+            0: 'NA',
+            98: 'Pos',
+        }[self.SmearResult]

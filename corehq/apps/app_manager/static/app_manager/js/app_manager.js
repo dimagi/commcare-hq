@@ -58,15 +58,24 @@ hqDefine('app_manager/js/app_manager.js', function () {
             var r = $('input[name="' + name + '"]').first().val();
             return JSON.parse(r);
         }
+        function updateRelatedTags($elem, name, value) {
+            var relatedTags = $elem.find("[data-" + name +"]");
+            _.each(relatedTags, function (related) {
+                $(related).data(name, value);
+            });
+        }
         function resetIndexes($sortable) {
             if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+                var parentVar = $sortable.data('parentvar');
+                var parentValue = $sortable.closest("[data-indexVar='" + parentVar + "']").data('index');
                 _.each($sortable.find('> .js-sorted-li'), function (elem, i) {
                     $(elem).data('index', i);
                     var indexVar = $(elem).data('indexvar');
-                    var relatedTags = $(elem).find("[data-" + indexVar +"]");
-                    _.each(relatedTags, function (related) {
-                        $(related).data(indexVar, i);
-                    });
+                    updateRelatedTags($(elem), indexVar, i);
+                    if (parentVar) {
+                        $(elem).data(parentVar, parentValue);
+                        updateRelatedTags($(elem), parentVar, parentValue);
+                    }
                 });
                 _.each($('[data-updateprop]'), function (tag) {
                     var tagName = $(tag).data('updateprop'),
@@ -207,6 +216,11 @@ hqDefine('app_manager/js/app_manager.js', function () {
 
                             if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
                                 resetIndexes($sortable);
+                                if (from_module_id !== to_module_id) {
+                                    var $parentSortable = $sortable.parents(".sortable"),
+                                        $fromSortable = $parentSortable.find("[data-index=" + from_module_id + "] .sortable");
+                                    resetIndexes($fromSortable);
+                                }
                                 $.post($form.attr('action'), $form.serialize(), function (data) {});
                             } else {
                                 // disable sortable
@@ -272,6 +286,19 @@ hqDefine('app_manager/js/app_manager.js', function () {
             }
         });
 
+        $('.new-form').on('click', function (e) {
+            e.preventDefault();
+            var dataType = $(this).data("type");
+            var moduleId = $(this).data("module");
+            var form = $("#form-to-create-new-form-for-module-" + moduleId);
+            $("input[name=form_type]", form).val(dataType);
+            if (!form.data('clicked')) {
+                form.data('clicked', 'true');
+                $('.new-form-icon-module-' + moduleId).removeClass().addClass("fa fa-refresh fa-spin");
+                form.submit();
+            }
+        });
+
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
             $(document).on('click', '.js-new-form', function (e) {
                 e.preventDefault();
@@ -315,12 +342,15 @@ hqDefine('app_manager/js/app_manager.js', function () {
                     $(pop).popover('hide');
                     var dataType = $(e.target).closest('button').data('type');
                     $('#new-module-type').val(dataType);
-                    var form = $('#new-module-form');
-                    if (!form.data('clicked')) {
-                        form.data('clicked', 'true');
-                        $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-                        form.submit();
+                    if ($(e.target).closest('button').data('stopsubmit') !== 'yes') {
+                        var form = $('#new-module-form');
+                        if (!form.data('clicked')) {
+                            form.data('clicked', 'true');
+                            $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+                            form.submit();
+                        }
                     }
+
                 });
             }).on('click', function (e) {
                 e.preventDefault();

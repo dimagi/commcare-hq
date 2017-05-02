@@ -155,9 +155,9 @@ def save_xform(app, form, xml):
 
     # For registration forms, assume that the first question is the case name
     # unless something else has been specified
-    if toggles.APP_MANAGER_V2.enabled(app.domain):
-        if form.is_registration_form():
-            questions = form.get_questions([app.default_language])
+    if form.is_registration_form():
+        questions = form.get_questions([app.default_language])
+        if hasattr(form.actions, 'open_case'):
             path = form.actions.open_case.name_path
             if path:
                 name_questions = [q for q in questions if q['value'] == path]
@@ -410,7 +410,7 @@ def get_casedb_schema(form):
     This lists all case types and their properties for the given app.
     """
     app = form.get_app()
-    base_case_type = form.get_module().case_type
+    base_case_type = form.get_module().case_type if form.requires_case() else None
     case_types = app.get_case_types() | get_shared_case_types(app)
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, ['case_name'], per_type_defaults)
@@ -739,7 +739,8 @@ def module_offers_search(module):
     return (
         isinstance(module, (Module, AdvancedModule, ShadowModule)) and
         module.search_config and
-        module.search_config.properties
+        (module.search_config.properties or
+         module.search_config.default_properties)
     )
 
 
@@ -864,17 +865,17 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
     return sort_only_elements, sort_columns
 
 
-def get_app_manager_template(domain, v1, v2):
+def get_app_manager_template(user, v1, v2):
     """
-    Given the name of the domain, a template string v1, and a template string v2,
+    Given the user, a template string v1, and a template string v2,
     return the template for V2 if the APP_MANAGER_V2 toggle is enabled.
 
-    :param domain: String, domain name
+    :param user: WebUser
     :param v1: String, template name for V1
     :param v2: String, template name for V2
     :return: String, either v1 or v2 depending on toggle
     """
-    if domain is not None and toggles.APP_MANAGER_V2.enabled(domain):
+    if user is not None and toggles.APP_MANAGER_V2.enabled(user.username):
         return v2
     return v1
 

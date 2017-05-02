@@ -102,7 +102,7 @@ class ScheduledRemindersCalendarView(BaseMessagingSectionView):
         today = timezone_now.date()
 
         def adjust_next_fire_to_timezone(reminder_utc):
-            return ServerTime(reminder_utc.next_fire).user_time(timezone).done()
+            return ServerTime(reminder_utc.next_fire).user_time(timezone).done().replace(tzinfo=None)
 
         if reminders:
             start_date = adjust_next_fire_to_timezone(reminders[0]).date()
@@ -466,6 +466,8 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         return reverse(self.urlname, args=[self.domain, self.handler_id])
 
     def process_schedule_form(self):
+        if self.schedule_form.cleaned_data['case_type'] != self.reminder_handler.case_type:
+            raise ValueError("Reminder case type is expected to be read only on edit")
         self.schedule_form.save(self.reminder_handler)
 
     def rule_in_progress(self):

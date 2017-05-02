@@ -65,3 +65,14 @@ class DjangoPillowCheckpoint(models.Model):
             sequence=checkpoint_dict['seq'],
             old_sequence=checkpoint_dict.get('old_seq', None)
         )
+
+
+class KafkaCheckpoint(models.Model):
+    checkpoint_id = models.CharField(max_length=126, db_index=True)
+    topic = models.CharField(max_length=126)
+    partition = models.IntegerField()
+    offset = models.IntegerField()
+    last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('checkpoint_id', 'topic', 'partition')

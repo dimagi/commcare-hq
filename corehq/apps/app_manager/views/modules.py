@@ -70,28 +70,28 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
 logger = logging.getLogger(__name__)
 
 
-def get_module_template(domain, module):
+def get_module_template(user, module):
     if isinstance(module, CareplanModule):
         return get_app_manager_template(
-            domain,
+            user,
             "app_manager/v1/module_view_careplan.html",
             "app_manager/v2/module_view_careplan.html",
         )
     elif isinstance(module, AdvancedModule):
         return get_app_manager_template(
-            domain,
+            user,
             "app_manager/v1/module_view_advanced.html",
             "app_manager/v2/module_view_advanced.html",
         )
     elif isinstance(module, ReportModule):
         return get_app_manager_template(
-            domain,
+            user,
             'app_manager/v1/module_view_report.html',
             'app_manager/v2/module_view_report.html',
         )
     else:
         return get_app_manager_template(
-            domain,
+            user,
             "app_manager/v1/module_view.html",
             "app_manager/v2/module_view.html",
         )
@@ -111,7 +111,7 @@ def get_module_view_context(app, module, lang=None):
         'lang': lang,
         'langs': app.langs,
         'module_type': module.module_type,
-        'requires_case_details': bool(module.requires_case_details),
+        'requires_case_details': module.requires_case_details(),
     }
     case_property_builder = _setup_case_property_builder(app)
     if isinstance(module, CareplanModule):
@@ -858,7 +858,10 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:
-        if search_properties.get('properties') is not None:
+        if (
+                search_properties.get('properties') is not None
+                or search_properties.get('default_properties') is not None
+        ):
             module.search_config = CaseSearch(
                 properties=[
                     CaseSearchProperty.wrap(p)
@@ -937,7 +940,7 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     lang, langs = get_langs(request, app)
 
     response_html = render_to_string(get_app_manager_template(
-            domain,
+            request.user,
             'app_manager/v1/partials/build_errors.html',
             'app_manager/v2/partials/build_errors.html',
         ), {
@@ -965,7 +968,7 @@ def new_module(request, domain, app_id):
 
     if module_type == 'case' or module_type == 'survey':  # survey option added for V2
 
-        if toggles.APP_MANAGER_V2.enabled(domain):
+        if toggles.APP_MANAGER_V2.enabled(request.user.username):
             if module_type == 'case':
                 name = name or 'Case List'
             else:
@@ -975,7 +978,7 @@ def new_module(request, domain, app_id):
         module_id = module.id
 
         form_id = None
-        if toggles.APP_MANAGER_V2.enabled(domain):
+        if toggles.APP_MANAGER_V2.enabled(request.user.username):
             if module_type == 'case':
                 # registration form
                 register = app.new_form(module_id, "Register", lang)
