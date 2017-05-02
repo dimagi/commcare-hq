@@ -200,8 +200,8 @@ class ConfigurableReportTableManagerMixin(object):
                             {reformatted_diffs}
                             """.format(
                                 table_id=sql_adapter.config.get_id,
-                                raw_diffs=pprint.pprint(raw_diffs, indent=2, width=40),
-                                reformatted_diffs=pprint.pprint(diffs, indent=2, width=40),
+                                raw_diffs=pprint.pformat(raw_diffs, indent=2, width=40),
+                                reformatted_diffs=pprint.pformat(diffs, indent=2, width=40),
                             )
 
                             send_mail_async(
