@@ -70,11 +70,16 @@ if USE_PARTITIONED_DATABASE:
     }
 
 ####### Couch Config ######
-COUCH_HTTPS = False
-COUCH_SERVER_ROOT = 'couch:5984'
-COUCH_USERNAME = ''
-COUCH_PASSWORD = ''
-COUCH_DATABASE_NAME = 'commcarehq'
+COUCH_DATABASES = {
+    'default': {
+        # for production this ought to be set to true on your configured couch instance
+        'COUCH_HTTPS': False,
+        'COUCH_SERVER_ROOT': 'couch:5984',  # 6984 for https couch
+        'COUCH_USERNAME': '',
+        'COUCH_PASSWORD': '',
+        'COUCH_DATABASE_NAME': 'commcarehq'
+    }
+}
 
 redis_host = 'redis'
 

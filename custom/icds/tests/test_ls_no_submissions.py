@@ -62,17 +62,17 @@ class TestLSSubmissionPerformanceIndicator(TestCase):
     def test_form_sent_today(self, last_sub_time):
         last_sub_time.return_value = {self.aww.get_id: self.today}
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
-        self.assertEqual(len(indicator.get_messages()), 0)
+        self.assertEqual(len(indicator.get_messages(language_code='en')), 0)
 
     def test_form_sent_seven_days_ago(self, last_sub_time):
         last_sub_time.return_value = {self.aww.get_id: self.today - timedelta(days=7)}
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
-        self.assertEqual(len(indicator.get_messages()), 0)
+        self.assertEqual(len(indicator.get_messages(language_code='en')), 0)
 
     def test_form_sent_eight_days_ago(self, last_sub_time):
         last_sub_time.return_value = {self.aww.get_id: self.today - timedelta(days=8)}
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
-        messages = indicator.get_messages()
+        messages = indicator.get_messages(language_code='en')
         self.assertEqual(len(messages), 1)
         message = messages[0]
         self.assertTrue('one week' in message)
@@ -81,7 +81,7 @@ class TestLSSubmissionPerformanceIndicator(TestCase):
     def test_form_sent_thirty_days_ago(self, last_sub_time):
         last_sub_time.return_value = {self.aww.get_id: self.today - timedelta(days=30)}
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
-        messages = indicator.get_messages()
+        messages = indicator.get_messages(language_code='en')
         self.assertEqual(len(messages), 1)
         message = messages[0]
         self.assertTrue('one week' in message)
@@ -91,7 +91,7 @@ class TestLSSubmissionPerformanceIndicator(TestCase):
         # last submissions only looks 30 days into past
         last_sub_time.return_value = {}
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
-        messages = indicator.get_messages()
+        messages = indicator.get_messages(language_code='en')
         self.assertEqual(len(messages), 1)
         message = messages[0]
         self.assertTrue('one month' in message)
@@ -105,7 +105,7 @@ class TestLSSubmissionPerformanceIndicator(TestCase):
             aww_2.get_id: self.today - timedelta(days=8)
         }
         indicator = LSSubmissionPerformanceIndicator(self.domain, self.ls)
-        messages = indicator.get_messages()
+        messages = indicator.get_messages(language_code='en')
         self.assertEqual(len(messages), 1)
         message = messages[0]
         self.assertTrue('one week' in message)

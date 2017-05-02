@@ -102,7 +102,7 @@ class ScheduledRemindersCalendarView(BaseMessagingSectionView):
         today = timezone_now.date()
 
         def adjust_next_fire_to_timezone(reminder_utc):
-            return ServerTime(reminder_utc.next_fire).user_time(timezone).done()
+            return ServerTime(reminder_utc.next_fire).user_time(timezone).done().replace(tzinfo=None)
 
         if reminders:
             start_date = adjust_next_fire_to_timezone(reminders[0]).date()

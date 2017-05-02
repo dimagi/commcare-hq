@@ -422,7 +422,7 @@ class CaseListFormWorkflow(object):
         if form.form_type == 'module_form':
             [reg_action] = form.get_registration_actions(target_case_type)
             source_session_var = form.session_var_for_action(reg_action)
-        if form.form_type == 'advanced_form':
+        if form.form_type == 'advanced_form' or form.form_type == "shadow_form":
             # match case session variable
             reg_action = form.get_registration_actions(target_case_type)[0]
             source_session_var = reg_action.case_session_var
@@ -461,7 +461,7 @@ class CaseListFormWorkflow(object):
                 return form.get_module().case_type
             else:
                 return reg_action.case_type
-        elif form.form_type == 'advanced_form':
+        elif form.form_type == 'advanced_form' or form.form_type == "shadow_form":
             return form.get_registration_actions(target_module.case_type)[0].case_type
 
 

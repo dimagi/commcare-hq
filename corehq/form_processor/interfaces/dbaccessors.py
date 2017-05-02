@@ -172,6 +172,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
+    def case_exists(case_id):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_case_xform_ids(case_id):
         raise NotImplementedError
 
@@ -245,6 +249,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_deleted_case_ids_by_owner(domain, owner_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_case_owner_ids(domain):
         raise NotImplementedError
 
 
@@ -356,6 +364,9 @@ class CaseAccessors(object):
             )
             all_extension_ids = all_extension_ids | new_extensions
         return all_extension_ids
+
+    def get_case_owner_ids(self):
+        return self.db_accessor.get_case_owner_ids(self.domain)
 
 
 def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):

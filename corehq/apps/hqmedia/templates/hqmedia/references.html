@@ -71,6 +71,10 @@
 {% endblock %}
 
 {% block page_content %}
+{% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+{% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+{% initial_page_data 'uploaders' uploaders_js %}
+
 <div id="multimedia-reference-checker">
 
     <div class="row">

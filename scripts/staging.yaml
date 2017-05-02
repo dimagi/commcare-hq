@@ -46,13 +46,15 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-  - nh/240812/mw_pwd_reset  # Norman 3/23
+#  - nh/240812/mw_pwd_reset  # Norman 3/23
   - nh/new_rb  # Norman 11/22
-  - mk-nikshay-audit-cookie-safe # Manish 3/3
+#  - mk-nikshay-audit-cookie-safe # Manish 3/3
   - mk-add-password-encoder # Manish 3/3
   - gc/case-close-refactor # Giovanni 4/7
-  - dm/sql-db-aliases
-  - np/update/twofactor # NP 4/21
+#  - np/update/twofactor # NP 4/21
+  - ce/hide-reports # Cal 4/26
+  - es/location-user  # Ethan 4/27
+  - nc/repeater-auth  # Noah 5/1
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -72,7 +74,6 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches:
-      - br/gevent-bckd-queue
+    branches: []
   submodules/commcare-translations:
     branches: []
