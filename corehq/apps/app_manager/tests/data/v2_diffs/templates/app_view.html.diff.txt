@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,298 +1,79 @@
+@@ -1,300 +1,78 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -16,6 +16,7 @@
 -    <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
 -    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 -    <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
+-    <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
 -    <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 -    <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
 -    <script src="{% static "jsdiff/diff.js" %}"></script>
@@ -120,9 +121,7 @@
 -            });
 -        });
 -
--    </script>
--    {% include 'hqmedia/partials/multimedia_init.html' %}
--    <script>
+-        var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders.js").get();
 -        var refs = {{ refs|JSON }};
 -        var media_info = {{ media_info|JSON }};
 -        var image_refs = {};
@@ -186,6 +185,7 @@
 +  <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
 +  <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 +  <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
++  <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
 +  <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 +  <script src="{% static 'app_manager/js/app_view.js' %}"></script>
 +  {% if app.get_doc_type == "Application" %}
@@ -199,12 +199,10 @@
 +      {% if can_preview_form %}
 +        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
 +      {% endif %}
-+      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
-+          <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
-+              <i class="fa fa-list-alt"></i>
-+              {% trans "App Summary" %}
-+          </a>
-+      {% endif %}
++      <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
++          <i class="fa fa-list-alt"></i>
++          {% trans "App Summary" %}
++      </a>
 +  </div>
 +
 +  <div class="appmanager-edit-title">
@@ -239,7 +237,10 @@
 -    {% initial_page_data 'is_superuser' request.user.is_superuser %}
 -    {% initial_page_data 'lang' lang %}
 -    {% initial_page_data 'langs' app.langs %}
+-    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+-    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
 -    {% initial_page_data 'translations' translations %}
+-    {% initial_page_data 'uploaders' uploaders_js %}
 -    {% registerurl "edit_app_langs" domain app.id %}
 -    {% registerurl "edit_app_ui_translations" domain app.id %}
 -    {% registerurl "get_app_ui_translations" domain %}

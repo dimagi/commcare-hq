@@ -268,18 +268,20 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
+        uploaders = [
+            MultimediaLogoUploadController(
+                slug,
+                reverse(
+                    ProcessLogoFileUploadView.name,
+                    args=[domain, app_id, slug],
+                )
+            )
+            for slug in uploader_slugs
+        ]
         context.update({
             "sessionid": request.COOKIES.get('sessionid'),
-            'uploaders': [
-                MultimediaLogoUploadController(
-                    slug,
-                    reverse(
-                        ProcessLogoFileUploadView.name,
-                        args=[domain, app_id, slug],
-                    )
-                )
-                for slug in uploader_slugs
-            ],
+            "uploaders": uploaders,
+            "uploaders_js": [u.js_options for u in uploaders],
             "refs": {
                 slug: ApplicationMediaReference(
                     app.logo_refs.get(slug, {}).get("path", slug),
