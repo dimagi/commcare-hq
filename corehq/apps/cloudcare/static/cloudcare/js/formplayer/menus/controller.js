@@ -111,8 +111,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             } else {
                 $('#select-case').show();
             }
-
-
+            
             $('#select-case').off('click').click(function () {
                 FormplayerFrontend.trigger("menu:select", caseId);
             });
