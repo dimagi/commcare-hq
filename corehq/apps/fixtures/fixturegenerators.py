@@ -66,16 +66,18 @@ class ItemListsProvider(object):
             _ = [_set_cached_type(item, global_fixture) for item in items]
             items_by_type[global_fixture._id] = items
 
-        other_items = restore_user.get_fixture_data_items()
+        if set(all_types) - set(global_types):
+            # only query ownership models if there are non-global types
+            other_items = restore_user.get_fixture_data_items()
 
-        for item in other_items:
-            if item.data_type_id in global_types:
-                continue  # was part of the global type so no need to add here
-            try:
-                _set_cached_type(item, all_types[item.data_type_id])
-            except (AttributeError, KeyError):
-                continue
-            items_by_type[item.data_type_id].append(item)
+            for item in other_items:
+                if item.data_type_id in global_types:
+                    continue  # was part of the global type so no need to add here
+                try:
+                    _set_cached_type(item, all_types[item.data_type_id])
+                except (AttributeError, KeyError):
+                    continue
+                items_by_type[item.data_type_id].append(item)
 
         fixtures = []
         types_sorted_by_tag = sorted(all_types.iteritems(), key=lambda (id_, type_): type_.tag)
