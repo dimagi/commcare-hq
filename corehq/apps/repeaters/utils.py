@@ -19,7 +19,7 @@ def get_repeater_auth_header(headers, username, password):
 
 def migrate_repeater(repeater_doc):
     if "use_basic_auth" in repeater_doc:
-        use_basic_auth = repeater_doc['use_basic_auth'] == True
+        use_basic_auth = repeater_doc['use_basic_auth'] is True
         del repeater_doc['use_basic_auth']
         if use_basic_auth:
             repeater_doc["auth_type"] = "basic"
