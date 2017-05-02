@@ -1064,7 +1064,7 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     'Easy-reference user properties in the form builder.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    enabled_for_new_domains_after=datetime(2017, 5, 3, 12),  # noon UTC
+    enabled_for_new_domains_after=datetime(2017, 5, 3, 20),  # 8pm UTC
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
