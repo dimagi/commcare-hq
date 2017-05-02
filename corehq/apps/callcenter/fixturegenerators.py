@@ -3,7 +3,6 @@ from datetime import datetime
 import pytz
 
 from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
-from casexml.apps.phone.models import OTARestoreUser
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.logging import notify_exception
@@ -40,16 +39,16 @@ def should_sync(domain, last_sync, utcnow=None):
 class IndicatorsFixturesProvider(object):
     id = 'indicators'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
-        assert isinstance(restore_user, OTARestoreUser)
-
+    def __call__(self, restore_state):
+        restore_user = restore_state.restore_user
         domain = restore_user.project
         fixtures = []
 
-        if self._should_return_no_fixtures(domain, last_sync):
+        if self._should_return_no_fixtures(domain, restore_state.last_sync_log):
             return fixtures
 
         config = None
+        app = restore_state.params.app
         if app:
             try:
                 config = get_call_center_config_from_app(app)

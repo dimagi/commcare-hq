@@ -1,7 +1,6 @@
 from collections import defaultdict
 from xml.etree import ElementTree
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
-from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
 
@@ -48,8 +47,8 @@ def item_lists_by_domain(domain):
 class ItemListsProvider(object):
     id = 'item-list'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
-        assert isinstance(restore_user, OTARestoreUser)
+    def __call__(self, restore_state):
+        restore_user = restore_state.restore_user
 
         all_types = dict([(t._id, t) for t in FixtureDataType.by_domain(restore_user.domain)])
         global_types = dict([(id, t) for id, t in all_types.items() if t.is_global])

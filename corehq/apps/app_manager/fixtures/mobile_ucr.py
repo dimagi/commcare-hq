@@ -1,10 +1,8 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 from lxml.builder import E
 from django.conf import settings
-
-from casexml.apps.phone.models import OTARestoreUser
 
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
@@ -28,15 +26,15 @@ def _should_sync(restore_user, last_sync_log):
 class ReportFixturesProvider(object):
     id = 'commcare:reports'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
+    def __call__(self, restore_state):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        assert isinstance(restore_user, OTARestoreUser)
-
-        if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_user, last_sync):
+        restore_user = restore_state.restore_user
+        if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_user, restore_state.last_sync_log):
             return []
 
+        app = restore_state.params.app
         apps = [app] if app else [a for a in get_apps_in_domain(restore_user.domain, include_remote=False)]
         report_configs = [
             report_config

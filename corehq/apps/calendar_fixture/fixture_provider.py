@@ -8,7 +8,8 @@ from corehq.toggles import CUSTOM_CALENDAR_FIXTURE
 class CalendarFixtureProvider(object):
     id = 'enikshay:calendar'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
+    def __call__(self, restore_state):
+        restore_user = restore_state.restore_user
         if not CUSTOM_CALENDAR_FIXTURE.enabled(restore_user.domain):
             return []
 
