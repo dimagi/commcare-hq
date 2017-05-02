@@ -478,7 +478,7 @@ class RestoreState(object):
     def restore_class(self):
         return get_restore_response_class(self.domain)
 
-    def __init__(self, project, restore_user, params, async=False):
+    def __init__(self, project, restore_user, params, async=False, overwrite_cache=False):
         if not project or not project.name:
             raise Exception('you are not allowed to make a RestoreState without a domain!')
 
@@ -493,6 +493,7 @@ class RestoreState(object):
         self.duration = None
         self.current_sync_log = None
         self.async = async
+        self.overwrite_cache = overwrite_cache
 
     def validate_state(self):
         check_version(self.params.version)
@@ -653,7 +654,12 @@ class RestoreConfig(object):
         self.async = async
 
         self.version = self.params.version
-        self.restore_state = RestoreState(self.project, self.restore_user, self.params, async)
+        self.restore_state = RestoreState(
+            self.project,
+            self.restore_user,
+            self.params, async,
+            self.cache_settings.overwrite_cache
+        )
 
         self.asyc = async
 
