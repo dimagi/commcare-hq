@@ -16,8 +16,12 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
 
-def _should_sync(restore_user, last_sync_log):
-    sync_interval = restore_user.get_mobile_ucr_sync_interval()
+def _should_sync(restore_state):
+    last_sync_log = restore_state.last_sync_log
+    if not last_sync_log or restore_state.overwrite_cache:
+        return True
+
+    sync_interval = restore_state.restore_user.get_mobile_ucr_sync_interval()
     return not last_sync_log or (
         sync_interval and (datetime.utcnow() - last_sync_log.date).total_seconds() > sync_interval
     )
@@ -31,7 +35,7 @@ class ReportFixturesProvider(object):
         Generates a report fixture for mobile that can be used by a report module
         """
         restore_user = restore_state.restore_user
-        if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_user, restore_state.last_sync_log):
+        if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state):
             return []
 
         app = restore_state.params.app
