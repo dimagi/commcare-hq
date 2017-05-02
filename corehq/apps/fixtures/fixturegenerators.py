@@ -83,29 +83,51 @@ class ItemListsProvider(object):
         fixtures = []
         all_types_to_sync = data_types.values() + global_types.values()
         for data_type in all_types_to_sync:
+            if data_type.is_indexed:
+                fixtures.append(self._get_schema_element(data_type))
             fixtures.append(self._get_fixture_element(
                 data_type.tag,
                 restore_user.user_id,
-                sorted(items_by_type[data_type.get_id], key=lambda x: x.sort_key)
+                sorted(items_by_type[data_type.get_id], key=lambda x: x.sort_key),
+                data_type.is_indexed
             ))
         for data_type_id, data_type in all_types.iteritems():
             if data_type_id not in global_types and data_type_id not in data_types:
-                fixtures.append(self._get_fixture_element(data_type.tag, restore_user.user_id, []))
+                if data_type.is_indexed:
+                    fixtures.append(self._get_schema_element(data_type))
+                fixtures.append(self._get_fixture_element(
+                    data_type.tag,
+                    restore_user.user_id,
+                    [],
+                    data_type.is_indexed
+                ))
         return fixtures
 
-    def _get_fixture_element(self, tag, user_id, items):
-        fixture_element = ElementTree.Element(
-            'fixture',
-            attrib={
-                'id': ':'.join((self.id, tag)),
-                'user_id': user_id
-            }
-        )
+    def _get_fixture_element(self, tag, user_id, items, is_indexed=False):
+        attrib = {
+            'id': ':'.join((self.id, tag)),
+            'user_id': user_id
+        }
+        if is_indexed:
+            attrib['indexed'] = 'true'
+        fixture_element = ElementTree.Element('fixture', attrib=attrib)
         item_list_element = ElementTree.Element('%s_list' % tag)
         fixture_element.append(item_list_element)
         for item in items:
             item_list_element.append(item.to_xml())
         return fixture_element
+
+    def _get_schema_element(self, data_type):
+        schema_element = ElementTree.Element(
+            'schema',
+            attrib={'id': ':'.join((self.id, data_type.tag))}
+        )
+        indices_element = ElementTree.SubElement(schema_element, 'indices')
+        for field in data_type.fields:
+            if field.is_indexed:
+                index_element = ElementTree.SubElement(indices_element, 'index')
+                index_element.text = field.field_name
+        return schema_element
 
 
 item_lists = ItemListsProvider()
