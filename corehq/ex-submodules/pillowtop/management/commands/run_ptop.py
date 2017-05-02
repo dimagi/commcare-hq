@@ -52,6 +52,20 @@ class Command(BaseCommand):
             default=None,
             help="Run a single specific pillow name from settings.PILLOWTOPS list",
         )
+        parser.add_argument(
+            '--num-processes',
+            action='store',
+            dest='num_processes',
+            default=1,
+            type=int,
+        )
+        parser.add_argument(
+            '--process-number',
+            action='store',
+            dest='process_number',
+            default=0,
+            type=int,
+        )
 
     def handle(self, **options):
         run_all = options['run_all']
@@ -59,6 +73,8 @@ class Command(BaseCommand):
         list_checkpoints = options['list_checkpoints']
         pillow_name = options['pillow_name']
         pillow_key = options['pillow_key']
+        num_processes = options['num_processes']
+        process_number = options['process_number']
         if list_all:
             print("\nPillows registered in system:")
             for config in get_all_pillow_configs():
@@ -81,7 +97,7 @@ class Command(BaseCommand):
                                   for config in settings.PILLOWTOPS[pillow_key]]
 
         elif not run_all and not pillow_key and pillow_name:
-            pillow = get_pillow_by_name(pillow_name)
+            pillow = get_pillow_by_name(pillow_name, num_processes=num_processes, process_num=process_number)
             start_pillow(pillow)
             sys.exit()
         elif list_checkpoints:
