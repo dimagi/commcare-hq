@@ -51,8 +51,8 @@ class ItemListsProvider(object):
     def __call__(self, restore_user, version, last_sync=None, app=None):
         assert isinstance(restore_user, OTARestoreUser)
 
-        all_types = dict([(t._id, t) for t in FixtureDataType.by_domain(restore_user.domain)])
-        global_types = dict([(id, t) for id, t in all_types.items() if t.is_global])
+        all_types = {t._id: t for t in FixtureDataType.by_domain(restore_user.domain)}
+        global_types = {id: t for id, t in all_types.items() if t.is_global}
 
         items_by_type = defaultdict(list)
 
