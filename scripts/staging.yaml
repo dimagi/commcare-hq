@@ -54,6 +54,7 @@ branches:
 #  - np/update/twofactor # NP 4/21
   - ce/hide-reports # Cal 4/26
   - es/location-user  # Ethan 4/27
+  - nc/repeater-auth  # Noah 5/1
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

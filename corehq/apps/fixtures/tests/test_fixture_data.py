@@ -180,27 +180,69 @@ class FixtureDataTest(TestCase):
         check_xml_line_by_line(
             self,
             """
-            <schema id="item-list:district">
-                <indices>
-                    <index>district_id</index>
-                </indices>
-            </schema>
-            """,
-            ElementTree.tostring(fixtures[0])
+            <fixtures>
+                <schema id="item-list:district">
+                    <indices>
+                        <index>district_id</index>
+                    </indices>
+                </schema>
+                <fixture id="item-list:district" indexed="true" user_id="{}">
+                    <district_list>
+                        <district>
+                            <state_name>Delhi_state</state_name>
+                            <district_name lang="hin">Delhi_in_HIN</district_name>
+                            <district_name lang="eng">Delhi_in_ENG</district_name>
+                            <district_id>Delhi_id</district_id>
+                        </district>
+                    </district_list>
+                </fixture>
+            </fixtures>
+            """.format(self.user.user_id),
+            """
+            <fixtures>
+                {}
+                {}
+            </fixtures>
+            """.format(*[ElementTree.tostring(fixture) for fixture in fixtures])
         )
+
+    def test_empty_data_types(self):
+        empty_data_type = FixtureDataType(
+            domain=self.domain,
+            tag='blank',
+            name="blank",
+            fields=[
+                FixtureTypeField(
+                    field_name="name",
+                    properties=[]
+                ),
+            ],
+            item_attributes=[],
+        )
+        empty_data_type.save()
+        self.addCleanup(empty_data_type.delete)
+        get_fixture_data_types_in_domain.clear(self.domain)
+
+        fixtures = fixturegenerators.item_lists(self.user.to_ota_restore_user(), V2)
+        self.assertEqual(2, len(fixtures))
         check_xml_line_by_line(
             self,
             """
-            <fixture id="item-list:district" indexed="true" user_id="{}">
-                <district_list>
-                    <district>
-                        <state_name>Delhi_state</state_name>
-                        <district_name lang="hin">Delhi_in_HIN</district_name>
-                        <district_name lang="eng">Delhi_in_ENG</district_name>
-                        <district_id>Delhi_id</district_id>
-                    </district>
-                </district_list>
+            <f>
+            <fixture id="item-list:blank" user_id="{0}">
+              <blank_list/>
             </fixture>
+            <fixture id="item-list:district" user_id="{0}">
+              <district_list>
+                <district>
+                  <state_name>Delhi_state</state_name>
+                  <district_name lang="hin">Delhi_in_HIN</district_name>
+                  <district_name lang="eng">Delhi_in_ENG</district_name>
+                  <district_id>Delhi_id</district_id>
+                </district>
+              </district_list>
+            </fixture>
+            </f>
             """.format(self.user.user_id),
-            ElementTree.tostring(fixtures[1])
+            '<f>{}\n{}\n</f>'.format(*[ElementTree.tostring(fixture) for fixture in fixtures])
         )

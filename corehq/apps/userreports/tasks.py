@@ -255,6 +255,7 @@ def save_document(doc_ids):
 
         first_indicator = indicators[0]
         processed_indicators = []
+        failed_indicators = []
 
         for i in indicators:
             assert i.domain == first_indicator.domain
@@ -274,8 +275,9 @@ def save_document(doc_ids):
                     eval_context.reset_iteration()
             except (ESError, RequestError):
                 # couch or es had an issue
-                pass
+                failed_indicators.append(indicator.pk)
             else:
                 processed_indicators.append(indicator.pk)
 
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
+        AsyncIndicator.objects.filter(pk__in=failed_indicators).update(date_queued=None)

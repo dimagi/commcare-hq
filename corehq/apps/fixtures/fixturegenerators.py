@@ -51,8 +51,8 @@ class ItemListsProvider(object):
     def __call__(self, restore_user, version, last_sync=None, app=None):
         assert isinstance(restore_user, OTARestoreUser)
 
-        all_types = dict([(t._id, t) for t in FixtureDataType.by_domain(restore_user.domain)])
-        global_types = dict([(id, t) for id, t in all_types.items() if t.is_global])
+        all_types = {t._id: t for t in FixtureDataType.by_domain(restore_user.domain)}
+        global_types = {id: t for id, t in all_types.items() if t.is_global}
 
         items_by_type = defaultdict(list)
 
@@ -66,41 +66,26 @@ class ItemListsProvider(object):
             _ = [_set_cached_type(item, global_fixture) for item in items]
             items_by_type[global_fixture._id] = items
 
-        other_items = restore_user.get_fixture_data_items()
-        data_types = {}
+        if set(all_types) - set(global_types):
+            # only query ownership models if there are non-global types
+            other_items = restore_user.get_fixture_data_items()
 
-        for item in other_items:
-            if item.data_type_id in global_types:
-                continue  # was part of the global type so no need to add here
-            if item.data_type_id not in data_types:
+            for item in other_items:
+                if item.data_type_id in global_types:
+                    continue  # was part of the global type so no need to add here
                 try:
-                    data_types[item.data_type_id] = all_types[item.data_type_id]
+                    _set_cached_type(item, all_types[item.data_type_id])
                 except (AttributeError, KeyError):
                     continue
-            items_by_type[item.data_type_id].append(item)
-            _set_cached_type(item, data_types[item.data_type_id])
+                items_by_type[item.data_type_id].append(item)
 
         fixtures = []
-        all_types_to_sync = data_types.values() + global_types.values()
-        for data_type in all_types_to_sync:
+        types_sorted_by_tag = sorted(all_types.iteritems(), key=lambda (id_, type_): type_.tag)
+        for data_type_id, data_type in types_sorted_by_tag:
             if data_type.is_indexed:
                 fixtures.append(self._get_schema_element(data_type))
-            fixtures.append(self._get_fixture_element(
-                data_type.tag,
-                restore_user.user_id,
-                sorted(items_by_type[data_type.get_id], key=lambda x: x.sort_key),
-                data_type.is_indexed
-            ))
-        for data_type_id, data_type in all_types.iteritems():
-            if data_type_id not in global_types and data_type_id not in data_types:
-                if data_type.is_indexed:
-                    fixtures.append(self._get_schema_element(data_type))
-                fixtures.append(self._get_fixture_element(
-                    data_type.tag,
-                    restore_user.user_id,
-                    [],
-                    data_type.is_indexed
-                ))
+            items = sorted(items_by_type.get(data_type_id, []), key=lambda x: x.sort_key)
+            fixtures.append(self._get_fixture_element(data_type.tag, restore_user.user_id, items))
         return fixtures
 
     def _get_fixture_element(self, tag, user_id, items, is_indexed=False):

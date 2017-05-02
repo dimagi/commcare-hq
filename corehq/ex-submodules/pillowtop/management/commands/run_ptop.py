@@ -1,11 +1,16 @@
 from __future__ import print_function
-from pillowtop.run_pillowtop import start_pillows, start_pillow
-
 import sys
+
 from django.conf import settings
-from pillowtop.utils import get_all_pillow_instances, get_all_pillow_configs, \
-    get_pillow_config_from_setting, get_pillow_by_name
 from django.core.management.base import BaseCommand
+
+from pillowtop.run_pillowtop import start_pillows, start_pillow
+from pillowtop.utils import (
+    get_all_pillow_instances,
+    get_all_pillow_configs,
+    get_pillow_config_from_setting,
+    get_pillow_by_name
+)
 
 
 class Command(BaseCommand):
