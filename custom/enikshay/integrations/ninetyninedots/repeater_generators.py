@@ -353,7 +353,7 @@ def _get_phone_numbers(case_properties):
         number = _parse_number(case_properties.get(potential_number))
         if number:
             numbers.append(_format_number(number))
-    return ", ".join(numbers)
+    return ", ".join(numbers) if numbers else None
 
 
 def _parse_number(number):
