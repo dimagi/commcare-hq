@@ -284,12 +284,14 @@ class ENikshayLocationStructureMixin(object):
         self.sto = locations['STO']
         self.sto.metadata = {
             'nikshay_code': 'MH',
+            'is_test': 'no',
         }
         self.sto.save()
 
         self.dto = locations['DTO']
         self.dto.metadata = {
             'nikshay_code': 'ABD',
+            'is_test': 'no',
         }
         self.dto.save()
 
@@ -299,6 +301,7 @@ class ENikshayLocationStructureMixin(object):
         self.tu = locations['TU']
         self.tu.metadata = {
             'nikshay_code': '1',
+            'is_test': 'no',
         }
         self.tu.save()
 
@@ -318,7 +321,8 @@ class ENikshayLocationStructureMixin(object):
 
         self.pcp = locations['Private Doctor']
         self.pcp.metadata = {
-            'nikshay_code': "private_doctor"
+            'nikshay_code': "private_doctor",
+            'is_test': 'no',
         }
         self.pcp.save()
         super(ENikshayLocationStructureMixin, self).setUp()
