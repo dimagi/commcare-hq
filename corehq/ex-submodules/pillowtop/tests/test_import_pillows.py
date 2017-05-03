@@ -44,7 +44,7 @@ class PillowImportTestCase(SimpleTestCase):
             get_pillow_by_name('MissingPillow')
 
 
-def make_fake_pillow(pillow_id):
+def make_fake_pillow(pillow_id, **kwargs):
     return make_fake_constructed_pillow(pillow_id, 'fake-constructed-pillow')
 
 

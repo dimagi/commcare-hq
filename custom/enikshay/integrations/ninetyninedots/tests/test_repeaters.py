@@ -337,7 +337,6 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
 
     def test_get_payload_private_sector(self):
         self.person.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'
-        self.maxDiff = None
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.pcp.location_id)
         self._assert_payload_equal(cases, sector='private')

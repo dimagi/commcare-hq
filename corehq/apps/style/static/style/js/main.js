@@ -38,7 +38,7 @@ COMMCAREHQ.makeHqHelp = function (opts, wrap) {
             '<a href="#" tabindex="-1">' +
                 '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
     );
-    _.each(['content', 'title', 'html', 'placement'], function(attr) {
+    _.each(['content', 'title', 'html', 'placement', 'container'], function(attr) {
         $('a', el).data(attr, opts[attr]);
     });
     if (wrap) {

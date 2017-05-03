@@ -319,12 +319,13 @@ class ENikshayLocationStructureMixin(object):
         }
         self.dmc.save()
 
-        self.pcp = locations['Private Doctor']
+        self.pcp = locations['PCP']
         self.pcp.metadata = {
             'nikshay_code': "private_doctor",
             'is_test': 'no',
         }
         self.pcp.save()
+
         super(ENikshayLocationStructureMixin, self).setUp()
 
     def tearDown(self):
@@ -357,8 +358,10 @@ def setup_enikshay_locations(domain_name):
                             LocationTypeStructure('dmc', []),
                         ]),
                         LocationTypeStructure('drtb-hiv', []),
-                        LocationTypeStructure('pcp', []),
+                        LocationTypeStructure('pac', []),
                         LocationTypeStructure('pcc', []),
+                        LocationTypeStructure('pcp', []),
+                        LocationTypeStructure('pdr', []),
                         LocationTypeStructure('plc', []),
                     ])
                 ]),
@@ -377,9 +380,11 @@ def setup_enikshay_locations(domain_name):
                             LocationStructure('DMC', 'dmc', []),
                         ]),
                         LocationStructure('DRTB-HIV', 'drtb-hiv', []),
-                        LocationStructure('Private Doctor', 'pcp', []),
-                        LocationStructure('Private Chemist', 'pcc', []),
-                        LocationStructure('Private Lab', 'plc', []),
+                        LocationStructure('PAC', 'pac', []),
+                        LocationStructure('PCC', 'pcc', []),
+                        LocationStructure('PCP', 'pcp', []),
+                        LocationStructure('PDR', 'pdr', []),
+                        LocationStructure('PLC', 'plc', []),
                     ])
                 ]),
                 LocationStructure('DRTB', 'drtb', []),

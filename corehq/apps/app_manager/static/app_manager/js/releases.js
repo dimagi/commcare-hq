@@ -18,6 +18,13 @@ hqDefine('app_manager/js/releases.js', function () {
             }
         });
         self.num_errors = ko.observable(app_data.num_errors || 0);
+        self.numErrorsText = ko.computed(function () {
+            var s = "s";
+            if (self.num_errors() === 1) {
+                s = "";
+            }
+            return self.num_errors() + " Error" + s;
+        });
         self.app_code = ko.observable(null);
         self.failed_url_generation = ko.observable(false);
         self.build_profile = ko.observable('');
