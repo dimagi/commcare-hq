@@ -11,7 +11,8 @@ from custom.enikshay.case_utils import (
 )
 from custom.enikshay.integrations.bets.const import TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT, \
     DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT
-from custom.enikshay.integrations.utils import case_properties_changed
+from custom.enikshay.integrations.utils import case_properties_changed, is_valid_episode_submission, \
+    is_valid_voucher_submission
 
 
 class BaseBETSRepeater(CaseRepeater):
@@ -50,8 +51,8 @@ class BaseBETSVoucherRepeater(BaseBETSRepeater):
             approved
             and correct_voucher_type
             and not_sent
-            # TODO: Check if voucher is related to test location?
             and case_properties_changed(voucher_case, ['state'])
+            and is_valid_voucher_submission(voucher_case)
         )
 
 
@@ -75,6 +76,7 @@ class LabBETSVoucherRepeater(BaseBETSVoucherRepeater):
     def get_custom_url(cls, domain):
         from custom.enikshay.integrations.bets.views import LabBETSVoucherRepeaterView
         return reverse(LabBETSVoucherRepeaterView.urlname, args=[domain])
+
 
 class BETS180TreatmentRepeater(BaseBETSRepeater):
     friendly_name = _(
@@ -107,6 +109,7 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
             and treatment_outcome_transitioned
             and not_sent
             and adherence_total_doses_taken >= 180
+            and is_valid_episode_submission(episode_case)
         )
 
 
@@ -134,12 +137,14 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
             return voucher_count
 
         not_sent = voucher_case_properties.get("event_{}".format(DRUG_REFILL_EVENT)) != "sent"
+
         return (
             # TODO: Confirm state == "fulfilled"
             voucher_case_properties.get("state") == "fulfilled"
             and voucher_case_properties.get("type") == "prescription"
             and not_sent
             and case_properties_changed(voucher_case, ['state'])
+            and is_valid_voucher_submission(voucher_case)
             and _get_voucher_count() >= 2
         )
 
@@ -162,6 +167,7 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
             case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
             and case_properties_changed(episode_case, ["treatment_outcome"])
             and not_sent
+            and is_valid_episode_submission(episode_case)
         )
 
 
@@ -184,6 +190,7 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
             and case_properties.get("nikshay_registered") == 'true'
             and case_properties_changed(episode_case, ['nikshay_registered'])
             and not_sent
+            and is_valid_episode_submission(episode_case)
         )
 
 
@@ -210,6 +217,7 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
             and case_properties.get("nikshay_registered") == 'true'
             and case_properties_changed(episode_case, ['nikshay_registered'])
             and not_sent
+            and is_valid_episode_submission(episode_case)
         )
 
 

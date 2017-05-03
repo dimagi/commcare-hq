@@ -5,7 +5,7 @@ from custom.enikshay.exceptions import NikshayLocationNotFound, ENikshayCaseNotF
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_lab_referral_from_test,
-)
+    get_person_case_from_voucher)
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 
 
@@ -21,7 +21,10 @@ def _is_submission_from_test_location(case_id, owner_id):
 
 
 def is_valid_person_submission(person_case):
-    return not _is_submission_from_test_location(person_case.case_id, person_case.owner_id)
+    owner_id = person_case.owner_id
+    if owner_id == ARCHIVED_CASE_OWNER_ID:
+        owner_id = person_case.dynamic_case_properties.get("last_owner")
+    return not _is_submission_from_test_location(person_case.case_id, owner_id)
 
 
 def is_valid_episode_submission(episode_case):
@@ -29,7 +32,15 @@ def is_valid_episode_submission(episode_case):
         person_case = get_person_case_from_episode(episode_case.domain, episode_case)
     except ENikshayCaseNotFound:
         return False
-    return not _is_submission_from_test_location(person_case.case_id, person_case.owner_id)
+    return is_valid_person_submission(person_case)
+
+
+def is_valid_voucher_submission(voucher_case):
+    try:
+        person_case = get_person_case_from_voucher(voucher_case.domain, voucher_case)
+    except ENikshayCaseNotFound:
+        return False
+    return is_valid_person_submission(person_case)
 
 
 def is_valid_test_submission(test_case):

@@ -29,30 +29,26 @@ class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBa
 
     def test_trigger(self):
         # voucher not approved
-        case = create_and_save_a_case(
-            self.domain,
-            uuid.uuid4().hex,
-            case_type="voucher",
-            case_name="my voucher",
-            case_properties={
-                "voucher_type": "prescription",
-                'state': 'not approved'
-            },
-        )
+        self.create_case_structure()
+        self.assign_person_to_location(self.phi.location_id)
+        voucher = self.create_prescription_voucher({
+            "voucher_type": "prescription",
+            'state': 'not approved'
+        })
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # voucher approved
-        update_case(self.domain, case.case_id, {"state": "approved"})
+        update_case(self.domain, voucher.case_id, {"state": "approved"})
         self.assertEqual(1, len(self.repeat_records().all()))
 
         # Changing state to some other state doesn't create another record
-        update_case(self.domain, case.case_id, {"state": "foo"})
+        update_case(self.domain, voucher.case_id, {"state": "foo"})
         self.assertEqual(1, len(self.repeat_records().all()))
 
         # Approving voucher again doesn't create new record
         payload_generator = ChemistBETSVoucherPayloadGenerator(None)
-        payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), case, None)
-        update_case(self.domain, case.case_id, {"state": "approved"})
+        payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), voucher, None)
+        update_case(self.domain, voucher.case_id, {"state": "approved"})
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
@@ -69,16 +65,17 @@ class TestBETS180TreatmentRepeater(ENikshayLocationStructureMixin, ENikshayRepea
 
     def test_trigger(self):
         # episode that does not meet trigger
-        case = create_and_save_a_case(
+        cases = self.create_case_structure()
+        self.assign_person_to_location(self.phi.location_id)
+        update_case(
             self.domain,
-            uuid.uuid4().hex,
-            case_type="episode",
-            case_name="my episode",
-            case_properties={
+            self.episode_id,
+            {
                 'adherence_total_doses_taken': 150,
                 'treatment_outcome': 'not_evaluated'
             },
         )
+        case = cases[self.episode_id]
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # meet trigger conditions
@@ -111,6 +108,7 @@ class BETSDrugRefillRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeate
         # make prescription and episode too
         self.create_case_structure()
         voucher = self.create_prescription_voucher({"state": "foo"})
+        self.assign_person_to_location(self.phi.location_id)
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # update voucher to meet the trigger, but is only first voucher (need 2 to trigger)
@@ -145,15 +143,16 @@ class BETSSuccessfulTreatmentRepeaterTest(ENikshayLocationStructureMixin, ENiksh
 
     def test_trigger(self):
         # Create case that doesn't meet trigger
-        case = create_and_save_a_case(
+        cases = self.create_case_structure()
+        self.assign_person_to_location(self.phi.location_id)
+        update_case(
             self.domain,
-            uuid.uuid4().hex,
-            case_type="episode",
-            case_name="my episode",
-            case_properties={
+            self.episode_id,
+            {
                 'treatment_outcome': 'not_evaluated'
             },
         )
+        case = cases[self.episode_id]
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # Meet trigger
@@ -180,16 +179,17 @@ class BETSDiagnosisAndNotificationRepeaterTest(ENikshayLocationStructureMixin, E
 
     def test_trigger(self):
         # Create case that doesn't meet trigger
-        case = create_and_save_a_case(
+        cases = self.create_case_structure()
+        self.assign_person_to_location(self.phi.location_id)
+        update_case(
             self.domain,
-            uuid.uuid4().hex,
-            case_type="episode",
-            case_name="my episode",
-            case_properties={
+            self.episode_id,
+            {
                 'pending_registration': 'yes',
                 'nikshay_registered': 'false',
             },
         )
+        case = cases[self.episode_id]
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # Meet trigger
@@ -216,27 +216,24 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
 
     def test_trigger(self):
         # Create case that doesn't meet trigger
-        case = create_and_save_a_case(
+        cases = self.create_case_structure()
+        self.assign_person_to_location(self.phi.location_id)
+        update_case(
             self.domain,
-            uuid.uuid4().hex,
-            case_type="episode",
-            case_name="my episode",
-            case_properties={
-                'presumptive_referral_by_ayush': 'false',
-                'nikshay_registered': 'false',
-            },
+            self.episode_id,
+            {'presumptive_referral_by_ayush': 'false', 'nikshay_registered': 'false'},
         )
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # Meet trigger
         update_case(
-            self.domain, case.case_id, {"nikshay_registered": "true", 'presumptive_referral_by_ayush': "123"}
+            self.domain, self.episode_id, {"nikshay_registered": "true", 'presumptive_referral_by_ayush': "123"}
         )
         self.assertEqual(1, len(self.repeat_records().all()))
 
         # Make sure same case doesn't trigger event again
         payload_generator = BETSAYUSHReferralPayloadGenerator(None)
-        payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), case, None)
-        update_case(self.domain, case.case_id, {"nikshay_registered": "false"})
-        update_case(self.domain, case.case_id, {"nikshay_registered": "true"})
+        payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), cases[self.episode_id], None)
+        update_case(self.domain, self.episode_id, {"nikshay_registered": "false"})
+        update_case(self.domain, self.episode_id, {"nikshay_registered": "true"})
         self.assertEqual(1, len(self.repeat_records().all()))
