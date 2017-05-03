@@ -33,9 +33,9 @@ class ReportModuleSuiteHelper(object):
     def get_details(self):
         _load_reports(self.report_module)
         for config in self.report_module.report_configs:
-            for filter_slug, f in _MobileSelectFilterHelpers.get_filters(config, self.domain):
-                yield (_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
-                       _MobileSelectFilterHelpers.get_select_details(config, filter_slug, self.domain), True)
+            for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, self.domain):
+                yield (MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
+                       MobileSelectFilterHelpers.get_select_details(config, filter_slug, self.domain), True)
             yield (_get_select_detail_id(config), _get_select_details(config), True)
             yield (_get_summary_detail_id(config), _get_summary_details(config, self.domain), True)
 
@@ -55,12 +55,12 @@ def _get_config_entry(config, domain):
         ),
         datums=[
             SessionDatum(
-                detail_select=_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
-                id=_MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
-                nodeset=_MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug),
+                detail_select=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
+                id=MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
+                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug),
                 value='./@value',
             )
-            for filter_slug, f in _MobileSelectFilterHelpers.get_filters(config, domain)
+            for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, domain)
         ] + [
             SessionDatum(
                 detail_confirm=_get_summary_detail_id(config),
@@ -281,7 +281,7 @@ def _get_data_detail(config, domain):
 
     return Detail(
         id='reports.{}.data'.format(config.uuid),
-        nodeset='rows/row{}'.format(_MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)),
+        nodeset='rows/row{}'.format(MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)),
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
@@ -289,7 +289,7 @@ def _get_data_detail(config, domain):
     )
 
 
-class _MobileSelectFilterHelpers(object):
+class MobileSelectFilterHelpers(object):
 
     @staticmethod
     def get_options_nodeset(config, filter_slug):
@@ -316,7 +316,7 @@ class _MobileSelectFilterHelpers(object):
     @staticmethod
     def get_select_details(config, filter_slug, domain):
         detail = Detail(
-            id=_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
+            id=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
             title=Text(config.report(domain).get_ui_filter(filter_slug).label),
             fields=[
                 Field(
@@ -336,8 +336,8 @@ class _MobileSelectFilterHelpers(object):
         return ''.join([
             "[column[@id='{column_id}']=instance('commcaresession')/session/data/{datum_id}]".format(
                 column_id=config.report(domain).get_ui_filter(slug).field,
-                datum_id=_MobileSelectFilterHelpers.get_datum_id(config, slug))
-            for slug, f in _MobileSelectFilterHelpers.get_filters(config, domain)])
+                datum_id=MobileSelectFilterHelpers.get_datum_id(config, slug))
+            for slug, f in MobileSelectFilterHelpers.get_filters(config, domain)])
 
 
 def is_valid_mobile_select_filter_type(ui_filter):

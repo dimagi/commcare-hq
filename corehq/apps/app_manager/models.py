@@ -4201,7 +4201,7 @@ class ReportAppConfig(DocumentSchema):
     def complete_graph_configs(self, config, domain):
         graph_configs = {}
         from corehq.apps.userreports.reports.specs import MultibarChartSpec
-        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import _MobileSelectFilterHelpers
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MobileSelectFilterHelpers
         for chart_config in config.report(domain).charts:
             if isinstance(chart_config, MultibarChartSpec):
                 limited_graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
@@ -4215,7 +4215,7 @@ class ReportAppConfig(DocumentSchema):
                             "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
                             .format(
                                 config.uuid,
-                                _MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
+                                MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
                             )
                         ),
                         x_function="column[@id='{}']".format(chart_config.x_axis_column),
