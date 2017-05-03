@@ -935,7 +935,7 @@ class FormBase(DocumentSchema):
     def uses_cases(self):
         return (
             self.requires_case()
-            or self. get_action_type() == 'open'
+            or self.get_action_type() != 'none'
             or self.form_type == 'advanced_form'
         )
 
@@ -3050,28 +3050,34 @@ class ShadowForm(AdvancedForm):
 
     @staticmethod
     def _merge_actions(source_actions, extra_actions):
-        new_actions = OrderedDict(
-            (action.case_tag, LoadUpdateAction.wrap(action.to_json()))
+
+        new_actions = []
+        source_action_map = {
+            action.case_tag: action
             for action in source_actions.load_update_cases
-        )
+        }
+        overwrite_properties = [
+            "case_type",
+            "details_module",
+            "auto_select",
+            "load_case_from_fixture",
+            "show_product_stock",
+            "product_program",
+            "case_index",
+        ]
+
         for action in extra_actions.load_update_cases:
-            new_action = new_actions.get(action.case_tag, LoadUpdateAction(case_tag=action.case_tag))
-            overwrite_properties = [
-                "case_type",
-                "details_module",
-                "auto_select",
-                "load_case_from_fixture",
-                "show_product_stock",
-                "product_program",
-                "case_index",
-            ]
+            if action.case_tag in source_action_map:
+                new_action = LoadUpdateAction.wrap(source_action_map[action.case_tag].to_json())
+            else:
+                new_action = LoadUpdateAction(case_tag=action.case_tag)
+
             for prop in overwrite_properties:
                 setattr(new_action, prop, getattr(action, prop))
-            if action.case_tag not in new_actions:
-                new_actions[action.case_tag] = new_action
+            new_actions.append(new_action)
 
         return AdvancedFormActions(
-            load_update_cases=new_actions.values(),
+            load_update_cases=new_actions,
             open_cases=source_actions.open_cases,  # Shadow form is not allowed to specify any open case actions
         )
 

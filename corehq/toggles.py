@@ -1,3 +1,4 @@
+from datetime import datetime
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -51,7 +52,7 @@ class StaticToggle(object):
 
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
-                 always_disabled=None):
+                 always_disabled=None, enabled_for_new_domains_after=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -63,17 +64,25 @@ class StaticToggle(object):
         self.save_fn = save_fn
         self.always_enabled = always_enabled or set()
         self.always_disabled = always_disabled or set()
+        self.enabled_for_new_domains_after = enabled_for_new_domains_after
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
 
-    def enabled(self, item, **kwargs):
+    def enabled(self, item, namespace=None):
         if item in self.always_enabled:
             return True
         elif item in self.always_disabled:
             return False
-        return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in self.namespaces])
+        enabled_after = self.enabled_for_new_domains_after
+        if (enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
+                and was_domain_created_after(item, enabled_after)):
+            return True
+        if namespace is not None:
+            ns = None if namespace == NAMESPACE_USER else namespace
+            return toggle_enabled(self.slug, item, ns)
+        return any([toggle_enabled(self.slug, item, namespace=n) for n in self.namespaces])
 
     def enabled_for_request(self, request):
         return (
@@ -83,7 +92,7 @@ class StaticToggle(object):
         ) or (
             NAMESPACE_DOMAIN in self.namespaces
             and hasattr(request, 'domain')
-            and toggle_enabled(self.slug, request.domain, NAMESPACE_DOMAIN)
+            and self.enabled(request.domain, NAMESPACE_DOMAIN)
         )
 
     def set(self, item, enabled, namespace=None):
@@ -121,6 +130,22 @@ class StaticToggle(object):
             return [user.split('domain:')[1] for user in enabled_users if 'domain:' in user]
         except ResourceNotFound:
             return []
+
+
+def was_domain_created_after(domain, checkpoint):
+    """
+    Return true if domain was created after checkpoint
+
+    :param domain: Domain name (string).
+    :param checkpoint: datetime object.
+    """
+    from corehq.apps.domain.models import Domain
+    domain_obj = Domain.get_by_name(domain)
+    return (
+        domain_obj is not None and
+        domain_obj.date_created is not None and
+        domain_obj.date_created > checkpoint
+    )
 
 
 def deterministic_random(input_string):
@@ -373,7 +398,14 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     description=(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
-    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting', 
+    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
+)
+
+EXPORT_NO_SORT = StaticToggle(
+    'export_no_sort',
+    'Do not sort exports',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -427,7 +459,9 @@ HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
     description=(
-        "Do not turn this feature flag.  It is only used for providing compatability for old projects.  We are actively trying to remove projects from this list."
+        "Do not turn this feature flag.  It is only used for providing "
+        "compatability for old projects.  We are actively trying to remove "
+        "projects from this list."
     ),
 )
 
@@ -708,6 +742,13 @@ NINETYNINE_DOTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ENIKSHAY_API = StaticToggle(
+    'enikshay_api',
+    'Enable access to eNikshay api endpoints',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER]
+)
+
 NIKSHAY_INTEGRATION = StaticToggle(
     'nikshay_integration',
     'Enable patient registration in Nikshay',
@@ -859,7 +900,8 @@ TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
-    'Allow specifying a custom base URL for an application. Main use case is to allow migrating ICDS to a new cluster.',
+    'Allow specifying a custom base URL for an application. Main use case is '
+    'to allow migrating ICDS to a new cluster.',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
@@ -1021,7 +1063,8 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     'user_property_easy_refs',
     'Easy-reference user properties in the form builder.',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    enabled_for_new_domains_after=datetime(2017, 5, 3, 20),  # 8pm UTC
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(

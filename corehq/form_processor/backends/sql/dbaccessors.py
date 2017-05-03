@@ -531,13 +531,6 @@ class FormAccessorSQL(AbstractFormAccessor):
             )
 
     @staticmethod
-    @unit_testing_only
-    @transaction.atomic
-    def delete_all_forms(domain=None, user_id=None):
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute('SELECT delete_all_forms(%s, %s)', [domain, user_id])
-
-    @staticmethod
     def get_deleted_form_ids_for_user(domain, user_id):
         return FormAccessorSQL._get_form_ids_for_user(
             domain,
@@ -628,6 +621,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             cases = _order_list(case_ids, cases, 'case_id')
 
         return cases
+
+    @staticmethod
+    def case_exists(case_id):
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+        db = get_db_alias_for_partitioned_doc(case_id)
+        return CommCareCaseSQL.objects.using(db).filter(case_id=case_id).exists()
 
     @staticmethod
     def get_case_xform_ids(case_id):
@@ -785,12 +784,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
-
-    @staticmethod
-    @unit_testing_only
-    def delete_all_cases(domain=None):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT delete_all_cases(%s)', [domain])
 
     @staticmethod
     @transaction.atomic

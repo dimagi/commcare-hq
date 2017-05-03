@@ -346,6 +346,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         """
         return safe_index({'form': self.form_data}, path.split("/"))
 
+    @memoized
     def get_xml(self):
         return self.get_attachment('form.xml')
 
