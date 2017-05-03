@@ -11,8 +11,8 @@ from custom.enikshay.case_utils import (
 )
 from custom.enikshay.integrations.bets.const import TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT, \
     DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT
-from custom.enikshay.integrations.utils import case_properties_changed, is_valid_bets_repeater_episode, \
-    is_valid_voucher_submission
+from custom.enikshay.integrations.utils import case_properties_changed, is_valid_episode_submission, \
+    is_valid_voucher_submission, is_valid_archived_submission
 
 
 class BaseBETSRepeater(CaseRepeater):
@@ -109,7 +109,7 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
             and treatment_outcome_transitioned
             and not_sent
             and adherence_total_doses_taken >= 180
-            and is_valid_bets_repeater_episode(episode_case)
+            and is_valid_episode_submission(episode_case)
         )
 
 
@@ -169,7 +169,7 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
             case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
             and case_properties_changed(episode_case, ["treatment_outcome"])
             and not_sent
-            and is_valid_bets_repeater_episode(episode_case)
+            and is_valid_archived_submission(episode_case)
         )
 
 
@@ -192,7 +192,7 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
             and case_properties.get("nikshay_registered") == 'true'
             and case_properties_changed(episode_case, ['nikshay_registered'])
             and not_sent
-            and is_valid_bets_repeater_episode(episode_case)
+            and is_valid_episode_submission(episode_case)
         )
 
 
@@ -219,7 +219,7 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
             and case_properties.get("nikshay_registered") == 'true'
             and case_properties_changed(episode_case, ['nikshay_registered'])
             and not_sent
-            and is_valid_bets_repeater_episode(episode_case)
+            and is_valid_episode_submission(episode_case)
         )
 
 
