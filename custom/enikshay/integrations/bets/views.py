@@ -66,7 +66,7 @@ class IncentiveUpdate(jsonobject.JsonObject):
     payment_amount = jsonobject.DecimalProperty(required=False)
     failure_description = jsonobject.StringProperty(required=False)
     bets_parent_event_id = jsonobject.StringProperty(
-        required=False, choices=BETS_EVENT_IDS.values())
+        required=False, choices=BETS_EVENT_IDS)
 
     case_type = CASE_TYPE_EPISODE
 
