@@ -108,25 +108,20 @@ def _get_select_details(config):
 def _get_summary_details(config, domain):
     def _get_graph_fields():
         from corehq.apps.userreports.reports.specs import MultibarChartSpec
-        # todo: make this less hard-coded
+        from corehq.apps.app_manager.models import GraphConfiguration
         for chart_config in config.report(domain).charts:
             if isinstance(chart_config, MultibarChartSpec):
-                graph_config = config.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
+                graph_config = config.complete_graph_configs(config, domain).get(chart_config.chart_id, GraphConfiguration())
 
-                def _column_to_series(column):
+                # GraphSeries => xml_models.Series 
+                def _series_to_series(series):
                     return Series(
-                        nodeset=(
-                            "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
-                            .format(
-                                config.uuid,
-                                _MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
-                            )
-                        ),
-                        x_function="column[@id='{}']".format(chart_config.x_axis_column),
-                        y_function="column[@id='{}']".format(column),
+                        nodeset=series.data_path,
+                        x_function=series.x_function,
+                        y_function=series.y_function,
                         configuration=ConfigurationGroup(configs=[
                             ConfigurationItem(id=key, xpath_function=value)
-                            for key, value in graph_config.series_configs.get(column, {}).items()
+                            for key, value in series.config.items()
                         ])
                     )
                 yield Field(
@@ -135,7 +130,7 @@ def _get_summary_details(config, domain):
                         form='graph',
                         graph=Graph(
                             type=graph_config.graph_type,
-                            series=[_column_to_series(c.column_id) for c in chart_config.y_axis_columns],
+                            series=[_series_to_series(s) for s in graph_config.series],
                             configuration=ConfigurationGroup(configs=[
                                 ConfigurationItem(id=key, xpath_function=value)
                                 for key, value in graph_config.config.items()

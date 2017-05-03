@@ -4196,6 +4196,36 @@ class ReportAppConfig(DocumentSchema):
     use_xpath_description = BooleanProperty(default=False)
     show_data_table = BooleanProperty(default=True)
     graph_configs = DictProperty(ReportGraphConfig)
+    #complete_graph_configs = DictProperty(GraphConfiguration)
+
+    def complete_graph_configs(self, config, domain):
+        graph_configs = {}
+        from corehq.apps.userreports.reports.specs import MultibarChartSpec
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import _MobileSelectFilterHelpers
+        for chart_config in config.report(domain).charts:
+            if isinstance(chart_config, MultibarChartSpec):
+                limited_graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
+                graph_configs[chart_config.chart_id] = GraphConfiguration(
+                    graph_type=limited_graph_config.graph_type,
+                    config=limited_graph_config.config,
+                    series=[GraphSeries(
+                        config=limited_graph_config.series_configs.get(c.column_id, {}),
+                        locale_specific_config={},
+                        data_path=(
+                            "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
+                            .format(
+                                config.uuid,
+                                _MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
+                            )
+                        ),
+                        x_function="column[@id='{}']".format(chart_config.x_axis_column),
+                        y_function="column[@id='{}']".format(c.column_id),
+                    ) for c in chart_config.y_axis_columns],
+                    locale_specific_config={},
+                    annotations=[]
+                )
+        return graph_configs
+
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
 
