@@ -5,14 +5,19 @@
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
-
+{% load compress %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'style/js/ui-element.js' %}"></script>
-{% if strong_mobile_passwords and not hide_password_feedback %}
-    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-    <script src="{% static 'registration/js/password.js' %}"></script>
-{% endif %}
+    {% if strong_mobile_passwords and not hide_password_feedback %}
+        <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+        <script src="{% static 'registration/js/password.js' %}"></script>
+    {% endif %}
+    {% if implement_password_hashing %}
+    {% compress js %}
+        <script src="{% static 'domain/js/encoder.js' %}"></script>
+    {% endcompress %}
+    {% endif %}
     <script src="{% static 'users/js/edit_commcare_user.js' %}"></script>
 {% endblock %}
 

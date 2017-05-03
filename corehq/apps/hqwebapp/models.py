@@ -1,5 +1,5 @@
 from collections import namedtuple
-
+from django.contrib.auth.models import User
 from django.db import models
 
 from corehq.util.markup import mark_up_urls
@@ -27,5 +27,18 @@ class MaintenanceAlert(models.Model):
     @property
     def html(self):
         return mark_up_urls(self.text)
+
+
+class HashedPasswordLoginAttempt(models.Model):
+    username = models.CharField(max_length=255, db_index=True)
+    password_hash = models.CharField(max_length=255)
+    used_at = models.DateTimeField(auto_now_add=True)
+
+
+class UsedPasswords(models.Model):
+    user = models.ForeignKey(User, db_index=True)
+    password_hash = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+
 
 from .signals import *
