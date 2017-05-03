@@ -48,18 +48,12 @@ def _process_form(request, domain, app_id, user_id, authenticated,
     if should_ignore_submission(request):
         # silently ignore submission if it meets ignore-criteria
         response = SubmissionPost.submission_ignored_response()
-        datadog_counter('commcare.xform_submissions.count', tags=metic_tags + [
-            'status_code:{}'.format(response.status_code),
-            'submission_type:{}'.format('ignored')
-        ])
+        _record_metrics(metic_tags, 'ignored', response)
         return response
 
     if toggles.FORM_SUBMISSION_BLACKLIST.enabled(domain):
         response = SubmissionPost.get_blacklisted_response()
-        datadog_counter('commcare.xform_submissions.count', tags=metic_tags + [
-            'status_code:{}'.format(response.status_code),
-            'submission_type:{}'.format('blacklisted')
-        ])
+        _record_metrics(metic_tags, 'blacklisted', response)
         return response
 
     with TimingContext() as timer:
@@ -83,10 +77,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             log_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, details)
             notify_exception(request, "Received a submission with POST.keys()", details)
             response = HttpResponseBadRequest(e.message)
-            datadog_counter('commcare.xform_submissions.count', tags=metic_tags + [
-                'status_code:{}'.format(response.status_code),
-                'submission_type:{}'.format('unknown')
-            ])
+            _record_metrics(metic_tags, 'unknown', response)
             return response
 
         app_id, build_id = get_app_and_build_ids(domain, app_id)
@@ -114,26 +105,29 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
     response = result.response
 
-    metic_tags += 'submission_type:{}'.format(result.submission_type),
-    datadog_counter('commcare.xform_submissions.count', tags=metic_tags + [
-        'status_code:{}'.format(response.status_code)
-    ])
-
     if response.status_code == 400:
         logging.error(
             'Status code 400 for a form submission. '
             'Response is: \n{0}\n'
         )
-    elif response.status_code == 201:
 
-        datadog_gauge('commcare.xform_submissions.timings', timer.duration, tags=metic_tags)
-        # normalize over number of items (form or case) saved
-        normalized_time = timer.duration / (1 + len(result.cases))
-        datadog_gauge('commcare.xform_submissions.normalized_timings', normalized_time, tags=metic_tags)
-        datadog_counter('commcare.xform_submissions.case_count', len(result.cases), tags=metic_tags)
-        datadog_counter('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=metic_tags)
+    _record_metrics(metic_tags, result.submission_type, response, result, timer)
 
     return response
+
+
+def _record_metrics(base_tags, submission_type, response, result=None, timer=None):
+    base_tags += 'submission_type:{}'.format(submission_type),
+    datadog_counter('commcare.xform_submissions.count', tags=base_tags + [
+        'status_code:{}'.format(response.status_code)
+    ])
+    if response.status_code == 201 and timer and result:
+        datadog_gauge('commcare.xform_submissions.timings', timer.duration, tags=base_tags)
+        # normalize over number of items (form or case) saved
+        normalized_time = timer.duration / (1 + len(result.cases))
+        datadog_gauge('commcare.xform_submissions.normalized_timings', normalized_time, tags=base_tags)
+        datadog_counter('commcare.xform_submissions.case_count', len(result.cases), tags=base_tags)
+        datadog_counter('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=base_tags)
 
 
 @csrf_exempt
