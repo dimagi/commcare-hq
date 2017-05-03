@@ -4195,10 +4195,10 @@ class ReportAppConfig(DocumentSchema):
     xpath_description = StringProperty()
     use_xpath_description = BooleanProperty(default=False)
     show_data_table = BooleanProperty(default=True)
-    graph_configs = DictProperty(ReportGraphConfig)
-    #complete_graph_configs = DictProperty(GraphConfiguration)
+    graph_configs = DictProperty(ReportGraphConfig) # deprecated
+    complete_graph_configs = DictProperty(GraphConfiguration)
 
-    def complete_graph_configs(self, config, domain):
+    def migrate_graph_configs(self, config, domain):
         graph_configs = {}
         from corehq.apps.userreports.reports.specs import MultibarChartSpec
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MobileSelectFilterHelpers
@@ -4224,7 +4224,8 @@ class ReportAppConfig(DocumentSchema):
                     locale_specific_config={},
                     annotations=[]
                 )
-        return graph_configs
+        self.complete_graph_configs = graph_configs
+        return self.complete_graph_configs
 
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
