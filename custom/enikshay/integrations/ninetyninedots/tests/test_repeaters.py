@@ -270,6 +270,20 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
         person_case_properties = person_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
         person_locations = get_person_locations(person_case)
+        locations = {
+            u"state_code": person_locations.sto,
+            u"district_code": person_locations.dto,
+            u"tu_code": person_locations.tu,
+        }
+        if sector == 'public':
+            locations.update({
+                u"phi_code": person_locations.phi,
+            })
+        else:
+            locations.update({
+                u"he_code": person_locations.pcp,
+            })
+
         expected_numbers = u"+91{}, +91{}".format(
             self.primary_phone_number.replace("0", ""),
             self.secondary_phone_number.replace("0", "")
@@ -278,10 +292,6 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             u"beneficiary_id": self.person_id,
             u"first_name": person_case_properties.get(PERSON_FIRST_NAME, None),
             u"last_name": person_case_properties.get(PERSON_LAST_NAME, None),
-            u"state_code": person_locations.sto,
-            u"district_code": person_locations.dto,
-            u"tu_code": person_locations.tu,
-            u"phi_code": person_locations.phi,
             u"phone_numbers": expected_numbers,
             u"merm_params": {
                 u"IMEI": person_case_properties.get(MERM_ID, None),
@@ -296,6 +306,7 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             u"address": person_case_properties.get(CURRENT_ADDRESS),
             u"sector": sector,
         }
+        expected_payload.update(locations)
         actual_payload = json.loads(self._get_actual_payload(casedb))
         self.assertDictEqual(expected_payload, actual_payload)
 
@@ -328,7 +339,7 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         self.person.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'
         self.maxDiff = None
         cases = self.create_case_structure()
-        cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
+        cases[self.person_id] = self.assign_person_to_location(self.pcp.location_id)
         self._assert_payload_equal(cases, sector='private')
 
     def test_handle_success(self):

@@ -70,7 +70,8 @@ class PatientPayload(jsonobject.JsonObject):
     state_code = jsonobject.StringProperty(required=False)
     district_code = jsonobject.StringProperty(required=False)
     tu_code = jsonobject.StringProperty(required=False)
-    phi_code = jsonobject.StringProperty(required=False)
+    phi_code = jsonobject.StringProperty(required=False, exclude_if_none=True)
+    he_code = jsonobject.StringProperty(required=False, exclude_if_none=True)
 
     phone_numbers = jsonobject.StringProperty(required=False)
     merm_params = jsonobject.ObjectProperty(MermParams, required=False)
@@ -85,17 +86,29 @@ class PatientPayload(jsonobject.JsonObject):
         person_case_properties = person_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
         person_locations = get_person_locations(person_case)
+        try:
+            locations = dict(
+                state_code=person_locations.sto,
+                district_code=person_locations.dto,
+                tu_code=person_locations.tu,
+                phi_code=person_locations.phi,
+            )
+        except AttributeError:
+            locations = dict(
+                state_code=person_locations.sto,
+                district_code=person_locations.dto,
+                tu_code=person_locations.tu,
+                he_code=person_locations.pcp,
+            )
+
         merm_params = MermParams(
             IMEI=person_case_properties.get(MERM_ID, None),
         )
+
         return cls(
             beneficiary_id=person_case.case_id,
             first_name=person_case_properties.get(PERSON_FIRST_NAME, None),
             last_name=person_case_properties.get(PERSON_LAST_NAME, None),
-            state_code=person_locations.sto,
-            district_code=person_locations.dto,
-            tu_code=person_locations.tu,
-            phi_code=person_locations.phi,
             phone_numbers=_get_phone_numbers(person_case_properties),
             merm_params=merm_params,
             treatment_start_date=episode_case_properties.get(TREATMENT_START_DATE, None),
@@ -111,6 +124,7 @@ class PatientPayload(jsonobject.JsonObject):
             weight_band=episode_case_properties.get(WEIGHT_BAND),
             address=person_case_properties.get(CURRENT_ADDRESS),
             sector='private' if person_case_properties.get(ENROLLED_IN_PRIVATE) == 'true' else 'public',
+            **locations
         )
 
 
