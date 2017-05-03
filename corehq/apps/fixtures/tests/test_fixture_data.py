@@ -188,7 +188,7 @@ class FixtureDataTest(TestCase):
         self.addCleanup(empty_data_type.delete)
         get_fixture_data_types_in_domain.clear(self.domain)
 
-        fixtures = fixturegenerators.item_lists(self.user.to_ota_restore_user(), V2)
+        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
         self.assertEqual(2, len(fixtures))
         check_xml_line_by_line(
             self,
