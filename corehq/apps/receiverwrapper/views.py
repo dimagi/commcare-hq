@@ -41,12 +41,26 @@ from corehq import toggles
 
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
+    metic_tags = [
+        'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
+        u'domain:{}'.format(domain),
+    ]
     if should_ignore_submission(request):
         # silently ignore submission if it meets ignore-criteria
-        return SubmissionPost.submission_ignored_response()
+        response = SubmissionPost.submission_ignored_response()
+        datadog_counter('commcare.xform_submissions.count', tags=metic_tags + [
+            'status_code:{}'.format(response.status_code),
+            'submission_type:{}'.format('ignored')
+        ])
+        return response
 
     if toggles.FORM_SUBMISSION_BLACKLIST.enabled(domain):
-        return SubmissionPost.get_blacklisted_response()
+        response = SubmissionPost.get_blacklisted_response()
+        datadog_counter('commcare.xform_submissions.count', tags=metic_tags + [
+            'status_code:{}'.format(response.status_code),
+            'submission_type:{}'.format('blacklisted')
+        ])
+        return response
 
     try:
         instance, attachments = couchforms.get_instance_and_attachment(request)
@@ -67,7 +81,12 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         }
         log_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, details)
         notify_exception(request, "Received a submission with POST.keys()", details)
-        return HttpResponseBadRequest(e.message)
+        response = HttpResponseBadRequest(e.message)
+        datadog_counter('commcare.xform_submissions.count', tags=metic_tags + [
+            'status_code:{}'.format(response.status_code),
+            'submission_type:{}'.format('unknown')
+        ])
+        return response
 
     app_id, build_id = get_app_and_build_ids(domain, app_id)
     submission_post = SubmissionPost(
@@ -94,12 +113,10 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
     response = result.response
 
-    tags = [
-        'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
-        'submission_type:{}'.format(result.submission_type),
-        u'domain:{}'.format(domain),
-    ]
-    datadog_counter('commcare.xform_submissions.count', tags=tags + ['status_code:{}'.format(response.status_code)])
+    metic_tags += 'submission_type:{}'.format(result.submission_type),
+    datadog_counter('commcare.xform_submissions.count', tags=metic_tags + [
+        'status_code:{}'.format(response.status_code)
+    ])
 
     if response.status_code == 400:
         logging.error(
@@ -108,12 +125,12 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         )
     elif response.status_code == 201:
 
-        datadog_gauge('commcare.xform_submissions.timings', timer.duration, tags=tags)
+        datadog_gauge('commcare.xform_submissions.timings', timer.duration, tags=metic_tags)
         # normalize over number of items (form or case) saved
         normalized_time = timer.duration / (1 + len(result.cases))
-        datadog_gauge('commcare.xform_submissions.normalized_timings', normalized_time, tags=tags)
-        datadog_counter('commcare.xform_submissions.case_count', len(result.cases), tags=tags)
-        datadog_counter('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=tags)
+        datadog_gauge('commcare.xform_submissions.normalized_timings', normalized_time, tags=metic_tags)
+        datadog_counter('commcare.xform_submissions.case_count', len(result.cases), tags=metic_tags)
+        datadog_counter('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=metic_tags)
 
     return response
 
