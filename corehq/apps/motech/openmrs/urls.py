@@ -12,12 +12,4 @@ urlpatterns = [
     url(r'^rest/concept/sync/$',
         views.sync_concepts,
         name='openmrs_sync_concepts'),
-
-    # patients
-    url(r'^rest/patientidentifiertype/$',
-        views.all_patient_identifier_types,
-        name='openmrs_all_patient_identifier_types'),
-    url(r'^rest/patient/$',
-        views.search_patients,
-        name='openmrs_search_patients'),
 ]
