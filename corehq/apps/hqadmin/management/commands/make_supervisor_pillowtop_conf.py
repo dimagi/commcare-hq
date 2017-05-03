@@ -24,7 +24,7 @@ class Command(SupervisorConfCommand):
             }
             pillow_params.update(params)
             for process_number in range(num_processes):
-                pillow_params.update({'process_num', process_number})
+                pillow_params.update({'process_num': process_number})
                 pillow_rendering = super(Command, self).render_configuration_file(conf_template_string, pillow_params)
                 configs.append(pillow_rendering)
         return '\n\n'.join(configs)
