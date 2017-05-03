@@ -1632,22 +1632,6 @@ PILLOWTOPS = {
             }
         },
         {
-            'name': 'kafka-ucr-static-08',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
-            'params': {
-                'ucr_division': '08'
-            }
-        },
-        {
-            'name': 'kafka-ucr-static-9f',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
-            'params': {
-                'ucr_division': '9f'
-            }
-        },
-        {
             'name': 'ReportCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
@@ -1691,16 +1675,6 @@ PILLOWTOPS = {
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'experimental': [
-        {
-            'name': 'BlobDeletionPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_main_blob_deletion_pillow',
-        },
-        {
-            'name': 'ApplicationBlobDeletionPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_application_blob_deletion_pillow',
-        },
         {
             'name': 'CaseSearchToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
