@@ -2028,3 +2028,5 @@ if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
     SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
+
+CSRF_COOKIE_HTTPONLY = True
