@@ -1,7 +1,5 @@
-import uuid
 from django.test import override_settings
 
-from corehq.util.test_utils import create_and_save_a_case
 from custom.enikshay.integrations.bets.repeater_generators import ChemistBETSVoucherPayloadGenerator, \
     BETS180TreatmentPayloadGenerator, BETSSuccessfulTreatmentPayloadGenerator, \
     BETSDiagnosisAndNotificationPayloadGenerator, BETSAYUSHReferralPayloadGenerator
