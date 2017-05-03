@@ -9,6 +9,8 @@ from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
+from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
+from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
 
 from dimagi.utils.logging import notify_exception
 
@@ -28,8 +30,6 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.util import (
     get_app_manager_template,
-    get_casedb_schema,
-    get_session_schema,
     app_callout_templates,
     is_usercase_in_use,
 )
