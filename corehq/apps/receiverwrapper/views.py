@@ -62,53 +62,54 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         ])
         return response
 
-    try:
-        instance, attachments = couchforms.get_instance_and_attachment(request)
-    except MultimediaBug as e:
-        try:
-            instance = request.FILES[MAGIC_PROPERTY].read()
-            xform = convert_xform_to_json(instance)
-            meta = xform.get("meta", {})
-        except:
-            meta = {}
-
-        details = {
-            "domain": domain,
-            "app_id": app_id,
-            "user_id": user_id,
-            "authenticated": authenticated,
-            "form_meta": meta,
-        }
-        log_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, details)
-        notify_exception(request, "Received a submission with POST.keys()", details)
-        response = HttpResponseBadRequest(e.message)
-        datadog_counter('commcare.xform_submissions.count', tags=metic_tags + [
-            'status_code:{}'.format(response.status_code),
-            'submission_type:{}'.format('unknown')
-        ])
-        return response
-
-    app_id, build_id = get_app_and_build_ids(domain, app_id)
-    submission_post = SubmissionPost(
-        instance=instance,
-        attachments=attachments,
-        domain=domain,
-        app_id=app_id,
-        build_id=build_id,
-        auth_context=auth_cls(
-            domain=domain,
-            user_id=user_id,
-            authenticated=authenticated,
-        ),
-        location=couchforms.get_location(request),
-        received_on=couchforms.get_received_on(request),
-        date_header=couchforms.get_date_header(request),
-        path=couchforms.get_path(request),
-        submit_ip=couchforms.get_submit_ip(request),
-        last_sync_token=couchforms.get_last_sync_token(request),
-        openrosa_headers=couchforms.get_openrosa_headers(request),
-    )
     with TimingContext() as timer:
+        try:
+            instance, attachments = couchforms.get_instance_and_attachment(request)
+        except MultimediaBug as e:
+            try:
+                instance = request.FILES[MAGIC_PROPERTY].read()
+                xform = convert_xform_to_json(instance)
+                meta = xform.get("meta", {})
+            except:
+                meta = {}
+
+            details = {
+                "domain": domain,
+                "app_id": app_id,
+                "user_id": user_id,
+                "authenticated": authenticated,
+                "form_meta": meta,
+            }
+            log_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, details)
+            notify_exception(request, "Received a submission with POST.keys()", details)
+            response = HttpResponseBadRequest(e.message)
+            datadog_counter('commcare.xform_submissions.count', tags=metic_tags + [
+                'status_code:{}'.format(response.status_code),
+                'submission_type:{}'.format('unknown')
+            ])
+            return response
+
+        app_id, build_id = get_app_and_build_ids(domain, app_id)
+        submission_post = SubmissionPost(
+            instance=instance,
+            attachments=attachments,
+            domain=domain,
+            app_id=app_id,
+            build_id=build_id,
+            auth_context=auth_cls(
+                domain=domain,
+                user_id=user_id,
+                authenticated=authenticated,
+            ),
+            location=couchforms.get_location(request),
+            received_on=couchforms.get_received_on(request),
+            date_header=couchforms.get_date_header(request),
+            path=couchforms.get_path(request),
+            submit_ip=couchforms.get_submit_ip(request),
+            last_sync_token=couchforms.get_last_sync_token(request),
+            openrosa_headers=couchforms.get_openrosa_headers(request),
+        )
+
         result = submission_post.run()
 
     response = result.response
