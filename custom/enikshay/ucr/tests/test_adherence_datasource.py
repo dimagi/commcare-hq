@@ -1,6 +1,5 @@
+import datetime
 import mock
-import pytz
-from datetime import datetime
 
 from django.test import TestCase
 
@@ -110,16 +109,16 @@ class TestAdherenceUCRSource(TestCase):
     def test_basic(self):
         simple_data = [
             # (case_id, adherence_date, adherence_value, source, closed, closure_reason, modified_on)
-            (_uid(1), datetime(2016, 1, 21), DTIndicators[0], 'enikshay', False, None, None),
-            (_uid(2), datetime(2016, 1, 21), DOSE_UNKNOWN, 'enikshay', False, None, None),
-            (_uid(3), datetime(2016, 1, 22), DTIndicators[0], 'enikshay', False, None, None),
-            (_uid(4), datetime(2016, 1, 24), DTIndicators[0], 'enikshay', False, None, None),
+            (_uid(1), datetime.date(2016, 1, 21), DTIndicators[0], 'enikshay', False, None, None),
+            (_uid(2), datetime.date(2016, 1, 21), DOSE_UNKNOWN, 'enikshay', False, None, None),
+            (_uid(3), datetime.date(2016, 1, 22), DTIndicators[0], 'enikshay', False, None, None),
+            (_uid(4), datetime.date(2016, 1, 24), DTIndicators[0], 'enikshay', False, None, None),
         ]
         self.create_adherence_cases(simple_data)
 
         # test latest adhernece date
         result = self.data_store.latest_adherence_date(self.episode_id)
-        self.assertEqual(result, pytz.UTC.localize(datetime(2016, 1, 24)))
+        self.assertEqual(result, datetime.date(2016, 1, 24))
 
         # 'adherence2' case has DOSE_UNKNOWN so should be excluded
         result = self.data_store.dose_known_adherences(self.episode_id)
