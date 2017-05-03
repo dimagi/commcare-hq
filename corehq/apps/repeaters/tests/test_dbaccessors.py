@@ -94,7 +94,7 @@ class TestRepeatRecordDBAccessors(TestCase):
 
     def test_get_repeat_record_count_with_state_and_no_repeater(self):
         count = get_repeat_record_count(self.domain, state=RECORD_PENDING_STATE)
-        self.assertEqual(count, 6)
+        self.assertEqual(count, 3)
 
     def test_get_repeat_record_count_with_repeater_id_and_no_state(self):
         count = get_repeat_record_count(self.domain, repeater_id=self.other_id)
