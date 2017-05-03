@@ -133,7 +133,9 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
             # This is an expensive operation, so only call this function if all other conditions are true.
             voucher_count = episode_case_properties.get('approved_voucher_count', 0)
             if voucher_count < 2:
-                voucher_count = len(get_approved_prescription_vouchers_from_episode(episode.domain, episode.case_id))
+                voucher_count = len(
+                    get_approved_prescription_vouchers_from_episode(episode.domain, episode.case_id)
+                )
             return voucher_count
 
         not_sent = voucher_case_properties.get("event_{}".format(DRUG_REFILL_EVENT)) != "sent"
