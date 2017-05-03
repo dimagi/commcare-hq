@@ -382,6 +382,10 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         childView: Views.GridCaseTileViewItem,
     });
 
+    Views.CaseListDetailView = Views.CaseListView.extend({
+        template: "#case-view-list-detail-template",
+    });
+
     Views.BreadcrumbView = Marionette.ItemView.extend({
         tagName: "li",
         template: "#breadcrumb-item-template",

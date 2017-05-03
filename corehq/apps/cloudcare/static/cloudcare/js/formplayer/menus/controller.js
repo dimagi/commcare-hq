@@ -140,7 +140,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     styles: detailObject.get('styles'),
                     title: detailObject.get('title'),
                 };
-                return new Menus.Views.CaseListView(menuData);
+                return new Menus.Views.CaseListDetailView(menuData);
             }
 
             var headers = detailObject.get('headers');
