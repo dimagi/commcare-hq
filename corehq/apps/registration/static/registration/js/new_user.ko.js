@@ -54,7 +54,7 @@ hqDefine('registration/js/new_user.ko.js', function () {
 
     module.initRMI = function (rmiUrl) {
         _private.rmiUrl = rmiUrl;
-        _private.csrf = $("#csrfTokenContainer").val();
+        _private.csrf = $.cookie('csrftoken');
 
         _private.rmi = function (remoteMethod, data, options) {
             options = options || {};

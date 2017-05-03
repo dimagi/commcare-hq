@@ -115,7 +115,7 @@ function CustomDataFieldsModel () {
 
         $("<input type='hidden'>")
             .attr("name", 'csrfmiddlewaretoken')
-            .attr("value", $("#csrfTokenContainer").val())
+            .attr("value", $.cookie('csrftoken'))
             .appendTo(customDataFieldsForm);
 
         $('<input type="hidden">')

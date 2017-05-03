@@ -27,7 +27,7 @@ hqDefine("app_manager/js/form_designer.js", function() {
                     }
                 },
             },
-            csrftoken: $("#csrfTokenContainer").val(),
+            csrftoken: $.cookie('csrftoken'),
         });
 
         // Add callbacks to core, which has already been provided by the server
