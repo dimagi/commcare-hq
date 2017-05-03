@@ -317,9 +317,9 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self._processor.rebuild_table(sql_adapter)
 
 
-# TODO(Emord) make other pillows support params dictionary
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
-                         include_ucrs=None, exclude_ucrs=None, topics=None):
+                         include_ucrs=None, exclude_ucrs=None, topics=None,
+                         **kwargs):
     topics = topics or KAFKA_TOPICS
     topics = [kafka_bytestring(t) for t in topics]
     return ConfigurableReportKafkaPillow(
@@ -336,7 +336,8 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
 
 
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
-                                include_ucrs=None, exclude_ucrs=None, topics=None):
+                                include_ucrs=None, exclude_ucrs=None, topics=None,
+                                **kwargs):
     topics = topics or KAFKA_TOPICS
     topics = [kafka_bytestring(t) for t in topics]
     return ConfigurableReportKafkaPillow(

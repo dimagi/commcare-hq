@@ -23,7 +23,7 @@ class GroupsToUsersProcessor(PillowProcessor):
             update_es_user_with_groups(change.get_document(), self._es)
 
 
-def get_group_to_user_pillow(pillow_id='GroupToUserPillow'):
+def get_group_to_user_pillow(pillow_id='GroupToUserPillow', **kwargs):
     assert pillow_id == 'GroupToUserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
     processor = GroupsToUsersProcessor()

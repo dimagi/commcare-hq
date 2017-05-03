@@ -29,7 +29,7 @@ def transform_domain_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow'):
+def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', **kwargs):
     assert pillow_id == 'KafkaDomainPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, DOMAIN_INDEX_INFO)
     domain_processor = ElasticProcessor(
