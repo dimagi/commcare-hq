@@ -39,18 +39,18 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
 
                 Menus.Controller.showMenu(menuResponse);
-            }).fail(function() {
+            }).fail(function () {
                 FormplayerFrontend.trigger('navigateHome');
             });
         },
 
-        selectDetail: function(caseId, detailIndex) {
+        selectDetail: function (caseId, detailIndex) {
             var urlObject = Util.currentUrlToObject();
             urlObject.addStep(caseId);
             var fetchingDetails = FormplayerFrontend.request("entity:get:details", urlObject);
             $.when(fetchingDetails).done(function (detailResponse) {
                 Menus.Controller.showDetail(detailResponse, detailIndex, caseId);
-            }).fail(function() {
+            }).fail(function () {
                 FormplayerFrontend.trigger('navigateHome');
             });
         },
@@ -169,11 +169,11 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 data: detailObject.details,
                 id: 0,
             });
-            var numEntitiesPerRow = detailObject.numEntitiesPerRow || 1;
-            var numRows = detailObject.maxHeight;
-            var numColumns = detailObject.maxWidth;
-            var useUniformUnits = detailObject.useUniformUnits || false;
-            var caseTileStyles = Menus.Views.buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
+            var numEntitiesPerRow = detailObject.caseTileConfiguration.numEntitiesPerRow || 1;
+            var numRows = detailObject.caseTileConfiguration.maxHeight;
+            var numColumns = detailObject.caseTileConfiguration.maxWidth;
+            var useUniformUnits = detailObject.caseTileConfiguration.useUniformUnits || false;
+            var caseTileStyles = Menus.Views.buildCaseTileStyles(detailObject.caseTileConfiguration.tiles, numRows, numColumns,
                 numEntitiesPerRow, useUniformUnits, 'persistent');
             // Style the positioning of the elements within a tile (IE element 1 at grid position 1 / 2 / 4 / 3
             $("#persistent-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
@@ -195,7 +195,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var detailCollection,
                 breadcrumbModels;
 
-            breadcrumbModels = _.map(breadcrumbs, function(breadcrumb, idx) {
+            breadcrumbModels = _.map(breadcrumbs, function (breadcrumb, idx) {
                 return {
                     data: breadcrumb,
                     id: idx,
@@ -221,20 +221,26 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 styles: menuResponse.styles,
                 type: menuResponse.type,
                 sessionId: menuResponse.sessionId,
-                tiles: menuResponse.tiles,
-                numEntitiesPerRow: menuResponse.numEntitiesPerRow,
-                maxHeight: menuResponse.maxHeight,
-                maxWidth: menuResponse.maxWidth,
-                useUniformUnits: menuResponse.useUniformUnits,
-                isPersistentDetail: menuResponse.isPersistentDetail,
             };
-            if (menuResponse.type === "commands") {
+
+            if (menuResponse.caseTileConfiguration) {
+                menuData = $.extend(menuData, {
+                    tiles: menuResponse.caseTileConfiguration.tiles,
+                    numEntitiesPerRow: menuResponse.caseTileConfiguration.numEntitiesPerRow,
+                    maxHeight: menuResponse.caseTileConfiguration.maxHeight,
+                    maxWidth: menuResponse.caseTileConfiguration.maxWidth,
+                    useUniformUnits: menuResponse.caseTileConfiguration.useUniformUnits,
+                    isPersistentDetail: menuResponse.caseTileConfiguration.isPersistentDetail,
+                });
+            }
+
+            if (menuData.type === "commands") {
                 return new Menus.Views.MenuListView(menuData);
-            } else if (menuResponse.type === "query") {
+            } else if (menuData.type === "query") {
                 return new Menus.Views.QueryListView(menuData);
             }
-            else if (menuResponse.type === "entities") {
-                if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
+            else if (menuData.type === "entities") {
+                if (menuData.tiles === null || menuData.tiles === undefined) {
                     return new Menus.Views.CaseListView(menuData);
                 } else {
                     if (menuResponse.numEntitiesPerRow > 1) {

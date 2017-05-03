@@ -26,11 +26,7 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'currentPage',
             'pageCount',
             'titles',
-            'numEntitiesPerRow',
-            'maxWidth',
-            'maxHeight',
-            'widthHints',
-            'useUniformUnits',
+            'caseTileConfiguration',
         ],
 
         commandProperties: [
