@@ -128,7 +128,7 @@ class RepeaterTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_repeater_failed_sends(self):
         """
-        This tests records that fail to send three times
+        This tests records that fail are requeued later
         """
         def now():
             return datetime.utcnow()
@@ -138,10 +138,10 @@ class RepeaterTest(BaseRepeaterTest):
 
         for repeat_record in repeat_records:
             with patch(
-                    'corehq.apps.repeaters.models.simple_post_with_cached_timeout',
+                    'corehq.apps.repeaters.models.simple_post_with_logged_timeout',
                     return_value=MockResponse(status_code=404, reason='Not Found')) as mock_post:
                 repeat_record.fire()
-                self.assertEqual(mock_post.call_count, 3)
+                self.assertEqual(mock_post.call_count, 1)
 
         next_check_time = now() + timedelta(minutes=60)
 
@@ -171,22 +171,20 @@ class RepeaterTest(BaseRepeaterTest):
     def test_repeater_successful_send(self):
 
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
-        mocked_responses = [
-            MockResponse(status_code=404, reason='Not Found'),
-            MockResponse(status_code=200, reason='No Reason')
-        ]
+
         for repeat_record in repeat_records:
             with patch(
-                    'corehq.apps.repeaters.models.simple_post_with_cached_timeout',
-                    side_effect=mocked_responses) as mock_post:
+                    'corehq.apps.repeaters.models.simple_post_with_logged_timeout',
+                    return_value=MockResponse(status_code=200, reason='No Reason')) as mock_post:
                 repeat_record.fire()
-                self.assertEqual(mock_post.call_count, 2)
+                self.assertEqual(mock_post.call_count, 1)
                 mock_post.assert_any_call(
+                    repeat_record.domain,
                     repeat_record.get_payload(),
                     repeat_record.repeater.get_url(repeat_record),
                     headers=repeat_record.repeater.get_headers(repeat_record),
-                    force_send=False,
                     timeout=POST_TIMEOUT,
+                    auth=repeat_record.repeater.get_auth(),
                 )
 
         # The following is pretty fickle and depends on which of
@@ -211,11 +209,11 @@ class RepeaterTest(BaseRepeaterTest):
     def test_check_repeat_records(self):
         self.assertEqual(len(RepeatRecord.all()), 2)
 
-        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_fire:
+        with patch('corehq.apps.repeaters.models.simple_post_with_logged_timeout') as mock_fire:
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 2)
 
-        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_fire:
+        with patch('corehq.apps.repeaters.models.simple_post_with_logged_timeout') as mock_fire:
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
 
@@ -227,13 +225,13 @@ class RepeaterTest(BaseRepeaterTest):
         for repeat_record in RepeatRecord.all():
             repeat_record.cancelled = True
             repeat_record.save()
-        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_fire:
+        with patch('corehq.apps.repeaters.models.simple_post_with_logged_timeout') as mock_fire:
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
 
         # trigger force send records if not cancelled and tries not exhausted
         for repeat_record in RepeatRecord.all():
-            with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout',
+            with patch('corehq.apps.repeaters.models.simple_post_with_logged_timeout',
                        return_value=MockResponse(status_code=200, reason='')
                        ) as mock_fire:
                 repeat_record.fire(force_send=True)
@@ -245,7 +243,7 @@ class RepeaterTest(BaseRepeaterTest):
                 self.assertEqual(repeat_record.overall_tries, 1)
 
         # not trigger records succeeded triggered after cancellation
-        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_fire:
+        with patch('corehq.apps.repeaters.models.simple_post_with_logged_timeout') as mock_fire:
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
             for repeat_record in RepeatRecord.all():
@@ -276,10 +274,10 @@ class RepeaterTest(BaseRepeaterTest):
     def test_automatic_cancel_repeat_record(self):
         repeat_record = self.case_repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
         repeat_record.overall_tries = 1
-        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout', side_effect=Exception('Boom!')):
+        with patch('corehq.apps.repeaters.models.simple_post_with_logged_timeout', side_effect=Exception('Boom!')):
             repeat_record.fire()
         self.assertEqual(2, repeat_record.overall_tries)
-        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout', side_effect=Exception('Boom!')):
+        with patch('corehq.apps.repeaters.models.simple_post_with_logged_timeout', side_effect=Exception('Boom!')):
             repeat_record.fire()
         self.assertEqual(True, repeat_record.cancelled)
         repeat_record.requeue()
@@ -560,14 +558,14 @@ class RepeaterFailureTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_failure(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain_name).get_case(CASE_ID))
-        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout', side_effect=Exception('Boom!')):
+        with patch('corehq.apps.repeaters.models.simple_post_with_logged_timeout', side_effect=Exception('Boom!')):
             repeat_record.fire()
 
         self.assertEquals(repeat_record.failure_reason, 'Boom!')
         self.assertFalse(repeat_record.succeeded)
 
         # Should be marked as successful after a successful run
-        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout'):
+        with patch('corehq.apps.repeaters.models.simple_post_with_logged_timeout'):
             repeat_record.fire()
 
         self.assertTrue(repeat_record.succeeded)
@@ -668,13 +666,14 @@ class TestRepeaterFormat(BaseRepeaterTest):
     @run_with_all_backends
     def test_new_format_payload(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
-        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_post:
+        with patch('corehq.apps.repeaters.models.simple_post_with_logged_timeout') as mock_post:
             repeat_record.fire()
             headers = self.repeater.get_headers(repeat_record)
             mock_post.assert_called_with(
+                self.repeater.domain,
                 self.payload,
                 self.repeater.url,
                 headers=headers,
-                force_send=False,
                 timeout=POST_TIMEOUT,
+                auth=self.repeater.get_auth(),
             )

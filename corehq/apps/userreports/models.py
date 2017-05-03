@@ -814,10 +814,13 @@ def get_report_configs(config_ids, domain):
         if config.domain != domain:
             raise ReportConfigurationNotFoundError
 
-    dynamic_report_configs = [
-        ReportConfiguration.wrap(doc) for doc in
-        get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
-    ]
+    dynamic_report_configs = []
+    if dynamic_report_config_ids:
+        dynamic_report_configs = [
+            ReportConfiguration.wrap(doc) for doc in
+            get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
+        ]
+
     if len(dynamic_report_configs) != len(dynamic_report_config_ids):
         raise ReportConfigurationNotFoundError
     for config in dynamic_report_configs:

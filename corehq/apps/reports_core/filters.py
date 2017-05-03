@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, time
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.userreports.expressions.getters import transform_from_datatype
-from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, CHOICE_DELIMITER
+from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, CHOICE_DELIMITER, \
+    LocationDrilldownFilterValue
 from corehq.apps.userreports.util import localize
 from corehq.util.dates import iso_string_to_date, get_quarter_date_range
 
@@ -17,6 +19,7 @@ import six
 from six.moves import range
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
+REQUEST_USER_KEY = 'request_user'
 
 
 class BaseFilter(object):
@@ -42,7 +45,7 @@ class BaseFilter(object):
             selected or default filter value
         """
         kwargs = {
-            "request_user": user
+            REQUEST_USER_KEY: user
         }
         if self.all_required_params_are_in_context(request_params):
             kwargs.update(
@@ -50,7 +53,7 @@ class BaseFilter(object):
             )
             return self.value(**kwargs)
         else:
-            return self.default_value(request_user=user)
+            return self.default_value(**kwargs)
 
     def all_required_params_are_in_context(self, context):
         return all(slug.name in context for slug in self.params if slug.required)
@@ -378,7 +381,7 @@ class DynamicChoiceListFilter(BaseFilter):
 
     def value(self, **kwargs):
         selection = six.text_type(kwargs.get(self.name, ""))
-        user = kwargs.get("request_user", None)
+        user = kwargs.get(REQUEST_USER_KEY, None)
         if selection:
             choices = selection.split(CHOICE_DELIMITER)
             typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
@@ -399,7 +402,8 @@ class LocationDrilldownFilter(BaseFilter):
     javascript_template = 'reports_core/filters/location_async/location_async.js'
     location_filter = True
 
-    def __init__(self, name, field, datatype, label, domain, css_id=None):
+    def __init__(self, name, field, datatype, label, domain, include_descendants,
+                 max_drilldown_levels, css_id=None):
         params = [
             FilterParam(name, True),
         ]
@@ -409,6 +413,8 @@ class LocationDrilldownFilter(BaseFilter):
         self.label = label
         self.css_id = css_id or self.name
         self.domain = domain
+        self.include_descendants = include_descendants
+        self.max_drilldown_levels = max_drilldown_levels
 
     @property
     def api_root(self):
@@ -416,6 +422,7 @@ class LocationDrilldownFilter(BaseFilter):
                                                     'resource_name': 'location_internal',
                                                     'api_name': 'v0.5'})
 
+    @memoized
     def user_location_id(self, user):
         domain_membership = user.get_domain_membership(self.domain)
         return domain_membership.location_id if domain_membership else None
@@ -427,8 +434,34 @@ class LocationDrilldownFilter(BaseFilter):
             'loc_id': loc_id,
             'hierarchy': location_hierarchy_config(self.domain),
             'locations': load_locs_json(self.domain, selected_loc_id=loc_id, user=request_user),
-            'loc_url': self.api_root
+            'loc_url': self.api_root,
+            'max_drilldown_levels': self.max_drilldown_levels,
         }
 
+    def valid_location_ids(self, location_id):
+        if self.include_descendants:
+            return SQLLocation.objects.get_locations_and_children_ids([location_id])
+        else:
+            return [location_id]
+
     def value(self, **kwargs):
-        return kwargs.get(self.name, None)
+        selected_loc_id = kwargs.get(self.name, None)
+        if selected_loc_id:
+            return self.valid_location_ids(selected_loc_id)
+        else:
+            return self.default_value(kwargs.get(REQUEST_USER_KEY, None))
+
+    def default_value(self, request_user=None):
+        # Returns list of visible locations for the user if user is assigned to a location
+        #   or special value of SHOW_ALL or SHOW_NONE depending whether
+        #   user is domain-admin or not respectively
+        if request_user:
+            user_location_id = self.user_location_id(request_user)
+            if user_location_id:
+                return self.valid_location_ids(user_location_id)
+            elif request_user.is_domain_admin(self.domain):
+                return LocationDrilldownFilterValue.SHOW_ALL
+            else:
+                return LocationDrilldownFilterValue.SHOW_NONE
+        else:
+            return LocationDrilldownFilterValue.SHOW_NONE

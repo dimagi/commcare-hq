@@ -1268,8 +1268,12 @@ This filter allows selection of a location for filtering by drilling down from t
   "type": "location_drilldown",
   "slug": "by_location",
   "field": "district_id",
+  "include_descendants": true,
+  "max_drilldown_levels": 3
 }
 ```
+* "include_descendants" - Include descendant locations in the results. Defaults to `false`.
+* "max_drilldown_levels" - Maximum allowed drilldown levels. Defaults to 99
 
 ### Internationalization
 

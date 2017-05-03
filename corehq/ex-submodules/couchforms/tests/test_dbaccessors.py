@@ -55,7 +55,6 @@ class TestDBAccessors(TestCase):
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_xforms(cls.domain)
-        cls.xform_deleted.delete()
         super(TestDBAccessors, cls).tearDownClass()
 
     def test_get_form_ids_by_type_xforminstance(self):

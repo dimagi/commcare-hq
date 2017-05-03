@@ -9,7 +9,8 @@ class Command(BaseCommand):
     help = ('Create a billing account and an enterprise level subscription '
             'for the given domain')
 
-    args = ['domain']
+    def add_arguments(self, parser):
+        parser.add_argument('domain')
 
     @require_debug_true()
     def handle(self, domain, **kwargs):

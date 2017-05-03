@@ -4,6 +4,7 @@ import uuid
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
+from mock import patch
 
 from casexml.apps.case.exceptions import CaseValueError
 from casexml.apps.case.mock import CaseBlock
@@ -15,6 +16,7 @@ from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.blobs import get_blob_db
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -302,7 +304,7 @@ class FundamentalCaseTests(TestCase):
 
     def test_restore_caches_cleared(self):
         cache = get_redis_default_cache()
-        cache_key = restore_cache_key(RESTORE_CACHE_KEY_PREFIX, 'user_id', version="2.0")
+        cache_key = restore_cache_key(DOMAIN, RESTORE_CACHE_KEY_PREFIX, 'user_id', version="2.0")
         cache.set(cache_key, 'test-thing')
         self.assertEqual(cache.get(cache_key), 'test-thing')
         form = """
@@ -378,6 +380,10 @@ class FundamentalCaseTestsSQL(FundamentalCaseTests):
         self.assertEqual(0, len(cases))
         self.assertTrue(xform.is_error)
         self.assertIn('CaseValueError', xform.problem)
+
+    def test_caching_form_attachment_during_submission(self):
+        with patch.object(get_blob_db(), 'get', side_effect=Exception('unexpected blobdb read')):
+            _submit_case_block(True, uuid.uuid4().hex, user_id='user2', update={})
 
 
 def _submit_case_block(create, case_id, **kwargs):

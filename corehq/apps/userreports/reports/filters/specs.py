@@ -1,5 +1,6 @@
 from dimagi.ext.jsonobject import (
     BooleanProperty,
+    IntegerProperty,
     JsonObject,
     ListProperty,
     StringProperty,
@@ -102,6 +103,9 @@ class DynamicChoiceListFilterSpec(FilterSpec):
 
 class LocationDrilldownFilterSpec(FilterSpec):
     type = TypeProperty('location_drilldown')
+    include_descendants = BooleanProperty(default=False)
+    # default to some random high number '99'
+    max_drilldown_levels = IntegerProperty(default=99)
 
 
 class PreFilterSpec(FilterSpec):

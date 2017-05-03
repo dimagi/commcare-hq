@@ -1,11 +1,16 @@
 from __future__ import print_function
-from pillowtop.run_pillowtop import start_pillows, start_pillow
-
 import sys
+
 from django.conf import settings
-from pillowtop.utils import get_all_pillow_instances, get_all_pillow_configs, \
-    get_pillow_config_from_setting, get_pillow_by_name
 from django.core.management.base import BaseCommand
+
+from pillowtop.run_pillowtop import start_pillows, start_pillow
+from pillowtop.utils import (
+    get_all_pillow_instances,
+    get_all_pillow_configs,
+    get_pillow_config_from_setting,
+    get_pillow_by_name
+)
 
 
 class Command(BaseCommand):
@@ -53,7 +58,7 @@ class Command(BaseCommand):
             dest='num_processes',
             default=1,
             type=int,
-            help="Number of pillow processes for this pillow name that are running",
+            help="The number of processes that are expected to be run for this pillow",
         )
         parser.add_argument(
             '--process-number',
@@ -61,7 +66,8 @@ class Command(BaseCommand):
             dest='process_number',
             default=0,
             type=int,
-            help="The pillow number in the sequence of processes that are running",
+            help="The process number of this pillow process. Should be between 0 and num-processes. "
+                 "It's expected that there will only be one process for each number running at once",
         )
 
     def handle(self, **options):
@@ -70,6 +76,9 @@ class Command(BaseCommand):
         list_checkpoints = options['list_checkpoints']
         pillow_name = options['pillow_name']
         pillow_key = options['pillow_key']
+        num_processes = options['num_processes']
+        process_number = options['process_number']
+        assert 0 <= process_number < num_processes
         if list_all:
             print("\nPillows registered in system:")
             for config in get_all_pillow_configs():
@@ -92,7 +101,7 @@ class Command(BaseCommand):
                                   for config in settings.PILLOWTOPS[pillow_key]]
 
         elif not run_all and not pillow_key and pillow_name:
-            pillow = get_pillow_by_name(pillow_name)
+            pillow = get_pillow_by_name(pillow_name, num_processes=num_processes, process_num=process_number)
             start_pillow(pillow)
             sys.exit()
         elif list_checkpoints:

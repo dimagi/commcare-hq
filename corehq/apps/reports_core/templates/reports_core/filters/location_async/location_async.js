@@ -12,7 +12,8 @@
       var model = new LocationSelectViewModel({
         "hierarchy": hierarchy,
         "auto_drill": false,
-        "loc_url": loc_url
+        "loc_url": loc_url,
+        "max_drill_depth": '{{ context_.max_drilldown_levels }}'
       });
       $('#group_{{ context_.input_name }}').koApplyBindings(model);
       model.load(locs, selected);

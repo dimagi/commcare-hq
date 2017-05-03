@@ -5,6 +5,7 @@ hqDefine("export/js/export_list.js", function() {
     listExportsApp.config(["$httpProvider", function($httpProvider) {
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
     }]);
     listExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure(initial_page_data("djng_current_rmi"));

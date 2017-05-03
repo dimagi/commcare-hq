@@ -20,6 +20,7 @@
                     download_application_zip(true, build_profile());
                 }"
             {% endif %}
+            id="download_zip"
         >
         {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}
             <i class="fa fa-bolt"></i> {% trans 'Download Incomplete ZIP' %}

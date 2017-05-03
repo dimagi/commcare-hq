@@ -120,7 +120,7 @@ def get_releases_context(request, domain, app_id):
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
         ),
-        'build_profile_access': build_profile_access and not toggles.APP_MANAGER_V2.enabled(request.user.username),
+        'build_profile_access': build_profile_access,
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
         'latest_build_id': get_latest_build_id(domain, app_id)

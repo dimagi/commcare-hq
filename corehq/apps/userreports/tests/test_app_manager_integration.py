@@ -10,7 +10,6 @@ from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATY
 from dimagi.utils.parsing import json_format_datetime
 
 
-@patch('corehq.apps.app_manager.util.get_other_apps_in_domain', Mock(return_value=[]))
 class AppManagerDataSourceConfigTest(SimpleTestCase):
 
     def setUp(self):
@@ -26,7 +25,7 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
             return json.loads(f.read())
 
     @patch('corehq.apps.userreports.specs.datetime')
-    @patch('corehq.apps.app_manager.util.get_per_type_defaults', Mock(return_value={}))
+    @patch('corehq.apps.app_manager.app_schemas.case_properties.get_per_type_defaults', Mock(return_value={}))
     def test_simple_case_management(self, datetime_mock):
         fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
         datetime_mock.utcnow.return_value = fake_time_now

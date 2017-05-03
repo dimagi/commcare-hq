@@ -123,7 +123,7 @@ def assign_test_db_names(dbs):
 
 
 class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
-                          ['couch_database_url', 'couchdb_apps', 'extra_db_names'])):
+                          ['couch_database_configs', 'couchdb_apps', 'extra_db_names', 'unit_testing'])):
     def make_couchdb_tuples(self):
         """
         Helper function to generate couchdb tuples
@@ -132,18 +132,19 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
         """
         return [self._make_couchdb_tuple(row) for row in self.couchdb_apps]
 
-    def _format_db_uri(self, db_uri):
-        return db_uri
-
     def _make_couchdb_tuple(self, row):
         if isinstance(row, six.string_types):
             app_label, postfix = row, None
         else:
             app_label, postfix = row
         if postfix:
-            return app_label, self._format_db_uri('%s__%s' % (self.couch_database_url, postfix))
+            if postfix in self.db_urls_by_prefix:
+                url = self.db_urls_by_prefix[postfix]
+            else:
+                url = '%s__%s' % (self.main_db_url, postfix)
+            return app_label, url
         else:
-            return app_label, self._format_db_uri(self.couch_database_url)
+            return app_label, self.main_db_url
 
     def get_extra_couchdbs(self):
         """
@@ -160,9 +161,38 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
 
         postfixes.extend(self.extra_db_names)
         for postfix in postfixes:
-            extra_dbs[postfix] = self._format_db_uri('%s__%s' % (self.couch_database_url, postfix))
+            if postfix in self.db_urls_by_prefix:
+                url = self.db_urls_by_prefix[postfix]
+            else:
+                url = '%s__%s' % (self.main_db_url, postfix)
+            extra_dbs[postfix] = url
 
         return extra_dbs
+
+    @property
+    def main_db_url(self):
+        return self.db_urls_by_prefix[None]
+
+    @property
+    def db_urls_by_prefix(self):
+        if not getattr(self, '_urls_by_prefix', None):
+            urls_by_prefix = {}
+            for key, config in self.couch_database_configs.items():
+                prefix = None if key == 'default' else key
+                url = self._get_db_url(config)
+                urls_by_prefix[prefix] = url
+            self._urls_by_prefix = urls_by_prefix
+
+        return self._urls_by_prefix
+
+    def _get_db_url(self, config):
+        return get_dynamic_db_settings(
+            config['COUCH_SERVER_ROOT'],
+            config['COUCH_USERNAME'],
+            config['COUCH_PASSWORD'],
+            get_db_name(config['COUCH_DATABASE_NAME'], self.unit_testing),
+            use_https=config['COUCH_HTTPS'],
+        )["COUCH_DATABASE"]
 
 
 def celery_failure_handler(task, exc, task_id, args, kwargs, einfo):

@@ -1,17 +1,17 @@
 {% load i18n %}
-{% blocktrans %}Hi!{% endblocktrans %}
+{% blocktrans %}Hey there,{% endblocktrans %}
 
 {% blocktrans %}
     {{ inviter }} has invited you to join the {{ domain }} project space at CommCareHQ.
     This invitation expires in {{ days }} day(s).
 {% endblocktrans %}
 
-{% blocktrans %}CommCareHQ is a tool that helps manage frontline workers around the world.{% endblocktrans %}
+{% blocktrans %}To accept this invitation click <a href="{{ url }}">this link</a>. If you are unable to click the link, copy and paste the following url into your browser. {{url}}{% endblocktrans %}
 
-{% blocktrans %}To accept this invitation go to: {{ url }}{% endblocktrans %}
+{% blocktrans %}CommCareHQ is a data management tool used by over 500 organizations to help frontline workers around the world.{% endblocktrans %}
 
 {% blocktrans %}
-    If you think this is a mistake, you can go ahead and ignore this email.
+    If you think you have received this by mistake, you can go ahead and ignore this email.
     To find out more about CommCareHQ visit http://www.commcarehq.org/.
 {% endblocktrans %}
 

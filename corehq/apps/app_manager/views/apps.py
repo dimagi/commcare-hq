@@ -145,7 +145,6 @@ def default_new_app(request, domain):
 
 def get_app_view_context(request, app):
 
-    is_cloudcare_allowed = has_privilege(request, privileges.CLOUDCARE)
     context = {}
 
     settings_layout = copy.deepcopy(
@@ -166,15 +165,26 @@ def get_app_view_context(request, app):
             new_settings.append(setting)
         section['settings'] = new_settings
 
+    app_view_options = {
+        'permissions': {
+            'cloudcare': has_privilege(request, privileges.CLOUDCARE),
+        },
+        'sections': settings_layout,
+        'urls': {
+            'save': reverse("edit_commcare_settings", args=(app.domain, app.id)),
+        },
+        'user': {
+            'is_previewer': request.couch_user.is_previewer(),
+        },
+        'values': get_settings_values(app),
+        'warning': _("This is not an allowed value for this field"),
+    }
     if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in app.profile:
         custom_properties_array = map(lambda p: {'key': p[0], 'value': p[1]},
                                       app.profile.get('custom_properties').items())
-        context.update({'custom_properties': custom_properties_array})
-
+        app_view_options.update({'customProperties': custom_properties_array})
     context.update({
-        'settings_layout': settings_layout,
-        'settings_values': get_settings_values(app),
-        'is_cloudcare_allowed': is_cloudcare_allowed,
+        'app_view_options': app_view_options,
     })
 
     build_config = CommCareBuildConfig.fetch()
@@ -192,9 +202,9 @@ def get_app_view_context(request, app):
 
     (build_spec_setting,) = filter(
         lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
-        [setting for section in context['settings_layout']
+        [setting for section in settings_layout
             for setting in section['settings']]
-    ) if context['settings_layout'] else (None,)
+    ) if settings_layout else (None,)
     if build_spec_setting:
         build_spec_setting['options_map'] = options_map
         build_spec_setting['default_app_version'] = app.application_version
@@ -271,17 +281,19 @@ def get_apps_base_context(request, domain, app):
 
     if app and not app.is_remote_app():
         app.assert_app_v2()
+        show_advanced = (
+            toggles.APP_BUILDER_ADVANCED.enabled(domain)
+            or getattr(app, 'commtrack_enabled', False)
+        )
         context.update({
             'show_care_plan': (
                 not app.has_careplan_module
                 and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)
             ),
-            'show_advanced': (
-                toggles.APP_BUILDER_ADVANCED.enabled(domain)
-                or getattr(app, 'commtrack_enabled', False)
-            ),
+            'show_advanced': show_advanced,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
+            'show_shadow_forms': show_advanced,
         })
 
     return context
