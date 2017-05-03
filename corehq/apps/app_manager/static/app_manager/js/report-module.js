@@ -444,5 +444,11 @@ ko.bindingHandlers.editGraph = {
             name: 'some graph', // TODO (langs on the above two lines, too)
         }, valueAccessor());
         $(element).find(".guts").replaceWith(graph_el.ui);
+
+        // TODO: fire save button on change
+        graph_el.on("change", function() {
+            console.log("do something");
+            // self.saveButton.fire('change');
+        });
     },
 };
