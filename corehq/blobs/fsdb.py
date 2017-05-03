@@ -13,6 +13,7 @@ from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB, SAFENAME
 from corehq.blobs.util import set_blob_expire_object
+from corehq.util.datadog.gauges import datadog_counter
 
 CHUNK_SIZE = 4096
 
@@ -48,12 +49,14 @@ class FilesystemBlobDB(AbstractBlobDB):
     def get(self, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
         if not exists(path):
+            datadog_counter('commcare.blobdb.notfound')
             raise NotFound(identifier, bucket)
         return open(path, "rb")
 
     def size(self, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
         if not exists(path):
+            datadog_counter('commcare.blobdb.notfound')
             raise NotFound(identifier, bucket)
         return os.path.getsize(path)
 

@@ -5,16 +5,15 @@ from contextlib import contextmanager
 
 from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
-from corehq.blobs.util import ClosingContextProxy
+from corehq.blobs.interface import AbstractBlobDB, SAFENAME
+from corehq.blobs.util import ClosingContextProxy, set_blob_expire_object
+from corehq.util.datadog.gauges import datadog_counter
 
 import boto3
 from botocore.client import Config
 from botocore.handlers import calculate_md5
 from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
-
-from corehq.blobs.interface import AbstractBlobDB, SAFENAME
-from corehq.blobs.util import set_blob_expire_object
 
 DEFAULT_S3_BUCKET = "blobdb"
 
@@ -113,6 +112,7 @@ class S3BlobDB(AbstractBlobDB):
                 self.db.meta.client.head_bucket(Bucket=self.s3_bucket_name)
             except ClientError as err:
                 if not is_not_found(err):
+                    datadog_counter('commcare.blobdb.notfound')
                     raise
                 self.db.create_bucket(Bucket=self.s3_bucket_name)
             self._s3_bucket_exists = True
@@ -179,6 +179,7 @@ def maybe_not_found(throw=None):
         yield
     except ClientError as err:
         if not is_not_found(err):
+            datadog_counter('commcare.blobdb.notfound')
             raise
         if throw is not None:
             raise throw
