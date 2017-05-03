@@ -1,11 +1,24 @@
 {% load i18n %}
 <tr>
-    <td>{{ repeater.url }}</td>
+    <td>{{ repeater.url }}
+        {% if repeater.white_listed_case_types %}
+            <br/>Case Types: {{ repeater.white_listed_case_types|join:", " }}
+        {% endif %}
+    </td>
     <td>{{ repeater.get_pending_record_count }}</td>
     <td>{{ repeater.get_failure_record_count }}</td>
     <td>{{ repeater.get_cancelled_record_count }}</td>
     <td>{{ repeater.get_success_record_count }}</td>
     <td>
+        {% if repeater.is_case_repeater %}
+        <a class="btn btn-default" href="{% url 'edit_case_repeater' domain repeater.get_id %}">
+        {% elif repeater.is_form_repeater %}
+        <a class="btn btn-default" href="{% url 'edit_form_repeater' domain repeater.get_id %}">
+        {% else %}
+        <a class="btn btn-default" href="{% url 'edit_repeater' domain repeater.get_id %}?repeater_type={{ cls }}">
+        {% endif %}
+            {% trans "Edit"%}
+        </a>
         <a
             class="btn btn-default"
             href="

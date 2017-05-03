@@ -195,6 +195,9 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return True
 
     def clear_caches(self):
+        super(Repeater, self).clear_caches()
+        # also expire for cases repeater is fetched using Repeater class
+        Repeater.get.clear(Repeater, self._id)
         if self.__class__ == Repeater:
             cls = self.get_class_from_doc_type(self.doc_type)
         else:
@@ -293,6 +296,16 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         """
         generator = self.get_payload_generator(self.format_or_default_format())
         return generator.handle_exception(exception, repeat_record)
+
+    @property
+    def is_form_repeater(self):
+        # check if any of parent class is FormRepeater
+        return bool(filter(lambda parent_class: parent_class.__name__ == "FormRepeater", self.__class__.__mro__))
+
+    @property
+    def is_case_repeater(self):
+        # check if any of parent class is CaseRepeater
+        return bool(filter(lambda parent_class: parent_class.__name__ == "CaseRepeater", self.__class__.__mro__))
 
 
 class FormRepeater(Repeater):
