@@ -11,25 +11,16 @@ def sync_concepts_from_openmrs(account):
     answers_relationships = []
     for concept in api.get_all():
         concept = openmrs_concept_json_from_api_json(concept)
-        concept, answers = openmrs_concept_from_concept_json(account, concept)
-        if answers:
-            answers_relationships.append((concept, answers))
+        concept, answer_uuids = openmrs_concept_from_concept_json(account, concept)
+        if answer_uuids:
+            answers_relationships.append((concept, answer_uuids))
         concept.save()
 
-    while answers_relationships:
-        delayed = []
-        for concept, answers in answers_relationships:
-            answer_concepts = OpenmrsConcept.objects.filter(account=account, uuid__in=answers).all()
-            if set(answer_concept.uuid for answer_concept in answer_concepts) == set(answers):
-                concept.answers = answer_concepts
-                concept.save()
-            else:
-                delayed.append((concept, answers))
-
-        if len(answers_relationships) == len(delayed):
-            # this is going to be an infinite loop
-            raise Exception(delayed)
-        answers_relationships = delayed
+    for concept, answer_uuids in answers_relationships:
+        answer_concepts = OpenmrsConcept.objects.filter(account=account, uuid__in=answer_uuids).all()
+        assert set(answer_concept.uuid for answer_concept in answer_concepts) == set(answer_uuids)
+        concept.answers = answer_concepts
+        concept.save()
 
 
 class OpenmrsConceptJSON(jsonobject.JsonObject):
