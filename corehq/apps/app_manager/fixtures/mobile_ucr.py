@@ -1,8 +1,10 @@
 from collections import defaultdict
 from datetime import datetime
 import logging
-from lxml.builder import E
+import random
+
 from django.conf import settings
+from lxml.builder import E
 
 from casexml.apps.phone.models import OTARestoreUser
 
@@ -12,10 +14,14 @@ from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobil
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.util.xml_utils import serialize
 
+from corehq.apps.userreports.const import UCR_SUPPORT_BOTH_BACKENDS
 from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
 from corehq.apps.userreports.models import get_report_config
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+
+MOBILE_UCR_RANDOM_THRESHOLD = 10 ** 5
 
 
 class ReportFixturesProvider(object):
@@ -60,8 +66,9 @@ class ReportFixturesProvider(object):
 
     @staticmethod
     def report_config_to_fixture(report_config, restore_user):
+        domain = restore_user.domain
         report, data_source = ReportFixturesProvider._get_report_and_data_source(
-            report_config.report_id, restore_user.domain
+            report_config.report_id, domain
         )
 
         # TODO: Convert to be compatible with restore_user
@@ -95,6 +102,10 @@ class ReportFixturesProvider(object):
         )
         filters_elem = ReportFixturesProvider._get_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
+
+        if (data_source.config.backend_id in UCR_SUPPORT_BOTH_BACKENDS and
+                random.randint(0, MOBILE_UCR_RANDOM_THRESHOLD) == MOBILE_UCR_RANDOM_THRESHOLD):
+            compare_ucr_dbs.delay(domain, report.report_id, filter_values)
 
         report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
         report_elem.append(filters_elem)
