@@ -10,7 +10,7 @@ from custom.enikshay.case_utils import (
     get_approved_prescription_vouchers_from_episode,
 )
 from custom.enikshay.integrations.bets.const import TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT, \
-    DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, VOUCHER_EVENT_ID
+    DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT
 from custom.enikshay.integrations.utils import case_properties_changed
 
 
@@ -26,7 +26,7 @@ class BaseBETSRepeater(CaseRepeater):
         return self._allowed_case_type(case) and self._allowed_user(case)
 
 
-class BETSVoucherRepeater(BaseBETSRepeater):
+class BaseBETSVoucherRepeater(BaseBETSRepeater):
     """Forward a voucher to BETS
     Case Type: Voucher
     Trigger: When voucher.state transitions to "approved" or "partially_approved"
@@ -35,27 +35,46 @@ class BETSVoucherRepeater(BaseBETSRepeater):
         Success: voucher.event_{EVENT_ID} = "true" and voucher.bets_{EVENT_ID}_error = ''
         Error: voucher.bets_{EVENT_ID}_error = 'error message'
     """
-    friendly_name = _("BETS - Voucher Forwarding (voucher case type)")
-
-    @classmethod
-    def get_custom_url(cls, domain):
-        from custom.enikshay.integrations.bets.views import BETSVoucherRepeaterView
-        return reverse(BETSVoucherRepeaterView.urlname, args=[domain])
+    event_id = None
+    voucher_type = None
 
     def allowed_to_forward(self, voucher_case):
         if not self.case_types_and_users_allowed(voucher_case):
             return False
 
         case_properties = voucher_case.dynamic_case_properties()
+        correct_voucher_type = case_properties['voucher_type'] == self.voucher_type
         approved = case_properties.get("state") == "approved"
-        not_sent = case_properties.get("event_{}".format(VOUCHER_EVENT_ID)) != "sent"
+        not_sent = case_properties.get("event_{}".format(self.event_id)) != "sent"
         return (
             approved
+            and correct_voucher_type
             and not_sent
             # TODO: Check if voucher is related to test location?
             and case_properties_changed(voucher_case, ['state'])
         )
 
+
+class ChemistBETSVoucherRepeater(BaseBETSVoucherRepeater):
+    friendly_name = _("BETS - Chemist Voucher Forwarding (voucher case type)")
+    event_id = CHEMIST_VOUCHER_EVENT
+    voucher_type = "prescription"
+
+    @classmethod
+    def get_custom_url(cls, domain):
+        from custom.enikshay.integrations.bets.views import ChemistBETSVoucherRepeaterView
+        return reverse(ChemistBETSVoucherRepeaterView.urlname, args=[domain])
+
+
+class LabBETSVoucherRepeater(BaseBETSVoucherRepeater):
+    friendly_name = _("BETS - Lab Voucher Forwarding (voucher case type)")
+    event_id = LAB_VOUCHER_EVENT
+    voucher_type = "test"
+
+    @classmethod
+    def get_custom_url(cls, domain):
+        from custom.enikshay.integrations.bets.views import LabBETSVoucherRepeaterView
+        return reverse(LabBETSVoucherRepeaterView.urlname, args=[domain])
 
 class BETS180TreatmentRepeater(BaseBETSRepeater):
     friendly_name = _(
@@ -195,7 +214,8 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
 
 
 def create_case_repeat_records(sender, case, **kwargs):
-    create_repeat_records(BETSVoucherRepeater, case)
+    create_repeat_records(ChemistBETSVoucherRepeater, case)
+    create_repeat_records(LabBETSVoucherRepeater, case)
     create_repeat_records(BETS180TreatmentRepeater, case)
     create_repeat_records(BETSDrugRefillRepeater, case)
     create_repeat_records(BETSSuccessfulTreatmentRepeater, case)

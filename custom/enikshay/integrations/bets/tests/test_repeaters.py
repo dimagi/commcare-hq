@@ -2,10 +2,10 @@ import uuid
 from django.test import override_settings
 
 from corehq.util.test_utils import create_and_save_a_case
-from custom.enikshay.integrations.bets.repeater_generators import BETSVoucherPayloadGenerator, \
+from custom.enikshay.integrations.bets.repeater_generators import ChemistBETSVoucherPayloadGenerator, \
     BETS180TreatmentPayloadGenerator, BETSSuccessfulTreatmentPayloadGenerator, \
     BETSDiagnosisAndNotificationPayloadGenerator, BETSAYUSHReferralPayloadGenerator
-from custom.enikshay.integrations.bets.repeaters import BETSVoucherRepeater, BETS180TreatmentRepeater, \
+from custom.enikshay.integrations.bets.repeaters import ChemistBETSVoucherRepeater, BETS180TreatmentRepeater, \
     BETSDrugRefillRepeater, BETSSuccessfulTreatmentRepeater, BETSDiagnosisAndNotificationRepeater, \
     BETSAYUSHReferralRepeater
 from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENikshayRepeaterTestBase, MockResponse
@@ -20,7 +20,7 @@ class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBa
     def setUp(self):
         super(TestVoucherRepeater, self).setUp()
 
-        self.repeater = BETSVoucherRepeater(
+        self.repeater = ChemistBETSVoucherRepeater(
             domain=self.domain,
             url='super-cool-url',
         )
@@ -35,6 +35,7 @@ class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBa
             case_type="voucher",
             case_name="my voucher",
             case_properties={
+                "voucher_type": "prescription",
                 'state': 'not approved'
             },
         )
@@ -49,7 +50,7 @@ class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBa
         self.assertEqual(1, len(self.repeat_records().all()))
 
         # Approving voucher again doesn't create new record
-        payload_generator = BETSVoucherPayloadGenerator(None)
+        payload_generator = ChemistBETSVoucherPayloadGenerator(None)
         payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), case, None)
         update_case(self.domain, case.case_id, {"state": "approved"})
         self.assertEqual(1, len(self.repeat_records().all()))

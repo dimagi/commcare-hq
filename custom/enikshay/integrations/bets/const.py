@@ -1,5 +1,4 @@
 # BETS event names
-VOUCHER_EVENT_ID = "VOUCHER_EVENT_ID"  # TODO: Get this from BETS
 SUCCESSFUL_TREATMENT_EVENT = "SUCCESSFUL_TREATMENT_EVENT"  # TODO: Get this from BETS
 
 # e-Voucher payout to chemists (reimbursement of drug cost + additional x% top up)
@@ -21,7 +20,6 @@ AYUSH_REFERRAL_EVENT = "105"
 # Suspect Registration + Validated diagnostic e-Voucher prior to or on date
 # of treatment initiation
 SUSPECT_REGISTRATION_EVENT = '106'
-
 
 # To compounder on case notification
 COMPOUNDER_NOTIFICATION_EVENT = '107'

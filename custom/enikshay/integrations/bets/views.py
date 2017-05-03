@@ -150,10 +150,16 @@ def update_incentive(request, domain):
     return _update_case_from_request(request, domain, IncentiveUpdate)
 
 
-class BETSVoucherRepeaterView(AddCaseRepeaterView):
-    urlname = 'bets_voucher_repeater'
-    page_title = "BETS Vouchers"
-    page_name = "BETS Vouchers (voucher case type)"
+class ChemistBETSVoucherRepeaterView(AddCaseRepeaterView):
+    urlname = 'chemist_bets_voucher_repeater'
+    page_title = "BETS Chemist Vouchers"
+    page_name = "BETS Chemist Vouchers (voucher case type)"
+
+
+class LabBETSVoucherRepeaterView(AddCaseRepeaterView):
+    urlname = 'lab_bets_voucher_repeater'
+    page_title = "BETS Lab Vouchers"
+    page_name = "BETS Lab Vouchers (voucher case type)"
 
 
 class BETS180TreatmentRepeaterView(AddCaseRepeaterView):

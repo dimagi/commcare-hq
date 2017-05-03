@@ -20,17 +20,16 @@ from custom.enikshay.const import (
 )
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT,
-    VOUCHER_EVENT_ID,
     DRUG_REFILL_EVENT,
     SUCCESSFUL_TREATMENT_EVENT,
     DIAGNOSIS_AND_NOTIFICATION_EVENT,
     AYUSH_REFERRAL_EVENT,
     LOCATION_TYPE_MAP,
-)
+    CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT)
 from custom.enikshay.exceptions import NikshayLocationNotFound
-from custom.enikshay.integrations.bets.repeaters import BETSVoucherRepeater, BETS180TreatmentRepeater, \
+from custom.enikshay.integrations.bets.repeaters import BETS180TreatmentRepeater, \
     BETSDrugRefillRepeater, BETSSuccessfulTreatmentRepeater, BETSDiagnosisAndNotificationRepeater, \
-    BETSAYUSHReferralRepeater
+    BETSAYUSHReferralRepeater, ChemistBETSVoucherRepeater, LabBETSVoucherRepeater
 
 
 class BETSPayload(jsonobject.JsonObject):
@@ -186,6 +185,10 @@ class VoucherPayload(BETSPayload):
     def create_voucher_payload(cls, voucher_case):
         voucher_case_properties = voucher_case.dynamic_case_properties()
         fulfilled_by_id = voucher_case_properties.get(FULFILLED_BY_ID)
+        event_id = {
+            "prescription": CHEMIST_VOUCHER_EVENT,
+            "test": LAB_VOUCHER_EVENT,
+        }[voucher_case_properties['voucher_type']]
 
         location = cls._get_location(
             fulfilled_by_id,
@@ -195,7 +198,7 @@ class VoucherPayload(BETSPayload):
         )
 
         return cls(
-            EventID=VOUCHER_EVENT_ID,
+            EventID=event_id,
             EventOccurDate=voucher_case_properties.get(DATE_FULFILLED),
             VoucherID=voucher_case_properties.get(VOUCHER_ID),
             BeneficiaryUUID=fulfilled_by_id,
@@ -252,9 +255,7 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
             )
 
 
-@RegisterGenerator(BETSVoucherRepeater, 'case_json', 'JSON', is_default=True)
-class BETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
-    event_id = VOUCHER_EVENT_ID
+class BaseBETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
 
     def get_test_payload(self, domain):
         return json.dumps(VoucherPayload(
@@ -269,6 +270,16 @@ class BETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
 
     def get_payload(self, repeat_record, voucher_case):
         return json.dumps(VoucherPayload.create_voucher_payload(voucher_case).to_json())
+
+
+@RegisterGenerator(ChemistBETSVoucherRepeater, 'case_json', 'JSON', is_default=True)
+class ChemistBETSVoucherPayloadGenerator(BaseBETSVoucherPayloadGenerator):
+    event_id = CHEMIST_VOUCHER_EVENT
+
+
+@RegisterGenerator(LabBETSVoucherRepeater, 'case_json', 'JSON', is_default=True)
+class LabBETSVoucherPayloadGenerator(BaseBETSVoucherPayloadGenerator):
+    event_id = LAB_VOUCHER_EVENT
 
 
 class IncentivePayloadGenerator(BETSBasePayloadGenerator):
