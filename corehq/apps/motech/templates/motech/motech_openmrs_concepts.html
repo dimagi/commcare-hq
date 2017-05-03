@@ -1,5 +1,6 @@
 {% extends 'style/base_section.html' %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% block js %}
     {{ block.super }}
@@ -13,19 +14,19 @@
             disable: syncButton.inProgress,
             click: syncButton.sync
         ">
-            <!--ko ifnot: syncButton.inProgress-->Sync from OpenMRS<!--/ko-->
-            <!--ko if: syncButton.inProgress-->Syncing from OpenMRS...<!--/ko-->
+            <!--ko ifnot: syncButton.inProgress-->{% trans "Sync from OpenMRS" %}<!--/ko-->
+            <!--ko if: syncButton.inProgress-->{% trans "Syncing from OpenMRS..." %}<!--/ko-->
         </button>
-        <!--ko if: syncButton.inProgress-->This may take a while...<!--/ko-->
+        <!--ko if: syncButton.inProgress-->{% trans "This may take a while..." %}<!--/ko-->
         <!--ko if: syncButton.hasError-->
-            <div class="alert alert-danger">There was an unexpectederror syncing with OpenMRS</div>
+            <div class="alert alert-danger">{% trans "There was an unexpected error syncing with OpenMRS" %}</div>
         <!--/ko-->
         <table class="table">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Data Type</th>
-                    <th>Answers</th>
+                    <th>{% trans "Name" %}</th>
+                    <th>{% trans "Data Type" %}</th>
+                    <th>{% trans "Answers" %}</th>
                 </tr>
             </thead>
             <tbody data-bind="foreach: _.sortBy(concepts(), function (concept) {
