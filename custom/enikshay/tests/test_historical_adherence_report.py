@@ -6,6 +6,7 @@ from django.test import override_settings, TestCase, RequestFactory
 from mock import MagicMock
 
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from custom.enikshay.const import ENIKSHAY_TIMEZONE
 from custom.enikshay.reports import HistoricalAdherenceReport
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
 
