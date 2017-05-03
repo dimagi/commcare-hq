@@ -1,6 +1,12 @@
 # Case property names used in integrations
 PRIMARY_PHONE_NUMBER = 'phone_number'
 BACKUP_PHONE_NUMBER = 'secondary_contact_phone_number'
+OTHER_NUMBER = "phone_number_other"
+NINETYNINEDOTS_NUMBERS = [
+    PRIMARY_PHONE_NUMBER,
+    BACKUP_PHONE_NUMBER,
+    OTHER_NUMBER,
+]
 
 MERM_ID = 'merm_id'
 ENROLLED_IN_PRIVATE = "enrolled_in_private"
@@ -23,6 +29,7 @@ CURRENT_ADDRESS = 'current_address'
 NINETYNINEDOTS_PERSON_PROPERTIES = [
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
+    OTHER_NUMBER,
     MERM_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,

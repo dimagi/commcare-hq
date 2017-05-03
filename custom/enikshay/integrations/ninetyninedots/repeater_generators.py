@@ -28,8 +28,7 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
 )
 from custom.enikshay.const import (
-    PRIMARY_PHONE_NUMBER,
-    BACKUP_PHONE_NUMBER,
+    NINETYNINEDOTS_NUMBERS,
     MERM_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
@@ -349,14 +348,12 @@ class TreatmentOutcomePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
 
 def _get_phone_numbers(case_properties):
-    primary_number = _parse_number(case_properties.get(PRIMARY_PHONE_NUMBER))
-    backup_number = _parse_number(case_properties.get(BACKUP_PHONE_NUMBER))
-    if primary_number and backup_number:
-        return ", ".join([_format_number(primary_number), _format_number(backup_number)])
-    elif primary_number:
-        return _format_number(primary_number)
-    elif backup_number:
-        return _format_number(backup_number)
+    numbers = []
+    for potential_number in NINETYNINEDOTS_NUMBERS:
+        number = _parse_number(case_properties.get(potential_number))
+        if number:
+            numbers.append(_format_number(number))
+    return ", ".join(numbers)
 
 
 def _parse_number(number):
