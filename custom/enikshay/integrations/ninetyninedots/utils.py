@@ -3,7 +3,7 @@ from dateutil import parser
 from pytz import timezone
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from casexml.apps.case.const import CASE_INDEX_EXTENSION, UNOWNED_EXTENSION_OWNER_ID
+from casexml.apps.case.const import CASE_INDEX_EXTENSION, UNOWNED_EXTENSION_OWNER_ID, ENIKSHAY_TIMEZONE
 from corehq.form_processor.exceptions import CaseNotFound
 from dimagi.utils.decorators.memoized import memoized
 
@@ -86,7 +86,7 @@ class AdherenceCaseFactory(object):
         }
 
     def _parse_adherence_date(self, iso_datestring):
-        tz = timezone('Asia/Kolkata')
+        tz = timezone(ENIKSHAY_TIMEZONE)
         try:
             datetime_from_adherence = parser.parse(iso_datestring)
             datetime_in_india = datetime_from_adherence.astimezone(tz)

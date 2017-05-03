@@ -131,7 +131,7 @@ class HistoricalAdherenceReportTests(ENikshayCaseStructureMixin, TestCase):
         self.assertEqual(report.default_datespan.startdate, date)
 
         utc_now = datetime.datetime.now(pytz.utc)
-        india_now = utc_now.astimezone(pytz.timezone("Asia/Kolkata"))
+        india_now = utc_now.astimezone(pytz.timezone(ENIKSHAY_TIMEZONE))
 
         self.assertEqual(report.default_datespan.enddate, india_now.date())
 
