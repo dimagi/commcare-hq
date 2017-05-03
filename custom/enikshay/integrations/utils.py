@@ -19,6 +19,8 @@ def _is_submission_from_test_location(case_id, owner_id):
 
 
 def is_valid_person_submission(person_case):
+    if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
+        return False
     return not _is_submission_from_test_location(person_case.case_id, person_case.owner_id)
 
 
