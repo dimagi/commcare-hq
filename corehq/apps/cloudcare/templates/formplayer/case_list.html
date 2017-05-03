@@ -26,7 +26,7 @@
             <thead>
               <tr>
                 <% _.each(headers, function(header, index) { %>
-                  <% if (widthHints && !(widthHints[index] === 0)) { %>
+                  <% if (!(widthHints) || !(widthHints[index] === 0)) { %>
                     <th class="module-caselist-header"> <%= header %></th>
                   <% } %>
                 <% }); %>
@@ -173,7 +173,7 @@
                 <thead>
                 <tr>
                     <% _.each(headers, function(header, index) { %>
-                    <% if (widthHints && !(widthHints[index] === 0)) { %>
+                    <% if (!(widthHints) || !(widthHints[index] === 0)) { %>
                     <th class="module-caselist-header"> <%= header %></th>
                     <% } %>
                     <% }); %>
