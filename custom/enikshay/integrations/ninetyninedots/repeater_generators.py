@@ -46,6 +46,22 @@ from custom.enikshay.const import (
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
+class MermParams(jsonobject.JsonObject):
+    IMEI = jsonobject.StringProperty(required=False)
+    daily_reminder_status = jsonobject.IntegerProperty(required=False, choices=(1, 0), exclude_if_none=True)
+    daily_reminder_time = jsonobject.TimeProperty(required=False, exclude_if_none=True)  # HH:mm
+    refill_reminder_status = jsonobject.IntegerProperty(required=False, choices=(1, 0), exclude_if_none=True)
+    refill_reminder_datetime = jsonobject.DateTimeProperty(
+        required=False,
+        exact=True,
+        exclude_if_none=True
+    )  # yy/MM/dd HH:mm:ss
+    RT_hours = jsonobject.IntegerProperty(
+        required=False,
+        exclude_if_none=True
+    )  # 1 = 12 hours; i.e. for 3 days - RT_hours = 6
+
+
 class PatientPayload(jsonobject.JsonObject):
     beneficiary_id = jsonobject.StringProperty(required=True)
     first_name = jsonobject.StringProperty(required=False)
@@ -57,7 +73,7 @@ class PatientPayload(jsonobject.JsonObject):
     phi_code = jsonobject.StringProperty(required=False)
 
     phone_numbers = jsonobject.StringProperty(required=False)
-    merm_id = jsonobject.StringProperty(required=False)
+    merm_params = jsonobject.ObjectProperty(MermParams, required=False)
 
     treatment_start_date = jsonobject.StringProperty(required=False)
 
@@ -69,6 +85,9 @@ class PatientPayload(jsonobject.JsonObject):
         person_case_properties = person_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
         person_locations = get_person_locations(person_case)
+        merm_params = MermParams(
+            IMEI=person_case_properties.get(MERM_ID, None),
+        )
         return cls(
             beneficiary_id=person_case.case_id,
             first_name=person_case_properties.get(PERSON_FIRST_NAME, None),
@@ -78,7 +97,7 @@ class PatientPayload(jsonobject.JsonObject):
             tu_code=person_locations.tu,
             phi_code=person_locations.phi,
             phone_numbers=_get_phone_numbers(person_case_properties),
-            merm_id=person_case_properties.get(MERM_ID, None),
+            merm_params=merm_params,
             treatment_start_date=episode_case_properties.get(TREATMENT_START_DATE, None),
             treatment_supporter_name=u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
@@ -113,7 +132,9 @@ class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
         return json.dumps(PatientPayload(
             beneficiary_id=uuid.uuid4().hex,
             phone_numbers=_format_number(_parse_number("0123456789")),
-            merm_id=uuid.uuid4().hex,
+            merm_params=MermParams(
+                IMEI=uuid.uuid4().hex,
+            )
         ).to_json())
 
     def get_payload(self, repeat_record, episode_case):

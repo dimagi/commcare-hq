@@ -164,6 +164,13 @@ class TestUpdatePatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeater
         self._update_case(self.episode_id, {TREATMENT_SUPPORTER_PHONE: '999999999', })
         self.assertEqual(2, len(self.repeat_records().all()))
 
+    def test_update_owner_id(self):
+        self.create_case_structure()
+        self.assign_person_to_location(self.phi.location_id)
+        self._create_99dots_registered_case()
+        self._update_case(self.person_id, {'owner_id': self.dto.location_id})
+        self.assertEqual(1, len(self.repeat_records().all()))
+
     def test_trigger_multiple_cases(self):
         """Submitting a form with noop case blocks was throwing an exception
         """
@@ -276,7 +283,9 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             u"tu_code": person_locations.tu,
             u"phi_code": person_locations.phi,
             u"phone_numbers": expected_numbers,
-            u"merm_id": person_case_properties.get(MERM_ID, None),
+            u"merm_params": {
+                u"IMEI": person_case_properties.get(MERM_ID, None),
+            },
             u"treatment_start_date": episode_case_properties.get(TREATMENT_START_DATE, None),
             u"treatment_supporter_name": u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
