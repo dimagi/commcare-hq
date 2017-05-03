@@ -294,13 +294,19 @@ def _get_report_module_context(app, module):
         {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
 
     ]
-    return {
+    context = {
         'all_reports': [_report_to_config(r) for r in all_reports],
-        'current_reports': [r.to_json() for r in module.report_configs],
         'filter_choices': filter_choices,
         'auto_filter_choices': auto_filter_choices,
         'daterange_choices': [choice._asdict() for choice in get_simple_dateranges()],
     }
+    current_reports = []
+    for r in module.report_configs:
+        r.migrate_graph_configs(r, app.domain)  # TODO: DRYer, shouldn't pass r
+        current_reports.append(r.to_json())
+        # TODO: save at this point?
+    context.update({'current_reports': current_reports})
+    return context
 
 
 def _get_fixture_columns_by_type(domain):

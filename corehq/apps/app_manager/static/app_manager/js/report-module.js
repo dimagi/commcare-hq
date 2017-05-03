@@ -33,6 +33,8 @@ hqDefine('app_manager/js/report-module.js', function () {
 
     function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton) {
         var self = this;
+        self.completeGraphConfigs = graph_configs;
+        // TODO: is the rest of this function still needed?
 
         graph_configs = graph_configs || {};
 
@@ -72,8 +74,13 @@ hqDefine('app_manager/js/report-module.js', function () {
             return reportCharts[reportId()];
         });
 
+        // TODO: delete? this and maybe other code?
         this.getCurrentGraphConfig = function(chart_id) {
             return self.currentGraphConfigs()[chart_id] || {config: {keyValuePairs: []}};
+        };
+
+        this.getCompleteGraphConfig = function(chart_id) {
+            return self.completeGraphConfigs[chart_id]; // TODO: what if it doesn't exist? what's the empty case?
         };
 
         this.toJSON = function () {
@@ -384,7 +391,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                 options.uuid,
                 self.availableReportIds,
                 self.reportCharts,
-                options.graph_configs,
+                options.complete_graph_configs,
                 options.filters,
                 self.reportFilters,
                 self.lang,
@@ -425,3 +432,17 @@ hqDefine('app_manager/js/report-module.js', function () {
         select2Separator: select2Separator
     };
 });
+
+ko.bindingHandlers.editGraph = {
+    init: function (element, valueAccessor) {
+        var GraphConfigurationUiElement = hqImport('app_manager/js/graph-config.js').GraphConfigurationUiElement;
+        var graph_el = new GraphConfigurationUiElement({
+            childCaseTypes: [],
+            fixtures: [],
+            lang: 'en',
+            langs: ['en'],
+            name: 'some graph', // TODO (langs on the above two lines, too)
+        }, valueAccessor());
+        $(element).find(".guts").replaceWith(graph_el.ui);
+    },
+};
