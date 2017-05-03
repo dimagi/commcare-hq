@@ -21,10 +21,7 @@ def _is_submission_from_test_location(case_id, owner_id):
 
 
 def is_valid_person_submission(person_case):
-    owner_id = person_case.owner_id
-    if owner_id == ARCHIVED_CASE_OWNER_ID:
-        owner_id = person_case.dynamic_case_properties.get("last_owner")
-    return not _is_submission_from_test_location(person_case.case_id, owner_id)
+    return not _is_submission_from_test_location(person_case.case_id, person_case.owner_id)
 
 
 def is_valid_episode_submission(episode_case):
