@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from django.urls import reverse
 from django.test import TestCase, Client
 
@@ -32,7 +33,7 @@ class TestCSRF(TestCase):
     def _form_post_with_and_without_csrf(self):
         client = Client(enforce_csrf_checks=True)
         login_page = client.get(reverse('login'))
-        csrf_token = login_page.cookies.get('csrftoken')
+        csrf_token = BeautifulSoup(login_page.content).find('input', {'id': 'csrfTokenContainer'}).get('value')
         client.login(username=self.username, password=self.password)
 
         form_data = {
@@ -44,7 +45,7 @@ class TestCSRF(TestCase):
         # all views unless decorated with csrf_exempt should be CSRF protected by default via Django's middleware
         csrf_missing = client.post(reverse('send_to_recipients', args=[self.domain.name]), form_data).status_code
 
-        form_data['csrfmiddlewaretoken'] = csrf_token.value
+        form_data['csrfmiddlewaretoken'] = csrf_token
         csrf_sent = client.post(
             reverse('send_to_recipients', args=[self.domain.name]), form_data, follow=True
         ).status_code
