@@ -156,6 +156,7 @@ def REPORTS(project):
 
     return reports
 
+
 def _filter_reports(report_set, reports):
     if report_set:
         return [r for r in reports if r.slug in report_set]

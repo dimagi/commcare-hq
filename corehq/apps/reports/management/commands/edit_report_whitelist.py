@@ -4,7 +4,7 @@ from corehq.apps.domain.models import Domain
 
 
 class Command(BaseCommand):
-    help = 'Reindex a pillowtop index'
+    help = 'Adds reports to a projects report whitelist or resets that list'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -12,7 +12,8 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             'reports',
-            nargs='*'
+            nargs='*',
+            help='report slugs of the reports to add'
         )
         parser.add_argument(
             '--reset',
@@ -21,7 +22,6 @@ class Command(BaseCommand):
             default=False,
             help='Clear whitelist before adding new reports.'
         )
-
 
     def handle(self, domain, reports, **options):
         reset = options.pop('reset')
