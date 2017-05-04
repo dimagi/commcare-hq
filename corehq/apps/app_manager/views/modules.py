@@ -302,7 +302,8 @@ def _get_report_module_context(app, module):
     }
     current_reports = []
     for r in module.report_configs:
-        r.migrate_graph_configs(r, app.domain)  # TODO: DRYer, shouldn't pass r
+        if not len(r.complete_graph_configs):
+            r.migrate_graph_configs(r, app.domain)  # TODO: DRYer, shouldn't pass r
         current_reports.append(r.to_json())
         # TODO: save at this point?
     context.update({'current_reports': current_reports})

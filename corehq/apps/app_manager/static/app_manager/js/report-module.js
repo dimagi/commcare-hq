@@ -34,40 +34,35 @@ hqDefine('app_manager/js/report-module.js', function () {
     function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton) {
         var self = this;
         self.completeGraphConfigs = graph_configs;
-        // TODO: is the rest of this function still needed?
+        this.graphConfigs = {}; // TODO: still needed?
 
         graph_configs = graph_configs || {};
 
-        this.graphConfigs = {};
+        self.graphConfigUiElements = {};
+        var GraphConfigurationUiElement = hqImport('app_manager/js/graph-config.js').GraphConfigurationUiElement;
         for (var i = 0; i < availableReportIds.length; i++) {
             var currentReportId = availableReportIds[i];
-            self.graphConfigs[currentReportId] = {};
+            self.graphConfigUiElements[currentReportId] = {};
             for (var j = 0; j < reportCharts[currentReportId].length; j++) {
                 var currentChart = reportCharts[currentReportId][j];
                 var graph_config = graph_configs[currentChart.chart_id] || {};
-                var series_configs = {};
-                var chart_series = [];
-                for(var k = 0; k < currentChart.y_axis_columns.length; k++) {
-                    var series = currentChart.y_axis_columns[k].column_id;
-                    chart_series.push(series);
-                    series_configs[series] = new Config(
-                        currentReportId === report_id ? (graph_config.series_configs || {})[series] || {} : {}
-                    );
-                }
-
-                self.graphConfigs[currentReportId][currentChart.chart_id] = {
-                    graph_type: ko.observable(currentReportId === report_id ? graph_config.graph_type || 'bar' : 'bar'),
-                    series_configs: series_configs,
-                    chart_series: chart_series,
-                    config: new Config(
-                        currentReportId === report_id ? graph_config.config || {} : {}
-                    )
-                };
+                var graph_el = new GraphConfigurationUiElement({
+                    childCaseTypes: [],
+                    fixtures: [],
+                    lang: 'en',
+                    langs: ['en'],
+                    name: 'some graph', // TODO (langs on the above two lines, too)
+                }, graph_config);
+                self.graphConfigUiElements[currentReportId][currentChart.chart_id] = graph_el;
             }
         }
 
         this.currentGraphConfigs = ko.computed(function() {
             return self.graphConfigs[reportId()];
+        });
+
+        this.currentGraphConfigUiElements = ko.computed(function() {
+            return self.graphConfigUiElements[reportId()];
         });
 
         this.currentCharts = ko.computed(function() {
@@ -83,6 +78,10 @@ hqDefine('app_manager/js/report-module.js', function () {
             return self.completeGraphConfigs[chart_id]; // TODO: what if it doesn't exist? what's the empty case?
         };
 
+        this.getCurrentGraphConfigurationUiElement = function(chart_id) {
+            return self.currentGraphConfigUiElements()[chart_id]; // TODO: what if it doesn't exist? what's the empty case?
+        };
+
         this.toJSON = function () {
             function configToDict(config) {
                 var dict = {};
@@ -94,16 +93,9 @@ hqDefine('app_manager/js/report-module.js', function () {
             }
 
             var chartsToConfigs = {};
-            var currentChartsToConfigs = self.currentGraphConfigs();
+            var currentChartsToConfigs = self.currentGraphConfigUiElements();
             _.each(currentChartsToConfigs, function(graph_config, chart_id) {
-                chartsToConfigs[chart_id] = {
-                    series_configs: {}
-                };
-                _.each(graph_config.series_configs, function(series_config, series) {
-                    chartsToConfigs[chart_id].series_configs[series] = configToDict(series_config);
-                });
-                chartsToConfigs[chart_id].graph_type = graph_config.graph_type();
-                chartsToConfigs[chart_id].config = configToDict(graph_config.config);
+                chartsToConfigs[chart_id] = graph_config.val();
             });
             return chartsToConfigs;
         };
@@ -274,7 +266,7 @@ hqDefine('app_manager/js/report-module.js', function () {
             self.fullLocalizedDescription[self.lang] = self.localizedDescription() || "";
             return {
                 report_id: self.reportId(),
-                graph_configs: self.graphConfig.toJSON(),
+                complete_graph_configs: self.graphConfig.toJSON(),
                 filters: self.filterConfig.toJSON(),
                 header: self.fullDisplay,
                 localized_description: self.fullLocalizedDescription,
@@ -435,20 +427,12 @@ hqDefine('app_manager/js/report-module.js', function () {
 
 ko.bindingHandlers.editGraph = {
     init: function (element, valueAccessor) {
-        var GraphConfigurationUiElement = hqImport('app_manager/js/graph-config.js').GraphConfigurationUiElement;
-        var graph_el = new GraphConfigurationUiElement({
-            childCaseTypes: [],
-            fixtures: [],
-            lang: 'en',
-            langs: ['en'],
-            name: 'some graph', // TODO (langs on the above two lines, too)
-        }, valueAccessor());
-        $(element).find(".guts").replaceWith(graph_el.ui);
+        $(element).find(".guts").replaceWith(valueAccessor().ui);
 
         // TODO: fire save button on change
-        graph_el.on("change", function() {
+        /*graph_el.on("change", function() {
             console.log("do something");
             // self.saveButton.fire('change');
-        });
+        });*/
     },
 };

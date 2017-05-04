@@ -1,7 +1,7 @@
 {% load i18n %}
 
 <div data-bind="foreach: { data: graphConfig.currentCharts, as: 'chart' }">
-    <div data-bind="editGraph: report.graphConfig.getCompleteGraphConfig(chart.chart_id)">
+    <div data-bind="editGraph: report.graphConfig.getCurrentGraphConfigurationUiElement(chart.chart_id)">
         <!-- ko stopBinding: true -->
             <div class="guts"></div>
         <!-- /ko -->
