@@ -31,7 +31,7 @@ from fluff.signals import (
     get_tables_to_rebuild,
     reformat_alembic_diffs
 )
-from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
@@ -293,7 +293,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
     def __init__(self, processor, pillow_name, topics):
         change_feed = KafkaChangeFeed(topics, group_id=pillow_name)
-        checkpoint = PillowCheckpoint(pillow_name, change_feed.sequence_format)
+        checkpoint = KafkaPillowCheckpoint(pillow_name, topics)
         event_handler = KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
         )
