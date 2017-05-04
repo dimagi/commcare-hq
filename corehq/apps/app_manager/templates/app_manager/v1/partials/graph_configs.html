@@ -1,9 +1,11 @@
-{% load i18n %}
-
 <div data-bind="foreach: { data: graphConfig.currentCharts, as: 'chart' }">
     <div data-bind="editGraph: report.graphConfig.getCurrentGraphConfigurationUiElement(chart.chart_id)">
+        <!--
+            graph-config.js will take care of replacing the inner div
+            with the graphing ui and applying bindings to it
+        -->
         <!-- ko stopBinding: true -->
-            <div class="guts"></div>
+            <div></div>
         <!-- /ko -->
     </div>
 </div>

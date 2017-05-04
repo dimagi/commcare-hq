@@ -431,6 +431,6 @@ hqDefine('app_manager/js/report-module.js', function () {
 
 ko.bindingHandlers.editGraph = {
     init: function (element, valueAccessor) {
-        $(element).find(".guts").replaceWith(valueAccessor().ui);
+        $(element).find(":first").replaceWith(valueAccessor().ui);
     },
 };
