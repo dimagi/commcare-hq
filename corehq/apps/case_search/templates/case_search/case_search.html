@@ -119,6 +119,7 @@
                             <th>{% trans "Case Type" %}</th>
                             <th>{% trans "Closed" %}</th>
                             <th>{% trans "Properties" %}</th>
+                            <th>{% trans "Indices" %}</th>
                         </tr>
                     </thead>
                     <tbody data-bind="foreach: results">
@@ -133,6 +134,16 @@
                                     <small data-bind="text:$data['key']"></small>:
                                     <strong data-bind="text:$data['value']"></strong><br />
                                 </div>
+                            </td>
+                            <td>
+                                <ul data-bind="foreach: indices">
+                                    <li>
+                                        <span class="label label-default"
+                                              data-bind="text: relationship"></span>
+                                        <a data-bind="attr: {href: $parents[1].case_data_url.replace('___', $data.referenced_id)},
+                                                      text: identifier"></a>
+                                    </li>
+                                </ul>
                             </td>
                         </tr>
                     </tbody>
