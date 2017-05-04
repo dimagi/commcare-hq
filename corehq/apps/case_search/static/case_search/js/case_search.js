@@ -41,21 +41,6 @@ hqDefine('case_search/js/case_search.js', function(){
                 )},
                 success: function(data){
                     self.results(data.values);
-                    var values = JSON.stringify(data.values, null, '    ');
-                    if (self.codeMirror === null){
-                        self.codeMirror = CodeMirror( $("#raw-results").get(0), {
-                            value: values,
-                            mode: { name: 'javascript', json: true },
-                            readOnly: true,
-                            lineNumbers: true,
-                            lineWrapping: true,
-                            viewportMargin: Infinity,
-                            foldGutter: true,
-                            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-                        });
-                    } else {
-                        self.codeMirror.setValue(values);
-                    }
                 },
             });
         };

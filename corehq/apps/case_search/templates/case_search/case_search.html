@@ -2,17 +2,9 @@
 {% load hq_shared_tags %}
 {% load compress %}
 {% load i18n %}
-{% block stylesheets %}
-    <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"/>
-    <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
-{% endblock stylesheets %}
+
 {% compress js %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
-    <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
-    <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
-    <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
-    <script src="{% static 'codemirror/addon/fold/brace-fold.js' %}"></script>
     <script src="{% static 'case_search/js/case_search.js' %}"></script>
 {% endblock js %}
 {% endcompress %}
@@ -145,15 +137,6 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>
-        </div>
-        <hr />
-        <div class="row">
-            <div class="col-sm-12">
-                <h3>{% trans "Raw" %}</h3>
-            </div>
-            <div class="col-sm-12">
-                <div id="raw-results"></div>
             </div>
         </div>
     </div>
