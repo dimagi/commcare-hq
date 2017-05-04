@@ -29,7 +29,6 @@ from custom.enikshay.case_utils import (
 )
 from custom.enikshay.const import (
     NINETYNINEDOTS_NUMBERS,
-    MERM_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
     TREATMENT_START_DATE,
@@ -41,6 +40,12 @@ from custom.enikshay.const import (
     WEIGHT_BAND,
     CURRENT_ADDRESS,
     ENROLLED_IN_PRIVATE,
+    MERM_ID,
+    MERM_DAILY_REMINDER_STATUS,
+    MERM_DAILY_REMINDER_TIME,
+    MERM_REFILL_REMINDER_STATUS,
+    MERM_REFILL_REMINDER_DATETIME,
+    MERM_RT_HOURS,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
@@ -73,7 +78,7 @@ class PatientPayload(jsonobject.JsonObject):
     he_code = jsonobject.StringProperty(required=False, exclude_if_none=True)
 
     phone_numbers = jsonobject.StringProperty(required=False)
-    merm_params = jsonobject.ObjectProperty(MermParams, required=False)
+    merm_params = jsonobject.ObjectProperty(MermParams, required=False, exclude_if_none=True)
 
     treatment_start_date = jsonobject.StringProperty(required=False)
 
@@ -101,7 +106,12 @@ class PatientPayload(jsonobject.JsonObject):
             )
 
         merm_params = MermParams(
-            IMEI=person_case_properties.get(MERM_ID, None),
+            IMEI=episode_case_properties.get(MERM_ID, None),
+            daily_reminder_status=episode_case_properties.get(MERM_DAILY_REMINDER_STATUS, None),
+            daily_reminder_time=episode_case_properties.get(MERM_DAILY_REMINDER_TIME, None),
+            refill_reminder_status=episode_case_properties.get(MERM_REFILL_REMINDER_STATUS, None),
+            refill_reminder_datetime=episode_case_properties.get(MERM_REFILL_REMINDER_DATETIME, None),
+            RT_hours=episode_case_properties.get(MERM_RT_HOURS, None),
         )
 
         return cls(
@@ -109,7 +119,7 @@ class PatientPayload(jsonobject.JsonObject):
             first_name=person_case_properties.get(PERSON_FIRST_NAME, None),
             last_name=person_case_properties.get(PERSON_LAST_NAME, None),
             phone_numbers=_get_phone_numbers(person_case_properties),
-            merm_params=merm_params,
+            merm_params=merm_params if episode_case_properties.get(MERM_ID, '') != '' else None,
             treatment_start_date=episode_case_properties.get(TREATMENT_START_DATE, None),
             treatment_supporter_name=u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),

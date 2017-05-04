@@ -37,7 +37,6 @@ def get_person_case_structure(case_id, user_id, extra_update=None):
         PERSON_FIRST_NAME: u"Peregrine",
         PERSON_LAST_NAME: u"เՇร ค Շгคק",
         'aadhaar_number': "499118665246",
-        MERM_ID: "123456789",
         'dob': "1987-08-15",
         'age': '20',
         'sex': 'male',
@@ -97,6 +96,7 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=No
         TREATMENT_START_DATE: "2015-03-03",
         TREATMENT_SUPPORTER_FIRST_NAME: u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣",
         TREATMENT_SUPPORTER_LAST_NAME: u"𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
+        MERM_ID: "123456789",
     }
     update.update(extra_update)
 
