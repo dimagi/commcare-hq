@@ -315,6 +315,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         )
         Adherence.objects.create(
             adherenceId=5,
+            creationDate=datetime(2017, 4, 21),
             dosageStatusId=0,
             doseDate=datetime(2017, 4, 22),
             doseReasonId=3,
@@ -336,7 +337,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertFalse(adherence_case.closed)  # TODO
         self.assertIsNone(adherence_case.external_id)
         self.assertEqual(adherence_case.name, '2017-04-22')
-        # self.assertEqual(adherence_case.opened_on, '')  # TODO
+        self.assertEqual(adherence_case.opened_on, datetime(2017, 4, 21))
         self.assertEqual(adherence_case.owner_id, '-')
         self.assertEqual(adherence_case.dynamic_case_properties(), OrderedDict([
             ('adherence_date', '2017-04-22'),
@@ -380,6 +381,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         )
         Adherence.objects.create(
             adherenceId=1,
+            creationDate=datetime(2017, 4, 21),
             dosageStatusId=0,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
@@ -388,6 +390,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         )
         Adherence.objects.create(
             adherenceId=2,
+            creationDate=datetime(2017, 4, 21),
             dosageStatusId=1,
             doseDate=datetime.utcnow(),
             doseReasonId=3,

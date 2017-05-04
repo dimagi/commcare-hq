@@ -227,6 +227,7 @@ class BeneficiaryCaseFactory(object):
                 'case_type': ADHERENCE_CASE_TYPE,
                 'close': False,
                 'create': True,
+                'date_opened': adherence.creationDate,
                 'owner_id': '-',
                 'update': {
                     'adherence_date': adherence.doseDate.date(),

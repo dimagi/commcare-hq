@@ -313,7 +313,7 @@ class Adherence(models.Model):
     adherenceId = models.CharField(max_length=18, primary_key=True)
     beneficiaryId = models.ForeignKey(Beneficiary, null=True, on_delete=models.CASCADE)
     commentId = models.CharField(max_length=8, null=True)
-    creationDate = models.DateTimeField(null=True)
+    creationDate = models.DateTimeField()
     creator = models.CharField(max_length=255, null=True)
     dosageStatusId = models.IntegerField()
     doseDate = models.DateTimeField()
