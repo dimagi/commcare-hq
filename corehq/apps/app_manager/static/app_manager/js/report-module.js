@@ -4,7 +4,7 @@ hqDefine('app_manager/js/report-module.js', function () {
     //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
     var select2Separator = "\u001F";
 
-    function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton) {
+    function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs, lang, langs, changeSaveButton) {
         var self = this;
 
         graph_configs = graph_configs || {};
@@ -20,9 +20,9 @@ hqDefine('app_manager/js/report-module.js', function () {
                 var graph_el = new GraphConfigurationUiElement({
                     childCaseTypes: [],
                     fixtures: [],
-                    lang: 'en',
-                    langs: ['en'],
-                    name: 'some graph', // TODO (langs on the above two lines, too)
+                    lang: lang,
+                    langs: langs,
+                    name: 'some graph', // TODO
                 }, graph_config);
                 self.graphUiElements[currentReportId][currentChart.chart_id] = graph_el;
 
@@ -167,7 +167,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                           showDataTable, uuid, availableReportIds,
                           reportCharts, graph_configs,
                           filterValues, reportFilters,
-                          language, changeSaveButton) {
+                          language, languages, changeSaveButton) {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
@@ -189,7 +189,8 @@ hqDefine('app_manager/js/report-module.js', function () {
         this.useXpathDescription.subscribe(changeSaveButton);
         this.showDataTable.subscribe(changeSaveButton);
 
-        this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);
+        this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts,
+                                           graph_configs, this.lang, languages, changeSaveButton);
         this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);
 
         this.toJSON = function () {
@@ -225,6 +226,7 @@ hqDefine('app_manager/js/report-module.js', function () {
         var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
         self.staticFilterData = options.staticFilterData;
+        self.languages = options.languages;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
         self.moduleFilter = options.moduleFilter === "None" ? "" : options.moduleFilter;
@@ -318,6 +320,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                 options.filters,
                 self.reportFilters,
                 self.lang,
+                self.languages,
                 self.changeSaveButton
             );
             report.reportId.subscribe(function (reportId) {
