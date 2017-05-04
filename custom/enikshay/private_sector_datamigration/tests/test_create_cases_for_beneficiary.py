@@ -439,7 +439,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self._assertIndexEqual(
             prescription_case.indices[0],
             CommCareCaseIndex(
-                identifier='host',
+                identifier='episode_of_prescription',
                 referenced_type='episode',
                 referenced_id=episode_case.get_id,
                 relationship='extension',

@@ -262,7 +262,7 @@ class BeneficiaryCaseFactory(object):
             },
             'indices': [CaseIndex(
                 episode_structure,
-                identifier='host',
+                identifier='episode_of_prescription',
                 relationship=CASE_INDEX_EXTENSION,
                 related_type=EPISODE_CASE_TYPE,
             )],
