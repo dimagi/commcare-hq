@@ -41,19 +41,19 @@ from corehq import toggles
 
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
-    metic_tags = [
+    metric_tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
         u'domain:{}'.format(domain),
     ]
     if should_ignore_submission(request):
         # silently ignore submission if it meets ignore-criteria
         response = SubmissionPost.submission_ignored_response()
-        _record_metrics(metic_tags, 'ignored', response)
+        _record_metrics(metric_tags, 'ignored', response)
         return response
 
     if toggles.FORM_SUBMISSION_BLACKLIST.enabled(domain):
         response = SubmissionPost.get_blacklisted_response()
-        _record_metrics(metic_tags, 'blacklisted', response)
+        _record_metrics(metric_tags, 'blacklisted', response)
         return response
 
     with TimingContext() as timer:
@@ -77,7 +77,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             log_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, details)
             notify_exception(request, "Received a submission with POST.keys()", details)
             response = HttpResponseBadRequest(e.message)
-            _record_metrics(metic_tags, 'unknown', response)
+            _record_metrics(metric_tags, 'unknown', response)
             return response
 
         app_id, build_id = get_app_and_build_ids(domain, app_id)
@@ -111,7 +111,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             'Response is: \n{0}\n'
         )
 
-    _record_metrics(metic_tags, result.submission_type, response, result, timer)
+    _record_metrics(metric_tags, result.submission_type, response, result, timer)
 
     return response
 
