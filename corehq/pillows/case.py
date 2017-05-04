@@ -37,7 +37,7 @@ def transform_case_for_elasticsearch(doc_dict):
 
 def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', **kwargs):
     assert pillow_id == 'CaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO, topics.CASE_TOPICS)
     case_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,

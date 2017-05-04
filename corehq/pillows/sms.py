@@ -15,7 +15,7 @@ SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID = 'sql-sms-to-es'
 
 def get_sql_sms_pillow(pillow_id='SqlSMSPillow', **kwargs):
     assert pillow_id == 'SqlSMSPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, SMS_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, SMS_INDEX_INFO, [topics.SMS])
     processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=SMS_INDEX_INFO,
