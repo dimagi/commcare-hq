@@ -124,6 +124,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('dataset', 'real'),
             ('dob', '1992-01-02'),
             ('dob_known', 'yes'),
+            ('enrolled_in_private', 'true'),
             ('first_name', 'Nick'),
             ('hiv_status', 'non_reactive'),
             ('is_active', 'yes'),

@@ -62,6 +62,7 @@ class BeneficiaryCaseFactory(object):
                     'current_address': self.beneficiary.current_address,
                     'current_episode_type': self.beneficiary.current_episode_type,
                     'dataset': 'real',
+                    'enrolled_in_private': 'true',
                     'first_name': self.beneficiary.firstName,
                     'last_name': self.beneficiary.lastName,
                     'name': ' '.join([self.beneficiary.firstName, self.beneficiary.lastName]),
