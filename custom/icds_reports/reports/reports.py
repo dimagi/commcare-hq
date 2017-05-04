@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 from django.urls import reverse
 from sqlagg import AliasColumn
@@ -6,25 +5,20 @@ from sqlagg.columns import SimpleColumn, SumColumn
 from sqlagg.filters import EQ, IN
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.api import ReportDataSource
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter
-from corehq.apps.reports.generic import GenericReportView
-from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlTabularReport, DictDataFormat, \
-    DataFormatter, SqlData
-from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlData
+from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.maps import GenericMapReport
 from corehq.apps.reports.util import get_INFilter_bindparams
-from corehq.apps.style.decorators import maps_prefer_canvas, use_maps, use_jquery_ui, use_select2, use_datatables, \
+from corehq.apps.style.decorators import use_maps, use_jquery_ui, use_select2, use_datatables, \
     use_daterangepicker
 from custom.icds_reports.asr_sqldata import ASRIdentification, ASROperationalization, ASRPopulation, Annual, \
     DisabledChildren, Infrastructure, Equipment
-from custom.icds_reports.filters import ICDSMonthFilter, IcdsLocationFilter, ICDSYearFilter, CasteFilter, \
-    MinorityFilter, DisabledFilter, ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, \
-    TableauLocationFilter, StateFilter, GenderFilter, MultiCasteFilter, MultiAgeTrancheFilter, YesNoResidentFilter
+from custom.icds_reports.filters import ICDSMonthFilter, IcdsLocationFilter, ICDSYearFilter, \
+    MinorityFilter, DisabledFilter, StateFilter, GenderFilter, MultiCasteFilter, \
+    MultiAgeTrancheFilter, YesNoResidentFilter
 from custom.icds_reports.mpr_sqldata import MPRIdentification, MPRSectors, MPRPopulation, MPRBirthsAndDeaths, \
     MPRAWCDetails, MPRSupplementaryNutrition, MPRUsingSalt, MPRProgrammeCoverage, MPRPreschoolEducation, \
     MPRGrowthMonitoring, MPRImmunizationCoverage, MPRVhnd, MPRReferralServices, MPRMonitoring
