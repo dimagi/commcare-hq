@@ -113,11 +113,9 @@ def _get_summary_details(config, domain):
         from corehq.apps.app_manager.models import GraphConfiguration
         for chart_config in config.report(domain).charts:
             if isinstance(chart_config, MultibarChartSpec):
-                all_graph_configs = config.complete_graph_configs
-                if not len(all_graph_configs) and len(config.graph_configs):
-                    all_graph_configs = config.migrate_graph_configs(domain)
-                    # TODO: save module, now that it's migrated?
-                graph_config = all_graph_configs.get(chart_config.chart_id, GraphConfiguration())
+                config.migrate_graph_configs(domain)
+                graph_config = config.complete_graph_configs.get(chart_config.chart_id,
+                                                                 GraphConfiguration())
 
                 # GraphSeries => xml_models.Series 
                 def _series_to_series(series):

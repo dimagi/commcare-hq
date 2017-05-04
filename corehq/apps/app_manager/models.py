@@ -4199,13 +4199,16 @@ class ReportAppConfig(DocumentSchema):
     complete_graph_configs = DictProperty(GraphConfiguration)
 
     def migrate_graph_configs(self, domain):
-        graph_configs = {}
+        if len(self.complete_graph_configs):
+            return
+
+        self.complete_graph_configs = {}
         from corehq.apps.userreports.reports.specs import MultibarChartSpec
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MobileSelectFilterHelpers
         for chart_config in self.report(domain).charts:
             if isinstance(chart_config, MultibarChartSpec):
                 limited_graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
-                graph_configs[chart_config.chart_id] = GraphConfiguration(
+                self.complete_graph_configs[chart_config.chart_id] = GraphConfiguration(
                     graph_type=limited_graph_config.graph_type,
                     config=limited_graph_config.config,
                     series=[GraphSeries(
@@ -4224,8 +4227,6 @@ class ReportAppConfig(DocumentSchema):
                     locale_specific_config={},
                     annotations=[]
                 )
-        self.complete_graph_configs = graph_configs
-        return self.complete_graph_configs
 
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
