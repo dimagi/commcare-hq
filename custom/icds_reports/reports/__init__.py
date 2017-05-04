@@ -132,7 +132,6 @@ CUSTOM_REPORTS = (
     )),
     ('CUSTOM REPORTS', [
         TableauReport,
-        ChildHealthMonthReport,
         ChildHealthMothlyMapReport
     ]),
 )

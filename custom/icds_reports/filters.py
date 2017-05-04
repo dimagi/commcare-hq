@@ -234,7 +234,7 @@ class StateFilter(ICDSTableauFilterMixin, BaseSingleOptionFilter):
     @property
     def options(self):
         data = sorted(StateData(config=dict(aggregation_level=1)).data, key=lambda x: x[1])
-        revert = [(x[1], x[0]) for x in data]
+        revert = [(x[0], x[0]) for x in data]
         return [
             ('All', 'All')
         ] + revert

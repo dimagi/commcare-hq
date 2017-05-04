@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from django.urls import reverse
 from sqlagg import AliasColumn
@@ -7,14 +8,18 @@ from sqlagg.sorting import OrderBy
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter
-from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlTabularReport
+from corehq.apps.reports.generic import GenericReportView
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlTabularReport, DictDataFormat, \
+    DataFormatter, SqlData
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
 from corehq.apps.reports.util import get_INFilter_bindparams
-from corehq.apps.style.decorators import maps_prefer_canvas, use_maps
+from corehq.apps.style.decorators import maps_prefer_canvas, use_maps, use_jquery_ui, use_select2, use_datatables, \
+    use_daterangepicker
 from custom.icds_reports.asr_sqldata import ASRIdentification, ASROperationalization, ASRPopulation, Annual, \
     DisabledChildren, Infrastructure, Equipment
 from custom.icds_reports.filters import ICDSMonthFilter, IcdsLocationFilter, ICDSYearFilter, CasteFilter, \
@@ -104,60 +109,13 @@ class TableauReport(CustomProjectReport):
 
 
 @location_safe
-class ChildHealthMonthReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
+class ChildHealthMonthReport(SqlData):
     table_name = "agg_child_health_monthly"
-    name = 'Child Health Monthly'
-    title = 'Child Health Monthly'
-    slug = 'child_health'
-
-    fields = [
-        StateFilter,
-        ICDSMonthFilter,
-        ICDSYearFilter,
-        GenderFilter,
-        MultiAgeTrancheFilter,
-        MultiCasteFilter,
-        MinorityFilter,
-        DisabledFilter,
-        YesNoResidentFilter
-    ]
-
-    @property
-    def config(self):
-        month = int(self.request.GET.get('month', 0))
-        year = int(self.request.GET.get('year', 0))
-        date = None
-        if month and year:
-            date = datetime(year, month, 1).date()
-        aggregation_lvl = 1
-        state = self.request.GET.get('state', '')
-        if state and state != 'All':
-            aggregation_lvl = 2
-
-        caste = self.request.GET.getlist('caste', [])
-        age_tranche = self.request.GET.getlist('age_tranche', [])
-        minority = self.request.GET.get('minority', '')
-        disabled = self.request.GET.get('disabled', '')
-        resident = self.request.GET.get('resident', '')
-        gender = self.request.GET.get('gender', '')
-
-        return {
-            'domain': 'icds_test',
-            'month': date,
-            'aggregation_lvl': aggregation_lvl,
-            'caste': caste,
-            'age_tranche': age_tranche,
-            'minority': minority,
-            'disabled': disabled,
-            'resident': resident,
-            'gender': gender
-        }
 
     @property
     def filter_values(self):
         filter_values = clean_IN_filter_value(super(ChildHealthMonthReport, self).filter_values, 'age_tranche')
         filter_values = clean_IN_filter_value(filter_values, 'caste')
-        print filter_values
         return filter_values
 
     @property
@@ -166,6 +124,8 @@ class ChildHealthMonthReport(SqlTabularReport, CustomProjectReport, ProjectRepor
             EQ('month', 'month'),
             EQ('aggregation_level', 'aggregation_lvl')
         ]
+        if self.config['state'] != 'All':
+            filters.append(EQ('state_name', 'state'))
         if self.config['gender'] != 'All':
             filters.append(EQ('gender', 'gender'))
         if self.config['age_tranche'] and 'All' not in self.config['age_tranche']:
@@ -178,19 +138,18 @@ class ChildHealthMonthReport(SqlTabularReport, CustomProjectReport, ProjectRepor
             filters.append(EQ('disabled', 'disabled'))
         if self.config['resident'] != 'All':
             filters.append(EQ('resident', 'resident'))
-        print filters
         return filters
 
     @property
     def group_by(self):
-        group_by = ['month', 'state_name']
+        group_by = ['state_name']
         if self.config['aggregation_lvl'] == 2:
             group_by.append('district_name')
         return group_by
 
     @property
     def order_by(self):
-        order_by = [OrderBy('month'), OrderBy('state_name')]
+        order_by = [OrderBy('state_name')]
         if self.config['aggregation_lvl'] == 2:
             order_by.append(OrderBy('district_name'))
         return order_by
@@ -223,7 +182,6 @@ class ChildHealthMonthReport(SqlTabularReport, CustomProjectReport, ProjectRepor
                 return 'normal'
 
         columns = [
-            DatabaseColumn("Month", SimpleColumn('month')),
             DatabaseColumn("State", SimpleColumn('state_name'))
         ]
 
@@ -311,60 +269,177 @@ class ChildHealthMonthReport(SqlTabularReport, CustomProjectReport, ProjectRepor
         ]
 
     @property
-    def rows(self):
-        if self.config['month']:
-            return super(ChildHealthMonthReport, self).rows
-        return []
-
-    @property
     def engine_id(self):
         return 'ucr'
 
 
-@location_safe
 class ChildHealthMothlyMapReport(CustomProjectReport, GenericMapReport):
 
     name = 'Child Health Monthly (Map)'
     title = 'Child Health Monthly (Map)'
     slug = 'map_child_health'
+    flush_layout = True
 
     fields = [
+        StateFilter,
         ICDSMonthFilter,
         ICDSYearFilter,
-        IcdsLocationFilter
+        GenderFilter,
+        MultiAgeTrancheFilter,
+        MultiCasteFilter,
+        MinorityFilter,
+        DisabledFilter,
+        YesNoResidentFilter
     ]
 
     data_source = {
-        'adapter': 'legacyreport',
-        'geo_column': 'gps',
-        'report': 'custom.icds_reports.reports.ChildHealthMonthReport',
-        'report_params': {'map': True}
+        'adapter': 'report',
+        'geojson_adapter': 'geojson',
+        'geo_column': 'geo',
+        'report': 'custom.icds_reports.reports.reports.ChildHealthMonthReport',
+        'path': 'custom/icds_reports/resources/%s.geojson.json',
     }
 
-    def headers(self):
-        return DataTablesHeader(
-            DataTablesColumn('', sortable=False),
-            DataTablesColumn('Name', sortable=False),
-            DataTablesColumn('Code', sortable=False)
-        )
+    @property
+    def config(self):
+        month = int(self.request.GET.get('month', 0))
+        year = int(self.request.GET.get('year', 0))
+        date = None
+        if month and year:
+            date = datetime(year, month, 1).date()
+        aggregation_lvl = 1
+        state = self.request.GET.get('state', '')
+        if state and state != 'All':
+            aggregation_lvl = 2
 
-    @maps_prefer_canvas
+        caste = self.request.GET.getlist('caste', [])
+        age_tranche = self.request.GET.getlist('age_tranche', [])
+        minority = self.request.GET.get('minority', '')
+        disabled = self.request.GET.get('disabled', '')
+        resident = self.request.GET.get('resident', '')
+        gender = self.request.GET.get('gender', '')
+
+        return {
+            'domain': 'icds_test',
+            'month': date,
+            'state': state,
+            'aggregation_lvl': aggregation_lvl,
+            'caste': caste,
+            'age_tranche': age_tranche,
+            'minority': minority,
+            'disabled': disabled,
+            'resident': resident,
+            'gender': gender
+        }
+
+    @use_jquery_ui
+    @use_select2
+    @use_datatables
+    @use_daterangepicker
     @use_maps
     def decorator_dispatcher(self, request, *args, **kwargs):
-        super(ChildHealthMothlyMapReport, self).decorator_dispatcher(request, *args, **kwargs)
+        pass
 
     def _get_data(self):
-        adapter = self.data_source['adapter']
+        locations = 'states'
+        row_location_loc = 'state_name'
+        if self.config['aggregation_lvl'] == 2:
+            locations = 'districts'
+            row_location_loc = 'district_name'
+
+        def_value = {'sort_key': 0, 'html': '0%'}
+        def_value_int = {'sort_key': 0, 'html': 0}
+        report_adapter = self.data_source['adapter']
         geo_col = self.data_source.get('geo_column', 'geo')
+        geo_data_adapter = self.data_source['geojson_adapter']
 
         try:
-            loader = getattr(self, '_get_data_%s' % adapter)
+            report_loader = getattr(self, '_get_data_%s' % report_adapter)
+            geo_data_loader = getattr(self, '_get_data_%s' % geo_data_adapter)
         except AttributeError:
-            raise RuntimeError('unknown adapter [%s]' % adapter)
-        data = loader(self.data_source, dict(self.request.GET.iteritems()))
-
-        return self._to_geojson(data, geo_col)
+            raise RuntimeError('unknown adapter [%s] or [%s]' % (report_loader, geo_data_loader))
+        report_data = report_loader(self.data_source, self.config)
+        geo_data = geo_data_loader(dict(path=self.data_source['path'] % locations), dict())
+        map_data = []
+        location_name_col = 'NAME_1' if locations == 'states' else 'NAME_2'
+        for geo in geo_data:
+            if self.config['state'] != 'All' and geo['NAME_1'] != self.config['state']:
+                continue
+            columns = {
+                row_location_loc: geo[location_name_col],
+                'sum_nutrition_status_moderately_underweight': def_value_int,
+                'sum_nutrition_status_normal': def_value_int,
+                'sum_nutrition_status_severely_underweight': def_value_int,
+                'sum_valid_in_month': def_value_int,
+                'moderately-underweight': def_value,
+                'normal-weight': def_value,
+                'severely-underweight': def_value,
+                'nutrition-status-of-location': {'sort_key': 'unknown', 'html': 'unknown'},
+            }
+            for row in report_data:
+                if row[row_location_loc] == geo[location_name_col]:
+                    columns = row
+                    continue
+            columns.update(dict(geo=geo['geo']))
+            map_data.append(columns)
+        return self._to_geojson(map_data, geo_col)
 
     @property
     def display_config(self):
-        return {}
+        name_column = 'district_name' if self.config['aggregation_lvl'] == 2 else 'state_name'
+        conf = {
+            'name_column': name_column,
+            'detail_columns': ['nutrition-status-of-location'],
+            'table_columns': [
+                'sum_nutrition_status_moderately_underweight',
+                'sum_nutrition_status_normal',
+                'sum_nutrition_status_severely_underweight',
+                'sum_valid_in_month',
+                'moderately-underweight',
+                'normal-weight',
+                'severely-underweight',
+                'nutrition-status-of-location'
+            ],
+            'column_titles': {
+                'state_name': 'State',
+                'district_name': 'District',
+                'sum_nutrition_status_moderately_underweight': 'Nutrition status moderately underweight',
+                'sum_nutrition_status_normal': 'Nutrition status normal',
+                'sum_nutrition_status_severely_underweight': 'Nutrition status severely underweight',
+                'sum_valid_in_month': 'Valid in month',
+                'moderately-underweight': 'Moderately underweight',
+                'normal-weight': 'Normal weight',
+                'severely-underweight': 'Severely underweight',
+                'nutrition-status-of-location': 'Nutrition status of location',
+            },
+            'enum_captions': {},
+            'numeric_format': {},
+            'display': {
+                'table': True
+            },
+            'metrics': [
+                {
+                    'default': True,
+                    'color': {
+                        'column': 'nutrition-status-of-location',
+                        'title': 'nutrition-status-of-location',
+                        'categories': {
+                            'unknown': 'rgba(192, 192, 192, 0.8)',
+                            'severe': 'rgba(255, 0, 0, 0.8)',
+                            'moderate': 'rgba(255, 128, 0, 0.8)',
+                            'normal': 'rgba(0, 153, 0, 0.8)',
+                        }
+                    }
+                }
+            ],
+            'detail_template': """<div>
+                <h3><%= name %></h3>
+                <hr />
+                <p>Number of children: <%= props['sum_valid_in_month']%></p>
+                <p>% Normal Weight: <strong><%= props['normal-weight']%></strong></p>
+                <p>% Moderately Underweight: <strong><%= props['moderately-underweight']%></strong></p>
+                <p>% Severely Underweight: <strong><%= props['severely-underweight']%></strong></p>
+                </div>
+            """
+        }
+        return conf
