@@ -37,7 +37,8 @@ class ReportModuleSuiteHelper(object):
                 yield (MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
                        MobileSelectFilterHelpers.get_select_details(config, filter_slug, self.domain), True)
             yield (_get_select_detail_id(config), _get_select_details(config), True)
-            yield (_get_summary_detail_id(config), _get_summary_details(config, self.domain), True)
+            yield (_get_summary_detail_id(config),
+                   _get_summary_details(config, self.domain, self.report_module), True)
 
     def get_custom_entries(self):
         _load_reports(self.report_module)
@@ -105,42 +106,44 @@ def _get_select_details(config):
     ).serialize().decode('utf-8'))
 
 
-def _get_summary_details(config, domain):
+def _get_summary_details(config, domain, module):
     def _get_graph_fields():
-        # TODO: this doesn't write annotations or locale-specific config.
-        # Share code with case detail graph suite generation?
         from corehq.apps.userreports.reports.specs import MultibarChartSpec
         from corehq.apps.app_manager.models import GraphConfiguration
+
+        def _locale_config(key):
+            return id_strings.mobile_ucr_configuration(
+                module,
+                config.uuid,
+                key
+            )
+
+        def _locale_series_config(index, key):
+            return id_strings.mobile_ucr_series_configuration(
+                module,
+                config.uuid,
+                index,
+                key
+            )
+
+        def _locale_annotation(index):
+            return id_strings.mobile_ucr_annotation(
+                module,
+                config.uuid,
+                index
+            )
+
+
         for chart_config in config.report(domain).charts:
             if isinstance(chart_config, MultibarChartSpec):
                 config.migrate_graph_configs(domain)
-                graph_config = config.complete_graph_configs.get(chart_config.chart_id,
-                                                                 GraphConfiguration())
-
-                # GraphSeries => xml_models.Series 
-                def _series_to_series(series):
-                    return Series(
-                        nodeset=series.data_path,
-                        x_function=series.x_function,
-                        y_function=series.y_function,
-                        configuration=ConfigurationGroup(configs=[
-                            ConfigurationItem(id=key, xpath_function=value)
-                            for key, value in series.config.items()
-                        ])
-                    )
+                graph_config = config.complete_graph_configs.get(chart_config.chart_id, GraphConfiguration())
                 yield Field(
                     header=Header(text=Text()),
-                    template=GraphTemplate(
-                        form='graph',
-                        graph=Graph(
-                            type=graph_config.graph_type,
-                            series=[_series_to_series(s) for s in graph_config.series],
-                            configuration=ConfigurationGroup(configs=[
-                                ConfigurationItem(id=key, xpath_function=value)
-                                for key, value in graph_config.config.items()
-                            ]),
-                        ),
-                    )
+                    template=GraphTemplate.build('graph', graph_config,
+                                                 locale_config=_locale_config,
+                                                 locale_series_config=_locale_series_config,
+                                                 locale_annotation=_locale_annotation)
                 )
 
     def _get_description_text(report_config):
