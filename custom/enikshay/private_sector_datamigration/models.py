@@ -232,7 +232,7 @@ class Episode(models.Model):
     def diabetes_status(self):
         return {
             'Yes': 'diabetic',
-            'No': 'non-diabetic',
+            'No': 'non_diabetic',
             'Not known': 'unknown',
             None: 'unknown',
             'Select': 'unknown',
