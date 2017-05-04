@@ -54,6 +54,10 @@ hqDefine('app_manager/js/report-module.js', function () {
                     name: 'some graph', // TODO (langs on the above two lines, too)
                 }, graph_config);
                 self.graphConfigUiElements[currentReportId][currentChart.chart_id] = graph_el;
+
+                graph_el.on("change", function() {
+                    changeSaveButton();
+                });
             }
         }
 
@@ -428,11 +432,5 @@ hqDefine('app_manager/js/report-module.js', function () {
 ko.bindingHandlers.editGraph = {
     init: function (element, valueAccessor) {
         $(element).find(".guts").replaceWith(valueAccessor().ui);
-
-        // TODO: fire save button on change
-        /*graph_el.on("change", function() {
-            console.log("do something");
-            // self.saveButton.fire('change');
-        });*/
     },
 };
