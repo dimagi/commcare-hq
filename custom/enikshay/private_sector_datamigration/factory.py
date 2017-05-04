@@ -108,6 +108,7 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['other_id_type'] = self.beneficiary.other_id_type
 
         if self._episode:
+            kwargs['attrs']['update']['diabetes_status'] = self._episode.diabetes_status
             kwargs['attrs']['update']['hiv_status'] = self._episode.hiv_status
             kwargs['attrs']['update']['current_patient_type_choice'] = self._episode.current_patient_type_choice
 

@@ -229,6 +229,16 @@ class Episode(models.Model):
         return ''  # TODO - handle
 
     @property
+    def diabetes_status(self):
+        return {
+            'Yes': 'diabetic',
+            'No': 'non-diabetic',
+            'Not known': 'unknown',
+            None: 'unknown',
+            'Select': 'unknown',
+        }[self.diabetes]
+
+    @property
     def disease_classification(self):
         return {
             'Pulmonary': 'pulmonary',
