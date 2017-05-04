@@ -175,7 +175,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                 });
 
                 if(filter.choices !== undefined && filter.show_all) {
-                    filter.choices.unshift({value: "_all", display: "Show All"}); // TODO: translate
+                    filter.choices.unshift({value: "_all", display: gettext("Show All")});
                 }
             }
         });
