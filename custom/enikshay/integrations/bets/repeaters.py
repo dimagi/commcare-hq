@@ -9,6 +9,7 @@ from custom.enikshay.case_utils import (
     get_episode_case_from_voucher,
     get_approved_prescription_vouchers_from_episode,
 )
+from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.integrations.bets.const import TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT, \
     DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT
 from custom.enikshay.integrations.utils import case_properties_changed, is_valid_episode_submission, \
@@ -96,6 +97,7 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
         case_properties = episode_case.dynamic_case_properties()
         treatment_outcome = case_properties.get('treatment_outcome', None)
         treatment_outcome_transitioned = case_properties_changed(episode_case, ['treatment_outcome'])
+        enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
         episode_has_outcome = treatment_outcome and (treatment_outcome != 'not_evaluated')
         adherence_total_doses_taken = case_properties.get('adherence_total_doses_taken', "0")
         try:
@@ -109,6 +111,7 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
             and treatment_outcome_transitioned
             and not_sent
             and adherence_total_doses_taken >= 180
+            and enrolled_in_private_sector
             and is_valid_episode_submission(episode_case)
         )
 
@@ -165,10 +168,12 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
 
         case_properties = episode_case.dynamic_case_properties()
         not_sent = case_properties.get("event_{}".format(SUCCESSFUL_TREATMENT_EVENT)) != "sent"
+        enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
         return (
             case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
             and case_properties_changed(episode_case, ["treatment_outcome"])
             and not_sent
+            and enrolled_in_private_sector
             and is_valid_archived_submission(episode_case)
         )
 
@@ -187,11 +192,13 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
 
         case_properties = episode_case.dynamic_case_properties()
         not_sent = case_properties.get("event_{}".format(DIAGNOSIS_AND_NOTIFICATION_EVENT)) != "sent"
+        enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
         return (
             case_properties.get("pending_registration") == "no"
             and case_properties.get("nikshay_registered") == 'true'
             and case_properties_changed(episode_case, ['nikshay_registered'])
             and not_sent
+            and enrolled_in_private_sector
             and is_valid_episode_submission(episode_case)
         )
 
@@ -214,11 +221,13 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
             and case_properties.get("presumptive_referral_by_ayush") != "false"
         )
         not_sent = case_properties.get("event_{}".format(AYUSH_REFERRAL_EVENT)) != "sent"
+        enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
         return (
             presumptive_referral_by_ayush
             and case_properties.get("nikshay_registered") == 'true'
             and case_properties_changed(episode_case, ['nikshay_registered'])
             and not_sent
+            and enrolled_in_private_sector
             and is_valid_episode_submission(episode_case)
         )
 

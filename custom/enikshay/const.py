@@ -18,6 +18,7 @@ EPISODE_PENDING_REGISTRATION = "episode_pending_registration"
 WEIGHT_BAND = 'weight_band'
 
 CURRENT_ADDRESS = 'current_address'
+ENROLLED_IN_PRIVATE = "enrolled_in_private"
 
 NINETYNINEDOTS_PERSON_PROPERTIES = [
     PRIMARY_PHONE_NUMBER,
