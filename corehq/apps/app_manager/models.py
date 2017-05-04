@@ -4198,11 +4198,11 @@ class ReportAppConfig(DocumentSchema):
     graph_configs = DictProperty(ReportGraphConfig) # deprecated
     complete_graph_configs = DictProperty(GraphConfiguration)
 
-    def migrate_graph_configs(self, config, domain):
+    def migrate_graph_configs(self, domain):
         graph_configs = {}
         from corehq.apps.userreports.reports.specs import MultibarChartSpec
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MobileSelectFilterHelpers
-        for chart_config in config.report(domain).charts:
+        for chart_config in self.report(domain).charts:
             if isinstance(chart_config, MultibarChartSpec):
                 limited_graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
                 graph_configs[chart_config.chart_id] = GraphConfiguration(
@@ -4214,8 +4214,8 @@ class ReportAppConfig(DocumentSchema):
                         data_path=(
                             "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
                             .format(
-                                config.uuid,
-                                MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
+                                self.uuid,
+                                MobileSelectFilterHelpers.get_data_filter_xpath(self, domain)
                             )
                         ),
                         x_function="column[@id='{}']".format(chart_config.x_axis_column),
