@@ -25,7 +25,7 @@ from dimagi.utils.web import json_request
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -474,20 +474,6 @@ def resync_case_to_es(domain, case):
         publish_case_saved(case)
     else:
         CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
-
-
-def verify_location_allowed_for_case(case, domain, user):
-    from corehq.apps.locations.permissions import user_can_access_location_id, user_can_access_other_user
-    from corehq.apps.reports.standard.cases.data_sources import CaseInfo
-
-    info = CaseInfo(None, case)
-    if info.owner_type == 'location':
-        return user_can_access_location_id(domain, user, info.owner_id)
-    elif info.owner_type == 'user':
-        owning_user = CouchUser.get_by_user_id(info.owner_id)
-        return user_can_access_other_user(domain, user, owning_user)
-    else:
-        return False
 
 
 @quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)

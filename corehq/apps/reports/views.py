@@ -3,7 +3,6 @@ from datetime import datetime, timedelta, date
 import itertools
 import json
 from wsgiref.util import FileWrapper
-from corehq.apps.reports.standard.cases.data_sources import CaseInfo
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
@@ -113,8 +112,7 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
 from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location, location_safe, \
-    user_can_access_location_id, location_restricted_exception, \
-    user_can_access_other_user
+    location_restricted_exception, user_can_access_case
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import default_language as ucr_default_language
@@ -164,7 +162,7 @@ from .util import (
     get_group,
     group_filter,
     users_matching_filter,
-    resync_case_to_es, verify_location_allowed_for_case)
+    resync_case_to_es)
 from corehq.apps.style.decorators import (
     use_jquery_ui,
     use_select2,
@@ -1247,7 +1245,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
                           "is a mistake please report an issue.")
             return HttpResponseRedirect(CaseListReport.get_url(domain=self.domain))
         if not (request.can_access_all_locations or
-                verify_location_allowed_for_case(self.case_instance, self.domain, self.request.couch_user)):
+                user_can_access_case(self.domain, self.request.couch_user, self.case_instance)):
             raise location_restricted_exception(request)
         return super(CaseDetailsView, self).dispatch(request, *args, **kwargs)
 
@@ -1308,7 +1306,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
 def case_forms(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
     if not (request.can_access_all_locations or
-                verify_location_allowed_for_case(case, domain, request.couch_user)):
+                user_can_access_case(domain, request.couch_user, case)):
         raise location_restricted_exception(request)
     try:
         start_range = int(request.GET['start_range'])
