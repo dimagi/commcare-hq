@@ -164,7 +164,7 @@ from .util import (
     get_group,
     group_filter,
     users_matching_filter,
-    resync_case_to_es)
+    resync_case_to_es, verify_location_allowed_for_case)
 from corehq.apps.style.decorators import (
     use_jquery_ui,
     use_select2,
@@ -1246,22 +1246,10 @@ class CaseDetailsView(BaseProjectReportSectionView):
                           "Sorry, we couldn't find that case. If you think this "
                           "is a mistake please report an issue.")
             return HttpResponseRedirect(CaseListReport.get_url(domain=self.domain))
-        if not self.verify_location_allowed():
+        if not (request.can_access_all_locations or
+                verify_location_allowed_for_case(self.case_instance, self.domain, self.request.couch_user)):
             raise location_restricted_exception(request)
         return super(CaseDetailsView, self).dispatch(request, *args, **kwargs)
-
-    def verify_location_allowed(self):
-        case = self.case_instance
-        domain = self.domain
-        user = self.request.couch_user
-        info = CaseInfo(self, case)
-        if info.owner_type == 'location':
-            return user_can_access_location_id(domain, user, info.owner_id)
-        elif info.owner_type == 'user':
-            owning_user = CommCareUser.get(info.owner_id)
-            return user_can_access_other_user(domain, user, owning_user)
-        else:
-            return False
 
     @property
     def case_id(self):
@@ -1313,11 +1301,15 @@ class CaseDetailsView(BaseProjectReportSectionView):
         }
 
 
+@location_safe
 @require_case_view_permission
 @login_and_domain_required
 @require_GET
 def case_forms(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
+    if not (request.can_access_all_locations or
+                verify_location_allowed_for_case(case, domain, request.couch_user)):
+        raise location_restricted_exception(request)
     try:
         start_range = int(request.GET['start_range'])
         end_range = int(request.GET['end_range'])
@@ -1348,6 +1340,7 @@ def case_forms(request, domain, case_id):
     ])
 
 
+@location_safe
 class CaseAttachmentsView(CaseDetailsView):
     urlname = 'single_case_attachments'
     template_name = "reports/reportdata/case_attachments.html"
