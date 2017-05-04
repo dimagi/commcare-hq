@@ -1,4 +1,4 @@
-/* globals hqDefine, ko, $, CodeMirror */
+/* globals hqDefine, ko, $ */
 
 hqDefine('case_search/js/case_search.js', function(){
     'use strict';
