@@ -2,6 +2,7 @@ from mock import patch
 
 from django.test import TestCase
 
+from casexml.apps.phone.tests.utils import call_fixture_generator
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.exceptions import CantSaveException
@@ -162,7 +163,7 @@ class LocationGroupTest(TestCase):
         self.user.unset_location()
         self.addCleanup(self.user.set_location, self.loc)
 
-        fixture = location_fixture_generator(self.user.to_ota_restore_user(), '2.0')
+        fixture = call_fixture_generator(location_fixture_generator, self.user.to_ota_restore_user())
         self.assertEqual(len(fixture), 1)
         self.assertEquals(len(fixture[0].findall('.//state')), 0)
 
@@ -173,5 +174,5 @@ class LocationGroupTest(TestCase):
         """
         self.user.unset_location()
         self.addCleanup(self.user.set_location, self.loc)
-        fixture = location_fixture_generator(self.user.to_ota_restore_user(), '2.0')
+        fixture = call_fixture_generator(location_fixture_generator, self.user.to_ota_restore_user())
         self.assertEqual(len(fixture), 0)

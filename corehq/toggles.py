@@ -1187,3 +1187,11 @@ ENTERPRISE_OPTIMIZATIONS = StaticToggle(
     [NAMESPACE_DOMAIN],
     always_enabled={'icds-cas'}
 )
+
+MOBIE_UCR_SYNC_DELAY_CONFIG = StaticToggle(
+    'mobile_ucr_sync_delay',
+    "Show settings for configuring mobile UCR sync delay",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
+)
