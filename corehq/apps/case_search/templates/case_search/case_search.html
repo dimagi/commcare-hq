@@ -32,10 +32,17 @@
                         {% csrf_token %}
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <strong>{% trans "Case Type" %}</strong>
+                                <strong>{% trans "Case Metadata" %}</strong>
                             </div>
                             <div class="panel-body">
-                                <input name="type" type="text" placeholder="Case Type (optional)" data-bind="value: type"/>
+                                <label>
+                                    {% trans "Case Type:" %}
+                                    <input name="type" type="text" placeholder="Case Type (optional)" data-bind="value: type"/>
+                                </label>
+                                <label>
+                                    {% trans "Owner ID:" %}
+                                    <input name="type" type="text" placeholder="Owner ID (optional)" data-bind="value: owner_id"/>
+                                </label>
                             </div>
                         </div>
                         <div class="panel panel-default">

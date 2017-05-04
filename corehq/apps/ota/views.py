@@ -114,6 +114,10 @@ def search(request, domain):
 
     query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
 
+    owner_id = criteria.pop('owner_id', False)
+    if owner_id:
+        search_es = search_es.owner(owner_id)
+
     fuzzies = config.config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
