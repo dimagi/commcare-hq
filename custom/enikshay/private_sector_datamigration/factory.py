@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from dateutil.relativedelta import relativedelta
 
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 
 from corehq.apps.locations.models import SQLLocation
@@ -57,7 +57,6 @@ class BeneficiaryCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': PERSON_CASE_TYPE,
-                'close': False,
                 'create': True,
                 'update': {
                     'current_address': self.beneficiary.current_address,
@@ -111,16 +110,25 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['hiv_status'] = self._episode.hiv_status
             kwargs['attrs']['update']['current_patient_type_choice'] = self._episode.current_patient_type_choice
 
+            if self._episode.is_treatment_ended:
+                kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
+                kwargs['attrs']['update']['is_active'] = 'no'
+                if self._episode.treatment_outcome == 'died':
+                    kwargs['attrs']['close'] = True
+            else:
+                kwargs['attrs']['update']['is_active'] = 'yes'
+
         agency = (
             self._episode.treating_provider or self.beneficiary.referred_provider
             if self._episode else self.beneficiary.referred_provider
         )
         assert agency is not None
 
-        kwargs['attrs']['owner_id'] = SQLLocation.active_objects.get(
-            domain=self.domain,
-            site_code=agency.nikshayId,
-        ).location_id
+        if not self._episode or not self._episode.is_treatment_ended:
+            kwargs['attrs']['owner_id'] = SQLLocation.active_objects.get(
+                domain=self.domain,
+                site_code=agency.nikshayId,
+            ).location_id
 
         return CaseStructure(**kwargs)
 
@@ -128,7 +136,6 @@ class BeneficiaryCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': OCCURRENCE_CASE_TYPE,
-                'close': False,
                 'create': True,
                 'owner_id': '-',
                 'update': {
@@ -147,13 +154,16 @@ class BeneficiaryCaseFactory(object):
                 related_type=PERSON_CASE_TYPE,
             )],
         }
+
+        if self._episode and self._episode.is_treatment_ended:
+            kwargs['attrs']['close'] = True
+
         return CaseStructure(**kwargs)
 
     def get_episode_case_structure(self, occurrence_structure):
         kwargs = {
             'attrs': {
                 'case_type': EPISODE_CASE_TYPE,
-                'close': False,
                 'create': True,
                 'owner_id': '-',
                 'update': {
@@ -197,6 +207,12 @@ class BeneficiaryCaseFactory(object):
 
             if self._episode.disease_classification == 'extra_pulmonary':
                 kwargs['attrs']['update']['site_choice'] = self._episode.site_choice
+
+            if self._episode.treatment_outcome:
+                kwargs['attrs']['update']['treatment_outcome'] = self._episode.treatment_outcome
+
+            if self._episode.is_treatment_ended:
+                kwargs['attrs']['close'] = True
         else:
             kwargs['attrs']['update']['episode_pending_registration'] = 'yes'
             kwargs['attrs']['update']['treatment_initiated'] = 'no'

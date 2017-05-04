@@ -6,6 +6,7 @@ from django.test import TestCase, override_settings
 
 from mock import patch
 
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -109,7 +110,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(len(person_case_ids), 1)
         person_case = self.case_accessor.get_case(person_case_ids[0])
-        self.assertFalse(person_case.closed)  # TODO - update by outcome
+        self.assertFalse(person_case.closed)
         self.assertIsNone(person_case.external_id)
         self.assertEqual(person_case.name, 'Nick P')
         self.assertEqual(person_case.owner_id, self.pcp.location_id)
@@ -125,6 +126,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('dob_known', 'yes'),
             ('first_name', 'Nick'),
             ('hiv_status', 'non_reactive'),
+            ('is_active', 'yes'),
             ('last_name', 'P'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
@@ -138,7 +140,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(len(occurrence_case_ids), 1)
         occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
-        self.assertFalse(occurrence_case.closed)  # TODO - update by outcome
+        self.assertFalse(occurrence_case.closed)
         self.assertIsNone(occurrence_case.external_id)
         self.assertEqual(occurrence_case.name, 'Occurrence #1')
         self.assertEqual(occurrence_case.owner_id, '-')
@@ -163,7 +165,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(len(episode_case_ids), 1)
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
-        self.assertFalse(episode_case.closed)  # TODO - update by outcome
+        self.assertFalse(episode_case.closed)
         self.assertEqual(episode_case.external_id, '02139-02215')
         self.assertEqual(episode_case.name, 'Episode #1: Confirmed TB (Patient)')
         self.assertEqual(episode_case.opened_on, datetime(2017, 4, 19))
@@ -199,6 +201,92 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             )
         )
         self.assertEqual(len(episode_case.xform_ids), 1)
+
+    def test_beneficiary_cured(self):
+        Episode.objects.create(
+            adherenceScore=0.5,
+            alertFrequencyId=2,
+            beneficiaryID=self.beneficiary,
+            creationDate=datetime(2017, 4, 20),
+            dateOfDiagnosis=datetime(2017, 4, 18),
+            episodeDisplayID=3,
+            episodeID=6,
+            extraPulmonary='Abdomen',
+            hiv='Negative',
+            lastMonthAdherencePct=0.6,
+            lastTwoWeeksAdherencePct=0.7,
+            missedDosesPct=0.8,
+            newOrRetreatment='New',
+            nikshayID='02139-02215',
+            patientWeight=50,
+            rxStartDate=datetime(2017, 4, 19),
+            site='Extrapulmonary',
+            treatmentOutcomeId='Cured',
+            unknownAdherencePct=0.9,
+            unresolvedMissedDosesPct=0.1,
+        )
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertFalse(person_case.closed)
+        self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
+        self.assertEqual(person_case.dynamic_case_properties()['is_active'], 'no')
+
+        occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(1, len(occurrence_case_ids))
+        occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
+        self.assertTrue(occurrence_case.closed)
+
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertTrue(episode_case.closed)
+        self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome'], 'cured')
+
+    def test_beneficiary_died(self):
+        Episode.objects.create(
+            adherenceScore=0.5,
+            alertFrequencyId=2,
+            beneficiaryID=self.beneficiary,
+            creationDate=datetime(2017, 4, 20),
+            dateOfDiagnosis=datetime(2017, 4, 18),
+            episodeDisplayID=3,
+            episodeID=6,
+            extraPulmonary='Abdomen',
+            hiv='Negative',
+            lastMonthAdherencePct=0.6,
+            lastTwoWeeksAdherencePct=0.7,
+            missedDosesPct=0.8,
+            newOrRetreatment='New',
+            nikshayID='02139-02215',
+            patientWeight=50,
+            rxStartDate=datetime(2017, 4, 19),
+            site='Extrapulmonary',
+            treatmentOutcomeId='Died',
+            unknownAdherencePct=0.9,
+            unresolvedMissedDosesPct=0.1,
+        )
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertTrue(person_case.closed)
+        self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
+        self.assertEqual(person_case.dynamic_case_properties()['is_active'], 'no')
+
+        occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(1, len(occurrence_case_ids))
+        occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
+        self.assertTrue(occurrence_case.closed)
+
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertTrue(episode_case.closed)
+        self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome'], 'died')
 
     def test_adherence(self):
         episode = Episode.objects.create(

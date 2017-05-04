@@ -270,6 +270,33 @@ class Episode(models.Model):
     def treating_provider(self):
         return get_agency_by_motech_user_name(self.treatingQP)
 
+    @property
+    def treatment_outcome(self):
+        if self.treatmentOutcomeId is None:
+            return None
+        elif self.treatmentOutcomeId.startswith('Lost to follow-up'):
+            return 'loss_to_follow_up'
+        else:
+            return {
+                'Cured': 'cured',
+                'Died': 'died',
+                'died': 'died',
+                'Failure': 'failure',
+                'SWITCH TO CAT IV': 'regimen_changed',
+                'Switched to Category IV/V': 'regimen_changed',
+            }[self.treatmentOutcomeId]
+
+    @property
+    def is_treatment_ended(self):
+        return self.treatment_outcome in [
+            'cured',
+            'treatment_complete',
+            'died',
+            'failure',
+            'loss_to_follow_up',
+            'regimen_changed',
+        ]
+
 
 class Adherence(models.Model):
     id = models.IntegerField(null=True)
