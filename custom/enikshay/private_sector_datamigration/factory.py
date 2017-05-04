@@ -169,9 +169,9 @@ class BeneficiaryCaseFactory(object):
                 'create': True,
                 'owner_id': '-',
                 'update': {
-                    'adherence_schedule_id': 'schedule_mwf',
+                    'adherence_schedule_id': 'schedule_mwf',  # TODO - confirm
                     'date_of_mo_signature': self.beneficiary.dateOfRegn.date(),
-                    'dots_99_enabled': 'false',
+                    'dots_99_enabled': 'false',  # TODO - confirm or fix
                     'episode_id': get_human_friendly_id(),
                     'episode_type': self.beneficiary.current_episode_type,
                     'name': self.beneficiary.episode_name,
