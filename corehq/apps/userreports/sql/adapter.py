@@ -123,6 +123,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             delete = table.delete(table.c.doc_id == doc['_id'])
             connection.execute(delete)
 
+    def doc_exists(self, doc):
+        return self.session_helper.Session.query(
+            self.get_query_object().filter_by(doc_id=doc['_id']).exists()
+        )
 
 class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 
