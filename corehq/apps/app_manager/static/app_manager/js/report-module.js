@@ -4,7 +4,7 @@ hqDefine('app_manager/js/report-module.js', function () {
     //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
     var select2Separator = "\u001F";
 
-    function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs, lang, langs, changeSaveButton) {
+    function GraphConfig(reportId, reportName, availableReportIds, reportCharts, graph_configs, lang, langs, changeSaveButton) {
         var self = this;
 
         graph_configs = graph_configs || {};
@@ -22,8 +22,8 @@ hqDefine('app_manager/js/report-module.js', function () {
                     fixtures: [],
                     lang: lang,
                     langs: langs,
-                    name: 'some graph', // TODO
                 }, graph_config);
+                graph_el.setName(reportName);
                 self.graphUiElements[currentReportId][currentChart.chart_id] = graph_el;
 
                 graph_el.on("change", function() {
@@ -31,6 +31,15 @@ hqDefine('app_manager/js/report-module.js', function () {
                 });
             }
         }
+
+        this.name = ko.observable(reportName);
+        this.name.subscribe(function(newValue) {
+            _.each(self.graphUiElements, function(reportGraphElements) {
+                _.each(reportGraphElements, function(uiElement) {
+                    uiElement.setName(newValue);
+                });
+            });
+        });
 
         this.currentGraphUiElements = ko.computed(function() {
             return self.graphUiElements[reportId()];
@@ -189,8 +198,11 @@ hqDefine('app_manager/js/report-module.js', function () {
         this.useXpathDescription.subscribe(changeSaveButton);
         this.showDataTable.subscribe(changeSaveButton);
 
-        this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts,
+        self.graphConfig = new GraphConfig(this.reportId, this.display(), availableReportIds, reportCharts,
                                            graph_configs, this.lang, languages, changeSaveButton);
+        this.display.subscribe(function(newValue) {
+            self.graphConfig.name(newValue);
+        });
         this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);
 
         this.toJSON = function () {
