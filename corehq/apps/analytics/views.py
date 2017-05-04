@@ -5,6 +5,7 @@ import json
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
+from rest_framework.views import APIView
 
 import settings
 from corehq.apps.analytics.tasks import track_clicked_deploy_on_hubspot, track_job_candidate_on_hubspot
