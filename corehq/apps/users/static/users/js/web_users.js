@@ -5,7 +5,6 @@ hqDefine("users/js/web_users.js", function() {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-        $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
     }]);
     usersApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure(hqImport("hqwebapp/js/initial_page_data.js").get("djng_current_rmi"));

@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from corehq.apps.motech.authproxy import authproxy_client
 
 
 class ConnectedAccount(models.Model):
@@ -14,3 +15,6 @@ class ConnectedAccount(models.Model):
     server_type = models.CharField(max_length=32, choices=SERVER_TYPE_CHOCIES)
     server_url = models.URLField()
     server_username = models.CharField(max_length=255)
+
+    def get_requests_object(self):
+        return authproxy_client.requests(self.token)

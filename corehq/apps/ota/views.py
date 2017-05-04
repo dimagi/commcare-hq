@@ -133,7 +133,7 @@ def search(request, domain):
     # Even if it's a SQL domain, we just need to render the results as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
     fixtures = CaseDBFixture(cases).fixture
-    return HttpResponse(fixtures, content_type="text/xml")
+    return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
 def _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details):

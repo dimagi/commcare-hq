@@ -89,7 +89,7 @@
     };
 
     $.fn.startNotificationsService = function (rmiUrl) {
-        var csrfToken = $("#csrfTokenContainer").val();
+        var csrfToken = $.cookie('csrftoken');
         var _rmi = RMI(rmiUrl, csrfToken);
         function rmi(remoteMethod, data) {
             return _rmi("", data, {headers: {"DjNg-Remote-Method": remoteMethod}});

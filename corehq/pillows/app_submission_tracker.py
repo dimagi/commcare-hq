@@ -17,7 +17,7 @@ from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.reindexer.reindexer import Reindexer
 
 
-def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerProcessor'):
+def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerProcessor', **kwargs):
     """
     This gets a pillow which iterates through all forms and marks the corresponding app
     as having submissions. This could be expanded to be more generic and include

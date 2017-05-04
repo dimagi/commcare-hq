@@ -19,6 +19,8 @@ from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
 from unidecode import unidecode
+from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties, \
+    get_usercase_properties
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
@@ -36,13 +38,11 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.programs.models import Program
 from corehq.apps.app_manager.util import (
-    get_all_case_properties,
     save_xform,
     is_usercase_in_use,
     enable_usercase,
     actions_use_usercase,
     advanced_actions_use_usercase,
-    get_usercase_properties,
     CASE_XPATH_PATTERN_MATCHES,
     CASE_XPATH_SUBSTRING_MATCHES,
     USER_CASE_XPATH_PATTERN_MATCHES,

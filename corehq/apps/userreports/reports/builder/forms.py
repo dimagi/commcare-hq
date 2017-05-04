@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 
 from corehq.apps.userreports.reports.builder.columns import \
     QuestionColumnOption, ColumnOption, CountColumn, MultiselectQuestionColumnOption
@@ -24,7 +25,6 @@ from corehq.apps.app_manager.models import (
     Application,
     Form,
 )
-from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.style.crispy import FieldWithHelpBubble
 from corehq.apps.userreports import tasks
