@@ -10,7 +10,7 @@ from django.conf import settings
 from kafka.util import kafka_bytestring
 import six
 
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import PartitionedKafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.userreports.const import (
     KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
@@ -291,8 +291,10 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # doc save errors and data source config errors
     retry_errors = False
 
-    def __init__(self, processor, pillow_name, topics):
-        change_feed = KafkaChangeFeed(topics, group_id=pillow_name)
+    def __init__(self, processor, pillow_name, topics, num_processes, process_num):
+        change_feed = PartitionedKafkaChangeFeed(
+            topics, group_id=pillow_name, num_processes=num_processes, process_num=process_num
+        )
         checkpoint = KafkaPillowCheckpoint(pillow_name, topics)
         event_handler = KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
@@ -319,7 +321,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
-                         **kwargs):
+                         num_processes=1, process_num=0, **kwargs):
     topics = topics or KAFKA_TOPICS
     topics = [kafka_bytestring(t) for t in topics]
     return ConfigurableReportKafkaPillow(
@@ -331,13 +333,15 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
             exclude_ucrs=exclude_ucrs,
         ),
         pillow_name=pillow_id,
-        topics=topics
+        topics=topics,
+        num_processes=num_processes,
+        process_num=process_num,
     )
 
 
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 include_ucrs=None, exclude_ucrs=None, topics=None,
-                                **kwargs):
+                                num_processes=1, process_num=0, **kwargs):
     topics = topics or KAFKA_TOPICS
     topics = [kafka_bytestring(t) for t in topics]
     return ConfigurableReportKafkaPillow(
@@ -349,5 +353,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
             exclude_ucrs=exclude_ucrs,
         ),
         pillow_name=pillow_id,
-        topics=topics
+        topics=topics,
+        num_processes=num_processes,
+        process_num=process_num,
     )

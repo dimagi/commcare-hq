@@ -121,6 +121,42 @@ class KafkaChangeFeed(ChangeFeed):
         )
 
 
+class PartitionedKafkaChangeFeed(KafkaChangeFeed):
+    def __init__(self, topics, group_id, strict=False, num_processes=1, process_num=0):
+        self.num_processes = num_processes
+        self.process_num = process_num
+        super(PartitionedKafkaChangeFeed, self).__init__(topics, group_id, strict)
+
+    def iter_changes(self, since, forever):
+        """
+        Since must be a dictionary of topic partition offsets.
+        """
+        since = self._get_partitioned_offsets(since)
+        return super(PartitionedKafkaChangeFeed, self).iter_changes(since, forever)
+
+    def get_current_checkpoint_offsets(self):
+        offsets = super(PartitionedKafkaChangeFeed, self).get_current_checkpoint_offsets()
+        return self._get_partitioned_offsets(offsets)
+
+    def get_latest_offsets(self):
+        offsets = super(PartitionedKafkaChangeFeed, self).get_latest_offsets()
+        return self._get_partitioned_offsets(offsets)
+
+    def _get_partitioned_offsets(self, offsets):
+        topic_partitions = sorted(list(offsets))
+
+        partitioned_topic_partitions = [
+            topic_partitions[num::self.num_processes]
+            for num in range(self.num_processes)
+        ][self.process_num]
+
+        return {
+            tp: offset
+            for tp, offset in offsets.items()
+            if tp in partitioned_topic_partitions
+        }
+
+
 class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
     """
     Event handler that supports checkpoints when subscribing to multiple topics.
