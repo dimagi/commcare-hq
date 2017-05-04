@@ -3,11 +3,12 @@ from dateutil import parser
 from pytz import timezone
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from casexml.apps.case.const import CASE_INDEX_EXTENSION, UNOWNED_EXTENSION_OWNER_ID, ENIKSHAY_TIMEZONE
+from casexml.apps.case.const import CASE_INDEX_EXTENSION, UNOWNED_EXTENSION_OWNER_ID
 from corehq.form_processor.exceptions import CaseNotFound
 from dimagi.utils.decorators.memoized import memoized
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+from custom.eNikshay.const import ENIKSHAY_TIMEZONE
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 from custom.enikshay.case_utils import get_open_episode_case_from_person, get_adherence_cases_between_dates
 from custom.enikshay.exceptions import ENikshayCaseNotFound
