@@ -255,6 +255,7 @@
             ">
                 {% trans "View Changes" %}
             </button>
+            {% endif %}
             <a class="btn"
                data-bind="
                 openModal: 'deploy-build-modal-template',
@@ -266,7 +267,6 @@
                 </span>
                 {% trans "Deploy Version" %}
             </a>
-            {% endif %}
           </div><!-- .panel-footer -->
         </div><!-- .panel-release -->
     </div> <!-- .releases-container -->
