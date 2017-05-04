@@ -145,7 +145,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         self.change = function () {
             self.saveButton.fire('change');
             self.ensureBlankProperties();
-            self.forceRefreshTextchangeBinding($('#case-config-ko'));
+            self.forceRefreshTextchangeBinding(self.home);
         };
 
         self.usercaseChange = function () {
@@ -171,7 +171,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         };
 
         self.init = function () {
-            var $home = $('#case-config-ko');
+            var $home =self.home;
             var $usercaseMgmt = $('#usercase-config-ko');
             _.delay(function () {
                 if ($home.length) {
@@ -889,7 +889,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
                 allow: {
                     repeats: function () {
                         // This placeholder function allows us to reuse the "case-config:case-properties:question"
-                        // template in case_config_shared.html
+                        // template in case_config_ko_templates.html
                         return true;
                     }
                 },

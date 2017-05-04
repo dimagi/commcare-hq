@@ -3,11 +3,19 @@
     To use, include this file on a page that also includes hqwebapp/rollout_modal.html
 */
 hqDefine("hqwebapp/js/rollout_modal.js", function() {
+    function snooze(slug) {
+        $.cookie(cookieName(slug), true, { expires: 3, path: '/' });
+        window.analytics.usage("Soft Rollout", "snooze", slug);
+    }
+
+    function cookieName(slug) {
+        return "snooze_" + slug;
+    }
+
     $(function() {
         var $modal = $(".rollout-modal"),
-            slug = $modal.data("slug"),
-            cookie_name = "snooze_" + slug;
-        if ($modal.length && !$.cookie(cookie_name)) {
+            slug = $modal.data("slug");
+        if ($modal.length && !$.cookie(cookieName(slug))) {
             $modal.modal({
                 backdrop: 'static',
                 keyboard: false,
@@ -15,7 +23,10 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
             });
             $modal.on('click', '.flag-enable', function() {
                 $.post({
-                    url: hqImport("hqwebapp/js/urllib.js").reverse("enable_vellum_beta"),
+                    url: hqImport("hqwebapp/js/urllib.js").reverse("toggle_" + slug),
+                    data: {
+                        on_or_off: "on",
+                    },
                     success: function() {
                         window.location.reload(true);
                     },
@@ -28,10 +39,32 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
                 window.analytics.usage("Soft Rollout", "enable", slug);
             });
             $modal.on('click', '.flag-snooze', function() {
-                $.cookie(cookie_name, true, { expires: 3, path: '/' });
                 $modal.modal('hide');
-                window.analytics.usage("Soft Rollout", "snooze", slug);
+                snooze(slug);
             });
         }
+
+        $("#rollout-revert").click(function() {
+            var slug = $(this).data("slug"),
+                redirect = $(this).data("redirect");
+            $.post({
+                url: hqImport("hqwebapp/js/urllib.js").reverse("toggle_" + slug),
+                data: {
+                    on_or_off: "off",
+                },
+                success: function(data) {
+                    snooze(slug);
+                    if (redirect) {
+                        window.location = redirect;
+                    } else {
+                        window.location.reload(true);
+                    }
+                },
+                error: function() {
+                    alert_user(gettext('We could not turn off the new feature. Please try again later.'), 'danger');
+                },
+            });
+            window.analytics.usage("Soft Rollout", "disable", slug);
+        });
     });
 });

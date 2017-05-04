@@ -124,6 +124,10 @@ class TestRegisterPatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeat
         self._create_99dots_enabled_case()
         self.assertEqual(1, len(self.repeat_records().all()))
 
+        # updating some other random properties shouldn't create a new repeat record
+        self._update_case(self.episode_id, {'some_property': "changed"})
+        self.assertEqual(1, len(self.repeat_records().all()))
+
         # set as registered, shouldn't register a new repeat record
         self._create_99dots_registered_case()
         self.assertEqual(1, len(self.repeat_records().all()))

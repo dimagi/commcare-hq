@@ -72,9 +72,11 @@
     </div>
     <% if (menuIndex % 2 === 1) { %>
       <div class="clearfix visible-xs"></div>
-    <% } else if (menuIndex % 3 === 2) { %>
+    <% } %>
+    <% if (menuIndex % 3 === 2) { %>
       <div class="clearfix visible-sm"></div>
-    <% } else if (menuIndex % 4 === 3) { %>
+    <% } %>
+    <% if (menuIndex % 4 === 3) { %>
       <div class="clearfix visible-lg"></div>
     <% } %>
 </script>

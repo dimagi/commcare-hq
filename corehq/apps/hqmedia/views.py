@@ -82,6 +82,7 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
     def page_context(self):
         return {
             'uploaders': self.upload_controllers,
+            'uploaders_js': [u.js_options for u in self.upload_controllers],
             "sessionid": self.request.COOKIES.get('sessionid'),
         }
 

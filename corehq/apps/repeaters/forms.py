@@ -147,11 +147,13 @@ class CaseRepeaterForm(GenericRepeaterForm):
     white_listed_case_types = forms.MultipleChoiceField(
         required=False,
         label=_('Case Types'),
+        widget=forms.SelectMultiple(attrs={'class': 'ko-select2'}),
         help_text=_('Only cases of this type will be forwarded. Leave empty to forward all cases')
     )
     black_listed_users = forms.MultipleChoiceField(
         required=False,
         label=_('Users to exclude'),
+        widget=forms.SelectMultiple(attrs={'class': 'ko-select2'}),
         help_text=_('Case creations and updates submitted by these users will not be forwarded')
     )
 

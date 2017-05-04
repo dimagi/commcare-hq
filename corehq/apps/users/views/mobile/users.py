@@ -12,7 +12,6 @@ from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render, redirect
-from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -872,13 +871,12 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
 
     def render_form(self, status):
-        context = RequestContext(self.request, {
-            'form': self.new_commcare_user_form,
-            'data_fields_form': self.custom_data.form,
-        })
         return self.render_json_response({
             "status": status,
-            "form_html": render_to_string(self.template_name, context)
+            "form_html": render_to_string(self.template_name, {
+                'form': self.new_commcare_user_form,
+                'data_fields_form': self.custom_data.form,
+            }, request=self.request)
         })
 
     def get(self, request, *args, **kwargs):

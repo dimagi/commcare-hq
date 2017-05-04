@@ -4,7 +4,9 @@ from urllib import urlencode
 import math
 import operator
 from pygooglechart import ScatterChart
-from corehq.util.quickcache import quickcache
+from corehq.apps.locations.dbaccessors import user_ids_at_locations
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import conditionally_location_safe
 import pytz
 
 from corehq import toggles
@@ -31,7 +33,6 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_duration_stats_for_users)
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.filters.users import (
     ExpandedMobileWorkerFilter as EMWF, LocationRestrictedMobileWorkerFilter
 )
@@ -689,17 +690,9 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             mobile_user_and_group_slugs,
         ))
 
-    @quickcache(['self.domain', 'mobile_user_and_group_slugs'], timeout=10)
-    def is_query_too_big(self, mobile_user_and_group_slugs):
-        user_es_query = EMWF.user_es_query(
-            self.domain,
-            mobile_user_and_group_slugs,
-        )
-        return user_es_query.count() > USER_QUERY_LIMIT
-
     @property
     def rows(self):
-        if self.is_query_too_big(self.request.GET.getlist(EMWF.slug)):
+        if util.is_query_too_big(self.domain, self.request.GET.getlist(EMWF.slug)):
             raise BadRequestError(
                 _('Query selects too many users. Please modify your filters to select fewer users')
             )
@@ -1344,6 +1337,11 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'
 
 
+def _worker_activity_is_location_safe(view, *args, **kwargs):
+    return toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(kwargs.get("domain", None))
+
+
+@conditionally_location_safe(_worker_activity_is_location_safe)
 class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     slug = 'worker_activity'
     name = ugettext_noop("Worker Activity")
@@ -1361,7 +1359,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def fields(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
             return [
-                'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+                'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
                 'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
                 'corehq.apps.reports.filters.dates.DatespanFilter',
             ]
@@ -1461,7 +1459,15 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     @property
     def users_to_iterate(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
-            user_query = EMWF.user_es_query(self.domain, self.request.GET.getlist(EMWF.slug))
+            user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
+                self.domain, self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
+            )
+            if not self.request.couch_user.has_permission(self.domain, 'access_all_locations'):
+                accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+                    self.request.domain,
+                    self.request.couch_user)
+                )
+                user_query = user_query.location(accessible_location_ids)
             return util.get_simplified_users(user_query)
         elif not self.group_ids:
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]

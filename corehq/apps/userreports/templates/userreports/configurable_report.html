@@ -5,6 +5,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'reports/js/reports.util.js' %}"></script>
     <script src="{% static 'reports/js/reports.config.js' %}"></script>
+    <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
     <script src="{% static 'reports/js/saved_reports.js' %}"></script>
     <script src="{% static 'userreports/js/configurable_report.js' %}"></script>
 {% endblock %}
@@ -25,6 +26,7 @@
 {% block page_actions %}
     {% registerurl 'configurable_data_source_status' domain report.spec.config_id %}
     {% registerurl 'add_report_config' domain %}
+    {% initial_page_data 'standardHQReport' True %}
     {% initial_page_data 'created_by_builder' report.spec.report_meta.created_by_builder %}
     {% initial_page_data 'builder_report_type' report.spec.report_meta.builder_report_type %}
     {% initial_page_data 'report_builder_events' report_builder_events %}

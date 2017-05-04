@@ -1,3 +1,5 @@
+import uuid
+
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.app_manager.models import Application
@@ -343,7 +345,7 @@ class Command(BaseCommand):
             # fetch attachments before assigning new _id
             attachments = {k: doc.fetch_attachment(k) for k in attachemnt_stubs}
 
-        doc._id = doc.get_db().server.next_uuid()
+        doc._id = uuid.uuid4().hex
         del doc['_rev']
         if new_domain:
             doc.domain = new_domain

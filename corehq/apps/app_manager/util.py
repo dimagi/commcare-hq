@@ -157,13 +157,14 @@ def save_xform(app, form, xml):
     # unless something else has been specified
     if form.is_registration_form():
         questions = form.get_questions([app.default_language])
-        path = form.actions.open_case.name_path
-        if path:
-            name_questions = [q for q in questions if q['value'] == path]
-            if not len(name_questions):
-                path = None
-        if not path and len(questions):
-            form.actions.open_case.name_path = questions[0]['value']
+        if hasattr(form.actions, 'open_case'):
+            path = form.actions.open_case.name_path
+            if path:
+                name_questions = [q for q in questions if q['value'] == path]
+                if not len(name_questions):
+                    path = None
+            if not path and len(questions):
+                form.actions.open_case.name_path = questions[0]['value']
 
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
@@ -409,7 +410,7 @@ def get_casedb_schema(form):
     This lists all case types and their properties for the given app.
     """
     app = form.get_app()
-    base_case_type = form.get_module().case_type
+    base_case_type = form.get_module().case_type if form.requires_case() else None
     case_types = app.get_case_types() | get_shared_case_types(app)
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, ['case_name'], per_type_defaults)
