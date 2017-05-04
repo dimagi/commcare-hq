@@ -4,7 +4,6 @@ hqDefine('case_search/js/case_search.js', function(){
     'use strict';
     return function(case_data_url){
         var self = this;
-        self.codeMirror = null;
         self.type = ko.observable();
         self.owner_id = ko.observable();
         self.customQueryAddition = ko.observable();
