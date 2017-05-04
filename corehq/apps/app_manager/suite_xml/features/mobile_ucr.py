@@ -107,6 +107,8 @@ def _get_select_details(config):
 
 def _get_summary_details(config, domain):
     def _get_graph_fields():
+        # TODO: this doesn't write annotations or locale-specific config.
+        # Share code with case detail graph suite generation?
         from corehq.apps.userreports.reports.specs import MultibarChartSpec
         from corehq.apps.app_manager.models import GraphConfiguration
         for chart_config in config.report(domain).charts:
