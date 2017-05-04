@@ -4,45 +4,16 @@ hqDefine('app_manager/js/report-module.js', function () {
     //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
     var select2Separator = "\u001F";
 
-    function KeyValuePair(key, value, config) {
-        var self = this;
-
-        self.key = ko.observable(key);
-        self.value = ko.observable(value);
-        self.config = config;
-
-        self.remove = function() {
-            config.keyValuePairs.remove(self);
-        };
-    }
-
-    function Config(dict) {
-        var self = this;
-
-        dict = dict || {};
-
-        self.keyValuePairs = ko.observableArray();
-        _.each(dict, function(value, key) {
-            self.keyValuePairs.push(new KeyValuePair(key, value, self));
-        });
-
-        self.addConfig = function() {
-            self.keyValuePairs.push(new KeyValuePair('', '', self));
-        };
-    }
-
     function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton) {
         var self = this;
-        self.completeGraphConfigs = graph_configs;
-        this.graphConfigs = {}; // TODO: still needed?
 
         graph_configs = graph_configs || {};
 
-        self.graphConfigUiElements = {};
+        self.graphUiElements = {};
         var GraphConfigurationUiElement = hqImport('app_manager/js/graph-config.js').GraphConfigurationUiElement;
         for (var i = 0; i < availableReportIds.length; i++) {
             var currentReportId = availableReportIds[i];
-            self.graphConfigUiElements[currentReportId] = {};
+            self.graphUiElements[currentReportId] = {};
             for (var j = 0; j < reportCharts[currentReportId].length; j++) {
                 var currentChart = reportCharts[currentReportId][j];
                 var graph_config = graph_configs[currentChart.chart_id] || {};
@@ -53,7 +24,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                     langs: ['en'],
                     name: 'some graph', // TODO (langs on the above two lines, too)
                 }, graph_config);
-                self.graphConfigUiElements[currentReportId][currentChart.chart_id] = graph_el;
+                self.graphUiElements[currentReportId][currentChart.chart_id] = graph_el;
 
                 graph_el.on("change", function() {
                     changeSaveButton();
@@ -61,70 +32,26 @@ hqDefine('app_manager/js/report-module.js', function () {
             }
         }
 
-        this.currentGraphConfigs = ko.computed(function() {
-            return self.graphConfigs[reportId()];
-        });
-
-        this.currentGraphConfigUiElements = ko.computed(function() {
-            return self.graphConfigUiElements[reportId()];
+        this.currentGraphUiElements = ko.computed(function() {
+            return self.graphUiElements[reportId()];
         });
 
         this.currentCharts = ko.computed(function() {
             return reportCharts[reportId()];
         });
 
-        // TODO: delete? this and maybe other code?
-        this.getCurrentGraphConfig = function(chart_id) {
-            return self.currentGraphConfigs()[chart_id] || {config: {keyValuePairs: []}};
-        };
-
-        this.getCompleteGraphConfig = function(chart_id) {
-            return self.completeGraphConfigs[chart_id]; // TODO: what if it doesn't exist? what's the empty case?
-        };
-
-        this.getCurrentGraphConfigurationUiElement = function(chart_id) {
-            return self.currentGraphConfigUiElements()[chart_id]; // TODO: what if it doesn't exist? what's the empty case?
+        this.getCurrentGraphUiElement = function(chart_id) {
+            return self.currentGraphUiElements()[chart_id]; // TODO: what if it doesn't exist? what's the empty case?
         };
 
         this.toJSON = function () {
-            function configToDict(config) {
-                var dict = {};
-                var keyValuePairs = config.keyValuePairs();
-                for (var i = 0; i < keyValuePairs.length; i++) {
-                    dict[keyValuePairs[i].key()] = keyValuePairs[i].value();
-                }
-                return dict;
-            }
-
             var chartsToConfigs = {};
-            var currentChartsToConfigs = self.currentGraphConfigUiElements();
+            var currentChartsToConfigs = self.currentGraphUiElements();
             _.each(currentChartsToConfigs, function(graph_config, chart_id) {
                 chartsToConfigs[chart_id] = graph_config.val();
             });
             return chartsToConfigs;
         };
-
-        this.addSubscribersToSaveButton = function() {
-            var addSubscriberToSaveButton = function(observable) {
-                observable.subscribe(changeSaveButton);
-            };
-            var addConfigToSaveButton = function(config) {
-                addSubscriberToSaveButton(config.keyValuePairs);
-                _.each(config.keyValuePairs(), function(keyValuePair) {
-                    addSubscriberToSaveButton(keyValuePair.key);
-                    addSubscriberToSaveButton(keyValuePair.value);
-                });
-            };
-            _.each(self.graphConfigs, function(reportGraphConfigs) {
-                _.each(reportGraphConfigs, function(graphConfig) {
-                    addSubscriberToSaveButton(graphConfig.graph_type);
-                    addConfigToSaveButton(graphConfig.config);
-                    _.each(graphConfig.series_configs, addConfigToSaveButton);
-                });
-            });
-        };
-
-        this.allGraphTypes = ['bar', 'time', 'xy'];
     }
 
     /**
@@ -338,13 +265,13 @@ hqDefine('app_manager/js/report-module.js', function () {
         };
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: "You have unsaved changes in your report list module",
+            unsavedMessage: gettext("You have unsaved changes in your report list module"),
             save: function () {
                 // validate that all reports have valid data
                 var reports = self.reports();
                 for (var i = 0; i < reports.length; i++) {
                     if (!reports[i].reportId() || !reports[i].display()) {
-                        alert('Reports must have all properties set!');
+                        alert(gettext('Reports must have all properties set!'));
                         break;
                     }
                 }
