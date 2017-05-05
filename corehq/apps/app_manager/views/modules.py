@@ -2,7 +2,6 @@
 from collections import OrderedDict, namedtuple
 import json
 import logging
-import re
 from lxml import etree
 
 from django.template.loader import render_to_string
@@ -295,11 +294,13 @@ def _get_report_module_context(app, module):
         {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
 
     ]
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE
     context = {
         'all_reports': [_report_to_config(r) for r in all_reports],
         'filter_choices': filter_choices,
         'auto_filter_choices': auto_filter_choices,
         'daterange_choices': [choice._asdict() for choice in get_simple_dateranges()],
+        'column_xpath_template': COLUMN_XPATH_CLIENT_TEMPLATE,
     }
     current_reports = []
     for r in module.report_configs:
@@ -910,11 +911,6 @@ def edit_report_module(request, domain, app_id, module_id):
 
     try:
         module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
-        for report_config in module.report_configs:
-            for chart_id, graph_config in report_config.complete_graph_configs.iteritems():
-                for series in graph_config.series:
-                    if series.data_path:
-                        series.data_path = re.sub(r'#UUID', report_config.uuid, series.data_path)
     except Exception:
         notify_exception(
             request,

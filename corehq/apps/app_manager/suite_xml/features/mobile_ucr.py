@@ -10,6 +10,10 @@ from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.quickcache import quickcache
 
 
+COLUMN_XPATH_TEMPLATE = "column[@id='{}']"
+COLUMN_XPATH_CLIENT_TEMPLATE = "column[@id='<%= id %>']"
+
+
 @quickcache(['report_module.unique_id'])
 def _load_reports(report_module):
     if not report_module._loaded:
@@ -148,11 +152,11 @@ def _get_summary_details(config, domain, module):
                     )
                     graph_config.series[index].x_function = (
                         graph_config.series[index].x_function
-                        or "column[@id='{}']".format(chart_config.x_axis_column)
+                        or COLUMN_XPATH_TEMPLATE.format(chart_config.x_axis_column)
                     )
                     graph_config.series[index].y_function = (
                         graph_config.series[index].y_function
-                        or "column[@id='{}']".format(column.column_id)
+                        or COLUMN_XPATH_TEMPLATE.format(column.column_id)
                     )
                 yield Field(
                     header=Header(text=Text()),
