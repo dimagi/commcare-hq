@@ -21,8 +21,11 @@ hqDefine('app_manager/js/report-module.js', function () {
                     series: _.map(currentChart.y_axis_columns, function(c) {
                         return {
                             data_path: "instance('reports')/reports/report[@id='<UUID>']/rows/row[@is_total_row='False']",
+                            data_path_placeholder: "instance('reports')/reports/report[@id='<UUID>']/rows/row[@is_total_row='False']",
                             x_function: "column[@id='" + currentChart.x_axis_column + "']",
+                            x_placeholder: "column[@id='" + currentChart.x_axis_column + "']",
                             y_function: "column[@id='" + c.column_id + "']",
+                            y_placeholder: "column[@id='" + c.column_id + "']",
                         };
                     }),
                 };
