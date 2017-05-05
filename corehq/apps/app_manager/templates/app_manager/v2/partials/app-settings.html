@@ -177,16 +177,16 @@
     <div id="custom-keys-example" style="display: none;">
       <h6>Example:</h6>
       <div class="row">
-        <div class="col-sm-6">polish.TextField.charactersKey1</div><div class="col-sm-6">.,</div>
-        <div class="col-sm-6">polish.TextField.charactersKey2</div><div class="col-sm-6">abc2</div>
-        <div class="col-sm-6">polish.TextField.charactersKey3</div><div class="col-sm-6">def3</div>
-        <div class="col-sm-6">polish.TextField.charactersKey4</div><div class="col-sm-6">ghi4</div>
-        <div class="col-sm-6">polish.TextField.charactersKey5</div><div class="col-sm-6">jkl5</div>
-        <div class="col-sm-6">polish.TextField.charactersKey6</div><div class="col-sm-6">mno6</div>
-        <div class="col-sm-6">polish.TextField.charactersKey7</div><div class="col-sm-6">pqrs7</div>
-        <div class="col-sm-6">polish.TextField.charactersKey8</div><div class="col-sm-6">tuv8</div>
-        <div class="col-sm-6">polish.TextField.charactersKey9</div><div class="col-sm-6">wxyz9</div>
-        <div class="col-sm-6">polish.TextField.charactersKey0</div><div class="col-sm-6"> 0</div>
+        <div class="col-sm-9">polish.TextField.charactersKey1</div><div class="col-sm-3">.,</div>
+        <div class="col-sm-9">polish.TextField.charactersKey2</div><div class="col-sm-3">abc2</div>
+        <div class="col-sm-9">polish.TextField.charactersKey3</div><div class="col-sm-3">def3</div>
+        <div class="col-sm-9">polish.TextField.charactersKey4</div><div class="col-sm-3">ghi4</div>
+        <div class="col-sm-9">polish.TextField.charactersKey5</div><div class="col-sm-3">jkl5</div>
+        <div class="col-sm-9">polish.TextField.charactersKey6</div><div class="col-sm-3">mno6</div>
+        <div class="col-sm-9">polish.TextField.charactersKey7</div><div class="col-sm-3">pqrs7</div>
+        <div class="col-sm-9">polish.TextField.charactersKey8</div><div class="col-sm-3">tuv8</div>
+        <div class="col-sm-9">polish.TextField.charactersKey9</div><div class="col-sm-3">wxyz9</div>
+        <div class="col-sm-9">polish.TextField.charactersKey0</div><div class="col-sm-3"> 0</div>
       </div>
     </div>
   </aside>
@@ -240,7 +240,7 @@
         <div class="tab-pane" id="actions">
             {% if app.get_doc_type != 'LinkedApplication' %}
                 {% if copy_app_form %}
-                    <div class="panel panel-appmanager panel-appmanager-form">
+                    <div class="panel panel-appmanager panel-appmanager-form" id="copy-app-form">
                         <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
                             {% crispy copy_app_form %}
                         </form>
@@ -278,30 +278,32 @@
                     </div>
                     </div>
                 {% endif %}
+                {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
                 {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-                    <legend>Export compressed application</legend>
-                    <form action="{% url "gzip_app" domain app.id %}" method="POST">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fa fa-arrow-down"></i>
-                            {% trans "Download" %}
-                        </button>
-                    </form>
-                    <br>
+                    <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
+                        <form action="{% url "gzip_app" domain app.id %}" method="POST">
+                            {% csrf_token %}
+                            <legend>Export compressed application</legend>
+                            <div class="panel-body">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-arrow-down"></i>
+                                    {% trans "Download" %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 {% endif %}
             {% endif %}
             <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
-                <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
-                    <form action="{% url "delete_app" domain app.id %}" method="POST">
-                        {% csrf_token %}
-                        <legend>{% trans "Delete Application" %}</legend>
-                        <div class="panel-body">
-                            <button type="submit" class="btn btn-danger disable-on-submit">
-                                <i class="fa fa-trash"></i>
-                                {% trans "Delete this application" %}
-                            </button>
-                        </div>
-                    </form>
+                <form class="form form-horizontal" method="POST" action="{% url "delete_app" domain app.id %}">
+                    {% csrf_token %}
+                    <legend>{% trans "Delete Application" %}</legend>
+                    <div class="panel-body">
+                        <button type="submit" class="btn btn-danger disable-on-submit">
+                            <i class="fa fa-trash"></i>
+                            {% trans "Delete this application" %}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

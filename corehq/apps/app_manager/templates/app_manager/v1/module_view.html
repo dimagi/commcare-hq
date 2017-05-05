@@ -6,10 +6,22 @@
 {% block head %}{{ block.super }}
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
+{% block stylesheets %}{{ block.super }}
+    <style>
+        /* Prevent help icons from disturbing horizontal alignment of table headers */
+        th > .hq-help {
+            position: absolute;
+        }
+    </style>
+{% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
+    {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
+        <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
+        <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    {% endif %}
     <script src="{% static 'app_manager/js/module-view.js' %}"></script>
     {% include "app_manager/v1/partials/xpathValidator.html" %}
 {% endblock %}
@@ -21,13 +33,13 @@
     <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
 
     {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
-        {% for detail in details %}
-            {% if detail.type == 'case' %}
-                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
-            {% else %}
-                {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
-            {% endif %}
-        {% endfor %}
+      {% for detail in details %}
+          {% if detail.type == 'case' %}
+              {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+          {% else %}
+              {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
+          {% endif %}
+      {% endfor %}
     {% endif %}
 
     {% if case_list_form_options %}
@@ -35,6 +47,57 @@
     {% endif %}
     {% include 'style/partials/key_value_mapping.html' %}
     {% include 'app_manager/v1/partials/graph_configuration_modal.html' %}
+
+    <script>
+    var print_ref;
+    {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
+    {% with print_uploader as uploader %}
+    var printTemplateUploader = new HQMediaFileUploadController (
+        '{{ uploader.slug }}',
+        '{{ uploader.media_type }}',
+        {
+            allowCloseDuringUpload: true,
+            fileFilters: {{ uploader.supported_files|JSON }},
+            uploadURL: '{{ uploader.destination }}',
+            processingURL: '{{ uploader.processing_url }}',
+            swfURL: '{% static 'hqmedia/MediaUploader/flashuploader.swf' %}',
+            isMultiFileUpload: {{ uploader.is_multi_file|yesno:"true,false" }},
+            {% if uploader.queue_template %}queueTemplate: '{% filter escapejs %}{% include uploader.queue_template %}{% endfilter %}',{% endif %}
+            {% if uploader.status_template %}statusTemplate: '{% filter escapejs %}{% include uploader.status_template %}{% endfilter %}',{% endif %}
+            {% if uploader.details_template %}detailsTemplate: '{% filter escapejs %}{% include uploader.details_template %}{% endfilter %}',{% endif %}
+            {% if uploader.errors_template %}errorsTemplate: '{% filter escapejs %}{% include uploader.errors_template %}{% endfilter %}',{% endif %}
+            {% if uploader.existing_file_template %}existingFileTemplate: '{% filter escapejs %}{% include uploader.existing_file_template %}{% endfilter %}',{% endif %}
+            uploadParams: {{ uploader.upload_params|JSON }},
+            sessionid: {{ request.COOKIES.sessionid|JSON }},
+            licensingParams: {{ uploader.licensing_params|JSON }},
+        });
+    printTemplateUploader.init();
+    print_ref = new BaseMediaReference({{ print_ref|JSON }});
+    print_ref.upload_controller = printTemplateUploader;
+    print_ref.setObjReference({{ print_media_info|JSON }});
+    printTemplateUploader.currentReference = print_ref;
+
+    function removePrintTemplate(slug) {
+        $.post(
+            '{% url "hqmedia_remove_detail_print_template" domain app.id %}',
+            {
+                module_unique_id: '{{ module.unique_id }}',
+            },
+            function(data, status) {
+                if(status == 'success'){
+                    print_ref.setObjReference({
+                        path: print_ref.path,
+                    });
+                    print_ref.is_matched(false);
+                    printTemplateUploader.updateUploadFormUI();
+                }
+            }
+        );
+    }
+
+    {% endwith %}
+    {% endif %}
+    </script>
 {% endblock %}
 
 {% block form-view %}
@@ -123,6 +186,11 @@
 
 {% block modals %}{{ block.super }}
 {% include "app_manager/v1/partials/nav_menu_media_modals.html" %}
+{% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
+    {% with print_uploader as uploader %}
+        {% include 'hqmedia/partials/multimedia_uploader.html' %}
+    {% endwith %}
+{% endif %}
 {% endblock modals %}
 
 {% block breadcrumbs %}

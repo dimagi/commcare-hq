@@ -6,11 +6,15 @@ import datetime
 import uuid
 import mock
 
+from django.apps import apps
 from django.conf import settings
-from django.core.management import call_command
+
+from nose.tools import nottest
 
 from dimagi.utils.data import generator as data_gen
 
+from corehq.apps.accounting.bootstrap.config.testing import BOOTSTRAP_CONFIG_TESTING
+from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
@@ -20,25 +24,23 @@ from corehq.apps.accounting.models import (
     FeatureRate,
     SoftwarePlan,
     SoftwarePlanEdition,
-    Subscriber,
-    Subscription,
-    SubscriptionAdjustment,
-    SubscriptionType,
     SoftwarePlanVersion,
     SoftwareProduct,
     SoftwareProductRate,
+    Subscriber,
+    Subscription,
+    SubscriptionType,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import unit_testing_only
 import six
 from six.moves import range
 
 
 @unit_testing_only
-def instantiate_accounting():
-    call_command('cchq_prbac_bootstrap', testing=True)
-
+@nottest
+def bootstrap_test_plans():
     DefaultProductPlan.objects.all().delete()
     SoftwarePlanVersion.objects.all().delete()
     SoftwarePlan.objects.all().delete()
@@ -46,7 +48,7 @@ def instantiate_accounting():
     SoftwareProduct.objects.all().delete()
     FeatureRate.objects.all().delete()
     Feature.objects.all().delete()
-    call_command('cchq_software_plan_bootstrap', testing=True)
+    ensure_plans(BOOTSTRAP_CONFIG_TESTING, verbose=False, apps=apps)
 
 
 @unit_testing_only
@@ -71,38 +73,21 @@ def create_arbitrary_web_user_name(is_dimagi=False):
     return "%s@%s.com" % (unique_name(), 'dimagi' if is_dimagi else 'gmail')
 
 
-@unit_testing_only
-def arbitrary_web_user(is_dimagi=False):
-    domain = arbitrary_domain()
-    username = create_arbitrary_web_user_name(is_dimagi=is_dimagi)
-    try:
-        web_user = WebUser.create(domain.name, username, 'test123')
-    except Exception:
-        web_user = WebUser.get_by_username(username)
-    web_user.is_active = True
-    web_user.save()
-    return web_user
-
-
-@unit_testing_only
-def billing_account(web_user_creator, web_user_contact, currency=None, save=True):
+def billing_account(web_user_creator, web_user_contact):
     account_name = data_gen.arbitrary_unique_name(prefix="BA")[:40]
-    currency = currency or Currency.objects.get(code=settings.DEFAULT_CURRENCY)
-    billing_account = BillingAccount(
+    currency = Currency.objects.get(code=settings.DEFAULT_CURRENCY)
+    billing_account = BillingAccount.objects.create(
         name=account_name,
         created_by=web_user_creator,
         currency=currency,
     )
-    if save:
-        billing_account.save()
-        billing_contact = arbitrary_contact_info(billing_account, web_user_contact)
-        billing_contact.save()
+    arbitrary_contact_info(billing_account, web_user_contact)
     return billing_account
 
 
 @unit_testing_only
 def arbitrary_contact_info(account, web_user_creator):
-    return BillingContactInfo(
+    return BillingContactInfo.objects.create(
         account=account,
         first_name=data_gen.arbitrary_firstname(),
         last_name=data_gen.arbitrary_lastname(),
@@ -118,7 +103,7 @@ def arbitrary_contact_info(account, web_user_creator):
 
 
 @unit_testing_only
-def subscribable_plan(edition=SoftwarePlanEdition.STANDARD):
+def subscribable_plan_version(edition=SoftwarePlanEdition.STANDARD):
     return DefaultProductPlan.get_default_plan_version(edition)
 
 
@@ -128,7 +113,7 @@ def generate_domain_subscription(account, domain, date_start, date_end,
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
     subscription = Subscription(
         account=account,
-        plan_version=plan_version or subscribable_plan(),
+        plan_version=plan_version or subscribable_plan_version(),
         subscriber=subscriber,
         date_start=date_start,
         date_end=date_end,
@@ -136,13 +121,6 @@ def generate_domain_subscription(account, domain, date_start, date_end,
     )
     subscription.save()
     return subscription
-
-
-@unit_testing_only
-def delete_all_subscriptions():
-    SubscriptionAdjustment.objects.all().delete()
-    Subscription.objects.all().delete()
-    Subscriber.objects.all().delete()
 
 
 @unit_testing_only
@@ -166,13 +144,10 @@ def arbitrary_domain():
 @unit_testing_only
 def arbitrary_commcare_user(domain, is_active=True):
     username = unique_name()
-    try:
-        commcare_user = CommCareUser.create(domain, username, 'test123')
-        commcare_user.is_active = is_active
-        commcare_user.save()
-        return commcare_user
-    except Exception:
-        pass
+    commcare_user = CommCareUser.create(domain, username, 'test123')
+    commcare_user.is_active = is_active
+    commcare_user.save()
+    return commcare_user
 
 
 @unit_testing_only

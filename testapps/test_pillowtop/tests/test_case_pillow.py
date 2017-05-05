@@ -11,7 +11,7 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
 from pillowtop.es_utils import initialize_index_and_mapping
-from testapps.test_pillowtop.utils import process_kafka_changes, process_couch_changes
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 
 class CasePillowTest(TestCase):
@@ -52,8 +52,8 @@ class CasePillowTest(TestCase):
         self.assertEqual(1, results.total)
 
         # soft delete the case
-        with process_kafka_changes('CaseToElasticsearchPillow'):
-            with process_couch_changes('DefaultChangeFeedPillow'):
+        with process_pillow_changes('CaseToElasticsearchPillow'):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
                 CaseAccessors(self.domain).soft_delete_cases([case_id])
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
 
@@ -64,8 +64,8 @@ class CasePillowTest(TestCase):
     def _create_case_and_sync_to_es(self):
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        with process_kafka_changes('CaseToElasticsearchPillow'):
-            with process_couch_changes('DefaultChangeFeedPillow'):
+        with process_pillow_changes('CaseToElasticsearchPillow'):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
                 create_and_save_a_case(self.domain, case_id, case_name)
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
         return case_id, case_name

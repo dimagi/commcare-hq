@@ -87,6 +87,7 @@ FormplayerFrontend.on('clearForm', function () {
     $('#webforms-nav').html("");
     $('#cloudcare-debugger').html("");
     $('.atwho-container').remove();
+    $('#case-detail-modal').modal('hide');
 });
 
 FormplayerFrontend.reqres.setHandler('clearMenu', function () {
@@ -230,6 +231,12 @@ FormplayerFrontend.on("start", function (options) {
             false
         );
     }
+});
+
+FormplayerFrontend.reqres.setHandler('getCurrentApp', function() {
+    var appId = FormplayerFrontend.request('getCurrentAppId');
+    var currentApp = FormplayerFrontend.request("appselect:getApp", appId);
+    return currentApp;
 });
 
 FormplayerFrontend.reqres.setHandler('getCurrentAppId', function() {
@@ -426,7 +433,12 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
     resp = $.ajax(options);
     resp.fail(function () {
         tfLoadingComplete(true);
-    }).done(function() {
+    }).done(function(response) {
+        if (response.hasOwnProperty('exception')) {
+            tfLoadingComplete(true);
+            return;
+        }
+
         tfLoadingComplete();
         $("#cloudcare-notifications").empty();
         FormplayerFrontend.trigger('navigateHome');
@@ -445,4 +457,36 @@ FormplayerFrontend.on('navigateHome', function() {
     } else {
         FormplayerFrontend.navigate("/apps", { trigger: true });
     }
+});
+
+/**
+ * This is a hack to ensure that routing works properly on FireFox. Normally,
+ * location.href is supposed to return a url decoded string. However, FireFox's
+ * location.href returns a url encoded string. For example:
+ *
+ * Chrome:
+ * > location.href
+ * > "http://.../#{"appId"%3A"db732ce1735229da84b451cbd7cfa7ac"}"
+ *
+ * FireFox:
+ * > location.href
+ * > "http://.../#{%22appId%22%3A%22db732ce1735229da84b451cbd7cfa7ac%22}"
+ *
+ * This is important because BackBone caches the non url encoded fragment when you call `navigate`.
+ * Then on the 'onhashchange' event, Backbone compares the cached value with the `getHash`
+ * function. If they do not match it will trigger a call to loadUrl which triggers BackBone's router.
+ * On FireFox, it registers as a URL change since it compares the url encoded
+ * version to the url decoded version which will always mismatch. Therefore, in
+ * addition to running the route through the mouseclick, the route gets run again
+ * when the hash changes.
+ *
+ * Additional explanation here: http://stackoverflow.com/a/25849032/835696
+ *
+ * https://manage.dimagi.com/default.asp?250644
+ */
+_.extend(Backbone.History.prototype, {
+    getHash: function(window) {
+        var match = (window || this).location.href.match(/#(.*)$/);
+        return match ? decodeURI(match[1]) : '';
+    },
 });

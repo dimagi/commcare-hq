@@ -2,10 +2,11 @@ from StringIO import StringIO
 
 from django.contrib import messages
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext as _
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps
@@ -60,7 +61,9 @@ def upload_bulk_ui_translations(request, domain, app_id):
     if success:
         messages.success(request, _("UI Translations Updated!"))
 
-    return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
+    # In v2, languages is the default tab on the settings page
+    view_name = 'app_settings' if toggles.APP_MANAGER_V2.enabled(request.user.username) else 'app_languages'
+    return HttpResponseRedirect(reverse(view_name, args=[domain, app_id]))
 
 
 @require_can_edit_apps
@@ -93,6 +96,9 @@ def upload_bulk_app_translations(request, domain, app_id):
         # msg[0] should be a function like django.contrib.messages.error .
         # mes[1] should be a string.
         msg[0](request, msg[1])
+
+    # In v2, languages is the default tab on the settings page
+    view_name = 'app_settings' if toggles.APP_MANAGER_V2.enabled(request.user.username) else 'app_languages'
     return HttpResponseRedirect(
-        reverse('app_languages', args=[domain, app_id])
+        reverse(view_name, args=[domain, app_id])
     )

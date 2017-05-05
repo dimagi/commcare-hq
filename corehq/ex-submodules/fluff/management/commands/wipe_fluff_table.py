@@ -35,7 +35,7 @@ class Command(BaseCommand):
                 print("\tWipe cancelled.")
                 return
 
-        processor = FluffPillowProcessor(pillow.indicator_class)
-        engine = processor.get_sql_engine()
-        table = pillow.indicator_class().table
-        engine.execute(table.delete())
+        for processor in pillow.processors:
+            engine = processor.get_sql_engine()
+            table = processor.indicator_class().table
+            engine.execute(table.delete())

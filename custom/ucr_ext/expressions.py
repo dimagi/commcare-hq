@@ -347,6 +347,14 @@ def get_case_forms_by_date(spec, context):
     else:
         case_id_expression = spec['case_id_expression']
 
+    case_forms_expression = {
+        "type": "get_case_forms",
+        "case_id_expression": case_id_expression
+    }
+
+    if spec['xmlns']:
+        case_forms_expression['xmlns'] = spec['xmlns']
+
     filters = []
     if spec['start_date'] is not None:
         start_date_filter = {
@@ -390,40 +398,17 @@ def get_case_forms_by_date(spec, context):
             'property_value': 0
         }
         filters.append(end_date_filter)
-    if spec['xmlns'] is not None and len(spec['xmlns']) > 0:
-        xmlns_filters = []
-        for x in spec['xmlns']:
-                x_filter = {
-                    "operator": "eq",
-                    "type": "boolean_expression",
-                    "expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "xmlns"
-                    },
-                    "property_value": x
-                }
-                xmlns_filters.append(x_filter)
-        xmlns_filter = {
-            "type": "or",
-            "filters": xmlns_filters
-        }
-        filters.append(xmlns_filter)
     if spec['form_filter'] is not None:
         filters.append(spec['form_filter'])
 
-    spec = {
-        "type": "get_case_forms",
-        "case_id_expression": case_id_expression
-    }
     if len(filters) > 0:
-        spec = {
+        case_forms_expression = {
             "filter_expression": {
                 "type": "and",
                 "filters": filters
             },
             "type": "filter_items",
-            "items_expression": spec
+            "items_expression": case_forms_expression
         }
     spec = {
         "type": "sort_items",
@@ -436,7 +421,7 @@ def get_case_forms_by_date(spec, context):
             ],
             "datatype": "date"
         },
-        "items_expression": spec
+        "items_expression": case_forms_expression
     }
     return ExpressionFactory.from_spec(spec, context)
 

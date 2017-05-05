@@ -1,41 +1,44 @@
-$(function(){
-    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
-        ids = initial_page_data('app_ids').concat(initial_page_data('fixture_ids'));
-
-    _.each(ids, function (id) {
-        var publish = $('#id_' + id + '-publish');
-        publish.change(function () {
-            $(this).parent().parent().parent().next().slideToggle();
+/* globals hqDefine */
+hqDefine("domain/js/create_snapshot.js", function() {
+    $(function(){
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+            ids = initial_page_data('app_ids').concat(initial_page_data('fixture_ids'));
+    
+        _.each(ids, function (id) {
+            var publish = $('#id_' + id + '-publish');
+            publish.change(function () {
+                $(this).parent().parent().parent().next().slideToggle();
+            });
+            publish.parent().parent().parent().next().toggle(publish.is(':checked'));
+            $('#id_' + id + '-deployment_date').datepicker({
+                changeMonth: true,
+                changeYear: true,
+                showButtonPanel: true,
+                dateFormat: 'yy-mm-dd',
+                maxDate: '0',
+                numberOfMonths: 2
+            });
         });
-        publish.parent().parent().parent().next().toggle(publish.is(':checked'));
-        $('#id_' + id + '-deployment_date').datepicker({
-            changeMonth: true,
-            changeYear: true,
-            showButtonPanel: true,
-            dateFormat: 'yy-mm-dd',
-            maxDate: '0',
-            numberOfMonths: 2
+    
+        $('#save-button').on('click', function () {
+            $('#id_publish_on_submit').val('no');
+            $('#snapshot-form').submit();
         });
-    });
-
-    $('#save-button').on('click', function () {
-        $('#id_publish_on_submit').val('no');
-        $('#snapshot-form').submit();
-    });
-
-    $('input:radio[name="publisher"]').change(function() {
-        if ($(this).val() == 'user') {
-            $('#author-input').show(250);
-        } else {
-            $('#author-input').hide(250);
-        }
-    });
-
-    $('#publish-now-button').on('click', function() {
-        ga_track_event('Exchange', 'Publish Now', '?', {
-            'hitCallback': function() {
-                $('#snapshot-form').submit();
+    
+        $('input:radio[name="publisher"]').change(function() {
+            if ($(this).val() == 'user') {
+                $('#author-input').show(250);
+            } else {
+                $('#author-input').hide(250);
             }
+        });
+    
+        $('#publish-now-button').on('click', function() {
+            ga_track_event('Exchange', 'Publish Now', '?', {
+                'hitCallback': function() {
+                    $('#snapshot-form').submit();
+                }
+            });
         });
     });
 });

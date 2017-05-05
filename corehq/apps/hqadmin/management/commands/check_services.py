@@ -6,11 +6,15 @@ from corehq.apps.hqadmin.service_checks import CHECKS
 class Command(BaseCommand):
     help = ("Check the status of various services. "
             "You can check a particular service by passing in it's name.")
-    args = "service"
 
-    def handle(self, *args, **options):
-        if len(args) == 1:
-            service_name = args[0]
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'service_name',
+            nargs='?',
+        )
+
+    def handle(self, service_name, **options):
+        if service_name:
             if service_name not in CHECKS:
                 print("Services available are:")
                 for service_name in CHECKS.keys():

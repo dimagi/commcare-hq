@@ -182,6 +182,10 @@ class TestBillingRecord(BaseAccountingTest):
         )
         self.billing_record = BillingRecord(invoice=self.invoice)
 
+    def tearDown(self):
+        self.domain.delete()
+        super(TestBillingRecord, self).tearDown()
+
     def test_should_send_email(self):
         self.assertTrue(self.billing_record.should_send_email)
 

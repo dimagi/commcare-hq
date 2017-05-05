@@ -50,7 +50,9 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     log_accounting_info,
 )
+from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.notifications.models import Notification
 from corehq.apps.users.models import FakeUser, WebUser
@@ -354,18 +356,12 @@ def create_wire_credits_invoice(domain_name,
                                 amount,
                                 invoice_items,
                                 contact_emails):
-    account = BillingAccount.get_or_create_account_by_domain(
-        domain_name,
-        created_by=account_created_by,
-        entry_point=account_entry_point
-    )[0]
     wire_invoice = WirePrepaymentInvoice.objects.create(
         domain=domain_name,
         date_start=datetime.datetime.utcnow(),
         date_end=datetime.datetime.utcnow(),
         date_due=None,
         balance=amount,
-        account=account,
     )
     wire_invoice.items = invoice_items
 
@@ -686,6 +682,7 @@ def _downgrade_domain(subscription):
         DefaultProductPlan.get_default_plan_version(
             SoftwarePlanEdition.COMMUNITY
         ),
+        adjustment_method=SubscriptionAdjustmentMethod.AUTOMATIC_DOWNGRADE,
         note='Automatic downgrade to community for invoice 60 days late',
         internal_change=True
     )
@@ -721,3 +718,35 @@ def _create_overdue_notification(invoice, context):
                                        domain_specific=True, type='billing',
                                        domains=[invoice.get_domain()])
     note.activate()
+
+
+@task(queue='background_queue', ignore_result=True, acks_late=True)
+def archive_logos(domain_name):
+    try:
+        for app in get_all_apps(domain_name):
+            if isinstance(app, HQMediaMixin):
+                has_archived = app.archive_logos()
+                if has_archived:
+                    app.save()
+    except Exception as e:
+        log_accounting_error(
+            "Failed to remove all commcare logos for domain %s." % domain_name,
+            show_stack_trace=True,
+        )
+        raise e
+
+
+@task(queue='background_queue', ignore_result=True, acks_late=True)
+def restore_logos(domain_name):
+    try:
+        for app in get_all_apps(domain_name):
+            if isinstance(app, HQMediaMixin):
+                has_restored = app.restore_logos()
+                if has_restored:
+                    app.save()
+    except Exception as e:
+        log_accounting_error(
+            "Failed to restore all commcare logos for domain %s." % domain_name,
+            show_stack_trace=True,
+        )
+        raise e

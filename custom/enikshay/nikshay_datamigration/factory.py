@@ -7,16 +7,21 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence, \
-    get_open_drtb_hiv_case_from_episode
-from custom.enikshay.exceptions import ENikshayCaseNotFound
-from custom.enikshay.nikshay_datamigration.models import Outcome
-
+from custom.enikshay.case_utils import (
+    get_first_parent_of_case,
+    get_open_drtb_hiv_case_from_episode,
+)
+from custom.enikshay.exceptions import ENikshayCaseNotFound, ENikshayLocationNotFound
+from custom.enikshay.nikshay_datamigration.models import (
+    Followup,
+    Outcome,
+)
 
 PERSON_CASE_TYPE = 'person'
 OCCURRENCE_CASE_TYPE = 'occurrence'
 EPISODE_CASE_TYPE = 'episode'
 DRTB_HIV_REFERRAL_CASE_TYPE = 'drtb-hiv-referral'
+TEST_CASE_TYPE = 'test'
 
 MockLocation = namedtuple('MockLocation', 'name location_id location_type')
 MockLocationType = namedtuple('MockLocationType', 'name code')
@@ -53,19 +58,19 @@ class EnikshayCaseFactory(object):
 
     @property
     @memoized
-    def existing_person_case(self):
+    def existing_episode_case(self):
         """
-        Get the existing person case for this nikshay ID, or None if no person case exists
+        Get the existing episode case for this nikshay ID, or None if no episode case exists
         """
-        matching_external_ids = self.case_accessor.get_cases_by_external_id(self.nikshay_id, case_type='person')
+        matching_external_ids = self.case_accessor.get_cases_by_external_id(
+            self.nikshay_id, case_type=EPISODE_CASE_TYPE
+        )
         if matching_external_ids:
             assert len(matching_external_ids) == 1
+            existing_episode = matching_external_ids[0]
+            assert existing_episode.dynamic_case_properties().get('migration_created_case') == 'true'
             return matching_external_ids[0]
         return None
-
-    @property
-    def creating_person_case(self):
-        return self.existing_person_case is not None
 
     @property
     @memoized
@@ -73,24 +78,24 @@ class EnikshayCaseFactory(object):
         """
         Get the existing occurrence case for this nikshay ID, or None if no occurrence case exists
         """
-        if self.existing_person_case:
+        if self.existing_episode_case:
             try:
-                return get_open_occurrence_case_from_person(
-                    self.domain, self.existing_person_case.case_id
+                return get_first_parent_of_case(
+                    self.domain, self.existing_episode_case.case_id, OCCURRENCE_CASE_TYPE
                 )
             except ENikshayCaseNotFound:
                 return None
 
     @property
     @memoized
-    def existing_episode_case(self):
+    def existing_person_case(self):
         """
-        Get the existing episode case for this nikshay ID, or None if no episode case exists
+        Get the existing person case for this nikshay ID, or None if no episode case exists
         """
         if self.existing_occurrence_case:
             try:
-                return get_open_episode_case_from_occurrence(
-                    self.domain, self.existing_occurrence_case.case_id
+                return get_first_parent_of_case(
+                    self.domain, self.existing_occurrence_case.case_id, PERSON_CASE_TYPE
                 )
             except ENikshayCaseNotFound:
                 return None
@@ -109,21 +114,32 @@ class EnikshayCaseFactory(object):
             except ENikshayCaseNotFound:
                 return None
 
+    @memoized
+    def existing_test_case(self, followup):
+        #  TODO
+        return None
+
     def get_case_structures_to_create(self):
         person_structure = self.get_person_case_structure()
-        ocurrence_structure = self.get_occurrence_case_structure(person_structure)
-        episode_structure = self.get_episode_case_structure(ocurrence_structure)
-        if not self._outcome or self._outcome.hiv_status in ['unknown', 'reactive']:
+        occurrence_structure = self.get_occurrence_case_structure(person_structure)
+        episode_structure = self.get_episode_case_structure(occurrence_structure)
+        test_structures = [
+            self.get_test_case_structure(followup, occurrence_structure)
+            for followup in self._followups
+        ]
+        if (
+            not self._outcome
+            or (not self._outcome.is_treatment_ended and self._outcome.hiv_status in ['unknown', 'reactive'])
+        ):
             drtb_hiv_referral_structure = self.get_drtb_hiv_referral_case_structure(episode_structure)
-            return [drtb_hiv_referral_structure]
+            return [drtb_hiv_referral_structure] + test_structures
         else:
-            return [episode_structure]
+            return [episode_structure] + test_structures
 
     def get_person_case_structure(self):
         kwargs = {
             'attrs': {
                 'case_type': PERSON_CASE_TYPE,
-                'external_id': self.nikshay_id,
                 'update': {
                     'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,
@@ -149,25 +165,20 @@ class EnikshayCaseFactory(object):
                     'sex': self.patient_detail.sex,
 
                     'migration_created_case': 'true',
+                    'migration_created_from_record': self.patient_detail.PregId,
                 },
             },
         }
 
-        if self.phi:
-            if self.phi.location_type.code == 'phi':
-                kwargs['attrs']['owner_id'] = self.phi.location_id
-                kwargs['attrs']['update']['phi'] = self.phi.name
-                kwargs['attrs']['update']['phi_assigned_to'] = self.phi.location_id
-                kwargs['attrs']['update']['tu_choice'] = self.tu.location_id
-            else:
-                kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
-                kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
-                kwargs['attrs']['update']['migration_error'] = 'not_phi_location'
-                kwargs['attrs']['update']['migration_error_details'] = self._phi_code
+        if self.phi.location_type.code == 'phi':
+            kwargs['attrs']['owner_id'] = self.phi.location_id
+            kwargs['attrs']['update']['phi'] = self.phi.name
+            kwargs['attrs']['update']['phi_assigned_to'] = self.phi.location_id
+            kwargs['attrs']['update']['tu_choice'] = self.tu.location_id
         else:
             kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
-            kwargs['attrs']['update']['archive_reason'] = 'migration_location_not_found'
-            kwargs['attrs']['update']['migration_error'] = 'location_not_found'
+            kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
+            kwargs['attrs']['update']['migration_error'] = 'not_phi_location'
             kwargs['attrs']['update']['migration_error_details'] = self._phi_code
 
         if self._outcome:
@@ -209,7 +220,9 @@ class EnikshayCaseFactory(object):
                     'name': 'Occurrence #1',
                     'occurrence_episode_count': 1,
                     'occurrence_id': get_human_friendly_id(),
+
                     'migration_created_case': 'true',
+                    'migration_created_from_record': self.patient_detail.PregId,
                 },
             },
             'indices': [CaseIndex(
@@ -241,6 +254,7 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'case_type': EPISODE_CASE_TYPE,
                 'date_opened': self.patient_detail.pregdate1,
+                'external_id': self.nikshay_id,
                 'owner_id': '-',
                 'update': {
                     'adherence_schedule_date_start': (
@@ -278,6 +292,7 @@ class EnikshayCaseFactory(object):
                     'treatment_supporter_mobile_number': validate_phone_number(self.patient_detail.dotmob),
 
                     'migration_created_case': 'true',
+                    'migration_created_from_record': self.patient_detail.PregId,
                 },
             },
             'indices': [CaseIndex(
@@ -313,6 +328,9 @@ class EnikshayCaseFactory(object):
                 'owner_id': self.drtb_hiv.location_id,
                 'update': {
                     'name': self.patient_detail.pname,
+
+                    'migration_created_case': 'true',
+                    'migration_created_from_record': self.patient_detail.PregId,
                 }
             },
             'indices': [CaseIndex(
@@ -329,6 +347,54 @@ class EnikshayCaseFactory(object):
             kwargs['attrs']['create'] = True
         return CaseStructure(**kwargs)
 
+    def get_test_case_structure(self, followup, occurrence_structure):
+        kwargs = {
+            'attrs': {
+                'case_type': TEST_CASE_TYPE,
+                'close': False,
+                'date_opened': followup.TestDate,
+                'owner_id': '-',
+                'update': {
+                    'date_reported': followup.TestDate,
+                    'date_tested': followup.TestDate,
+                    'episode_type_at_request': 'presumptive_tb' if followup.IntervalId == 0 else 'confirmed_tb',
+                    'lab_serial_number': followup.LabNo or '',
+                    'name': followup.TestDate,
+                    'result_grade': followup.result_grade,
+                    'result_recorded': 'yes',
+                    'testing_facility_id': followup.DMC,
+
+                    'migration_created_case': 'true',
+                    'migration_created_from_id': followup.id,
+                    'migration_created_from_record': self.patient_detail.PregId,
+                }
+            },
+            'indices': [CaseIndex(
+                occurrence_structure,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=OCCURRENCE_CASE_TYPE,
+            )],
+        }
+
+        if followup.IntervalId == 0:
+            kwargs['attrs']['update']['diagnostic_test_reason'] = 'presumptive_tb'
+            kwargs['attrs']['update']['purpose_of_testing'] = 'diagnostic'
+        elif followup.IntervalId == 1:
+            kwargs['attrs']['update']['follow_up_test_reason'] = 'end_of_ip'
+            kwargs['attrs']['update']['purpose_of_testing'] = 'follow_up'
+        elif followup.IntervalId == 4:
+            kwargs['attrs']['update']['follow_up_test_reason'] = 'end_of_cp'
+            kwargs['attrs']['update']['purpose_of_testing'] = 'follow_up'
+
+        existing_test_case = self.existing_test_case(followup)
+        if existing_test_case:
+            kwargs['case_id'] = existing_test_case.case_id
+            kwargs['attrs']['create'] = False
+        else:
+            kwargs['attrs']['create'] = True
+        return CaseStructure(**kwargs)
+
     @property
     @memoized
     def _outcome(self):
@@ -339,25 +405,46 @@ class EnikshayCaseFactory(object):
             return None
 
     @property
+    @memoized
+    def _followups(self):
+        return list(Followup.objects.filter(PatientID=self.patient_detail))
+
+    @property
     def tu(self):
         if self.test_phi is not None:
             return MockLocation('FAKETU', 'fake_tu_id', MockLocationType('tu', 'tu'))
-        return self.nikshay_codes_to_location.get('-'.join(self._phi_code.split('-')[:3]))
+
+        tu_code = '-'.join(self._phi_code.split('-')[:3])
+        try:
+            return self.nikshay_codes_to_location[tu_code]
+        except KeyError:
+            raise ENikshayLocationNotFound(tu_code)
 
     @property
     def phi(self):
         if self.test_phi is not None:
             return MockLocation('FAKEPHI', self.test_phi, MockLocationType('phi', 'phi'))
-        return self.nikshay_codes_to_location.get(self._phi_code)
+
+        try:
+            return self.nikshay_codes_to_location[self._phi_code]
+        except KeyError:
+            raise ENikshayLocationNotFound(self._phi_code)
 
     @property
     def drtb_hiv(self):
         if self.test_phi is not None:
             return MockLocation('FAKEDRTBHIV', 'fake_drtb_hiv_id', MockLocationType('drtb_hiv', 'drtb_hiv'))
-        dto = self.nikshay_codes_to_location['-'.join(self._phi_code.split('-')[:2])]
+
+        dto_code = '-'.join(self._phi_code.split('-')[:2])
+        try:
+            dto = self.nikshay_codes_to_location[dto_code]
+        except KeyError:
+            raise ENikshayLocationNotFound(dto_code)
+
         for dto_child in dto.get_children():
             if dto_child.location_type.code == 'drtb-hiv':
                 return dto_child
+        raise ENikshayLocationNotFound('drtb-hiv matching DTO %s' % dto_code)
 
     @property
     def _phi_code(self):

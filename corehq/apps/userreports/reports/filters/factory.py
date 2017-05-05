@@ -1,7 +1,7 @@
 import json
 from jsonobject.exceptions import BadValueError
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, Choice, DynamicChoiceListFilter, \
-    NumericFilter, PreFilter, QuarterFilter
+    NumericFilter, PreFilter, QuarterFilter, LocationDrilldownFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.reports.filters.choice_providers import DATA_SOURCE_COLUMN, \
@@ -14,7 +14,7 @@ from corehq.apps.userreports.reports.filters.values import(
 )
 from corehq.apps.userreports.reports.filters.specs import (
     ChoiceListFilterSpec, DynamicChoiceListFilterSpec, NumericFilterSpec, DateFilterSpec,
-    PreFilterSpec, QuarterFilterSpec)
+    PreFilterSpec, QuarterFilterSpec, LocationDrilldownFilterSpec)
 
 
 def _build_date_filter(spec, report):
@@ -86,6 +86,19 @@ def _build_dynamic_choice_list_filter(spec, report):
     )
 
 
+def _build_location_drilldown_filter(spec, report):
+    wrapped = LocationDrilldownFilterSpec.wrap(spec)
+    return LocationDrilldownFilter(
+        name=wrapped.slug,
+        datatype=wrapped.datatype,
+        field=wrapped.field,
+        label=wrapped.display,
+        domain=report.domain,
+        include_descendants=wrapped.include_descendants,
+        max_drilldown_levels=wrapped.max_drilldown_levels,
+    )
+
+
 class ReportFilterFactory(object):
     constructor_map = {
         'date': _build_date_filter,
@@ -93,7 +106,8 @@ class ReportFilterFactory(object):
         'pre': _build_pre_filter,
         'choice_list': _build_choice_list_filter,
         'dynamic_choice_list': _build_dynamic_choice_list_filter,
-        'numeric': _build_numeric_filter
+        'numeric': _build_numeric_filter,
+        'location_drilldown': _build_location_drilldown_filter,
     }
 
     @classmethod

@@ -14,7 +14,7 @@ TREATMENT_SUPPORTER_PHONE = 'treatment_supporter_mobile_number'
 
 TREATMENT_OUTCOME = 'treatment_outcome'
 TREATMENT_OUTCOME_DATE = 'treatment_outcome_date'
-
+EPISODE_PENDING_REGISTRATION = "episode_pending_registration"
 WEIGHT_BAND = 'weight_band'
 
 CURRENT_ADDRESS = 'current_address'
@@ -36,3 +36,18 @@ NINETYNINEDOTS_EPISODE_PROPERTIES = [
     TREATMENT_START_DATE,
     WEIGHT_BAND,
 ]
+
+DOSE_TAKEN_INDICATORS = [
+    'directly_observed_dose',
+    'unobserved_dose',
+    'self_administered_dose',
+]
+
+DOSE_MISSED = 'missed_dose'
+DOSE_UNKNOWN = 'missing_data'
+DOSE_KNOWN_INDICATORS = DOSE_TAKEN_INDICATORS + [DOSE_MISSED]
+DAILY_SCHEDULE_FIXTURE_NAME = 'adherence_schedules'
+DAILY_SCHEDULE_ID = 'schedule_daily'
+SCHEDULE_ID_FIXTURE = 'id'
+# one of values of 'adherence_closure_reason' case property
+HISTORICAL_CLOSURE_REASON = 'historical'

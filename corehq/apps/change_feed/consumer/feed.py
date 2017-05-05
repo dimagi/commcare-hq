@@ -7,10 +7,10 @@ from kafka.common import ConsumerTimeout
 
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
-from corehq.apps.change_feed.topics import get_multi_topic_offset, get_topic_offset, \
-    validate_offsets
+from corehq.apps.change_feed.topics import get_multi_topic_offset, validate_offsets
 from dimagi.utils.logging import notify_error
-from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
+from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
+from pillowtop.models import kafka_seq_to_str
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 
 MIN_TIMEOUT = 100
@@ -20,8 +20,9 @@ class KafkaChangeFeed(ChangeFeed):
     """
     Kafka-based implementation of a ChangeFeed
     """
+    sequence_format = 'json'
 
-    def __init__(self, topics, group_id, partition=0, strict=False):
+    def __init__(self, topics, group_id, strict=False):
         """
         Create a change feed listener for a list of kafka topics, a group ID, and partition.
 
@@ -29,8 +30,7 @@ class KafkaChangeFeed(ChangeFeed):
         """
         self._topics = topics
         self._group_id = group_id
-        self._partition = partition
-        self._processed_topic_offsets = {}  # maps topics to sequence IDs
+        self._processed_topic_offsets = {}
         self.strict = strict
 
     def __unicode__(self):
@@ -47,10 +47,11 @@ class KafkaChangeFeed(ChangeFeed):
 
     def iter_changes(self, since, forever):
         """
-        Since can either be an integer (for single topic change feeds) or a dict
-        of topics to integers (for multiple topic change feeds)
+        Since must be a dictionary of topic partition offsets.
         """
         # a special value of since=None will start from the end of the change stream
+        if since is not None and (not isinstance(since, dict) or not since):
+            raise ValueError("'since' must be None or a topic offset dictionary")
 
         # in milliseconds, -1 means wait forever for changes
         timeout = -1 if forever else MIN_TIMEOUT
@@ -60,40 +61,29 @@ class KafkaChangeFeed(ChangeFeed):
         reset = 'largest' if start_from_latest else 'smallest'
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
         if not start_from_latest:
-            if isinstance(since, dict):
-                if not since:
-                    since = {topic: 0 for topic in self._topics}
-                self._processed_topic_offsets = copy(since)
-            else:
-                # single topic
-                single_topic = self._get_single_topic_or_fail()
-                try:
-                    offset = int(since)  # coerce sequence IDs to ints
-                except ValueError:
-                    notify_error("kafka pillow {} couldn't parse sequence ID {}. rewinding...".format(
-                        self._group_id, since
-                    ))
-                    # since kafka only keeps 7 days of data this isn't a big deal. Hopefully we will only see
-                    # these once when each pillow moves over.
-                    offset = 0
-                self._processed_topic_offsets = {single_topic: offset}
-
-            def _make_offset_tuple(topic):
-                if topic in self._processed_topic_offsets:
-                    return (topic, self._partition, self._processed_topic_offsets[topic])
-                else:
-                    return (topic, self._partition)
-
-            offsets = [_make_offset_tuple(topic) for topic in self._topics]
             if self.strict:
-                self._validate_offsets(offsets)
+                validate_offsets(since)
+
+            checkpoint_topics = {tp[0] for tp in since}
+            extra_topics = checkpoint_topics - set(self._topics)
+            if extra_topics:
+                raise ValueError("'since' contains extra topics: {}".format(list(extra_topics)))
+
+            self._processed_topic_offsets = copy(since)
+
+            offsets = [
+                copy(self._processed_topic_offsets)
+            ]
+            topics_missing = set(self._topics) - checkpoint_topics
+            for topic in topics_missing:
+                offsets.append(topic)  # consume all available partitions
 
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions(*offsets)
 
         try:
             for message in consumer:
-                self._processed_topic_offsets[message.topic] = message.offset
+                self._processed_topic_offsets[(message.topic, message.partition)] = message.offset
                 yield change_from_kafka_message(message)
         except ConsumerTimeout:
             assert not forever, 'Kafka pillow should not timeout when waiting forever!'
@@ -103,21 +93,20 @@ class KafkaChangeFeed(ChangeFeed):
         # the way kafka works, the checkpoint should increment by 1 because
         # querying the feed is inclusive of the value passed in.
         return {
-            topic: sequence + 1 for topic, sequence in self._processed_topic_offsets.items()
+            topic_partition: sequence + 1 for topic_partition, sequence in self._processed_topic_offsets.items()
         }
 
-    def get_current_offsets(self):
+    def get_processed_offsets(self):
+        return copy(self._processed_topic_offsets)
+
+    def get_latest_offsets(self):
         return get_multi_topic_offset(self.topics)
 
-    def get_latest_change_id(self):
-        topic = self._get_single_topic_or_fail()
-        return get_topic_offset(topic)
+    def get_latest_offsets_json(self):
+        return json.loads(kafka_seq_to_str(self.get_latest_offsets()))
 
-    def get_checkpoint_value(self):
-        try:
-            return self.get_latest_change_id()
-        except ValueError:
-            return json.dumps(self.get_current_offsets())
+    def get_latest_offsets_as_checkpoint_value(self):
+        return self.get_latest_offsets()
 
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         config = {
@@ -131,33 +120,24 @@ class KafkaChangeFeed(ChangeFeed):
             **config
         )
 
-    def _validate_offsets(self, offsets):
-        expected_values = {offset[0]: offset[2] for offset in offsets if len(offset) > 2}
-        validate_offsets(expected_values)
 
-
-class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
+class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
     """
     Event handler that supports checkpoints when subscribing to multiple topics.
     """
 
     def __init__(self, checkpoint, checkpoint_frequency, change_feed):
-        super(MultiTopicCheckpointEventHandler, self).__init__(checkpoint, checkpoint_frequency)
+        super(KafkaCheckpointEventHandler, self).__init__(checkpoint, checkpoint_frequency)
         assert isinstance(change_feed, KafkaChangeFeed)
         self.change_feed = change_feed
-        # todo: do this somewhere smarter?
-        checkpoint_doc = self.checkpoint.get_or_create_wrapped()
-        if checkpoint_doc.sequence_format != 'json' or checkpoint_doc.sequence == DEFAULT_EMPTY_CHECKPOINT_SEQUENCE:
-            checkpoint_doc.sequence_format = 'json'
-            # convert initial default to json default
-            if checkpoint_doc.sequence == DEFAULT_EMPTY_CHECKPOINT_SEQUENCE:
-                checkpoint_doc.sequence = '{}'
-            checkpoint_doc.save()
 
     def fire_change_processed(self, change, context):
         if self.should_update_checkpoint(context):
             updated_to = self.change_feed.get_current_checkpoint_offsets()
-            self.update_checkpoint(json.dumps(updated_to))
+            self.update_checkpoint(updated_to)
+            return True
+
+        return False
 
 
 def change_from_kafka_message(message):
@@ -178,6 +158,7 @@ def change_from_kafka_message(message):
         deleted=change_meta.is_deletion,
         metadata=change_meta,
         document_store=document_store,
+        topic=message.topic,
     )
 
 

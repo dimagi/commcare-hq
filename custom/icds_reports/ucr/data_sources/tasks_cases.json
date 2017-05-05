@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "config": {
     "table_id": "static-tasks_cases",
     "display_name": "Cases - Tasks (Static)",
@@ -40,6 +44,7 @@
         "is_primary_key": false,
         "is_nullable": false,
         "column_id": "awc_id",
+        "create_index": true,
         "expression": {
           "type": "root_doc",
           "expression": {
@@ -67,6 +72,7 @@
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "supervisor_id",
+        "create_index": true,
         "type": "expression"
       },
       {
@@ -328,6 +334,10 @@
         "property_value": "pregnancy"
       }
     },
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

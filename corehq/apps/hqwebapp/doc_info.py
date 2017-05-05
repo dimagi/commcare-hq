@@ -1,7 +1,7 @@
 from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 from dimagi.ext.jsonobject import *
 from corehq.apps.users.util import raw_username

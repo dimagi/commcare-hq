@@ -7,6 +7,7 @@
     <script src="{% static 'accounting/js/accounting.payment_method_handler.js' %}"></script>
     <script src="{% static 'accounting/js/accounting.credits.js' %}"></script>
     <script src="https://js.stripe.com/v2/"></script>
+    {% include 'domain/partials/schedule_once.html' %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

@@ -1,11 +1,11 @@
+import itertools
 import logging
 import struct
 from abc import ABCMeta, abstractproperty
 from abc import abstractmethod
-from itertools import groupby
 from datetime import datetime
-
-import itertools
+from itertools import groupby
+from uuid import UUID
 
 import csiphash
 import six
@@ -50,8 +50,9 @@ from corehq.form_processor.utils.sql import (
     case_index_adapter,
     case_attachment_adapter
 )
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
 from corehq.sql_db.routers import db_for_read_write
+from corehq.util.queries import fast_distinct_in_domain
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.chunked import chunked
 
@@ -93,6 +94,24 @@ class ShardAccessor(object):
             return {row.doc_id: row.hash for row in rows}
 
     @staticmethod
+    def hash_doc_uuid_sql(doc_uuid):
+        """Get the hash for a UUID from PostgreSQL
+
+        This is used to ensure the python version is consistent with what's
+        being used by PL/Proxy
+        """
+        assert settings.USE_PARTITIONED_DATABASE
+
+        if not isinstance(doc_uuid, UUID):
+            raise ValueError("Expected an instance of UUID")
+
+        query = "SELECT hash_string(CAST(%s AS bytea), 'siphash24') AS hash"
+        with get_cursor(XFormInstanceSQL) as cursor:
+            doc_uuid_before_cast = '\\x%s' % doc_uuid.hex
+            cursor.execute(query, [doc_uuid_before_cast])
+            return fetchone_as_namedtuple(cursor).hash
+
+    @staticmethod
     def hash_doc_ids_python(doc_ids):
         return {
             doc_id: ShardAccessor.hash_doc_id_python(doc_id)
@@ -103,6 +122,10 @@ class ShardAccessor(object):
     def hash_doc_id_python(doc_id):
         if isinstance(doc_id, unicode):
             doc_id = doc_id.encode('utf-8')
+        elif isinstance(doc_id, UUID):
+            # Hash the 16-byte string
+            doc_id = doc_id.bytes
+
         digest = csiphash.siphash24(ShardAccessor.hash_key, doc_id)
         hash_long = struct.unpack("<Q", digest)[0]  # convert byte string to long
         # convert 64 bit hash to 32 bit to match Postgres
@@ -114,6 +137,8 @@ class ShardAccessor(object):
         :param doc_ids:
         :return: Dict of ``doc_id -> Django DB alias``
         """
+        assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
+        consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         databases = {}
         shard_map = partition_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
@@ -131,6 +156,8 @@ class ShardAccessor(object):
         """
         :return: Django DB alias in which the doc should be stored
         """
+        assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
+        consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         shard_map = partition_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
         hash_ = ShardAccessor.hash_doc_id_python(doc_id)
@@ -139,6 +166,23 @@ class ShardAccessor(object):
 
 
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
+    startkey_min_value = datetime.min
+
+    def is_sharded(self):
+        """
+        :return: True the django model is sharded, otherwise false.
+        """
+        from corehq.form_processor.models import RestrictedManager
+        from corehq.sql_db.models import PartitionedModel
+        return (
+            isinstance(self.model_class.objects, RestrictedManager) or
+            issubclass(self.model_class, PartitionedModel)
+        )
+
+    @property
+    def sql_db_aliases(self):
+        return get_sql_db_aliases_in_use() if self.is_sharded() else ['default']
+
     @abstractproperty
     def model_class(self):
         """
@@ -487,13 +531,6 @@ class FormAccessorSQL(AbstractFormAccessor):
             )
 
     @staticmethod
-    @unit_testing_only
-    @transaction.atomic
-    def delete_all_forms(domain=None, user_id=None):
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute('SELECT delete_all_forms(%s, %s)', [domain, user_id])
-
-    @staticmethod
     def get_deleted_form_ids_for_user(domain, user_id):
         return FormAccessorSQL._get_form_ids_for_user(
             domain,
@@ -586,15 +623,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return cases
 
     @staticmethod
-    def case_modified_since(case_id, server_modified_on):
-        """
-        Return True if a case has been modified since the given modification date.
-        Assumes that the case exists in the DB.
-        """
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_modified FROM case_modified_since(%s, %s)', [case_id, server_modified_on])
-            result = fetchone_as_namedtuple(cursor)
-            return result.case_modified
+    def case_exists(case_id):
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+        db = get_db_alias_for_partitioned_doc(case_id)
+        return CommCareCaseSQL.objects.using(db).filter(case_id=case_id).exists()
 
     @staticmethod
     def get_case_xform_ids(case_id):
@@ -754,12 +786,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
 
     @staticmethod
-    @unit_testing_only
-    def delete_all_cases(domain=None):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT delete_all_cases(%s)', [domain])
-
-    @staticmethod
     @transaction.atomic
     def save_case(case):
         transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
@@ -804,9 +830,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     logging.debug(msg)
                 raise CaseSaveError(e)
             else:
-                case.clear_tracked_models()
                 for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
                     attachment.delete_content()
+                case.clear_tracked_models()
 
     @staticmethod
     def get_open_case_ids_for_owner(domain, owner_id):
@@ -865,7 +891,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 [domain, case_ids]
             )
             results = fetchall_as_namedtuple(cursor)
-            return dict((result.case_id, result.server_modified_on) for result in results)
+            return {result.case_id: result.server_modified_on for result in results}
 
     @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
@@ -880,16 +906,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return CaseAccessorSQL.get_cases_by_external_id(domain, user_id, case_type)[0]
         except IndexError:
             return None
-
-    @staticmethod
-    def get_case_types_for_domain(domain):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_type FROM get_case_types_for_domain(%s)',
-                [domain]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return {result.case_type for result in results}
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):
@@ -926,6 +942,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             publish_case_deleted(domain, case_id)
 
         return affected_count
+
+    @staticmethod
+    def get_case_owner_ids(domain):
+        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+        db_aliases = get_db_aliases_for_partitioned_query()
+        owner_ids = set()
+        for db_alias in db_aliases:
+            owner_ids.update(fast_distinct_in_domain(CommCareCaseSQL, 'owner_id', domain, using=db_alias))
+
+        return owner_ids
 
 
 class LedgerReindexAccessor(ReindexAccessor):

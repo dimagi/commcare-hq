@@ -7,15 +7,12 @@ from couchforms.models import XFormInstance
 
 class Command(BaseCommand):
     help = "Archive MVP Forms"
-    args = "filepath archiving_user"
 
-    def handle(self, *args, **options):
-        if len(args) < 2:
-            print("please specify a filepath and an archiving_user")
-            return
-        filepath = args[0]
-        archiving_user = args[1]
+    def add_arguments(self, parser):
+        parser.add_argument('filepath')
+        parser.add_argument('archiving_user')
 
+    def handle(self, filepath, archiving_user, **options):
         try:
             form_ids = open(filepath)
         except Exception as e:

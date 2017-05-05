@@ -11,12 +11,12 @@
  
  {% block case_management_js %}{{ block.super }}
 -    {% if form.source %}
-+  {% if form.requires_case or form.get_action_type == 'open' %}
++  {% if form.source %}
      var CaseConfig = hqImport('app_manager/js/case-config-ui.js').CaseConfig;
      var caseConfig = new CaseConfig({
-         home: $('#casexml_home'),
-@@ -25,5 +25,73 @@
-         usercasePropertiesMap: {{ usercase_properties|JSON }},
+         home: $('#case-config-ko'),
+@@ -26,5 +26,73 @@
+         propertyDescriptions: {{ property_descriptions|JSON }},
      });
      caseConfig.init();
 -    {% endif %}

@@ -2,13 +2,13 @@ from django.test import TestCase
 from django.test.utils import override_settings
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
 
 ALICE_XML = """<?xml version='1.0' ?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/D95E58BD-A228-414F-83E6-EEE716F0B3AD">
     <name>Dinkle</name>
     <join_date>2010-08-28</join_date>
-    <n0:case case_id="ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169" user_id="user-xxx-alice" date_modified="2013-04-19T16:52:04.304-04" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+    <n0:case case_id="ddb8e2b3-7ce0-43e4-ad45-domain-test" user_id="user-xxx-alice" date_modified="2013-04-19T16:52:04.304-04" xmlns:n0="http://commcarehq.org/case/transaction/v2">
         <n0:create>
             <n0:case_name>Dinkle</n0:case_name>
             <n0:owner_id>da77a254-56dd-11e0-a55d-005056aa7fb5</n0:owner_id>
@@ -32,7 +32,7 @@ ALICE_XML = """<?xml version='1.0' ?>
 EVE_XML = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/1DFD8610-91E3-4409-BF8B-02D3B4FF3530">
     <plan_to_buy_gun>no</plan_to_buy_gun>
-    <n0:case case_id="ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169" user_id="user-xxx-eve" date_modified="2013-04-19T16:53:02.799-04" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+    <n0:case case_id="ddb8e2b3-7ce0-43e4-ad45-domain-test" user_id="user-xxx-eve" date_modified="2013-04-19T16:53:02.799-04" xmlns:n0="http://commcarehq.org/case/transaction/v2">
         <n0:update>
             <n0:plan_to_buy_gun>no</n0:plan_to_buy_gun>
         </n0:update>
@@ -51,7 +51,7 @@ EVE_XML = """<?xml version='1.0' ?>
 ALICE_UPDATE_XML = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/1DFD8610-91E3-4409-BF8B-02D3B4FF3530">
     <plan_to_buy_gun>no</plan_to_buy_gun>
-    <n0:case case_id="ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169" user_id="user-xxx-alice" date_modified="2013-04-19T16:53:02.799-04" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+    <n0:case case_id="ddb8e2b3-7ce0-43e4-ad45-domain-test" user_id="user-xxx-alice" date_modified="2013-04-19T16:53:02.799-04" xmlns:n0="http://commcarehq.org/case/transaction/v2">
         <n0:update>
             <n0:plan_to_buy_gun>no</n0:plan_to_buy_gun>
         </n0:update>
@@ -75,15 +75,19 @@ EVE_DOMAIN = 'domain2'
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=True)
 class DomainTest(TestCase):
 
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        super(DomainTest, self).tearDown()
+
     def test_cant_own_case(self):
-        _, _, [case] = submit_form_locally(ALICE_XML, ALICE_DOMAIN)
-        response, form, cases = submit_form_locally(EVE_XML, EVE_DOMAIN)
+        result_alice = submit_form_locally(ALICE_XML, ALICE_DOMAIN)
+        result_eve = submit_form_locally(EVE_XML, EVE_DOMAIN)
 
-        self.assertIn('IllegalCaseId', response.content)
-        self.assertNotIn('plan_to_buy_gun', case.dynamic_case_properties())
+        self.assertIn('IllegalCaseId', result_eve.response.content)
+        self.assertNotIn('plan_to_buy_gun', result_alice.case.dynamic_case_properties())
 
-        _, _, [case] = submit_form_locally(ALICE_UPDATE_XML, ALICE_DOMAIN)
-        self.assertEqual(case.dynamic_case_properties()['plan_to_buy_gun'], 'no')
+        result_alice_update = submit_form_locally(ALICE_UPDATE_XML, ALICE_DOMAIN)
+        self.assertEqual(result_alice_update.case.dynamic_case_properties()['plan_to_buy_gun'], 'no')
 
 
 @use_sql_backend

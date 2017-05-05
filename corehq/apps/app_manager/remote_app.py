@@ -1,7 +1,7 @@
 from lxml import etree
 import urllib2
 import urlparse
-from django.core import urlresolvers
+from django.urls import reverse
 from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.xform import WrappedNode
 from corehq.apps.users.util import cc_user_domain
@@ -71,7 +71,7 @@ def make_remote_profile(app, langs=None):
             profile_xml.set_property("cc_user_domain", cc_user_domain(app.domain))
             profile_xml.set_property('form-record-url', app.form_record_url)
             profile_xml.set_property('key_server', app.key_server_url)
-            download_index_url = urlresolvers.reverse(
+            download_index_url = reverse(
                 'download_index',
                 args=[app.domain, app.get_id],
             )

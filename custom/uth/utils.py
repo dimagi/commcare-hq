@@ -174,11 +174,11 @@ def create_case(case_id, files, patient_case_id=None):
     for f in files:
         file_dict[f] = UploadedFile(files[f], f)
 
-    _, _, cases = submit_form_locally(
+    cases = submit_form_locally(
         instance=xform,
         attachments=file_dict,
         domain=UTH_DOMAIN,
-    )
+    ).cases
     case_ids = {case.case_id for case in cases}
     return [CommCareCase.get(case_id) for case_id in case_ids]
 

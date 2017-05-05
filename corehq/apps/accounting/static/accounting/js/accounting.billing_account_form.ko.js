@@ -8,16 +8,14 @@ hqDefine('accounting/js/accounting.billing_account_form.ko.js', function () {
             return !self.is_active();
         });
     };
-    return {BillingAccountForm: BillingAccountForm};
-});
 
-$(function () {
-    var BillingAccountForm = hqImport('accounting/js/accounting.billing_account_form.ko.js').BillingAccountForm;
-    var baForm = new BillingAccountForm(hqImport('hqwebapp/js/initial_page_data.js').get('account_form_is_active'));
-    $('#account-form').koApplyBindings(baForm);
-
-    $("#show_emails").click(function() {
-        $('#emails-text').show();
-        $(this).parent().hide();
+    $(function () {
+        var baForm = new BillingAccountForm(hqImport('hqwebapp/js/initial_page_data.js').get('account_form_is_active'));
+        $('#account-form').koApplyBindings(baForm);
+    
+        $("#show_emails").click(function() {
+            $('#emails-text').show();
+            $(this).parent().hide();
+        });
     });
 });

@@ -92,7 +92,7 @@ class BaseOtaRestoreTest(TestCase, TestFileMixin):
         delete_all_cases()
         delete_all_sync_logs()
         restore_config = RestoreConfig(project=self.project, restore_user=self.restore_user)
-        restore_config.cache.delete(restore_config._initial_cache_key)
+        restore_config.cache.clear()
         super(BaseOtaRestoreTest, self).tearDown()
 
 
@@ -131,17 +131,26 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         self.assertIsInstance(restore_config_cached.get_payload(), CachedResponse)
         self.assertNotIsInstance(restore_config_overwrite.get_payload(), CachedResponse)
 
-        # even cached responses change the sync log id so they are not the same
-        restore_payload = restore_config.get_payload().as_string()
-        self.assertNotEqual(restore_payload, restore_config_cached.get_payload().as_string())
-        self.assertNotEqual(restore_payload, restore_config_overwrite.get_payload().as_string())
+    def testDifferentDeviceCache(self):
+        '''
+        Ensure that if restore is coming from different device, do not return cached response
+        '''
+        restore_config = get_restore_config(
+            self.project, self.restore_user, items=True, force_cache=True, device_id='123',
+        )
+        restore_config_other_device = get_restore_config(
+            self.project, self.restore_user, items=True, device_id='456'
+        )
+
+        self.assertNotIsInstance(restore_config.get_payload(), CachedResponse)
+        self.assertNotIsInstance(restore_config_other_device.get_payload(), CachedResponse)
 
     def testUserRestoreWithCase(self):
         xml_data = self.get_xml('create_short')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
 
         # implicit length assertion
-        _, _, [newcase] = submit_form_locally(xml_data, domain=self.project.name)
+        result = submit_form_locally(xml_data, domain=self.project.name)
 
         expected_case_block = """
         <case>
@@ -161,7 +170,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             self,
             expected_case_block,
             xml.get_case_xml(
-                newcase,
+                result.case,
                 [case_const.CASE_ACTION_CREATE, case_const.CASE_ACTION_UPDATE]
             )
         )
@@ -183,7 +192,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             self,
             expected_v2_case_block,
             xml.get_case_xml(
-                newcase,
+                result.case,
                 [case_const.CASE_ACTION_CREATE, case_const.CASE_ACTION_UPDATE],
                 version="2.0",
             ),
@@ -292,7 +301,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
     def testRestoreAttributes(self):
         xml_data = self.get_xml('attributes')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
-        _, _, [newcase] = submit_form_locally(xml_data, domain=self.project.name)
+        newcase = submit_form_locally(xml_data, domain=self.project.name).case
 
         self.assertTrue(isinstance(newcase.adate, dict))
         self.assertEqual(date(2012, 02, 01), newcase.adate["#text"])

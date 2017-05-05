@@ -2,12 +2,14 @@ from datetime import date, datetime
 
 from django.db import models
 
+import dateutil.parser
+
 
 def _parse_datetime_or_null_to_date(datetime_str):
     if datetime_str == 'NULL':
         return ''
     else:
-        return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S.%f').date()
+        return dateutil.parser.parse(datetime_str).date()
 
 
 class PatientDetail(models.Model):
@@ -285,8 +287,6 @@ class Outcome(models.Model):
     )
     InitiatedDate = models.CharField(max_length=255, null=True)  # dates, None, and NULL
     userName = models.CharField(max_length=255)
-    # loginDate = models.DateTimeField()
-    # OutcomeDate1 = models.CharField(max_length=255)  # datetimes and NULL
 
     @property
     def hiv_status(self):
@@ -304,7 +304,7 @@ class Outcome(models.Model):
             'NULL': None,
             '0': None,
             '1': 'cured',
-            '2': 'treatment_completed',
+            '2': 'treatment_complete',
             '3': 'died',
             '4': 'failure',
             '5': 'loss_to_follow_up',
@@ -316,7 +316,7 @@ class Outcome(models.Model):
     def is_treatment_ended(self):
         return self.treatment_outcome in [
             'cured',
-            'treatment_completed',
+            'treatment_complete',
             'died',
             'failure',
             'loss_to_follow_up',
@@ -339,14 +339,35 @@ class Outcome(models.Model):
                     return datetime.strptime(date_string, format).date()
 
 
-# class Household(models.Model):
-#     PatientID = models.ForeignKey(APatientDetail)  # have to move to end of excel CSV
-#     Name = models.CharField(max_length=255, null=True)
-#     Dosage = models.CharField(max_length=255, null=True)
-#     Weight = models.CharField(max_length=255, null=True)
-#     M1 = models.CharField(max_length=255, null=True)
-#     M2 = models.CharField(max_length=255, null=True)
-#     M3 = models.CharField(max_length=255, null=True)
-#     M4 = models.CharField(max_length=255, null=True)
-#     M5 = models.CharField(max_length=255, null=True)
-#     M6 = models.CharField(max_length=255, null=True)
+class Followup(models.Model):
+    id = models.AutoField(primary_key=True)
+    PatientID = models.ForeignKey(PatientDetail, on_delete=models.CASCADE)  # requires trimming whitespace in excel
+    IntervalId = models.IntegerField()
+    TestDate = models.DateField()
+    DMC = models.IntegerField()
+    LabNo = models.CharField(max_length=255, null=True)
+    SmearResult = models.IntegerField()
+    PatientWeight = models.IntegerField(null=True)
+    DmcStoCode = models.CharField(max_length=255, null=True)
+    DmcDtoCode = models.CharField(max_length=255, null=True)
+    DmcTbuCode = models.CharField(max_length=255, null=True)
+    RegBy = models.CharField(max_length=255, null=True)
+
+    @property
+    def result_grade(self):
+        return {
+            99: 'Neg',
+            1: 'SC-1',
+            2: 'SC-2',
+            4: 'SC-4',
+            5: 'SC-5',
+            6: 'SC-6',
+            7: 'SC-7',
+            8: 'SC-8',
+            9: 'SC-9',
+            11: '1+',
+            12: '2+',
+            13: '3+',
+            0: 'NA',
+            98: 'Pos',
+        }[self.SmearResult]

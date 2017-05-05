@@ -1,6 +1,6 @@
 from collections import defaultdict
 from unittest import skipUnless, SkipTest
-from uuid import uuid4
+from uuid import uuid4, UUID
 
 from django.conf import settings
 from django.test import TestCase
@@ -15,7 +15,6 @@ DOMAIN = 'sharding-test'
 
 
 @use_sql_backend
-@override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardingTests(TestCase):
 
@@ -110,7 +109,7 @@ PARTITION_DATABASE_CONFIG = {
 
 
 @use_sql_backend
-@override_settings(PARTITION_DATABASE_CONFIG=PARTITION_DATABASE_CONFIG, DATABASES=DATABASES, ALLOW_FORM_PROCESSING_QUERIES=True)
+@override_settings(PARTITION_DATABASE_CONFIG=PARTITION_DATABASE_CONFIG, DATABASES=DATABASES)
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardAccessorTests(TestCase):
 
@@ -174,3 +173,8 @@ class ShardAccessorTests(TestCase):
         python_shards = {doc_id: hash_ & part_mask for doc_id, hash_ in sql_hashes.items()}
 
         self.assertEqual(python_shards, sql_shards)
+
+    def test_hash_uuid(self):
+        uuid = UUID('403724ef9fe141f2908363918c62c2ff')
+        self.assertEqual(ShardAccessor.hash_doc_id_python(uuid), 1415444857)
+        self.assertEqual(ShardAccessor.hash_doc_uuid_sql(uuid), 1415444857)

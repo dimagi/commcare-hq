@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.http import QueryDict
 from django import template
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from dimagi.utils.decorators.memoized import memoized
@@ -25,6 +25,7 @@ from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
 from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
+from corehq import toggles
 
 
 register = template.Library()
@@ -117,14 +118,6 @@ def cachebuster(url):
     return resource_versions.get(url, "")
 
 
-@register.simple_tag()
-def new_satic(url, **kwargs):
-    # todo delete after final merge
-    if kwargs:
-        warnings.warn('static no longer accepts arguments', PendingDeprecationWarning)
-    return static(url)
-
-
 @quickcache(['couch_user.username'])
 def _get_domain_list(couch_user):
     domains = Domain.active_for_user(couch_user)
@@ -206,11 +199,16 @@ def pretty_doc_info(doc_info):
     })
 
 
-def _toggle_enabled(module, request, toggle_or_toggle_name):
+def _get_toggle(module, toggle_or_toggle_name):
     if isinstance(toggle_or_toggle_name, basestring):
         toggle = getattr(module, toggle_or_toggle_name)
     else:
         toggle = toggle_or_toggle_name
+    return toggle
+
+
+def _toggle_enabled(module, request, toggle_or_toggle_name):
+    toggle = _get_toggle(module, toggle_or_toggle_name)
     return toggle.enabled_for_request(request)
 
 
@@ -218,6 +216,26 @@ def _toggle_enabled(module, request, toggle_or_toggle_name):
 def toggle_enabled(request, toggle_or_toggle_name):
     import corehq.toggles
     return _toggle_enabled(corehq.toggles, request, toggle_or_toggle_name)
+
+@register.filter
+def toggle_tag_info(request, toggle_or_toggle_name):
+    """Show Tag Information for feature flags / Toggles,
+    and if not enabled, show where the UI would be.
+    Useful for trying to find out if you have all the flags enabled in a
+    particular location or whether a feature on prod is part of a particular
+    flag. """
+    if not toggles.SHOW_DEV_TOGGLE_INFO.enabled_for_request(request):
+        return ""
+    flag = _get_toggle(toggles, toggle_or_toggle_name)
+    tag = flag.tag
+    is_enabled = flag.enabled_for_request(request)
+    return mark_safe("""<div class="label label-{css_class} label-flag{css_disabled}">{tag_name}: {description}{status}</div>""".format(
+        css_class=tag.css_class,
+        tag_name=tag.name,
+        description=flag.label,
+        status=" <strong>[DISABLED]</strong>" if not is_enabled else "",
+        css_disabled=" label-flag-disabled" if not is_enabled else "",
+    ))
 
 
 @register.filter
@@ -228,10 +246,12 @@ def can_use_restore_as(request):
     if request.couch_user.is_superuser:
         return True
 
+    if toggles.LOGIN_AS_ALWAYS_OFF.enabled(request.domain):
+        return False
+
     return (
         request.couch_user.can_edit_commcare_users() and
-        has_privilege(request, privileges.DATA_CLEANUP) and
-        has_privilege(request, privileges.CLOUDCARE)
+        has_privilege(request, privileges.LOGIN_AS)
     )
 
 

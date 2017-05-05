@@ -12,7 +12,7 @@ from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.decorators.memoized import memoized
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 from PIL import Image
 
@@ -566,6 +566,13 @@ class HQMediaMixin(Document):
                                 for icon in icons
                                 if icon]
                             )
+                # Print template
+                if display and details.display == 'long' and details.print_template:
+                    media.append(ApplicationMediaReference(
+                        details.print_template['path'],
+                        media_class=CommCareMultimedia,
+                        **media_kwargs)
+                    )
 
             if module.case_list_form.form_id:
                 _add_menu_media(module.case_list_form, **media_kwargs)

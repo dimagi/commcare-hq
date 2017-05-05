@@ -22,14 +22,6 @@
 {% endblock js %}
 
 {% block js-inline %}{{ block.super }}
-  <script>
-    $(function () {
-      var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
-      COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
-      $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
-    });
-  </script>
-
   {% if not app.is_remote_app %}
     <script>
       $(function () {
@@ -66,9 +58,8 @@
     </script>
   {% endif %}
 
-
-  {% include 'hqmedia/partials/multimedia_init.html' %}
   <script>
+    var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders.js").get();
     var refs = {{ refs|JSON }};
     var media_info = {{ media_info|JSON }};
     var image_refs = {};
@@ -113,84 +104,18 @@
         return '{{ app.anonymous_cloudcare_url }}';
     }
   </script>
-  <script>
-    $(function () {
-      var langs = {{ app.langs|JSON }};
-      var saveURL = "{% url "edit_app_langs" domain app.id %}";
-      var validate = !{{ app.is_remote_app|BOOL }};
-      var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
-      $("#supported-languages").koApplyBindings(new SupportedLanguages({
-        langs: langs,
-        saveURL: saveURL,
-        validate: validate
-      }));
-    });
-  </script>
-  <script>
-    $("#copy form button").click(function() {
-      var $submit = $(this),
-        $form = $submit.closest("form"),
-        domain = $form.find("#id_domain").val(),
-        $modal = $("#copy-toggles");
-      {% if request.user.is_superuser %}
-        $submit.disableButton();
-        $.ajax({
-          method: "GET",
-          url: "{% url "toggle_diff" domain %}",
-          data: {
-            domain: domain,
-          },
-          success: function(toggles) {
-            if (toggles.length) {
-              var template = _.template($modal.find("script").html()),
-                $ul = $modal.find("ul").html("");
-              _.each(toggles, function(toggle) {
-                $ul.append(template(toggle));
-              });
-              $modal.modal().one("click", ".btn-primary", function() {
-                $(this).disableButton();
-                var slugs = _.map($modal.find(":checked"), function(c) {
-                    return $(c).data("slug");
-                });
-                $form.find("input[name='toggles']").val(slugs.join(","));
-                $form.submit();
-              }).one("hide.bs.modal", function() {
-                $submit.enableButton();
-              });
-            } else {
-              $form.submit();
-            }
-          },
-          error: function() {
-            // If anything goes wrong, just submit the form
-            $form.submit();
-          },
-        });
-      {% else %}
-        $form.submit();
-      {% endif %}
-    });
-  </script>
-  <script>
-    // Set up typeahead for domain names
-    $(function(){
-      $("#id_domain").koApplyBindings({
-        domain_names: {{ domain_names|JSON }},
-      });
-    });
-  </script>
-  <script>
-    $('#open_checker').click(function() {
-      ga_track_event('App Builder', 'Manage Multimedia');
-    });
-
-    $('#download_zip').click(function() {
-      ga_track_event('App Builder', 'Download Multimedia');
-    });
-  </script>
 {% endblock js-inline %}
 
 
 {% block app_view_tabs %}
+  {% initial_page_data 'app_view_options' app_view_options %}
+  {% initial_page_data 'domain_names' domain_names %}
+  {% initial_page_data 'is_remote_app' app.is_remote_app %}
+  {% initial_page_data 'is_superuser' request.user.is_superuser %}
+  {% initial_page_data 'langs' app.langs %}
+  {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+  {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+  {% initial_page_data 'uploaders' uploaders_js %}
+  {% registerurl "toggle_diff" domain %}
   {% include "app_manager/v2/partials/app-settings.html" %}
 {% endblock app_view_tabs %}

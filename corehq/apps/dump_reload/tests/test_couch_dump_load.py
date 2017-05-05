@@ -17,6 +17,7 @@ from corehq.apps.dump_reload.couch.dump import get_doc_ids_to_dump, ToggleDumper
 from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider
 from corehq.apps.dump_reload.couch.load import ToggleLoader
 from corehq.apps.dump_reload.util import get_model_label
+from corehq.apps.userreports.const import VALID_REFERENCED_DOC_TYPES
 from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
 from corehq.util.couch import get_document_class_by_doc_type
 from corehq.util.test_utils import mock_out_couch
@@ -100,6 +101,11 @@ class CouchDumpLoadTest(TestCase):
     def test_docs_with_domain(self):
         # one test for all docs that have a 'domain' property
         doc_types = []
+        special_handlers = {
+            "DataSourceConfiguration": {
+                "referenced_doc_type": lambda x: random.choice(VALID_REFERENCED_DOC_TYPES)
+            }
+        }
         for provider in DOC_PROVIDERS:
             if isinstance(provider, DocTypeIDProvider):
                 doc_types.extend(provider.doc_types)
@@ -111,7 +117,12 @@ class CouchDumpLoadTest(TestCase):
             doc = doc_class(domain=domain)
             for key, prop in properties_by_key.items():
                 if key != 'domain' and prop.required:
-                    doc[key] = _get_property_value(prop)
+                    special_handler = special_handlers.get(doc_type, {})
+                    special_handler = special_handler.get(prop.name)
+                    if special_handler:
+                        doc[key] = special_handler(prop)
+                    else:
+                        doc[key] = _get_property_value(prop)
 
             doc = doc_class.wrap(doc.to_json())  # dump and wrap to set default props etc.
             res = doc_class.get_db().save_doc(doc)

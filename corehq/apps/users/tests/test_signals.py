@@ -30,7 +30,7 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
     def test_commcareuser_save(self, send_to_es, invalidate, sync_call_center,
                                update_hubspot_properties):
-        CommCareUser().save()
+        CommCareUser(username='test').save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)

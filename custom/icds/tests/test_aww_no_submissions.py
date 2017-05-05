@@ -40,26 +40,26 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
     def test_form_sent_today(self, aww_user_ids):
         aww_user_ids.return_value = {self.user.get_id: self.today}
         indicator = AWWSubmissionPerformanceIndicator(self.domain, self.user)
-        messages = indicator.get_messages()
+        messages = indicator.get_messages(language_code='en')
         self.assertEqual(len(messages), 0)
 
     def test_form_sent_seven_days_ago(self, aww_user_ids):
         aww_user_ids.return_value = {self.user.get_id: self.today - timedelta(days=7)}
         indicator = AWWSubmissionPerformanceIndicator(self.domain, self.user)
-        messages = indicator.get_messages()
+        messages = indicator.get_messages(language_code='en')
         self.assertEqual(len(messages), 0)
 
     def test_form_sent_eight_days_ago(self, aww_user_ids):
         aww_user_ids.return_value = {self.user.get_id: self.today - timedelta(days=8)}
         indicator = AWWSubmissionPerformanceIndicator(self.domain, self.user)
-        messages = indicator.get_messages()
+        messages = indicator.get_messages(language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertTrue('one week' in messages[0])
 
     def test_form_sent_thirty_days_ago(self, aww_user_ids):
         aww_user_ids.return_value = {self.user.get_id: self.today - timedelta(days=30)}
         indicator = AWWSubmissionPerformanceIndicator(self.domain, self.user)
-        messages = indicator.get_messages()
+        messages = indicator.get_messages(language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertTrue('one week' in messages[0])
 
@@ -67,6 +67,6 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
         # last submissions only looks 30 days into past
         aww_user_ids.return_value = {}
         indicator = AWWSubmissionPerformanceIndicator(self.domain, self.user)
-        messages = indicator.get_messages()
+        messages = indicator.get_messages(language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertTrue('one month' in messages[0])

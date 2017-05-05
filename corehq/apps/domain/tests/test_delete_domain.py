@@ -1,7 +1,23 @@
+import random
 import uuid
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
+from mock import patch
+
+from dateutil.relativedelta import relativedelta
 from django.test import TestCase
+
 from casexml.apps.stock.models import DocDomainMapping, StockReport, StockTransaction
+
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    CreditLine,
+    DefaultProductPlan,
+    FeatureType,
+    SoftwarePlanEdition,
+    Subscription,
+    SubscriptionManager,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
@@ -77,13 +93,26 @@ class TestDeleteDomain(TestCase):
         )
         MobileBackendInvitation.objects.create(domain=domain_name, backend=backend)
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestDeleteDomain, cls).setUpClass()
+
     def setUp(self):
+        super(TestDeleteDomain, self).setUp()
         self.domain = Domain(name="test", is_active=True)
         self.domain.save()
         self.domain.convert_to_commtrack()
+        self.current_subscription = Subscription.new_domain_subscription(
+            BillingAccount.get_or_create_account_by_domain(self.domain.name, created_by='tests')[0],
+            self.domain.name,
+            DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ADVANCED),
+            date_start=date.today() - relativedelta(days=1),
+        )
+
         self.domain2 = Domain(name="test2", is_active=True)
         self.domain2.save()
         self.domain2.convert_to_commtrack()
+
         LocationType.objects.create(
             domain='test',
             name='facility',
@@ -131,5 +160,62 @@ class TestDeleteDomain(TestCase):
         self._assert_sql_counts('test', 0)
         self._assert_sql_counts('test2', 2)
 
+    def test_active_subscription_terminated(self):
+        self.domain.delete()
+
+        terminated_subscription = Subscription.objects.get(subscriber__domain=self.domain.name)
+        self.assertFalse(terminated_subscription.is_active)
+        self.assertIsNotNone(terminated_subscription.date_end)
+
+    def test_accounting_future_subscription_suppressed(self):
+        self.current_subscription.date_end = self.current_subscription.date_start + relativedelta(days=5)
+        self.current_subscription.save()
+        next_subscription = Subscription.new_domain_subscription(
+            self.current_subscription.account,
+            self.domain.name,
+            DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.PRO),
+            date_start=self.current_subscription.date_end,
+        )
+
+        self.domain.delete()
+
+        self.assertTrue(
+            super(SubscriptionManager, Subscription.objects).get_queryset().get(
+                id=next_subscription.id
+            ).is_hidden_to_ops
+        )
+
+    def test_active_subscription_credits_transferred_to_account(self):
+        credit_amount = random.randint(1, 10)
+        CreditLine.add_credit(
+            credit_amount,
+            feature_type=FeatureType.SMS,
+            subscription=self.current_subscription,
+        )
+
+        self.domain.delete()
+
+        subscription_credits = CreditLine.get_credits_by_subscription_and_features(
+            self.current_subscription,
+            feature_type=FeatureType.SMS,
+        )
+        self.assertEqual(len(subscription_credits), 1)
+        self.assertEqual(subscription_credits[0].balance, Decimal('0.0000'))
+        account_credits = CreditLine.get_credits_for_account(
+            self.current_subscription.account,
+            feature_type=FeatureType.SMS,
+        )
+        self.assertEqual(len(account_credits), 1)
+        self.assertEqual(account_credits[0].balance, Decimal(credit_amount))
+
+    @patch('corehq.apps.accounting.models.DomainDowngradeActionHandler.get_response')
+    def test_downgraded(self, mock_get_response):
+        mock_get_response.return_value = True
+
+        self.domain.delete()
+
+        self.assertEqual(len(mock_get_response.call_args_list), 1)
+
     def tearDown(self):
         self.domain2.delete()
+        super(TestDeleteDomain, self).tearDown()

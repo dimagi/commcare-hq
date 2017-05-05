@@ -10,6 +10,7 @@ from corehq.apps.repeaters.dbaccessors import (
     get_repeaters_by_domain,
     get_success_repeat_record_count,
     iterate_repeat_records,
+    iter_repeat_records_by_domain,
 )
 from corehq.apps.repeaters.models import RepeatRecord, CaseRepeater
 from corehq.apps.repeaters.const import RECORD_PENDING_STATE
@@ -30,6 +31,13 @@ class TestRepeatRecordDBAccessors(TestCase):
             repeater_id=cls.repeater_id,
             next_check=before,
         )
+        failed_hq_error = RepeatRecord(
+            domain=cls.domain,
+            failure_reason='Some python error',
+            repeater_id=cls.repeater_id,
+            next_check=before,
+        )
+        failed_hq_error.doc_type += '-Failed'
         success = RepeatRecord(
             domain=cls.domain,
             succeeded=True,
@@ -57,6 +65,7 @@ class TestRepeatRecordDBAccessors(TestCase):
 
         cls.records = [
             failed,
+            failed_hq_error,
             success,
             pending,
             overdue,
@@ -81,6 +90,14 @@ class TestRepeatRecordDBAccessors(TestCase):
 
     def test_get_failure_repeat_record_count(self):
         count = get_failure_repeat_record_count(self.domain, self.repeater_id)
+        self.assertEqual(count, 2)
+
+    def test_get_repeat_record_count_with_state_and_no_repeater(self):
+        count = get_repeat_record_count(self.domain, state=RECORD_PENDING_STATE)
+        self.assertEqual(count, 3)
+
+    def test_get_repeat_record_count_with_repeater_id_and_no_state(self):
+        count = get_repeat_record_count(self.domain, repeater_id=self.other_id)
         self.assertEqual(count, 1)
 
     def test_get_paged_repeat_records_with_state_and_no_records(self):
@@ -103,6 +120,10 @@ class TestRepeatRecordDBAccessors(TestCase):
         records = get_paged_repeat_records('wrong-domain', 0, 2)
         self.assertEqual(len(records), 0)
 
+    def test_get_all_paged_repeat_records(self):
+        records = get_paged_repeat_records(self.domain, 0, 10)
+        self.assertEqual(len(records), len(self.records))  # get all the records that were created
+
     def test_iterate_repeat_records(self):
         records = list(iterate_repeat_records(datetime.utcnow(), chunk_size=2))
         self.assertEqual(len(records), 4)  # Should grab all but the succeeded one
@@ -110,6 +131,18 @@ class TestRepeatRecordDBAccessors(TestCase):
     def test_get_overdue_repeat_record_count(self):
         overdue_count = get_overdue_repeat_record_count()
         self.assertEqual(overdue_count, 1)
+
+    def test_get_all_repeat_records_by_domain_wrong_domain(self):
+        records = list(iter_repeat_records_by_domain("wrong-domain"))
+        self.assertEqual(len(records), 0)
+
+    def test_get_all_repeat_records_by_domain_with_repeater_id(self):
+        records = list(iter_repeat_records_by_domain(self.domain, repeater_id=self.repeater_id))
+        self.assertEqual(len(records), 5)
+
+    def test_get_all_repeat_records_by_domain(self):
+        records = list(iter_repeat_records_by_domain(self.domain))
+        self.assertEqual(len(records), len(self.records))
 
 
 class TestRepeatersDBAccessors(TestCase):

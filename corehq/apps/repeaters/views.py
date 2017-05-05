@@ -1,6 +1,6 @@
 import json
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.views.generic import View
 
 from dimagi.utils.web import json_response
@@ -16,7 +16,7 @@ from .forms import CaseRepeaterForm
 class AddCaseRepeaterView(AddRepeaterView):
     urlname = 'add_case_repeater'
     repeater_form_class = CaseRepeaterForm
-    template_name = 'repeaters/add_case_repeater.html'
+    template_name = 'domain/admin/add_form_repeater.html'
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -63,7 +63,7 @@ class RepeatRecordView(View):
     def post(self, request, domain):
         # Retriggers a repeat record
         record = RepeatRecord.get(request.POST.get('record_id'))
-        record.fire(max_tries=1, force_send=True)
+        record.fire(force_send=True)
         return json_response({
             'success': record.succeeded,
             'failure_reason': record.failure_reason,

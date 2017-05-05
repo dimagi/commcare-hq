@@ -40,8 +40,6 @@ bootstrap_test_gateway.__test__ = False
 
 class Command(BaseCommand):
     help = "bootstrap Test SMS backend gateway fees"
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         bootstrap_test_gateway(None)

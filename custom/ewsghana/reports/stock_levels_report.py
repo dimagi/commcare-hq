@@ -3,7 +3,7 @@ from collections import OrderedDict
 from datetime import timedelta
 from itertools import chain
 import datetime
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.loader import render_to_string
 from django.utils.timesince import timesince
 from math import ceil

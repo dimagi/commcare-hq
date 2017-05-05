@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "config": {
     "table_id": "static-child_delivery_forms",
     "display_name": "Forms - Children from Delivery (Static)",
@@ -37,6 +41,7 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "awc_id",
+        "create_index": true,
         "expression": {
           "value_expression": {
             "datatype": null,
@@ -70,6 +75,7 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "supervisor_id",
+        "create_index": true,
         "expression": {
           "location_id_expression": {
             "value_expression": {
@@ -896,6 +902,10 @@
         ]
       }
     },
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

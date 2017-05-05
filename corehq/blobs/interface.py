@@ -16,7 +16,7 @@ class AbstractBlobDB(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def put(self, content, identifier, bucket=DEFAULT_BUCKET):
+    def put(self, content, identifier, bucket=DEFAULT_BUCKET, timeout=None):
         """Put a blob in persistent storage
 
         :param content: A file-like object in binary read mode.
@@ -28,6 +28,9 @@ class AbstractBlobDB(object):
         :param bucket: Optional bucket name used to partition blob data
         in the persistent storage medium. This may be delimited with
         slashes (/). It must be a valid relative path.
+        :param timeout: A parameter in minutes for the minimum time an
+        object will live in the blobdb. `None` means forever. There are
+        no guarantees for the maximum time it will live in blob storage.
         :returns: A `BlobInfo` named tuple. The returned object has a
         `identifier` member that must be used to get or delete the blob.
         """
@@ -53,6 +56,17 @@ class AbstractBlobDB(object):
         :param bucket: Optional bucket name. This must have the same
         value that was passed to ``put``.
         :returns: True if the object exists else false.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def size(self, identifier, bucket=DEFAULT_BUCKET):
+        """Gets the size of a blob in bytes
+
+        :param identifier: The identifier of the object to get.
+        :param bucket: Optional bucket name. This must have the same
+        value that was passed to ``put``.
+        :returns: The number of bytes of a blob
         """
         raise NotImplementedError
 

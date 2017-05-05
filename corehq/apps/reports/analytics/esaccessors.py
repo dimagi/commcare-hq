@@ -589,3 +589,12 @@ def _get_attachment_dicts_from_form(form):
     if 'external_blobs' in form:
         return form['external_blobs'].values()
     return []
+
+
+@quickcache(['domain'], timeout=24 * 3600)
+def get_case_types_for_domain_es(domain):
+    query = (
+        CaseES().domain(domain).size(0)
+        .terms_aggregation("type.exact", "case_types")
+    )
+    return set(query.run().aggregations.case_types.keys)

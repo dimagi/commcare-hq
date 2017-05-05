@@ -9,6 +9,7 @@ class TestLocationTypeExpression(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestLocationTypeExpression, cls).setUpClass()
         cls.domain_name = "test-domain"
         cls.domain_obj = create_domain(cls.domain_name)
         cls.location_type = LocationType(
@@ -39,6 +40,7 @@ class TestLocationTypeExpression(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
+        super(TestLocationTypeExpression, cls).tearDownClass()
 
     def _check_expression(self, doc, expected, domain=None):
         domain = domain or self.domain_name
@@ -71,6 +73,7 @@ class TestLocationParentIdExpression(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestLocationParentIdExpression, cls).setUpClass()
         cls.domain = 'test-loc-parent-id'
         cls.domain_obj = create_domain(cls.domain)
         cls.location_type = LocationType(
@@ -117,6 +120,7 @@ class TestLocationParentIdExpression(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
+        super(TestLocationParentIdExpression, cls).tearDownClass()
 
     def test_location_parent_id(self):
         self.assertEqual(

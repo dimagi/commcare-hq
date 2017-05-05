@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from corehq.util.celery_utils import revoke_tasks
 
 
@@ -14,15 +14,16 @@ class Command(BaseCommand):
     Example:
     python manage.py revoke_celery_tasks couchexport.tasks.export_async
     """
-    args = '<task name 1> <task name 2> ...'
-    help = ''
 
-    def handle(self, *args, **options):
-        if len(args) == 0:
-            raise CommandError("usage: python manage.py revoke_celery_tasks "
-                "<task name 1> <task name 2> ...")
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'task_names',
+            metavar='task_name',
+            nargs='+',
+        )
 
+    def handle(self, task_names, **options):
         try:
-            revoke_tasks(args)
+            revoke_tasks(task_names)
         except KeyboardInterrupt:
             pass

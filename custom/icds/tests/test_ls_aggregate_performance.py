@@ -37,11 +37,11 @@ class TestLSAggregatePerformanceIndicator(SimpleTestCase, TestXmlMixin):
         thr.return_value = ET.fromstring(self.get_xml('thr_fixture'))
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
         indicator = LSAggregatePerformanceIndicator('domain', 'user')
-        message = indicator.get_messages()[0]
-        self.assertIn('Timely Home Visits - 22 / 269', message)
-        self.assertIn('Received adequate THR / Due for THR - 19 / 34', message)
-        self.assertIn('Number of children weighed - 30 / 33', message)
-        self.assertIn('Days AWC open - 59', message)
+        message = indicator.get_messages(language_code='en')[0]
+        self.assertIn('Home visits completed on time / Home visits completed: 22 / 269', message)
+        self.assertIn('Beneficiaries received adequate THR / Beneficiaries eligible for THR: 19 / 34', message)
+        self.assertIn('Children weighed under 3 years / Total children under 3 years: 30 / 33', message)
+        self.assertIn('Average days AWC open / Goal: 59 / 25', message)
 
 
 class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
@@ -91,11 +91,11 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         thr.return_value = ET.fromstring(self.get_xml('thr_fixture'))
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
         indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
-        message = indicator.get_messages()[0]
-        self.assertIn('Home Visits - 6 / 65', message)
-        self.assertIn('Received adequate THR / Due for THR - 1 / 2', message)
-        self.assertIn('Number of children weighed - 1 / 2', message)
-        self.assertIn('Days AWC open - 3', message)
+        message = indicator.get_messages(language_code='en')[0]
+        self.assertIn('Home visits completed / Goal: 6 / 65', message)
+        self.assertIn('Beneficiaries received adequate THR / Beneficiaries eligible for THR: 1 / 2', message)
+        self.assertIn('Children weighed under 3 years / Total children under 3 years: 1 / 2', message)
+        self.assertIn('Days AWC open / Goal: 3 / 25', message)
 
     @patch.object(LSAggregatePerformanceIndicator, 'visits_fixture', new_callable=PropertyMock)
     @patch.object(LSAggregatePerformanceIndicator, 'thr_fixture', new_callable=PropertyMock)
@@ -110,7 +110,7 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
         indicator = AWWAggregatePerformanceIndicator(self.domain, aww3)
         with self.assertRaises(Exception) as e:
-            indicator.get_messages()
+            indicator.get_messages(language_code='en')
         self.assertIn('AWC AWC3 not found in the restore', e.exception.message)
 
     @patch.object(LSAggregatePerformanceIndicator, 'visits_fixture', new_callable=PropertyMock)
@@ -124,5 +124,5 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         visits.return_value = ET.fromstring(self.get_xml('visit_fixture'))
         indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
         with self.assertRaises(Exception) as e:
-            indicator.get_messages()
+            indicator.get_messages(language_code='en')
         self.assertIn('Attribute awc_opened_count not found in restore for AWC AWC1', e.exception.message)

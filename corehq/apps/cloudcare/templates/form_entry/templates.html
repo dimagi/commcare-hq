@@ -4,7 +4,9 @@
 <script type="text/html" id="sub-group-fullform-ko-template">
       <div class="gr" data-bind="
         css: {
-          'gr-no-children': $data.children().length === 0
+          'gr-no-children': $data.children().length === 0,
+          'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'question' }),
+          'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions()
         }">
         <fieldset class="gr-header">
             <legend>

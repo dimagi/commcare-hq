@@ -91,3 +91,9 @@ class TestGroupUserIds(SimpleTestCase):
 
         user_ids = get_groups_user_ids([group1._id, group2._id])
         self.assertEqual(set(user_ids), set(['billy', 'joel', 'eric', 'clapton']))
+
+    def test_one_user_in_group(self):
+        group1 = self._send_group_to_es(users=['billy'])
+
+        user_ids = get_groups_user_ids([group1._id])
+        self.assertEqual(set(user_ids), set(['billy']))

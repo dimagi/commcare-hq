@@ -64,7 +64,6 @@
     <script src="{% static 'style/js/ui-element.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
     {% if show_live_preview %}
     <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
     {% endif %}
@@ -95,7 +94,7 @@
     <i class="fa fa-spin fa-spinner"></i>
   </div>
 </div>
-<div class="appmanager-content appmanager-content-animate-preview"
+<div class="appmanager-content appmanager-content-transition-all"
      id="js-appmanager-body">
     {% if app %}
         {% if error %}

@@ -11,7 +11,7 @@ from corehq.util.test_utils import flag_enabled
 from datetime import datetime, timedelta
 from django.test import TestCase
 from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.tests.util import bootstrap_domain
@@ -56,7 +56,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def _assert_fixture_has_locations(self, xml_name, desired_locations, flat=False):
         generator = flat_location_fixture_generator if flat else location_fixture_generator
-        fixture = ElementTree.tostring(generator(self.user, V2)[-1])
+        fixture = ElementTree.tostring(call_fixture_generator(generator, self.user)[-1])
         desired_fixture = self._assemble_expected_fixture(xml_name, desired_locations)
         self.assertXmlEqual(desired_fixture, fixture)
 
@@ -103,7 +103,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
         empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
-        fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
+        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0])
         self.assertXmlEqual(empty_fixture, fixture)
 
     def test_metadata(self):
@@ -252,6 +252,20 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
             ['Massachusetts', 'New York', 'Middlesex', 'Suffolk', 'New York City', 'Boston', 'Revere']
         )  # (New York City is of type "county")
 
+    def test_include_without_expanding_lower_level(self):
+        # I want all all the cities, but am at the state level
+        self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
+        location_type = self.locations['Massachusetts'].location_type
+
+        # Get all the cities
+        location_type.include_without_expanding = self.locations['Revere'].location_type
+        location_type.save()
+        self._assert_fixture_has_locations(
+            'expand_from_root',  # This is the same as expanding from root / getting all locations
+            ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
+             'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
+        )
+
     @flag_enabled('FLAT_LOCATION_FIXTURE')
     def test_index_location_fixtures(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'])
@@ -259,7 +273,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
             'index_location_fixtures',
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'Middlesex', 'Cambridge', 'Somerville'],
         )
-        fixture_nodes = flat_location_fixture_generator(self.user, V2)
+        fixture_nodes = call_fixture_generator(flat_location_fixture_generator, self.user)
         self.assertEqual(len(fixture_nodes), 2)  # fixture schema, then fixture
 
         # check the fixture like usual
@@ -321,7 +335,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
     def test_metadata_added_to_all_nodes(self):
         mass = self.locations['Massachusetts']
         self.user._couch_user.set_location(mass)
-        fixture = flat_location_fixture_generator(self.user, V2)[1]  # first node is index
+        fixture = call_fixture_generator(flat_location_fixture_generator, self.user)[1]  # first node is index
         location_nodes = fixture.findall('locations/location')
         self.assertEqual(7, len(location_nodes))
         for location_node in location_nodes:
@@ -341,7 +355,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
 
         self.addCleanup(_clear_metadata)
         self.user._couch_user.set_location(mass)
-        fixture = flat_location_fixture_generator(self.user, V2)[1]  # first node is index
+        fixture = call_fixture_generator(flat_location_fixture_generator, self.user)[1]  # first node is index
         mass_data = [
             field for field in fixture.find('locations/location[@id="{}"]/location_data'.format(mass.location_id))
         ]
@@ -359,7 +373,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
 
         self.addCleanup(_clear_metadata)
         self.user._couch_user.set_location(mass)
-        fixture = flat_location_fixture_generator(self.user, V2)[1]  # first node is index
+        fixture = call_fixture_generator(flat_location_fixture_generator, self.user)[1]  # first node is index
         self.assertEqual(
             'Red Sox',
             fixture.find(
@@ -400,7 +414,7 @@ class WebUserLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
         empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
-        fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
+        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0])
         self.assertXmlEqual(empty_fixture, fixture)
 
     def test_simple_location_fixture(self):
@@ -489,6 +503,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ShouldSyncLocationFixturesTest, cls).setUpClass()
         delete_all_users()
         cls.domain = "Erebor"
         cls.domain_obj = create_domain(cls.domain)
@@ -506,6 +521,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
+        super(ShouldSyncLocationFixturesTest, cls).tearDownClass()
 
     def test_should_sync_locations_change_location_type(self):
         """

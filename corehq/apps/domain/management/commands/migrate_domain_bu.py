@@ -1,7 +1,7 @@
 from __future__ import print_function
 import csv
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
 
 from corehq.util.couch import iter_update, DocUpdate
@@ -14,15 +14,13 @@ class Command(BaseCommand):
 
     domain, business_unit
     """
-    args = "migration_file"
-    label = "migration csv file"
 
-    def handle(self, *args, **options):
-        if len(args) != 1:
-            raise CommandError("Usage is ./manage.py migrate_domain_bu [migration_file]!")
+    def add_arguments(self, parser):
+        parser.add_argument('migration_file')
 
+    def handle(self, migration_file, **options):
         name_by_map = {}
-        with open(args[0], 'rb') as csvfile:
+        with open(migration_file, 'rb') as csvfile:
             reader = csv.reader(csvfile, delimiter=',')
             for row in reader:
                 name_by_map[row[0]] = row[1]

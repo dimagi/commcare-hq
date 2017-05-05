@@ -39,7 +39,7 @@ def multimedia_list_download(request, domain, app_id):
 def multimedia_ajax(request, domain, app_id):
 
     template = get_app_manager_template(
-        domain,
+        request.user,
         'app_manager/v1/partials/multimedia_ajax.html',
         'app_manager/v2/partials/multimedia_ajax.html',
     )

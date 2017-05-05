@@ -17,7 +17,7 @@ _soft_assert = soft_assert(
 class Command(BaseCommand):
     help = "Kills stale celery workers"
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         _kill_stale_workers()
 
 

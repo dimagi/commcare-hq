@@ -1,3 +1,4 @@
+from datetime import datetime
 from abc import ABCMeta, abstractmethod
 from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
@@ -18,6 +19,7 @@ class ChangeMeta(jsonobject.JsonObject):
     document_subtype = jsonobject.StringProperty()
     domain = jsonobject.StringProperty()
     is_deletion = jsonobject.BooleanProperty()
+    publish_timestamp = jsonobject.DateTimeProperty(default=datetime.utcnow)
     _allow_dynamic_properties = False
 
 
@@ -32,10 +34,12 @@ class Change(object):
         'deleted': 'deleted'
     }
 
-    def __init__(self, id, sequence_id, document=None, deleted=False, metadata=None, document_store=None):
+    def __init__(self, id, sequence_id, document=None, deleted=False, metadata=None,
+                 document_store=None, topic=None):
         self._dict = {}
         self.id = id
         self.sequence_id = sequence_id
+        self.topic = topic
         self.document = document
         # on couch-based change feeds .deleted represents a hard deletion.
         # on kafka-based feeds, .deleted represents a soft deletion and is equivalent
@@ -43,6 +47,7 @@ class Change(object):
         self.deleted = deleted
         self.metadata = metadata
         self.document_store = document_store
+        self.error_raised = None
         self._document_checked = False
         self._dict = {
             'id': self.id,
@@ -58,9 +63,10 @@ class Change(object):
         if not self.document and self.document_store and not self._document_checked:
             try:
                 self.document = self.document_store.get_document(self.id)
-            except DocumentNotFoundError:
+            except DocumentNotFoundError, e:
                 self.document = None
                 self._document_checked = True  # set this flag to avoid multiple redundant lookups
+                self.error_raised = e
         return self.document
 
     def __repr__(self):
@@ -107,6 +113,8 @@ class ChangeFeed(object):
     """
     __metaclass__ = ABCMeta
 
+    sequence_format = 'text'
+
     @abstractmethod
     def iter_changes(self, since, forever):
         """
@@ -115,21 +123,32 @@ class ChangeFeed(object):
         pass
 
     @abstractmethod
-    def get_latest_change_id(self):
+    def get_latest_offsets(self):
         """
-        Should return an integer ID representing the last change - can be used
-        to show progress / changes remaining to process
-        """
-        pass
-
-    @abstractmethod
-    def get_current_offsets(self):
-        """
-        :return: A dictionary of ``(topic/db_name, offset integer)`` pairs
+        :return: A dictionary of ``(topic/db_name, offset integer)`` pairs representing
+                 the max sequence ID that is available for each topic.
         """
 
-    @abstractmethod
-    def get_checkpoint_value(self):
+    def get_latest_offsets_json(self):
         """
-        :return: The current string change ID, or a json string if multiple feeds are used
+        :return: A version of `get_latest_offsets` that returns a dictionary, but is
+                 guarenteed to be valid JSON
+        """
+        return self.get_latest_offsets()
+
+    @abstractmethod
+    def get_processed_offsets(self):
+        """
+        :return: A dictionary of ``topic/dbname, offset integer`` pairs representing
+                 the last sequence ID that was processed for each topic.
+        """
+
+    @abstractmethod
+    def get_latest_offsets_as_checkpoint_value(self):
+        """
+        :return: The latest offset value in the format expected by the ``since`` param
+                 of ``iter_changes``:
+                   * string change ID for Cloudant and CouchDB
+                   * int change ID for single kafka topic
+                   * or a dict if multiple kafka topics are used
         """

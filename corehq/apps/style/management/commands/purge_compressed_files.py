@@ -13,7 +13,7 @@ MANIFEST_FILE = os.path.join(CACHE_DIR, settings.COMPRESS_OFFLINE_MANIFEST)
 class Command(BaseCommand):
     help = "Purges all static files that aren't in the manifest.json file"
 
-    def handle(self, *args, **kwargs):
+    def handle(self, **kwargs):
         with open(MANIFEST_FILE, 'r+') as f:
             manifest = json.loads(f.read())
 

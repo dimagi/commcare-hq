@@ -48,13 +48,11 @@ class Command(BaseCommand):
             "restores them to the revision immediately prior to deletion."
             "\nUsage: './manage.py undelete_docs [database] [ids_file]'")
 
-    def handle(self, *args, **options):
-        try:
-            database, ids_file = args
-        except ValueError:
-            print("Usage: './manage.py undelete_docs [database] [ids_file]'")
-            return
+    def add_arguments(self, parser):
+        parser.add_argument('database')
+        parser.add_argument('ids_file')
 
+    def handle(self, database, ids_file, **options):
         # figure out db to use
         slugs = ['commcarehq'] + sorted(filter(None, couch_config.all_dbs_by_slug))
         if database not in slugs:

@@ -18,7 +18,7 @@ class Command(BaseCommand):
         ])
         return filter(lambda x: 'last_modified' not in x or not x['last_modified'], docs)
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         for domain_doc in self._get_domains_without_last_modified_date():
             print("Updating domain {}".format(domain_doc['name']))
             domain = Domain.wrap(domain_doc)

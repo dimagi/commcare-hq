@@ -12,8 +12,16 @@
        });
     });
     $(function () {
+        hqImport('hqwebapp/js/urllib.js').registerUrl(
+            'app_data',
+            '/a/' + '{{ domain }}' + '/apps/view/---/app_data/'
+        )
         var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
         var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
+        var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
+        $('#recent-changes-btn').on('click', function (e) {
+            appDiff.renderDiff({{ app.id|JSON }}, {{ latest_build_id|JSON }});
+        })
         // init releases
         {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
         var urls = {
@@ -101,6 +109,12 @@
                     css: {disabled: !buildButtonEnabled()}
                 ">{% trans 'Make New Version' %}</button>
 
+                {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+                <button class="btn btn-primary" id="recent-changes-btn" data-toggle="modal" data-target="#app-diff-modal">
+                    {% trans 'View changes' %}
+                </button>
+                {% endif %}
+
     <div id="build-errors-wrapper"></div>
     <table class="table">
         <tr>
@@ -112,6 +126,8 @@
             <th>{% trans "Comments" %}</th>
             {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
                 <th>Errors</th>
+            {% elif request|toggle_enabled:"SHOW_DEV_TOGGLE_INFO" %}
+                <th>{{ request|toggle_tag_info:"APPLICATION_ERROR_REPORT" }}</th>
             {% endif %}
             <th>
                 {% trans "Released" %}
@@ -188,6 +204,15 @@
                         </a>
                     </div>
                 </td>
+                {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+                <td>
+                    <button class="btn btn-default" data-toggle="modal" data-target="#app-diff-modal" data-bind="
+                        click: function() { $parent.onViewChanges($data.id(), $parent.previousBuildId($index())) }
+                    ">
+                        {% trans "View Changes" %}
+                    </button>
+                </td>
+                {% endif %}
                 <td>
                     <button class="btn btn-default hide" data-bind="
                         openModal: 'revert-build-modal-template',
@@ -212,6 +237,8 @@
                     <a data-bind="text: num_errors,
                                   attr: {href: $root.url('application_errors', version())}" />
                 </td>
+                {% elif request|toggle_enabled:"SHOW_DEV_TOGGLE_INFO" %}
+                <td>{{ request|toggle_tag_info:"APPLICATION_ERROR_REPORT" }}</td>
                 {% endif %}
                 <td class="build-is-released">
                     <div data-bind="starred: is_released, click: $root.toggleRelease"></div>
@@ -234,7 +261,7 @@
                             {% trans "View More" %}
                         </a>
                     </div>
-                    <div data-bind="visible: doneFetching() && !savedApps().length, css: {hide: false}" class="hide">
+                    <div data-bind="visible: doneFetching() && !savedApps().length && buildButtonEnabled(), css: {hide: false}" class="hide">
                         <div class="alert alert-info">
                             {% trans 'Use the <strong>Make New Version</strong> button to create and deploy the latest version of your application' %}
                         </div>
@@ -302,5 +329,6 @@
 </div>
 {% endif %}
 
+{% include 'app_manager/v1/partials/app_diff_modal.html' %}
 <!-- Async Download Modals -->
 {% include 'app_manager/v1/partials/download_async_modal.html' with element_id='download-zip-modal' %}

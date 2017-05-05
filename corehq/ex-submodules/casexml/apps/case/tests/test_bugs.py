@@ -120,12 +120,12 @@ class CaseBugTest(TestCase, TestFileMixin):
             CaseBlock(create=True, case_id=case_id).as_xml()
         ])
         xml_data = self.get_xml('duplicate_case_properties')
-        response, form, [case] = submit_form_locally(xml_data, 'test-domain')
-        self.assertEqual("", case.dynamic_case_properties()['foo'])
+        result = submit_form_locally(xml_data, 'test-domain')
+        self.assertEqual("", result.case.dynamic_case_properties()['foo'])
 
         xml_data = self.get_xml('duplicate_case_properties_2')
-        response, form, [case] = submit_form_locally(xml_data, 'test-domain')
-        self.assertEqual("2", case.dynamic_case_properties()['bar'])
+        result = submit_form_locally(xml_data, 'test-domain')
+        self.assertEqual("2", result.case.dynamic_case_properties()['bar'])
 
     def test_multiple_case_blocks(self):
         """Ensure we can submit a form with multiple blocks for the same case"""
@@ -153,8 +153,8 @@ class CaseBugTest(TestCase, TestFileMixin):
         """Creates a bunch of subcases"""
         # cz 2/24/2017: unclear why this test is here
         xml_data = self.get_xml('lots_of_subcases')
-        response, form, cases = submit_form_locally(xml_data, 'test-domain')
-        self.assertEqual(11, len(cases))
+        result = submit_form_locally(xml_data, 'test-domain')
+        self.assertEqual(11, len(result.cases))
 
     def test_submit_to_deleted_case(self):
         """submitting to a deleted case should succeed and affect the case"""

@@ -5,7 +5,6 @@ from datetime import date, timedelta
 
 from django.test import TestCase
 
-from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
@@ -28,11 +27,6 @@ class TestExplicitCommunitySubscriptions(TestCase):
         cls.domain = Domain(name=str(uuid.uuid4()))
         cls.domain.save()
         cls.from_date = date.today()
-
-    def setUp(self):
-        super(TestExplicitCommunitySubscriptions, self).setUp()
-        generator.instantiate_accounting()
-        assert Subscription.objects.count() == 0
 
     @classmethod
     def tearDownClass(cls):

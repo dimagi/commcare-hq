@@ -1,7 +1,7 @@
 import json
 import uuid
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import TestCase
 from django.test.utils import override_settings
 from mock import patch
@@ -58,14 +58,11 @@ class CaseAPITestMixin(object):
         cls.test_type = cls.case_types[0]
         cls.test_user_id = cls.users[0]._id
 
-        update_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, True, toggles.NAMESPACE_DOMAIN)
-
     @classmethod
     def do_teardown(cls):
         for user in cls.users:
             user.delete()
         cls.project.delete()
-        clear_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, toggles.NAMESPACE_DOMAIN)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(TEST_DOMAIN)
 
     def assertListMatches(self, list, function):
@@ -255,12 +252,9 @@ class CaseAPIMiscTests(TestCase):
             cls.password
         )
 
-        update_toggle_cache(toggles.CLOUDCARE_CACHE.slug, cls.domain, True, toggles.NAMESPACE_DOMAIN)
-
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
-        clear_toggle_cache(toggles.CLOUDCARE_CACHE.slug, cls.domain, toggles.NAMESPACE_DOMAIN)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         cls.project.delete()
         super(CaseAPIMiscTests, cls).tearDownClass()

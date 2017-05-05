@@ -127,7 +127,7 @@ def flag_enabled(toggle_class_string):
     """
     return mock.patch(
         '.'.join(['corehq.toggles', toggle_class_string, 'enabled']),
-        new=lambda *args: True,
+        new=lambda *args, **kwargs: True,
     )
 
 

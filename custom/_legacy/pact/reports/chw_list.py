@@ -1,4 +1,4 @@
-from django.core.urlresolvers import  NoReverseMatch
+from django.urls import NoReverseMatch
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin

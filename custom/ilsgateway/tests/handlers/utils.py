@@ -1,5 +1,4 @@
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
-from corehq.apps.accounting.tests import generator
 from corehq.apps.commtrack.models import CommtrackActionConfig
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
@@ -159,7 +158,6 @@ def prepare_domain(domain_name):
             administrative=administrative,
         )
 
-    generator.instantiate_accounting()
     account = BillingAccount.get_or_create_account_by_domain(
         domain.name,
         created_by="automated-test",

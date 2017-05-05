@@ -170,6 +170,9 @@ ANALYTICS_CONFIG = {
     "HQ_INSTANCE": ''  # e.g. "www", or "india", or "staging"
 }
 
+# Green house api key
+GREENHOUSE_API_KEY = ''
+
 AXES_LOCK_OUT_AT_FAILURE = False
 LUCENE_ENABLED = True
 

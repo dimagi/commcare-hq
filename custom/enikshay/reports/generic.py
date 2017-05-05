@@ -155,9 +155,13 @@ class EnikshaySqlData(SqlData):
         return []
 
     @property
+    def date_property(self):
+        return 'opened_on'
+
+    @property
     def filters(self):
         filters = [
-            AND([GTE('opened_on', 'start_date'), LT('opened_on', 'end_date')])
+            AND([GTE(self.date_property, 'start_date'), LT(self.date_property, 'end_date')])
         ]
 
         locations_id = filter(lambda x: bool(x), self.config.locations_id)

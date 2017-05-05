@@ -1,13 +1,13 @@
-from collections import namedtuple
 import logging
+from collections import namedtuple
 
 from couchdbkit.exceptions import BulkSaveError
 from redis.exceptions import RedisError
 
+from casexml.apps.case.exceptions import IllegalCaseId
+from corehq.toggles import ENTERPRISE_OPTIMIZATIONS
 from dimagi.utils.decorators.memoized import memoized
-
 from ..utils import should_use_sql_backend
-
 
 CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])
 ProcessedForms = namedtuple('ProcessedForms', ['submitted', 'deprecated'])
@@ -86,7 +86,7 @@ class FormProcessorInterface(object):
             return LedgerDBCouch()
 
     def acquire_lock_for_xform(self, xform_id):
-        lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2 * 60)
+        lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=5 * 60)
         try:
             lock.acquire()
         except RedisError:
@@ -107,7 +107,19 @@ class FormProcessorInterface(object):
         Check if there is already a form with the given ID. If domain is specified only check for
         duplicates within that domain.
         """
-        return self.processor.is_duplicate(xform_id, domain=domain)
+        if domain:
+            return self.processor.is_duplicate(xform_id, domain=domain)
+        else:
+            # check across Couch & SQL to ensure global uniqueness
+            # check this domains DB first to support existing bad data
+            return (
+                self.processor.is_duplicate(xform_id) or
+                # don't bother checking other DB if there's only one active domain
+                (
+                    not ENTERPRISE_OPTIMIZATIONS.enabled(self.domain) and
+                    self.other_db_processor().is_duplicate(xform_id)
+                )
+            )
 
     def new_xform(self, form_json):
         return self.processor.new_xform(form_json)
@@ -126,8 +138,7 @@ class FormProcessorInterface(object):
                 stock_result=stock_result,
             )
         except BulkSaveError as e:
-            logging.error('BulkSaveError saving forms', exc_info=1,
-                          extra={'details': {'errors': e.errors}})
+            logging.exception('BulkSaveError saving forms', extra={'details': {'errors': e.errors}})
             raise
         except Exception as e:
             xforms_being_saved = [form.form_id for form in forms if form]
@@ -136,7 +147,8 @@ class FormProcessorInterface(object):
             )
             from corehq.form_processor.submission_post import handle_unexpected_error
             handle_unexpected_error(self, forms.submitted, e, error_message)
-            raise
+            e.sentry_capture = False  # we've already notified
+            raise e
 
     def hard_delete_case_and_forms(self, case, xforms):
         domain = case.domain
@@ -165,6 +177,40 @@ class FormProcessorInterface(object):
 
     def submission_error_form_instance(self, instance, message):
         return self.processor.submission_error_form_instance(self.domain, instance, message)
+
+    def get_case_with_lock(self, case_id, lock=False, strip_history=False, wrap=False):
+        """
+        Get a case with option lock. If case not found in domains DB also check other DB
+        and raise IllegalCaseId if found.
+
+        :param case_id: ID of case to fetch
+        :param lock: Get a Redis lock for the case. Returns None if False or case not found.
+        :param strip_history: If False, don't include case actions. (Couch only)
+        :param wrap: Return wrapped case if True. (Couch only)
+        :return: tuple(case, lock). Either could be None
+        :raises: IllegalCaseId
+        """
+        # check across Couch & SQL to ensure global uniqueness
+        # check this domains DB first to support existing bad data
+        from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
+
+        case, lock = self.processor.get_case_with_lock(case_id, lock, strip_history, wrap)
+        if case:
+            return case, lock
+
+        if not couch_sql_migration_in_progress(self.domain) and not ENTERPRISE_OPTIMIZATIONS.enabled(self.domain):
+            # during migration we're copying from one DB to the other so this check will always fail
+            if self.other_db_processor().case_exists(case_id):
+                raise IllegalCaseId("Bad case id")
+
+        return case, lock
+
+    def other_db_processor(self):
+        """Get the processor for the database not used by this domain."""
+        from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+        from corehq.form_processor.backends.couch.processor import FormProcessorCouch
+        (other_processor,) = {FormProcessorSQL, FormProcessorCouch} - {self.processor}
+        return other_processor
 
 
 def _list_to_processed_forms_tuple(forms):

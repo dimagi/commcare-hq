@@ -3,7 +3,7 @@ import six
 from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.util.soft_assert.api import soft_assert
 from dimagi.utils.couch import release_lock
-from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
+from corehq.form_processor.interfaces.processor import CaseUpdateMetadata, FormProcessorInterface
 
 _soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
 
@@ -56,6 +56,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         # this is used to allow casedb to be re-entrant. Each new context pushes the parent context locks
         # onto this stack and restores them when the context exits
         self.lock_stack = []
+        self.processor_interface = FormProcessorInterface(self.domain)
 
     def _populate_from_initial(self, initial_cases):
         if initial_cases:
@@ -91,15 +92,14 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         if case_id in self.cache:
             return self.cache[case_id]
 
-        case = self._get_case(case_id)
+        case, lock = self.processor_interface.get_case_with_lock(case_id, self.lock, self.strip_history, self.wrap)
+        if lock:
+            self.locks.append(lock)
+
         if case:
             self._validate_case(case)
             self.cache[case_id] = case
         return case
-
-    @abstractmethod
-    def _get_case(self, case_id):
-        pass
 
     def set(self, case_id, case):
         assert isinstance(case, self.case_model_classes)

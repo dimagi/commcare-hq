@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
@@ -75,7 +75,7 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.util.quickcache import skippable_quickcache
+from corehq.util.quickcache import quickcache
 from corehq.util.xml_utils import indent_xml
 from corehq.apps.analytics.tasks import track_clicked_preview_on_hubspot
 from corehq.apps.analytics.utils import get_meta
@@ -474,22 +474,20 @@ def get_cases_vary_on(request, domain):
 
 def get_cases_skip_arg(request, domain):
     """
-    When this function returns True, skippable_quickcache will not go to the cache for the result. By default,
+    When this function returns True, quickcache will not go to the cache for the result. By default,
     if neither of these params are passed into the function, nothing will be cached. Cache will always be
     skipped if ids_only is false.
 
     The caching is mainly a hack for touchforms to respond more quickly. Touchforms makes repeated requests to
     get the list of case_ids associated with a user.
     """
-    if not toggles.CLOUDCARE_CACHE.enabled(domain):
-        return True
     request_params = request.GET
     return (not string_to_boolean(request_params.get('use_cache', 'false')) or
         not string_to_boolean(request_params.get('ids_only', 'false')))
 
 
 @cloudcare_api
-@skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
+@quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
 def get_cases(request, domain):
     request_params = request.GET
 
@@ -505,17 +503,6 @@ def get_cases(request, domain):
     case_id = request_params.get("case_id", "")
     footprint = string_to_boolean(request_params.get("footprint", "false"))
     accessor = CaseAccessors(domain)
-
-    if toggles.HSPH_HACK.enabled(domain):
-        hsph_case_id = request_params.get('hsph_hack', None)
-        if hsph_case_id != 'None' and hsph_case_id and user_id:
-            case = accessor.get_case(hsph_case_id)
-            usercase_id = CommCareUser.get_by_user_id(user_id).get_usercase_id()
-            usercase = accessor.get_case(usercase_id) if usercase_id else None
-            return json_response(map(
-                lambda case: CaseAPIResult(domain=domain, id=case['_id'], couch_doc=case, id_only=ids_only),
-                filter(None, [case, case.parent, usercase])
-            ))
 
     if case_id and not footprint:
         # short circuit everything else and just return the case
@@ -636,11 +623,11 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
     restore_user = user.to_ota_restore_user()
     if not fixture_id:
         ret = ElementTree.Element("fixtures")
-        for fixture in generator.get_fixtures(restore_user, version=V2):
+        for fixture in generator.get_fixtures(restore_user):
             ret.append(fixture)
         return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
     else:
-        fixture = generator.get_fixture_by_id(fixture_id, restore_user, version=V2)
+        fixture = generator.get_fixture_by_id(fixture_id, restore_user)
         if not fixture:
             raise Http404
         assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(

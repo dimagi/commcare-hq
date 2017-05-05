@@ -13,5 +13,5 @@ def post_fork(server, worker):
     mimetypes.init()
     # hacky way to address gunicorn gevent requests hitting django too early before urls are loaded
     # see: https://github.com/benoitc/gunicorn/issues/527#issuecomment-19601046
-    from django.core.urlresolvers import resolve
+    from django.urls import resolve
     resolve('/')

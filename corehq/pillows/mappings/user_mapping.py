@@ -1,28 +1,19 @@
 from corehq.util.elastic import es_index
+from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
+
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-USER_INDEX = es_index("hqusers_2017-02-03")
+USER_INDEX = es_index("hqusers_2017-03-22")
 USER_MAPPING = {'_all': {'analyzer': 'standard'},
  '_meta': {'created': None},
  'date_detection': False,
- 'date_formats': ['yyyy-MM-dd',
-                  "yyyy-MM-dd'T'HH:mm:ssZZ",
-                  "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
-                  "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
-                  "yyyy-MM-dd'T'HH:mm:ss'Z'",
-                  "yyyy-MM-dd'T'HH:mm:ssZ",
-                  "yyyy-MM-dd'T'HH:mm:ssZZ'Z'",
-                  "yyyy-MM-dd'T'HH:mm:ss.SSSZZ",
-                  "yyyy-MM-dd'T'HH:mm:ss",
-                  "yyyy-MM-dd' 'HH:mm:ss",
-                  "yyyy-MM-dd' 'HH:mm:ss.SSSSSS",
-                  "mm/dd/yy' 'HH:mm:ss"],
+ 'date_formats': DATE_FORMATS_ARR,
  'dynamic': False,
  'properties': {'CURRENT_VERSION': {'type': 'string'},
                 'base_doc': {'type': 'string'},
-                'created_on': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
+                'created_on': {'format': DATE_FORMATS_STRING,
                                'type': 'date'},
-                'date_joined': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
+                'date_joined': {'format': DATE_FORMATS_STRING,
                                 'type': 'date'},
                 'doc_type': {'index': 'not_analyzed', 'type': 'string'},
                 'domain': {'fields': {'domain': {'index': 'analyzed',
@@ -65,7 +56,7 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                 'email_opt_out': {'type': 'boolean'},
                 'analytics_enabled': {'type': 'boolean'},
                 'eulas': {'dynamic': False,
-                          'properties': {'date': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
+                          'properties': {'date': {'format': DATE_FORMATS_STRING,
                                                   'type': 'date'},
                                          'doc_type': {'index': 'not_analyzed',
                                                       'type': 'string'},
@@ -80,11 +71,28 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                 'is_staff': {'type': 'boolean'},
                 'is_superuser': {'type': 'boolean'},
                 'language': {'type': 'string'},
-                'last_login': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
+                'last_login': {'format': DATE_FORMATS_STRING,
                                'type': 'date'},
                 'last_name': {'type': 'string'},
                 'password': {'type': 'string'},
                 'registering_device_id': {'type': 'string'},
+                'reporting_metadata': {'dynamic': False,
+                                       'properties': {
+                                           'last_submissions': {
+                                               'dynamic': False,
+                                               'properties': {
+                                                    'submission_date': {'format': DATE_FORMATS_STRING,
+                                                                        'type': 'date'},
+                                                    'app_id': {'type': 'string'},
+                                                    'build_id': {'type': 'string'},
+                                                    'device_id': {'type': 'string'},
+                                                    'build_version': {'type': 'integer'},
+                                                    'commcare_version': {'type': 'string'},
+                                               },
+                                               'type': 'object'
+                                           }
+                                       },
+                                       'type': 'object'},
                 'status': {'type': 'string'},
                 'user_data': {'type': 'object', 'enabled': False},
                 'base_username': {'fields': {'base_username': {'index': 'analyzed',
@@ -106,25 +114,9 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                                                                 'type': 'string'}},
                                   'type': 'multi_field'}}}
 
-USER_META = {
-    "settings": {
-        "analysis": {
-            "analyzer": {
-                "default": {
-                    "type": "custom",
-                    "tokenizer": "whitespace",
-                    "filter": ["lowercase"]
-                },
-            }
-        }
-    }
-}
-
-
 USER_INDEX_INFO = ElasticsearchIndexInfo(
     index=USER_INDEX,
     alias='hqusers',
     type='user',
-    meta=USER_META,
     mapping=USER_MAPPING,
 )

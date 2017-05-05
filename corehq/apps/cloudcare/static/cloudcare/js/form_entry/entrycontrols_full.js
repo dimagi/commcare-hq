@@ -367,7 +367,7 @@ function ComboboxEntry(question, options) {
 
     self.renderAtwho = function() {
         var $input = $('#' + self.entryId),
-            limit = 5,
+            limit = Infinity,
             $atwhoView;
         $input.atwho('destroy');
         $input.atwho('setIframe', window.frameElement, true);

@@ -1,9 +1,8 @@
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from dimagi.utils.read_only import ReadOnlyObject
-from pillowtop.checkpoints.manager import PillowCheckpoint, \
-    PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.checkpoints.util import get_machine_id
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.interface import PillowProcessor
@@ -129,22 +128,23 @@ def _get_indicator_doc_from_class_and_id(indicator_class, doc_id):
 
 
 class FluffPillow(ConstructedPillow):
-    def __init__(self, indicator_class, processor):
-        self.indicator_class = indicator_class
-        self.kafka_topic = indicator_class().kafka_topic
-        self.domains = processor.domains
-        self.doc_type = processor.doc_type
+    def __init__(self, indicator_name, kafka_topic, processor, domains=None, doc_type=None):
+        self.kafka_topic = kafka_topic
+        self.domains = domains or processor.domains
+        self.doc_type = doc_type or processor.doc_type
 
-        name = '{}Pillow'.format(indicator_class.__name__)
-        checkpoint = PillowCheckpoint('fluff.{}.{}'.format(name, get_machine_id()))
+        change_feed = KafkaChangeFeed(topics=[self.kafka_topic], group_id=indicator_name)
+
+        name = '{}Pillow'.format(indicator_name)
+        checkpoint = PillowCheckpoint('fluff.{}.{}'.format(name, get_machine_id()), change_feed.sequence_format)
 
         super(FluffPillow, self).__init__(
             name=name,
             checkpoint=checkpoint,
-            change_feed=KafkaChangeFeed(topics=[self.kafka_topic], group_id=indicator_class.__name__),
+            change_feed=change_feed,
             processor=processor,
-            change_processed_event_handler=PillowCheckpointEventHandler(
-                checkpoint=checkpoint, checkpoint_frequency=1000,
+            change_processed_event_handler=KafkaCheckpointEventHandler(
+                checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
             )
         )
 
@@ -153,8 +153,27 @@ def get_fluff_pillow(indicator_class, delete_filtered=False):
     processor = FluffPillowProcessor(indicator_class, delete_filtered=delete_filtered)
 
     return FluffPillow(
-        indicator_class=indicator_class,
+        indicator_name=indicator_class.__name__,
+        kafka_topic=indicator_class().kafka_topic,
         processor=processor,
+    )
+
+
+def get_multi_fluff_pillow(indicator_classes, name, kafka_topic, delete_filtered=False):
+    processors = [
+        FluffPillowProcessor(cls, delete_filtered=delete_filtered)
+        for cls in indicator_classes
+    ]
+    domains = list(set(d for cls in indicator_classes for d in cls.domains))
+    doc_types = list(set(cls.document_class._doc_type for cls in indicator_classes))
+    assert len(doc_types) == 1
+
+    return FluffPillow(
+        indicator_name=name,
+        kafka_topic=kafka_topic,
+        processor=processors,
+        domains=domains,
+        doc_type=doc_types[0]
     )
 
 

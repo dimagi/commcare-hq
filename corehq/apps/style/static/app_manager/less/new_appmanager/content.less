@@ -21,6 +21,23 @@
   &.formdesigner-content-wrapper {
     padding: 0;
   }
+  #formdesigner {
+    background-color: @cc-brand-low !important;
+    opacity: 100;
+    .transition(opacity 1s);
+
+    &.loading {
+      opacity: 0;
+    }
+
+    .fd-content-right .fd-head,
+    .fd-content-right .fd-form-actions {
+      // There is a 2px white line between the right edge of form player and the
+      // right edge of the screen. This gets rid of it. If I make the container
+      // 2px bigger, all of formplayer bumps down to the next line --B
+      margin-right: -2px;
+    }
+  }
 }
 
 .appmanager-content {
@@ -28,7 +45,8 @@
   position: relative;
 }
 
-#js-appmanager-body.appmanager-content-not-formdesigner {
+#js-appmanager-body.appmanager-settings-content {
+  .box-shadow(0 0 20px 0 rgba(0, 0, 0, .20));
   background-color: white;
   padding-top: 9px;
   padding-left: 20px;
@@ -154,4 +172,13 @@
 .appmanager-content-single-page {
   background: white;
   padding: 20px 20px;
+}
+
+.auto-release-notes {
+  line-height:  20px;
+  padding-top: 10px;
+}
+
+.releases-container {
+  padding-top: 5px;
 }

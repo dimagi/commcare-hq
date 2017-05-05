@@ -499,10 +499,13 @@ class Item(StudyObject):
 
 class Command(BaseCommand):
     help = 'Create an application from an ODM document in the given domain'
-    args = '<domain> <app-slug> <odm-doc>'
 
-    def handle(self, *args, **options):
-        domain_name, app_name, odm_filename = args
+    def add_arguments(self, parser):
+        parser.add_argument('domain_name')
+        parser.add_argument('app_name')
+        parser.add_argument('odm_filename')
+
+    def handle(self, domain_name, app_name, odm_filename, **options):
         study = self.get_study(odm_filename)
         app = study.get_new_app(domain_name, app_name)
         app.save()

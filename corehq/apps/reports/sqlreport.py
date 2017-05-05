@@ -274,9 +274,11 @@ class SqlData(ReportDataSource):
         session = connection_manager.get_scoped_session(self.engine_id)
         try:
             return qc.resolve(session.connection(), self.filter_values)
-        except:
+        except Exception:
             session.rollback()
             raise
+        finally:
+            session.remove()
 
     @property
     def data(self):

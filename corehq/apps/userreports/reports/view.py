@@ -28,7 +28,7 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
@@ -141,7 +141,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             return original
 
     def should_redirect_to_paywall(self, request):
-        return self.spec.report_meta.created_by_builder and not has_report_builder_access(request)
+        spec = self.get_spec_or_404()
+        return spec.report_meta.created_by_builder and not has_report_builder_access(request)
 
     @property
     def section_url(self):
@@ -167,7 +168,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def get_spec_or_404(self):
         try:
             return self.spec
-        except DocumentNotFound:
+        except (DocumentNotFound, BadSpecError) as e:
+            messages.error(self.request, e)
             raise Http404()
 
     def has_viable_configuration(self):
@@ -203,18 +205,22 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     @memoized
-    def filter_values(self):
+    def request_user(self):
         try:
-            user = self.request.couch_user
+            return self.request.couch_user
         except AttributeError:
-            user = None
-        return get_filter_values(self.filters, self.request_dict, user=user)
+            return None
+
+    @property
+    @memoized
+    def filter_values(self):
+        return get_filter_values(self.filters, self.request_dict, user=self.request_user)
 
     @property
     @memoized
     def filter_context(self):
         return {
-            filter.css_id: filter.context(self.filter_values[filter.css_id], self.lang)
+            filter.css_id: filter.context(self.request_dict, self.request_user, self.lang)
             for filter in self.filters
         }
 

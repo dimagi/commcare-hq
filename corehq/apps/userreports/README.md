@@ -61,6 +61,7 @@ An overview of the design, API and data structures used here.
         - [Dynamic choice lists](#dynamic-choice-lists)
             - [Choice providers](#choice-providers)
         - [Choice lists](#choice-lists)
+        - [Drilldown by Location](#drilldown-by-location)
         - [Internationalization](#internationalization)
     - [Report Columns](#report-columns)
         - [Field columns](#field-columns)
@@ -884,6 +885,7 @@ Property        | Description
 type            | A specified type for the indicator. It must be one of the types listed below.
 column_id       | The database column where the indicator will be saved.
 display_name    | A display name for the indicator (not widely used, currently).
+comment         | A string describing the indicator
 
 Additionally, specific indicator types have other type-specific properties. These are covered below.
 
@@ -1257,6 +1259,21 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
   ]
 }
 ```
+
+### Drilldown by Location
+
+This filter allows selection of a location for filtering by drilling down from top level.
+```
+{
+  "type": "location_drilldown",
+  "slug": "by_location",
+  "field": "district_id",
+  "include_descendants": true,
+  "max_drilldown_levels": 3
+}
+```
+* "include_descendants" - Include descendant locations in the results. Defaults to `false`.
+* "max_drilldown_levels" - Maximum allowed drilldown levels. Defaults to 99
 
 ### Internationalization
 

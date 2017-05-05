@@ -18,7 +18,7 @@ from couchforms.analytics import (
 )
 from couchforms.models import XFormInstance, XFormError
 from pillowtop.es_utils import initialize_index_and_mapping
-from testapps.test_pillowtop.utils import process_kafka_changes, process_couch_changes
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 from corehq.elastic import get_es_new, EsMeta, send_to_elasticsearch
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -129,8 +129,8 @@ class CouchformsESAnalyticsTest(TestCase):
         @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
         @patch('corehq.elastic.ES_META', TEST_ES_META)
         def create_form_and_sync_to_es(received_on):
-            with process_kafka_changes('XFormToElasticsearchPillow'):
-                with process_couch_changes('DefaultChangeFeedPillow'):
+            with process_pillow_changes('XFormToElasticsearchPillow'):
+                with process_pillow_changes('DefaultChangeFeedPillow'):
                     metadata = TestFormMetadata(domain=cls.domain, app_id=cls.app_id,
                                                 xmlns=cls.xmlns, received_on=received_on)
                     form = get_form_ready_to_save(metadata, is_db_test=True)

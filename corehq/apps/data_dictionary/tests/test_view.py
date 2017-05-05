@@ -1,6 +1,6 @@
 import uuid
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import Client, TestCase
 
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty

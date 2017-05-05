@@ -43,26 +43,26 @@ class DuplicateFormTest(TestCase, TestFileMixin):
         self.assertTrue(xform1.is_archived)
 
         # Post an xform with that has different doc_type but same id
-        _, xform2, _ = submit_form_locally(
+        result = submit_form_locally(
             instance,
             domain=domain,
         )
 
-        self.assertNotEqual(xform1.form_id, xform2.form_id)
+        self.assertNotEqual(xform1.form_id, result.xform.form_id)
 
     def test_wrong_domain(self):
         domain = 'test-domain'
         instance = self.get_xml('duplicate')
 
-        _, xform1, _ = submit_form_locally(
+        result1 = submit_form_locally(
             instance,
             domain='wrong-domain',
         )
-        _, xform2, _ = submit_form_locally(
+        result2 = submit_form_locally(
             instance,
             domain=domain,
         )
-        self.assertNotEqual(xform1.form_id, xform2.form_id)
+        self.assertNotEqual(result1.xform.form_id, result2.xform.form_id)
 
 
 @use_sql_backend

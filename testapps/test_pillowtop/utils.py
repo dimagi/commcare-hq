@@ -4,42 +4,32 @@ from django.conf import settings
 from django.test.utils import override_settings
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-from corehq.apps.change_feed.topics import get_topic_offset, get_multi_topic_offset
-
+from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.util.decorators import ContextDecorator
 from pillowtop import get_pillow_by_name
+from pillowtop.pillow.interface import PillowBase
 
 
-class process_kafka_changes(ContextDecorator):
+class process_pillow_changes(ContextDecorator):
     def __init__(self, pillow_name_or_instance):
-        if isinstance(pillow_name_or_instance, basestring):
+        self.pillow_name_or_instance = pillow_name_or_instance
+        if isinstance(pillow_name_or_instance, PillowBase):
+            self._pillow = pillow_name_or_instance
+        else:
+            self._pillow = None
+
+    @property
+    def pillow(self):
+        if not self._pillow:
             with real_pillow_settings(), override_settings(PTOP_CHECKPOINT_DELAY_OVERRIDE=None):
-                self.pillow = get_pillow_by_name(pillow_name_or_instance, instantiate=True)
-        else:
-            self.pillow = pillow_name_or_instance
-
-        self.topics = self.pillow.get_change_feed().topics
+                self._pillow = get_pillow_by_name(self.pillow_name_or_instance, instantiate=True)
+        return self._pillow
 
     def __enter__(self):
-        if len(self.topics) == 1:
-            self.kafka_seq = get_topic_offset(self.topics[0])
-        else:
-            self.kafka_seq = get_multi_topic_offset(self.topics)
+        self.offsets = self.pillow.get_change_feed().get_latest_offsets_as_checkpoint_value()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.pillow.process_changes(since=self.kafka_seq, forever=False)
-
-
-class process_couch_changes(ContextDecorator):
-    def __init__(self, pillow_name):
-        with real_pillow_settings():
-            self.pillow = get_pillow_by_name(pillow_name, instantiate=True)
-
-    def __enter__(self):
-        self.seq = self.pillow.get_change_feed().get_latest_change_id()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.pillow.process_changes(since=self.seq, forever=False)
+        self.pillow.process_changes(since=self.offsets, forever=False)
 
 
 class real_pillow_settings(ContextDecorator):

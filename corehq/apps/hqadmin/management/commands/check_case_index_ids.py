@@ -19,7 +19,7 @@ class Command(BaseCommand):
         parser.add_argument('--debug', action='store_true', dest='debug', default=False)
         parser.add_argument('--cleanup', action='store_true', dest='cleanup', default=False)
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         domain = options['domain']
         debug = options['debug']
         cleanup = options['cleanup']

@@ -2,8 +2,7 @@ from datetime import datetime
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.models import ReportNotification, ReportConfig
-from corehq.apps.reports.scheduled import guess_reporting_minute, get_scheduled_reports
-from corehq.apps.reports.tasks import get_report_queue
+from corehq.apps.reports.scheduled import guess_reporting_minute, get_scheduled_report_ids
 from corehq.apps.reports.views import get_scheduled_report_response
 from corehq.apps.users.models import WebUser
 
@@ -50,7 +49,7 @@ class ScheduledReportTest(TestCase):
             report.delete()
 
     def _check(self, period, as_of, count):
-        self.assertEqual(count, len(list(get_scheduled_reports(period, as_of))))
+        self.assertEqual(count, len(list(get_scheduled_report_ids(period, as_of))))
 
     def testDefaultValue(self):
         now = datetime.utcnow()
@@ -61,7 +60,7 @@ class ScheduledReportTest(TestCase):
         else:
             self.assertRaises(
                 ValueError,
-                lambda: list(get_scheduled_reports('daily', None))
+                lambda: list(get_scheduled_report_ids('daily', None))
             )
 
     def testDailyReportEmptyMinute(self):
@@ -80,7 +79,7 @@ class ScheduledReportTest(TestCase):
         # but not too lenient
         self.assertRaises(
             ValueError,
-            lambda: list(get_scheduled_reports('daily', datetime(2014, 10, 31, 12, 6)))
+            lambda: list(get_scheduled_report_ids('daily', datetime(2014, 10, 31, 12, 6)))
         )
 
     def testDailyReportWithMinuteHalfHour(self):
@@ -168,25 +167,26 @@ class ScheduledReportSendingTest(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain_obj = create_domain(cls.domain)
+        cls.user = WebUser.create(
+            domain=cls.domain,
+            username='dummy@example.com',
+            password='secret',
+        )
 
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
+        cls.user.delete()
 
     def test_get_scheduled_report_response(self):
         domain = self.domain
-        user = WebUser.create(
-            domain=domain,
-            username='dummy@example.com',
-            password='secret',
-        )
         report_config = ReportConfig.wrap({
             "date_range": "last30",
             "days": 30,
             "domain": domain,
             "report_slug": "worker_activity",
             "report_type": "project_report",
-            "owner_id": user._id,
+            "owner_id": self.user._id,
         })
         report_config.save()
         report = ReportNotification(
@@ -194,15 +194,6 @@ class ScheduledReportSendingTest(TestCase):
         )
         report.save()
         response = get_scheduled_report_response(
-            couch_user=user, domain=domain, scheduled_report_id=report._id
+            couch_user=self.user, domain=domain, scheduled_report_id=report._id
         )[0]
-        self.assertTrue(user.username in response)
-
-
-class TestMVPCeleryQueueHack(SimpleTestCase):
-
-    def test_queue_selection_mvp(self):
-        self.assertEqual('background_queue', get_report_queue(ReportNotification(domain='mvp-tiby')))
-
-    def test_queue_selection_normal(self):
-        self.assertEqual('celery', get_report_queue(ReportNotification(domain='not-mvp')))
+        self.assertTrue(self.user.username in response)

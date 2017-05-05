@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.validators import MinLengthValidator, validate_slug
 from django.db import transaction
 from django.forms.utils import ErrorList
@@ -70,7 +70,6 @@ from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.accounting.utils import (
     get_money_str,
     has_subscription_already_ended,
-    log_accounting_info,
     make_anchor_tag,
 )
 from corehq.apps.domain.models import Domain
@@ -797,9 +796,8 @@ class ChangeSubscriptionForm(forms.Form):
 
     @transaction.atomic
     def change_subscription(self):
-        log_accounting_info("Entering change_subscription with subscription id=%d" % self.subscription.id)
         new_plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['new_plan_version'])
-        new_subscription = self.subscription.change_plan(
+        return self.subscription.change_plan(
             new_plan_version,
             date_end=self.cleaned_data['new_date_end'],
             web_user=self.web_user,
@@ -807,8 +805,6 @@ class ChangeSubscriptionForm(forms.Form):
             pro_bono_status=self.cleaned_data['pro_bono_status'],
             internal_change=True,
         )
-        log_accounting_info("Exiting change_subscription with subscription id=%d" % self.subscription.id)
-        return new_subscription
 
 
 class CreditForm(forms.Form):

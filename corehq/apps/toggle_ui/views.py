@@ -1,7 +1,7 @@
 import json
 from collections import Counter
 from couchdbkit.exceptions import ResourceNotFound
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, \
@@ -178,14 +178,22 @@ class ToggleEditView(ToggleBaseView):
         return HttpResponse(json.dumps(data), content_type="application/json")
 
 
-def enable_vellum_beta(request):
-    slug = "vellum_beta"
-    toggle = Toggle.get(slug)
+def toggle_app_manager_v2(request):
+    slug = "app_manager_v2"
+    on_or_off = request.POST.get('on_or_off', 'on')
+    try:
+        toggle = Toggle.get(slug)
+    except ResourceNotFound:
+        toggle = Toggle(slug=slug)
 
-    changed_entries = []
-    if request.user.username not in toggle.enabled_users:
-        changed_entries.append(request.user.username)
-        toggle.enabled_users.append(request.user.username)
+    enable = on_or_off == "on"
+    enabled = request.user.username in toggle.enabled_users
+    if enable != enabled:
+        changed_entries = [request.user.username]
+        if enable:
+            toggle.enabled_users.append(request.user.username)
+        else:
+            toggle.enabled_users.remove(request.user.username)
         toggle.save()
         _call_save_fn_and_clear_cache(slug, changed_entries, toggle.enabled_users, _find_static_toggle(slug))
 

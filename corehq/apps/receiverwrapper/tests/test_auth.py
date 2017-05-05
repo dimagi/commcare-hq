@@ -1,5 +1,5 @@
 import uuid
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from urllib import urlencode
 
 from corehq.apps.users.models import CommCareUser

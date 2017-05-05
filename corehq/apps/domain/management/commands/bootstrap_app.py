@@ -11,15 +11,12 @@ from couchdbkit import ResourceNotFound
 
 class Command(BaseCommand):
     help = "Bootstrap an Application with two modules in a given domain."
-    args = "<domain> <app-name>"
-    label = ""
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('domain_name')
+        parser.add_argument('app_name')
 
-        if len(args) != 2:
-            raise CommandError('Usage: manage.py bootstrap_app <domain> <app-name>')
-        domain_name, app_name = args
-
+    def handle(self, domain_name, app_name, **options):
         try:
             Domain.get_by_name(domain_name)
         except ResourceNotFound:

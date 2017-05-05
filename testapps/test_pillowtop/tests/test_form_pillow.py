@@ -118,12 +118,12 @@ class FormPillowTest(TestCase):
     def _make_form(self, build_id=None):
         metadata = TestFormMetadata(domain=self.domain)
         form_xml = get_simple_form_xml(uuid.uuid4().hex, metadata=metadata)
-        _, form, _ = submit_form_locally(
+        result = submit_form_locally(
             form_xml,
             self.domain,
             build_id=build_id or self.app._id
         )
-        return form
+        return result.xform
 
     def _get_kafka_seq(self):
         # KafkaChangeFeed listens for multiple topics (form, form-sql) in the form pillow,

@@ -20,6 +20,7 @@ from corehq.apps.users.models import CommCareUser
 from custom.pnlppgi.filters import WeekFilter, LocationBaseDrilldownOptionFilter
 from django.utils.translation import ugettext as _
 
+from custom.pnlppgi.sqldata import LastDataForYear
 from custom.pnlppgi.utils import location_filter, users_locations, show_location
 from custom.pnlppgi.utils import update_config
 
@@ -29,6 +30,7 @@ EMPTY_CELL = {'sort_key': 0, 'html': '---'}
 class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
     slug = 'site_reporting_rates_report'
     name = u'Complétude et promptitude'
+    is_public = True
 
     report_template_path = 'pnlppgi/site_reporting.html'
 
@@ -158,6 +160,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
 
 
 class MalariaReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
+    is_public = True
 
     @property
     def group_by(self):
@@ -360,7 +363,11 @@ class CumulativeMalaria(MalariaReport):
     def rendered_report_title(self):
         year = self.request.GET.get('year', False)
         if year:
-            return self.name + (' [Year %s]' % year)
+            data = LastDataForYear(config=self.config).get_data()
+            return self.name + (' [Week %s/%s]' % (
+                0 if not data else data[0]['week']['sort_key'],
+                year
+            ))
         return self.name
 
     @property

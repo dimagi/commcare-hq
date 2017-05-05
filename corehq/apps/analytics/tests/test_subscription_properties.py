@@ -11,7 +11,6 @@ from corehq.apps.accounting.models import (
     ProBonoStatus,
     SubscriptionType
 )
-from corehq.apps.accounting.tests import generator
 from corehq.apps.analytics.signals import get_subscription_properties_by_user
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -22,7 +21,6 @@ class TestSubscriptionProperties(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestSubscriptionProperties, cls).setUpClass()
-        generator.instantiate_accounting()
 
         cls.base_domain = Domain(name="base", is_active=True)
         cls.base_domain.save()

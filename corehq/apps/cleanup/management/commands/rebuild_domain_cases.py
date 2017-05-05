@@ -8,16 +8,13 @@ from corehq.form_processor.utils import should_use_sql_backend
 
 
 class Command(BaseCommand):
-    args = '<domain> <reason>'
     help = ('Reprocesses all cases in a domain. Only works with couch-based domains')
 
-    def handle(self, *args, **options):
-        if len(args) == 2:
-            domain = args[0]
-            reason = args[1]
-        else:
-            raise CommandError('Usage: %s\n%s' % (self.args, self.help))
+    def add_arguments(self, parser):
+        parser.add_argument('domain')
+        parser.add_argument('reason')
 
+    def handle(self, domain, reason, **options):
         if should_use_sql_backend(domain):
             raise CommandError('This command only works for couch-based domains.')
 

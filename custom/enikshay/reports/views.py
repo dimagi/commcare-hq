@@ -25,13 +25,17 @@ class LocationsView(View):
             user=user
         )
         location_choice_provider = LocationChoiceProvider(StubReport(domain=domain), None)
-        location_choice_provider.configure({'include_descendants': True})
+        location_choice_provider.configure({
+            'include_descendants': True,
+            'order_by_hierarchy': True,
+            'show_full_path': True,
+        })
         return JsonResponse(
             {
                 'results': [
                     {'id': location.value, 'text': location.display}
                     for location in location_choice_provider.query(query_context)
                 ],
-                'total': location_choice_provider.query_count(query_context, user)
+                'total': location_choice_provider.query_count(query_context.query, user)
             }
         )

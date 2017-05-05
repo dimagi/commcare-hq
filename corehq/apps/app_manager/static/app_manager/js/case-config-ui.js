@@ -10,6 +10,12 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
     var CaseConfig = function (params) {
         var self = this;
         var i;
+        self.makePopover = function () {
+            $('.property-description').closest('.read-only').popover({
+                'trigger': 'hover',
+                'placement': 'auto right',
+            });
+        };
 
         self.home = params.home;
         self.actions = (function (a) {
@@ -39,6 +45,8 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
             self.usercasePropertiesMap = ko.mapping.fromJS(propertiesMap);
         };
         self.setUsercasePropertiesMap(params.usercasePropertiesMap);
+
+        self.descriptionDict = params.propertyDescriptions;
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: gettext("You have unchanged case settings"),
@@ -137,7 +145,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         self.change = function () {
             self.saveButton.fire('change');
             self.ensureBlankProperties();
-            self.forceRefreshTextchangeBinding($('#case-config-ko'));
+            self.forceRefreshTextchangeBinding(self.home);
         };
 
         self.usercaseChange = function () {
@@ -163,7 +171,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         };
 
         self.init = function () {
-            var $home = $('#case-config-ko');
+            var $home =self.home;
             var $usercaseMgmt = $('#usercase-config-ko');
             _.delay(function () {
                 if ($home.length) {
@@ -479,6 +487,9 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
             var self = {};
             ko.mapping.fromJS(data, UserCaseTransaction.mapping(self), self);
             self.caseConfig = caseConfig;
+            self.case_type = function () {
+                return 'commcare-user';
+            };
 
             // link self.case_name to corresponding path observable
             // in case_properties for convenience
@@ -636,6 +647,25 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
             self.case_transaction = case_transaction;
             self.isBlank = ko.computed(function () {
                 return !self.key() && !self.path();
+            });
+            self.caseType = ko.computed(function () {
+                return self.case_transaction.case_type();
+            });
+            self.updatedDescription = ko.observable('');
+            self.description = ko.computed({
+                read: function () {
+                    if (self.updatedDescription()) {
+                        return self.updatedDescription();
+                    }
+                    var config = self.case_transaction.caseConfig;
+                    var type = config.descriptionDict[self.caseType()];
+                    if (type) {
+                        return type[self.key()] || '';
+                    }
+                },
+                write: function (value) {
+                    self.updatedDescription(value);
+                },
             });
             return self;
         }
@@ -859,7 +889,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
                 allow: {
                     repeats: function () {
                         // This placeholder function allows us to reuse the "case-config:case-properties:question"
-                        // template in case_config_shared.html
+                        // template in case_config_ko_templates.html
                         return true;
                     }
                 },

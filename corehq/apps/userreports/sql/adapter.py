@@ -95,29 +95,27 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
         return distinct_values, too_many_values
 
-    def best_effort_save(self, doc):
+    def _best_effort_save_rows(self, rows, doc):
         try:
-            self.save(doc)
+            self._save_rows(rows, doc)
         except IntegrityError:
             pass  # can be due to users messing up their tables/data so don't bother logging
         except Exception as e:
             self.handle_exception(doc, e)
 
-    def save(self, doc):
-        """
-        Saves the document. Should bubble up known errors.
-        """
-        indicator_rows = self.config.get_all_values(doc)
-        if indicator_rows:
-            table = self.get_table()
-            with self.engine.begin() as connection:
-                # delete all existing rows for this doc to ensure we aren't left with stale data
-                delete = table.delete(table.c.doc_id == doc['_id'])
-                connection.execute(delete)
-                for indicator_row in indicator_rows:
-                    all_values = {i.column.database_column_name: i.value for i in indicator_row}
-                    insert = table.insert().values(**all_values)
-                    connection.execute(insert)
+    def _save_rows(self, rows, doc):
+        if not rows:
+            return
+
+        table = self.get_table()
+        with self.engine.begin() as connection:
+            # delete all existing rows for this doc to ensure we aren't left with stale data
+            delete = table.delete(table.c.doc_id == doc['_id'])
+            connection.execute(delete)
+            for row in rows:
+                all_values = {i.column.database_column_name: i.value for i in row}
+                insert = table.insert().values(**all_values)
+                connection.execute(insert)
 
     def delete(self, doc):
         table = self.get_table()

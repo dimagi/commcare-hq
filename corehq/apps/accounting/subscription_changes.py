@@ -3,7 +3,7 @@ import datetime
 import json
 
 from couchdbkit import ResourceConflict
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
 
@@ -12,17 +12,13 @@ from couchexport.models import SavedExportSchema
 from corehq import privileges
 from corehq.apps.accounting.utils import (
     get_active_reminders_by_domain_name,
-    get_privileges,
     log_accounting_error,
-    log_accounting_info,
+    get_privileges,
 )
-from corehq.apps.app_manager.dbaccessors import get_all_apps
-from corehq.apps.app_manager.models import Application
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
@@ -39,19 +35,14 @@ class BaseModifySubscriptionHandler(object):
         self.privileges = [x for x in changed_privs if x in self.supported_privileges()]
 
     def get_response(self):
-        log_accounting_info('get_response for %s' % str(self))
         responses = []
         for privilege in self.privileges:
-            log_accounting_info('handling privilege=%s' % str(privilege))
             try:
                 response = self.privilege_to_response_function()[privilege](self.domain, self.new_plan_version)
-                log_accounting_info('completed handling privilege=%s' % str(privilege))
             except ResourceConflict:
-                log_accounting_info('ResourceConflict handling privilege=%s' % str(privilege))
                 # Something else updated the domain. Reload and try again.
                 self.domain = Domain.get_by_name(self.domain.name)
                 response = self.privilege_to_response_function()[privilege](self.domain, self.new_plan_version)
-                log_accounting_info('completed handling privilege=%s after ResourceConflict' % str(privilege))
             if response is not None:
                 responses.append(response)
         return responses
@@ -73,7 +64,7 @@ class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):
 
     def get_response(self):
         response = super(BaseModifySubscriptionActionHandler, self).get_response()
-        return len([x for x in response if not x]) == 0
+        return all(response)
 
 
 # TODO - cache
@@ -191,19 +182,9 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
     def response_commcare_logo_uploader(domain, new_plan_version):
         """Make sure no existing applications are using a logo.
         """
-        try:
-            for app in get_all_apps(domain.name):
-                if isinstance(app, Application):
-                    has_archived = app.archive_logos()
-                    if has_archived:
-                        app.save()
-            return True
-        except Exception:
-            log_accounting_error(
-                "Failed to remove all commcare logos for domain %s."
-                % domain.name
-            )
-            return False
+        from corehq.apps.accounting.tasks import archive_logos
+        archive_logos.delay(domain.name)
+        return True
 
     @staticmethod
     def response_domain_security(domain, new_plan_version):
@@ -267,19 +248,9 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     def response_commcare_logo_uploader(domain, new_plan_version):
         """Make sure no existing applications are using a logo.
         """
-        try:
-            for app in get_all_apps(domain.name):
-                if isinstance(app, HQMediaMixin):
-                    has_restored = app.restore_logos()
-                    if has_restored:
-                        app.save()
-            return True
-        except Exception:
-            log_accounting_error(
-                "Failed to restore all commcare logos for domain %s."
-                % domain.name
-            )
-            return False
+        from corehq.apps.accounting.tasks import restore_logos
+        restore_logos.delay(domain.name)
+        return True
 
     @staticmethod
     def response_report_builder(project, new_plan_version):

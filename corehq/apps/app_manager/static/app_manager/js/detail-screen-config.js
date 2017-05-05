@@ -117,8 +117,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.type.subscribe(function () {
             self.notifyButton();
         });
-        self.direction = ko.observable(typeof params.direction !== 'undefined' ? params.direction : "");
+        self.direction = ko.observable(params.direction || "ascending");
+        self.blanks = ko.observable(params.blanks || (params.direction === "descending" ? "last" : "first"));
         self.direction.subscribe(function () {
+            self.notifyButton();
+        });
+        self.blanks.subscribe(function () {
             self.notifyButton();
         });
         self.sortCalculation.subscribe(function () {
@@ -133,26 +137,26 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             var type = self.type();
             // This is here for the CACHE_AND_INDEX feature
             if (type === 'plain' || type === 'index') {
-                return 'Increasing (a, b, c)';
+                return gettext('Increasing (a, b, c)');
             } else if (type === 'date') {
-                return 'Increasing (May 1st, May 2nd)';
+                return gettext('Increasing (May 1st, May 2nd)');
             } else if (type === 'int') {
-                return 'Increasing (1, 2, 3)';
+                return gettext('Increasing (1, 2, 3)');
             } else if (type === 'double' || type === 'distance') {
-                return 'Increasing (1.1, 1.2, 1.3)';
+                return gettext('Increasing (1.1, 1.2, 1.3)');
             }
         });
 
         self.descendText = ko.computed(function () {
             var type = self.type();
             if (type === 'plain' || type === 'index') {
-                return 'Decreasing (c, b, a)';
+                return gettext('Decreasing (c, b, a)');
             } else if (type === 'date') {
-                return 'Decreasing (May 2nd, May 1st)'
+                return gettext('Decreasing (May 2nd, May 1st)');
             } else if (type === 'int') {
-                return 'Decreasing (3, 2, 1)';
+                return gettext('Decreasing (3, 2, 1)');
             } else if (type === 'double' || type === 'distance') {
-                return 'Decreasing (1.3, 1.2, 1.1)';
+                return gettext('Decreasing (1.3, 1.2, 1.1)');
             }
         });
     };
@@ -168,11 +172,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         var self = this;
         self.sortRows = ko.observableArray([]);
 
-        self.addSortRow = function (field, type, direction, display, notify, sortCalculation) {
+        self.addSortRow = function (field, type, direction, blanks, display, notify, sortCalculation) {
             self.sortRows.push(new SortRow({
                 field: field,
                 type: type,
                 direction: direction,
+                blanks: blanks,
                 display: display,
                 saveButton: saveButton,
                 properties: properties,
@@ -1179,6 +1184,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 field: row.textField.val(),
                                 type: row.type(),
                                 direction: row.direction(),
+                                blanks: row.blanks(),
                                 display: row.display(),
                                 sort_calculation: row.sortCalculation(),
                             };
@@ -1317,6 +1323,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 spec.sortRows[j].field,
                                 spec.sortRows[j].type,
                                 spec.sortRows[j].direction,
+                                spec.sortRows[j].blanks,
                                 spec.sortRows[j].display[this.lang],
                                 false,
                                 spec.sortRows[j].sort_calculation
@@ -1349,6 +1356,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 }
                 if (spec.state.long !== undefined) {
                     this.longScreen = addScreen(spec.state, "long");
+                    this.printTemplateReference = spec.print_ref;
                 }
             };
             DetailScreenConfig.init = function (spec) {

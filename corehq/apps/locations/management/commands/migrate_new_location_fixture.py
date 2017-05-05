@@ -1,10 +1,10 @@
 from __future__ import print_function
 
 from django.core.management.base import BaseCommand
-from toggle.models import Toggle
 
 from corehq.apps.locations.models import SQLLocation, LocationFixtureConfiguration
 from corehq.toggles import HIERARCHICAL_LOCATION_FIXTURE, NAMESPACE_DOMAIN, FLAT_LOCATION_FIXTURE
+from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
 class Command(BaseCommand):
@@ -49,13 +49,13 @@ class Command(BaseCommand):
         # and update their location configuration to use hierarchical fixture for now
         for domain in domains_to_stay_on_hierarchical_fixture:
             if not dry_run:
-                print("Setting HIERARCHICAL_LOCATION_FIXTURE toggle for domain: %s" % domain)
+                print(u"Setting HIERARCHICAL_LOCATION_FIXTURE toggle for domain: %s" % domain)
                 HIERARCHICAL_LOCATION_FIXTURE.set(domain, True, NAMESPACE_DOMAIN)
             else:
-                print("HIERARCHICAL_LOCATION_FIXTURE toggle would be set for domain: %s" % domain)
+                print(u"HIERARCHICAL_LOCATION_FIXTURE toggle would be set for domain: %s" % domain)
 
             if not dry_run:
-                print("Enabling legacy fixture for domain: %s" % domain)
+                print(u"Enabling legacy fixture for domain: %s" % domain)
                 location_configuration = LocationFixtureConfiguration.for_domain(domain)
                 print("Current Configuration, Persisted: %s, Use Flat fixture: %s, Use Hierarchical fixture %s" % (
                     not location_configuration._state.adding, location_configuration.sync_hierarchical_fixture,
@@ -63,7 +63,7 @@ class Command(BaseCommand):
 
                 enable_legacy_fixture_for_domain(domain)
             else:
-                print("Legacy fixture to be enabled for domain: %s" % domain)
+                print(u"Legacy fixture to be enabled for domain: %s" % domain)
                 location_configuration = LocationFixtureConfiguration.for_domain(domain)
                 print("Current Configuration, Persisted: %s, Use Flat fixture: %s, Use Hierarchical fixture %s" % (
                     not location_configuration._state.adding, location_configuration.sync_hierarchical_fixture,
@@ -91,6 +91,4 @@ def enable_legacy_fixture_for_domain(domain):
 
 
 def find_domains_with_flat_fixture_enabled():
-    toggle = Toggle.get(FLAT_LOCATION_FIXTURE.slug)
-    enabled_users = toggle.enabled_users
-    return [user.split('domain:')[1] for user in enabled_users if 'domain:' in user]
+    return find_domains_with_toggle_enabled(FLAT_LOCATION_FIXTURE)

@@ -3,7 +3,7 @@ import json
 import urllib
 
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import ResourceNotFound

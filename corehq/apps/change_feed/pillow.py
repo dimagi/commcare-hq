@@ -48,19 +48,19 @@ class KafkaProcessor(PillowProcessor):
             self._producer.send_change(get_topic(doc_meta), change_meta)
 
 
-def get_default_couch_db_change_feed_pillow(pillow_id):
+def get_default_couch_db_change_feed_pillow(pillow_id, **kwargs):
     return get_change_feed_pillow_for_db(pillow_id, CommCareCase.get_db())
 
 
-def get_user_groups_db_kafka_pillow(pillow_id):
+def get_user_groups_db_kafka_pillow(pillow_id, **kwargs):
     return get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(CommCareUser))
 
 
-def get_domain_db_kafka_pillow(pillow_id):
+def get_domain_db_kafka_pillow(pillow_id, **kwargs):
     return get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(Domain))
 
 
-def get_application_db_kafka_pillow(pillow_id):
+def get_application_db_kafka_pillow(pillow_id, **kwargs):
     from corehq.apps.app_manager.models import Application
     return get_change_feed_pillow_for_db(pillow_id, couch_config.get_db_for_class(Application))
 
@@ -70,11 +70,12 @@ def get_change_feed_pillow_for_db(pillow_id, couch_db):
     processor = KafkaProcessor(
         kafka_client, data_source_type=data_sources.COUCH, data_source_name=couch_db.dbname
     )
-    checkpoint = PillowCheckpoint(pillow_id)
+    change_feed = CouchChangeFeed(couch_db, include_docs=True)
+    checkpoint = PillowCheckpoint(pillow_id, change_feed.sequence_format)
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=CouchChangeFeed(couch_db, include_docs=True),
+        change_feed=change_feed,
         processor=processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100,

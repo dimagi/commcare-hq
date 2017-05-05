@@ -17,10 +17,12 @@ from .interfaces import FormManagementMode, BulkFormManagementInterface
 from .dispatcher import EditDataInterfaceDispatcher
 from corehq.util.log import send_HTML_email
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.logging import notify_error
 
 
 logger = get_task_logger('data_interfaces')
 ONE_HOUR = 60 * 60
+HALT_AFTER = 23 * 60 * 60
 
 
 @task(ignore_result=True)
@@ -74,24 +76,33 @@ def run_case_update_rules(now=None):
 
 @serial_task(
     '{domain}',
-    timeout=24 * 60 * 60,
+    timeout=36 * 60 * 60,
     max_retries=0,
     queue='background_queue',
 )
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
+    start_run = datetime.utcnow()
     all_rules = AutomaticUpdateRule.by_domain(domain)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
 
     for case_type, rules in rules_by_case_type.iteritems():
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-        case_ids = AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date)
+        case_id_chunks = AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date)
 
-        for case in CaseAccessors(domain).iter_cases(case_ids):
-            for rule in rules:
-                stop_processing = rule.apply_rule(case, now)
-                if stop_processing:
-                    break
+        for case_ids in case_id_chunks:
+            for case in CaseAccessors(domain).iter_cases(case_ids):
+                time_elapsed = datetime.utcnow() - start_run
+                if time_elapsed.seconds > HALT_AFTER:
+                    notify_error(
+                        "Halting rule run for domain %s as it's been running for more than a day." % domain
+                    )
+                    return
+
+                for rule in rules:
+                    stop_processing = rule.apply_rule(case, now)
+                    if stop_processing:
+                        break
 
         for rule in rules:
             rule.last_run = now

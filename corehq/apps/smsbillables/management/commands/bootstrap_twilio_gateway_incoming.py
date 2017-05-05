@@ -28,8 +28,6 @@ def bootstrap_twilio_gateway_incoming(apps):
 
 class Command(BaseCommand):
     help = "bootstrap incoming Twilio gateway fees"
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         bootstrap_twilio_gateway_incoming(None)

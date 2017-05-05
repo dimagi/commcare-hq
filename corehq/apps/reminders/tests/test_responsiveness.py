@@ -1,5 +1,6 @@
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from corehq.apps.hqcase.utils import update_case
+from corehq.apps.reminders.tasks import process_handlers_for_case_changed
 from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import set_parent_case
 from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder, MATCH_EXACT,
@@ -406,6 +407,7 @@ class ReminderResponsivenessTest(TestCase):
                 message={'en': 'Hello {case.name}, your test result was normal.'})
             .set_stop_condition(max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY)
             .set_advanced_options())
+        reminder.active = False
         reminder.save()
 
         self.assertEqual(self.get_reminders(), [])
@@ -413,9 +415,11 @@ class ReminderResponsivenessTest(TestCase):
         with create_test_case(self.domain, 'participant', 'bob', drop_signals=False) as child_case, \
                 create_test_case(self.domain, 'parent-case', 'jim', drop_signals=False) as parent_case, \
                 patch('corehq.apps.reminders.models.CaseReminderHandler.get_now') as now_mock:
+            process_handlers_for_case_changed(self.domain, child_case.case_id, [reminder._id])
             self.assertEqual(self.get_reminders(), [])
 
             set_parent_case(self.domain, child_case, parent_case)
+            process_handlers_for_case_changed(self.domain, child_case.case_id, [reminder._id])
             self.assertEqual(self.get_reminders(), [])
 
             now_mock.return_value = datetime(2016, 1, 1, 10, 0)
@@ -426,10 +430,11 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(self.get_reminders(), [])
 
             update_case(self.domain, parent_case.case_id, case_properties={'status': 'green'})
+            process_handlers_for_case_changed(self.domain, child_case.case_id, [reminder._id])
             reminder_instance = self.assertOneReminder()
             self.assertEqual(reminder_instance.domain, self.domain)
             self.assertEqual(reminder_instance.handler_id, reminder.get_id)
-            self.assertTrue(reminder_instance.active)
+            self.assertFalse(reminder_instance.active)
             self.assertEqual(reminder_instance.start_date, date(2016, 1, 1))
             self.assertIsNone(reminder_instance.start_condition_datetime)
             self.assertEqual(reminder_instance.next_fire, datetime(2016, 1, 1, 12, 0))
@@ -439,6 +444,7 @@ class ReminderResponsivenessTest(TestCase):
             self.assertEqual(reminder_instance.callback_try_count, 0)
 
             update_case(self.domain, parent_case.case_id, case_properties={'status': 'red'})
+            process_handlers_for_case_changed(self.domain, child_case.case_id, [reminder._id])
             self.assertEqual(self.get_reminders(), [])
 
     @run_with_all_backends

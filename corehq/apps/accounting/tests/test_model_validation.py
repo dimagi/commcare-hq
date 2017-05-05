@@ -26,7 +26,7 @@ class TestCreditAdjustmentValidation(BaseAccountingTest):
         subscription = Subscription.objects.create(
             account=account,
             date_start=date.today(),
-            plan_version=generator.subscribable_plan(),
+            plan_version=generator.subscribable_plan_version(),
             subscriber=Subscriber.objects.create(domain='test')
         )
         invoice = Invoice.objects.create(

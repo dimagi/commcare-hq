@@ -24,7 +24,7 @@ class Command(BaseCommand):
             '--limit',
             dest='limit',
             default=None,
-            type='int',
+            type=int,
             help='Limits the number of domains migrated',
         )
         parser.add_argument(

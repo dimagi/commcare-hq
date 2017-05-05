@@ -7,7 +7,7 @@ import json
 import types
 
 from django import template
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe

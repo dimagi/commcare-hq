@@ -55,6 +55,7 @@ from .permissions import (
 )
 from .models import LocationType, SQLLocation, filter_for_archived
 from .forms import LocationForm, UsersAtLocationForm
+from .signals import clean_location
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
@@ -77,7 +78,7 @@ def lock_locations(func):
     def func_wrapper(request, *args, **kwargs):
         key = location_lock_key(request.domain)
         client = get_redis_client()
-        lock = client.lock(key, LOCK_LOCATIONS_TIMEOUT)
+        lock = client.lock(key, timeout=LOCK_LOCATIONS_TIMEOUT)
         if lock.acquire(blocking=False):
             try:
                 return func(request, *args, **kwargs)
@@ -510,6 +511,14 @@ class NewLocationView(BaseLocationView):
         )
 
     def settings_form_post(self, request, *args, **kwargs):
+        self.location_form.is_valid()
+        clean_location.send(
+            self.__class__.__name__,
+            domain=self.domain,
+            request_user=self.request.couch_user,
+            location=self.location,
+            forms={self.location_form.__class__.__name__: self.location_form},
+        )
         if self.location_form.is_valid():
             self.location_form.save()
             return self.form_valid()

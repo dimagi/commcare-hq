@@ -54,7 +54,7 @@ class Command(BaseCommand):
             else:
                 auth_context = DefaultAuthContext()
 
-            response, form, cases = submit_form_locally(
+            result = submit_form_locally(
                 xml_data,
                 domain,
                 attachments=attachments_dict,
@@ -63,5 +63,5 @@ class Command(BaseCommand):
                 app_id=metadata.app_id,
                 build_id=metadata.build_id
             )
-            if not response.status_code == 201:
-                self.stderr.write(str(response))
+            if not result.response.status_code == 201:
+                self.stderr.write(str(result.response))

@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "config": {
     "table_id": "static-person_cases",
     "display_name": "Cases - Person (Static)",
@@ -47,6 +51,7 @@
         "is_nullable": false,
         "is_primary_key": false,
         "column_id": "awc_id",
+        "create_index": true,
         "type": "expression"
       },
       {
@@ -57,6 +62,7 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "supervisor_id",
+        "create_index": true,
         "expression": {
           "location_id_expression": {
             "expression": {
@@ -154,6 +160,7 @@
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "opened_on",
+        "create_index": true,
         "type": "raw",
         "property_name": "opened_on"
       },
@@ -173,6 +180,7 @@
         "datatype": "date",
         "is_primary_key": false,
         "column_id": "dob",
+        "create_index": true,
         "is_nullable": true,
         "type": "raw",
         "property_name": "dob"
@@ -183,6 +191,7 @@
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "age_at_reg",
+        "create_index": true,
         "is_nullable": true,
         "type": "raw",
         "property_name": "age_at_reg"
@@ -193,6 +202,7 @@
         "datatype": "date",
         "is_primary_key": false,
         "column_id": "date_death",
+        "create_index": true,
         "is_nullable": true,
         "type": "raw",
         "property_name": "date_death"
@@ -1331,6 +1341,7 @@
         "datatype": "date",
         "is_primary_key": false,
         "column_id": "last_referral_date",
+        "create_index": true,
         "is_nullable": true,
         "type": "raw",
         "property_name": "last_referral_date"
@@ -2537,6 +2548,10 @@
         "property_value": null
       }
     },
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

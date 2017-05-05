@@ -19,7 +19,7 @@
                   {% include 'app_manager/v2/partials/module_link_secondary.html' %}
                 </div>
 
-                <ul class="appnav-menu appnav-menu-nested see {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable sortable-forms {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}">
+                <ul class="appnav-menu appnav-menu-nested see {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable sortable-forms {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}" data-parentvar="moduleid">
                     <li class="sort-action">
                         <form method="post"
                               action="{% url "rearrange" domain app.id 'forms' %}">

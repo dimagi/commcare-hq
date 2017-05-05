@@ -2,7 +2,7 @@
 import json
 
 from django.test import TestCase
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from mock import patch
 
 from corehq.apps.export.models import CaseExportInstance

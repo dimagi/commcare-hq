@@ -6,10 +6,8 @@ from corehq.apps.domain.models import Domain
 
 class Command(BaseCommand):
     help = "Migrates old django domain countries from string to list. Sept 2014."
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         print("Migrating Domain countries")
 
         country_lookup = {v.lower(): k for k, v in COUNTRIES.iteritems()}

@@ -69,8 +69,6 @@ def bootstrap_grapevine_gateway_update(apps):
 
 class Command(BaseCommand):
     help = "update Grapevine gateway fees"
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         bootstrap_grapevine_gateway_update(None)

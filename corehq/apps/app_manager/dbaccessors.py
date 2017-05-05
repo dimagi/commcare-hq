@@ -1,4 +1,5 @@
 from collections import namedtuple
+from itertools import chain, imap
 
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
@@ -6,6 +7,7 @@ from corehq.util.quickcache import quickcache
 from django.http import Http404
 
 from corehq.apps.es import AppES
+from dimagi.utils.couch.database import iter_docs
 
 AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version', 'comment'])
 
@@ -288,21 +290,24 @@ def get_latest_app_ids_and_versions(domain, app_id=None):
 
 def get_all_apps(domain):
     """
-    Returns a list of all the apps ever built and current Applications.
+    Returns an iterable over all the apps ever built and current Applications.
     Used for subscription management when apps use subscription only features
     that shouldn't be present in built apps as well as app definitions.
     """
-    from .models import Application
-    from corehq.apps.app_manager.util import get_correct_app_class
-    saved_apps = Application.get_db().view(
-        'app_manager/saved_app',
-        startkey=[domain],
-        endkey=[domain, {}],
-        include_docs=True,
-    )
-    all_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in saved_apps]
-    all_apps.extend(get_apps_in_domain(domain))
-    return all_apps
+    def _saved_apps():
+        from .models import Application
+        from corehq.apps.app_manager.util import get_correct_app_class
+        saved_app_ids = Application.get_db().view(
+            'app_manager/saved_app',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=False,
+            wrapper=lambda row: row['id'],
+        )
+        correct_wrap = lambda app_doc: get_correct_app_class(app_doc).wrap(app_doc)
+        return imap(correct_wrap, iter_docs(Application.get_db(), saved_app_ids))
+
+    return chain(get_apps_in_domain(domain), _saved_apps())
 
 
 def get_all_app_ids(domain):

@@ -530,6 +530,7 @@ class Sort(AbstractTemplate):
     type = StringField('@type')
     order = StringField('@order')
     direction = StringField('@direction')
+    blanks = StringField('@blanks')
 
 
 class Style(XmlObject):
@@ -563,6 +564,7 @@ class Field(OrderedXmlObject):
     ORDER = ('header', 'template', 'sort_node')
 
     sort = StringField('@sort')
+    print_id = StringField('@print-id')
     style = NodeField('style', Style)
     header = NodeField('header', Header)
     template = NodeField('template', Template)
@@ -643,6 +645,7 @@ class Detail(OrderedXmlObject, IdNode):
     ORDER = ('title', 'lookup', 'details', 'fields')
 
     nodeset = StringField('@nodeset')
+    print_template = StringField('@print-template')
 
     title = NodeField('title/text', Text)
     lookup = NodeField('lookup', Lookup)

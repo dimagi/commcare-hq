@@ -7,7 +7,6 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    args = ''
     help = "Call 'migrate' for each configured database"
 
     def add_arguments(self, parser):
@@ -26,7 +25,12 @@ class Command(BaseCommand):
         parser.add_argument('--list', '-l', action='store_true', dest='list', default=False,
             help='Show a list of all known migrations and which are applied.')
 
-    def handle(self, *args, **options):
+    def handle(self, app_label, migration_name, **options):
+        args = []
+        if app_label is not None:
+            args.append(app_label)
+        if migration_name is not None:
+            args.append(migration_name)
         for db_alias in settings.DATABASES.keys():
             print('\n======================= Migrating DB: {} ======================='.format(db_alias))
             call_options = copy(options)

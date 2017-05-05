@@ -44,7 +44,7 @@ class GroupPillowTest(TestCase):
 
         # send to elasticsearch
         pillow = get_group_pillow()
-        pillow.process_changes(since={GROUP: since}, forever=False)
+        pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(GROUP_INDEX_INFO.index)
 
         # verify there

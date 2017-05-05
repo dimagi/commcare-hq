@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from tastypie import fields
 from tastypie.authentication import Authentication
@@ -17,12 +17,13 @@ from corehq.apps.api.resources import (
     v0_1,
     v0_3,
 )
-from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
+from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication, \
+    LoginAndDomainAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.serializers import CommCareCaseSerializer, XFormInstanceSerializer
 from corehq.apps.api.util import get_object_or_not_exist, get_obj
-from corehq.apps.app_manager import util as app_manager_util
+from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.cloudcare.api import ElasticCaseQuery
@@ -371,7 +372,7 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
 
             dehydrated['case_type'] = module.case_type
 
-            dehydrated['case_properties'] = app_manager_util.get_case_properties(
+            dehydrated['case_properties'] = get_case_properties(
                 app, [module.case_type], defaults=['name']
             )[module.case_type]
 
@@ -417,7 +418,7 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
         return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_apps)
+        authentication = LoginAndDomainAuthentication()
         object_class = Application
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']

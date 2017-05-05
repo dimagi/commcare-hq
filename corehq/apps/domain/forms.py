@@ -21,7 +21,7 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import transaction
 from django.db.models import F
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
@@ -80,7 +80,7 @@ from corehq.privileges import (
     REPORT_BUILDER_ADD_ON_PRIVS,
     REPORT_BUILDER_TRIAL,
 )
-from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX
+from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBIE_UCR_SYNC_DELAY_CONFIG
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
@@ -554,6 +554,17 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=ugettext_lazy("Enter the case type to be used for FLWs in call center apps")
     )
 
+    mobile_ucr_sync_interval = IntegerField(
+        label=ugettext_lazy("Default mobile report sync delay (hours)"),
+        required=False,
+        help_text=ugettext_lazy(
+            """
+            Default time to wait between sending updated mobile report data to users.
+            Can be overrided on a per user bases.
+            """
+        )
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -593,11 +604,18 @@ class DomainGlobalSettingsForm(forms.Form):
                 )
                 owner_field.widget.set_domain(self.domain)
 
+        if not MOBIE_UCR_SYNC_DELAY_CONFIG.enabled(self.domain):
+            del self.fields['mobile_ucr_sync_interval']
+
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
         timezone_field = TimeZoneField()
         timezone_field.run_validators(data)
         return smart_str(data)
+
+    def clean_mobile_ucr_sync_interval(self):
+        if self.cleaned_data.get('mobile_ucr_sync_interval'):
+            return self.cleaned_data.get('mobile_ucr_sync_interval') * 3600
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
@@ -665,6 +683,7 @@ class DomainGlobalSettingsForm(forms.Form):
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
+        domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
         self._save_logo_configuration(domain)
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
@@ -2038,7 +2057,8 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
     end_date = forms.DateField(
         help_text=ugettext_noop(
-            '1 year after the deployment date (date the project goes live).'
+            'Specify the End Date based on the Start Date plus number of '
+            'months of software plan in the contract with the Client.'
         ),
         label=ugettext_noop('End Date'),
     )

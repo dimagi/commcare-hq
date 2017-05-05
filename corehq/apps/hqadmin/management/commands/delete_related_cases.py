@@ -15,9 +15,7 @@ class Command(BaseCommand):
         parser.add_argument('case_id', type=unicode)
         parser.add_argument('--filename', dest='filename', default='case-delete-info.csv')
 
-    def handle(self, *args, **options):
-        domain = options['domain']
-        case_id = options['case_id']
+    def handle(self, domain, case_id, **options):
         case_accessor = CaseAccessors(domain=domain)
         case = case_accessor.get_case(case_id)
         if not case.is_deleted and raw_input('\n'.join([

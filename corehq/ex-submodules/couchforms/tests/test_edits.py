@@ -99,7 +99,8 @@ class EditFormTest(TestCase, TestFileMixin):
         original_xml = self.get_xml('original')
         edit_xml = self.get_xml('edit')
 
-        _, xform, _ = submit_form_locally(original_xml, self.domain)
+        result = submit_form_locally(original_xml, self.domain)
+        xform = result.xform
         self.assertEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_normal)
         self.assertEqual(self.domain, xform.domain)

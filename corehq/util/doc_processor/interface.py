@@ -223,8 +223,11 @@ class DocumentProcessorController(object):
 
     def _update_progress(self):
         self.visited += 1
+        if self.visited + self.previously_visited > self.total:
+            self.total = self.visited + self.previously_visited
         if self.visited % self.chunk_size == 0:
-            self.document_iterator.set_iterator_detail('progress', {"visited": self.visited, "total": self.total})
+            self.document_iterator.set_iterator_detail('progress',
+                {"visited": self.visited, "total": self.total})
 
         now = datetime.now()
         attempted = self.attempted
@@ -240,7 +243,8 @@ class DocumentProcessorController(object):
 
     def _processing_complete(self):
         if self.session_visited:
-            self.document_iterator.set_iterator_detail('progress', {"visited": self.visited, "total": self.total})
+            self.document_iterator.set_iterator_detail('progress',
+                {"visited": self.visited, "total": self.total})
         self.doc_processor.processing_complete(self.skipped)
         self.progress_logger.progress_complete(
             self.processed,

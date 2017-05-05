@@ -17,7 +17,6 @@ from django.contrib import messages
 from django.http import Http404
 from django.views.decorators.http import require_POST
 from corehq.mobile_flags import MULTIPLE_APPS_UNLIMITED
-from corehq.tabs.tabclasses import MySettingsTab
 import langcodes
 
 from django.http import HttpResponseRedirect, HttpResponse
@@ -26,7 +25,7 @@ from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_laz
     activate, LANGUAGE_SESSION_KEY)
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required)
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.util.quickcache import quickcache
@@ -88,11 +87,6 @@ class BaseMyAccountView(BaseSectionPageView):
     def main_context(self):
         context = super(BaseMyAccountView, self).main_context
         context.update({
-            'active_tab': MySettingsTab(
-                self.request,
-                self.urlname,
-                couch_user=self.request.couch_user
-            ),
             'is_my_account_settings': True,
         })
         return context

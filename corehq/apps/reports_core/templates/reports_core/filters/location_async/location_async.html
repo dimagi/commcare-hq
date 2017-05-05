@@ -1,0 +1,19 @@
+{% extends "reports_core/filters/filter_base.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block filter-controls %}
+<span class="form-group"  id="group_{{ filter.css_id }}" data-bind="visible: show_location_filter_bool()">
+        <div data-bind="foreach: selected_path" style="display: inline-block;">
+            {% block location_select %}
+            <select class="form-control"
+                    data-bind="options: children,
+                               optionsText: 'display_name',
+                               value: selected_child,
+                               disable: !can_edit_children()"></select>
+            {% endblock %}
+        </div>
+        <i id="loc_ajax" class="fa fa-spinner fa-spin hide"></i>
+        <input name="{{ context_.input_name }}" type="hidden" data-bind="value: selected_locid" />
+</span>
+{% endblock %}

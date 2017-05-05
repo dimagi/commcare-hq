@@ -37,9 +37,9 @@ class CaseExclusionTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "exclusion", "nested_device_report.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        _, _, [case] = submit_form_locally(xml_data, TEST_DOMAIN)
+        result = submit_form_locally(xml_data, TEST_DOMAIN)
         self.assertEqual(['case_in_form'], CaseAccessors(TEST_DOMAIN).get_case_ids_in_domain())
-        self.assertEqual("form case", case.name)
+        self.assertEqual("form case", result.case.name)
 
 
 @use_sql_backend

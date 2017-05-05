@@ -117,6 +117,7 @@ UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
 UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
 UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
 NIKSHAY_DATAMIGRATION = "%s/%s" % (FILEPATH, "nikshay_datamigration.log")
+PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigration.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -278,6 +279,8 @@ HQ_APPS = (
     'corehq.apps.sms',
     'corehq.apps.smsforms',
     'corehq.apps.ivr',
+    'corehq.messaging.scheduling',
+    'corehq.messaging.scheduling.scheduling_partitioned',
     'corehq.messaging.smsbackends.tropo',
     'corehq.messaging.smsbackends.twilio',
     'corehq.apps.dropbox',
@@ -296,7 +299,7 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.messaging.smsbackends.unicel',
     'corehq.messaging.smsbackends.icds_nic',
-    'corehq.apps.reports',
+    'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
     'corehq.apps.data_interfaces',
@@ -333,6 +336,8 @@ HQ_APPS = (
     'corehq.blobs',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
+    'corehq.apps.motech',
+    'corehq.apps.motech.openmrs',
 
     # custom reports
     'a5288',
@@ -374,6 +379,7 @@ ENIKSHAY_APPS = (
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
     'custom.enikshay.nikshay_datamigration',
+    'custom.enikshay.private_sector_datamigration',
     'custom.enikshay.integrations.nikshay'
 )
 
@@ -723,6 +729,8 @@ ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
+GREENHOUSE_API_KEY = ''
+
 MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
@@ -756,14 +764,6 @@ LOGSTASH_HOST = 'localhost'
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 ELASTICSEARCH_VERSION = 1.7
-
-####### Couch Config #######
-# for production this ought to be set to true on your configured couch instance
-COUCH_HTTPS = False
-COUCH_SERVER_ROOT = 'localhost:5984'  # 6984 for https couch
-COUCH_USERNAME = ''
-COUCH_PASSWORD = ''
-COUCH_DATABASE_NAME = 'commcarehq'
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
@@ -874,6 +874,11 @@ MOBILE_INTEGRATION_TEST_TOKEN = None
 
 OVERRIDE_UCR_BACKEND = None
 
+# CommCare HQ - To indicate server
+COMMCARE_HQ_NAME = "CommCare HQ"
+# CommCare - To Indicate mobile
+COMMCARE_NAME = "CommCare"
+
 ENTERPRISE_MODE = False
 
 CUSTOM_LANDING_PAGE = False
@@ -889,6 +894,13 @@ SENTRY_PRIVATE_KEY = None
 SENTRY_PROJECT_ID = None
 SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
 SENTRY_API_KEY = None
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
+AUTHPROXY_URL = None
+AUTHPROXY_CERT = None
+
+from env_settings import *
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -912,7 +924,48 @@ except ImportError as error:
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
 
+
+def _determine_couch_databases(couch_databases):
+    from dev_settings import COUCH_DATABASES as DEFAULT_COUCH_DATABASES_VALUE
+    if 'COUCH_SERVER_ROOT' in globals() and \
+            couch_databases in (None, DEFAULT_COUCH_DATABASES_VALUE):
+        import warnings
+        couch_databases = {
+            'default': {
+                'COUCH_HTTPS': COUCH_HTTPS,
+                'COUCH_SERVER_ROOT': COUCH_SERVER_ROOT,
+                'COUCH_USERNAME': COUCH_USERNAME,
+                'COUCH_PASSWORD': COUCH_PASSWORD,
+                'COUCH_DATABASE_NAME': COUCH_DATABASE_NAME,
+            },
+        }
+        warnings.warn("""COUCH_SERVER_ROOT and related variables are deprecated
+
+Please replace your COUCH_* settings with
+
+COUCH_DATABASES = {
+    'default': {
+        'COUCH_HTTPS': %(COUCH_HTTPS)r,
+        'COUCH_SERVER_ROOT': %(COUCH_SERVER_ROOT)r,
+        'COUCH_USERNAME': %(COUCH_USERNAME)r,
+        'COUCH_PASSWORD': %(COUCH_PASSWORD)r,
+        'COUCH_DATABASE_NAME': %(COUCH_DATABASE_NAME)r,
+    },
+}
+""" % globals(), DeprecationWarning)
+
+    return couch_databases
+
+
+try:
+    COUCH_DATABASES = _determine_couch_databases(COUCH_DATABASES)
+except NameError:
+    COUCH_DATABASES = _determine_couch_databases(None)
+
+
 _location = lambda x: os.path.join(FILEPATH, x)
+
+IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
 
 TEMPLATES = [
     {
@@ -963,7 +1016,7 @@ LOGGING = {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
         'couch-request-formatter': {
-            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
+            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(database)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
         },
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
@@ -1078,6 +1131,14 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
+        'private_sector_datamigration': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': PRIVATE_SECTOR_DATAMIGRATION,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
         'sentry': {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
@@ -1104,6 +1165,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
+            # gets overridden in ansible, in environment specific way
             'handlers': ['notify_exception', 'sentry'],
             'level': 'ERROR',
             'propagate': True,
@@ -1115,7 +1177,7 @@ LOGGING = {
         },
         'pillowtop': {
             'handlers': ['pillowtop'],
-            'level': 'ERROR',
+            'level': 'INFO',
             'propagate': False,
         },
         'smsbillables': {
@@ -1173,11 +1235,16 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'private_sector_datamigration': {
+            'handlers': ['private_sector_datamigration', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         'sentry.errors.uncaught': {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
-        }
+        },
     }
 }
 
@@ -1232,18 +1299,6 @@ INDICATOR_CONFIG = {
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
-COUCH_DATABASE_NAME = helper.get_db_name(COUCH_DATABASE_NAME, UNIT_TESTING)
-_dynamic_db_settings = helper.get_dynamic_db_settings(
-    COUCH_SERVER_ROOT,
-    COUCH_USERNAME,
-    COUCH_PASSWORD,
-    COUCH_DATABASE_NAME,
-    use_https=COUCH_HTTPS,
-)
-
-# create local server and database configs
-COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
-
 NEW_USERS_GROUPS_DB = 'users'
 USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
@@ -1257,6 +1312,8 @@ NEW_APPS_DB = 'apps'
 APPS_DB = NEW_APPS_DB
 
 SYNCLOGS_DB = 'synclogs'
+
+META_DB = 'meta'
 
 
 COUCHDB_APPS = [
@@ -1321,10 +1378,10 @@ COUCHDB_APPS = [
     'ilsgateway',
     'ewsghana',
     ('auditcare', 'auditcare'),
-    ('performance_sms', 'meta'),
+    ('performance_sms', META_DB),
     ('repeaters', 'receiverwrapper'),
-    ('userreports', 'meta'),
-    ('custom_data_fields', 'meta'),
+    ('userreports', META_DB),
+    ('custom_data_fields', META_DB),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
@@ -1332,8 +1389,8 @@ COUCHDB_APPS = [
     ('fluff', 'fluff-opm'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
-    ('export', 'meta'),
-    ('callcenter', 'meta'),
+    ('export', META_DB),
+    ('callcenter', META_DB),
 
     # users and groups
     ('groups', USERS_GROUPS_DB),
@@ -1355,10 +1412,12 @@ COUCHDB_APPS = [
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
-    COUCH_DATABASE,
+    COUCH_DATABASES,
     COUCHDB_APPS,
     [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB, NEW_APPS_DB],
+    UNIT_TESTING
 )
+COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url
 COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
 EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
@@ -1417,10 +1476,6 @@ MESSAGE_TAGS = {
 
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
-# CommCare HQ - To indicate server
-COMMCARE_HQ_NAME = "CommCare HQ"
-# CommCare - To Indicate mobile
-COMMCARE_NAME = "CommCare"
 
 DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
@@ -1564,11 +1619,33 @@ PILLOWTOPS = {
             'name': 'kafka-ucr-main',
             'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
+        },
+        {
+            'name': 'kafka-ucr-main-08',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+            'params': {
+                'ucr_division': '08'
+            }
+        },
+        {
+            'name': 'kafka-ucr-main-9f',
+            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
+            'params': {
+                'ucr_division': '9f'
+            }
         },
         {
             'name': 'kafka-ucr-static',
             'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
         },
         {
             'name': 'ReportCaseToElasticsearchPillow',
@@ -1601,18 +1678,10 @@ PILLOWTOPS = {
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
-        'custom.m4change.models.AncHmisCaseFluffPillow',
-        'custom.m4change.models.LdHmisCaseFluffPillow',
-        'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
-        'custom.m4change.models.ProjectIndicatorsCaseFluffPillow',
-        'custom.m4change.models.McctMonthlyAggregateFormFluffPillow',
-        'custom.m4change.models.AllHmisCaseFluffPillow',
+        'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.CouvertureFluffPillow',
-        'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassageFluffPillow',
-        'custom.intrahealth.models.TauxDeRuptureFluffPillow',
-        'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.intrahealth.models.IntraHealthFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
@@ -1621,29 +1690,7 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
-    'mvp_indicators': [
-        {
-            'name': 'MVPCaseIndicatorPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'mvp_docs.pillows.get_mvp_case_indicator_pillow',
-        },
-        {
-            'name': 'MVPFormIndicatorPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'mvp_docs.pillows.get_mvp_form_indicator_pillow',
-        },
-    ],
     'experimental': [
-        {
-            'name': 'BlobDeletionPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_main_blob_deletion_pillow',
-        },
-        {
-            'name': 'ApplicationBlobDeletionPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_application_blob_deletion_pillow',
-        },
         {
             'name': 'CaseSearchToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1669,7 +1716,10 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsTreatmentOutcomeRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater'
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
@@ -1690,6 +1740,9 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_lactating.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_pregnancies.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_4_6_infrastructure.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_block.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_district.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_individual.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_individual_issues.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_block.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_ticket_level.json'),
@@ -1750,7 +1803,10 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patient_overview_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patients_due_to_follow_up.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_treatment_outcome_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_treatment_outcome.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_general.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_tb_hiv.json')
 ]
 
 
@@ -1777,6 +1833,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
@@ -1789,6 +1846,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
 
@@ -1852,9 +1910,13 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
+    ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
     ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
-    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression')
+    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression'),
+    ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
+    ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
+    ('month_expression', 'custom.enikshay.expressions.month_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -1981,3 +2043,4 @@ _raven_config = helper.configure_sentry(
 if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
+    SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'

@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "config": {
     "table_id": "static-gm_forms",
     "display_name": "Forms - Growth Monitoring (Static)",
@@ -53,7 +57,8 @@
         "transform": {},
         "is_nullable": true,
         "type": "expression",
-        "column_id": "awc_id"
+        "column_id": "awc_id",
+        "create_index": true
       },
       {
         "display_name": "Supervisor ID",
@@ -89,7 +94,8 @@
         "transform": {},
         "is_nullable": true,
         "type": "expression",
-        "column_id": "supervisor_id"
+        "column_id": "supervisor_id",
+        "create_index": true
       },
       {
         "display_name": "Block ID",
@@ -628,6 +634,10 @@
         "property_value": "F"
       }
     },
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

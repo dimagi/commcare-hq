@@ -5,134 +5,9 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'reports/js/reports.util.js' %}"></script>
     <script src="{% static 'reports/js/reports.config.js' %}"></script>
+    <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
     <script src="{% static 'reports/js/saved_reports.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function(){
-            var $editReportButton = $("#edit-report-link");
-
-            {% if report.spec.report_meta.created_by_builder %}
-
-            var $applyFiltersButton = $("#apply-filters");
-            $applyFiltersButton.click(function(){
-                window.analytics.usage("Report Viewer", "Apply Filters", '{{ report.spec.report_meta.builder_report_type }}');
-            });
-            gaTrackLink($editReportButton, 'Report Builder', 'Edit Report', '{{ report.spec.report_meta.builder_report_type }}');
-            window.analytics.trackWorkflowLink($editReportButton, "Clicked Edit to enter the Report Builder");
-            window.analytics.usage("Report Viewer", "View Report", '{{ report.spec.report_meta.builder_report_type }}');
-
-            {% else %}
-            gaTrackLink($editReportButton, 'Edit UCR', 'Edit UCR');
-            {% endif %}
-
-            {% for event in report_builder_events %}
-            window.analytics.usage.apply(this, {{ event|JSON }});
-            {% endfor %}
-        });
-    </script>
-    {% if not report.is_static %}
-    <script>
-        $(function(){
-            // Poll the status of the data source
-            var retrying = false;
-            (function poll() {
-                $.ajax({
-                    url: "{% url 'configurable_data_source_status' domain report.spec.config_id %}",
-                    dataType: 'json',
-                    success: function(data) {
-                        if (data.isBuilt){
-                            $('#built-warning').addClass('hide');
-                            if (retrying){
-                                location.reload();
-                            } else if ($('#report-filters').find('.control-label').length === 0) {
-                                $('#report-filters').submit();
-                            }
-                        } else {
-                            retrying = true;
-                            $('#built-warning').removeClass('hide');
-                            setTimeout(poll, 5000);
-                        }
-                    }
-                });
-            })();
-        });
-    </script>
-    {% endif %}
-    <script>
-        var urlSerialize = hqImport('reports/js/reports.util.js').urlSerialize;
-        var standardHQReport = new HQReport({
-            domain: '{{ domain }}',
-            urlRoot: '{{ report.url_root }}',
-            slug: {{ report.slug|JSON }},
-            subReportSlug: {{ report.sub_slug|JSON }},
-            type: {{ report.type|JSON }},
-            filterSet: {{ report.filter_set|JSON }},
-            needsFilters: {{ report.needs_filters|JSON }},
-            isExportable: {{ report.is_exportable|JSON }},
-            checkExportSize: true,
-            isExportAll: {{ report.is_export_all|JSON }},
-            isEmailable: {{ report.is_emailable|JSON }},
-            emailDefaultSubject: {{ report.title|JSON }},
-            emailSuccessMessage: "{% trans 'Report successfully emailed' %}",
-            emailErrorMessage: "{% trans 'An error occurred emailing you report. Please try again.' %}",
-            getReportRenderUrl: function(renderType, additionalParams) {
-                var params = urlSerialize($('#paramSelectorForm'), ['format']);
-                return window.location.pathname + "?format=" + renderType + "&" + params;
-            },
-            getExportSizeCheckUrl: function() {
-                var params = urlSerialize($('#paramSelectorForm'), ['format']);
-                return window.location.pathname + "?format=export_size_check" + "&" + params;
-            },
-
-            {% if request.datespan %}
-                datespan: {
-                    startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
-                    enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
-                },
-            {% endif %}
-        });
-        standardHQReport.init();
-
-        // Bind the ReportConfigsViewModel to the save button.
-        var defaultConfig = {{ default_config|JSON }};
-        {% if report.has_datespan %}
-            if(!defaultConfig.date_range) {
-                defaultConfig.date_range = 'last7';
-            }
-            defaultConfig.has_ucr_datespan = true;
-            defaultConfig.datespan_filters = {{ datespan_filters|JSON }};
-        {% else %}
-            defaultConfig.date_range = null;
-            defaultConfig.has_ucr_datespan = false;
-            defaultConfig.datespan_filters = [];
-        {% endif %}
-        if(!defaultConfig.datespan_slug) {
-            defaultConfig.datespan_slug = null;
-        }
-        $("#savedReports").reportUserConfigurableConfigEditor({
-            filterForm: $("#paramSelectorForm"),
-            items: {{ report_configs|JSON }},
-            defaultItem: defaultConfig,
-            saveUrl: '{% url "add_report_config" domain %}'
-        });
-
-        $('#email-enabled').tooltip({
-            placement: 'right',
-            html: true,
-            title: '{% trans "You can email a saved version<br />of this report." %}'
-        });
-    </script>
-    {% if report.spec.report_meta.created_by_builder %}
-        <script>
-            window.analytics.usage(
-                    'Report Builder',
-                    '{{ report.spec.report_meta.builder_report_type }}',
-                    'Load a report that was built in report builder'
-            )
-        </script>
-    {% endif %}
+    <script src="{% static 'userreports/js/configurable_report.js' %}"></script>
 {% endblock %}
 
 {% block report_alerts %}
@@ -149,6 +24,32 @@
 {% endblock %}
 
 {% block page_actions %}
+    {% registerurl 'configurable_data_source_status' domain report.spec.config_id %}
+    {% registerurl 'add_report_config' domain %}
+    {% initial_page_data 'standardHQReport' True %}
+    {% initial_page_data 'created_by_builder' report.spec.report_meta.created_by_builder %}
+    {% initial_page_data 'builder_report_type' report.spec.report_meta.builder_report_type %}
+    {% initial_page_data 'report_builder_events' report_builder_events %}
+    {% initial_page_data 'is_static' report.is_static %}
+    {% initial_page_data 'default_config' default_config %}
+    {% initial_page_data 'report_configs' report_configs %}
+    {% initial_page_data 'has_datespan' report.has_datespan %}
+    {% initial_page_data 'datespan_filters' datespan_filters %}
+    {% if request.datespan %}
+        {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
+        {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
+    {% endif %}
+    {% initial_page_data 'domain' domain %}
+    {% initial_page_data 'url_root' report.url_root %}
+    {% initial_page_data 'slug' report.slug %}
+    {% initial_page_data 'sub_slug' report.sub_slug %}
+    {% initial_page_data 'type' report.type %}
+    {% initial_page_data 'filter_set' report.filter_set %}
+    {% initial_page_data 'needs_filters' report.needs_filters %}
+    {% initial_page_data 'is_exportable' report.is_exportable %}
+    {% initial_page_data 'is_export_all' report.is_export_all %}
+    {% initial_page_data 'is_emailable' report.is_emailable %}
+    {% initial_page_data 'title' report.title %}
 
     {% if has_report_builder_trial %}
     <a class="btn btn-success" href="{% url 'report_builder_paywall_pricing' domain %}">

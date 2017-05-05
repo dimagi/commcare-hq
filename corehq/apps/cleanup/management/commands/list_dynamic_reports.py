@@ -7,11 +7,10 @@ from corehq.apps.domain.models import Domain
 
 class Command(BaseCommand):
 
-    def handle(self, *args, **options):
-        if len(args) != 1:
-            print('usage is ./manage.py list_dynamic_reports filename')
-            sys.exit(1)
-        filename = args[0]
+    def add_arguments(self, parser):
+        parser.add_argument('filename')
+
+    def handle(self, filename, **options):
         with open(filename, 'wb') as f:
             writer = csv.writer(f)
             writer.writerow(['domain', 'section', 'type', 'report'])

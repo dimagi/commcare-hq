@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter

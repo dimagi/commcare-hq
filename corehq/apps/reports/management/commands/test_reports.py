@@ -4,10 +4,8 @@ from corehq.apps.reports.tasks import daily_reports, weekly_reports
 
 class Command(BaseCommand):
     help = "Tests sending reports. Equvalent to firing the celery tasks right NOW."
-    args = ""
-    label = ""
     
-    def handle(self, *args, **options):
+    def handle(self, **options):
         daily_reports()
         weekly_reports()
         

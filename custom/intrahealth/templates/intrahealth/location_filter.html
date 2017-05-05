@@ -12,7 +12,6 @@
 
 <script type="text/javascript">
 
-    var LOAD_LOCS_URL = '{{ api_root }}';
     var REQUIRED = {{ required }}
 
     $.when(
@@ -22,8 +21,17 @@
         var locs = {{ locations|safe }};
         var selected = '{{ loc_id }}';
         var hierarchy = {{ hierarchy|JSON }};
+        var location_url = '{{ api_root }}';
 
-        var model = new LocationSelectViewModel(hierarchy, false, null, false, IntrahealthLocModel);
+        var model = new LocationSelectViewModel({
+            "hierarchy": hierarchy,
+            "default_caption": false,
+            "auto_drill": null,
+            "loc_filter": false,
+            "loc_url": location_url,
+            "func": IntrahealthLocModel
+        });
+
         $('#group_{{ control_slug }}').koApplyBindings(model);
         model.load(locs, selected);
     });

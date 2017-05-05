@@ -1,6 +1,6 @@
 from dropbox.client import DropboxOAuth2Flow
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.views.generic import View
 

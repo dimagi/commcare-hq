@@ -11,7 +11,7 @@ from corehq.pillows.reportcase import get_report_case_reindexer
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
 from pillowtop.es_utils import initialize_index_and_mapping
-from testapps.test_pillowtop.utils import process_kafka_changes, process_couch_changes
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 DOMAIN = 'report-case-pillowtest-domain'
 
@@ -56,8 +56,8 @@ class ReportCasePillowTest(TestCase):
     def _create_case_and_sync_to_es(self, domain):
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        with process_kafka_changes('ReportCaseToElasticsearchPillow'):
-            with process_couch_changes('DefaultChangeFeedPillow'):
+        with process_pillow_changes('ReportCaseToElasticsearchPillow'):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
                 create_and_save_a_case(domain, case_id, case_name)
         self.elasticsearch.indices.refresh(REPORT_CASE_INDEX_INFO.index)
         return case_id, case_name

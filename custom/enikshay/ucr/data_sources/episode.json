@@ -10,6 +10,9 @@
         "enikshay-aks-audit",
         "np-migration-3"
     ],
+    "server_environment": [
+        "softlayer"
+    ],
     "config": {
         "referenced_doc_type": "CommCareCase",
         "engine_id": "ucr",
@@ -88,6 +91,35 @@
                     "datatype": null,
                     "type": "property_name",
                     "property_name": "owner_id"
+                }
+            },
+            {
+                "display_name": "date_of_diagnosis",
+                "transform": {
+                },
+                "datatype": "date",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "date_of_diagnosis",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "date_of_diagnosis"
+                }
+            },
+            {
+                "display_name": "treatment_initiation_date",
+                "transform": {
+                },
+                "datatype": "date",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "treatment_initiation_date",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "treatment_initiation_date"
                 }
             },
             {
@@ -342,7 +374,7 @@
                     "value_expression": {
                         "datatype": "string",
                         "type": "property_name",
-                        "property_name": "contact_phone_number"
+                        "property_name": "phone_number"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
@@ -466,9 +498,26 @@
                 "datatype": "string",
                 "type": "expression",
                 "expression": {
-                    "datatype": "string",
-                    "type": "property_name",
-                    "property_name": "key_populations"
+                    "type": "conditional",
+                    "test": {
+                        "operator": "not_eq",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "key_populations"
+                        },
+                        "property_value": ""
+                    },
+                    "expression_if_true": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "key_populations"
+                    },
+                    "expression_if_false": {
+                        "constant": "none",
+                        "type": "constant"
+                    }
                 },
                 "column_id": "key_populations"
             },
@@ -640,6 +689,21 @@
                 "column_id": "basis_of_diagnosis"
             },
             {
+                "display_name": "adherence_schedule_id",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "adherence_schedule_id"
+                },
+                "column_id": "adherence_schedule_id"
+            },
+            {
                 "display_name": "not_microbiological_basis_of_diagnosis",
                 "datatype": "string",
                 "type": "expression",
@@ -784,41 +848,20 @@
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "reduce_items",
-                        "items_expression": {
-                            "type": "sort_items",
-                            "items_expression": {
-                                "type": "filter_items",
-                                "items_expression": {
-                                    "type": "get_case_forms",
-                                    "case_id_expression": {
-                                        "type": "nested",
-                                        "argument_expression": {
-                                            "type": "named",
-                                            "name": "latest_diagnostic_test_case"
-                                        },
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "_id"
-                                        }
-                                    }
-                                },
-                                "filter_expression": {
-                                    "type": "boolean_expression",
-                                    "operator": "eq",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "xmlns"
-                                    },
-                                    "property_value": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3"
-                                }
+                        "type": "first_case_form_with_xmlns",
+                        "case_id_expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "latest_diagnostic_test_case"
                             },
-                            "sort_expression": {
+                            "value_expression": {
                                 "type": "property_name",
-                                "property_name": "received_on"
+                                "property_name": "_id"
                             }
                         },
-                        "aggregation_fn": "last_item"
+                        "xmlns": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3",
+                        "reverse": true
                     },
                     "value_expression": {
                         "type": "property_path",
@@ -880,41 +923,20 @@
                     "doc_id_expression":{
                         "type": "nested",
                         "argument_expression": {
-                            "type": "reduce_items",
-                            "items_expression": {
-                                "type": "sort_items",
-                                "items_expression": {
-                                    "type": "filter_items",
-                                    "items_expression": {
-                                        "type": "get_case_forms",
-                                        "case_id_expression": {
-                                            "type": "nested",
-                                            "argument_expression": {
-                                                "type": "named",
-                                                "name": "latest_diagnostic_test_case"
-                                            },
-                                            "value_expression": {
-                                                "type": "property_name",
-                                                "property_name": "_id"
-                                            }
-                                        }
-                                    },
-                                    "filter_expression": {
-                                        "type": "boolean_expression",
-                                        "operator": "eq",
-                                        "expression": {
-                                            "type": "property_name",
-                                            "property_name": "xmlns"
-                                        },
-                                        "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
-                                    }
+                            "type": "first_case_form_with_xmlns",
+                            "case_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_diagnostic_test_case"
                                 },
-                                "sort_expression": {
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "received_on"
+                                    "property_name": "_id"
                                 }
                             },
-                            "aggregation_fn": "last_item"
+                            "xmlns": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F",
+                            "reverse": true
                         },
                         "value_expression": {
                             "type": "property_path",
@@ -947,7 +969,7 @@
             {
                 "display_name": "microbiological_test_facility_referred_to",
                 "column_id": "microbiological_test_facility_referred_to",
-                "datatype": "date",
+                "datatype": "string",
                 "type": "expression",
                 "expression": {
                     "type": "nested",
@@ -969,50 +991,12 @@
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "reduce_items",
-                        "items_expression": {
-                            "type": "sort_items",
-                            "items_expression": {
-                                "type": "filter_items",
-                                "items_expression": {
-                                    "type": "get_case_forms",
-                                    "case_id_expression": {
-                                        "type": "nested",
-                                        "argument_expression": {
-                                            "type": "named",
-                                            "name": "latest_microbiological_test_case"
-                                        },
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "_id"
-                                        }
-                                    }
-                                },
-                                "filter_expression": {
-                                    "type": "boolean_expression",
-                                    "operator": "eq",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "xmlns"
-                                    },
-                                    "property_value": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3"
-                                }
-                            },
-                            "sort_expression": {
-                                "type": "property_name",
-                                "property_name": "received_on"
-                            }
-                        },
-                        "aggregation_fn": "last_item"
+                        "type": "named",
+                        "name": "latest_microbiological_test_case"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "microscopy",
-                            "ql_microscopy",
-                            "lab_serial_number"
-                        ]
+                        "type": "property_name",
+                        "property_name": "lab_serial_number"
                     }
                 }
             },
@@ -1070,7 +1054,7 @@
             {
                 "display_name": "endofip_test_facility_referred_to",
                 "column_id": "endofip_test_facility_referred_to",
-                "datatype": "date",
+                "datatype": "string",
                 "type": "expression",
                 "expression": {
                     "type": "nested",
@@ -1121,7 +1105,7 @@
             {
                 "display_name": "endofcp_test_facility_referred_to",
                 "column_id": "endofcp_test_facility_referred_to",
-                "datatype": "date",
+                "datatype": "string",
                 "type": "expression",
                 "expression": {
                     "type": "nested",
@@ -1200,41 +1184,20 @@
                     "doc_id_expression":{
                         "type": "nested",
                         "argument_expression": {
-                            "type": "reduce_items",
-                            "items_expression": {
-                                "type": "sort_items",
-                                "items_expression": {
-                                    "type": "filter_items",
-                                    "items_expression": {
-                                        "type": "get_case_forms",
-                                        "case_id_expression": {
-                                            "type": "nested",
-                                            "argument_expression": {
-                                                "type": "named",
-                                                "name": "latest_microbiological_test_case"
-                                            },
-                                            "value_expression": {
-                                                "type": "property_name",
-                                                "property_name": "_id"
-                                            }
-                                        }
-                                    },
-                                    "filter_expression": {
-                                        "type": "boolean_expression",
-                                        "operator": "eq",
-                                        "expression": {
-                                            "type": "property_name",
-                                            "property_name": "xmlns"
-                                        },
-                                        "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
-                                    }
+                            "type": "first_case_form_with_xmlns",
+                            "reverse": true,
+                            "xmlns": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F",
+                            "case_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_microbiological_test_case"
                                 },
-                                "sort_expression": {
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "received_on"
+                                    "property_name": "_id"
                                 }
-                            },
-                            "aggregation_fn": "last_item"
+                            }
                         },
                         "value_expression": {
                             "type": "property_path",
@@ -1269,13 +1232,66 @@
                 }
             },
             {
+                "display_name": "dosage_frequency",
+                "column_id": "dosage_frequency",
+                "datatype": "string",
+                "type": "expression",
+                "expression":{
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "complete_treatment_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "ql_weight_band_and_dosage",
+                            "dosage_frequency"
+                        ]
+                    }
+                }
+            },
+            {
                 "display_name": "type_of_regimen",
                 "column_id": "type_of_regimen",
                 "datatype": "string",
                 "type": "expression",
-                "expression":{
-                    "type": "property_name",
-                    "property_name": "regimen"
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "patient_type_choice"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "new"
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": "New"
+                    },
+                    "expression_if_false": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_initiated"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes_private"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": "Outside RNTCP"
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": "Previously Treated"
+                        }
+                    }
                 }
             },
             {
@@ -1463,6 +1479,23 @@
                 }
             },
             {
+                "column_id": "bacteriological_test_date_reported",
+                "display_name": "bacteriological_test_date_reported",
+                "type": "expression",
+                "datatype": "date",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "bacteriological_examination_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "date_reported"
+                    }
+                }
+            },
+            {
                 "display_name": "ip_initiation_date",
                 "datatype": "string",
                 "type": "expression",
@@ -1476,29 +1509,6 @@
                     "property_name": "ip_initiation_date"
                 },
                 "column_id": "ip_initiation_date"
-            },
-            {
-                "display_name": "dosage_frequency",
-                "datatype": "string",
-                "type": "expression",
-                "is_primary_key": false,
-                "transform": {
-                },
-                "is_nullable": true,
-                "expression": {
-                    "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "dosage_frequency"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "type": "named",
-                        "name": "person_id"
-                    }
-                },
-                "column_id": "dosage_frequency"
             },
             {
                 "display_name": "treatment_outcome_date",
@@ -3880,6 +3890,33 @@
             },
             {
                 "type": "boolean",
+                "column_id": "successfully_treated",
+                "filter": {
+                    "type": "or",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "cured"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "treatment_complete"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
                 "column_id": "died",
                 "filter": {
                     "type": "boolean_expression",
@@ -3941,6 +3978,204 @@
                         "property_name": "treatment_outcome"
                     },
                     "property_value": "not_evaluated"
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_cured",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "cured"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_treatment_complete",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "treatment_complete"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_successfully_treated",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "or",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_outcome"
+                                    },
+                                    "property_value": "cured"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_outcome"
+                                    },
+                                    "property_value": "treatment_complete"
+                                }
+                            ]
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_died",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "died"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_failure",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "failure"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_loss_to_follow_up",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "loss_to_follow_up"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_regimen_changed",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "regimen_changed"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_not_evaluated",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "not_evaluated"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+
                 }
             },
             {
@@ -4174,27 +4409,12 @@
 
                         },
                         "map_expression": {
-                            "type": "reduce_items",
-                            "items_expression": {
-                                "type": "filter_items",
-                                "items_expression": {
-                                    "type": "get_case_forms",
-                                    "case_id_expression": {
-                                        "type": "property_name",
-                                        "property_name": "_id"
-                                    }
-                                },
-                                "filter_expression": {
-                                    "type": "boolean_expression",
-                                    "operator": "eq",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "xmlns"
-                                    },
-                                    "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
-                                }
-                            },
-                            "aggregation_fn": "count"
+                            "type": "count_case_forms_with_xmlns",
+                            "xmlns": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F",
+                            "case_id_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
                         }
                     },
                     "aggregation_fn": "sum"
@@ -4245,27 +4465,12 @@
 
                         },
                         "map_expression": {
-                            "type": "reduce_items",
-                            "items_expression": {
-                                "type": "filter_items",
-                                "items_expression": {
-                                    "type": "get_case_forms",
-                                    "case_id_expression": {
-                                        "type": "property_name",
-                                        "property_name": "_id"
-                                    }
-                                },
-                                "filter_expression": {
-                                    "type": "boolean_expression",
-                                    "operator": "eq",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "xmlns"
-                                    },
-                                    "property_value": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3"
-                                }
-                            },
-                            "aggregation_fn": "count"
+                            "type": "count_case_forms_with_xmlns",
+                            "xmlns": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3",
+                            "case_id_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
                         }
                     },
                     "aggregation_fn": "sum"
@@ -5211,6 +5416,670 @@
                 },
                 "type": "boolean",
                 "column_id": "case_created_by_migration"
+            },
+            {
+                "filter": {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "patient_type_choice"
+                    },
+                    "property_value": [
+                        "new",
+                        "recurrent"
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "operator": "lte",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "datatype": "integer",
+                                "type": "named",
+                                "name": "age"
+                            },
+                            "property_value": 14
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_under_14"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_transgender"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_male"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_female"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_reactive"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "initiated_on_art"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_reactive_art_initiated"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cpt_initiated"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_reactive_cpt_initiated"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "or",
+                            "filters": [
+                                {
+                                    "operator": "eq",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_outcome"
+                                    },
+                                    "property_value": "died"
+                                },
+                                {
+                                    "operator": "eq",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_status"
+                                    },
+                                    "property_value": "died"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_reactive_died"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "property_value": [
+                                "new",
+                                "recurrent"
+                            ]
+                        },
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "named",
+                                "name": "hiv_status"
+                            },
+                            "property_value": [
+                                "reactive",
+                                "non_reactive"
+                            ]
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "column_id": "new_or_recurrent_patient_with_hiv_status"
+            },
+            {
+                "filter": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "case_definition"
+                    },
+                    "property_value": "microbiological"
+                },
+                "type": "boolean",
+                "column_id": "microbiological"
+            },
+            {
+                "filter": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "episode_type"
+                    },
+                    "property_value": "confirmed_tb"
+                },
+                "type": "boolean",
+                "column_id": "patient"
+            },
+            {
+                "filter": {
+                    "operator": "in",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "treatment_initiated"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": ["yes_phi", "yes_private"]
+                },
+                "type": "boolean",
+                "column_id": "treatment_initiated"
+            },
+            {
+                "display_name": "date_of_diagnosis_diff",
+                "column_id": "date_of_diagnosis_diff",
+                "datatype": "integer",
+                "type": "expression",
+                "expression": {
+                    "type": "diff_days",
+                    "to_date_expression": {
+                        "type": "property_name",
+                        "property_name": "date_of_diagnosis"
+                    },
+                    "from_date_expression": {
+                        "type": "add_days",
+                        "date_expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "complete_treatment_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "meta", "timeEnd"],
+                                "datatype": "date"
+                            }
+                        },
+                        "count_expression": {
+                            "type": "evaluator",
+                            "statement": "0 - a",
+                            "context_variables": {
+                                "a": {
+                                    "datatype": "integer",
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "named",
+                                        "name": "complete_treatment_form"
+                                    },
+                                    "value_expression": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "ql_treatment_admin_details",
+                                            "symptom_duration"
+                                        ],
+                                        "datatype": "integer"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "display_name": "treatment_initiation_date_diff",
+                "column_id": "treatment_initiation_date_diff",
+                "datatype": "integer",
+                "type": "expression",
+                "expression": {
+                    "type": "diff_days",
+                    "to_date_expression": {
+                        "type": "property_name",
+                        "property_name": "treatment_initiation_date"
+                    },
+                    "from_date_expression": {
+                        "type": "property_name",
+                        "property_name": "date_of_diagnosis"
+                    }
+                }
+            },
+            {
+                "display_name": "diagnosed_patient",
+                "column_id": "diagnosed_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "not",
+                    "filter": {
+                        "type": "boolean_expression",
+                        "operator": "in",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "date_of_diagnosis"
+                        },
+                        "property_value": [null, ""]
+                    }
+                }
+            },
+            {
+                "display_name": "screened_for_diabetes_patient",
+                "column_id": "screened_for_diabetes_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "in",
+                            "expression": {
+                                "value_expression": {
+                                    "datatype": "string",
+                                    "type": "property_name",
+                                    "property_name": "diabetes_status"
+                                },
+                                "type": "related_doc",
+                                "related_doc_type": "CommCareCase",
+                                "doc_id_expression": {
+                                    "datatype": null,
+                                    "type": "named",
+                                    "name": "person_id"
+                                }
+                            },
+                            "property_value": ["diabetic","non_diabetic"]
+                        }
+                    ]
+                }
+            },
+            {
+                "display_name": "diabetic_patient",
+                "column_id": "diabetic_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "value_expression": {
+                                    "datatype": "string",
+                                    "type": "property_name",
+                                    "property_name": "diabetes_status"
+                                },
+                                "type": "related_doc",
+                                "related_doc_type": "CommCareCase",
+                                "doc_id_expression": {
+                                    "datatype": null,
+                                    "type": "named",
+                                    "name": "person_id"
+                                }
+                            },
+                            "property_value": "diabetic"
+                        }
+                    ]
+                }
+            },
+            {
+                "display_name": "hiv_positive_patient",
+                "column_id": "hiv_positive_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                }
+            },
+            {
+                "display_name": "adt_initiated_patient",
+                "column_id": "adt_initiated_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "value_expression": {
+                                    "datatype": "string",
+                                    "type": "property_name",
+                                    "property_name": "adt_initiated"
+                                },
+                                "type": "related_doc",
+                                "related_doc_type": "CommCareCase",
+                                "doc_id_expression": {
+                                    "datatype": null,
+                                    "type": "named",
+                                    "name": "person_id"
+                                }
+                            },
+                            "property_value": "yes"
+                        }
+                    ]
+                }
+            },
+            {
+                "display_name": "pediatric_patient",
+                "column_id": "pediatric_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "operator": "lte",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "datatype": "integer",
+                                "type": "named",
+                                "name": "age"
+                            },
+                            "property_value": 14
+                        }
+                    ]
+                }
+            },
+            {
+                "display_name": "contacts_diagnosed",
+                "column_id": "contacts_diagnosed",
+                "type": "expression",
+                "datatype": "integer",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                      "type": "first_case_form_with_xmlns",
+                      "reverse": true,
+                      "xmlns": "http://openrosa.org/formdesigner/A800140B-A98B-47BF-A021-E69971A60B40",
+                      "case_id_expression": {
+                        "type": "named",
+                        "name": "occurrence_id"
+                      }
+                    },
+                    "value_expression": {
+                        "type": "evaluator",
+                        "statement": "(a if a else 0) + (b if b else 0)",
+                        "context_variables": {
+                            "a": {
+                                "datatype": "integer",
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_contact_details",
+                                     "ql_contacts_diagnosed",
+                                     "diagnosed_under_6"
+                                ]
+                            },
+                            "b": {
+                                "datatype": "integer",
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_contact_details",
+                                     "ql_contacts_diagnosed",
+                                     "diagnosed_over_6"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "display_name": "contacts_screened",
+                "column_id": "contacts_screened",
+                "datatype": "integer",
+                "type": "expression",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                      "type": "first_case_form_with_xmlns",
+                      "reverse": true,
+                      "xmlns": "http://openrosa.org/formdesigner/A800140B-A98B-47BF-A021-E69971A60B40",
+                      "case_id_expression": {
+                        "type": "named",
+                        "name": "occurrence_id"
+                      }
+                    },
+                    "value_expression": {
+                        "type": "evaluator",
+                        "statement": "(a if a else 0) + (b if b else 0)",
+                        "context_variables": {
+                            "a": {
+                                "datatype": "integer",
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_contact_details",
+                                     "ql_contacts_screened",
+                                     "screened_under_6"
+                                ]
+                            },
+                            "b": {
+                                "datatype": "integer",
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_contact_details",
+                                     "ql_contacts_screened",
+                                     "screened_over_6"
+                                ]
+                            }
+                        }
+                    }
+                }
             }
         ],
         "named_filters": {
@@ -6110,34 +6979,13 @@
                 "expression_if_true": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "reduce_items",
-                        "items_expression": {
-                            "type": "sort_items",
-                            "items_expression": {
-                                "type": "filter_items",
-                                "items_expression": {
-                                    "type": "get_case_forms",
-                                    "case_id_expression": {
-                                        "type": "property_name",
-                                        "property_name": "_id"
-                                    }
-                                },
-                                "filter_expression": {
-                                    "type": "boolean_expression",
-                                    "operator": "eq",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "xmlns"
-                                    },
-                                    "property_value": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3"
-                                }
-                            },
-                            "sort_expression": {
-                                "type": "property_name",
-                                "property_name": "received_on"
-                            }
-                        },
-                        "aggregation_fn": "last_item"
+                        "type": "first_case_form_with_xmlns",
+                        "reverse": true,
+                        "xmlns": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3",
+                        "case_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
                     },
                     "value_expression": {
                         "type":"concatenate_strings",
@@ -7007,41 +7855,29 @@
                 "aggregation_fn": "last_item"
             },
             "latest_microscopy_test_request_form": {
-                "type": "reduce_items",
-                "items_expression": {
-                    "type": "sort_items",
-                    "items_expression": {
-                        "type": "filter_items",
-                        "items_expression": {
-                            "type": "get_case_forms",
-                            "case_id_expression": {
-                                "type": "nested",
-                                "argument_expression": {
-                                    "type": "named",
-                                    "name": "latest_microscopy_test_case"
-                                },
-                                "value_expression": {
-                                    "type": "property_name",
-                                    "property_name": "_id"
-                                }
-                            }
-                        },
-                        "filter_expression": {
-                            "type": "boolean_expression",
-                            "operator": "eq",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "xmlns"
-                            },
-                            "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
-                        }
+                "type": "first_case_form_with_xmlns",
+                "reverse": true,
+                "xmlns": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F",
+                "case_id_expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "latest_microscopy_test_case"
                     },
-                    "sort_expression": {
+                    "value_expression": {
                         "type": "property_name",
-                        "property_name": "received_on"
+                        "property_name": "_id"
                     }
-                },
-                "aggregation_fn": "last_item"
+                }
+            },
+            "contact_tracing_form": {
+                "type": "first_case_form_with_xmlns",
+                "reverse": true,
+                "xmlns": "http://openrosa.org/formdesigner/A800140B-A98B-47BF-A021-E69971A60B40",
+                "case_id_expression": {
+                    "type": "named",
+                    "name": "occurrence_id"
+                }
             },
             "latest_diagnostic_mbr_test_case": {
                 "type": "reduce_items",
@@ -7641,34 +8477,13 @@
                     "aggregation_fn": "last_item"
                 },
                 "value_expression": {
-                    "type": "reduce_items",
-                    "items_expression": {
-                        "type": "sort_items",
-                        "items_expression": {
-                            "type": "filter_items",
-                            "items_expression": {
-                                "type": "get_case_forms",
-                                "case_id_expression": {
-                                    "type": "property_name",
-                                    "property_name": "_id"
-                                }
-                            },
-                            "filter_expression": {
-                                "type": "boolean_expression",
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "xmlns"
-                                },
-                                "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
-                            }
-                        },
-                        "sort_expression": {
-                            "type": "property_name",
-                            "property_name": "received_on"
-                        }
-                    },
-                    "aggregation_fn": "last_item"
+                    "type": "first_case_form_with_xmlns",
+                    "reverse": true,
+                    "xmlns": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F",
+                    "case_id_expression": {
+                        "type": "property_name",
+                        "property_name": "_id"
+                    }
                 }
             },
             "test_result_form": {
@@ -7708,34 +8523,13 @@
                     "aggregation_fn": "last_item"
                 },
                 "value_expression": {
-                    "type": "reduce_items",
-                    "items_expression": {
-                        "type": "sort_items",
-                        "items_expression": {
-                            "type": "filter_items",
-                            "items_expression": {
-                                "type": "get_case_forms",
-                                "case_id_expression": {
-                                    "type": "property_name",
-                                    "property_name": "_id"
-                                }
-                            },
-                            "filter_expression": {
-                                "type": "boolean_expression",
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "xmlns"
-                                },
-                                "property_value": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3"
-                            }
-                        },
-                        "sort_expression": {
-                            "type": "property_name",
-                            "property_name": "received_on"
-                        }
-                    },
-                    "aggregation_fn": "last_item"
+                    "type": "first_case_form_with_xmlns",
+                    "reverse": true,
+                    "xmlns": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3",
+                    "case_id_expression": {
+                        "type": "property_name",
+                        "property_name": "_id"
+                    }
                 }
             },
             "sample_receipt_form": {
@@ -7775,34 +8569,13 @@
                     "aggregation_fn": "last_item"
                 },
                 "value_expression": {
-                    "type": "reduce_items",
-                    "items_expression": {
-                        "type": "sort_items",
-                        "items_expression": {
-                            "type": "filter_items",
-                            "items_expression": {
-                                "type": "get_case_forms",
-                                "case_id_expression": {
-                                    "type": "property_name",
-                                    "property_name": "_id"
-                                }
-                            },
-                            "filter_expression": {
-                                "type": "boolean_expression",
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "xmlns"
-                                },
-                                "property_value": "http://openrosa.org/formdesigner/B139DDFB-13C5-4E89-8BE6-E74ACB9FCBBE"
-                            }
-                        },
-                        "sort_expression": {
-                            "type": "property_name",
-                            "property_name": "received_on"
-                        }
-                    },
-                    "aggregation_fn": "last_item"
+                    "type": "first_case_form_with_xmlns",
+                    "reverse": true,
+                    "xmlns": "http://openrosa.org/formdesigner/B139DDFB-13C5-4E89-8BE6-E74ACB9FCBBE",
+                    "case_id_expression": {
+                        "type": "property_name",
+                        "property_name": "_id"
+                    }
                 }
             },
             "suspect_registration": {
@@ -7842,34 +8615,13 @@
                     "aggregation_fn": "last_item"
                 },
                 "value_expression": {
-                    "type": "reduce_items",
-                    "items_expression": {
-                        "type": "sort_items",
-                        "items_expression": {
-                            "type": "filter_items",
-                            "items_expression": {
-                                "type": "get_case_forms",
-                                "case_id_expression": {
-                                    "type": "property_name",
-                                    "property_name": "_id"
-                                }
-                            },
-                            "filter_expression": {
-                                "type": "boolean_expression",
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "xmlns"
-                                },
-                                "property_value": "http://openrosa.org/formdesigner/1953B000-3BB5-4A6C-B5BB-D60BD17028D0"
-                            }
-                        },
-                        "sort_expression": {
-                            "type": "property_name",
-                            "property_name": "received_on"
-                        }
-                    },
-                    "aggregation_fn": "last_item"
+                    "type": "first_case_form_with_xmlns",
+                    "reverse": true,
+                    "xmlns": "http://openrosa.org/formdesigner/1953B000-3BB5-4A6C-B5BB-D60BD17028D0",
+                    "case_id_expression": {
+                        "type": "property_name",
+                        "property_name": "_id"
+                    }
                 }
             },
             "patient_registration": {
@@ -7909,66 +8661,22 @@
                     "aggregation_fn": "last_item"
                 },
                 "value_expression": {
-                    "type": "reduce_items",
-                    "items_expression": {
-                        "type": "sort_items",
-                        "items_expression": {
-                            "type": "filter_items",
-                            "items_expression": {
-                                "type": "get_case_forms",
-                                "case_id_expression": {
-                                    "type": "property_name",
-                                    "property_name": "_id"
-                                }
-                            },
-                            "filter_expression": {
-                                "type": "boolean_expression",
-                                "operator": "eq",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "xmlns"
-                                },
-                                "property_value": "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4"
-                            }
-                        },
-                        "sort_expression": {
-                            "type": "property_name",
-                            "property_name": "received_on"
-                        }
-                    },
-                    "aggregation_fn": "first_item"
+                    "type": "first_case_form_with_xmlns",
+                    "xmlns": "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4",
+                    "case_id_expression": {
+                        "type": "property_name",
+                        "property_name": "_id"
+                    }
                 }
             },
             "complete_treatment_form": {
-                "type": "reduce_items",
-                "items_expression": {
-                    "type": "sort_items",
-                    "items_expression": {
-                        "type": "filter_items",
-                        "items_expression": {
-                            "type": "get_case_forms",
-                            "case_id_expression": {
-                                "type": "property_name",
-                                "property_name": "_id"
-                            }
-                        },
-                        "filter_expression": {
-                            "type": "boolean_expression",
-                            "operator": "eq",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "xmlns"
-                            },
-                            "property_value": "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4"
-                        }
-                    },
-                    "sort_expression": {
-                        "type": "property_name",
-                        "property_name": "received_on"
-                    }
-                },
-                "aggregation_fn": "last_item"
-
+                "type": "first_case_form_with_xmlns",
+                "reverse": true,
+                "xmlns": "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4",
+                "case_id_expression": {
+                    "type": "property_name",
+                    "property_name": "_id"
+                }
             },
             "hiv_status": {
                 "value_expression": {
@@ -7986,8 +8694,12 @@
             "key_populations": {
                 "value_expression": {
                     "datatype": "string",
-                    "type": "property_name",
-                    "property_name": "key_populations"
+                    "type": "property_path",
+                    "property_path": [
+                        "form",
+                        "ql_patient_details",
+                        "key_populations"
+                    ]
                 },
                 "type": "related_doc",
                 "related_doc_type": "CommCareCase",

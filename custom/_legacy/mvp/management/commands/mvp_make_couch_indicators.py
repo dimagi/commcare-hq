@@ -63,10 +63,8 @@ SUM_LAST_UNIQUE_INICATORS = [
 
 class Command(BaseCommand):
     help = "Create the indicator definitions necessary to compute MVP Indicators."
-    args = ""
-    label = ""
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         all_indicators = DynamicIndicatorDefinition.view("indicators/dynamic_indicator_definitions",
             reduce=False,
             include_docs=True,

@@ -21,10 +21,6 @@ class TestLocationFilter(LocationHierarchyTestCase):
         ])
     ]
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestLocationFilter, cls).setUpClass()
-
     def setUp(self):
         super(TestLocationFilter, self).setUp()
         self.web_user = WebUser.create(self.domain, 'test', 'test')

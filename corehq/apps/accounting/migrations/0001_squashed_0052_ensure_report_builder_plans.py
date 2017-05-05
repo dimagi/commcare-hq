@@ -9,6 +9,7 @@ import django.db.models.deletion
 
 import jsonfield.fields
 
+from corehq.apps.accounting.bootstrap.config.enterprise import BOOTSTRAP_CONFIG as enterprise_config
 from corehq.apps.accounting.bootstrap.config.report_builder_v0 import BOOTSTRAP_CONFIG as report_builder_config
 from corehq.apps.accounting.bootstrap.config.resellers_and_managed_hosting import BOOTSTRAP_CONFIG as resellers_config
 from corehq.apps.accounting.bootstrap.config.user_buckets_jan_2017 import BOOTSTRAP_CONFIG as self_service_config
@@ -20,6 +21,7 @@ import corehq.util.mixin
 
 def _cchq_software_plan_bootstrap(apps, schema_editor):
     pricing_config = self_service_config
+    pricing_config.update(enterprise_config)
     pricing_config.update(report_builder_config)
     pricing_config.update(resellers_config)
     ensure_plans(pricing_config, verbose=True, apps=apps)

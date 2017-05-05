@@ -1,14 +1,18 @@
 from django.db import models
+from django.utils.translation import ugettext as _
 
 from dimagi.utils.couch import CriticalSection
 
 
 PROPERTY_TYPE_CHOICES = (
-    ('date', 'Date'),
-    ('plain', 'Plain'),
-    ('number', 'Number'),
-    ('select', 'Select'),
-    ('integer', 'Integer'),
+    ('date', _('Date')),
+    ('plain', _('Plain')),
+    ('number', _('Number')),
+    ('select', _('Select')),
+    ('barcode', _('Barcode')),
+    ('gps', _('GPS')),
+    ('phone_number', _('Phone Number')),
+    ('password', _('Password')),
     ('', 'No Type Currently Selected')
 )
 

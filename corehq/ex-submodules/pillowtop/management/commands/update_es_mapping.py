@@ -10,11 +10,14 @@ from corehq.pillows.utils import get_all_expected_es_indices
 
 class Command(BaseCommand):
     help = "Update an existing ES mapping. If there are conflicting changes this command will fail."
-    args = "[INDEX NAME or ALIAS]"
 
-    def handle(self, *args, **options):
-        if len(args) != 1: raise CommandError("Please specify the index name to update")
-        index_name = args[0]
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'index_name',
+            help='INDEX NAME or ALIAS',
+        )
+
+    def handle(self, index_name, **options):
         es_indices = list(get_all_expected_es_indices())
         indexes = [index for index in es_indices if index_name == index.alias or index_name == index.index]
 

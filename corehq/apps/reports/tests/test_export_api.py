@@ -2,7 +2,7 @@ from datetime import datetime
 import time
 import uuid
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test.client import Client
 from django.test import SimpleTestCase
 
@@ -89,6 +89,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         self.couch_user.delete()
         self._clear_docs()
+        self.domain.delete()
 
         self.teardown_subscription()
 

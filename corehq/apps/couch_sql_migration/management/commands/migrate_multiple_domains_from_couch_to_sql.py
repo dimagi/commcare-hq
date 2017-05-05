@@ -22,17 +22,16 @@ from couchforms.models import doc_types, XFormInstance
 
 
 class Command(BaseCommand):
-    args = "<path to domain list>"
 
     def add_arguments(self, parser):
+        parser.add_argument('path')
         parser.add_argument('--strict', action='store_true', default=False,
                             help="Abort domain migration even for diffs in deleted doc types")
 
-    def handle(self, *args, **options):
+    def handle(self, path, **options):
         with_traceback = options['traceback']
         self.strict = options['strict']
 
-        path = args[0]
         if not os.path.isfile(path):
             raise CommandError("Couldn't locate domain list: {}".format(path))
 

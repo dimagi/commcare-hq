@@ -32,7 +32,7 @@ def FakePillow():
 def GetDocPillow():
     return FakeConstructedPillow(
         name='GetDocPillow',
-        checkpoint=PillowCheckpoint('get_doc_processor'),
+        checkpoint=PillowCheckpoint('get_doc_processor', 'text'),
         change_feed=RandomChangeFeed(10),
         processor=GetDocProcessor(),
     )

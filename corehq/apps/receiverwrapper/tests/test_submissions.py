@@ -8,7 +8,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.util.test_utils import TestFileMixin
 from django.test.client import Client
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 import os
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
@@ -126,16 +126,16 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
 
     def test_case_ledger_form(self):
         form_xml = self.get_xml('case_ledger_form')
-        _, xform, cases = submit_form_locally(form_xml, domain=self.domain)
+        result = submit_form_locally(form_xml, domain=self.domain)
 
-        transaction = cases[0].get_transaction_by_form_id(xform.form_id)
+        transaction = result.cases[0].get_transaction_by_form_id(result.xform.form_id)
         self.assertTrue(transaction.is_form_transaction)
         self.assertTrue(transaction.is_case_create)
         self.assertTrue(transaction.is_case_close)
         self.assertTrue(transaction.is_ledger_transaction)
 
         form_xml = self.get_xml('case_ledger_form_2')
-        _, xform, cases = submit_form_locally(form_xml, domain=self.domain)
+        result = submit_form_locally(form_xml, domain=self.domain)
 
-        transaction = cases[0].get_transaction_by_form_id(xform.form_id)
+        transaction = result.cases[0].get_transaction_by_form_id(result.xform.form_id)
         self.assertTrue(transaction.is_form_transaction)

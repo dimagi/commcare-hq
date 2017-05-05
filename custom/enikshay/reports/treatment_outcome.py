@@ -1,5 +1,7 @@
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesColumnGroup, DataTablesHeader
+from custom.enikshay.reports.filters import TreatmentInitiationDateFilter, EnikshayLocationFilter, \
+    EnikshayMigrationFilter
 from custom.enikshay.reports.generic import EnikshayReport, EnikshayMultiReport
 from custom.enikshay.reports.const import TREATMENT_OUTCOMES
 from custom.enikshay.reports.sqldata.treatment_outcome_sql_data import TreatmentOutcomeSqlData
@@ -150,6 +152,7 @@ class CPTAndARTReport(EnikshayReport):
 
 @location_safe
 class TreatmentOutcomeReport(EnikshayMultiReport):
+    fields = (TreatmentInitiationDateFilter, EnikshayLocationFilter, EnikshayMigrationFilter)
 
     name = ugettext_lazy('Summary of Treatment Outcome')
     slug = 'treatment_outcome'

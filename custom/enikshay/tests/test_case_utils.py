@@ -54,7 +54,7 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         )
         self.assertEqual(len(fetched_cases), 3)
         self.assertItemsEqual(
-            ["2016-08-10", "2016-08-11", "2016-08-12"],
+            ["2016-08-10-00-00", "2016-08-11-00-00", "2016-08-12-00-00"],
             [case.case_id for case in fetched_cases]
         )
 
@@ -74,7 +74,7 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         )
         self.assertEqual(len(fetched_cases), 1)
         self.assertEqual(
-            "2016-08-10",
+            "2016-08-10-00-00",
             fetched_cases[0].case_id,
         )
 

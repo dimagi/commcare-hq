@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn

@@ -1,9 +1,9 @@
 import json
 from corehq.apps.data_interfaces.models import AutomaticUpdateRuleCriteria, AutomaticUpdateAction
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.style import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
 
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import AUTO_CASE_UPDATE_ENHANCEMENTS
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
 from django import forms
@@ -171,7 +171,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         return values
 
     def set_case_type_choices(self, initial):
-        case_types = [''] + list(CaseAccessors(self.domain).get_case_types())
+        case_types = [''] + list(get_case_types_for_domain_es(self.domain))
         if initial and initial not in case_types:
             # Include the deleted case type in the list of choices so that
             # we always allow proper display and edit of rules

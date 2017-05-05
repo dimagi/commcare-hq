@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import urllib
 from wsgiref.util import FileWrapper
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse, Http404, StreamingHttpResponse, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views.generic import View

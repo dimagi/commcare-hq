@@ -96,14 +96,20 @@ class CaseFindingSqlData(EnikshaySqlData):
     @property
     def filters(self):
         filters = super(CaseFindingSqlData, self).filters
-        filters.append(RawFilter('closed = 0'))
+        filters.append(RawFilter("episode_type = 'confirmed_tb'"))
         return filters
+
+    @property
+    def date_property(self):
+        return 'bacteriological_test_date_reported'
 
     @property
     def columns(self):
         test_type_filter = [
             RawFilter("bacteriological_examination = 1")
         ]
+
+        filters_without_episode_type = self.filters[:-1]
 
         return (
             generate_for_all_patient_types(
@@ -130,7 +136,7 @@ class CaseFindingSqlData(EnikshaySqlData):
                     '',
                     CountColumn(
                         'doc_id',
-                        filters=self.filters + test_type_filter + [
+                        filters=filters_without_episode_type + test_type_filter + [
                             RawFilter("bacteriological_test_episode_type = 'presumptive_tb'")
                         ],
                         alias='patients_with_presumptive_tb'
@@ -141,7 +147,7 @@ class CaseFindingSqlData(EnikshaySqlData):
                     CountColumn(
                         'doc_id',
                         filters=(
-                            self.filters + test_type_filter + [
+                            filters_without_episode_type + test_type_filter + [
                                 RawFilter("result_of_bacteriological_test = 'tb_detected'"),
                                 RawFilter("bacteriological_test_episode_type = 'presumptive_tb'")
                             ]

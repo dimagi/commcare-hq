@@ -72,7 +72,7 @@
               </div>
               {% endif %}
 
-              {% if app.advanced_app_builder or module.is_surveys %}
+              {% if app.advanced_app_builder or module.put_in_root %}
                   <div class="form-group">
                       <label class="col-sm-2 control-label">
                           {% trans "Menu Mode" %}
@@ -84,6 +84,9 @@
                           </select>
                       </div>
                   </div>
+              {% else %}
+                    {# grid display input depends on the value of put_in_root #}
+                    <input id="put_in_root" type="hidden" value="{% if module.put_in_root %}true{% else %}false{% endif %}" />
               {% endif %}
 
               {% if app.grid_display_for_some_modules %}
@@ -119,15 +122,23 @@
             </div>
           </div>
 
-           {% if app.advanced_app_builder %}
-           <div class="panel panel-appmanager">
-            <div class="panel-heading">
-              <h4 class="panel-title panel-title-nolink">{% trans "Advanced Settings" %}</h4>
+           {% if not module.is_surveys %}
+             {% if app.advanced_app_builder or module.case_list_form.form_id or module.case_list.show or module.task_list.show %}
+             <div class="panel panel-appmanager">
+              <div class="panel-heading">
+                <h4 class="panel-title panel-title-nolink">{% trans "Advanced Settings" %}</h4>
+              </div>
+              <div class="panel-body">
+                {% include 'app_manager/v2/partials/case_list_form_setting.html' %}
+
+                {% include 'app_manager/v2/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
+
+                {% if module.module_type == 'basic' and request.project.survey_management_enabled or module.task_list.show %}
+                    {% include 'app_manager/v1/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
+                {% endif %}
+              </div>
             </div>
-            <div class="panel-body">
-              {% include 'app_manager/v2/partials/case_list_form_setting.html' %}
-            </div>
-          </div>
+            {% endif %}
           {% endif %}
 
         {% endblock %}

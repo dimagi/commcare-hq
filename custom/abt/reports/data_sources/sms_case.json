@@ -452,7 +452,9 @@
             "benin": {
                 "default": 0,
                 "cases": {
-                    "Atacora": 270141
+                  "Atacora": 82986,
+                  "Donga": 196780,
+                  "Alibori": 163278
                 },
                 "type": "switch",
                 "switch_on": {
@@ -843,15 +845,14 @@
             "benin": {
                   "default": 0,
                   "cases": {
-                    "boukoumbe": 29090,
-                    "colby": 22044,
-                    "kérou": 40328,
-                    "kouande": 44275,
-                    "materi": 41474,
-                    "natitingou": 29385,
-                    "pehunco": 37137,
-                    "tanguieta": 13490,
-                    "toucoutouna": 12918
+                    "Kerou": 45000,
+                    "Pehunco": 37986,
+                    "Djougou": 138722,
+                    "Ouake": 31249,
+                    "Copargo": 26809,
+                    "Kandi": 74913,
+                    "Gogounou": 51244,
+                    "Segbana": 37121
                   },
                   "type": "switch",
                   "switch_on": {
@@ -859,7 +860,7 @@
                       "type": "property_path",
                       "property_path": [
                         "user_data",
-                        "level_2_data"
+                        "level_2_name"
                       ]
                     },
                     "type": "related_doc",
@@ -1241,7 +1242,7 @@
                 "Mnekezi": 2267,
                 "Mombasa": 4457,
                 "Mtundu": 1862,
-                "Mugango ": 6707,
+                "Mugango": 6707,
                 "Muganza": 2321,
                 "Murangi": 5446,
                 "Murusagamba": 6121,
@@ -1372,23 +1373,23 @@
             "benin": {
                   "default": 0,
                   "cases": {
-                    "natta": 15078,
-                    "manta": 14012,
-                    "cobly": 22044,
-                    "kérou_centre": 27741,
-                    "firou": 10128,
-                    "kaoubagou": 2459,
-                    "kouande": 17279,
-                    "guilimaro": 16308,
-                    "birni": 10688,
-                    "materi": 24510,
-                    "dassari": 16964,
-                    "perma": 13065,
-                    "natitingou_central_warehouse": 16320,
-                    "pehunco": 28313,
-                    "gnemasson": 8824,
-                    "taicou": 13490,
-                    "toucountouna": 12918
+                    "Firou": 14458,
+                    "Kerou": 30542,
+                    "Gnemasson": 8786,
+                    "Pehunco": 29200,
+                    "Barei": 38256,
+                    "Djougou 3": 33897,
+                    "Kolokonde": 33944,
+                    "Partago": 32625,
+                    "Semerè 1": 31249,
+                    "Copargo": 26809,
+                    "Angaradebou": 22539,
+                    "Kassakou": 23283,
+                    "Sonsoro": 29091,
+                    "Borodarou": 19435,
+                    "Sori": 31809,
+                    "Libante": 13300,
+                    "Piami": 23821
                   },
                   "type": "switch",
                   "switch_on": {
@@ -1396,7 +1397,7 @@
                       "type": "property_path",
                       "property_path": [
                         "user_data",
-                        "level_3_data"
+                        "level_3_name"
                       ]
                     },
                     "type": "related_doc",
@@ -1727,7 +1728,7 @@
             "Mali": 242684,
             "Madagascar": 311916,
             "kenya": 226827,
-            "benin": 270141
+            "benin": 443044
           },
           "type": "switch",
           "switch_on": {

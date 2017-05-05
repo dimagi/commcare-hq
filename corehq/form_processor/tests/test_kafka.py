@@ -12,7 +12,7 @@ from corehq.form_processor.utils import get_simple_form_xml, should_use_sql_back
 from corehq.util.test_utils import create_and_save_a_case, create_and_save_a_form
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.sample import TestProcessor
-from testapps.test_pillowtop.utils import process_kafka_changes, process_couch_changes
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 
 @use_sql_backend
@@ -44,12 +44,12 @@ class KafkaPublishingSQLTest(TestCase):
         # see: http://manage.dimagi.com/default.asp?228463 for context
         case_id = uuid.uuid4().hex
         form_xml = get_simple_form_xml(uuid.uuid4().hex, case_id)
-        submit_form_locally(form_xml, domain=self.domain)[1]
+        submit_form_locally(form_xml, domain=self.domain)
         self.assertEqual(1, len(CaseAccessors(self.domain).get_case_ids_in_domain()))
 
-        with process_kafka_changes(self.case_pillow):
-            with process_couch_changes('DefaultChangeFeedPillow'):
-                dupe_form = submit_form_locally(form_xml, domain=self.domain)[1]
+        with process_pillow_changes(self.case_pillow):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
+                dupe_form = submit_form_locally(form_xml, domain=self.domain).xform
                 self.assertTrue(dupe_form.is_duplicate)
 
         # check the case was republished
@@ -65,7 +65,7 @@ class KafkaPublishingSQLTest(TestCase):
         product_b = make_product(self.domain, 'B Product', 'prodcode_b')
         case_id = uuid.uuid4().hex
         form_xml = get_simple_form_xml(uuid.uuid4().hex, case_id)
-        submit_form_locally(form_xml, domain=self.domain)[1]
+        submit_form_locally(form_xml, domain=self.domain)
 
         # submit ledger data
         balances = (
@@ -79,9 +79,9 @@ class KafkaPublishingSQLTest(TestCase):
         form = submit_case_blocks(ledger_blocks, self.domain)[0]
 
         # submit duplicate
-        with process_kafka_changes(self.ledger_pillow):
-            with process_couch_changes('DefaultChangeFeedPillow'):
-                dupe_form = submit_form_locally(form.get_xml(), domain=self.domain)[1]
+        with process_pillow_changes(self.ledger_pillow):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
+                dupe_form = submit_form_locally(form.get_xml(), domain=self.domain).xform
                 self.assertTrue(dupe_form.is_duplicate)
 
         # confirm republished
@@ -131,8 +131,8 @@ class KafkaPublishingTest(TestCase):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
 
     def test_form_is_published(self):
-        with process_kafka_changes(self.form_pillow):
-            with process_couch_changes('DefaultChangeFeedPillow'):
+        with process_pillow_changes(self.form_pillow):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
                 form = create_and_save_a_form(self.domain)
 
         self.assertEqual(1, len(self.processor.changes_seen))
@@ -143,14 +143,14 @@ class KafkaPublishingTest(TestCase):
     def test_duplicate_form_published(self):
         form_id = uuid.uuid4().hex
         form_xml = get_simple_form_xml(form_id)
-        orig_form = submit_form_locally(form_xml, domain=self.domain)[1]
+        orig_form = submit_form_locally(form_xml, domain=self.domain).xform
         self.assertEqual(form_id, orig_form.form_id)
         self.assertEqual(1, len(self.form_accessors.get_all_form_ids_in_domain()))
 
-        with process_kafka_changes(self.form_pillow):
-            with process_couch_changes('DefaultChangeFeedPillow'):
+        with process_pillow_changes(self.form_pillow):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
                 # post an exact duplicate
-                dupe_form = submit_form_locally(form_xml, domain=self.domain)[1]
+                dupe_form = submit_form_locally(form_xml, domain=self.domain).xform
                 self.assertTrue(dupe_form.is_duplicate)
                 self.assertNotEqual(form_id, dupe_form.form_id)
                 if should_use_sql_backend(self.domain):
@@ -170,8 +170,8 @@ class KafkaPublishingTest(TestCase):
 
     def test_form_soft_deletions(self):
         form = create_and_save_a_form(self.domain)
-        with process_kafka_changes(self.form_pillow):
-            with process_couch_changes('DefaultChangeFeedPillow'):
+        with process_pillow_changes(self.form_pillow):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
                 form.soft_delete()
 
         self.assertEqual(1, len(self.processor.changes_seen))
@@ -180,8 +180,8 @@ class KafkaPublishingTest(TestCase):
         self.assertTrue(change_meta.is_deletion)
 
     def test_case_is_published(self):
-        with process_kafka_changes(self.case_pillow):
-            with process_couch_changes('DefaultChangeFeedPillow'):
+        with process_pillow_changes(self.case_pillow):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
                 case = create_and_save_a_case(self.domain, case_id=uuid.uuid4().hex, case_name='test case')
 
         self.assertEqual(1, len(self.processor.changes_seen))
@@ -191,8 +191,8 @@ class KafkaPublishingTest(TestCase):
 
     def test_case_deletions(self):
         case = create_and_save_a_case(self.domain, case_id=uuid.uuid4().hex, case_name='test case')
-        with process_kafka_changes(self.case_pillow):
-            with process_couch_changes('DefaultChangeFeedPillow'):
+        with process_pillow_changes(self.case_pillow):
+            with process_pillow_changes('DefaultChangeFeedPillow'):
                 case.soft_delete()
 
         self.assertEqual(1, len(self.processor.changes_seen))

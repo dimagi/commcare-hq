@@ -41,6 +41,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
     @classmethod
     def setUpClass(cls):
         super(BaseInvoiceTestCase, cls).setUpClass()
+        generator.bootstrap_test_plans()  # TODO - only call for subclasses that actually need the test plans
         cls.billing_contact = generator.create_arbitrary_web_user_name()
         cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
         cls.currency = generator.init_default_currency()
@@ -129,7 +130,6 @@ class TestInvoice(BaseInvoiceTestCase):
         account = BillingAccount.get_or_create_account_by_domain(
             domain, created_by=self.dimagi_user)[0]
         billing_contact = generator.arbitrary_contact_info(account, self.dimagi_user)
-        billing_contact.save()
         account.date_confirmed_extra_charges = datetime.date.today()
         account.save()
         tasks.generate_invoices()
@@ -147,71 +147,31 @@ class TestInvoice(BaseInvoiceTestCase):
 
     def test_date_due_not_set_small_invoice(self):
         """Date Due doesn't get set if the invoice is small"""
-        Subscription.objects.all().delete()
-        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
-
-        subscription_length = 5  # months
-        subscription_start_date = datetime.date(2016, 2, 23)
-        subscription_end_date = add_months_to_date(subscription_start_date, subscription_length)
-        subscription = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
-            date_start=subscription_start_date,
-            date_end=subscription_end_date,
-            plan_version=plan_version,
-        )
-
-        invoice_date_small = utils.months_from_date(subscription.date_start, 1)
+        invoice_date_small = utils.months_from_date(self.subscription.date_start, 1)
         tasks.generate_invoices(invoice_date_small)
-        small_invoice = subscription.invoice_set.first()
+        small_invoice = self.subscription.invoice_set.first()
 
         self.assertTrue(small_invoice.balance <= SMALL_INVOICE_THRESHOLD)
         self.assertIsNone(small_invoice.date_due)
 
     def test_date_due_set_large_invoice(self):
         """Date Due only gets set for a large invoice (> $100)"""
-        Subscription.objects.all().delete()
-        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ADVANCED)
-
-        subscription_length = 5  # months
-        subscription_start_date = datetime.date(2016, 2, 23)
-        subscription_end_date = add_months_to_date(subscription_start_date, subscription_length)
-        subscription = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
-            date_start=subscription_start_date,
-            date_end=subscription_end_date,
-            plan_version=plan_version
-        )
-
-        invoice_date_large = utils.months_from_date(subscription.date_start, 3)
+        self.subscription.plan_version = generator.subscribable_plan_version(SoftwarePlanEdition.ADVANCED)
+        self.subscription.save()
+        invoice_date_large = utils.months_from_date(self.subscription.date_start, 3)
         tasks.generate_invoices(invoice_date_large)
-        large_invoice = subscription.invoice_set.last()
+        large_invoice = self.subscription.invoice_set.last()
 
         self.assertTrue(large_invoice.balance > SMALL_INVOICE_THRESHOLD)
         self.assertIsNotNone(large_invoice.date_due)
 
     def test_date_due_gets_set_autopay(self):
         """Date due always gets set for autopay """
-        Subscription.objects.all().delete()
-        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
-
-        subscription_length = 4
-        subscription_start_date = datetime.date(2016, 2, 23)
-        subscription_end_date = add_months_to_date(subscription_start_date, subscription_length)
-        autopay_subscription = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
-            date_start=subscription_start_date,
-            date_end=subscription_end_date,
-            plan_version=plan_version
-        )
-
-        autopay_subscription.account.update_autopay_user(self.billing_contact, self.domain)
-        invoice_date_autopay = utils.months_from_date(autopay_subscription.date_start, 1)
+        self.subscription.account.update_autopay_user(self.billing_contact, self.domain)
+        invoice_date_autopay = utils.months_from_date(self.subscription.date_start, 1)
         tasks.generate_invoices(invoice_date_autopay)
 
-        autopay_invoice = autopay_subscription.invoice_set.last()
+        autopay_invoice = self.subscription.invoice_set.last()
         self.assertTrue(autopay_invoice.balance <= SMALL_INVOICE_THRESHOLD)
         self.assertIsNotNone(autopay_invoice.date_due)
 
@@ -220,18 +180,8 @@ class TestContractedInvoices(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestContractedInvoices, self).setUp()
-        generator.delete_all_subscriptions()
-
-        self.subscription_length = self.min_subscription_length
-        subscription_start_date = datetime.date(2016, 2, 23)
-        subscription_end_date = add_months_to_date(subscription_start_date, self.subscription_length)
-        self.subscription = generator.generate_domain_subscription(
-            self.account,
-            self.domain,
-            date_start=subscription_start_date,
-            date_end=subscription_end_date,
-            service_type=SubscriptionType.IMPLEMENTATION,
-        )
+        self.subscription.service_type = SubscriptionType.IMPLEMENTATION
+        self.subscription.save()
 
         self.invoice_date = utils.months_from_date(
             self.subscription.date_start,
@@ -439,7 +389,6 @@ class TestUserLineItem(BaseInvoiceTestCase):
         account = BillingAccount.get_or_create_account_by_domain(
             domain, created_by=self.dimagi_user)[0]
         billing_contact = generator.arbitrary_contact_info(account, self.dimagi_user)
-        billing_contact.save()
         account.date_confirmed_extra_charges = datetime.date.today()
         account.save()
 

@@ -1,6 +1,7 @@
 import pytz
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from django.utils.dateparse import parse_datetime
+from dateutil.parser import parse
 
 from corehq.apps.locations.models import SQLLocation
 
@@ -18,10 +19,13 @@ CASE_TYPE_ADHERENCE = "adherence"
 CASE_TYPE_OCCURRENCE = "occurrence"
 CASE_TYPE_EPISODE = "episode"
 CASE_TYPE_PERSON = "person"
+CASE_TYPE_LAB_REFERRAL = "lab_referral"
 CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
+CASE_TYPE_TEST = "test"
+CASE_TYPE_VOUCHER = "voucher"
 
 
-def get_parent_of_case(domain, case_id, parent_case_type):
+def get_all_parents_of_case(domain, case_id):
     case_accessor = CaseAccessors(domain)
     try:
         if not isinstance(case_id, basestring):
@@ -35,34 +39,53 @@ def get_parent_of_case(domain, case_id, parent_case_type):
 
     parent_case_ids = [
         indexed_case.referenced_id for indexed_case in child_case.indices
-        if indexed_case.referenced_type == parent_case_type
     ]
     parent_cases = case_accessor.get_cases(parent_case_ids)
-    open_parent_cases = [
+
+    return parent_cases
+
+
+def get_parent_of_case(domain, case_id, parent_case_type):
+    parent_cases = get_all_parents_of_case(domain, case_id)
+    case_type_open_parent_cases = [
         parent_case for parent_case in parent_cases
-        if not parent_case.closed
+        if not parent_case.closed and parent_case.type == parent_case_type
     ]
 
-    if not open_parent_cases:
+    if not case_type_open_parent_cases:
         raise ENikshayCaseNotFound(
             "Couldn't find any open {} cases for id: {}".format(parent_case_type, case_id)
         )
 
-    return open_parent_cases[0]
+    return case_type_open_parent_cases[0]
+
+
+def get_first_parent_of_case(domain, case_id, parent_case_type):
+    parent_cases = get_all_parents_of_case(domain, case_id)
+    case_type_parent_cases = [
+        parent_case for parent_case in parent_cases if parent_case.type == parent_case_type
+    ]
+
+    if not case_type_parent_cases:
+        raise ENikshayCaseNotFound(
+            "Couldn't find any {} cases for id: {}".format(parent_case_type, case_id)
+        )
+
+    return case_type_parent_cases[0]
 
 
 def get_occurrence_case_from_episode(domain, episode_case_id):
     """
-    Gets the first open occurrence case for an episode
+    Gets the first occurrence case for an episode
     """
-    return get_parent_of_case(domain, episode_case_id, CASE_TYPE_OCCURRENCE)
+    return get_first_parent_of_case(domain, episode_case_id, CASE_TYPE_OCCURRENCE)
 
 
 def get_person_case_from_occurrence(domain, occurrence_case_id):
     """
-    Gets the first open person case for an occurrence
+    Gets the first person case for an occurrence
     """
-    return get_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
+    return get_first_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
 
 
 def get_person_case_from_episode(domain, episode_case_id):
@@ -154,9 +177,16 @@ def get_episode_case_from_adherence(domain, adherence_case_id):
     return get_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
 
 
+def get_occurrence_case_from_test(domain, test_case_id):
+    """
+        Gets the first open occurrence case for a test
+        """
+    return get_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
+
+
 def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
-    case_accessor = CaseAccessors(domain)
     episode = get_open_episode_case_from_person(domain, person_case_id)
+    case_accessor = CaseAccessors(domain)
     indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
     open_pertinent_adherence_cases = [
         case for case in indexed_cases
@@ -210,3 +240,56 @@ def get_person_locations(person_case):
         )
     except (KeyError, AttributeError) as e:
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
+
+
+def get_lab_referral_from_test(domain, test_case_id):
+    case_accessor = CaseAccessors(domain)
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([test_case_id])
+    lab_referral_cases = [case for case in reverse_indexed_cases if case.type == CASE_TYPE_LAB_REFERRAL]
+    if lab_referral_cases:
+        return lab_referral_cases[0]
+    else:
+        raise ENikshayCaseNotFound(
+            "test with id: {} exists but has no lab referral cases".format(test_case_id)
+        )
+
+
+def get_adherence_cases_by_day(domain, episode_case_id):
+    indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([episode_case_id])
+    adherence_cases = [
+        case for case in indexed_cases
+        if case.type == CASE_TYPE_ADHERENCE
+    ]
+
+    adherence = defaultdict(list)  # datetime.date -> list of adherence cases
+
+    for case in adherence_cases:
+        # adherence_date is in India timezone
+        adherence_datetime = parse(case.dynamic_case_properties().get('adherence_date'))
+        adherence[adherence_datetime.date()].append(case)
+
+    return adherence
+
+
+def get_person_case(domain, case_id):
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+    except CaseNotFound:
+        raise ENikshayCaseNotFound("Couldn't find case: {}".format(case_id))
+
+    case_type = case.type
+
+    if case_type == CASE_TYPE_PERSON:
+        return case_id
+    elif case_type == CASE_TYPE_EPISODE:
+        return get_person_case_from_episode(domain, case.case_id).case_id
+    elif case_type == CASE_TYPE_ADHERENCE:
+        episode_case = get_episode_case_from_adherence(domain, case.case_id)
+        return get_person_case_from_episode(domain, episode_case.case_id).case_id
+    elif case_type == CASE_TYPE_TEST:
+        occurrence_case = get_occurrence_case_from_test(domain, case.case_id)
+        return get_person_case_from_occurrence(domain, occurrence_case.case_id).case_id
+    elif case_type == CASE_TYPE_OCCURRENCE:
+        return get_person_case_from_occurrence(domain, case.case_id).case_id
+    else:
+        raise ENikshayCaseNotFound(u"Unknown case type: {}".format(case_type))

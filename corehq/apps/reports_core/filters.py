@@ -1,9 +1,12 @@
 from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, time
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.userreports.expressions.getters import transform_from_datatype
-from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, CHOICE_DELIMITER
+from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, CHOICE_DELIMITER, \
+    LocationDrilldownFilterValue
 from corehq.apps.userreports.util import localize
 from corehq.util.dates import iso_string_to_date, get_quarter_date_range
 
@@ -11,10 +14,12 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.conf import settings
+from django.urls import reverse
 import six
 from six.moves import range
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
+REQUEST_USER_KEY = 'request_user'
 
 
 class BaseFilter(object):
@@ -23,26 +28,44 @@ class BaseFilter(object):
     """
     template = None
     javascript_template = None
+    # setting this to True makes the report using the filter a location_safe report (has_location_filter())
+    location_filter = False
 
     def __init__(self, name, params=None):
         self.name = name
         self.params = params or []
 
-    def get_value(self, context, user=None):
+    def get_value(self, request_params, user=None):
+        """
+        Args:
+            request_params: is a dict of request.GET or request.POST params
+            user: couch-user object
+
+        Retruns:
+            selected or default filter value
+        """
         kwargs = {
-            "request_user": user
+            REQUEST_USER_KEY: user
         }
-        if self.check_context(context):
-            kwargs.update({param.name: context[param.name] for param in self.params if param.name in context})
+        if self.all_required_params_are_in_context(request_params):
+            kwargs.update(
+                {param.name: request_params[param.name] for param in self.params if param.name in request_params}
+            )
             return self.value(**kwargs)
         else:
-            return self.default_value(request_user=user)
+            return self.default_value(**kwargs)
 
-    def check_context(self, context):
+    def all_required_params_are_in_context(self, context):
         return all(slug.name in context for slug in self.params if slug.required)
 
     def value(self, **kwargs):
         """
+        Args:
+            kwargs: a dict of self.params and their values obtained from request
+
+        Returns:
+            Should return the value selected for this filter
+
         Override this and return the value. This method will only be called if all required
         parameters are present in the filter context. All the parameters present in the context
         will be passed in as keyword arguments.
@@ -60,19 +83,22 @@ class BaseFilter(object):
         """
         return None
 
-    def context(self, values, lang=None):
+    def context(self, request_params, request_user, lang=None):
         """
         Context for rendering the filter.
+
+        Args:
+            request_params: is a dict of request.GET or request.POST params
         """
         context = {
             'label': localize(self.label, lang),
             'css_id': self.css_id,
-            'value': values,
+            'value': self.get_value(request_params, request_user),
         }
-        context.update(self.filter_context())
+        context.update(self.filter_context(request_user))
         return context
 
-    def filter_context(self):
+    def filter_context(self, request_user):
         """
         Override to supply additional context.
         """
@@ -129,7 +155,7 @@ class DatespanFilter(BaseFilter):
         # default to "Show All Dates"
         return None
 
-    def filter_context(self):
+    def filter_context(self, request_user):
         return {
             'timezone': None
         }
@@ -165,7 +191,7 @@ class QuarterFilter(BaseFilter):
             years += [(SHOW_ALL_CHOICE, _('Show all'))]
         return years
 
-    def filter_context(self):
+    def filter_context(self, request_user):
         return {
             'years': self.years
         }
@@ -337,8 +363,9 @@ class DynamicChoiceListFilter(BaseFilter):
         self.url_generator = url_generator
         self.choice_provider = choice_provider
 
-    def context(self, values, lang=None):
-        context = super(DynamicChoiceListFilter, self).context(values, lang)
+    def context(self, request_params, request_user, lang=None):
+        values = self.get_value(request_params, request_user)
+        context = super(DynamicChoiceListFilter, self).context(request_params, request_user, lang)
         context['value'] = self._format_values_for_display(values)
         return context
 
@@ -354,7 +381,7 @@ class DynamicChoiceListFilter(BaseFilter):
 
     def value(self, **kwargs):
         selection = six.text_type(kwargs.get(self.name, ""))
-        user = kwargs.get("request_user", None)
+        user = kwargs.get(REQUEST_USER_KEY, None)
         if selection:
             choices = selection.split(CHOICE_DELIMITER)
             typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
@@ -368,3 +395,73 @@ class DynamicChoiceListFilter(BaseFilter):
                 return choice_provider_default
 
         return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
+
+
+class LocationDrilldownFilter(BaseFilter):
+    template = 'reports_core/filters/location_async/location_async.html'
+    javascript_template = 'reports_core/filters/location_async/location_async.js'
+    location_filter = True
+
+    def __init__(self, name, field, datatype, label, domain, include_descendants,
+                 max_drilldown_levels, css_id=None):
+        params = [
+            FilterParam(name, True),
+        ]
+        super(LocationDrilldownFilter, self).__init__(name=name, params=params)
+        self.datatype = datatype
+        self.field = field
+        self.label = label
+        self.css_id = css_id or self.name
+        self.domain = domain
+        self.include_descendants = include_descendants
+        self.max_drilldown_levels = max_drilldown_levels
+
+    @property
+    def api_root(self):
+        return reverse('api_dispatch_list', kwargs={'domain': self.domain,
+                                                    'resource_name': 'location_internal',
+                                                    'api_name': 'v0.5'})
+
+    @memoized
+    def user_location_id(self, user):
+        domain_membership = user.get_domain_membership(self.domain)
+        return domain_membership.location_id if domain_membership else None
+
+    def filter_context(self, request_user):
+        loc_id = self.user_location_id(request_user)
+        return {
+            'input_name': self.name,
+            'loc_id': loc_id,
+            'hierarchy': location_hierarchy_config(self.domain),
+            'locations': load_locs_json(self.domain, selected_loc_id=loc_id, user=request_user),
+            'loc_url': self.api_root,
+            'max_drilldown_levels': self.max_drilldown_levels,
+        }
+
+    def valid_location_ids(self, location_id):
+        if self.include_descendants:
+            return SQLLocation.objects.get_locations_and_children_ids([location_id])
+        else:
+            return [location_id]
+
+    def value(self, **kwargs):
+        selected_loc_id = kwargs.get(self.name, None)
+        if selected_loc_id:
+            return self.valid_location_ids(selected_loc_id)
+        else:
+            return self.default_value(kwargs.get(REQUEST_USER_KEY, None))
+
+    def default_value(self, request_user=None):
+        # Returns list of visible locations for the user if user is assigned to a location
+        #   or special value of SHOW_ALL or SHOW_NONE depending whether
+        #   user is domain-admin or not respectively
+        if request_user:
+            user_location_id = self.user_location_id(request_user)
+            if user_location_id:
+                return self.valid_location_ids(user_location_id)
+            elif request_user.is_domain_admin(self.domain):
+                return LocationDrilldownFilterValue.SHOW_ALL
+            else:
+                return LocationDrilldownFilterValue.SHOW_NONE
+        else:
+            return LocationDrilldownFilterValue.SHOW_NONE

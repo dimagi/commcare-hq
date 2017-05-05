@@ -210,11 +210,13 @@ class SubscriptionAdjustmentMethod(object):
     INTERNAL = "INTERNAL"
     TASK = "TASK"
     TRIAL = "TRIAL"
+    AUTOMATIC_DOWNGRADE = 'AUTOMATIC_DOWNGRADE'
     CHOICES = (
         (USER, "User"),
         (INTERNAL, "Ops"),
         (TASK, "Task (Invoicing)"),
         (TRIAL, "30 Day Trial"),
+        (AUTOMATIC_DOWNGRADE, "Automatic Downgrade"),
     )
 
 
@@ -767,7 +769,7 @@ class DefaultProductPlan(models.Model):
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
             raise AccountingError(
-                "No default product plan was set up, did you forget to run cchq_software_plan_bootstrap?"
+                "No default product plan was set up, did you forget to run migrations?"
             )
 
     @classmethod
@@ -956,38 +958,27 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
-        log_accounting_info("Starting _apply_upgrades_and_downgrades")
         _soft_assert_domain_not_loaded(isinstance(self.domain, six.string_types), "domain is object")
 
-        log_accounting_info("Check new_plan_version=%s" % str(new_plan_version))
+
         if new_plan_version is None:
             new_plan_version = DefaultProductPlan.get_default_plan_version()
 
-        log_accounting_info("Check downgraded_privileges=%s, upgraded_privileges=%s" % (
-            str(new_plan_version),
-            str(upgraded_privileges),
-        ))
         if downgraded_privileges is None or upgraded_privileges is None:
             change_status_result = get_change_status(None, new_plan_version)
             downgraded_privileges = downgraded_privileges or change_status_result.downgraded_privs
             upgraded_privileges = upgraded_privileges or change_status_result.upgraded_privs
 
-        log_accounting_info("Check downgraded_privileges=%s" % str(downgraded_privileges))
         if downgraded_privileges:
             Subscriber._process_downgrade(self.domain, downgraded_privileges, new_plan_version)
 
-        log_accounting_info("Check upgraded_privileges=%s" % str(upgraded_privileges))
         if upgraded_privileges:
             Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version)
-
-        log_accounting_info("Processed")
 
         if Subscriber.should_send_subscription_notification(old_subscription, new_subscription):
             send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
 
-        log_accounting_info("send signal")
         subscription_upgrade_or_downgrade.send_robust(None, domain=self.domain)
-        log_accounting_info("Exiting _apply_upgrades_and_downgrades")
 
     @staticmethod
     def should_send_subscription_notification(old_subscription, new_subscription):

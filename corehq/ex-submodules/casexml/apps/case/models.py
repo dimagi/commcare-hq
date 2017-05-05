@@ -13,7 +13,6 @@ import logging
 
 from django.core.cache import cache
 from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -159,7 +158,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
     representation of the case - the result of playing all
     the actions in sequence.
     """
-    _migrating_blobs_from_couch = True
 
     domain = StringProperty()
     export_tag = StringListProperty()

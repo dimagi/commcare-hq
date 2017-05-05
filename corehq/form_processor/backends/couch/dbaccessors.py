@@ -13,10 +13,9 @@ from corehq.apps.hqcase.dbaccessors import (
     get_open_case_ids,
     get_closed_case_ids,
     get_case_ids_in_domain_by_owner,
-    get_case_types_for_domain,
     get_cases_in_domain_by_external_id,
     get_deleted_case_ids_by_owner,
-)
+    get_all_case_owner_ids)
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
@@ -127,6 +126,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         ]
 
     @staticmethod
+    def case_exists(case_id):
+        return CommCareCase.get_db().doc_exist(case_id)
+
+    @staticmethod
     def get_case_xform_ids(case_id):
         return get_case_xform_ids(case_id)
 
@@ -188,10 +191,6 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_case_by_domain_hq_user_id(domain, user_id, case_type)
 
     @staticmethod
-    def get_case_types_for_domain(domain):
-        return get_case_types_for_domain(domain)
-
-    @staticmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
         cases = get_cases_in_domain_by_external_id(domain, external_id)
         if case_type:
@@ -209,6 +208,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_deleted_case_ids_by_owner(domain, owner_id):
         return get_deleted_case_ids_by_owner(owner_id)
+
+    @staticmethod
+    def get_case_owner_ids(domain):
+        return get_all_case_owner_ids(domain)
 
 
 class LedgerAccessorCouch(AbstractLedgerAccessor):

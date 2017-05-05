@@ -44,6 +44,10 @@ class TestRenewSubscriptions(BaseAccountingTest):
 
         self.subscription.save()
 
+    def tearDown(self):
+        self.domain.delete()
+        super(TestRenewSubscriptions, self).tearDown()
+
     def test_simple_renewal(self):
         self.renewed_subscription = self.subscription.renew_subscription()
 

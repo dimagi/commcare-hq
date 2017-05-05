@@ -1,17 +1,17 @@
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.document_types import GROUP
 from corehq.apps.groups.models import Group
 from corehq.elastic import get_es_new
 
 from .mappings.group_mapping import GROUP_INDEX_INFO
-from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, get_checkpoint_for_elasticsearch_pillow
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
 
-def get_group_pillow(pillow_id='GroupPillow'):
+def get_group_pillow(pillow_id='GroupPillow', **kwargs):
     """
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
@@ -21,13 +21,14 @@ def get_group_pillow(pillow_id='GroupPillow'):
         elasticsearch=get_es_new(),
         index_info=GROUP_INDEX_INFO,
     )
+    change_feed = KafkaChangeFeed(topics=[GROUP], group_id='groups-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[GROUP], group_id='groups-to-es'),
+        change_feed=change_feed,
         processor=processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
 

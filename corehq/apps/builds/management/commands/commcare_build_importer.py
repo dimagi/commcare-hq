@@ -19,11 +19,8 @@ class Command(BaseCommand):
     """
     help = "Interactively import a build from Jenkins build server."
 
-    def handle(self, *args, **options):
-        if not args:
-            self.interactive_import()
-        else:
-            raise CommandError(self.help)
+    def handle(self, **options):
+        self.interactive_import()
 
     def interactive_import(self):
 

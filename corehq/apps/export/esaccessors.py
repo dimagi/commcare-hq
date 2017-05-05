@@ -5,6 +5,7 @@ from corehq.apps.es import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
 from corehq.elastic import get_es_new
+from corehq.toggles import EXPORT_NO_SORT
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
@@ -12,8 +13,11 @@ def get_form_export_base_query(domain, app_id, xmlns, include_errors):
             .domain(domain)
             .app(app_id)
             .xmlns(xmlns)
-            .sort("received_on")
             .remove_default_filter('has_user'))
+
+    if not EXPORT_NO_SORT.enabled(domain):
+        query = query.sort("received_on")
+
     if include_errors:
         query = query.remove_default_filter("is_xform_instance")
         query = query.doc_type(["xforminstance", "xformarchived", "xformdeprecated", "xformduplicate"])
@@ -21,10 +25,14 @@ def get_form_export_base_query(domain, app_id, xmlns, include_errors):
 
 
 def get_case_export_base_query(domain, case_type):
-    return (CaseES()
+    query = (CaseES()
             .domain(domain)
-            .case_type(case_type)
-            .sort("opened_on"))
+            .case_type(case_type))
+
+    if not EXPORT_NO_SORT.enabled(domain):
+        query = query.sort("opened_on")
+
+    return query
 
 
 def get_sms_export_base_query(domain):
@@ -37,7 +45,15 @@ def get_sms_export_base_query(domain):
 def get_groups_user_ids(group_ids):
     q = (GroupES()
          .doc_id(group_ids))
-    return [user for user_list in q.values_list("users", flat=True) for user in user_list]
+
+    results = []
+    for user_list in q.values_list("users", flat=True):
+        if isinstance(user_list, basestring):
+            results.append(user_list)
+        else:
+            results.extend(user_list)
+
+    return results
 
 
 def get_ledger_section_entry_combinations(domain):

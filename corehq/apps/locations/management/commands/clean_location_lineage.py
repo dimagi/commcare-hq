@@ -8,12 +8,10 @@ from corehq.apps.locations.models import SQLLocation, Location
 
 class Command(BaseCommand):
     help = "Cleans the location lineage properties for a domain. See http://manage.dimagi.com/default.asp?245138"
-    args = '<domain>'
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'domain',
-            dest='domain_name',
+            'domain_name',
         )
         parser.add_argument(
             '--noinput',

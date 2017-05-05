@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "config": {
     "table_id": "static-visitorbook_forms",
     "display_name": "Forms - Visitor Book (Static)",
@@ -55,7 +59,8 @@
         "transform": {},
         "is_nullable": true,
         "type": "expression",
-        "column_id": "awc_id"
+        "column_id": "awc_id",
+        "create_index": true
       },
       {
         "display_name": "Supervisor ID",
@@ -91,7 +96,8 @@
         "transform": {},
         "is_nullable": true,
         "type": "expression",
-        "column_id": "supervisor_id"
+        "column_id": "supervisor_id",
+        "create_index": true
       },
       {
         "display_name": "Block ID",
@@ -320,6 +326,10 @@
     ],
     "named_expressions": {},
     "named_filters": {},
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

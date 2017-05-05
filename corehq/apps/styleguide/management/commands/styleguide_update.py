@@ -22,11 +22,10 @@ DJ_TEMPLATES_TO_PYCCO = [
 
 class Command(BaseCommand):
     help = "Prints the paths of all the static files"
-    args = "save or soft"
 
     root_dir = settings.FILEPATH
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         examples_dir = os.path.join(self.root_dir, EXAMPLES_PATH)
         template_dir = os.path.join(self.root_dir, TEMPLATE_PATH)
         docs_dir = os.path.join(self.root_dir, DOCS_TEMPLATE_PATH)

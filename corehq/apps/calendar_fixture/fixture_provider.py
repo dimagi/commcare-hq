@@ -1,14 +1,17 @@
 import datetime
 from xml.etree.ElementTree import Element
 from django.utils.translation import ugettext as _
+
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.toggles import CUSTOM_CALENDAR_FIXTURE
 
 
-class CalendarFixtureProvider(object):
+class CalendarFixtureProvider(FixtureProvider):
     id = 'enikshay:calendar'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
+    def __call__(self, restore_state):
+        restore_user = restore_state.restore_user
         if not CUSTOM_CALENDAR_FIXTURE.enabled(restore_user.domain):
             return []
 

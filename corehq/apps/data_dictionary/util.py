@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 
 from corehq import toggles
+from corehq.apps.app_manager.app_schemas.case_properties import all_case_properties_by_domain
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 
@@ -20,7 +21,6 @@ def generate_data_dictionary(domain):
 
 def _get_all_case_properties(domain):
     # moved here to avoid circular import
-    from corehq.apps.app_manager.util import all_case_properties_by_domain
     from corehq.apps.export.models.new import CaseExportDataSchema
 
     case_type_to_properties = {}
@@ -113,7 +113,8 @@ def get_case_property_description_dict(domain):
     return descriptions_dict
 
 
-def save_case_property(name, case_type=None, domain=None, data_type=None, description=None, group=None):
+def save_case_property(name, case_type, domain=None, data_type=None,
+                       description=None, group=None, deprecated=None):
     """
     Takes a case property to update and returns an error if there was one
     """
@@ -126,6 +127,8 @@ def save_case_property(name, case_type=None, domain=None, data_type=None, descri
         prop.description = description
     if group:
         prop.group = group
+    if deprecated is not None:
+        prop.deprecated = deprecated
     try:
         prop.full_clean()
     except ValidationError as e:

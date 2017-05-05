@@ -153,7 +153,7 @@ class PillowtopSupervisorApi(HQSupervisorApi):
     def get_pillow_process_info(self, pillow_name):
         process_info = [
             info for info in self.get_all_process_info()
-            if pillow_name in info.name
+            if info.name.endswith(pillow_name)
         ]
         try:
             return process_info[0]

@@ -13,12 +13,14 @@ from lxml import etree
 from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
 from unidecode import unidecode
+from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties, \
+    get_usercase_properties
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
@@ -36,13 +38,11 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.programs.models import Program
 from corehq.apps.app_manager.util import (
-    get_all_case_properties,
     save_xform,
     is_usercase_in_use,
     enable_usercase,
     actions_use_usercase,
     advanced_actions_use_usercase,
-    get_usercase_properties,
     CASE_XPATH_PATTERN_MATCHES,
     CASE_XPATH_SUBSTRING_MATCHES,
     USER_CASE_XPATH_PATTERN_MATCHES,
@@ -82,7 +82,10 @@ from corehq.apps.app_manager.models import (
     load_case_reserved_words,
     WORKFLOW_FORM,
     CustomInstance,
-    CaseReferences)
+    CaseReferences,
+    AdvancedModule,
+    ShadowForm,
+)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
@@ -103,9 +106,13 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
             extra_tags='html'
         )
         app.save()
-    return back_to_main(
-        request, domain, app_id=app_id,
-        module_id=app.get_module_by_unique_id(module_unique_id).id)
+    try:
+        module_id = app.get_module_by_unique_id(module_unique_id).id
+    except ModuleNotFoundException as e:
+        messages.error(request, e.message)
+        module_id = None
+
+    return back_to_main(request, domain, app_id=app_id, module_id=module_id)
 
 
 @no_conflict_require_POST
@@ -162,10 +169,13 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
     form = app.get_module(module_id).get_form(form_id)
     json_loads = json.loads(request.POST.get('actions'))
     actions = AdvancedFormActions.wrap(json_loads)
-    form.actions = actions
+    if form.form_type == "shadow_form":
+        form.extra_actions = actions
+    else:
+        form.actions = actions
     for action in actions.load_update_cases:
         add_properties_to_data_dictionary(domain, action.case_type, action.case_properties.keys())
-    if advanced_actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
+    if advanced_actions_use_usercase(actions) and not is_usercase_in_use(domain):
         enable_usercase(domain)
     response_json = {}
     app.save(response_json)
@@ -261,10 +271,11 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
     if should_edit("name"):
         name = request.POST['name']
         form.name[lang] = name
-        xform = form.wrapped_xform()
-        if xform.exists():
-            xform.set_name(name)
-            save_xform(app, form, xform.render())
+        if not form.form_type == "shadow_form":
+            xform = form.wrapped_xform()
+            if xform.exists():
+                xform.set_name(name)
+                save_xform(app, form, xform.render())
         resp['update'] = {'.variable-form_name': trans(form.name, [lang], use_delim=False)}
     if should_edit('comment'):
         form.comment = request.POST['comment']
@@ -357,6 +368,8 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
                 instance_path=instance.get("instancePath"),
             ) for instance in instances
         ]
+    if should_edit("shadow_parent"):
+        form.shadow_parent_form_id = request.POST['shadow_parent']
 
     handle_media_edits(request, form, should_edit, resp, lang)
 
@@ -375,9 +388,18 @@ def new_form(request, domain, app_id, module_id):
     app = get_app(domain, app_id)
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
-    form = app.new_form(module_id, name, lang)
+    form_type = request.POST.get('form_type', 'form')
+    if form_type == "shadow":
+        app = get_app(domain, app_id)
+        module = app.get_module(module_id)
+        if module.module_type == "advanced":
+            form = module.new_shadow_form(name, lang)
+        else:
+            raise Exception("Shadow forms may only be created under shadow modules")
+    else:
+        form = app.new_form(module_id, name, lang)
 
-    if toggles.APP_MANAGER_V2.enabled(domain):
+    if toggles.APP_MANAGER_V2.enabled(request.user.username) and form_type != "shadow":
         case_action = request.POST.get('case_action', 'none')
         if case_action == 'update':
             form.requires = 'case'
@@ -540,8 +562,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         form.get_unique_id()
         app.save()
 
-    allow_usercase = (domain_has_privilege(request.domain, privileges.USER_CASE)
-                      and not toggles.USER_TESTING_SIMPLIFY.enabled(request.domain))
+    allow_usercase = domain_has_privilege(request.domain, privileges.USER_CASE)
     valid_index_names = DEFAULT_CASE_INDEX_IDENTIFIERS.values()
     if allow_usercase:
         valid_index_names.append(USERCASE_PREFIX[0:-1])     # strip trailing slash
@@ -578,7 +599,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     }
 
-    if tours.NEW_APP.is_enabled(request.user):
+    if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(request.user.username):
         request.guided_tour = tours.NEW_APP.get_tour_data()
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
@@ -620,7 +641,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             ],
         })
         template = get_app_manager_template(
-            domain,
+            request.user,
             "app_manager/v1/form_view_careplan.html",
             "app_manager/v2/form_view_careplan.html",
         )
@@ -635,22 +656,21 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
         all_programs = [{'value': '', 'label': _('All Programs')}]
         context.update({
-            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
             'commtrack_programs': all_programs + commtrack_programs(),
         })
         context.update(get_schedule_context(form))
         template = get_app_manager_template(
-            domain,
+            request.user,
             "app_manager/v1/form_view_advanced.html",
             "app_manager/v2/form_view_advanced.html",
         )
         return template, context
     else:
         context.update({
-            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
+            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
         })
         template = get_app_manager_template(
-            domain,
+            request.user,
             "app_manager/v1/form_view.html",
             "app_manager/v2/form_view.html",
         )
@@ -721,7 +741,7 @@ def xform_display(request, domain, form_unique_id):
     if request.GET.get('format') == 'html':
         questions = [FormQuestionResponse(q) for q in questions]
         template = get_app_manager_template(
-            domain,
+            request.user,
             'app_manager/v1/xform_display.html',
             'app_manager/v2/xform_display.html',
         )

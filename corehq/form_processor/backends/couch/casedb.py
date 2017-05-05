@@ -27,27 +27,6 @@ class CaseDbCacheCouch(AbstractCaseDbCache):
                 'The offending ID is {}'.format(doc['_id'])
             )
 
-    def _get_case(self, case_id):
-        try:
-            if self.strip_history:
-                case_doc = CommCareCase.get_lite(case_id, wrap=self.wrap)
-            elif self.lock:
-                try:
-                    case_doc, lock = CommCareCase.get_locked_obj(_id=case_id)
-                except redis.RedisError:
-                    case_doc = CommCareCase.get(case_id)
-                else:
-                    self.locks.append(lock)
-            else:
-                if self.wrap:
-                    case_doc = CommCareCase.get(case_id)
-                else:
-                    case_doc = CommCareCase.get_db().get(case_id)
-        except ResourceNotFound:
-            return None
-
-        return case_doc
-
     def _iter_cases(self, case_ids):
         for case in iter_cases(case_ids, self.strip_history, self.wrap):
             yield case

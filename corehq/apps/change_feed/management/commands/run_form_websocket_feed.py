@@ -37,7 +37,7 @@ class Command(BaseCommand):
             help="Use 'compact' mode - don't include additional domain metadata (faster)",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, **options):
         since = options['from']
         sleep = float(options['sleep'] or '.01')
         last_domain = None

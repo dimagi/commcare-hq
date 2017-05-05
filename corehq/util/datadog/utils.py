@@ -2,11 +2,8 @@ import re
 import logging
 from functools import wraps
 
-from datadog.api.exceptions import DatadogException
-
 from corehq.util.datadog import statsd, COMMON_TAGS, datadog_logger
 from datadog import api
-
 
 from corehq.util.datadog.const import ALERT_INFO
 
@@ -19,21 +16,25 @@ DATADOG_HUBSPOT_SENT_FORM_METRIC = 'commcare.hubspot.sent_form'
 DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC = 'commcare.hubspot.track_data_post'
 
 
-def count_by_response_code(metric_prefix):
+def count_by_response_code(metric_name):
+    from corehq.util.datadog.gauges import datadog_counter
+
     def _wrapper(fn):
         @wraps(fn)
         def _inner(*args, **kwargs):
             response = fn(*args, **kwargs)
 
             try:
-                metric_name = '{}.{}'.format(metric_prefix, response.status_code)
-                statsd.increment(metric_name)
+                datadog_counter(metric_name, tags=[
+                    'status_code:{}'.format(response.status_code)
+                ])
             except Exception:
                 datadog_logger.exception('Unable to record Datadog stats')
 
             return response
 
         return _inner
+
     return _wrapper
 
 
@@ -49,8 +50,8 @@ def create_datadog_event(title, text, alert_type=ALERT_INFO, tags=None, aggregat
                 title=title, text=text, tags=tags,
                 alert_type=alert_type, aggregation_key=aggregation_key,
             )
-        except DatadogException:
-            datadog_logger.exception('Error creating Datadog event')
+        except Exception as e:
+            datadog_logger.exception('Error creating Datadog event', e)
     else:
         datadog_logger.debug('Datadog event: (%s) %s\n%s', alert_type, title, text)
 

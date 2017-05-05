@@ -2,7 +2,13 @@
 
 FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Backbone, Marionette, $) {
     Views.MenuView = Marionette.ItemView.extend({
-        tagName: "tr",
+        tagName: function() {
+            if (this.model.collection.layoutStyle === 'grid') {
+                return 'div';
+            } else {
+                return 'tr';
+            }
+        },
         className: "formplayer-request",
         events: {
             "click": "rowClick",
@@ -10,11 +16,19 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             "click .js-module-audio-pause": "audioPause",
         },
 
+        initialize: function (options) {
+            this.menuIndex = options.menuIndex;
+        },
+
         getTemplate: function () {
-            if (this.model.get('audioUri')) {
-                return "#menu-view-item-audio-template";
+            if (this.model.collection.layoutStyle === FormplayerFrontend.Constants.LayoutStyles.GRID) {
+                return "#menu-view-grid-item-template";
             } else {
-                return "#menu-view-item-template";
+                if (this.model.get('audioUri')) {
+                    return "#menu-view-row-audio-template";
+                } else {
+                    return "#menu-view-row-template";
+                }
             }
         },
 
@@ -61,23 +75,32 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.request('resourceMap', audioUri, appId) : "",
+                menuIndex: this.menuIndex,
             };
         },
     });
 
     Views.MenuListView = Marionette.CompositeView.extend({
         tagName: "div",
-        template: "#menu-view-list-template",
+        getTemplate: function () {
+            if (this.collection.layoutStyle === FormplayerFrontend.Constants.LayoutStyles.GRID) {
+                return "#menu-view-grid-template";
+            } else {
+                return "#menu-view-list-template";
+            }
+        },
         childView: Views.MenuView,
-        childViewContainer: "tbody",
+        childViewContainer: ".menus-container",
         templateHelpers: function () {
             return {
                 title: this.options.title,
+                environment: FormplayerFrontend.request('currentUser').environment,
             };
         },
-        childViewOptions: function () {
+        childViewOptions: function (model, index) {
             return {
                 sessionId: this.options.sessionId,
+                menuIndex: index,
             };
         },
     });

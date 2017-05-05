@@ -4,6 +4,7 @@ from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.users.models import CouchUser, LastSubmission
+from corehq.toggles import MARK_LATEST_SUBMISSION_ON_USER
 from corehq.util.quickcache import quickcache
 from corehq.apps.receiverwrapper.util import get_app_version_info
 
@@ -34,7 +35,7 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
             # the same effect, an app having has_submissions set to True.
             mark_has_submission(domain, build_id)
 
-        user_id = doc.get('user_id')
+        user_id = doc.get('form', {}).get('meta', {}).get('userID')
         received_on = doc.get('received_on')
         app_id = doc.get('app_id')
         version = doc.get('version')
@@ -44,7 +45,8 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
         except KeyError:
             metadata = None
 
-        if user_id and domain and received_on:
+        if (user_id and domain and received_on and
+                MARK_LATEST_SUBMISSION_ON_USER.enabled(domain)):
             mark_latest_submission(domain, user_id, app_id, build_id, version, metadata, received_on)
 
 

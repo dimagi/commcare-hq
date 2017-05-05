@@ -1,5 +1,5 @@
 from django.test import TestCase
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
