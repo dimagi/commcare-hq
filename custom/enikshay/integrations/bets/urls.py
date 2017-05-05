@@ -3,6 +3,7 @@ from .views import update_voucher, update_incentive
 
 from custom.enikshay.integrations.bets.views import (
     BETSUserRepeaterView,
+    BETSLocationRepeaterView,
 )
 
 urlpatterns = [
@@ -13,5 +14,11 @@ urlpatterns = [
         BETSUserRepeaterView.as_view(),
         {'repeater_type': 'UserRepeater'},
         name=BETSUserRepeaterView.urlname
+    ),
+    url(
+        r'^location_repeater$',
+        BETSLocationRepeaterView.as_view(),
+        {'repeater_type': 'LocationRepeater'},
+        name=BETSLocationRepeaterView.urlname
     ),
 ]
