@@ -913,7 +913,8 @@ def edit_report_module(request, domain, app_id, module_id):
         for report_config in module.report_configs:
             for chart_id, graph_config in report_config.complete_graph_configs.iteritems():
                 for series in graph_config.series:
-                    series.data_path = re.sub(r'<UUID>', report_config.uuid, series.data_path)
+                    if series.data_path:
+                        series.data_path = re.sub(r'#UUID', report_config.uuid, series.data_path)
     except Exception:
         notify_exception(
             request,

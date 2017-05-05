@@ -18,18 +18,12 @@ hqDefine('app_manager/js/report-module.js', function () {
                 var currentChart = reportCharts[currentReportId][j];
                 var graph_config = graph_configs[currentChart.chart_id] || {
                     graph_type: 'bar',
-                    series: _.map(currentChart.y_axis_columns, function(c) {
-                        return {
-                            data_path: "instance('reports')/reports/report[@id='<UUID>']/rows/row[@is_total_row='False']",
-                            x_function: "column[@id='" + currentChart.x_axis_column + "']",
-                            y_function: "column[@id='" + c.column_id + "']",
-                        };
-                    }),
+                    series: _.map(currentChart.y_axis_columns, function(c) { return {}; }),
                 };
 
                 // Add series placeholders
                 _.each(currentChart.y_axis_columns, function(column, index) {
-                    uuid = uuid || "<UUID>";
+                    uuid = uuid || "#UUID";
                     if (graph_config.series[index]) {
                         _.extend(graph_config.series[index], {
                             data_path_placeholder: "instance('reports')/reports/report[@id='" + uuid + "']/rows/row[@is_total_row='False']",

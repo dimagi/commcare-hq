@@ -4214,15 +4214,9 @@ class ReportAppConfig(DocumentSchema):
                     series=[GraphSeries(
                         config=limited_graph_config.series_configs.get(c.column_id, {}),
                         locale_specific_config={},
-                        data_path=(
-                            "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
-                            .format(
-                                self.uuid,
-                                MobileSelectFilterHelpers.get_data_filter_xpath(self, domain)
-                            )
-                        ),
-                        x_function="column[@id='{}']".format(chart_config.x_axis_column),
-                        y_function="column[@id='{}']".format(c.column_id),
+                        data_path="",
+                        x_function="",
+                        y_function="",
                     ) for c in chart_config.y_axis_columns],
                     locale_specific_config={},
                     annotations=[]
