@@ -147,15 +147,19 @@ class CheckpointCreationTest(TestCase):
 def test_checkpoint_creation(self, reindex_id, pillow_name):
     with real_pillow_settings():
         pillow = get_pillow_by_name(pillow_name)
-        random_seq = uuid.uuid4().hex
-        pillow.checkpoint.update_to(random_seq)
-        self.assertEqual(random_seq, pillow.checkpoint.get_current_sequence_id())
+        current_offsets = pillow.checkpoint.get_current_sequence_id()
+        pillow.checkpoint.update_to(current_offsets)
+        self.assertEqual(current_offsets, pillow.checkpoint.get_current_sequence_id())
         call_command('ptop_reindexer_v2', reindex_id, cleanup=True, noinput=True)
         pillow = get_pillow_by_name(pillow_name)
-        self.assertNotEqual(random_seq, pillow.checkpoint.get_current_sequence_id())
+        self.assertNotEqual(current_offsets, pillow.checkpoint.get_current_sequence_id())
         self.assertEqual(
             pillow.get_change_feed().get_latest_offsets_as_checkpoint_value(),
             pillow.checkpoint.get_or_create_wrapped().wrapped_sequence,
+        )
+        self.assertEqual(
+            pillow.get_change_feed().get_latest_offsets_as_checkpoint_value(),
+            pillow.checkpoint.get_current_sequence_id(),
         )
 
 
@@ -170,15 +174,24 @@ def test_no_checkpoint_creation(self, reindex_id, pillow_name):
     # reindexers
     with real_pillow_settings():
         pillow = get_pillow_by_name(pillow_name)
-        random_seq = uuid.uuid4().hex
-        pillow.checkpoint.update_to(random_seq)
-        self.assertEqual(random_seq, pillow.checkpoint.get_current_sequence_id())
+        current_offsets = pillow.checkpoint.get_current_sequence_id()
+        pillow.checkpoint.update_to(current_offsets)
+        self.assertEqual(current_offsets, pillow.checkpoint.get_current_sequence_id())
         call_command('ptop_reindexer_v2', reindex_id, cleanup=True, noinput=True)
         pillow = get_pillow_by_name(pillow_name)
         self.assertEqual(
-            random_seq,
+            current_offsets,
             pillow.checkpoint.get_current_sequence_id(),
         )
+        self.assertNotEqual(
+            pillow.get_change_feed().get_latest_offsets_as_checkpoint_value(),
+            pillow.checkpoint.get_or_create_wrapped().wrapped_sequence,
+        )
+        self.assertNotEqual(
+            pillow.get_change_feed().get_latest_offsets_as_checkpoint_value(),
+            pillow.checkpoint.get_current_sequence_id(),
+        )
+
 
 class UserReindexerTest(TestCase):
 
