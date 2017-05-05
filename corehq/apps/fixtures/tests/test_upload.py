@@ -122,3 +122,7 @@ class TestFixtureUpload(SimpleTestCase):
     test_no_types_sheet = _upload_test('no_types_sheet', [
         u"Workbook does not contain a sheet called types",
     ])
+    test_wrong_index_syntax = _upload_test('wrong_index_syntax', [
+        u"'field 1' is not correctly formatted in 'types' sheet. Whether a field is indexed should be specified "
+        "as 'field 1: is_indexed?'. Its value should be 'yes' or 'no'.",
+    ])
