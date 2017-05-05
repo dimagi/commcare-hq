@@ -175,7 +175,7 @@ class FixtureDataTest(TestCase):
         self.data_type.fields[2].is_indexed = True  # Set "district_id" as indexed
         self.data_type.save()
 
-        fixtures = fixturegenerators.item_lists(self.user.to_ota_restore_user(), V2)
+        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
         self.assertEqual(len(fixtures), 2)
         check_xml_line_by_line(
             self,
