@@ -202,3 +202,13 @@ class BETSUserRepeaterView(AddRepeaterView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
+
+
+class BETSLocationRepeaterView(AddRepeaterView):
+    urlname = "location_repeater"
+    page_title = "Locations"
+    page_name = page_title
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
