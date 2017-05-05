@@ -9,6 +9,8 @@ from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
+from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
+from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
 
 from dimagi.utils.logging import notify_exception
 
@@ -28,8 +30,6 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.util import (
     get_app_manager_template,
-    get_casedb_schema,
-    get_session_schema,
     app_callout_templates,
     is_usercase_in_use,
 )
@@ -48,7 +48,6 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
 from corehq.apps.tour import tours
 from corehq.apps.analytics import ab_tests
 from corehq.apps.domain.models import Domain
-from corehq.util.context_processors import websockets_override
 
 
 logger = logging.getLogger(__name__)
@@ -144,6 +143,8 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'nav_form': form,
         'formdesigner': True,
         'include_fullstory': include_fullstory,
+        'notifications_enabled': request.user.is_superuser,
+        'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
     })
     notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
 
@@ -239,14 +240,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'vellum_options': vellum_options,
         'CKEDITOR_BASEPATH': "app_manager/js/vellum/lib/ckeditor/",
     })
-
-    if request.user.is_superuser:
-        notification_options = websockets_override(request)
-        notification_options.update({
-            'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
-            'user_id': request.couch_user.get_id,
-        })
-        context.update({'notification_options': notification_options})
 
     if not settings.VELLUM_DEBUG:
         context.update({'requirejs_url': "app_manager/js/vellum/src"})

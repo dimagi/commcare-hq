@@ -1427,6 +1427,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     is_anonymous = BooleanProperty(default=False)
 
+    mobile_ucr_sync_interval = IntegerProperty()
+
     @classmethod
     def wrap(cls, data):
         # migrations from using role_id to using the domain_memberships

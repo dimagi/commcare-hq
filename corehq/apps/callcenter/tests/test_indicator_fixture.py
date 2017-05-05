@@ -3,6 +3,7 @@ from datetime import datetime, date, time, timedelta
 from xml.etree import ElementTree
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.phone.models import SyncLog, OTARestoreCommCareUser, OTARestoreWebUser
+from casexml.apps.phone.tests.utils import call_fixture_generator
 from corehq.apps.callcenter.fixturegenerators import gen_fixture, should_sync, \
     IndicatorsFixturesProvider
 from corehq.apps.domain.models import Domain
@@ -65,7 +66,7 @@ class CallcenterFixtureTests(SimpleTestCase):
             'get_call_center_indicators': lambda self, config: indicator_set,
         })('test', user)
 
-        fixture, = mock_indicators_fixture_generator(restore_user, version='2.0')
+        fixture, = call_fixture_generator(mock_indicators_fixture_generator, restore_user)
         check_xml_line_by_line(
             self, ElementTree.tostring(fixture),
             ElementTree.tostring(gen_fixture(restore_user, indicator_set)))
@@ -76,7 +77,7 @@ class CallcenterFixtureTests(SimpleTestCase):
             'project': Domain(name='test', default_timezone='UTC'),
         })('test', user)
 
-        fixtures = mock_indicators_fixture_generator(restore_user, version='2.0')
+        fixtures = call_fixture_generator(mock_indicators_fixture_generator, restore_user)
         self.assertEqual(fixtures, [])
 
     def test_should_sync_none(self):

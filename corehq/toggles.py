@@ -70,29 +70,33 @@ class StaticToggle(object):
         else:
             self.namespaces = [None]
 
-    def enabled(self, item, namespace=None):
+    def enabled(self, item, namespace=Ellipsis):
         if item in self.always_enabled:
             return True
         elif item in self.always_disabled:
             return False
+
+        if namespace is not Ellipsis and namespace not in self.namespaces:
+            # short circuit if we're checking an item that isn't supported by this toggle
+            return False
+
         enabled_after = self.enabled_for_new_domains_after
         if (enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
-                and was_domain_created_after(item, enabled_after)):
+            and was_domain_created_after(item, enabled_after)):
             return True
-        if namespace is not None:
-            ns = None if namespace == NAMESPACE_USER else namespace
-            return toggle_enabled(self.slug, item, ns)
-        return any([toggle_enabled(self.slug, item, namespace=n) for n in self.namespaces])
+
+        namespaces = self.namespaces if namespace is Ellipsis else [namespace]
+        return any([toggle_enabled(self.slug, item, namespace=n) for n in namespaces])
 
     def enabled_for_request(self, request):
         return (
             None in self.namespaces
             and hasattr(request, 'user')
-            and toggle_enabled(self.slug, request.user.username, None)
+            and self.enabled(request.user.username, namespace=None)
         ) or (
             NAMESPACE_DOMAIN in self.namespaces
             and hasattr(request, 'domain')
-            and self.enabled(request.domain, NAMESPACE_DOMAIN)
+            and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN)
         )
 
     def set(self, item, enabled, namespace=None):
@@ -107,8 +111,8 @@ class StaticToggle(object):
             @wraps(view_func)
             def wrapped_view(request, *args, **kwargs):
                 if (
-                    (hasattr(request, 'user') and self.enabled(request.user.username))
-                    or (hasattr(request, 'domain') and self.enabled(request.domain))
+                    (hasattr(request, 'user') and self.enabled(request.user.username, namespace=None))
+                    or (hasattr(request, 'domain') and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN))
                 ):
                     return view_func(request, *args, **kwargs)
                 if request.user.is_superuser:
@@ -126,10 +130,14 @@ class StaticToggle(object):
         from toggle.models import Toggle
         try:
             toggle = Toggle.get(self.slug)
-            enabled_users = toggle.enabled_users
-            return [user.split('domain:')[1] for user in enabled_users if 'domain:' in user]
         except ResourceNotFound:
             return []
+
+        enabled_users = toggle.enabled_users
+        domains = {user.split('domain:')[1] for user in enabled_users if 'domain:' in user}
+        domains |= self.always_enabled
+        domains -= self.always_disabled
+        return list(domains)
 
 
 def was_domain_created_after(domain, checkpoint):
@@ -1168,6 +1176,22 @@ MARK_LATEST_SUBMISSION_ON_USER = StaticToggle(
     'user_last_submission',
     "Marks the latest submssion on user model",
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
+)
+
+ENTERPRISE_OPTIMIZATIONS = StaticToggle(
+    'enterprise_optimizations',
+    'Used to enable specific optimizations for environments that only support a single domain e.g. ICDS',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
+)
+
+MOBIE_UCR_SYNC_DELAY_CONFIG = StaticToggle(
+    'mobile_ucr_sync_delay',
+    "Show settings for configuring mobile UCR sync delay",
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
     always_enabled={'icds-cas'}
 )

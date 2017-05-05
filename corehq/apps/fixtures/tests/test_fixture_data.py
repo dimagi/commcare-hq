@@ -1,7 +1,7 @@
 from xml.etree import ElementTree
 from django.test import TestCase
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from casexml.apps.case.xml import V2
+from casexml.apps.phone.tests.utils import call_fixture_generator
 from corehq.apps.fixtures import fixturegenerators
 from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data_types, \
     get_fixture_data_types_in_domain
@@ -115,7 +115,7 @@ class FixtureDataTest(TestCase):
         self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
-        fixture, = fixturegenerators.item_lists(self.user.to_ota_restore_user(), V2)
+        fixture, = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
 
         check_xml_line_by_line(self, """
         <fixture id="item-list:district" user_id="%s">
@@ -144,7 +144,7 @@ class FixtureDataTest(TestCase):
 
         self.data_item.remove_user(self.user)
 
-        fixtures = fixturegenerators.item_lists(self.user.to_ota_restore_user(), V2)
+        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
         self.assertEqual(1, len(fixtures))
         check_xml_line_by_line(
             self,
@@ -223,7 +223,7 @@ class FixtureDataTest(TestCase):
         self.addCleanup(empty_data_type.delete)
         get_fixture_data_types_in_domain.clear(self.domain)
 
-        fixtures = fixturegenerators.item_lists(self.user.to_ota_restore_user(), V2)
+        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
         self.assertEqual(2, len(fixtures))
         check_xml_line_by_line(
             self,
