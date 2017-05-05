@@ -151,8 +151,10 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
 
 
 class WrappedCheckpoint(object):
-    def __init__(self, kafka_seq):
+    def __init__(self, kafka_seq, timestamp):
         self.kafka_seq = kafka_seq
+        self.timestamp = timestamp
+        self.sequence_format = 'json'
 
     @property
     def wrapped_sequence(self):
@@ -173,10 +175,13 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
     def get_or_create_wrapped(self, verify_unchanged=None):
         checkpoints = self._get_checkpoints()
         ret = {}
+        timestamp = checkpoints[0].last_modified
         for checkpoint in checkpoints:
             ret[(checkpoint.topic, checkpoint.partition)] = checkpoint.offset
+            if checkpoint.last_modified > timestamp:
+                timestamp = checkpoint.last_modified
 
-        return WrappedCheckpoint(ret)
+        return WrappedCheckpoint(ret, timestamp)
 
     def get_current_sequence_id(self):
         return {
