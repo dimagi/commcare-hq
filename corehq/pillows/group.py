@@ -1,5 +1,5 @@
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.change_feed.document_types import GROUP
+from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
 from corehq.elastic import get_es_new
 
@@ -21,7 +21,7 @@ def get_group_pillow(pillow_id='GroupPillow', **kwargs):
         elasticsearch=get_es_new(),
         index_info=GROUP_INDEX_INFO,
     )
-    change_feed = KafkaChangeFeed(topics=[GROUP], group_id='groups-to-es')
+    change_feed = KafkaChangeFeed(topics=[topics.GROUP], group_id='groups-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
