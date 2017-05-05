@@ -1,7 +1,8 @@
-import json
 import logging
 import traceback
 
+# use simplejson because it supports dumping of Decimal
+import simplejson as json
 import json_delta
 import laboratory
 
