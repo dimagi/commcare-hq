@@ -522,7 +522,7 @@ hqDefine('app_manager/js/graph-config.js', function () {
         self.yFunction = ko.observable(origOrDefault('yFunction',""));
         self.yPlaceholder = ko.observable(origOrDefault('yPlaceholder',""));
 
-        var seriesValidationError = gettext(
+        var seriesValidationWarning = gettext(
             "It is recommended that you leave this value blank. Future changes to your report's "
             + "chart configuration will not be reflected here."
         );
@@ -531,19 +531,19 @@ hqDefine('app_manager/js/graph-config.js', function () {
                 return;
             }
             self.showDataPath(true);
-            return seriesValidationError;
+            return seriesValidationWarning;
         });
         self.validateX = ko.computed(function() {
             if (!self.xPlaceholder() || !self.xFunction()) {
                 return;
             }
-            return seriesValidationError;
+            return seriesValidationWarning;
         });
         self.validateY = ko.computed(function() {
             if (!self.yPlaceholder() || !self.yFunction()) {
                 return;
             }
-            return seriesValidationError;
+            return seriesValidationWarning;
         });
         self.xLabel = "X";
         self.yLabel = "Y";
