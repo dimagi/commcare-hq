@@ -824,10 +824,7 @@ class LocationImportView(BaseLocationView):
             expiry=ONE_HOUR,
             file_extension=file_extention_from_filename(upload.name),
         )
-        task = import_locations_async.delay(
-            domain,
-            file_ref.download_id,
-        )
+        task = import_locations_async.apply_async(args=[domain, file_ref.download_id], countdown=10)
         # put the file_ref.download_id in cache to lookup from elsewhere
         cache.set(import_locations_task_key(domain), file_ref.download_id, ONE_HOUR)
         file_ref.set_task(task)
