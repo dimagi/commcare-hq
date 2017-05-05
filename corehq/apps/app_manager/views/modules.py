@@ -2,6 +2,7 @@
 from collections import OrderedDict, namedtuple
 import json
 import logging
+import re
 from lxml import etree
 
 from django.template.loader import render_to_string
@@ -909,6 +910,10 @@ def edit_report_module(request, domain, app_id, module_id):
 
     try:
         module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
+        for report_config in module.report_configs:
+            for chart_id, graph_config in report_config.complete_graph_configs.iteritems():
+                for series in graph_config.series:
+                    series.data_path = re.sub(r'<UUID>', report_config.uuid, series.data_path)
     except Exception:
         notify_exception(
             request,

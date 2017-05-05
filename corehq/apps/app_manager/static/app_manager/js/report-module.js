@@ -16,7 +16,16 @@ hqDefine('app_manager/js/report-module.js', function () {
             self.graphUiElements[currentReportId] = {};
             for (var j = 0; j < reportCharts[currentReportId].length; j++) {
                 var currentChart = reportCharts[currentReportId][j];
-                var graph_config = graph_configs[currentChart.chart_id] || {};
+                var graph_config = graph_configs[currentChart.chart_id] || {
+                    graph_type: 'bar',
+                    series: _.map(currentChart.y_axis_columns, function(c) {
+                        return {
+                            data_path: "instance('reports')/reports/report[@id='<UUID>']/rows/row[@is_total_row='False']",
+                            x_function: "column[@id='" + currentChart.x_axis_column + "']",
+                            y_function: "column[@id='" + c.column_id + "']",
+                        };
+                    }),
+                };
                 var graph_el = new GraphConfigurationUiElement({
                     childCaseTypes: [],
                     fixtures: [],
