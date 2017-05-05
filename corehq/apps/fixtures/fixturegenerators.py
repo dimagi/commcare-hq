@@ -85,18 +85,18 @@ class ItemListsProvider(object):
             if data_type.is_indexed:
                 fixtures.append(self._get_schema_element(data_type))
             items = sorted(items_by_type.get(data_type_id, []), key=lambda x: x.sort_key)
-            fixtures.append(self._get_fixture_element(data_type.tag, restore_user.user_id, items))
+            fixtures.append(self._get_fixture_element(data_type, restore_user.user_id, items))
         return fixtures
 
-    def _get_fixture_element(self, tag, user_id, items, is_indexed=False):
+    def _get_fixture_element(self, data_type, user_id, items):
         attrib = {
-            'id': ':'.join((self.id, tag)),
+            'id': ':'.join((self.id, data_type.tag)),
             'user_id': user_id
         }
-        if is_indexed:
+        if data_type.is_indexed:
             attrib['indexed'] = 'true'
         fixture_element = ElementTree.Element('fixture', attrib=attrib)
-        item_list_element = ElementTree.Element('%s_list' % tag)
+        item_list_element = ElementTree.Element('%s_list' % data_type.tag)
         fixture_element.append(item_list_element)
         for item in items:
             item_list_element.append(item.to_xml())
