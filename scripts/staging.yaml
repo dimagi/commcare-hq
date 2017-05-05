@@ -51,7 +51,6 @@ branches:
   - revert-16005-revert-15522-mk-nikshay-audit-cookie-safe # Manish 4/May
   - mk-add-password-encoder # Manish 3/3
   - gc/case-close-refactor # Giovanni 4/7
-#  - np/update/twofactor # NP 4/21
   - ce/hide-reports # Cal 4/26
   - es/location-user  # Ethan 4/27
   - nc/repeater-auth  # Noah 5/1

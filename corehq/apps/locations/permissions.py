@@ -352,6 +352,19 @@ def user_can_access_other_user(domain, user, other_user):
             .exists())
 
 
+def user_can_access_case(domain, user, case):
+    from corehq.apps.reports.standard.cases.data_sources import CaseInfo
+
+    info = CaseInfo(None, case)
+    if info.owner_type == 'location':
+        return user_can_access_location_id(domain, user, info.owner_id)
+    elif info.owner_type == 'user':
+        owning_user = CouchUser.get_by_user_id(info.owner_id)
+        return user_can_access_other_user(domain, user, owning_user)
+    else:
+        return False
+
+
 def can_edit_location(view_fn):
     """
     Decorator controlling a user's access to a specific location.

@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from dateutil.relativedelta import relativedelta
 
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 
 from corehq.apps.locations.models import SQLLocation
@@ -57,12 +57,12 @@ class BeneficiaryCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': PERSON_CASE_TYPE,
-                'close': False,
                 'create': True,
                 'update': {
                     'current_address': self.beneficiary.current_address,
                     'current_episode_type': self.beneficiary.current_episode_type,
                     'dataset': 'real',
+                    'enrolled_in_private': 'true',
                     'first_name': self.beneficiary.firstName,
                     'last_name': self.beneficiary.lastName,
                     'name': ' '.join([self.beneficiary.firstName, self.beneficiary.lastName]),
@@ -108,8 +108,17 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['other_id_type'] = self.beneficiary.other_id_type
 
         if self._episode:
+            kwargs['attrs']['update']['diabetes_status'] = self._episode.diabetes_status
             kwargs['attrs']['update']['hiv_status'] = self._episode.hiv_status
             kwargs['attrs']['update']['current_patient_type_choice'] = self._episode.current_patient_type_choice
+
+            if self._episode.is_treatment_ended:
+                kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
+                kwargs['attrs']['update']['is_active'] = 'no'
+                if self._episode.treatment_outcome == 'died':
+                    kwargs['attrs']['close'] = True
+            else:
+                kwargs['attrs']['update']['is_active'] = 'yes'
 
         agency = (
             self._episode.treating_provider or self.beneficiary.referred_provider
@@ -117,10 +126,11 @@ class BeneficiaryCaseFactory(object):
         )
         assert agency is not None
 
-        kwargs['attrs']['owner_id'] = SQLLocation.active_objects.get(
-            domain=self.domain,
-            site_code=agency.nikshayId,
-        ).location_id
+        if not self._episode or not self._episode.is_treatment_ended:
+            kwargs['attrs']['owner_id'] = SQLLocation.active_objects.get(
+                domain=self.domain,
+                site_code=agency.nikshayId,
+            ).location_id
 
         return CaseStructure(**kwargs)
 
@@ -128,7 +138,6 @@ class BeneficiaryCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': OCCURRENCE_CASE_TYPE,
-                'close': False,
                 'create': True,
                 'owner_id': '-',
                 'update': {
@@ -147,19 +156,22 @@ class BeneficiaryCaseFactory(object):
                 related_type=PERSON_CASE_TYPE,
             )],
         }
+
+        if self._episode and self._episode.is_treatment_ended:
+            kwargs['attrs']['close'] = True
+
         return CaseStructure(**kwargs)
 
     def get_episode_case_structure(self, occurrence_structure):
         kwargs = {
             'attrs': {
                 'case_type': EPISODE_CASE_TYPE,
-                'close': False,
                 'create': True,
                 'owner_id': '-',
                 'update': {
-                    'adherence_schedule_id': 'schedule_mwf',
+                    'adherence_schedule_id': 'schedule_mwf',  # TODO - confirm
                     'date_of_mo_signature': self.beneficiary.dateOfRegn.date(),
-                    'dots_99_enabled': 'false',
+                    'dots_99_enabled': 'false',  # TODO - confirm or fix
                     'episode_id': get_human_friendly_id(),
                     'episode_type': self.beneficiary.current_episode_type,
                     'name': self.beneficiary.episode_name,
@@ -178,9 +190,9 @@ class BeneficiaryCaseFactory(object):
         }
 
         if self._episode:
-            rx_start_date = self._episode.rxStartDate.date()
-            kwargs['attrs']['date_opened'] = rx_start_date
-            kwargs['attrs']['update']['adherence_schedule_date_start'] = rx_start_date
+            rx_start_datetime = self._episode.rxStartDate
+            kwargs['attrs']['date_opened'] = rx_start_datetime
+            kwargs['attrs']['update']['adherence_schedule_date_start'] = rx_start_datetime.date()
             kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()
             kwargs['attrs']['update']['disease_classification'] = self._episode.disease_classification
             kwargs['attrs']['update']['episode_pending_registration'] = (
@@ -188,7 +200,7 @@ class BeneficiaryCaseFactory(object):
             )
             kwargs['attrs']['update']['treatment_card_completed_date'] = self._episode.creationDate.date()
             kwargs['attrs']['update']['treatment_initiated'] = 'yes_private'
-            kwargs['attrs']['update']['treatment_initiation_date'] = rx_start_date
+            kwargs['attrs']['update']['treatment_initiation_date'] = rx_start_datetime.date()
             kwargs['attrs']['update']['weight'] = int(self._episode.patientWeight)
 
             if self._episode.nikshayID:
@@ -197,6 +209,12 @@ class BeneficiaryCaseFactory(object):
 
             if self._episode.disease_classification == 'extra_pulmonary':
                 kwargs['attrs']['update']['site_choice'] = self._episode.site_choice
+
+            if self._episode.treatment_outcome:
+                kwargs['attrs']['update']['treatment_outcome'] = self._episode.treatment_outcome
+
+            if self._episode.is_treatment_ended:
+                kwargs['attrs']['close'] = True
         else:
             kwargs['attrs']['update']['episode_pending_registration'] = 'yes'
             kwargs['attrs']['update']['treatment_initiated'] = 'no'
@@ -209,6 +227,7 @@ class BeneficiaryCaseFactory(object):
                 'case_type': ADHERENCE_CASE_TYPE,
                 'close': False,
                 'create': True,
+                'date_opened': adherence.creationDate,
                 'owner_id': '-',
                 'update': {
                     'adherence_date': adherence.doseDate.date(),
@@ -244,7 +263,7 @@ class BeneficiaryCaseFactory(object):
             },
             'indices': [CaseIndex(
                 episode_structure,
-                identifier='host',
+                identifier='episode_of_prescription',
                 relationship=CASE_INDEX_EXTENSION,
                 related_type=EPISODE_CASE_TYPE,
             )],

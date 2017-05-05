@@ -229,6 +229,16 @@ class Episode(models.Model):
         return ''  # TODO - handle
 
     @property
+    def diabetes_status(self):
+        return {
+            'Yes': 'diabetic',
+            'No': 'non_diabetic',
+            'Not known': 'unknown',
+            None: 'unknown',
+            'Select': 'unknown',
+        }[self.diabetes]
+
+    @property
     def disease_classification(self):
         return {
             'Pulmonary': 'pulmonary',
@@ -270,13 +280,40 @@ class Episode(models.Model):
     def treating_provider(self):
         return get_agency_by_motech_user_name(self.treatingQP)
 
+    @property
+    def treatment_outcome(self):
+        if self.treatmentOutcomeId is None:
+            return None
+        elif self.treatmentOutcomeId.startswith('Lost to follow-up'):
+            return 'loss_to_follow_up'
+        else:
+            return {
+                'Cured': 'cured',
+                'Died': 'died',
+                'died': 'died',
+                'Failure': 'failure',
+                'SWITCH TO CAT IV': 'regimen_changed',
+                'Switched to Category IV/V': 'regimen_changed',
+            }[self.treatmentOutcomeId]
+
+    @property
+    def is_treatment_ended(self):
+        return self.treatment_outcome in [
+            'cured',
+            'treatment_complete',
+            'died',
+            'failure',
+            'loss_to_follow_up',
+            'regimen_changed',
+        ]
+
 
 class Adherence(models.Model):
     id = models.IntegerField(null=True)
     adherenceId = models.CharField(max_length=18, primary_key=True)
     beneficiaryId = models.ForeignKey(Beneficiary, null=True, on_delete=models.CASCADE)
     commentId = models.CharField(max_length=8, null=True)
-    creationDate = models.DateTimeField(null=True)
+    creationDate = models.DateTimeField()
     creator = models.CharField(max_length=255, null=True)
     dosageStatusId = models.IntegerField()
     doseDate = models.DateTimeField()
