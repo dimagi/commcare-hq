@@ -1726,6 +1726,7 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
+    'custom.enikshay.integrations.bets.repeaters.UserRepeater',
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS

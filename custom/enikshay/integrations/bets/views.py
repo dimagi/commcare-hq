@@ -4,8 +4,10 @@ https://docs.google.com/document/d/1RPPc7t9NhRjOOiedlRmtCt3wQSjAnWaj69v2g7QRzS0/
 import datetime
 import json
 from django.conf import settings
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.ext import jsonobject
@@ -13,6 +15,7 @@ from jsonobject.exceptions import BadValueError
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.views import AddRepeaterView
 from corehq.apps.hqcase.utils import update_case
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -144,3 +147,13 @@ def update_voucher(request, domain):
 @toggles.ENIKSHAY_API.required_decorator()
 def update_incentive(request, domain):
     return _update_case_from_request(request, domain, IncentiveUpdate)
+
+
+class UserRepeaterView(AddRepeaterView):
+    urlname = "user_repeater"
+    page_title = "Users"
+    page_name = page_title
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
