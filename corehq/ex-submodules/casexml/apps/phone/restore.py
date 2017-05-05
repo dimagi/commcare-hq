@@ -636,8 +636,6 @@ class RestoreConfig(object):
             self.cache_settings.overwrite_cache
         )
 
-        self.asyc = async
-
         self.force_cache = self.cache_settings.force_cache or self.async
         self.cache_timeout = self.cache_settings.cache_timeout
         self.overwrite_cache = self.cache_settings.overwrite_cache
