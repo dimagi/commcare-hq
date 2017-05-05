@@ -4,7 +4,7 @@ hqDefine('app_manager/js/report-module.js', function () {
     //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
     var select2Separator = "\u001F";
 
-    function GraphConfig(reportId, reportName, availableReportIds, reportCharts, graph_configs, lang, langs, changeSaveButton) {
+    function GraphConfig(reportId, uuid, reportName, availableReportIds, reportCharts, graph_configs, lang, langs, changeSaveButton) {
         var self = this;
 
         graph_configs = graph_configs || {};
@@ -21,14 +21,24 @@ hqDefine('app_manager/js/report-module.js', function () {
                     series: _.map(currentChart.y_axis_columns, function(c) {
                         return {
                             data_path: "instance('reports')/reports/report[@id='<UUID>']/rows/row[@is_total_row='False']",
-                            data_path_placeholder: "instance('reports')/reports/report[@id='<UUID>']/rows/row[@is_total_row='False']",
                             x_function: "column[@id='" + currentChart.x_axis_column + "']",
-                            x_placeholder: "column[@id='" + currentChart.x_axis_column + "']",
                             y_function: "column[@id='" + c.column_id + "']",
-                            y_placeholder: "column[@id='" + c.column_id + "']",
                         };
                     }),
                 };
+
+                // Add series placeholders
+                _.each(currentChart.y_axis_columns, function(column, index) {
+                    uuid = uuid || "<UUID>";
+                    if (graph_config.series[index]) {
+                        _.extend(graph_config.series[index], {
+                            data_path_placeholder: "instance('reports')/reports/report[@id='" + uuid + "']/rows/row[@is_total_row='False']",
+                            x_placeholder: "column[@id='" + currentChart.x_axis_column + "']",
+                            y_placeholder: "column[@id='" + column.column_id + "']",
+                        });
+                    }
+                });
+
                 var graph_el = new GraphConfigurationUiElement({
                     childCaseTypes: [],
                     fixtures: [],
@@ -210,7 +220,7 @@ hqDefine('app_manager/js/report-module.js', function () {
         this.useXpathDescription.subscribe(changeSaveButton);
         this.showDataTable.subscribe(changeSaveButton);
 
-        self.graphConfig = new GraphConfig(this.reportId, this.display(), availableReportIds, reportCharts,
+        self.graphConfig = new GraphConfig(this.reportId, this.uuid, this.display(), availableReportIds, reportCharts,
                                            graph_configs, this.lang, languages, changeSaveButton);
         this.display.subscribe(function(newValue) {
             self.graphConfig.name(newValue);
