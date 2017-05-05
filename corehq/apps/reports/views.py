@@ -1345,6 +1345,7 @@ class CaseAttachmentsView(CaseDetailsView):
     page_title = ugettext_lazy("Case Attachments")
     http_method_names = ['get']
 
+    @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         if not can_view_attachments(request):
             return HttpResponseForbidden(_("You don't have permission to access this page."))
