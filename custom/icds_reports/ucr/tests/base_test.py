@@ -5,7 +5,6 @@ from dateutil.relativedelta import relativedelta
 from xml.etree import ElementTree
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory
-from corehq.apps.es.fake.forms_fake import FormESFake
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -35,7 +34,7 @@ es_form_cache = []
 
 def mget_query_fake(index, ids, source):
     return [
-        form
+        {'_id': form['_id'], '_source': form}
         for form in es_form_cache
         if form['_id'] in ids
     ]

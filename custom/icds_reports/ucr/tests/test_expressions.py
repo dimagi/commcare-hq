@@ -13,7 +13,7 @@ es_form_cache = []
 
 def mget_query_fake(index, ids, source):
     return [
-        form
+        {"_id": form['_id'], "_source": form}
         for form in es_form_cache
         if form['_id'] in ids
     ]
@@ -33,7 +33,7 @@ class TestFormsExpressionSpecWithFilter(TestCase):
         cls.forms = [f.to_json() for f in FormAccessors(cls.domain).get_forms(cls.case.xform_ids)]
         for form in cls.forms:
             es_form_cache.append(deepcopy(form))
-        #  redundant case to create extra forms that shouldn't be in the results for cls.case
+        # redundant case to create extra forms that shouldn't be in the results for cls.case
         [cls.case_b] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
         cls.forms_b = [f.to_json() for f in FormAccessors(cls.domain).get_forms(cls.case_b.xform_ids)]
         for form in cls.forms_b:
