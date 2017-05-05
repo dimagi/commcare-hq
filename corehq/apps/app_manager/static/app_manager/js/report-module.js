@@ -67,7 +67,7 @@ hqDefine('app_manager/js/report-module.js', function () {
         });
 
         this.getCurrentGraphUiElement = function(chart_id) {
-            return self.currentGraphUiElements()[chart_id]; // TODO: what if it doesn't exist? what's the empty case?
+            return self.currentGraphUiElements()[chart_id];
         };
 
         this.toJSON = function () {
