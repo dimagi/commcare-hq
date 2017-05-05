@@ -24,6 +24,7 @@ from corehq.apps.locations.models import SQLLocation
 class FixtureTypeField(DocumentSchema):
     field_name = StringProperty()
     properties = StringListProperty()
+    is_indexed = BooleanProperty(default=False)
 
 
 class FixtureDataType(QuickCachedDocumentMixin, Document):
@@ -53,6 +54,10 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
     @property
     def fields_without_attributes(self):
         return get_fields_without_attributes(self.fields)
+
+    @property
+    def is_indexed(self):
+        return any(f.is_indexed for f in self.fields)
 
     @classmethod
     def total_by_domain(cls, domain):

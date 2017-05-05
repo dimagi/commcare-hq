@@ -171,6 +171,41 @@ class FixtureDataTest(TestCase):
             self.data_item.get_id
         )
 
+    def test_fixture_is_indexed(self):
+        self.data_type.fields[2].is_indexed = True  # Set "district_id" as indexed
+        self.data_type.save()
+
+        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        self.assertEqual(len(fixtures), 2)
+        check_xml_line_by_line(
+            self,
+            """
+            <fixtures>
+                <schema id="item-list:district">
+                    <indices>
+                        <index>district_id</index>
+                    </indices>
+                </schema>
+                <fixture id="item-list:district" indexed="true" user_id="{}">
+                    <district_list>
+                        <district>
+                            <state_name>Delhi_state</state_name>
+                            <district_name lang="hin">Delhi_in_HIN</district_name>
+                            <district_name lang="eng">Delhi_in_ENG</district_name>
+                            <district_id>Delhi_id</district_id>
+                        </district>
+                    </district_list>
+                </fixture>
+            </fixtures>
+            """.format(self.user.user_id),
+            """
+            <fixtures>
+                {}
+                {}
+            </fixtures>
+            """.format(*[ElementTree.tostring(fixture) for fixture in fixtures])
+        )
+
     def test_empty_data_types(self):
         empty_data_type = FixtureDataType(
             domain=self.domain,

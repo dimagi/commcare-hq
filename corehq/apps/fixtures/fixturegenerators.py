@@ -83,23 +83,37 @@ class ItemListsProvider(FixtureProvider):
         fixtures = []
         types_sorted_by_tag = sorted(all_types.iteritems(), key=lambda (id_, type_): type_.tag)
         for data_type_id, data_type in types_sorted_by_tag:
+            if data_type.is_indexed:
+                fixtures.append(self._get_schema_element(data_type))
             items = sorted(items_by_type.get(data_type_id, []), key=lambda x: x.sort_key)
-            fixtures.append(self._get_fixture_element(data_type.tag, restore_user.user_id, items))
+            fixtures.append(self._get_fixture_element(data_type, restore_user.user_id, items))
         return fixtures
 
-    def _get_fixture_element(self, tag, user_id, items):
-        fixture_element = ElementTree.Element(
-            'fixture',
-            attrib={
-                'id': ':'.join((self.id, tag)),
-                'user_id': user_id
-            }
-        )
-        item_list_element = ElementTree.Element('%s_list' % tag)
+    def _get_fixture_element(self, data_type, user_id, items):
+        attrib = {
+            'id': ':'.join((self.id, data_type.tag)),
+            'user_id': user_id
+        }
+        if data_type.is_indexed:
+            attrib['indexed'] = 'true'
+        fixture_element = ElementTree.Element('fixture', attrib=attrib)
+        item_list_element = ElementTree.Element('%s_list' % data_type.tag)
         fixture_element.append(item_list_element)
         for item in items:
             item_list_element.append(item.to_xml())
         return fixture_element
+
+    def _get_schema_element(self, data_type):
+        schema_element = ElementTree.Element(
+            'schema',
+            attrib={'id': ':'.join((self.id, data_type.tag))}
+        )
+        indices_element = ElementTree.SubElement(schema_element, 'indices')
+        for field in data_type.fields:
+            if field.is_indexed:
+                index_element = ElementTree.SubElement(indices_element, 'index')
+                index_element.text = field.field_name
+        return schema_element
 
 
 item_lists = ItemListsProvider()
