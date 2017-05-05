@@ -4,9 +4,9 @@ https://docs.google.com/document/d/1RPPc7t9NhRjOOiedlRmtCt3wQSjAnWaj69v2g7QRzS0/
 import datetime
 import json
 from django.conf import settings
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-
 
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -15,11 +15,11 @@ from jsonobject.exceptions import BadValueError
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.views import AddRepeaterView
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.repeaters.views import AddCaseRepeaterView
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-
 
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_EPISODE
 from .const import BETS_EVENT_IDS
@@ -192,3 +192,13 @@ class BETSAYUSHReferralRepeaterView(AddCaseRepeaterView):
     page_title = "AYUSH/Other provider: Registering and referral of a presumptive TB case in UATBC/e-Nikshay"
     page_name = "AYUSH/Other provider: Registering and referral of a presumptive TB " \
                 "case in UATBC/e-Nikshay (episode case type)"
+
+
+class UserRepeaterView(AddRepeaterView):
+    urlname = "user_repeater"
+    page_title = "Users"
+    page_name = page_title
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
