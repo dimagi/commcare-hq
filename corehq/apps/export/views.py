@@ -1389,14 +1389,15 @@ class DailySavedExportListView(BaseExportListView):
             rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_dual_model_rmi_response()
         except Exception as e:
+            message = "Problem getting Create Daily Saved Export Form: {} {}"
             notify_exception(
                 self.request,
-                message="Problem getting Create Daily Saved Export Form: {} {}".format(
+                message=message.format(
                     e.__class__, e
                 )
             )
             return format_angular_error(
-                _("Problem getting Create Daily Saved Export Form: {} {}").format(
+                _(message).format(
                     e.__class__, e
                 ),
             )
