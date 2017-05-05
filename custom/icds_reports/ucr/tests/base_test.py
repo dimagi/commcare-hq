@@ -30,7 +30,18 @@ def add_element(element, element_name, value):
         element.append(elem)
 
 
-@mock.patch('custom.icds_reports.ucr.expressions.FormES', FormESFake)
+es_form_cache = []
+
+
+def mget_query_fake(index, ids, source):
+    return [
+        form
+        for form in es_form_cache
+        if form['_id'] in ids
+    ]
+
+
+@mock.patch('custom.icds_reports.ucr.expressions.mget_query', mget_query_fake)
 class BaseICDSDatasourceTest(TestCase, TestFileMixin):
     dependent_apps = ['corehq.apps.domain', 'corehq.apps.case']
     file_path = ('data_sources', )
@@ -63,9 +74,10 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
         super(BaseICDSDatasourceTest, cls).tearDownClass()
 
     def tearDown(self):
+        global es_form_cache
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.adapter.clear_table()
-        FormESFake.reset_docs()
+        es_form_cache = []
 
     def _get_query_object(self):
         return self.adapter.get_query_object()
@@ -84,5 +96,6 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
                                  str(index) + ":" + key + ' ' + str(exp_value) + ' != ' + str(row[key]))
 
     def _submit_form(self, form):
+        global es_form_cache
         submitted_form = submit_form_locally(ElementTree.tostring(form), self.domain, **{})
-        FormESFake.save_doc(submitted_form.xform.to_json())
+        es_form_cache.append(submitted_form.xform.to_json())
