@@ -17,7 +17,7 @@ def transform_app_for_es(doc_dict):
     return doc.to_json()
 
 
-def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'):
+def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow', **kwargs):
     assert pillow_id == 'ApplicationToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, APP_INDEX_INFO)
     app_processor = ElasticProcessor(

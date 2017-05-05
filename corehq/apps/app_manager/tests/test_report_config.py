@@ -2,8 +2,9 @@ import os
 from xml.etree import ElementTree
 from django.test import SimpleTestCase, TestCase
 import mock
-from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator
 from corehq.apps.app_manager.fixtures import report_fixture_generator
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportModule, \
@@ -150,7 +151,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                                 lambda domain, include_remote: [cls.app]):
                     with mock_sql_backend():
                         with mock_datasource_config():
-                            fixture, = report_fixture_generator(cls.user, '2.0')
+                            fixture, = call_fixture_generator(report_fixture_generator, cls.user)
         cls.fixture = ElementTree.tostring(fixture)
 
     @classmethod

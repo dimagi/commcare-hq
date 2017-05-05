@@ -35,7 +35,6 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
-from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
@@ -47,7 +46,6 @@ from .utils import (
 
 
 @location_safe
-@json_error
 @handle_401_response
 @login_or_digest_or_basic_or_apikey_or_token()
 @check_domain_migration
@@ -78,7 +76,6 @@ def restore(request, domain, app_id=None):
 
 
 @location_safe
-@json_error
 @login_or_digest_or_basic_or_apikey()
 @check_domain_migration
 def search(request, domain):
@@ -117,6 +114,10 @@ def search(request, domain):
 
     query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
 
+    owner_id = criteria.pop('owner_id', False)
+    if owner_id:
+        search_es = search_es.owner(owner_id)
+
     fuzzies = config.config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
@@ -136,7 +137,7 @@ def search(request, domain):
     # Even if it's a SQL domain, we just need to render the results as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
     fixtures = CaseDBFixture(cases).fixture
-    return HttpResponse(fixtures, content_type="text/xml")
+    return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
 def _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details):
@@ -170,7 +171,6 @@ def _handle_es_exception(request, exception, query_addition_debug_details):
 @location_safe
 @csrf_exempt
 @require_POST
-@json_error
 @login_or_digest_or_basic_or_apikey()
 @check_domain_migration
 def claim(request, domain):

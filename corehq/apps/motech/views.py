@@ -2,14 +2,11 @@ from django.contrib import messages
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy, ugettext as _
-from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.motech.connected_accounts import get_openmrs_account
 from corehq.apps.motech.forms import OpenmrsInstanceForm
-from corehq.toggles import MOTECH
+from corehq.apps.motech.permissions import require_motech_permissions
 from dimagi.utils.decorators.memoized import memoized
-
-require_motech_permissions = lambda fn: MOTECH.required_decorator()(domain_admin_required(fn))
 
 
 class MotechSection(BaseDomainView):
@@ -53,3 +50,9 @@ class OpenmrsInstancesMotechView(MotechSection):
             self.openmrs_instance_form.save(self.domain)
             messages.success(request, _("Your OpenMRS server settings have been saved!"))
         return self.get(request, *args, **kwargs)
+
+
+class OpenmrsConceptMotechView(MotechSection):
+    page_title = ugettext_lazy("OpenMRS Concepts")
+    urlname = 'motech_openmrs_concepts'
+    template_name = 'motech/motech_openmrs_concepts.html'

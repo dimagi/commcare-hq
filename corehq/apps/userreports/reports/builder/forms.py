@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 
 from corehq.apps.userreports.reports.builder.columns import \
     QuestionColumnOption, ColumnOption, CountColumn, MultiselectQuestionColumnOption
@@ -24,7 +25,6 @@ from corehq.apps.app_manager.models import (
     Application,
     Form,
 )
-from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.style.crispy import FieldWithHelpBubble
 from corehq.apps.userreports import tasks
@@ -1297,7 +1297,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
                     _("Rows"),
                     _('Choose which property this report will group its results by. Each value of this property will be a row in the table. For example, if you choose a yes or no question, the report will show a row for "yes" and a row for "no."'),
                 ),
-                crispy.Field('group_by', required=True),
+                'group_by',
             ),
             self.user_filter_fieldset,
             self.default_filter_fieldset

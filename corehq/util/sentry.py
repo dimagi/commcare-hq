@@ -9,6 +9,7 @@ RATE_LIMITED_EXCEPTIONS = {
     'socket.error': 'rabbitmq',
     'redis.exceptions.ConnectionError': 'redis',
     'restkit.errors.RequestError': 'couchdb',
+    'restkit.errors.RequestFailed': 'couchdb',
 }
 
 
@@ -24,20 +25,23 @@ def _get_rate_limit_key(exc_info):
 def _is_rate_limited(rate_limit_key):
     exponential_backoff_key = '{}_down'.format(rate_limit_key)
     ExponentialBackoff.increment(exponential_backoff_key)
-    if ExponentialBackoff.should_backoff(exponential_backoff_key):
-        datadog_counter('commcare.sentry.errors.rate_limited', tags=[
-            'service:{}'.format(rate_limit_key)
-        ])
-        return True
-    return False
+    return ExponentialBackoff.should_backoff(exponential_backoff_key)
 
 
 class HQSentryClient(DjangoClient):
     def should_capture(self, exc_info):
+        ex_value = exc_info[1]
+        capture = getattr(ex_value, 'sentry_capture', True)
+        if not capture:
+            return False
+
         if not super(HQSentryClient, self).should_capture(exc_info):
             return False
 
         rate_limit_key = _get_rate_limit_key(exc_info)
         if rate_limit_key:
+            datadog_counter('commcare.sentry.errors.rate_limited', tags=[
+                'service:{}'.format(rate_limit_key)
+            ])
             return not _is_rate_limited(rate_limit_key)
         return True

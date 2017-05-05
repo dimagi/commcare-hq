@@ -379,10 +379,13 @@ class EnikshayCaseFactory(object):
 
         if followup.IntervalId == 0:
             kwargs['attrs']['update']['diagnostic_test_reason'] = 'presumptive_tb'
+            kwargs['attrs']['update']['purpose_of_testing'] = 'diagnostic'
         elif followup.IntervalId == 1:
             kwargs['attrs']['update']['follow_up_test_reason'] = 'end_of_ip'
+            kwargs['attrs']['update']['purpose_of_testing'] = 'follow_up'
         elif followup.IntervalId == 4:
             kwargs['attrs']['update']['follow_up_test_reason'] = 'end_of_cp'
+            kwargs['attrs']['update']['purpose_of_testing'] = 'follow_up'
 
         existing_test_case = self.existing_test_case(followup)
         if existing_test_case:

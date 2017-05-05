@@ -18,6 +18,13 @@ hqDefine('app_manager/js/releases.js', function () {
             }
         });
         self.num_errors = ko.observable(app_data.num_errors || 0);
+        self.numErrorsText = ko.computed(function () {
+            var s = "s";
+            if (self.num_errors() === 1) {
+                s = "";
+            }
+            return self.num_errors() + " Error" + s;
+        });
         self.app_code = ko.observable(null);
         self.failed_url_generation = ko.observable(false);
         self.build_profile = ko.observable('');
@@ -312,8 +319,11 @@ hqDefine('app_manager/js/releases.js', function () {
                     self.fetchState('');
                     if (scroll) {
                         // Scroll so the bottom of main content (and the "View More" button) aligns with the bottom of the window
-                        var $content = $("#hq-content");
-                        window.scrollTo(0, $content.position().top + $content.height() - window.innerHeight);
+                        // Wait for animation to finish first
+                        _.defer(function() {
+                            var $content = $("#releases");
+                            window.scrollTo(0, $content.offset().top + $content.outerHeight(true) - window.innerHeight);
+                        });
                     }
                 },
                 error: function () {

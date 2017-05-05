@@ -77,7 +77,7 @@ class UnknownUsersProcessor(PillowProcessor):
         update_unknown_user_from_form_if_necessary(self._es, change.get_document())
 
 
-def get_unknown_users_pillow(pillow_id='unknown-users-pillow'):
+def get_unknown_users_pillow(pillow_id='unknown-users-pillow', **kwargs):
     """
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
@@ -102,7 +102,7 @@ def add_demo_user_to_user_index():
     )
 
 
-def get_user_pillow(pillow_id='UserPillow'):
+def get_user_pillow(pillow_id='UserPillow', **kwargs):
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
     user_processor = ElasticProcessor(

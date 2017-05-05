@@ -10,6 +10,8 @@ from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 from django.contrib import messages
+from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
+    get_per_type_defaults
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -30,8 +32,6 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.util import (
     is_valid_case_type,
     is_usercase_in_use,
-    get_per_type_defaults,
-    ParentCasePropertyBuilder,
     prefix_usercase_properties,
     commtrack_ledger_sections,
     module_offers_search,
