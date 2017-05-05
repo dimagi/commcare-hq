@@ -15,5 +15,5 @@ urlpatterns = [
         name=AdvancedPrimeRestoreCacheView.urlname),
     url(r'^search/$', search, name='remote_search'),
     url(r'^claim-case/$', claim, name='claim_case'),
-    url('^heartbeat/(?P<id>[\w-]+)$', heartbeat, name='phone_heartbeat'),
+    url(r'^heartbeat/(?P<id>[\w-]+)/$', heartbeat, name='phone_heartbeat'),
 ]
