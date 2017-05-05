@@ -3,12 +3,12 @@ from corehq.apps.api.resources.v0_5 import CommCareUserResource
 from corehq.apps.repeaters.exceptions import RequestConnectionError
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
 from custom.enikshay.integrations.bets.repeaters import (
-    UserRepeater,
+    BETSUserRepeater,
 )
 
 
-@RegisterGenerator(UserRepeater, "user_json", "JSON", is_default=True)
-class UserPayloadGenerator(BasePayloadGenerator):
+@RegisterGenerator(BETSUserRepeater, "user_json", "JSON", is_default=True)
+class BETSUserPayloadGenerator(BasePayloadGenerator):
 
     @property
     def content_type(self):

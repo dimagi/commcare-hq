@@ -4,23 +4,23 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from corehq.apps.repeaters.models import RepeatRecord
 
-from custom.enikshay.integrations.bets.repeaters import UserRepeater
+from custom.enikshay.integrations.bets.repeaters import BETSUserRepeater
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class UserRepeaterTest(TestCase):
+class BETSUserRepeaterTest(TestCase):
     domain = 'user-repeater'
 
     def setUp(self):
-        super(UserRepeaterTest, self).setUp()
-        self.repeater = UserRepeater(
+        super(BETSUserRepeaterTest, self).setUp()
+        self.repeater = BETSUserRepeater(
             domain=self.domain,
             url='super-cool-url',
         )
         self.repeater.save()
 
     def tearDown(self):
-        super(UserRepeaterTest, self).tearDown()
+        super(BETSUserRepeaterTest, self).tearDown()
         delete_all_repeat_records()
         delete_all_repeaters()
 

@@ -8,7 +8,7 @@ from corehq.apps.users.signals import commcare_user_post_save
 from corehq.toggles import BETS_INTEGRATION
 
 
-class UserRepeater(Repeater):
+class BETSUserRepeater(Repeater):
     friendly_name = _("Forward Users")
 
     class Meta(object):
@@ -27,7 +27,7 @@ class UserRepeater(Repeater):
 
 
 def create_user_repeat_records(sender, couch_user, **kwargs):
-    create_repeat_records(UserRepeater, couch_user)
+    create_repeat_records(BETSUserRepeater, couch_user)
 
 
 commcare_user_post_save.connect(create_user_repeat_records)

@@ -149,7 +149,7 @@ def update_incentive(request, domain):
     return _update_case_from_request(request, domain, IncentiveUpdate)
 
 
-class UserRepeaterView(AddRepeaterView):
+class BETSUserRepeaterView(AddRepeaterView):
     urlname = "user_repeater"
     page_title = "Users"
     page_name = page_title
