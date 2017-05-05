@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
+from django.db.models import F
 from django.utils.translation import ugettext as _
 from restkit import RequestError
 
@@ -285,4 +286,6 @@ def save_document(doc_ids):
                 processed_indicators.append(indicator.pk)
 
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
-        AsyncIndicator.objects.filter(pk__in=failed_indicators).update(date_queued=None)
+        AsyncIndicator.objects.filter(pk__in=failed_indicators).update(
+            date_queued=None, unsuccessful_attempts=F('unsuccessful_attempts') + 1
+        )
