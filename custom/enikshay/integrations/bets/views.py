@@ -194,7 +194,7 @@ class BETSAYUSHReferralRepeaterView(AddCaseRepeaterView):
                 "case in UATBC/e-Nikshay (episode case type)"
 
 
-class UserRepeaterView(AddRepeaterView):
+class BETSUserRepeaterView(AddRepeaterView):
     urlname = "user_repeater"
     page_title = "Users"
     page_name = page_title

@@ -10,7 +10,7 @@ from custom.enikshay.integrations.bets.views import (
     BETSAYUSHReferralRepeaterView,
     ChemistBETSVoucherRepeaterView,
     LabBETSVoucherRepeaterView,
-    UserRepeaterView,
+    BETSUserRepeaterView,
 )
 
 urlpatterns = [
@@ -60,8 +60,8 @@ urlpatterns = [
     ),
     url(
         r'^user_repeater$',
-        UserRepeaterView.as_view(),
+        BETSUserRepeaterView.as_view(),
         {'repeater_type': 'UserRepeater'},
-        name=UserRepeaterView.urlname
+        name=BETSUserRepeaterView.urlname
     ),
 ]

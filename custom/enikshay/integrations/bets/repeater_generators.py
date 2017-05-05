@@ -36,7 +36,7 @@ from custom.enikshay.integrations.bets.repeaters import (
     BETSAYUSHReferralRepeater,
     ChemistBETSVoucherRepeater,
     LabBETSVoucherRepeater,
-    UserRepeater,
+    BETSUserRepeater,
 )
 
 
@@ -343,8 +343,8 @@ class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
         return json.dumps(IncentivePayload.create_ayush_referral_payload(episode_case).to_json())
 
 
-@RegisterGenerator(UserRepeater, "user_json", "JSON", is_default=True)
-class UserPayloadGenerator(BasePayloadGenerator):
+@RegisterGenerator(BETSUserRepeater, "user_json", "JSON", is_default=True)
+class BETSUserPayloadGenerator(BasePayloadGenerator):
 
     @property
     def content_type(self):

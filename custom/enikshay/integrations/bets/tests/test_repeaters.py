@@ -9,7 +9,7 @@ from custom.enikshay.integrations.bets.repeater_generators import ChemistBETSVou
     BETSDiagnosisAndNotificationPayloadGenerator, BETSAYUSHReferralPayloadGenerator
 from custom.enikshay.integrations.bets.repeaters import ChemistBETSVoucherRepeater, BETS180TreatmentRepeater, \
     BETSDrugRefillRepeater, BETSSuccessfulTreatmentRepeater, BETSDiagnosisAndNotificationRepeater, \
-    BETSAYUSHReferralRepeater, UserRepeater
+    BETSAYUSHReferralRepeater, BETSUserRepeater
 from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENikshayRepeaterTestBase, MockResponse
 
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
@@ -242,19 +242,19 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class UserRepeaterTest(TestCase):
+class BETSUserRepeaterTest(TestCase):
     domain = 'user-repeater'
 
     def setUp(self):
-        super(UserRepeaterTest, self).setUp()
-        self.repeater = UserRepeater(
+        super(BETSUserRepeaterTest, self).setUp()
+        self.repeater = BETSUserRepeater(
             domain=self.domain,
             url='super-cool-url',
         )
         self.repeater.save()
 
     def tearDown(self):
-        super(UserRepeaterTest, self).tearDown()
+        super(BETSUserRepeaterTest, self).tearDown()
         delete_all_repeat_records()
         delete_all_repeaters()
 
