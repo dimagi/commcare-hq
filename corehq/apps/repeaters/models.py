@@ -58,7 +58,6 @@ def simple_post_with_logged_timeout(domain, data, url, *args, **kwargs):
 DELETED = "-Deleted"
 
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
-PostInfo = namedtuple('PostInfo', 'payload headers auth')
 
 
 class GeneratorCollection(object):
@@ -287,23 +286,20 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return None
 
     def fire_for_record(self, repeat_record, force_send):
-        headers = self.get_headers(repeat_record)
-        auth = self.get_auth()
         if repeat_record.try_now() or force_send:
             repeat_record.overall_tries += 1
-            self.post_for_record(repeat_record, PostInfo(repeat_record.get_payload(), headers, auth))
+            self.post_for_record(repeat_record)
             repeat_record.save()
 
-    def post_for_record(self, repeat_record, post_info):
+    def post_for_record(self, repeat_record):
+        headers = self.get_headers(repeat_record)
+        auth = self.get_auth()
+        payload = repeat_record.get_payload()
+        url = repeat_record.url  # todo: does this ever not equal self.url?
+        domain = repeat_record.domain  # todo: does this ever not equal self.domain?
         try:
-            response = simple_post_with_logged_timeout(
-                repeat_record.domain,
-                post_info.payload,
-                repeat_record.url,
-                headers=post_info.headers,
-                timeout=POST_TIMEOUT,
-                auth=post_info.auth,
-            )
+            response = simple_post_with_logged_timeout(domain, payload, url, headers=headers, timeout=POST_TIMEOUT,
+                                                       auth=auth)
         except Exception as e:
             repeat_record.handle_exception(e)
         else:
