@@ -25,7 +25,7 @@ SUSPECT_REGISTRATION_EVENT = '106'
 COMPOUNDER_NOTIFICATION_EVENT = '107'
 
 # Honorarium to chemists for dispensing GoI - supplied daily drugs
-CHEMIST_HONORARIUM_EVETN = '108'
+CHEMIST_HONORARIUM_EVENT = '108'
 
 # Cash transfer on subsequent drug refill (~at every drug voucher validation,
 # starting after 2nd voucher)
@@ -42,7 +42,7 @@ BETS_EVENT_IDS = [
     AYUSH_REFERRAL_EVENT,
     SUSPECT_REGISTRATION_EVENT,
     COMPOUNDER_NOTIFICATION_EVENT,
-    CHEMIST_HONORARIUM_EVETN,
+    CHEMIST_HONORARIUM_EVENT,
     DRUG_REFILL_EVENT,
     PROVIDER_HONORARIUM,
 ]
