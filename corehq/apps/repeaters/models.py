@@ -297,10 +297,9 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         auth = self.get_auth()
         payload = repeat_record.get_payload()
         url = self.get_url(repeat_record)
-        domain = repeat_record.domain  # todo: does this ever not equal self.domain?
         try:
-            response = simple_post_with_logged_timeout(domain, payload, url, headers=headers, timeout=POST_TIMEOUT,
-                                                       auth=auth)
+            response = simple_post_with_logged_timeout(self.domain, payload, url, headers=headers,
+                                                       timeout=POST_TIMEOUT, auth=auth)
         except Exception as e:
             repeat_record.handle_exception(e)
         else:
