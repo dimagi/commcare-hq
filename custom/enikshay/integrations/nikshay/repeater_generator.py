@@ -421,7 +421,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
             _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(e.message))
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.content),
                             "private_nikshay_registered", "private_nikshay_error"
         )
 
