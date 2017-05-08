@@ -8,6 +8,7 @@ from kafka.common import ConsumerTimeout
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.change_feed.topics import get_multi_topic_offset, validate_offsets
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
 from pillowtop.models import kafka_seq_to_str
@@ -39,6 +40,11 @@ class KafkaChangeFeed(ChangeFeed):
     @property
     def topics(self):
         return self._topics
+
+    @property
+    @memoized
+    def topic_and_partitions(self):
+        return list(self._processed_topic_offsets)
 
     def _get_single_topic_or_fail(self):
         if len(self._topics) != 1:
@@ -127,20 +133,30 @@ class PartitionedKafkaChangeFeed(KafkaChangeFeed):
         self.process_num = process_num
         super(PartitionedKafkaChangeFeed, self).__init__(topics, group_id, strict)
 
+    @property
+    @memoized
+    def topic_and_partitions(self):
+        return list(self._get_partitioned_offsets(get_multi_topic_offset(self.topics)))
+
     def iter_changes(self, since, forever):
         """
         Since must be a dictionary of topic partition offsets.
         """
-        since = self._get_partitioned_offsets(since)
+        since = self._filter_offsets(since)
         return super(PartitionedKafkaChangeFeed, self).iter_changes(since, forever)
 
     def get_current_checkpoint_offsets(self):
         offsets = super(PartitionedKafkaChangeFeed, self).get_current_checkpoint_offsets()
-        return self._get_partitioned_offsets(offsets)
+        return self._filter_offsets(offsets)
 
     def get_latest_offsets(self):
         offsets = super(PartitionedKafkaChangeFeed, self).get_latest_offsets()
-        return self._get_partitioned_offsets(offsets)
+        return self._filter_offsets(offsets)
+
+    def _filter_offsets(self, offsets):
+        return {
+            tp: offsets[tp] for tp in self.topic_and_partitions
+        }
 
     def _get_partitioned_offsets(self, offsets):
         topic_partitions = sorted(list(offsets))
