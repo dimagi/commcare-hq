@@ -62,11 +62,14 @@
                   var $e = $(e);
                   var loc_type = $e.attr('loctype');
                   $e[loc_type == val ? 'show' : 'hide']();
-                });
-            });
+              });
+          });
 
           model.has_user = ko.computed(function() {
-              return loc_types_with_users.indexOf(model.loc_type()) !== -1;
+              var loc_type = model.allowed_child_types().length === 1 ?
+                             model.allowed_child_types()[0] :
+                             model.loc_type();
+              return loc_types_with_users.indexOf(loc_type) !== -1;
           });
 
           var locs = {{ locations|JSON }};
