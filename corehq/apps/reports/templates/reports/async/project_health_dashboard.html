@@ -180,10 +180,16 @@
         }
 
         function setupDataTables(){
+            debugger
             $('.datatable').DataTable({
                 "ordering": false,
                 "searching": false,
                 "lengthChange": false,
+                "oLanguage": {
+                    'sEmptyTable': django.gettext('No data available in table'),
+                    'sInfo': django.gettext('Showing _START_ to _END_ of _TOTAL_ entries'),
+                    'sInfoEmpty': django.gettext('Showing _START_ to _END_ of _TOTAL_ entries')
+                }
             })
         }
 
