@@ -552,8 +552,7 @@ class RepeatRecord(Document):
     def post(self, post_info, tries=0):
         tries += 1
         try:
-            generator = self.get_payload_generator(self.format_or_default_format())
-            if generator.format_label == 'XML' and hasattr(self.repeater, 'operation'):
+            if 'WSDL' in self.repeater.url.upper() and self.repeater.operation.strip():
                 response = simple_xml_post_with_logged_timeout(
                     self.domain, post_info.payload, self.url, self.repeater.operation
                 )
