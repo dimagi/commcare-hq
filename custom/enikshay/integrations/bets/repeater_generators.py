@@ -72,7 +72,8 @@ class IncentivePayload(BETSPayload):
         return cls(
             EventID=TREATMENT_180_EVENT,
             EventOccurDate=episode_case_properties.get(TREATMENT_OUTCOME_DATE),
-            BeneficiaryUUID=person_case.owner_id,
+            # TODO: Get this value from some episode/voucher case property
+            BeneficiaryUUID=None,
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=location.metadata["nikshay_code"],
