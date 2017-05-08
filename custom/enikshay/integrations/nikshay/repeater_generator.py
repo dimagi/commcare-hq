@@ -393,43 +393,40 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
             "Treat_I": episode_case_properties.get('treatment_initiation_status', ''),
             "usersid": settings.ENIKSHAY_PRIVATE_API_USERS.get(person_locations.sto, ''),
             "password": settings.ENIKSHAY_PRIVATE_API_PASSWORD,
-            "source": ENIKSHAY_ID,
+            "Source": ENIKSHAY_ID,
         }
 
     def handle_success(self, response, payload_doc, repeat_record):
-        # A success would be getting a nikshay_id for the patient
-        # without it this would actually be a failure
+        # A successful response returns a Nikshay ID like 00001
+        # Failures also return with status code 200 and some message like
+        # Dublicate Entry or Invalid data format
+        # (Dublicate is not a typo)
         try:
-            nikshay_id = _get_nikshay_id_from_response(response)
-            update_case(
-                payload_doc.domain,
-                payload_doc.case_id,
-                {
-                    "nikshay_registered": "true",
-                    "nikshay_id": nikshay_id,
-                    "nikshay_error": "",
-                },
-                external_id=nikshay_id,
-            )
+            if isinstance(response, basestring) and response.isdigit():
+                nikshay_id = response
+                update_case(
+                    payload_doc.domain,
+                    payload_doc.case_id,
+                    {
+                        "private_nikshay_registered": "true",
+                        "nikshay_id": nikshay_id,
+                        "private_nikshay_error": "",
+                    },
+                    external_id=nikshay_id,
+                )
+            else:
+                self.handle_failure(response, payload_doc, repeat_record)
         except NikshayResponseException as e:
             _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(e.message))
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        if response.status_code == 409:  # Conflict
-            update_case(
-                payload_doc.domain,
-                payload_doc.case_id,
-                {
-                    "nikshay_registered": "true",
-                    "nikshay_error": "duplicate",
-                },
-            )
-        else:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
+        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response),
+                            "private_nikshay_registered", "private_nikshay_error"
+        )
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": unicode(exception)})
+            update_case(repeat_record.domain, repeat_record.payload_id, {"private_nikshay_error": unicode(exception)})
 
 
 def _get_nikshay_id_from_response(response):
