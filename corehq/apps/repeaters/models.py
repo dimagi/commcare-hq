@@ -315,9 +315,25 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             log_repeater_timeout_in_datadog(self.domain)
             raise RequestConnectionError(error)
         except Exception as e:
-            repeat_record.handle_exception(e)
+            self.handle_response(e, repeat_record)
         else:
-            repeat_record.handle_response(response)
+            self.handle_response(response, repeat_record)
+
+    def handle_response(self, result, repeat_record):
+        """
+        route the result to the success, failure, or exception handlers
+
+        result may be either a response object or an exception
+        """
+        if isinstance(result, Exception):
+            repeat_record.handle_exception(result)
+            self.handle_exception(result, repeat_record)
+        elif 200 <= result.status_code < 300:
+            repeat_record.handle_success(result)
+            self.handle_success(result, repeat_record)
+        else:
+            repeat_record.handle_failure(result)
+            self.handle_failure(result, repeat_record)
 
     def handle_success(self, response, repeat_record):
         """handle a successful post
@@ -553,19 +569,12 @@ class RepeatRecord(Document):
     def fire(self, force_send=False):
         self.repeater.fire_for_record(self, force_send=force_send)
 
-    def handle_response(self, response):
-        if 200 <= response.status_code < 300:
-            self.handle_success(response)
-        else:
-            self.handle_failure(response)
-
     def handle_success(self, response):
         """Do something with the response if the repeater succeeds
         """
         self.last_checked = datetime.utcnow()
         self.next_check = None
         self.succeeded = True
-        self.repeater.handle_success(response, self)
 
     def handle_failure(self, response):
         """Do something with the response if the repeater fails
@@ -574,13 +583,11 @@ class RepeatRecord(Document):
             u'{}: {}. {}'.format(response.status_code, response.reason, getattr(response, 'content', None)),
             response
         )
-        self.repeater.handle_failure(response, self)
 
     def handle_exception(self, exception):
         """handle internal exceptions
         """
         self._fail(unicode(exception), None)
-        self.repeater.handle_exception(exception, self)
 
     def _fail(self, reason, response):
         if self.repeater.allow_retries(response) and self.overall_tries < self.max_possible_tries:
