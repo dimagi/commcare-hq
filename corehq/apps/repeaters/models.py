@@ -291,8 +291,23 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         auth = self.get_auth()
         if repeat_record.try_now() or force_send:
             repeat_record.overall_tries += 1
-            repeat_record.post(PostInfo(repeat_record.get_payload(), headers, auth))
+            self.post_for_record(repeat_record, PostInfo(repeat_record.get_payload(), headers, auth))
             repeat_record.save()
+
+    def post_for_record(self, repeat_record, post_info):
+        try:
+            response = simple_post_with_logged_timeout(
+                repeat_record.domain,
+                post_info.payload,
+                repeat_record.url,
+                headers=post_info.headers,
+                timeout=POST_TIMEOUT,
+                auth=post_info.auth,
+            )
+        except Exception as e:
+            repeat_record.handle_exception(e)
+        else:
+            return repeat_record.handle_response(response)
 
     def handle_success(self, response, repeat_record):
         """handle a successful post
@@ -543,21 +558,6 @@ class RepeatRecord(Document):
 
     def fire(self, force_send=False):
         self.repeater.fire_for_record(self, force_send=force_send)
-
-    def post(self, post_info):
-        try:
-            response = simple_post_with_logged_timeout(
-                self.domain,
-                post_info.payload,
-                self.url,
-                headers=post_info.headers,
-                timeout=POST_TIMEOUT,
-                auth=post_info.auth,
-            )
-        except Exception as e:
-            self.handle_exception(e)
-        else:
-            return self.handle_response(response)
 
     def handle_response(self, response):
         if 200 <= response.status_code < 300:
