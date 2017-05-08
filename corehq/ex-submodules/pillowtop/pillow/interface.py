@@ -17,7 +17,7 @@ from pillowtop.logger import pillow_logging
 def _topic_for_ddog(topic):
     # can be a string for couch pillows, but otherwise is topic, partition
     if isinstance(topic, TopicAndPartition):
-        return 'topic:{}, {}'.format(topic.topic, topic.partition)
+        return 'topic:{}-{}'.format(topic.topic, topic.partition)
     else:
         return 'topic:{}'.format(topic)
 
@@ -171,7 +171,7 @@ class PillowBase(object):
         for topic, value in checkpoint_sequence.iteritems():
             datadog_gauge('commcare.change_feed.checkpoint_offsets', value, tags=[
                 'pillow_name:{}'.format(self.get_name()),
-                'topic:{}'.format(_topic_for_ddog(topic)),
+                _topic_for_ddog(topic),
             ])
 
     def _record_change_in_datadog(self, change, timer):
@@ -217,7 +217,7 @@ class PillowBase(object):
             change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).seconds
             datadog_gauge('commcare.change_feed.change_lag', change_lag, tags=[
                 u'pillow_name:{}'.format(self.get_name()),
-                u'topic:{}'.format(_topic_for_ddog(change.topic)),
+                _topic_for_ddog(change.topic),
             ])
 
             if timer:
