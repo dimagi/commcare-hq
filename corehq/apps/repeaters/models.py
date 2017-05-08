@@ -48,8 +48,8 @@ from .utils import get_all_repeater_types
 
 def log_timeout_and_raise(domain, error):
     datadog_counter('commcare.repeaters.timeout', tags=[
-            u'domain:{}'.format(domain),
-        ])
+        u'domain:{}'.format(domain),
+    ])
     raise RequestConnectionError(error)
 
 

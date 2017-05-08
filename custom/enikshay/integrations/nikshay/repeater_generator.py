@@ -423,11 +423,17 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
     def handle_failure(self, response, payload_doc, repeat_record):
         _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.content),
                             "private_nikshay_registered", "private_nikshay_error"
-        )
+                            )
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            update_case(repeat_record.domain, repeat_record.payload_id, {"private_nikshay_error": unicode(exception)})
+            update_case(
+                repeat_record.domain,
+                repeat_record.payload_id,
+                {
+                    "private_nikshay_error": unicode(exception)
+                }
+            )
 
 
 def _get_nikshay_id_from_response(response):
