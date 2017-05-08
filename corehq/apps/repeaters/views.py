@@ -1,4 +1,6 @@
 import json
+from couchdbkit import ResourceNotFound
+from django.http import Http404
 
 from django.urls import reverse
 from django.views.generic import View
@@ -38,13 +40,25 @@ class RepeatRecordView(View):
     urlname = 'repeat_record'
     http_method_names = ['get', 'post']
 
+    @staticmethod
+    def get_record_or_404(request, domain):
+        try:
+            record = RepeatRecord.get(request.GET.get('record_id'))
+        except ResourceNotFound:
+            raise Http404()
+
+        if record.domain != domain:
+            raise Http404()
+
+        return record
+
     def get(self, request, domain):
-        record = RepeatRecord.get(request.GET.get('record_id'))
+        record = self.get_record_or_404(request, domain)
         content_type = record.repeater.get_payload_generator(
             record.repeater.format_or_default_format()
         ).content_type
         try:
-            payload = record.get_payload()
+            payload = record.get_payload(record)
         except XFormNotFound:
             return json_response({
                 'error': u'Odd, could not find payload for: {}'.format(record.payload_id)
@@ -62,7 +76,7 @@ class RepeatRecordView(View):
 
     def post(self, request, domain):
         # Retriggers a repeat record
-        record = RepeatRecord.get(request.POST.get('record_id'))
+        record = self.get_record_or_404(request, domain)
         record.fire(force_send=True)
         return json_response({
             'success': record.succeeded,
