@@ -5,6 +5,7 @@ from couchdbkit.exceptions import BulkSaveError
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
+from corehq.toggles import ENTERPRISE_OPTIMIZATIONS
 from dimagi.utils.decorators.memoized import memoized
 from ..utils import should_use_sql_backend
 
@@ -111,7 +112,14 @@ class FormProcessorInterface(object):
         else:
             # check across Couch & SQL to ensure global uniqueness
             # check this domains DB first to support existing bad data
-            return self.processor.is_duplicate(xform_id) or self.other_db_processor().is_duplicate(xform_id)
+            return (
+                self.processor.is_duplicate(xform_id) or
+                # don't bother checking other DB if there's only one active domain
+                (
+                    not ENTERPRISE_OPTIMIZATIONS.enabled(self.domain) and
+                    self.other_db_processor().is_duplicate(xform_id)
+                )
+            )
 
     def new_xform(self, form_json):
         return self.processor.new_xform(form_json)
@@ -190,7 +198,7 @@ class FormProcessorInterface(object):
         if case:
             return case, lock
 
-        if not couch_sql_migration_in_progress(self.domain):
+        if not couch_sql_migration_in_progress(self.domain) and not ENTERPRISE_OPTIMIZATIONS.enabled(self.domain):
             # during migration we're copying from one DB to the other so this check will always fail
             if self.other_db_processor().case_exists(case_id):
                 raise IllegalCaseId("Bad case id")

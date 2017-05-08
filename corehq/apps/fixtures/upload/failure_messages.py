@@ -28,6 +28,10 @@ FAILURE_MESSAGES = {
         "Properties should be specified as 'field 1: property 1'. In 'types' sheet, "
         "'{prop_key}' is not correctly formatted"
     ),
+    "wrong_index_syntax": ugettext_noop(
+        "'{prop_key}' is not correctly formatted in 'types' sheet. Whether a field is indexed should be specified "
+        "as 'field 1: is_indexed?'. Its value should be 'yes' or 'no'."
+    ),
     "invalid_field_name_numerical": ugettext_noop(
         "Error in 'types' sheet for 'field {i}', '{val}'. "
         "Field names should be strings, not numbers"

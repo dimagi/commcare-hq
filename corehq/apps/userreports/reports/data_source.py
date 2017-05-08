@@ -1,4 +1,4 @@
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_SQL_BACKEND
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_SQL_BACKEND, UCR_ES_PRIMARY
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.es.data_source import ConfigurableReportEsDataSource
 from corehq.apps.userreports.sql.data_source import ConfigurableReportSqlDataSource
@@ -105,7 +105,7 @@ class ConfigurableReportDataSource(object):
         return self.data_source.get_total_row()
 
     def override_backend_id(self, new_backend):
-        assert get_backend_id(self.config, can_handle_laboratory=True) == UCR_LABORATORY_BACKEND
+        assert get_backend_id(self.config, can_handle_laboratory=True) in (UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY)
         assert new_backend == UCR_ES_BACKEND or new_backend == UCR_SQL_BACKEND
         self._backend = new_backend
         self.config.backend_id = new_backend

@@ -830,9 +830,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     logging.debug(msg)
                 raise CaseSaveError(e)
             else:
-                case.clear_tracked_models()
                 for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
                     attachment.delete_content()
+                case.clear_tracked_models()
 
     @staticmethod
     def get_open_case_ids_for_owner(domain, owner_id):

@@ -1,6 +1,7 @@
 from xml.etree import ElementTree
 from django.utils.translation import ugettext as _
-from casexml.apps.phone.models import OTARestoreUser
+
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.util.translation import localize
 from custom.bihar import BIHAR_DOMAINS
 from custom.bihar.reports.indicators.indicators import IndicatorDataProvider, IndicatorConfig, INDICATOR_SETS
@@ -12,11 +13,11 @@ hard_coded_group_filter = lambda group: bool((group.metadata or {}).get('awc-cod
 hard_coded_fixture_id = 'indicators:bihar-supervisor'
 
 
-class IndicatorFixtureProvider(object):
+class IndicatorFixtureProvider(FixtureProvider):
     id = hard_coded_fixture_id
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
-        assert isinstance(restore_user, OTARestoreUser)
+    def __call__(self, restore_state):
+        restore_user = restore_state.restore_user
 
         if restore_user.domain in hard_coded_domains:
             groups = filter(hard_coded_group_filter, restore_user.get_groups())

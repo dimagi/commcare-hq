@@ -117,7 +117,7 @@ class CaseInfo(object):
 
     @property
     def user_id(self):
-        return self.report.individual or self.owner_id
+        return self.report and self.report.individual or self.owner_id
 
     @property
     def owner_id(self):

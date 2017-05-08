@@ -1,4 +1,4 @@
-from casexml.apps.phone.models import OTARestoreUser
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.products.models import Product
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
 from corehq.apps.products.models import SQLProduct
@@ -49,11 +49,11 @@ def product_fixture_generator_json(domain):
     }
 
 
-class ProductFixturesProvider(object):
+class ProductFixturesProvider(FixtureProvider):
     id = 'commtrack:products'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
-        assert isinstance(restore_user, OTARestoreUser)
+    def __call__(self, restore_state):
+        restore_user = restore_state.restore_user
 
         def get_products():
             return sorted(
@@ -62,7 +62,7 @@ class ProductFixturesProvider(object):
             )
 
         return simple_fixture_generator(
-            restore_user, self.id, "product", PRODUCT_FIELDS, get_products, last_sync
+            restore_user, self.id, "product", PRODUCT_FIELDS, get_products, restore_state.last_sync_log
         )
 
 product_fixture_generator = ProductFixturesProvider()

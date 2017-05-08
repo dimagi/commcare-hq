@@ -7,7 +7,11 @@
     <script src="{% static 'app_manager/js/careplan-config-ui.js' %}"></script>
 {% endblock %}
 
-{% block case_management_js %}
+{% block js-inline %}{{ block.super }}
+<script>
+    /* form_requires needs to be a knockout observable so that
+    its value can be read by another UI (form filtering) */
+    var form_requires = ko.observable({{ form.requires|JSON }});
     var Careplan = hqImport('app_manager/js/careplan-config-ui.js').Careplan;
     var careplan = new Careplan({
         home: $('#case-config-ko'),
@@ -24,6 +28,7 @@
         propertiesMap: {{ case_properties|JSON }}
     });
     careplan.init();
+</script>
 {% endblock %}
 
 {% block case_management_content %}

@@ -1,25 +1,29 @@
 --- 
 +++ 
-@@ -1,4 +1,4 @@
+@@ -1,13 +1,12 @@
 -{% extends "app_manager/v1/form_view_base.html" %}
 +{% extends "app_manager/v2/form_view_base.html" %}
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -8,7 +8,7 @@
- {% endblock %}
  
- {% block case_management_js %}{{ block.super }}
--    {% if form.source %}
+ {% block js-inline %}{{ block.super }}
+-
+ {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
+-{% if form.source %}
+-<script>
 +  {% if form.source %}
-     var CaseConfig = hqImport('app_manager/js/case-config-ui.js').CaseConfig;
-     var caseConfig = new CaseConfig({
-         home: $('#case-config-ko'),
-@@ -26,5 +26,73 @@
++  <script>
+     /* form_requires needs to be a knockout observable so that
+     its value can be read by another UI (form filtering) */
+     var form_requires = ko.observable({{ form.requires|JSON }});
+@@ -28,6 +27,74 @@
          propertyDescriptions: {{ property_descriptions|JSON }},
      });
      caseConfig.init();
--    {% endif %}
+-</script>
+-{% endif %}
++  </script>
 +  {% endif %}
  {% endblock %}
 +
