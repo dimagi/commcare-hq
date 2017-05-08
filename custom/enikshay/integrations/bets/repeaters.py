@@ -294,5 +294,8 @@ class BETSLocationRepeater(Repeater):
 
 
 @receiver(post_save, sender=SQLLocation, dispatch_uid="create_bets_location_repeat_records")
-def create_location_repeat_records(sender, **kwargs):
+def create_location_repeat_records(sender, raw=False, **kwargs):
+    if raw:
+        return
+
     create_repeat_records(BETSLocationRepeater, kwargs['instance'])
