@@ -363,7 +363,8 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
         try:
             tu_code = tu_location.metadata['nikshay_code']
         except (KeyError, AttributeError) as e:
-            raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
+            raise NikshayCodeNotFound("Nikshay codes not found for location with id: {}: {}"
+                                      .format(tu_location.get_id, e))
         episode_case_date = episode_case_properties.get('date_of_diagnosis', None)
         if episode_case_date:
             episode_date = datetime.datetime.strptime(episode_case_date, "%Y-%m-%d").date()
