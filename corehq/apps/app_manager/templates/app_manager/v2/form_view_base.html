@@ -101,12 +101,6 @@
                 });
             }());
 
-        {% block case_management_js %}
-            /* form_requires needs to be a knockout observable so that
-            its value can be read by another UI (form filtering) */
-            var form_requires = ko.observable({{ form.requires|JSON }});
-        {% endblock %}
-
         {% if allow_form_filtering %}
 
         function formFilterMatches(filter, pattern_matches, substring_matches) {
@@ -176,11 +170,14 @@
             return true;
         });
 
-        $('#form-filter').koApplyBindings({
-                formFilter: formFilter,
-                formFilterAllowed: formFilterAllowed,
-                errorMessages: {notAllowed: formFilterErrorMessage}
-        });
+        var $formFilter = $('#form-filter');
+        if ($formFilter.length) {
+            $formFilter.koApplyBindings({
+                    formFilter: formFilter,
+                    formFilterAllowed: formFilterAllowed,
+                    errorMessages: {notAllowed: formFilterErrorMessage},
+            });
+        };
         {% endif %}
 
         {% if allow_form_workflow %}
@@ -209,6 +206,13 @@
         $('#auto-gps-capture').koApplyBindings({
             auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
         });
+
+        var $shadowParent = $('#shadow-parent');
+        if ($shadowParent.length) {
+            $shadowParent.koApplyBindings({
+                shadow_parent: ko.observable({{ form.shadow_parent_form_id|JSON }})
+            });
+        }
 
         {% if request|toggle_enabled:'NO_VELLUM' %}
         $('#no-vellum').koApplyBindings({
@@ -345,18 +349,24 @@
             </li>
             {% endif %}{% endif %}
 
-            {% if form.form_type == 'advanced_form' and module.has_schedule %}
-                 <li>
-                     <a href="#visit-scheduler" data-toggle="tab">
-                         {% trans "Visit Scheduler" %}
-                     </a>
-                 </li>
+            {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
+                {% if module.has_schedule %}
+                    <li>
+                        <a href="#visit-scheduler" data-toggle="tab">
+                             {% trans "Visit Scheduler" %}
+                         </a>
+                     </li>
+                {% endif %}
             {% endif %}
 
+            {% if form.form_type != "shadow_form" %}
             <li>
                 <a href="#advanced" data-toggle="tab">{% trans "Actions" %}</a>
             </li>
+            {% endif %}
         </ul>
+
+        {% include 'app_manager/v2/partials/case_config_ko_templates.html' %}
 
         <div class="tab-content appmanager-tab-content">
 
@@ -366,6 +376,19 @@
                       <p class="alert alert-warning">
                           {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
                       </p>
+                  {% endif %}
+                  {% if form.form_type == "shadow_form" %}
+                    <div class="alert alert-warning">
+                        {% trans "You are viewing a shadow form, therefore:" %}
+                        <ul>
+                            <li>{% trans 'You will be unable to add "Open case" action' %}</li>
+                            <li>{% trans 'Load/Update actions will be "merged" with the source form actions'%}</li>
+                            <li>{% trans 'Every case tag in the source form load/update action configuration must appear in this configuration'%}</li>
+                            <li>{% trans 'You are not allowed to specify load or save case properties'%}</li>
+                            <li>{% trans 'The load and save case property behaviors specified in the shadow source form actions will be used for the actions with matching case tags specified here.'%}</li>
+                            <li>{% trans 'You are not allowed to specify case closures here'%}</li>
+                        </ul>
+                    </div>
                   {% endif %}
                   {% if form_errors or xform_validation_errored %}
                       <p class="alert alert-warning">
@@ -476,11 +499,14 @@
             </div>
             {% endif %}{% endif %}
 
-            {% if form.form_type == 'advanced_form' and module.has_schedule %}
-                {% include "app_manager/v2/partials/form_tab_visit_scheduler.html" %}
+            {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
+                {% if module.has_schedule  %}
+                    {% include "app_manager/v2/partials/form_tab_visit_scheduler.html" %}
+                {% endif %}
             {% endif %}
-
-            {% include "app_manager/v2/partials/form_tab_advanced.html" %}
+            {% if form.form_type != "shadow_form" %}
+                {% include "app_manager/v2/partials/form_tab_advanced.html" %}
+            {% endif %}
         </div>
     </div>
     <div id="questions"></div>

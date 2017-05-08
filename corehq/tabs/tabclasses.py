@@ -20,7 +20,8 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.motech.views import OpenmrsInstancesMotechView
+from corehq.apps.motech.views import OpenmrsInstancesMotechView, \
+    OpenmrsConceptMotechView
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
 from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
@@ -1631,6 +1632,9 @@ class MotechTab(UITab):
             (_("OpenMRS"), [{
                 'title': OpenmrsInstancesMotechView.page_title,
                 'url': reverse(OpenmrsInstancesMotechView.urlname, args=[self.domain]),
+            }, {
+                'title': OpenmrsConceptMotechView.page_title,
+                'url': reverse(OpenmrsConceptMotechView.urlname, args=[self.domain]),
             }])
         ]
 
@@ -1773,20 +1777,22 @@ class AdminTab(UITab):
                      'url': reverse('system_info')},
                 ])]
 
-        admin_operations = []
+        admin_operations = [
+            {'title': _('Look up user by email'),
+             'url': reverse('web_user_lookup')},
+        ]
 
         if self.couch_user and self.couch_user.is_staff:
             from corehq.apps.hqadmin.views import (
                 AuthenticateAs, ReprocessMessagingCaseUpdatesView
             )
-            admin_operations.extend([
+            admin_operations = [
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
                                 args=('pillow_errors',))},
                 {'title': _('Login as another user'),
                  'url': reverse(AuthenticateAs.urlname)},
-                {'title': _('Look up user by email'),
-                 'url': reverse('web_user_lookup')},
+            ] + admin_operations + [
                 {'title': _('View raw couch documents'),
                  'url': reverse('raw_couch')},
                 {'title': _('Check Call Center UCR tables'),
@@ -1795,7 +1801,7 @@ class AdminTab(UITab):
                  'url': reverse('superuser_management')},
                 {'title': _('Reprocess Messaging Case Updates'),
                  'url': reverse(ReprocessMessagingCaseUpdatesView.urlname)},
-            ])
+            ]
         return [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),

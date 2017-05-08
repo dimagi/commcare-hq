@@ -38,7 +38,7 @@ COMMCAREHQ.makeHqHelp = function (opts, wrap) {
             '<a href="#" tabindex="-1">' +
                 '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
     );
-    _.each(['content', 'title', 'html', 'placement'], function(attr) {
+    _.each(['content', 'title', 'html', 'placement', 'container'], function(attr) {
         $('a', el).data(attr, opts[attr]);
     });
     if (wrap) {
@@ -204,6 +204,7 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass, barClass) {
                 if (lastParent) {
                     var stillAttached = lastParent.tagName.toLowerCase() == 'html';
                     if (button.state !== 'saved' && stillAttached) {
+                        if ($('.js-unhide-on-unsaved').length > 0) $('.js-unhide-on-unsaved').removeClass('hide');
                         return options.unsavedMessage || "";
                     }
                 }

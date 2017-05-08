@@ -128,4 +128,4 @@ def mock_sql_backend():
 
 def mock_datasource_config():
     return patch('corehq.apps.userreports.reports.data_source.get_datasource_config',
-                 return_value=("id_doesnt_matter", None))
+                 return_value=(get_sample_data_source(), None))

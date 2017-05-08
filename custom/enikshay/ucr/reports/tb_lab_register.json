@@ -45,6 +45,25 @@
                     "order_by_hierarchy": true
                 },
                 "display": "Location"
+            },
+            {
+                "slug": "is_migrated",
+                "required": false,
+                "datatype": "integer",
+                "show_all": true,
+                "choices": [
+                    {
+                        "display": "Show only migrated from Nikshay",
+                        "value": 1
+                    },
+                    {
+                        "display": "Show only eNikshay",
+                        "value": 0
+                    }
+                ],
+                "field": "case_created_by_migration",
+                "type": "choice_list",
+                "display": "Filter migrated data"
             }
         ],
         "columns": [
@@ -253,9 +272,9 @@
                 "calculate_total": false
             },
             {
-                "display": "Nikshay ID",
+                "display": "Follow up Nikshay ID",
                 "type": "field",
-                "field": "nikshay_id",
+                "field": "follow_up_nikshay_id",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -265,9 +284,9 @@
                 "calculate_total": false
             },
             {
-                "display": "Regimen - New (N) / Previously treated (PT)",
+                "display": "Follow up regimen - New (N) / Previously treated (PT)",
                 "type": "field",
-                "field": "regimen",
+                "field": "follow_up_regimen",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -277,9 +296,9 @@
                 "calculate_total": false
             },
             {
-                "display": "Month",
+                "display": "Follow up month",
                 "type": "field",
-                "field": "treatment_initiation_date_month",
+                "field": "follow_up_treatment_initiation_date_month",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,

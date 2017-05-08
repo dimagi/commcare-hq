@@ -386,10 +386,13 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    if ajax and "blank form" in [error.get('type') for error in errors]:
+    if ajax and "blank form" in [error.get('type') for error in errors] and not form.form_type == "shadow_form":
         response_html = ("" if toggles.APP_MANAGER_V2.enabled(request.user.username)
                          else render_to_string('app_manager/v1/partials/create_form_prompt.html'))
     else:
+        if form.form_type == "shadow_form":
+            # Don't display the blank form error if its a shadow form
+            errors = [e for e in errors if e['type'] != "blank form"]
         response_html = render_to_string(
             get_app_manager_template(
                 request.user,

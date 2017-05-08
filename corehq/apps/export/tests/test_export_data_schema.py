@@ -1145,8 +1145,7 @@ class TestOrderingOfSchemas(SimpleTestCase):
             group_schemas=[
                 ExportGroupSchema(
                     path=[],
-                    items=[
-                    ]
+                    items=items,
                 )
             ]
         )
@@ -1162,15 +1161,17 @@ class TestOrderingOfSchemas(SimpleTestCase):
 
     def test_basic_ordering(self):
         schema = self._create_schema([
-            ExportItem(path=[PathNode(name='two')]),
-            ExportItem(path=[PathNode(name='one')]),
-            ExportItem(path=[PathNode(name='three')]),
+            ScalarItem(path=[PathNode(name='three')]),
+            ScalarItem(path=[PathNode(name='one')]),
+            ScalarItem(path=[PathNode(name='two')]),
+            ScalarItem(path=[PathNode(name='four')]),
         ])
 
         ordered_schema = self._create_schema([
-            ExportItem(path=[PathNode(name='one')]),
-            ExportItem(path=[PathNode(name='two')]),
-            ExportItem(path=[PathNode(name='three')]),
+            ScalarItem(path=[PathNode(name='one')]),
+            ScalarItem(path=[PathNode(name='two')]),
+            ScalarItem(path=[PathNode(name='three')]),
+            ScalarItem(path=[PathNode(name='four')]),
         ])
 
         schema = CaseExportDataSchema._reorder_schema_from_schema(
@@ -1181,9 +1182,10 @@ class TestOrderingOfSchemas(SimpleTestCase):
             schema,
             [],
             [
-                ExportItem(path=[PathNode(name='one')]),
-                ExportItem(path=[PathNode(name='two')]),
-                ExportItem(path=[PathNode(name='three')]),
+                ScalarItem(path=[PathNode(name='one')]),
+                ScalarItem(path=[PathNode(name='two')]),
+                ScalarItem(path=[PathNode(name='three')]),
+                ScalarItem(path=[PathNode(name='four')]),
             ],
         )
 

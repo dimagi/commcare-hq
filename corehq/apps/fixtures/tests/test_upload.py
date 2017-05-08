@@ -3,6 +3,7 @@ from django.test import SimpleTestCase
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
+from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.util.test_utils import make_make_path
 
 
@@ -24,7 +25,7 @@ def _upload_test(name, error_messages):
     return inner
 
 
-class TestFixtureUpload(SimpleTestCase):
+class TestFixtureUploadValidation(SimpleTestCase):
     maxDiff = None
 
     def _test(self, config):
@@ -122,3 +123,19 @@ class TestFixtureUpload(SimpleTestCase):
     test_no_types_sheet = _upload_test('no_types_sheet', [
         u"Workbook does not contain a sheet called types",
     ])
+    test_wrong_index_syntax = _upload_test('wrong_index_syntax', [
+        u"'field 1' is not correctly formatted in 'types' sheet. Whether a field is indexed should be specified "
+        "as 'field 1: is_indexed?'. Its value should be 'yes' or 'no'.",
+    ])
+
+
+class TestFixtureUpload(SimpleTestCase):
+    def _get_workbook(self, filename):
+        return get_workbook(_make_path('test_upload', '{}.xlsx'.format(filename)))
+
+    def test_indexed_field(self):
+        workbook = self._get_workbook('ok')
+        type_sheets = workbook.get_all_type_sheets()
+        indexed_field = type_sheets[0].fields[0]
+        self.assertEqual(indexed_field.field_name, 'name')
+        self.assertTrue(indexed_field.is_indexed)

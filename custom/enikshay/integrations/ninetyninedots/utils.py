@@ -8,6 +8,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from dimagi.utils.decorators.memoized import memoized
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+from custom.enikshay.const import ENIKSHAY_TIMEZONE
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 from custom.enikshay.case_utils import get_open_episode_case_from_person, get_adherence_cases_between_dates
 from custom.enikshay.exceptions import ENikshayCaseNotFound
@@ -86,7 +87,7 @@ class AdherenceCaseFactory(object):
         }
 
     def _parse_adherence_date(self, iso_datestring):
-        tz = timezone('Asia/Kolkata')
+        tz = timezone(ENIKSHAY_TIMEZONE)
         try:
             datetime_from_adherence = parser.parse(iso_datestring)
             datetime_in_india = datetime_from_adherence.astimezone(tz)

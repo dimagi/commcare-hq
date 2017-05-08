@@ -18,6 +18,13 @@ hqDefine('app_manager/js/releases.js', function () {
             }
         });
         self.num_errors = ko.observable(app_data.num_errors || 0);
+        self.numErrorsText = ko.computed(function () {
+            var s = "s";
+            if (self.num_errors() === 1) {
+                s = "";
+            }
+            return self.num_errors() + " Error" + s;
+        });
         self.app_code = ko.observable(null);
         self.failed_url_generation = ko.observable(false);
         self.build_profile = ko.observable('');
@@ -93,7 +100,10 @@ hqDefine('app_manager/js/releases.js', function () {
             if (!(ko.utils.unwrapObservable(self[url_type])) || self.build_profile()) {
                 return self.generate_short_url(url_type);
             } else {
-                return ko.utils.unwrapObservable(self[url_type]);
+                var data = ko.utils.unwrapObservable(self[url_type]);
+                var bitly_code = self.parse_bitly_url(data);
+                self.app_code(bitly_code);
+                return data;
             }
         };
 
@@ -161,6 +171,7 @@ hqDefine('app_manager/js/releases.js', function () {
             ga_track_event('App Manager', 'Deploy Button', self.id());
             analytics.workflow('Clicked Deploy');
             $.post(releasesMain.options.urls.hubspot_click_deploy);
+            self.get_short_odk_url();
         };
 
         self.clickScan = function() {
@@ -308,8 +319,11 @@ hqDefine('app_manager/js/releases.js', function () {
                     self.fetchState('');
                     if (scroll) {
                         // Scroll so the bottom of main content (and the "View More" button) aligns with the bottom of the window
-                        var $content = $("#hq-content");
-                        window.scrollTo(0, $content.position().top + $content.height() - window.innerHeight);
+                        // Wait for animation to finish first
+                        _.defer(function() {
+                            var $content = $("#releases");
+                            window.scrollTo(0, $content.offset().top + $content.outerHeight(true) - window.innerHeight);
+                        });
                     }
                 },
                 error: function () {

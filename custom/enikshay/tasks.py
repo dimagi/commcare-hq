@@ -7,7 +7,7 @@ from celery.task import periodic_task
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from django.conf import settings
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_datetime, parse_date
 
 from casexml.apps.case.mock import CaseBlock
 from corehq import toggles
@@ -24,7 +24,9 @@ from .const import (
     DAILY_SCHEDULE_ID,
     SCHEDULE_ID_FIXTURE,
     HISTORICAL_CLOSURE_REASON,
+    ENIKSHAY_TIMEZONE,
 )
+from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
 
 logger = get_task_logger(__name__)
@@ -51,7 +53,9 @@ class EpisodeAdherenceUpdater(object):
 
     def __init__(self, domain):
         self.domain = domain
-        self.purge_date = pytz.UTC.localize(datetime.datetime.today() - datetime.timedelta(days=60))
+        # set purge_date to 60 days back
+        self.purge_date = datetime.datetime.now(
+            pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=60)
         self.adherence_data_store = AdherenceDatastore(domain)
 
     def run(self):
@@ -66,10 +70,12 @@ class EpisodeAdherenceUpdater(object):
                         self.domain
                     )
             except Exception, e:
-                logger.error("Error calculating adherence values for episode case_id({}): {}".format(
-                    episode.case_id,
-                    e
-                ))
+                logger.error(
+                    "Error calculating adherence values for episode case_id({}): {}".format(
+                        episode.case_id,
+                        e
+                    )
+                )
 
     def _get_open_episode_cases(self):
         # return all open 'episode' cases
@@ -98,6 +104,11 @@ class EpisodeUpdate(object):
         self.case_updater = case_updater
         self._cache_dose_taken_by_date = False
 
+    @property
+    @memoized
+    def case_properties(self):
+        return self.episode.dynamic_case_properties()
+
     def get_property(self, property):
         """
         Args:
@@ -106,7 +117,7 @@ class EpisodeUpdate(object):
         Returns:
             value of the episode case-property named 'property'
         """
-        return self.episode.dynamic_case_properties().get(property)
+        return self.case_properties.get(property)
 
     @memoized
     def get_valid_adherence_cases(self):
@@ -169,7 +180,7 @@ class EpisodeUpdate(object):
         # index by 'adherence_date'
         cases_by_date = defaultdict(list)
         for case in adherence_cases:
-            adherence_date = parse_datetime(case['adherence_date']).date()
+            adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
             cases_by_date[adherence_date].append(case)
 
         # calculate whether adherence is taken on each day
@@ -178,6 +189,22 @@ class EpisodeUpdate(object):
             dose_taken_by_date[d] = is_dose_taken(cases)
 
         return dose_taken_by_date
+
+    def get_adherence_schedule_start_date(self):
+        # return property 'adherence_schedule_date_start' of episode case (is expected to be a date object)
+        raw_date = self.get_property('adherence_schedule_date_start')
+        if not raw_date:
+            return None
+        elif parse_date(raw_date):
+            return parse_date(raw_date)
+        else:
+            raise EnikshayTaskException(
+                "Episode case {case_id} has invalid format for 'adherence_schedule_date_start' {date}".format(
+                    case_id=self.episode.case_id,
+                    date=raw_date
+                )
+            )
+            return None
 
     def count_doses_taken(self, dose_taken_by_date, lte=None, gte=None):
         """
@@ -188,7 +215,7 @@ class EpisodeUpdate(object):
             two adherence_cases on one day at different time, it will be counted as one
         """
         if bool(lte) != bool(gte):
-            raise Exception("Both of lte and gte should be specified or niether of them")
+            raise EnikshayTaskException("Both of lte and gte should be specified or niether of them")
 
         if not lte:
             return dose_taken_by_date.values().count(True)
@@ -197,7 +224,7 @@ class EpisodeUpdate(object):
             return [
                 is_taken
                 for date, is_taken in dose_taken_by_date.iteritems()
-                if lte.date() <= date <= gte.date()
+                if lte <= date <= gte
             ].count(True)
 
     def update_json(self):
@@ -214,10 +241,15 @@ class EpisodeUpdate(object):
                 'aggregated_score_count_taken': value
             }
         """
-        adherence_schedule_date_start = parse_datetime(self.get_property('adherence_schedule_date_start'))
+
+        debug_data = []
+        adherence_schedule_date_start = self.get_adherence_schedule_start_date()
+        debug_data.append("adherence_schedule_date_start: {}".format(adherence_schedule_date_start))
+        debug_data.append("purge_date: {}".format(self.case_updater.purge_date))
+
         if not adherence_schedule_date_start:
             # adherence schedule hasn't been selected, so no update necessary
-            return {}
+            return {'update': {}, 'debug_data': debug_data}
 
         default_update = {
             'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
@@ -232,6 +264,7 @@ class EpisodeUpdate(object):
         else:
             update = {}
             latest_adherence_date = self.get_latest_adherence_date()
+            debug_data.append("latest_adherence_date: {}".format(latest_adherence_date))
             if not latest_adherence_date:
                 update = default_update
             else:
@@ -266,18 +299,14 @@ class EpisodeUpdate(object):
                         True,
                         "No fixture item found with schedule_id {}".format(adherence_schedule_id)
                     )
-        # convert datetime -> date objects
-        for key, val in update.iteritems():
-            if isinstance(val, datetime.datetime):
-                update[key] = val.date()
-        return update
+        return {'update': update, 'debug_data': debug_data}
 
     def case_block(self):
         """
         Returns:
             CaseBlock object with adherence updates. If no update is necessary, None is returned
         """
-        update = self.update_json()
+        update = self.update_json()['update']
         if update:
             return CaseBlock(**{
                 'case_id': self.episode.case_id,

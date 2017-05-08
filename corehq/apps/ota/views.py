@@ -1,10 +1,12 @@
 from distutils.version import LooseVersion
+
+from django.http import JsonResponse
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 
 from dimagi.utils.logging import notify_exception
 from django_prbac.utils import has_privilege
@@ -35,7 +37,6 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
-from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
@@ -47,7 +48,6 @@ from .utils import (
 
 
 @location_safe
-@json_error
 @handle_401_response
 @login_or_digest_or_basic_or_apikey_or_token()
 @check_domain_migration
@@ -56,27 +56,28 @@ def restore(request, domain, app_id=None):
     We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
-    couch_user = CouchUser.from_django_user_include_anonymous(domain, request.user)
-    assert couch_user is not None, 'No couch user to use for restore'
-    update_device_id(couch_user, request.GET.get('device_id'))
-    response, timing_context = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    if toggles.ENIKSHAY.enabled(domain):
+        update_device_id(request.couch_user, request.GET.get('device_id'))
+    response, timing_context = get_restore_response(domain, request.couch_user, app_id, **get_restore_params(request))
     tags = [
         u'domain:{}'.format(domain),
         u'status_code:{}'.format(response.status_code),
     ]
     datadog_counter('commcare.restores.count', tags=tags)
-    for timer in timing_context.to_list():
-        datadog_gauge(
-            'commcare.restores.timings',
-            timing_context.duration,
-            tags=tags + [u'segment:{}'.format(timer.name) if timer.parent else u'all'],
-        )
+    if timing_context is not None:
+        for timer in timing_context.to_list(exclude_root=True):
+            # Only record leaf nodes so we can sum to get the total
+            if timer.is_leaf_node:
+                datadog_gauge(
+                    'commcare.restores.timings',
+                    timer.duration,
+                    tags=tags + [u'segment:{}'.format(timer.name)],
+                )
 
     return response
 
 
 @location_safe
-@json_error
 @login_or_digest_or_basic_or_apikey()
 @check_domain_migration
 def search(request, domain):
@@ -115,6 +116,10 @@ def search(request, domain):
 
     query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
 
+    owner_id = criteria.pop('owner_id', False)
+    if owner_id:
+        search_es = search_es.owner(owner_id)
+
     fuzzies = config.config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
@@ -134,7 +139,7 @@ def search(request, domain):
     # Even if it's a SQL domain, we just need to render the results as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
     fixtures = CaseDBFixture(cases).fixture
-    return HttpResponse(fixtures, content_type="text/xml")
+    return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
 def _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details):
@@ -168,23 +173,28 @@ def _handle_es_exception(request, exception, query_addition_debug_details):
 @location_safe
 @csrf_exempt
 @require_POST
-@json_error
 @login_or_digest_or_basic_or_apikey()
 @check_domain_migration
 def claim(request, domain):
     """
     Allows a user to claim a case that they don't own.
     """
-    couch_user = CouchUser.from_django_user(request.user)
-    case_id = request.POST['case_id']
-    if (
-        request.session.get('last_claimed_case_id') == case_id or
-        get_first_claim(domain, couch_user.user_id, case_id)
-    ):
-        return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
-                            status=409)
+    as_user = request.POST.get('commcare_login_as', None)
+    restore_user = get_restore_user(domain, request.couch_user, as_user)
+
+    case_id = request.POST.get('case_id', None)
+    if case_id is None:
+        return HttpResponse('A case_id is required', status=400)
+
     try:
-        claim_case(domain, couch_user.user_id, case_id,
+        if (
+            request.session.get('last_claimed_case_id') == case_id or
+            get_first_claim(domain, restore_user.user_id, case_id)
+        ):
+            return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
+                                status=409)
+
+        claim_case(domain, restore_user.user_id, case_id,
                    host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
@@ -213,6 +223,7 @@ def get_restore_params(request):
         'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP),
         'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
         'openrosa_version': openrosa_version,
+        'device_id': request.GET.get('device_id'),
     }
 
 
@@ -220,7 +231,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None,
-                         as_user=None,
+                         as_user=None, device_id=None,
                          has_data_cleanup_privelege=False,
                          openrosa_version=OPENROSA_DEFAULT_VERSION):
     # not a view just a view util
@@ -256,6 +267,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             state_hash=state,
             include_item_count=items,
             app=app,
+            device_id=device_id,
         ),
         cache_settings=RestoreCacheSettings(
             force_cache=force_cache or async_restore_enabled,
@@ -364,3 +376,9 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
         download.save()
 
         return redirect('hq_soil_download', self.domain, download.download_id)
+
+
+@login_or_digest_or_basic_or_apikey()
+@require_GET
+def heartbeat(request, domain, id):
+    return JsonResponse({})

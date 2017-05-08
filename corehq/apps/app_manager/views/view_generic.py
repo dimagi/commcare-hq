@@ -2,6 +2,8 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render
+from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties, \
+    get_usercase_properties
 from corehq.apps.app_manager.const import APP_V1
 
 from corehq.apps.app_manager.views.modules import get_module_template, \
@@ -29,9 +31,7 @@ from corehq.apps.hqmedia.views import (
     ProcessAudioFileUploadView,
 )
 from corehq.apps.app_manager.util import (
-    get_all_case_properties,
     get_commcare_versions,
-    get_usercase_properties,
     get_app_manager_template,
 )
 from corehq import toggles
@@ -268,18 +268,20 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
+        uploaders = [
+            MultimediaLogoUploadController(
+                slug,
+                reverse(
+                    ProcessLogoFileUploadView.name,
+                    args=[domain, app_id, slug],
+                )
+            )
+            for slug in uploader_slugs
+        ]
         context.update({
             "sessionid": request.COOKIES.get('sessionid'),
-            'uploaders': [
-                MultimediaLogoUploadController(
-                    slug,
-                    reverse(
-                        ProcessLogoFileUploadView.name,
-                        args=[domain, app_id, slug],
-                    )
-                )
-                for slug in uploader_slugs
-            ],
+            "uploaders": uploaders,
+            "uploaders_js": [u.js_options for u in uploaders],
             "refs": {
                 slug: ApplicationMediaReference(
                     app.logo_refs.get(slug, {}).get("path", slug),

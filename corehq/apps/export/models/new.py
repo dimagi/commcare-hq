@@ -11,6 +11,8 @@ from django.utils.translation import ugettext as _
 from django.urls import reverse
 from django.db import models
 from django.http import Http404
+from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
+    get_case_properties
 
 from corehq.apps.reports.models import HQUserType
 from soil.progress import set_task_progress
@@ -34,7 +36,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
 )
 from corehq.apps.app_manager.models import Application, AdvancedFormActions
-from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
@@ -1418,7 +1419,7 @@ class ExportDataSchema(Document):
             unordered_items = []
             for idx, item in enumerate(group_schema.items):
                 if item in orders:
-                    ordered_items.insert(orders[item], item)
+                    ordered_items[orders[item]] = item
                 else:
                     unordered_items.append(item)
             group_schema.items = filter(None, ordered_items) + unordered_items

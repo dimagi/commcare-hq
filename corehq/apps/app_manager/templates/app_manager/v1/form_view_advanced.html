@@ -8,12 +8,20 @@
     <script src="{% static 'app_manager/js/visit-scheduler.js' %}"></script>
 {% endblock %}
 
-{% block case_management_js %}{{ block.super }}
-    {% if form.source %}
+{% block js-inline %}{{ block.super }}
+{% if form.source %}
+<script>
+    /* form_requires needs to be a knockout observable so that
+    its value can be read by another UI (form filtering) */
+    var form_requires = ko.observable({{ form.requires|JSON }});
     var CaseConfig = hqImport('app_manager/js/case-config-ui-advanced.js').CaseConfig;
     var caseConfig = new CaseConfig({
-        home: $('#casexml_home'),
-        actions: {{ form.actions|JSON }},
+        home: $('#case-config-ko'),
+        {% if form.form_type == "shadow_form" %}
+            actions: {{ form.extra_actions|JSON }},
+        {% else %}
+            actions: {{ form.actions|JSON }},
+        {% endif %}
         questions: {{ xform_questions|JSON }},
         requires: form_requires,
         save_url: "{% url "edit_advanced_form_actions" app.domain app.id module.id nav_form.id %}",
@@ -25,6 +33,7 @@
         commtrack_enabled: {{ app.commtrack_enabled|JSON }},
         commtrack_programs: {{ commtrack_programs|JSON }},
         propertyDescriptions: {{ property_descriptions|JSON }},
+        isShadowForm: {% if form.form_type == "shadow_form" %}true{% else %}false{% endif %},
     });
     caseConfig.init();
 
@@ -41,8 +50,9 @@
         all_schedule_phase_anchors: {{ all_schedule_phase_anchors|JSON }}
     });
     visitScheduler.init();
-    {% endif %}
-    {% endif %}
+{% endif %}
+</script>
+{% endif %}
 {% endblock %}
 
 {% block case_management_content %}

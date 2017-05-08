@@ -205,6 +205,10 @@ class MobileWorkersOptionsView(EmwfOptionsView):
             (self.get_users_size, self.get_users),
         ]
 
+    def user_es_query(self, query):
+        query = super(MobileWorkersOptionsView, self).user_es_query(query)
+        return query.mobile_users()
+
 
 @location_safe
 class LocationRestrictedEmwfOptions(LocationRestrictedEmwfOptionsMixin, EmwfOptionsView):

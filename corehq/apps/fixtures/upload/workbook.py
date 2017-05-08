@@ -80,19 +80,26 @@ class _FixtureTableDefinition(object):
         item_attributes = [] if item_attributes is None else item_attributes
 
         def _get_field_properties(prop_key):
-            if prop_key in row_dict:
-                try:
-                    properties = row_dict[prop_key]["property"]
-                    assert isinstance(properties, list)
-                except (KeyError, AssertionError):
+            properties = []
+            if prop_key in row_dict and 'property' in row_dict[prop_key]:
+                properties = row_dict[prop_key]["property"]
+                if not isinstance(properties, list):
                     error_message = _(FAILURE_MESSAGES["wrong_property_syntax"]).format(
                         prop_key=prop_key,
                     )
                     raise FixtureUploadError([error_message])
-                else:
-                    return properties
-            else:
-                return []
+            return properties
+
+        def _get_field_is_indexed(prop_key):
+            is_indexed = False
+            if prop_key in row_dict and 'is_indexed' in row_dict[prop_key]:
+                is_indexed = row_dict[prop_key]["is_indexed"]
+                if not isinstance(is_indexed, bool):
+                    error_message = _(FAILURE_MESSAGES["wrong_index_syntax"]).format(
+                        prop_key=prop_key,
+                    )
+                    raise FixtureUploadError([error_message])
+            return is_indexed
 
         def is_number(text):
             text = unicode(text)
@@ -113,7 +120,8 @@ class _FixtureTableDefinition(object):
         fields = [
             FixtureTypeField(
                 field_name=field,
-                properties=_get_field_properties('field {count}'.format(count=i + 1))
+                properties=_get_field_properties('field {count}'.format(count=i + 1)),
+                is_indexed=_get_field_is_indexed('field {count}'.format(count=i + 1)),
             ) for i, field in enumerate(field_names)
         ]
 

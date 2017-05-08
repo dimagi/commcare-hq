@@ -310,6 +310,9 @@ class ENikshayLocationStructureMixin(object):
             'is_test': 'no',
         }
         self.dmc.save()
+
+        self.pcp = locations['PCP']
+
         super(ENikshayLocationStructureMixin, self).setUp()
 
     def tearDown(self):
@@ -342,6 +345,11 @@ def setup_enikshay_locations(domain_name):
                             LocationTypeStructure('dmc', []),
                         ]),
                         LocationTypeStructure('drtb-hiv', []),
+                        LocationTypeStructure('pac', []),
+                        LocationTypeStructure('pcc', []),
+                        LocationTypeStructure('pcp', []),
+                        LocationTypeStructure('pdr', []),
+                        LocationTypeStructure('plc', []),
                     ])
                 ]),
                 LocationTypeStructure('drtb', []),
@@ -359,6 +367,11 @@ def setup_enikshay_locations(domain_name):
                             LocationStructure('DMC', 'dmc', []),
                         ]),
                         LocationStructure('DRTB-HIV', 'drtb-hiv', []),
+                        LocationStructure('PAC', 'pac', []),
+                        LocationStructure('PCC', 'pcc', []),
+                        LocationStructure('PCP', 'pcp', []),
+                        LocationStructure('PDR', 'pdr', []),
+                        LocationStructure('PLC', 'plc', []),
                     ])
                 ]),
                 LocationStructure('DRTB', 'drtb', []),

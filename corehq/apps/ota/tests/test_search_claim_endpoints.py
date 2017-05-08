@@ -16,7 +16,11 @@ from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case_search import get_case_search_reindexer
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO, CASE_SEARCH_INDEX
+from corehq.pillows.mappings.case_search_mapping import (
+    CASE_SEARCH_INDEX_INFO,
+    CASE_SEARCH_INDEX,
+    CASE_SEARCH_MAX_RESULTS,
+)
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -114,6 +118,28 @@ class CaseClaimEndpointTests(TestCase):
         response = client2.post(url, {'case_id': self.case_id})
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.content, 'You have already claimed that case')
+
+    @run_with_all_backends
+    def test_claim_restore_as(self):
+        """Server should assign cases to the correct user
+        """
+        client = Client()
+        client.login(username=USERNAME, password=PASSWORD)
+        other_user_username = 'other_user@{}.commcarehq.org'.format(DOMAIN)
+        other_user = CommCareUser.create(DOMAIN, other_user_username, PASSWORD)
+
+        url = reverse('claim_case', kwargs={'domain': DOMAIN})
+
+        client.post(url, {
+            'case_id': self.case_id,
+            'commcare_login_as': other_user_username
+        })
+
+        claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+        self.assertEqual(len(claim_ids), 1)
+
+        claim_case = CaseAccessors(DOMAIN).get_case(claim_ids[0])
+        self.assertEqual(claim_case.owner_id, other_user._id)
 
     @run_with_all_backends
     def test_search_endpoint(self):
@@ -250,6 +276,6 @@ class CaseClaimEndpointTests(TestCase):
                     }
                 }
             },
-            'size': 10
+            'size': CASE_SEARCH_MAX_RESULTS
         }
         run_query_mock.assert_called_with("case_search", expected_query, debug_host=None)

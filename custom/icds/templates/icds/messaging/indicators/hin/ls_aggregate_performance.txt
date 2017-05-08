@@ -1,9 +1,11 @@
-Performance metrics collected over the last 30 days for your AWCs:
+{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
 
-Home visits completed on time / Home visits completed: {{ visits }}
+समेकित निष्पदान प्रतिवेदन
 
-Beneficiaries received adequate THR / Beneficiaries eligible for THR: {{ thr_distribution }}
+ग्रह - भ्रमण : {{ visits }}
 
-Children weighed under 3 years / Total children under 3 years: {{ children_weighed }}
+टी.एच.र.वितरण : {{ thr_distribution }}
 
-Average days AWC open / Goal: {{ days_open }} / 25
+वजन किये गए बच्चो की संख्या : {{ children_weighed }}
+
+आँगनवाड़ी केंद्र खुले रहने के दिन : {{ days_open }} / 25

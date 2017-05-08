@@ -142,7 +142,7 @@
                 "display_name": "adherence_date",
                 "transform": {
                 },
-                "datatype": "datetime",
+                "datatype": "date",
                 "type": "expression",
                 "is_primary_key": false,
                 "is_nullable": true,

@@ -44,6 +44,7 @@ from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
     user_display_string,
     user_location_data,
+    username_to_user_id,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted
@@ -55,6 +56,8 @@ from dimagi.utils.dates import force_to_datetime
 from xml.etree import ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
+
+from dimagi.utils.web import get_site_domain
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -1100,7 +1103,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def is_previewer(self):
         from django.conf import settings
         return (self.is_superuser or
-                re.compile(settings.PREVIEWER_RE).match(self.username))
+                bool(re.compile(settings.PREVIEWER_RE).match(self.username)))
 
     def sync_from_django_user(self, django_user):
         if not django_user:
@@ -1181,6 +1184,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @classmethod
     @quickcache(['username'], skip_arg='strict')
     def get_by_username(cls, username, strict=True):
+        if not username:
+            return None
+
         def get(stale, raise_if_none):
             result = cls.get_db().view('users/by_username',
                 key=username,
@@ -1193,9 +1199,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
             if result['doc'] is None or result['doc']['username'] != username:
                 raise NoResultFound
-        except NoMoreData:
-            logging.exception('called get_by_username(%r) and it failed pretty bad' % username)
-            raise
         except NoResultFound:
             result = get(stale=None, raise_if_none=False)
 
@@ -1216,6 +1219,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         self.get_by_username.clear(self.__class__, self.username)
         self.get_by_user_id.clear(self.__class__, self.user_id)
+        username_to_user_id.clear(self.username)
         domains = getattr(self, 'domains', None)
         if domains is None:
             domain = getattr(self, 'domain', None)
@@ -1422,6 +1426,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     demo_restore_id = IntegerProperty()
 
     is_anonymous = BooleanProperty(default=False)
+
+    mobile_ucr_sync_interval = IntegerProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -2317,8 +2323,13 @@ class Invitation(QuickCachedDocumentMixin, Document):
     def send_activation_email(self, remaining_days=30):
         url = absolute_reverse("domain_accept_invitation",
                                args=[self.domain, self.get_id])
-        params = {"domain": self.domain, "url": url, 'days': remaining_days,
-                  "inviter": self.get_inviter().formatted_name}
+        params = {
+            "domain": self.domain,
+            "url": url,
+            'days': remaining_days,
+            "inviter": self.get_inviter().formatted_name,
+            'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+        }
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
         lang = guess_domain_language(self.domain)

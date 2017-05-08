@@ -394,6 +394,10 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     @property
     @memoized
     def basic_info_form(self):
+        sync_interval = self.domain_object.default_mobile_ucr_sync_interval
+        if sync_interval:
+            sync_interval /= 3600
+
         initial = {
             'hr_name': self.domain_object.hr_name or self.domain_object.name,
             'project_description': self.domain_object.project_description,
@@ -404,6 +408,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_case_owner': self.initial_call_center_case_owner,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
+            'mobile_ucr_sync_interval': sync_interval
         }
         if self.can_user_see_meta:
             initial.update({
@@ -2361,7 +2366,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
     def _format_date(self, date):
         tz_utc_aware_date = pytz.utc.localize(date)
-        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M %Z')
+        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M:%S %Z')
 
     @property
     def rows(self):
@@ -2511,7 +2516,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
         repeater = self.repeater_class(
             domain=self.domain,
             url=self.add_repeater_form.cleaned_data['url'],
-            use_basic_auth=self.add_repeater_form.cleaned_data['use_basic_auth'],
+            auth_type=self.add_repeater_form.cleaned_data['auth_type'] or None,
             username=self.add_repeater_form.cleaned_data['username'],
             password=self.add_repeater_form.cleaned_data['password'],
             format=self.add_repeater_form.cleaned_data['format']

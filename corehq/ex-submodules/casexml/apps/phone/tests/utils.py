@@ -1,14 +1,16 @@
 from xml.etree import ElementTree
-from casexml.apps.case.xml import V1
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from casexml.apps.case.xml import V1, V2
 from casexml.apps.phone.models import (
     get_properly_wrapped_sync_log,
     get_sync_log_class_by_format,
     OTARestoreWebUser,
     OTARestoreCommCareUser,
 )
-from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings, restore_cache_key
 from casexml.apps.phone.tests.dbaccessors import get_all_sync_logs_docs
 from casexml.apps.phone.xml import SYNC_XMLNS
+from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 
 from corehq.apps.users.models import CommCareUser, WebUser
 
@@ -75,7 +77,7 @@ def generate_restore_payload(project, user, restore_id="", version=V1, state_has
 
 
 def get_restore_config(project, user, restore_id="", version=V1, state_hash="",
-                       items=False, overwrite_cache=False, force_cache=False):
+                       items=False, overwrite_cache=False, force_cache=False, device_id=None):
     return RestoreConfig(
         project=project,
         restore_user=user,
@@ -83,7 +85,8 @@ def get_restore_config(project, user, restore_id="", version=V1, state_hash="",
             sync_log_id=restore_id,
             version=version,
             state_hash=state_hash,
-            include_item_count=items
+            include_item_count=items,
+            device_id=device_id,
         ),
         cache_settings=RestoreCacheSettings(
             overwrite_cache=overwrite_cache,
@@ -106,5 +109,32 @@ def generate_restore_response(project, user, restore_id="", version=V1, state_ha
     return config.get_response()
 
 
-def has_cached_payload(sync_log, version):
-    return bool(sync_log.get_cached_payload(version))
+def has_cached_payload(sync_log, version, prefix=RESTORE_CACHE_KEY_PREFIX):
+    return bool(get_redis_default_cache().get(restore_cache_key(
+        sync_log.domain,
+        prefix,
+        sync_log.user_id,
+        version=version,
+        sync_log_id=sync_log._id,
+    )))
+
+
+def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=None):
+    """
+    Convenience function for use in unit tests
+    """
+    from casexml.apps.phone.restore import RestoreState
+    from casexml.apps.phone.restore import RestoreParams
+    from corehq.apps.domain.models import Domain
+    params = RestoreParams(version=V2, app=app)
+    restore_state = RestoreState(
+        project or Domain(name=restore_user.domain),
+        restore_user,
+        params,
+        async=False,
+        overwrite_cache=False
+    )
+    if last_sync:
+        params.sync_log_id = last_sync._id
+        restore_state._last_sync_log = last_sync
+    return gen(restore_state)

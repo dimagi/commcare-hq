@@ -68,7 +68,7 @@ class TestLSVHNDSurveyIndicator(TestCase):
                 u'meta': {
                     u'user_id': user_id
                 },
-                u'vhsnd_date_planned': es_formatted_date(date),
+                u'vhsnd_date_past_month': es_formatted_date(date),
             }
         }
 
@@ -77,21 +77,21 @@ class TestLSVHNDSurveyIndicator(TestCase):
             self.aww.get_id: [self._make_form(self.aww.get_id, self.today)]
         }
         indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
-        self.assertEqual(len(indicator.get_messages()), 0)
+        self.assertEqual(len(indicator.get_messages(language_code='en')), 0)
 
     def test_form_sent_thirty_six_days_ago(self, last_subs):
         last_subs.return_value = {
             self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=36))]
         }
         indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
-        self.assertEqual(len(indicator.get_messages()), 0)
+        self.assertEqual(len(indicator.get_messages(language_code='en')), 0)
 
     def test_form_sent_thirty_seven_days_ago(self, last_subs):
         last_subs.return_value = {
             self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=37))]
         }
         indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
-        messages = indicator.get_messages()
+        messages = indicator.get_messages(language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertTrue('AWC1' in messages[0])
 
@@ -104,7 +104,7 @@ class TestLSVHNDSurveyIndicator(TestCase):
             aww_2.get_id: [self._make_form(aww_2.get_id, self.today - timedelta(days=37))]
         }
         indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
-        messages = indicator.get_messages()
+        messages = indicator.get_messages(language_code='en')
         self.assertEqual(len(messages), 1)
         message = messages[0]
         self.assertTrue('AWC1' in message)
@@ -119,7 +119,7 @@ class TestLSVHNDSurveyIndicator(TestCase):
             aww_2.get_id: [self._make_form(aww_2.get_id, self.today - timedelta(days=37))]
         }
         indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
-        messages = indicator.get_messages()
+        messages = indicator.get_messages(language_code='en')
         self.assertEqual(len(messages), 1)
         message = messages[0]
         self.assertFalse('AWC1' in message)
@@ -128,6 +128,6 @@ class TestLSVHNDSurveyIndicator(TestCase):
     def test_no_form_submitted(self, last_subs):
         last_subs.return_value = {}
         indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
-        messages = indicator.get_messages()
+        messages = indicator.get_messages(language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertTrue('AWC1' in messages[0])
