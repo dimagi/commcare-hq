@@ -45,6 +45,8 @@ class Command(BaseCommand):
 
         docs = iter(query.size(size).scroll())
         i = 0
+        n_shards = 5
+        print('iteration,size,time_ms')
         while True:
             start = int(time.time() * 1000)
             try:
@@ -53,7 +55,8 @@ class Command(BaseCommand):
                 print('Stopping')
                 break
 
-            print('iteration={} size={} time={}ms'.format(i, size, (time.time() * 1000) - start))
+            if i % (size * n_shards) == 0:
+                print('{},{},{}'.format(i, size, (time.time() * 1000) - start))
             i += 1
             if i >= limit:
                 break
