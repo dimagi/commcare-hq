@@ -212,7 +212,8 @@ class IndicatorESAdapter(IndicatorAdapter):
         return records.count > 0
 
     def delete(self, doc):
-        self.es.delete(index=self.table_name, doc_type='indicator', id=doc['_id'])
+        if self.doc_exists(doc):
+            self.es.delete(index=self.table_name, doc_type='indicator', id=doc['_id'])
 
 
 def build_es_mapping(data_source_config):

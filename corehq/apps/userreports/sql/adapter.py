@@ -118,15 +118,17 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                 connection.execute(insert)
 
     def delete(self, doc):
-        table = self.get_table()
-        with self.engine.begin() as connection:
-            delete = table.delete(table.c.doc_id == doc['_id'])
-            connection.execute(delete)
+        if self.doc_exists(doc):
+            table = self.get_table()
+            with self.engine.begin() as connection:
+                delete = table.delete(table.c.doc_id == doc['_id'])
+                connection.execute(delete)
 
     def doc_exists(self, doc):
         return self.session_helper.Session.query(
             self.get_query_object().filter_by(doc_id=doc['_id']).exists()
         )
+
 
 class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 
