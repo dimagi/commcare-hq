@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import logging
 import urllib
 import urlparse
+import warnings
 from django.utils.translation import ugettext_lazy as _
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
@@ -295,7 +296,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
         payload = repeat_record.get_payload()
-        url = repeat_record.url  # todo: does this ever not equal self.url?
+        url = self.get_url(repeat_record)
         domain = repeat_record.domain  # todo: does this ever not equal self.domain?
         try:
             response = simple_post_with_logged_timeout(domain, payload, url, headers=headers, timeout=POST_TIMEOUT,
@@ -352,7 +353,10 @@ class FormRepeater(Repeater):
             # adapted from http://stackoverflow.com/a/2506477/10840
             url_parts = list(urlparse.urlparse(url))
             query = urlparse.parse_qsl(url_parts[4])
-            query.append(("app_id", self.payload_doc(repeat_record).app_id))
+            try:
+                query.append(("app_id", self.payload_doc(repeat_record).app_id))
+            except (XFormNotFound, ResourceNotFound):
+                return None
             url_parts[4] = urllib.urlencode(query)
             return urlparse.urlunparse(url_parts)
 
@@ -467,10 +471,8 @@ class RepeatRecord(Document):
 
     @property
     def url(self):
-        try:
-            return self.repeater.get_url(self)
-        except (XFormNotFound, ResourceNotFound):
-            return None
+        warnings.warn("RepeatRecord.url is deprecated. Use Repeater.get_url instead", DeprecationWarning)
+        return self.repeater.get_url(self)
 
     @property
     def state(self):
