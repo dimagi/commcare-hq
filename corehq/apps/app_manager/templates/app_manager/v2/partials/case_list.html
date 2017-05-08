@@ -1,9 +1,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load xforms_extras %}
 
 {% include 'app_manager/v2/partials/case_list_missing_warning.html' %}
-
-<div data-bind="saveButton: shortScreen.saveButton"></div>
 
 <div class="panel panel-appmanager">
   <div class="panel-heading">
@@ -15,9 +14,11 @@
     </h4>
   </div>
   <div class="panel-body">
-    <div class="row"><div class="col-sm-3"><input type="text" name="case_label" class="form-control" /></div></div>
+    {% inline_edit_trans_v2 module.case_label langs edit_case_label_url saveValueName='case_label' %}
   </div>
 </div>
+
+<div data-bind="saveButton: shortScreen.saveButton"></div>
 
 <div data-bind="with: customXMLViewModel">
   <div class="panel panel-appmanager" data-bind="visible: enabled">
