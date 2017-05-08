@@ -186,12 +186,11 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
                 ))
 
             if save_failure:
-                repeat_record.handle_payload_exception(e, reraise=False)
+                repeat_record.handle_payload_exception(e)
         except Exception as e:
             if save_failure:
-                repeat_record.handle_payload_exception(e, reraise=True)
-            else:
-                raise
+                repeat_record.handle_payload_exception(e)
+            raise
 
     def register(self, payload, next_check=None):
         if not self.allowed_to_forward(payload):
@@ -550,12 +549,10 @@ class RepeatRecord(Document):
         warnings.warn("RepeatRecord.get_paylod is deprecated. Use Repeater._get_payload instead.")
         return self.repeater.get_payload_and_handle_exception(self, save_failure=save_failure)
 
-    def handle_payload_exception(self, exception, reraise=False):
+    def handle_payload_exception(self, exception):
         self.succeeded = False
         self.failure_reason = unicode(exception)
         self.save()
-        if reraise:
-            raise
 
     def fire(self, force_send=False):
         self.repeater.fire_for_record(self, force_send=force_send)
