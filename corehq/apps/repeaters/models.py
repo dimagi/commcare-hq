@@ -538,13 +538,10 @@ class RepeatRecord(Document):
         auth = self.repeater.get_auth()
         if self.try_now() or force_send:
             self.overall_tries += 1
-            tries = 0
-            post_info = PostInfo(self.get_payload(), headers, auth)
-            self.post(post_info, tries=tries)
+            self.post(PostInfo(self.get_payload(), headers, auth))
             self.save()
 
-    def post(self, post_info, tries=0):
-        tries += 1
+    def post(self, post_info):
         try:
             response = simple_post_with_logged_timeout(
                 self.domain,
@@ -557,13 +554,13 @@ class RepeatRecord(Document):
         except Exception as e:
             self.handle_exception(e)
         else:
-            return self.handle_response(response, post_info, tries)
+            return self.handle_response(response)
 
-    def handle_response(self, response, post_info, tries):
+    def handle_response(self, response):
         if 200 <= response.status_code < 300:
             return self.handle_success(response)
         else:
-            return self.handle_failure(response, post_info, tries)
+            return self.handle_failure(response)
 
     def handle_success(self, response):
         """Do something with the response if the repeater succeeds
@@ -573,7 +570,7 @@ class RepeatRecord(Document):
         self.succeeded = True
         self.repeater.handle_success(response, self)
 
-    def handle_failure(self, response, post_info, tries):
+    def handle_failure(self, response):
         """Do something with the response if the repeater fails
         """
         self._fail(
