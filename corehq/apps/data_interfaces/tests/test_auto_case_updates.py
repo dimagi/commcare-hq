@@ -17,12 +17,13 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleSubmission,
     CaseRuleActionResult,
     DomainCaseRuleRun,
+    CaseRuleUndoer,
 )
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from datetime import datetime, date
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.tests.utils import (run_with_all_backends, FormProcessorTestUtils,
     set_case_property_directly)
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -1172,6 +1173,69 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
 
             self.assertTrue(child.closed)
             self.assertFalse(parent.closed)
+
+    @run_with_all_backends
+    def test_undo(self):
+        rule = _create_empty_rule(self.domain)
+        _, definition = rule.add_action(UpdateCaseDefinition, close_case=True)
+        definition.set_properties_to_update([
+            UpdateCaseDefinition.PropertyDefinition(
+                name='result',
+                value_type=UpdateCaseDefinition.VALUE_TYPE_EXACT,
+                value='abc',
+            ),
+            UpdateCaseDefinition.PropertyDefinition(
+                name='parent/result',
+                value_type=UpdateCaseDefinition.VALUE_TYPE_EXACT,
+                value='def',
+            ),
+        ])
+        definition.save()
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as child, \
+                _with_case(self.domain, 'person', datetime.utcnow()) as parent:
+
+            self.assertActionResult(rule, 0)
+
+            child = set_parent_case(self.domain, child, parent)
+            result = rule.run_actions(child)
+
+            child = CaseAccessors(self.domain).get_case(child.case_id)
+            parent = CaseAccessors(self.domain).get_case(parent.case_id)
+
+            self.assertTrue(isinstance(result, CaseRuleActionResult))
+            self.assertActionResult(rule, 2, result,
+                CaseRuleActionResult(num_updates=1, num_closes=1, num_related_updates=1))
+
+            self.assertEqual(child.get_case_property('result'), 'abc')
+            self.assertEqual(parent.get_case_property('result'), 'def')
+
+            self.assertTrue(child.closed)
+            self.assertFalse(parent.closed)
+
+            undoer = CaseRuleUndoer(self.domain, rule_id=rule.pk)
+            result = undoer.bulk_undo()
+            self.assertEqual(result, {
+                'processed': 2,
+                'skipped': 0,
+                'archived': 2,
+            })
+
+            child = CaseAccessors(self.domain).get_case(child.case_id)
+            parent = CaseAccessors(self.domain).get_case(parent.case_id)
+
+            self.assertNotIn('result', child.dynamic_case_properties())
+            self.assertNotIn('result', parent.dynamic_case_properties())
+
+            self.assertFalse(child.closed)
+            self.assertFalse(parent.closed)
+
+            self.assertEqual(CaseRuleSubmission.objects.filter(domain=self.domain).count(), 2)
+            self.assertEqual(CaseRuleSubmission.objects.filter(domain=self.domain, archived=True).count(), 2)
+
+            form_ids = CaseRuleSubmission.objects.filter(domain=self.domain).values_list('form_id', flat=True)
+            for form in FormAccessors(self.domain).iter_forms(form_ids):
+                self.assertTrue(form.is_archived)
 
     @run_with_all_backends
     @override_settings(
