@@ -1,7 +1,7 @@
 import copy
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.change_feed.document_types import DOMAIN
+from corehq.apps.change_feed import topics
 from corehq.apps.domain.dbaccessors import count_downloads_for_all_snapshots
 from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es_new
@@ -37,7 +37,7 @@ def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', **kw
         index_info=DOMAIN_INDEX_INFO,
         doc_prep_fn=transform_domain_for_elasticsearch
     )
-    change_feed = KafkaChangeFeed(topics=[DOMAIN], group_id='domains-to-es')
+    change_feed = KafkaChangeFeed(topics=[topics.DOMAIN], group_id='domains-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

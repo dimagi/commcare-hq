@@ -1,10 +1,12 @@
 from distutils.version import LooseVersion
+
+from django.http import JsonResponse
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 
 from dimagi.utils.logging import notify_exception
 from django_prbac.utils import has_privilege
@@ -374,3 +376,9 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
         download.save()
 
         return redirect('hq_soil_download', self.domain, download.download_id)
+
+
+@login_or_digest_or_basic_or_apikey()
+@require_GET
+def heartbeat(request, domain, id):
+    return JsonResponse({})

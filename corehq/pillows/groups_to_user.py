@@ -1,6 +1,6 @@
 from collections import namedtuple
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.change_feed.document_types import GROUP
+from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
 from corehq.elastic import stream_es_query, get_es_new, ES_META
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
@@ -27,7 +27,7 @@ def get_group_to_user_pillow(pillow_id='GroupToUserPillow', **kwargs):
     assert pillow_id == 'GroupToUserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
     processor = GroupsToUsersProcessor()
-    change_feed = KafkaChangeFeed(topics=[GROUP], group_id='groups-to-users')
+    change_feed = KafkaChangeFeed(topics=[topics.GROUP], group_id='groups-to-users')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
