@@ -177,7 +177,6 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
 
 
 class NikshayRegisterPrivatePatientRepeater(BaseNikshayRepeater):
-    operation = 'InsertHFIDPatient_UATBC'
 
     class Meta(object):
         app_label = 'repeaters'

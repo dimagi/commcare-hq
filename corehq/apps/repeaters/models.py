@@ -150,6 +150,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     use_basic_auth = BooleanProperty(default=False)
     username = StringProperty()
     password = StringProperty()
+    operation = StringProperty()
     friendly_name = _("Data")
 
     @classmethod
