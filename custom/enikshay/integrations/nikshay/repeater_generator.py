@@ -401,9 +401,10 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
         # Failures also return with status code 200 and some message like
         # Dublicate Entry or Invalid data format
         # (Dublicate is not a typo)
+        message = repeat_record.get_xml_message_response(response)
         try:
-            if isinstance(response, basestring) and response.isdigit():
-                nikshay_id = response
+            if isinstance(message, basestring) and message.isdigit():
+                nikshay_id = message
                 update_case(
                     payload_doc.domain,
                     payload_doc.case_id,
@@ -415,7 +416,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
                     external_id=nikshay_id,
                 )
             else:
-                self.handle_failure(response, payload_doc, repeat_record)
+                self.handle_failure(message, payload_doc, repeat_record)
         except NikshayResponseException as e:
             _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(e.message))
 
