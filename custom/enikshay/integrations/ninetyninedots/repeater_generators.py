@@ -30,6 +30,7 @@ from custom.enikshay.case_utils import (
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
+    ENIKSHAY_TIMEZONE,
     MERM_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
@@ -223,7 +224,7 @@ class AdherencePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
         )
         adherence_case_properties = adherence_case.dynamic_case_properties()
         date = (parse_datetime(adherence_case.dynamic_case_properties().get('adherence_date'))
-                .astimezone(pytz.timezone('Asia/Kolkata'))
+                .astimezone(pytz.timezone(ENIKSHAY_TIMEZONE))
                 .date())
         payload = {
             'beneficiary_id': person_case.case_id,
