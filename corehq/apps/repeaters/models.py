@@ -45,16 +45,30 @@ from .const import (
 from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
 
+def log_timeout_and_raise(domain, error):
+    datadog_counter('commcare.repeaters.timeout', tags=[
+            u'domain:{}'.format(domain),
+        ])
+        raise RequestConnectionError(error)
 
 def simple_post_with_logged_timeout(domain, data, url, *args, **kwargs):
     try:
         response = simple_post(data, url, *args, **kwargs)
     except (Timeout, ConnectionError) as error:
-        datadog_counter('commcare.repeaters.timeout', tags=[
-            u'domain:{}'.format(domain),
-        ])
-        raise RequestConnectionError(error)
+        log_timeout_and_raise(domain, error)
     return response
+
+def simple_xml_post_with_logged_timeout(domain, data, url, operation, *args, **kwargs):
+    try:
+        client = Client(url)
+        # for response object use
+        # with client.options(raw_response=True):
+        #     response = client.service[self.repeater.operation](**post_info.payload)
+        response = client.service[operation](**data)
+    except (Timeout, ConnectionError) as error:
+        log_timeout_and_raise(domain, error)
+    return response
+
 
 DELETED = "-Deleted"
 
@@ -538,9 +552,10 @@ class RepeatRecord(Document):
         try:
             generator = self.get_payload_generator(self.format_or_default_format())
             if generator.format_label == 'XML' and hasattr(self.repeater, 'operation'):
-                client = Client(self.url)
-                response = client.service[self.repeater.operation](**post_info.payload)
-                return self.handle_success(response)
+                response = simple_xml_post_with_logged_timeout(
+                    self.domain, post_info.payload, self.url, self.repeater.operation
+                )
+                return self.handle_success(response)  # soap operations always throw exceptions when they fail
             else:
                 response = simple_post_with_logged_timeout(
                     self.domain,
