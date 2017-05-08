@@ -58,3 +58,5 @@ DATE_FULFILLED = "date_fulfilled"
 VOUCHER_ID = "voucher_id"
 FULFILLED_BY_ID = "fulfilled_by_id"
 AMOUNT_APPROVED = "amount_approved"
+
+ENIKSHAY_TIMEZONE = 'Asia/Kolkata'

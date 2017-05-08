@@ -24,6 +24,7 @@ from .const import (
     DAILY_SCHEDULE_ID,
     SCHEDULE_ID_FIXTURE,
     HISTORICAL_CLOSURE_REASON,
+    ENIKSHAY_TIMEZONE,
 )
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
@@ -52,7 +53,9 @@ class EpisodeAdherenceUpdater(object):
 
     def __init__(self, domain):
         self.domain = domain
-        self.purge_date = pytz.UTC.localize(datetime.datetime.today() - datetime.timedelta(days=60))
+        # set purge_date to 60 days back
+        self.purge_date = datetime.datetime.now(
+            pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=60)
         self.adherence_data_store = AdherenceDatastore(domain)
 
     def run(self):
@@ -188,14 +191,12 @@ class EpisodeUpdate(object):
         return dose_taken_by_date
 
     def get_adherence_schedule_start_date(self):
-        # return property 'adherence_schedule_date_start' of episode case, cast to datetime
+        # return property 'adherence_schedule_date_start' of episode case (is expected to be a date object)
         raw_date = self.get_property('adherence_schedule_date_start')
         if not raw_date:
             return None
-        if parse_datetime(raw_date):
-            return parse_datetime(raw_date)
         elif parse_date(raw_date):
-            return datetime.datetime.combine(parse_date(raw_date), datetime.datetime.min.time())
+            return parse_date(raw_date)
         else:
             raise EnikshayTaskException(
                 "Episode case {case_id} has invalid format for 'adherence_schedule_date_start' {date}".format(
@@ -223,7 +224,7 @@ class EpisodeUpdate(object):
             return [
                 is_taken
                 for date, is_taken in dose_taken_by_date.iteritems()
-                if lte.date() <= date <= gte.date()
+                if lte <= date <= gte
             ].count(True)
 
     def update_json(self):
@@ -298,10 +299,6 @@ class EpisodeUpdate(object):
                         True,
                         "No fixture item found with schedule_id {}".format(adherence_schedule_id)
                     )
-        # convert datetime -> date objects
-        for key, val in update.iteritems():
-            if isinstance(val, datetime.datetime):
-                update[key] = val.date()
         return {'update': update, 'debug_data': debug_data}
 
     def case_block(self):
