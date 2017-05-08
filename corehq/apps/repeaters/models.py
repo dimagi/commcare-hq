@@ -46,15 +46,9 @@ from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
 
 
-def simple_post_with_logged_timeout(domain, data, url, *args, **kwargs):
-    try:
-        response = simple_post(data, url, *args, **kwargs)
-    except (Timeout, ConnectionError) as error:
-        datadog_counter('commcare.repeaters.timeout', tags=[
-            u'domain:{}'.format(domain),
-        ])
-        raise RequestConnectionError(error)
-    return response
+def log_repeater_timeout_in_datadog(domain):
+    datadog_counter('commcare.repeaters.timeout', tags=[u'domain:{}'.format(domain)])
+
 
 DELETED = "-Deleted"
 
@@ -316,8 +310,10 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         payload = self.get_payload_and_handle_exception(repeat_record)
         url = self.get_url(repeat_record)
         try:
-            response = simple_post_with_logged_timeout(self.domain, payload, url, headers=headers,
-                                                       timeout=POST_TIMEOUT, auth=auth)
+            response = simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
+        except (Timeout, ConnectionError) as error:
+            log_repeater_timeout_in_datadog(self.domain)
+            raise RequestConnectionError(error)
         except Exception as e:
             repeat_record.handle_exception(e)
         else:
