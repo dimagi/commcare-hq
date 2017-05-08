@@ -603,6 +603,8 @@ class BaseCaseRuleTest(TestCase):
         for rule in AutomaticUpdateRule.objects.filter(domain=self.domain):
             rule.hard_delete()
 
+        DomainCaseRuleRun.objects.filter(domain=self.domain).delete()
+
 
 class CaseRuleCriteriaTest(BaseCaseRuleTest):
 
