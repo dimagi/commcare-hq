@@ -5,8 +5,8 @@ import json
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
+from django.conf import settings
 
-import settings
 from corehq.apps.analytics.tasks import track_clicked_deploy_on_hubspot, track_job_candidate_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 
@@ -31,7 +31,7 @@ class GreenhouseCandidateView(View):
         digester = hmac.new(settings.GREENHOUSE_API_KEY, request.body, hashlib.sha256)
         calculated_signature = digester.hexdigest()
 
-        if str(calculated_signature) == str(request.META.get('HTTP_SIGNATURE', '')):
+        if str(calculated_signature) == str(request.META.get('HTTP_SIGNATURE'.split()[1], '')):
             body_unicode = request.body.decode('utf-8')
             data = json.loads(body_unicode)
             try:
