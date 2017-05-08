@@ -317,7 +317,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         except Exception as e:
             repeat_record.handle_exception(e)
         else:
-            return repeat_record.handle_response(response)
+            repeat_record.handle_response(response)
 
     def handle_success(self, response, repeat_record):
         """handle a successful post
@@ -555,9 +555,9 @@ class RepeatRecord(Document):
 
     def handle_response(self, response):
         if 200 <= response.status_code < 300:
-            return self.handle_success(response)
+            self.handle_success(response)
         else:
-            return self.handle_failure(response)
+            self.handle_failure(response)
 
     def handle_success(self, response):
         """Do something with the response if the repeater succeeds
