@@ -4,6 +4,7 @@ from django.http import Http404
 
 from django.urls import reverse
 from django.views.generic import View
+from corehq.apps.domain.decorators import LoginAndDomainMixin
 
 from dimagi.utils.web import json_response
 
@@ -35,7 +36,7 @@ class AddCaseRepeaterView(AddRepeaterView):
         return repeater
 
 
-class RepeatRecordView(View):
+class RepeatRecordView(LoginAndDomainMixin, View):
 
     urlname = 'repeat_record'
     http_method_names = ['get', 'post']

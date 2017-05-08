@@ -10,7 +10,6 @@ from django.conf import settings
 from django.views.generic import RedirectView
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
-from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
 from corehq.apps.domain.views import (
     ActivateTransferDomainView,
@@ -155,7 +154,7 @@ domain_settings = [
         name=InternalSubscriptionManagementView.urlname),
     url(r'^billing_information/$', EditExistingBillingAccountView.as_view(),
         name=EditExistingBillingAccountView.urlname),
-    url(r'^repeat_record/', login_and_domain_required(RepeatRecordView.as_view()), name=RepeatRecordView.urlname),
+    url(r'^repeat_record/', RepeatRecordView.as_view(), name=RepeatRecordView.urlname),
     url(r'^repeat_record_report/cancel/', cancel_repeat_record, name='cancel_repeat_record'),
     url(r'^repeat_record_report/requeue/', requeue_repeat_record, name='requeue_repeat_record'),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
