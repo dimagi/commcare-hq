@@ -380,7 +380,8 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
             "fhname": person_case_properties.get('husband_father_name', ''),
             "age": person_case_properties.get('age', ''),
             "gender": person_case_properties.get('sex', '').capitalize(),
-            "Address": person_case_properties.get('current_address', ''),
+            # API for Address with char ',' returns Invalid data format error
+            "Address": person_case_properties.get('current_address', '').replace(',', ''),
             "pin": person_case_properties.get('current_address_postal_code', ''),
             "lno": person_case_properties.get('phone', ''),
             "mno": '0',
