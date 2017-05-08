@@ -21,7 +21,7 @@
      {% if allow_form_workflow %}
          <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
      {% endif %}
-@@ -176,18 +176,21 @@
+@@ -170,18 +170,21 @@
              return true;
          });
  
@@ -49,7 +49,7 @@
              {% with module_name=module.name|trans:langs %}
              labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
              {% endwith %}
-@@ -203,13 +206,6 @@
+@@ -197,13 +200,6 @@
                  workflow: '{{ form.post_form_workflow }}',
              };
  
@@ -63,7 +63,7 @@
              $('#form-workflow').koApplyBindings(new FormWorkflow(options))
          {% endif %}
  
-@@ -232,7 +228,7 @@
+@@ -226,7 +222,7 @@
  
          gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
  
@@ -72,7 +72,7 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -298,69 +294,55 @@
+@@ -292,69 +288,55 @@
      </script>
  {% endblock %}
  
@@ -184,7 +184,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -372,35 +354,36 @@
+@@ -366,35 +348,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -238,7 +238,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -412,30 +395,32 @@
+@@ -406,30 +389,32 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -295,7 +295,7 @@
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
                      <p class="alert alert-warning">
-@@ -461,7 +446,6 @@
+@@ -455,7 +440,6 @@
                          {% block usercase_management_content %}
                              {%  if form.uses_usercase and not allow_usercase %}
                                  <div class="container-fluid col-sm-6">
@@ -303,7 +303,7 @@
                                {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                                  <p>{% blocktrans %}
                                      The User Properties feature is no longer available because of the change in your
-@@ -506,7 +490,7 @@
+@@ -500,7 +484,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -312,7 +312,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -519,14 +503,15 @@
+@@ -513,14 +497,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -330,7 +330,7 @@
              {% endif %}
          </div>
      </div>
-@@ -534,12 +519,12 @@
+@@ -528,12 +513,12 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}

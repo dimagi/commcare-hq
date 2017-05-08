@@ -101,12 +101,6 @@
                 });
             }());
 
-        {% block case_management_js %}
-            /* form_requires needs to be a knockout observable so that
-            its value can be read by another UI (form filtering) */
-            var form_requires = ko.observable({{ form.requires|JSON }});
-        {% endblock %}
-
         {% if allow_form_filtering %}
 
         function formFilterMatches(filter, pattern_matches, substring_matches) {
