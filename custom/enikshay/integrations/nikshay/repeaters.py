@@ -178,7 +178,6 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
 
 class NikshayRegisterPrivatePatientRepeater(BaseNikshayRepeater):
     operation = 'InsertHFIDPatient_UATBC'
-    white_listed_case_types = ['episode']
 
     class Meta(object):
         app_label = 'repeaters'
