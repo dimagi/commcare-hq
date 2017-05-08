@@ -100,10 +100,8 @@ def get_module_template(user, module):
 def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
-        'edit_name_url': reverse(
-            'edit_module_attr',
-            args=[app.domain, app.id, module.id, 'name']
-        )
+        'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'name']),
+        'edit_case_label_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'case_label']),
     }
     module_brief = {
         'id': module.id,

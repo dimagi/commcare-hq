@@ -154,7 +154,7 @@
 
         {% if not module.is_surveys %}
           {% for detail in details %}
-            <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
+            <div class="tab-pane ko-template" id="{{ detail.type }}-detail-screen-config-tab">
               {% include 'app_manager/v2/partials/case_list.html' %}
             </div>
             {% if detail.long %}
