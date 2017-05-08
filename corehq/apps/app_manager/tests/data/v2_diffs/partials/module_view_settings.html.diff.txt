@@ -18,7 +18,7 @@
 -                                       value: selectedModuleId"></select>
 +
 +
-+          {% if child_module_enabled or module.module_type == 'shadow' or app.advanced_app_builder or module.put_in_root or app.grid_display_for_some_modules or value or ko_value or not module.is_surveys %}
++          {% if child_module_enabled or module.module_type == 'shadow' or app.advanced_app_builder or module.put_in_root or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
 +          <div class="panel panel-appmanager">
 +            <div class="panel-heading">
 +              <h4 class="panel-title panel-title-nolink">{% trans "Case Settings" %}</h4>
