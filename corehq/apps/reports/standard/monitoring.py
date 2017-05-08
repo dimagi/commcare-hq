@@ -56,7 +56,7 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.utils.translation import ugettext_noop
 
 
@@ -1345,8 +1345,8 @@ def _worker_activity_is_location_safe(view, *args, **kwargs):
 class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     slug = 'worker_activity'
     name = ugettext_noop("Worker Activity")
-    description = ugettext_noop("Summary of form and case activity by user or group.")
-    section_name = ugettext_noop("Project Reports")
+    description = ugettext_lazy("Summary of form and case activity by user or group.")
+    section_name = ugettext_lazy("Project Reports")
     num_avg_intervals = 3  # how many duration intervals we go back to calculate averages
     is_cacheable = True
 

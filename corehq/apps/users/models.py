@@ -173,11 +173,11 @@ class Permissions(DocumentSchema):
 
 
 class UserRolePresets(object):
-    READ_ONLY_NO_REPORTS = "Read Only (No Reports)"
-    APP_EDITOR = "App Editor"
-    READ_ONLY = "Read Only"
-    FIELD_IMPLEMENTER = "Field Implementer"
-    BILLING_ADMIN = "Billing Admin"
+    READ_ONLY_NO_REPORTS = _("Read Only (No Reports)")
+    APP_EDITOR = _("App Editor")
+    READ_ONLY = _("Read Only")
+    FIELD_IMPLEMENTER = _("Field Implementer")
+    BILLING_ADMIN = _("Billing Admin")
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,

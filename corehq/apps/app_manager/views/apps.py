@@ -132,7 +132,7 @@ def default_new_app(request, domain):
         # APP MANAGER V2 is completely blank on new app
         module = Module.new_module(_("Untitled Module"), lang)
         app.add_module(module)
-        form = app.new_form(0, "Untitled Form", lang)
+        form = app.new_form(0, _("Untitled Form"), lang)
 
     if request.project.secure_submissions:
         app.secure_submissions = True

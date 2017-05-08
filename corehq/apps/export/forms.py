@@ -1235,7 +1235,7 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
     date_range = DateSpanField(
         label=ugettext_lazy("Date Range"),
         required=True,
-        help_text="Export messages sent in this date range",
+        help_text=ugettext_lazy("Export messages sent in this date range"),
     )
 
     def __init__(self, domain_object, timezone, *args, **kwargs):
