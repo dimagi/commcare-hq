@@ -63,10 +63,11 @@ def simple_post_with_logged_timeout(domain, data, url, *args, **kwargs):
 def simple_xml_post_with_logged_timeout(domain, data, url, operation, *args, **kwargs):
     try:
         client = Client(url)
-        # for response object use
-        # with client.options(raw_response=True):
-        #     response = client.service[self.repeater.operation](**post_info.payload)
-        return client.service[operation](**data)
+        # for just response message use
+        # with client.options(raw_response=False) # explicitly set it to avoid caching mysteries
+        #     return client.service[operation](**data)
+        with client.options(raw_response=True):
+            return client.service[operation](**data)
     except (Timeout, ConnectionError) as error:
         log_timeout_and_raise(domain, error)
 
@@ -540,6 +541,12 @@ class RepeatRecord(Document):
         if reraise:
             raise
 
+    def get_xml_message_response(self, response):
+        # parse the xml content on response object to return just the message
+        client = Client(self.url)
+        binding = client.service[self.repeater.operation]._proxy._binding
+        return binding.process_reply(client, binding.get(self.repeater.operation), response)
+
     def fire(self, force_send=False):
         headers = self.repeater.get_headers(self)
         if self.try_now() or force_send:
@@ -556,7 +563,6 @@ class RepeatRecord(Document):
                 response = simple_xml_post_with_logged_timeout(
                     self.domain, post_info.payload, self.url, self.repeater.operation
                 )
-                return self.handle_success(response)  # soap operations always throw exceptions when they fail
             else:
                 response = simple_post_with_logged_timeout(
                     self.domain,
