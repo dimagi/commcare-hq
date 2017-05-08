@@ -242,6 +242,7 @@ def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(NikshayRegisterPatientRepeater, case)
     create_repeat_records(NikshayTreatmentOutcomeRepeater, case)
     create_repeat_records(NikshayFollowupRepeater, case)
+    create_repeat_records(NikshayRegisterPrivatePatientRepeater, case)
 
 
 def create_hiv_test_repeat_records(sender, case, **kwargs):
