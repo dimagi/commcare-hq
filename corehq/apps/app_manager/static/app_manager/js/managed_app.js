@@ -86,12 +86,4 @@ $(function () {
     $tabContent.on('blur', '.collapse', function() {
         inSelectElement = false;
     });
-
-    gaTrackLink($('#edit_label'), 'App Builder', 'Open Form', 'Edit Label');
-    _.each(app.form_counts_by_module, function(form_count, module_id) {
-        _.each(_.range(form_count), function(form_id) {
-            gaTrackLink($('#view_form_' + module_id + '_' + form_id + '_sidebar'), 'App Builder', 'View Form', 'Sidebar');
-            gaTrackLink($('#edit_pen_' + module_id + '_' + form_id), 'App Builder', 'Open Form', 'Edit Pen');
-        });
-    });
 });

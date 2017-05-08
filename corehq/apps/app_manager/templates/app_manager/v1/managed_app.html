@@ -143,6 +143,10 @@
                                     <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-moduleid="{{ module.id }}" data-index="{{ form.id }}">
                                         <!--[F]-->
                                         <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar"
+                                           class="track-usage-link"
+                                           data-category="App Builder"
+                                           data-action="View Form"
+                                           data-label="Sidebar"
                                            href="{% url "view_form" domain app.id module.id form.id %}">
                                             <i class="drag_handle"></i>
                                             {% if request|toggle_enabled:"SUPPORT" %}
@@ -166,7 +170,7 @@
                                         </a>
                                         {% if not form.no_vellum %}
                                             <div class="edit-form-pencil">
-                                                <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
+                                                <a href="{% url "form_source" domain app.id module.id form.id %}">
                                                     <i class="fa fa-pencil"></i>
                                                 </a>
                                             </div>
