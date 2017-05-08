@@ -174,6 +174,25 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         generator = self.get_payload_generator(self.format_or_default_format())
         return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
+    def get_payload_and_handle_exception(self, repeat_record, save_failure=True):
+        try:
+            return self.get_payload(repeat_record)
+        except ResourceNotFound as e:
+            # this repeater is pointing at a missing document
+            # quarantine it and tell it to stop trying.
+            logging.exception(
+                u'Repeater {} in domain {} references a missing or deleted document!'.format(
+                    repeat_record._id, self.domain,
+                ))
+
+            if save_failure:
+                repeat_record.handle_payload_exception(e, reraise=False)
+        except Exception as e:
+            if save_failure:
+                repeat_record.handle_payload_exception(e, reraise=True)
+            else:
+                raise
+
     def register(self, payload, next_check=None):
         if not self.allowed_to_forward(payload):
             return
@@ -295,7 +314,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def post_for_record(self, repeat_record):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
-        payload = repeat_record.get_payload()
+        payload = self.get_payload_and_handle_exception(repeat_record)
         url = self.get_url(repeat_record)
         try:
             response = simple_post_with_logged_timeout(self.domain, payload, url, headers=headers,
@@ -528,25 +547,10 @@ class RepeatRecord(Document):
         return not self.succeeded
 
     def get_payload(self, save_failure=True):
-        try:
-            return self.repeater.get_payload(self)
-        except ResourceNotFound as e:
-            # this repeater is pointing at a missing document
-            # quarantine it and tell it to stop trying.
-            logging.exception(
-                u'Repeater {} in domain {} references a missing or deleted document!'.format(
-                    self._id, self.domain,
-                ))
+        warnings.warn("RepeatRecord.get_paylod is deprecated. Use Repeater._get_payload instead.")
+        return self.repeater.get_payload_and_handle_exception(self, save_failure=save_failure)
 
-            if save_failure:
-                self._payload_exception(e, reraise=False)
-        except Exception as e:
-            if save_failure:
-                self._payload_exception(e, reraise=True)
-            else:
-                raise
-
-    def _payload_exception(self, exception, reraise=False):
+    def handle_payload_exception(self, exception, reraise=False):
         self.succeeded = False
         self.failure_reason = unicode(exception)
         self.save()
