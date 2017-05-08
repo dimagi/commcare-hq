@@ -935,7 +935,7 @@ class FormBase(DocumentSchema):
     def uses_cases(self):
         return (
             self.requires_case()
-            or self. get_action_type() == 'open'
+            or self.get_action_type() != 'none'
             or self.form_type == 'advanced_form'
         )
 

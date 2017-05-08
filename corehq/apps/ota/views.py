@@ -35,7 +35,6 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
-from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
@@ -47,7 +46,6 @@ from .utils import (
 
 
 @location_safe
-@json_error
 @handle_401_response
 @login_or_digest_or_basic_or_apikey_or_token()
 @check_domain_migration
@@ -78,7 +76,6 @@ def restore(request, domain, app_id=None):
 
 
 @location_safe
-@json_error
 @login_or_digest_or_basic_or_apikey()
 @check_domain_migration
 def search(request, domain):
@@ -170,7 +167,6 @@ def _handle_es_exception(request, exception, query_addition_debug_details):
 @location_safe
 @csrf_exempt
 @require_POST
-@json_error
 @login_or_digest_or_basic_or_apikey()
 @check_domain_migration
 def claim(request, domain):

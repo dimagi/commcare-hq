@@ -1633,22 +1633,6 @@ PILLOWTOPS = {
             }
         },
         {
-            'name': 'kafka-ucr-static-08',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
-            'params': {
-                'ucr_division': '08'
-            }
-        },
-        {
-            'name': 'kafka-ucr-static-9f',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
-            'params': {
-                'ucr_division': '9f'
-            }
-        },
-        {
             'name': 'ReportCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
@@ -1692,16 +1676,6 @@ PILLOWTOPS = {
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'experimental': [
-        {
-            'name': 'BlobDeletionPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_main_blob_deletion_pillow',
-        },
-        {
-            'name': 'ApplicationBlobDeletionPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_application_blob_deletion_pillow',
-        },
         {
             'name': 'CaseSearchToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1759,6 +1733,9 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_lactating.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_pregnancies.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_4_6_infrastructure.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_block.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_district.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_individual.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_individual_issues.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_block.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_ticket_level.json'),
@@ -1849,6 +1826,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
