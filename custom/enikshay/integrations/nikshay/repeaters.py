@@ -162,7 +162,7 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
             test_case_properties = test_case.dynamic_case_properties()
             episode_case_properties = episode_case.dynamic_case_properties()
             return (
-                test_case_properties.get('nikshay_registered', 'false') == 'false' and
+                test_case_properties.get('private_nikshay_registered', 'false') == 'false' and
                 test_case_properties.get('test_type_value', '') in ['microscopy-zn', 'microscopy-fluorescent'] and
                 episode_case_properties.get('nikshay_id') and
                 (
