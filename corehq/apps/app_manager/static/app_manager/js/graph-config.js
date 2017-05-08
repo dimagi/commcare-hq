@@ -153,8 +153,11 @@ hqDefine('app_manager/js/graph-config.js', function () {
 
                 series.selectedSource = {'text':'custom', 'value':'custom'};
                 series.dataPath = s.data_path;
+                series.dataPathPlaceholder = s.data_path_placeholder;
                 series.xFunction = s.x_function;
+                series.xPlaceholder = s.x_placeholder;
                 series.yFunction = s.y_function;
+                series.yPlaceholder = s.y_placeholder;
                 if (s.radius_function !== undefined){
                     series.radiusFunction = s.radius_function;
                 }
@@ -512,9 +515,36 @@ hqDefine('app_manager/js/graph-config.js', function () {
             self.selectedSource(source);
         }
         self.dataPath = ko.observable(origOrDefault('dataPath', self.getDefaultDataPath(self.selectedSource().value)));
+        self.dataPathPlaceholder = ko.observable(origOrDefault('dataPathPlaceholder', ""));
         self.showDataPath = ko.observable(origOrDefault('showDataPath', false));
         self.xFunction = ko.observable(origOrDefault('xFunction',""));
+        self.xPlaceholder = ko.observable(origOrDefault('xPlaceholder',""));
         self.yFunction = ko.observable(origOrDefault('yFunction',""));
+        self.yPlaceholder = ko.observable(origOrDefault('yPlaceholder',""));
+
+        var seriesValidationWarning = gettext(
+            "It is recommended that you leave this value blank. Future changes to your report's "
+            + "chart configuration will not be reflected here."
+        );
+        self.validateDataPath = ko.computed(function() {
+            if (!self.dataPathPlaceholder() || !self.dataPath()) {
+                return;
+            }
+            self.showDataPath(true);
+            return seriesValidationWarning;
+        });
+        self.validateX = ko.computed(function() {
+            if (!self.xPlaceholder() || !self.xFunction()) {
+                return;
+            }
+            return seriesValidationWarning;
+        });
+        self.validateY = ko.computed(function() {
+            if (!self.yPlaceholder() || !self.yFunction()) {
+                return;
+            }
+            return seriesValidationWarning;
+        });
         self.xLabel = "X";
         self.yLabel = "Y";
         self.configPropertyOptions = [
