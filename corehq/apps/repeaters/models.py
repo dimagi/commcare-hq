@@ -45,18 +45,20 @@ from .const import (
 from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
 
+
 def log_timeout_and_raise(domain, error):
     datadog_counter('commcare.repeaters.timeout', tags=[
             u'domain:{}'.format(domain),
         ])
-        raise RequestConnectionError(error)
+    raise RequestConnectionError(error)
+
 
 def simple_post_with_logged_timeout(domain, data, url, *args, **kwargs):
     try:
-        response = simple_post(data, url, *args, **kwargs)
+        return simple_post(data, url, *args, **kwargs)
     except (Timeout, ConnectionError) as error:
         log_timeout_and_raise(domain, error)
-    return response
+
 
 def simple_xml_post_with_logged_timeout(domain, data, url, operation, *args, **kwargs):
     try:
@@ -64,10 +66,9 @@ def simple_xml_post_with_logged_timeout(domain, data, url, operation, *args, **k
         # for response object use
         # with client.options(raw_response=True):
         #     response = client.service[self.repeater.operation](**post_info.payload)
-        response = client.service[operation](**data)
+        return client.service[operation](**data)
     except (Timeout, ConnectionError) as error:
         log_timeout_and_raise(domain, error)
-    return response
 
 
 DELETED = "-Deleted"
