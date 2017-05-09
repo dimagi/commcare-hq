@@ -1134,7 +1134,7 @@ BLOBDB_RESTORE = PredictablyRandomToggle(
     "Blobdb restore",
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0,
+    randomness=0.3,
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
