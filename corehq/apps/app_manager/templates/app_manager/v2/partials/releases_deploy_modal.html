@@ -318,7 +318,11 @@
                     <div class="panel panel-appmanager">
                         <div class="panel-heading">
                             <h4 class="panel-title">
-                                <a data-bind="attr: {href: $root.url('source', id)}">
+                                <a class="track-usage-link"
+                                   data-category="App Manager"
+                                   data-action="Deploy Type"
+                                   data-label="View Source Files"
+                                   data-bind="attr: {href: $root.url('source', id)}">
                                     {% trans 'View Source Files' %}
                                 </a>
                             </h4>

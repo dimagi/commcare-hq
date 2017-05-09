@@ -220,8 +220,6 @@
         });
         {% endif %}
 
-        gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
-
         {% if can_preview_form and allow_cloudcare %}
             // tag the 'preview in cloudcare' button with the right url
             // unfortunately, has to be done in javascript
@@ -520,7 +518,8 @@
     {{ block.super }}
     {% include 'app_manager/v2/partials/module_view_breadcrumbs.html' %}
     <li>
-        <a class="view-form" href="{% url "view_form" domain app.id module.id form.id %}">
+        <a class="track-usage-link" href="{% url "view_form" domain app.id module.id form.id %}"
+           data-category="App Builder" data-action="View Form" data-label="Breadcrumb">
             <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
         </a>
     </li>
