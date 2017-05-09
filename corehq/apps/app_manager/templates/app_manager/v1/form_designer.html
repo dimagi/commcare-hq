@@ -24,18 +24,6 @@
 
 {% block js-inline %}{{ block.super }}
     {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
-    <script>
-        {% if notifications_enabled %}
-            var userId = '{{ request.couch_user.get_id }}';
-            var notifications = hqImport('app_manager/js/app-notifications.js');
-            // initialize redis
-            var ws4redis = WS4Redis({
-                uri: '{{ WEBSOCKET_URI }}{{ notify_facility }}?subscribe-broadcast',
-                receive_message: notifications.NotifyFunction(userId, $('#notify-bar')),
-                heartbeat_msg: {{ WS4REDIS_HEARTBEAT }},
-            });
-        {% endif %}
-    </script>
 {% endblock %}
 
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
@@ -46,6 +34,7 @@
     {% initial_page_data 'guided_tour' request.guided_tour %}
     {% initial_page_data 'requirejs_args' requirejs_args %}
     {% initial_page_data 'requirejs_url' requirejs_url|static %}
+    {% initial_page_data 'notification_options' notification_options %}
     {% initial_page_data 'vellum_debug' vellum_debug %}
     {% initial_page_data 'vellum_options' vellum_options %}
     <div id="formdesigner" class="clearfix"></div>
