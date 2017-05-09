@@ -298,7 +298,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             return HTTPDigestAuth(self.username, self.password)
         return None
 
-    def post_for_record(self, repeat_record):
+    def fire_for_record(self, repeat_record):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
         payload = self.get_payload_and_handle_exception(repeat_record)
@@ -564,7 +564,7 @@ class RepeatRecord(Document):
     def fire(self, force_send=False):
         if self.try_now() or force_send:
             self.overall_tries += 1
-            self.repeater.post_for_record(self)
+            self.repeater.fire_for_record(self)
             self.save()
 
     def handle_success(self, response):
