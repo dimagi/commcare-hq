@@ -36,7 +36,7 @@ postgres:
 
 couch:
   image: klaemo/couchdb:2.0-dev
-  command: ["--with-haproxy", "--admin", "admin:password"]
+  command: ["--with-haproxy", "--admin", "admin:password", "-n", "1"]
   expose:
     - "5984"
   volumes:

@@ -200,8 +200,6 @@ ELASTICSEARCH_VERSION = 1.7
 
 CACHE_REPORTS = True
 
-IS_BIGCOUCH = True
-
 if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     UNIT_TESTING = False
     ADMINS = (('Admin', 'admin@example.com'),)
@@ -224,3 +222,4 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     SHARED_TEMP_DIR_NAME = 'temp'
 
 BIGCOUCH = True
+BIGCOUCH_QUORUM_COUNT = 1
