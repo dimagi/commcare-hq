@@ -1,5 +1,5 @@
 from django.db import models
-from django_fsm import FSMField, transition, RETURN_VALUE
+from django_fsm import FSMField, transition
 
 from .states import (
     FACT_TABLE_NEEDS_UPDATING,
