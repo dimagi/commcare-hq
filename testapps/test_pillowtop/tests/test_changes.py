@@ -19,10 +19,11 @@ class ChangeFeedDbTest(TestCase):
         self.couch_db.save_doc({'_id': doc_id, 'property': 'property_value'})
         pillow.process_changes(since=self.update_seq, forever=False)
 
-        change = self._extract_change_from_call_args(pillow.process_change.call_args)
+        changes = self._extract_changes_from_call_args(pillow.process_change.call_args_list)
+        change_ids = {change['id'] for change in changes}
         # validate the structure of the change. some implicit asserts here
-        self.assertEqual(doc_id, change['id'])
-        doc = change['doc']
+        self.assertIn(doc_id, change_ids)
+        doc = [change['doc'] for change in changes if change['doc']['_id'] == doc_id][0]
         self.assertEqual(doc_id, doc['_id'])
         self.assertEqual('property_value', doc['property'])
 
@@ -32,8 +33,10 @@ class ChangeFeedDbTest(TestCase):
         self.couch_db.save_doc({'_id': doc_id, 'property': 'property_value'})
         pillow.process_changes(since=self.update_seq, forever=False)
 
-        change = self._extract_change_from_call_args(pillow.process_change.call_args)
-        self.assertEqual(doc_id, change['id'])
+        changes = self._extract_changes_from_call_args(pillow.process_change.call_args_list)
+        change_ids = {change['id'] for change in changes}
+        self.assertIn(doc_id, change_ids)
+        change = [change for change in changes if change['id'] == doc_id][0]
         self.assertTrue(change.get('doc', None) is None)
 
     def test_couch_filter(self):
