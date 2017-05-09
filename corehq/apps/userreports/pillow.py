@@ -35,7 +35,7 @@ from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
-LONG_UCR_LOGGING_THRESHOLD = 0.2
+LONG_UCR_LOGGING_THRESHOLD = 0.5
 LONG_UCR_SOFT_ASSERT_THRESHOLD = 5
 _slow_ucr_assert = soft_assert('{}@{}'.format('jemord', 'dimagi.com'))
 
