@@ -5,7 +5,7 @@ from corehq.util.test_utils import flag_enabled
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition, CustomDataEditor
 from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.forms import LocationForm
+from corehq.apps.locations.forms import LocationFormSet
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
@@ -57,7 +57,11 @@ class TestUserSetupUtils(TestCase):
         super(TestUserSetupUtils, cls).tearDownClass()
 
     def assertValid(self, form):
-        msg = "{} has errors: \n{}".format(form.__class__.__name__, form.errors.as_text())
+        if isinstance(form, LocationFormSet):
+            errors = ", ".join(filter(None, [f.errors.as_text() for f in form.forms]))
+        else:
+            errors = form.errors.as_text()
+        msg = "{} has errors: \n{}".format(form.__class__.__name__, errors)
         self.assertTrue(form.is_valid(), msg)
 
     def assertInvalid(self, form):
@@ -95,12 +99,13 @@ class TestUserSetupUtils(TestCase):
         role.save()
         self.addCleanup(role.delete)
 
-    def make_new_location_form(self, name, parent, nikshay_code):
-        return LocationForm(
+    def make_new_location_form(self, name, location_type, parent, nikshay_code):
+        return LocationFormSet(
             location=SQLLocation(domain=self.domain, parent=parent),
             bound_data={'name': name,
-                  'data-field-nikshay_code': nikshay_code},
-            user=self.web_user,
+                        'location_type': self.location_types[location_type],
+                        'data-field-nikshay_code': nikshay_code},
+            request_user=self.web_user,
             is_new=True,
         )
 
@@ -115,16 +120,16 @@ class TestUserSetupUtils(TestCase):
             'location_type': location.location_type.code,
         }
         bound_data.update(data)
-        return LocationForm(
+        return LocationFormSet(
             location=None,
             bound_data=bound_data,
-            user=self.web_user,
+            request_user=self.web_user,
             is_new=False,
         )
 
     def test_validate_usertype(self):
         user = self.make_user('jon-snow@website', 'DTO')
-        loc = self.locations['DTO']
+        loc_type = self.location_types['dto'].code
 
         # Try submitting an invalid usertype
         custom_data = CustomDataEditor(
@@ -133,7 +138,7 @@ class TestUserSetupUtils(TestCase):
             existing_custom_data=user.user_data,
             post_dict={'data-field-usertype': ['sto']},
         )
-        validate_usertype(self.domain, loc, 'sto', custom_data)
+        validate_usertype(loc_type, 'sto', custom_data)
         self.assertInvalid(custom_data)
 
         # Try submitting a valid usertype
@@ -143,7 +148,7 @@ class TestUserSetupUtils(TestCase):
             existing_custom_data=user.user_data,
             post_dict={'data-field-usertype': ['deo']},  # invalid usertype
         )
-        validate_usertype(self.domain, loc, 'deo', custom_data)
+        validate_usertype(loc_type, 'deo', custom_data)
         self.assertValid(custom_data)
 
     @mock.patch('custom.enikshay.user_setup.set_user_role', mock.MagicMock)
@@ -226,16 +231,12 @@ class TestUserSetupUtils(TestCase):
 
     def test_validate_nikshay_code(self):
         parent = self.locations['CTO']
-        form = self.make_new_location_form('winterfell', parent=parent, nikshay_code='123')
-        self.assertValid(form)
-        validate_nikshay_code(self.domain, form)
+        form = self.make_new_location_form('winterfell', 'dto', parent=parent, nikshay_code='123')
         self.assertValid(form)
         form.save()
 
         # Making a new location with the same parent and nikshay_code should fail
-        form = self.make_new_location_form('castle_black', parent=parent, nikshay_code='123')
-        self.assertValid(form)
-        validate_nikshay_code(self.domain, form)
+        form = self.make_new_location_form('castle_black', 'dto', parent=parent, nikshay_code='123')
         self.assertInvalid(form)
 
     def test_issuer_id(self):
