@@ -552,7 +552,8 @@ class RepeatRecord(Document):
         return not self.succeeded
 
     def get_payload(self, save_failure=True):
-        warnings.warn("RepeatRecord.get_paylod is deprecated. Use Repeater._get_payload instead.")
+        warnings.warn("RepeatRecord.get_payload is deprecated. Use Repeater.get_payload_and_handle_exception.",
+                      DeprecationWarning)
         return self.repeater.get_payload_and_handle_exception(self, save_failure=save_failure)
 
     def handle_payload_exception(self, exception):
