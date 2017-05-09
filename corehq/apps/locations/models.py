@@ -1032,6 +1032,7 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def descendants(self):
         """return list of all locations that have this location as an ancestor"""
+        notify_of_deprecation("Deprecating this - use SQL locations instead")
         return list(self.sql_location.get_descendants().couch_locations())
 
     def get_children(self):
