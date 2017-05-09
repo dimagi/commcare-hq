@@ -1,0 +1,5 @@
+FACT_TABLE_NEEDS_UPDATING = 'needs_updating'
+FACT_TABLE_BATCH_DUMPED = 'batch_dumped'
+FACT_TABLE_READY = 'ready'
+FACT_TABLE_FAILED = 'failed'
+FACT_TABLE_DECOMMISSIONED = 'decommissioned'
