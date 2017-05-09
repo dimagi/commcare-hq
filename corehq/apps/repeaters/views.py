@@ -59,7 +59,7 @@ class RepeatRecordView(LoginAndDomainMixin, View):
             record.repeater.format_or_default_format()
         ).content_type
         try:
-            payload = record.get_payload(record)
+            payload = record.get_payload()
         except XFormNotFound:
             return json_response({
                 'error': u'Odd, could not find payload for: {}'.format(record.payload_id)
