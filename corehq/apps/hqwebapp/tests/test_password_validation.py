@@ -1,0 +1,48 @@
+from django.test import TestCase, override_settings
+from django.core.exceptions import ValidationError
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.models import UsedPasswords
+from corehq.apps.hqwebapp.password_validation import UsedPasswordValidator
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import WebUser
+from corehq.apps.hqwebapp.const import RESTRICT_USED_PASSWORDS_NUM
+
+
+class TestUsedPasswordsRestriction(TestCase):
+    def setUp(self):
+        delete_all_users()
+        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        self.username = 'auser@qwerty.commcarehq.org'
+        self.password = 'apassword'
+        self.user = WebUser.create(self.domain.name, self.username, self.password).get_django_user()
+
+    def tearDown(self):
+        self.user.delete()
+        self.domain.delete()
+        UsedPasswords.objects.all().delete()
+
+    def test_used_password_reset(self):
+        with override_settings(AUTH_PASSWORD_VALIDATORS=[{
+            'NAME': 'corehq.apps.hqwebapp.password_validation.UsedPasswordValidator',
+        }]):
+            with self.assertRaisesMessage(
+                    ValidationError,
+                    "Your password can not be same as last {num} passwords.".format(num=RESTRICT_USED_PASSWORDS_NUM)):
+                UsedPasswordValidator().validate(self.password, self.user)
+                # set as same password
+                self.user._password = self.password
+                self.user.save()
+
+            self.user._password = "123456"
+            self.user.save()
+
+            self.user._password = "987654"
+            self.user.save()
+
+            with self.assertRaisesMessage(
+                    ValidationError,
+                    "Your password can not be same as last {num} passwords.".format(num=RESTRICT_USED_PASSWORDS_NUM)):
+                UsedPasswordValidator().validate(self.password, self.user)
+                # set as an old password
+                self.user._password = "123456"
+                self.user.save()

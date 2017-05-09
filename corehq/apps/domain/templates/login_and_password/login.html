@@ -1,5 +1,7 @@
 {% extends "style/base_page.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
 
 {% block title %}{% trans "Log into CommCare HQ" %}{% endblock title %}
 
@@ -8,3 +10,16 @@
     {% include "login_and_password/partials/login_full.html" %}
     {% endblock %}
 {% endblock page_content %}
+
+
+{% block js %}
+    {{ block.super }}
+    {% if implement_password_hashing %}
+    {% compress js %}
+        <script src="{% static 'domain/js/encoder.js' %}"></script>
+    {% endcompress %}
+    <script>
+        var hex_parser = hqImport('domain/js/encoder.js');
+    </script>
+    {% endif %}
+{% endblock %}
