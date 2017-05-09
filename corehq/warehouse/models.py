@@ -14,7 +14,7 @@ class FactTableState(models.Model):
     domain = models.CharField(max_length=255)
     report_slug = models.CharField(max_length=255)
     state = FSMField(default=FACT_TABLE_NEEDS_UPDATING)
-    last_modified = models.DateTimeField()
+    last_modified = models.DateTimeField(auto_now=True)
     last_batch_id = models.CharField(max_length=255)
 
     class Meta(object):
