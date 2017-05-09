@@ -1,0 +1,61 @@
+{% extends 'reports/partials/base_maps.html' %}
+{% load hq_shared_tags %}
+
+{% block js-script %}
+    <style>
+        .text-labels {
+            white-space: nowrap !important;
+        }
+
+    </style>
+    <script>
+
+        CONTEXT = {{ context|JSON }};
+        ICON_PATH = '{% static 'leaflet/dist/images' %}';
+        MIN_HEIGHT = 1000; //px
+
+        function load(context, iconPath) {
+            debugger
+            L.Icon.Default.imagePath = iconPath;
+            var map = mapsInit(context);
+
+            var resize = function() {
+                setMapHeight(map);
+            };
+            map.eachLayer(function(layer) {
+                if (typeof layer.getBounds === 'function' && layer.feature !== void(0)) {
+                    var properties = layer.feature.properties;
+                    var name = properties.district_name !== void(0) ? properties.district_name : properties.state_name;
+
+                    var center = layer.getBounds().getCenter();
+                    var divIcon = L.divIcon({
+                        className: 'text-labels',   // Set class for CSS styling
+                        html: name
+                    });
+                    var marker = new L.marker(center, { icon: divIcon, opacity: 1 });
+
+                    marker.addTo(map)
+                }
+            });
+
+            $(window).resize(resize);
+            $('#reportFiltersAccordion').on('shown', resize);
+            $('#reportFiltersAccordion').on('hidden', resize);
+            resize();
+        }
+
+        $(function() {
+            if (CONTEXT !== '') {
+                load(CONTEXT, ICON_PATH);
+            }
+        });
+
+    </script>
+{% endblock js-script %}
+
+
+{% block content %}
+    <table class="table table-striped datatable dataTable" id="tabular"></table>
+    <div class="row dataTables_control" style="height: 20px"></div>
+{% endblock content %}
+

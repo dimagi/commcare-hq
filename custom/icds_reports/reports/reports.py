@@ -273,6 +273,7 @@ class ChildHealthMothlyMapReport(CustomProjectReport, GenericMapReport):
     title = 'Child Health Monthly (Map)'
     slug = 'map_child_health'
     flush_layout = True
+    report_partial_path = "icds_reports/partials/icds_map.html"
 
     fields = [
         StateFilter,
@@ -351,7 +352,7 @@ class ChildHealthMothlyMapReport(CustomProjectReport, GenericMapReport):
             report_loader = getattr(self, '_get_data_%s' % report_adapter)
             geo_data_loader = getattr(self, '_get_data_%s' % geo_data_adapter)
         except AttributeError:
-            raise RuntimeError('unknown adapter [%s] or [%s]' % (report_loader, geo_data_loader))
+            raise RuntimeError('unknown adapter [%s] or [%s]' % (report_adapter, geo_data_adapter))
         report_data = report_loader(self.data_source, self.config)
         geo_data = geo_data_loader(dict(path=self.data_source['path'] % locations), dict())
         map_data = []
