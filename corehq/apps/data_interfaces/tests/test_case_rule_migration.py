@@ -50,9 +50,14 @@ class TestCaseRuleMigration(TestCase):
 
         expected_criteria = []
         for criteria in old_rule.automaticupdaterulecriteria_set.all():
+            property_value = criteria.property_value
+            if criteria.match_type == AutomaticUpdateRuleCriteria.MATCH_DAYS_BEFORE:
+                property_value = int(property_value) * -1
+                property_value = str(property_value)
+
             expected_criteria.append({
                 'property_name': criteria.property_name,
-                'property_value': criteria.property_value,
+                'property_value': property_value,
                 'match_type': criteria.match_type,
             })
 
