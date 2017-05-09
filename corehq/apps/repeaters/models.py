@@ -307,7 +307,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             response = simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
         except (Timeout, ConnectionError) as error:
             log_repeater_timeout_in_datadog(self.domain)
-            raise RequestConnectionError(error)
+            self.handle_response(RequestConnectionError(error), repeat_record)
         except Exception as e:
             self.handle_response(e, repeat_record)
         else:
