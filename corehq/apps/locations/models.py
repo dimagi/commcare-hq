@@ -609,6 +609,9 @@ class SQLLocation(MPTTModel):
     class Meta:
         app_label = 'locations'
         unique_together = ('domain', 'site_code',)
+        index_together = [
+            ('tree_id', 'lft', 'rght')
+        ]
 
     def __unicode__(self):
         return u"{} ({})".format(self.name, self.domain)
