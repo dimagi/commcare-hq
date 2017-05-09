@@ -1,23 +1,26 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 <script type="text/html" id="value-or-none-ui-template">
     <div data-bind="visible: !hasValue()">
         <div class="btn-group" data-bind="visible: allowed()">
             <button class="btn btn-default" data-bind="enterInput: $data">
-                <span data-bind="html: messages.add"></span>
+                {% trans "Add Display Condition" %}
             </button>
         </div>
         <div></div>
         <div class="btn-group" data-bind="visible: !allowed()">
             <button class="btn btn-default btn-mini disabled" disabled="disabled">
                 <i class="fa fa-plus"></i>
-                <span data-bind="html: messages.add"></span>
+                {% trans "Add Display Condition" %}
             </button>
             <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
                 <li>
-                    <a href="#" data-bind="click: enterInput, html: messages.whyNotAdd"></a>
+                    <a href="#" data-bind="click: enterInput">
+                        {% trans "Why can't I add a display condition?" %}
+                    </a>
                 </li>
             </ul>
         </div>
@@ -25,7 +28,7 @@
     <div data-bind="visible: hasValue">
         <div data-bind="visible: !allowed()">
             <div class="alert alert-danger" data-bind="visible: value">
-                <strong data-bind="html: messages.notAllowedButExists"></strong>
+                <strong>{% trans "Error: Module Does Not Use Cases" %}</strong>
                 <div>
                     <code data-bind="text: value()"></code>
                     <a href="#" class="btn btn-danger" data-bind="exitInput: $data">
@@ -45,7 +48,8 @@
             <div class="row">
                 <div class="col-sm-9">
                     <textarea class="form-control vertical-resize" data-bind="
-                            xpathValidator: {text: inputValue, allowCaseHashtags: true, errorHtml: messages.invalidXpath},
+                            xpathValidator: {text: inputValue, allowCaseHashtags: true,
+                                             errorHtml: $('#formFilterXpathErrorHtml').html()},
                             hasfocus: hasFocus,
                             css: inputCss,
                             attr: inputAttr
@@ -57,11 +61,62 @@
                     </a>
                 </div>
             </div>
-            <div class="help-block" data-bind="visible: messages.helpText">
+            <div class="help-block">
                 <i class="fa fa-info-circle"></i>
-                <span data-bind="html: messages.helpText"></span>
+                {% blocktrans %}
+                    Similar to how you write display logic inside the form builder,
+                    except that you must enter <code>./</code> before a case property.
+                    <strong>For example</strong>: <code>./edd > today()</code> means
+                    "show this form if the selected case has an EDD later than today".
+                    <br/>
+                    <a href="https://confluence.dimagi.com/display/commcarepublic/Common+Logic+and+Calculations#CommonLogicandCalculations-DisplayLogicforForms">
+                        Click here for more help
+                    </a>
+                {% endblocktrans %}
             </div>
         </div>
     </div>
     <input type="hidden" data-bind="value: value, attr: {name: inputName}"/>
+    <span class="hide" id="caseReferenceNotAllowed">
+      {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+        {% blocktrans %}
+        To use display conditions in a module which reference a case, <br/>
+            (1) the module <strong>Menu</strong> setting must be set to <em>Display module and then
+                forms</em> <br/>
+            (2) all the forms in the module must update or close a case, which means registration
+                forms must go in a separate module, or if your project uses user properties, your
+                display condition may use user properties.
+        {% endblocktrans %}
+      {% else %}
+        {% blocktrans %}
+        To use display conditions in a module which reference a case, <br/>
+            (1) the module <strong>Menu</strong> setting must be set to <em>Display module and then
+                forms</em> <br/>
+            (2) all the forms in the module must update or close a case, which means registration
+                forms must go in a separate module, or if your project uses user case management, your
+                display condition may use the user case.
+        {% endblocktrans %}
+      {% endif %}
+    </span>
+    <span class="hide" id="userCaseReferenceNotAllowed">
+      {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+        {% blocktrans %}
+        To use display conditions in a module which reference a user property, user properties must be
+        enabled for your project.
+        {% endblocktrans %}
+      {% else %}
+        {% blocktrans %}
+        To use display conditions in a module which reference a user case, user case management must be
+        enabled for your project.
+        {% endblocktrans %}
+      {% endif %}
+    </span>
+    <span class="hide" id="formFilterXpathErrorHtml">
+    {% blocktrans%}
+        There is something wrong with the logic in the Form Display Condition.
+        Check to make sure your parentheses match and you are referencing case properties correctly.
+        Read more about Form Display Conditions
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions">here</a>
+    {% endblocktrans %}
+    </span>
 </script>
