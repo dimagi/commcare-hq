@@ -96,3 +96,4 @@ dnspython==1.13.0
 raven==6.0.0
 quickcache==0.0.1
 -e submodules/motechhub/packages/python/authproxy-client
+django_fsm==2.5.0
