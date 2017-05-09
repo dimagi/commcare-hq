@@ -1,31 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <script type="text/html" id="value-or-none-ui-template">
-    <div data-bind="visible: !hasValue()">
-        <div class="btn-group" data-bind="visible: allowed()">
-            <button class="btn btn-default" data-bind="enterInput: $data">
-                {% trans "Add Display Condition" %}
-            </button>
-        </div>
-        <div></div>
-        <div class="btn-group" data-bind="visible: !allowed()">
-            <button class="btn btn-default btn-mini disabled" disabled="disabled">
-                <i class="fa fa-plus"></i>
-                {% trans "Add Display Condition" %}
-            </button>
-            <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu">
-                <li>
-                    <a href="#" data-bind="click: enterInput">
-                        {% trans "Why can't I add a display condition?" %}
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
-    <div data-bind="visible: hasValue">
+    <div>
         <div data-bind="visible: !allowed()">
             <div class="alert alert-danger" data-bind="visible: value">
                 <strong>{% trans "Error: Module Does Not Use Cases" %}</strong>
@@ -37,33 +13,17 @@
                 </div>
                 <div data-bind="html: messages.notAllowed"></div>
             </div>
-            <div class="help-block" data-bind="visible: !value()">
-                <div data-bind="html: messages.notAllowed"></div>
-                <a href="#" class="btn btn-default" data-bind="exitInput: $data">
-                    {% trans "OK, close this" %}
-                </a>
-            </div>
         </div>
         <div data-bind="visible: allowed()">
-            <div class="row">
-                <div class="col-sm-9">
-                    <textarea class="form-control vertical-resize" data-bind="
-                            xpathValidator: {text: inputValue, allowCaseHashtags: true,
-                                             errorHtml: $('#formFilterXpathErrorHtml').html()},
-                            hasfocus: hasFocus,
-                            css: inputCss,
-                            attr: inputAttr
-                    "></textarea>
-                </div>
-                <div class="col-sm-3">
-                    <a href="#" class="btn btn-danger" data-bind="exitInput: $data">
-                        {% trans "Delete" %}
-                    </a>
-                </div>
-            </div>
+            <textarea name="form_filter" class="form-control vertical-resize" data-bind="
+                    xpathValidator: {text: inputValue, allowCaseHashtags: true,
+                                     errorHtml: $('#formFilterXpathErrorHtml').html()},
+                    hasfocus: hasFocus,
+                    css: inputCss,
+                    attr: inputAttr
+            "></textarea>
         </div>
     </div>
-    <input type="hidden" data-bind="value: value, attr: {name: inputName}"/>
     <span class="hide" id="caseReferenceNotAllowed">
       {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
         {% blocktrans %}
@@ -102,8 +62,6 @@
     {% blocktrans%}
         There is something wrong with the logic in the Form Display Condition.
         Check to make sure your parentheses match and you are referencing case properties correctly.
-        Read more about Form Display Conditions
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions">here</a>
     {% endblocktrans %}
     </span>
 </script>

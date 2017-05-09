@@ -356,7 +356,6 @@ function ValueOrNoneUI(opts) {
     };
 
     self.messages = opts.messages;
-    self.inputName = opts.inputName;
     self.inputCss = opts.inputCss;
     self.inputAttr = opts.inputAttr;
     self.defaultValue = opts.defaultValue;
