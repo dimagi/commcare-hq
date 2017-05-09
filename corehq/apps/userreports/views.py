@@ -1385,7 +1385,7 @@ class PreviewDataSourceView(BaseUserConfigReportsView):
         return {
             'data_source': config,
             'columns': q.column_descriptions,
-            'data': q[:20],
+            'data': [list(row) for row in q[:20]],
             'total_rows': q.count(),
         }
 
