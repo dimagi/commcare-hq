@@ -138,7 +138,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'corehq.apps.hqwebapp.middleware.HQCsrfViewMiddleWare',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -2050,3 +2050,5 @@ if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
     SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
+
+CSRF_COOKIE_HTTPONLY = True
