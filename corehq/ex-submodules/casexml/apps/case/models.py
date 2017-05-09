@@ -46,6 +46,7 @@ CASE_STATUS_CLOSED = 'closed'
 CASE_STATUS_ALL = 'all'
 
 INDEX_RELATIONSHIP_CHILD = 'child'
+INDEX_RELATIONSHIP_EXTENSION = 'extension'
 
 
 class CommCareCaseAction(LooselyEqualDocumentSchema):
@@ -215,6 +216,19 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
     def __repr__(self):
         return "%s(name=%r, type=%r, id=%r)" % (
                 self.__class__.__name__, self.name, self.type, self._id)
+
+    @classmethod
+    def convert_sql_relationship_id_to_couch_relationship(cls, relationship_id):
+        from corehq.form_processor.models import CommCareCaseIndexSQL
+        relationship = {
+            CommCareCaseIndexSQL.CHILD: INDEX_RELATIONSHIP_CHILD,
+            CommCareCaseIndexSQL.EXTENSION: INDEX_RELATIONSHIP_EXTENSION,
+        }.get(relationship_id)
+
+        if not relationship:
+            raise ValueError("relationship_id %s not recognized" % relationship_id)
+
+        return relationship
 
     @memoized
     def get_parent(self, identifier=None, relationship=None):

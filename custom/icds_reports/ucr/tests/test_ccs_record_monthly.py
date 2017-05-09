@@ -5,9 +5,8 @@ from django.test import override_settings
 import mock
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
-from corehq.apps.es.fake.forms_fake import FormESFake
 from corehq.apps.userreports.const import UCR_SQL_BACKEND
-from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element
+from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element, mget_query_fake
 
 XMNLS_BP_FORM = 'http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB'
 XMLNS_THR_FORM = 'http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A'
@@ -17,7 +16,7 @@ XMLNS_EBF_FORM = 'http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
-@mock.patch('custom.icds_reports.ucr.expressions.FormES', FormESFake)
+@mock.patch('custom.icds_reports.ucr.expressions.mget_query', mget_query_fake)
 class TestCCSRecordDataSource(BaseICDSDatasourceTest):
     datasource_filename = 'ccs_record_cases_monthly_tableau'
 

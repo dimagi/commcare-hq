@@ -148,7 +148,7 @@ def iteratively_build_table(config, last_id=None, resume_helper=None, in_place=F
 
 
 @task(queue=UCR_CELERY_QUEUE)
-def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_order, params):
+def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
     def _run_report(backend_to_use):
@@ -159,8 +159,13 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
                 [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
             )
 
-        datatables_params = DatatablesParams.from_request_dict(params)
-        page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
+        if params:
+            datatables_params = DatatablesParams.from_request_dict(params)
+            start = datatables_params.start
+            limit = datatables_params.count
+        else:
+            start, limit = None, None
+        page = list(data_source.get_data(start=start, limit=limit))
         total_records = data_source.get_total_records()
         json_response = {
             'aaData': page,
@@ -205,6 +210,9 @@ def queue_async_indicators():
     with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
         day_ago = datetime.utcnow() - timedelta(days=1)
         indicators = AsyncIndicator.objects.all()[:10000]
+        if indicators:
+            lag = (datetime.utcnow() - indicators[0].date_created).total_seconds()
+            datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
         indicators_by_domain_doc_type = defaultdict(list)
         for indicator in indicators:
             # don't requeue anything htat's be queued in the past day
@@ -255,6 +263,7 @@ def save_document(doc_ids):
 
         first_indicator = indicators[0]
         processed_indicators = []
+        failed_indicators = []
 
         for i in indicators:
             assert i.domain == first_indicator.domain
@@ -274,8 +283,9 @@ def save_document(doc_ids):
                     eval_context.reset_iteration()
             except (ESError, RequestError):
                 # couch or es had an issue
-                pass
+                failed_indicators.append(indicator.pk)
             else:
                 processed_indicators.append(indicator.pk)
 
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
+        AsyncIndicator.objects.filter(pk__in=failed_indicators).update(date_queued=None)

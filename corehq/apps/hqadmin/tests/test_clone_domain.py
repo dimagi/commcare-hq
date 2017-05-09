@@ -4,7 +4,7 @@ from mock import patch
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.locations.tests.util import setup_locations_and_types, delete_all_locations
+from corehq.apps.locations.tests.util import setup_locations_and_types
 from corehq.apps.repeaters.dbaccessors import delete_all_repeaters
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -17,9 +17,6 @@ class TestCloneDomain(TestCase):
     new_domain = "the-upside-down"
 
     def setUp(self):
-        delete_all_users()
-        delete_all_locations()
-        delete_all_repeaters()
         self.old_domain_obj = create_domain(self.old_domain)
         self.mobile_worker = CommCareUser.create(self.old_domain, 'will@normal-world.commcarehq.org', '123')
         self.web_user = WebUser.create(self.old_domain, 'barb@hotmail.com', '***', is_active=True)
@@ -57,7 +54,6 @@ class TestCloneDomain(TestCase):
         if new_domain_obj:
             new_domain_obj.delete()
         delete_all_users()
-        delete_all_locations()
         delete_all_repeaters()
 
     def test_same_locations(self):

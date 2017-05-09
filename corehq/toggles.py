@@ -70,29 +70,33 @@ class StaticToggle(object):
         else:
             self.namespaces = [None]
 
-    def enabled(self, item, namespace=None):
+    def enabled(self, item, namespace=Ellipsis):
         if item in self.always_enabled:
             return True
         elif item in self.always_disabled:
             return False
+
+        if namespace is not Ellipsis and namespace not in self.namespaces:
+            # short circuit if we're checking an item that isn't supported by this toggle
+            return False
+
         enabled_after = self.enabled_for_new_domains_after
         if (enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
-                and was_domain_created_after(item, enabled_after)):
+            and was_domain_created_after(item, enabled_after)):
             return True
-        if namespace is not None:
-            ns = None if namespace == NAMESPACE_USER else namespace
-            return toggle_enabled(self.slug, item, ns)
-        return any([toggle_enabled(self.slug, item, namespace=n) for n in self.namespaces])
+
+        namespaces = self.namespaces if namespace is Ellipsis else [namespace]
+        return any([toggle_enabled(self.slug, item, namespace=n) for n in namespaces])
 
     def enabled_for_request(self, request):
         return (
             None in self.namespaces
             and hasattr(request, 'user')
-            and toggle_enabled(self.slug, request.user.username, None)
+            and self.enabled(request.user.username, namespace=None)
         ) or (
             NAMESPACE_DOMAIN in self.namespaces
             and hasattr(request, 'domain')
-            and self.enabled(request.domain, NAMESPACE_DOMAIN)
+            and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN)
         )
 
     def set(self, item, enabled, namespace=None):
@@ -107,8 +111,8 @@ class StaticToggle(object):
             @wraps(view_func)
             def wrapped_view(request, *args, **kwargs):
                 if (
-                    (hasattr(request, 'user') and self.enabled(request.user.username))
-                    or (hasattr(request, 'domain') and self.enabled(request.domain))
+                    (hasattr(request, 'user') and self.enabled(request.user.username, namespace=None))
+                    or (hasattr(request, 'domain') and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN))
                 ):
                     return view_func(request, *args, **kwargs)
                 if request.user.is_superuser:
@@ -126,10 +130,14 @@ class StaticToggle(object):
         from toggle.models import Toggle
         try:
             toggle = Toggle.get(self.slug)
-            enabled_users = toggle.enabled_users
-            return [user.split('domain:')[1] for user in enabled_users if 'domain:' in user]
         except ResourceNotFound:
             return []
+
+        enabled_users = toggle.enabled_users
+        domains = {user.split('domain:')[1] for user in enabled_users if 'domain:' in user}
+        domains |= self.always_enabled
+        domains -= self.always_disabled
+        return list(domains)
 
 
 def was_domain_created_after(domain, checkpoint):
@@ -444,13 +452,6 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     description="Do not turn this feature flag. It is only used for providing compatability for old projects. "
     "We are actively trying to remove projects from this list. This functionality is now possible by using the "
     "Advanced Settings on the Organization Levels page and setting the Level to Expand From option."
-)
-
-FLAT_LOCATION_FIXTURE = StaticToggle(
-    'flat_location_fixture',
-    'Sync the location fixture in a flat format. ',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
 )
 
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
@@ -1064,7 +1065,7 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     'Easy-reference user properties in the form builder.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    enabled_for_new_domains_after=datetime(2017, 5, 3, 12),  # noon UTC
+    enabled_for_new_domains_after=datetime(2017, 5, 3, 20),  # 8pm UTC
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
@@ -1133,7 +1134,7 @@ BLOBDB_RESTORE = PredictablyRandomToggle(
     "Blobdb restore",
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0,
+    randomness=0.3,
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
@@ -1168,6 +1169,22 @@ MARK_LATEST_SUBMISSION_ON_USER = StaticToggle(
     'user_last_submission',
     "Marks the latest submssion on user model",
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
+)
+
+ENTERPRISE_OPTIMIZATIONS = StaticToggle(
+    'enterprise_optimizations',
+    'Used to enable specific optimizations for environments that only support a single domain e.g. ICDS',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
+)
+
+MOBIE_UCR_SYNC_DELAY_CONFIG = StaticToggle(
+    'mobile_ucr_sync_delay',
+    "Show settings for configuring mobile UCR sync delay",
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
     always_enabled={'icds-cas'}
 )

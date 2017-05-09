@@ -7,10 +7,19 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
+from kafka.common import TopicAndPartition
 from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.utils import force_seq_int
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
+
+
+def _topic_for_ddog(topic):
+    # can be a string for couch pillows, but otherwise is topic, partition
+    if isinstance(topic, TopicAndPartition):
+        return 'topic:{}-{}'.format(topic.topic, topic.partition)
+    else:
+        return 'topic:{}'.format(topic)
 
 
 class PillowRuntimeContext(object):
@@ -162,7 +171,7 @@ class PillowBase(object):
         for topic, value in checkpoint_sequence.iteritems():
             datadog_gauge('commcare.change_feed.checkpoint_offsets', value, tags=[
                 'pillow_name:{}'.format(self.get_name()),
-                'topic:{}'.format(topic),
+                _topic_for_ddog(topic),
             ])
 
     def _record_change_in_datadog(self, change, timer):
@@ -176,15 +185,14 @@ class PillowBase(object):
             'feed_type:{}'.format('kafka' if isinstance(change_feed, KafkaChangeFeed) else 'couch')
         ]
         for topic, value in current_seq.iteritems():
-            tags_with_topic = tags + ['topic:{}'.format(topic), ]
-
+            tags_with_topic = tags + [_topic_for_ddog(topic), ]
             datadog_gauge('commcare.change_feed.processed_offsets', value, tags=tags_with_topic)
             if topic in current_offsets:
                 needs_processing = current_offsets[topic] - value
                 datadog_gauge('commcare.change_feed.need_processing', needs_processing, tags=tags_with_topic)
 
         for topic, offset in current_offsets.iteritems():
-            tags_with_topic = tags + ['topic:{}'.format(topic), ]
+            tags_with_topic = tags + [_topic_for_ddog(topic), ]
             datadog_gauge('commcare.change_feed.current_offsets', offset, tags=tags_with_topic)
 
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change, timer)
@@ -209,7 +217,7 @@ class PillowBase(object):
             change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).seconds
             datadog_gauge('commcare.change_feed.change_lag', change_lag, tags=[
                 u'pillow_name:{}'.format(self.get_name()),
-                u'topic:{}'.format(change.topic),
+                _topic_for_ddog(change.topic),
             ])
 
             if timer:

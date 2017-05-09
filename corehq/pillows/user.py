@@ -1,7 +1,6 @@
 import copy
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER, FORM
-from corehq.apps.change_feed.topics import FORM_SQL
+from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
@@ -77,13 +76,13 @@ class UnknownUsersProcessor(PillowProcessor):
         update_unknown_user_from_form_if_necessary(self._es, change.get_document())
 
 
-def get_unknown_users_pillow(pillow_id='unknown-users-pillow'):
+def get_unknown_users_pillow(pillow_id='unknown-users-pillow', **kwargs):
     """
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
     processor = UnknownUsersProcessor()
-    change_feed = KafkaChangeFeed(topics=[FORM, FORM_SQL], group_id='unknown-users')
+    change_feed = KafkaChangeFeed(topics=topics.FORM_TOPICS, group_id='unknown-users')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
@@ -102,7 +101,7 @@ def add_demo_user_to_user_index():
     )
 
 
-def get_user_pillow(pillow_id='UserPillow'):
+def get_user_pillow(pillow_id='UserPillow', **kwargs):
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
     user_processor = ElasticProcessor(
@@ -110,7 +109,7 @@ def get_user_pillow(pillow_id='UserPillow'):
         index_info=USER_INDEX_INFO,
         doc_prep_fn=transform_user_for_elasticsearch,
     )
-    change_feed = KafkaChangeFeed(topics=[COMMCARE_USER, WEB_USER], group_id='users-to-es')
+    change_feed = KafkaChangeFeed(topics=topics.USER_TOPICS, group_id='users-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

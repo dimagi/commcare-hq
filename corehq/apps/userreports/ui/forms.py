@@ -13,7 +13,7 @@ from corehq.apps.userreports.util import get_table_name
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 
 
 class DocumentFormBase(forms.Form):
@@ -130,6 +130,7 @@ BACKEND_CHOICES = (
     (UCR_SQL_BACKEND, 'Postgres'),
     (UCR_ES_BACKEND, 'ElasticSearch'),
     (UCR_LABORATORY_BACKEND, 'Laboratory'),
+    (UCR_ES_PRIMARY, 'ES primary'),
 )
 
 

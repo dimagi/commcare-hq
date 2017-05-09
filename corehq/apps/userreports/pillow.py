@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 from collections import defaultdict
 from datetime import datetime, timedelta
 import hashlib
@@ -9,7 +10,7 @@ import six
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.const import (
-    KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
+    KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 )
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
@@ -150,8 +151,8 @@ class ConfigurableReportTableManagerMixin(object):
         ]
 
     def rebuild_tables_if_necessary(self):
-        sql_supported_backends = [UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND]
-        es_supported_backends = [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND]
+        sql_supported_backends = [UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY]
+        es_supported_backends = [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY]
         self._rebuild_sql_tables(self._tables_by_engine_id(sql_supported_backends))
         self._rebuild_es_tables(self._tables_by_engine_id(es_supported_backends))
 
@@ -194,9 +195,6 @@ class ConfigurableReportTableManagerMixin(object):
             adapter.rebuild_table_if_necessary()
 
     def rebuild_table(self, adapter):
-        if adapter.config.get_id in ("static-enikshay-episode", "static-np-migration-3-episode"):
-            # https://manage.dimagi.com/default.asp?252832
-            return
         config = adapter.config
         if not config.is_static:
             latest_rev = config.get_db().get_rev(config._id)
@@ -286,9 +284,9 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self._processor.rebuild_table(sql_adapter)
 
 
-# TODO(Emord) make other pillows support params dictionary
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
-                         include_ucrs=None, exclude_ucrs=None, topics=None):
+                         include_ucrs=None, exclude_ucrs=None, topics=None,
+                         **kwargs):
     topics = topics or KAFKA_TOPICS
     topics = [kafka_bytestring(t) for t in topics]
     return ConfigurableReportKafkaPillow(
@@ -305,7 +303,8 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
 
 
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
-                                include_ucrs=None, exclude_ucrs=None, topics=None):
+                                include_ucrs=None, exclude_ucrs=None, topics=None,
+                                **kwargs):
     topics = topics or KAFKA_TOPICS
     topics = [kafka_bytestring(t) for t in topics]
     return ConfigurableReportKafkaPillow(

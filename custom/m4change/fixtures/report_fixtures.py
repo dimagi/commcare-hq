@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from lxml import etree as ElementTree
 from django.utils.translation import ugettext as _
 
-from casexml.apps.phone.models import OTARestoreUser
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.locations.models import Location
 from custom.m4change.constants import M4CHANGE_DOMAINS, NUMBER_OF_MONTHS_FOR_FIXTURES
 from custom.m4change.models import FixtureReportResult
@@ -32,11 +32,11 @@ def get_last_day_of_month(month_start, today):
     return today.day if month_start.month == today.month else calendar.monthrange(month_start.year, month_start.month)[1]
 
 
-class ReportFixtureProvider(object):
+class ReportFixtureProvider(FixtureProvider):
     id = 'reports:m4change-mobile'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
-        assert isinstance(restore_user, OTARestoreUser)
+    def __call__(self, restore_state):
+        restore_user = restore_state.restore_user
 
         if restore_user.domain in M4CHANGE_DOMAINS:
             location_id = restore_user.get_commtrack_location_id()

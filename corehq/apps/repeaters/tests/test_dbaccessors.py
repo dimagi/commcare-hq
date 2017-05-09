@@ -92,6 +92,14 @@ class TestRepeatRecordDBAccessors(TestCase):
         count = get_failure_repeat_record_count(self.domain, self.repeater_id)
         self.assertEqual(count, 2)
 
+    def test_get_repeat_record_count_with_state_and_no_repeater(self):
+        count = get_repeat_record_count(self.domain, state=RECORD_PENDING_STATE)
+        self.assertEqual(count, 3)
+
+    def test_get_repeat_record_count_with_repeater_id_and_no_state(self):
+        count = get_repeat_record_count(self.domain, repeater_id=self.other_id)
+        self.assertEqual(count, 1)
+
     def test_get_paged_repeat_records_with_state_and_no_records(self):
         count = get_repeat_record_count('wrong-domain', state=RECORD_PENDING_STATE)
         self.assertEqual(count, 0)

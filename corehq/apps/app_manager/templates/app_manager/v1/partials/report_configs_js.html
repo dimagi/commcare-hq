@@ -27,8 +27,10 @@
             moduleFilter: "{{ module.module_filter|escapejs }}",
             availableReports: {{ all_reports|JSON }}, // structure for all reports
             currentReports: {{ current_reports|JSON }}, // config data for app reports
+            columnXpathTemplate: "{{ column_xpath_template|escapejs }}",
             saveURL: saveURL,
             lang: {{ lang|JSON }},
+            languages: {{ app.langs|JSON }},
             menuImage: navMenuMedia.menuImage,
             menuAudio: navMenuMedia.menuAudio,
             containerId: "#settings"

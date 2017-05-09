@@ -7,7 +7,7 @@ from django.test import TestCase
 
 from casexml.apps.case.xml import V1
 from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.tests.utils import generate_restore_payload, create_restore_user
+from casexml.apps.phone.tests.utils import generate_restore_payload, create_restore_user, call_fixture_generator
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.programs.fixtures import program_fixture_generator
 from corehq.apps.products.fixtures import product_fixture_generator
@@ -127,7 +127,7 @@ class FixtureTest(TestCase, TestXmlMixin):
     def test_product_fixture(self):
         user = self.user
         xml = self.generate_product_fixture_xml(user)
-        fixture = product_fixture_generator(user, V1)
+        fixture = call_fixture_generator(product_fixture_generator, user)
 
         self.assertXmlEqual(
             xml,
@@ -142,7 +142,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         product_list = Product.by_domain(user.domain)
         self._initialize_product_names(len(product_list))
 
-        fixture_original = product_fixture_generator(user, V1)
+        fixture_original = call_fixture_generator(product_fixture_generator, user)
         generate_restore_payload(self.domain_obj, user)
         self.assertXmlEqual(
             expected_xml,
@@ -161,7 +161,7 @@ class FixtureTest(TestCase, TestXmlMixin):
 
         # second sync is before any changes are made, so there should
         # be no products synced
-        fixture_pre_change = product_fixture_generator(user, V1, last_sync=first_sync)
+        fixture_pre_change = call_fixture_generator(product_fixture_generator, user, last_sync=first_sync)
         generate_restore_payload(self.domain_obj, user)
         self.assertEqual(
             [],
@@ -184,7 +184,7 @@ class FixtureTest(TestCase, TestXmlMixin):
 
         # now that we've updated a product, we should get
         # product data in sync again
-        fixture_post_change = product_fixture_generator(user, V1, last_sync=second_sync)
+        fixture_post_change = call_fixture_generator(product_fixture_generator, user, last_sync=second_sync)
 
         # regenerate the fixture xml to make sure it is still legit
         self.assertXmlEqual(
@@ -228,7 +228,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         program_list = Program.by_domain(user.domain)
         program_xml = self.generate_program_xml(program_list, user)
 
-        fixture = program_fixture_generator(user, V1)
+        fixture = call_fixture_generator(program_fixture_generator, user)
 
         self.assertXmlEqual(
             program_xml,
@@ -246,7 +246,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         program_list = Program.by_domain(user.domain)
         program_xml = self.generate_program_xml(program_list, user)
 
-        fixture_original = program_fixture_generator(user, V1)
+        fixture_original = call_fixture_generator(program_fixture_generator, user)
 
         generate_restore_payload(self.domain_obj, user)
         self.assertXmlEqual(
@@ -266,7 +266,7 @@ class FixtureTest(TestCase, TestXmlMixin):
 
         # second sync is before any changes are made, so there should
         # be no programs synced
-        fixture_pre_change = program_fixture_generator(user, V1, last_sync=first_sync)
+        fixture_pre_change = call_fixture_generator(program_fixture_generator, user, last_sync=first_sync)
         generate_restore_payload(self.domain_obj, user)
         self.assertEqual(
             [],
@@ -289,7 +289,7 @@ class FixtureTest(TestCase, TestXmlMixin):
 
         # now that we've updated a program, we should get
         # program data in sync again
-        fixture_post_change = program_fixture_generator(user, V1, last_sync=second_sync)
+        fixture_post_change = call_fixture_generator(program_fixture_generator, user, last_sync=second_sync)
 
         # regenerate the fixture xml to make sure it is still legit
         self.assertXmlEqual(

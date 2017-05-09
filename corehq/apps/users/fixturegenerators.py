@@ -1,23 +1,23 @@
 from __future__ import absolute_import
 from xml.etree import ElementTree
+
+from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.xml import get_data_element
-from casexml.apps.phone.models import OTARestoreUser
 
 
-class UserGroupsFixtureProvider(object):
+class UserGroupsFixtureProvider(FixtureProvider):
     """
     Generate user-based fixtures used in OTA restore
     """
 
     id = 'user-groups'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
+    def __call__(self, restore_state):
         """
         For a given user, return a fixture containing all the groups
         they are a part of.
         """
-        assert isinstance(restore_user, OTARestoreUser)
-        fixture = self.get_group_fixture(restore_user, last_sync)
+        fixture = self.get_group_fixture(restore_state.restore_user, restore_state.last_sync_log)
         if len(fixture):
             return [fixture]
         else:

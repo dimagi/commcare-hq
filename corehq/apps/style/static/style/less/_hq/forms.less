@@ -222,6 +222,12 @@ textarea.vertical-resize {
     resize: vertical;
 }
 
+.ko-inline-edit-with-help {
+    .hq-help {
+        vertical-align: middle;
+    }
+}
+
 .ko-inline-edit {
     &.inline {
         display: inline-block;
@@ -264,4 +270,8 @@ textarea.vertical-resize {
 
 table .ko-inline-edit .read-only:hover {
     background-color: @cc-neutral-hi;
+}
+
+.select2-container.select2-container-active > .select2-choice {
+  .box-shadow(0 0 10px @cc-brand-mid);
 }
