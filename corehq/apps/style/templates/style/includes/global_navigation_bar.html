@@ -103,11 +103,13 @@
                     <i class="fa fa-comments icon-comments dropdown-icon"></i> {% trans "User Forum" %}
                 </a>
             </li>
+            {% if not enterprise_mode or not 500traceback %}
             <li>
                 <a href="#modalReportIssue" data-toggle="modal" id="menuitem-issue">
                     <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
                 </a>
             </li>
+            {% endif %}
         </ul>
     </li>
     {% if request.couch_user and request.couch_user.is_web_user %}
