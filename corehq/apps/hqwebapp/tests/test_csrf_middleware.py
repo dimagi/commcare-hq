@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 from django.urls import reverse
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -25,10 +25,21 @@ class TestCSRF(TestCase):
         cls.domain.delete()
         super(TestCSRF, cls).tearDownClass()
 
+    @override_settings(UNIT_TESTING=False)
     def test_csrf_ON(self):
         csrf_sent, csrf_missing = self._form_post_with_and_without_csrf()
         self.assertEqual(csrf_sent, 200)
         self.assertEqual(csrf_missing, 403)
+
+    def test_csrf_ON_for_test(self):
+        with self.assertRaisesMessage(
+            AssertionError,
+            "Request at {at} doesn't contain a csrf token. Referring url is Unknown URL."
+            "Possibly related to https://github.com/dimagi/commcare-hq/pull/16008".format(
+                at=reverse('send_to_recipients', args=[self.domain.name])
+            )
+        ):
+            self._form_post_with_and_without_csrf()
 
     def _form_post_with_and_without_csrf(self):
         client = Client(enforce_csrf_checks=True)
