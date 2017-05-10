@@ -273,6 +273,16 @@ class Episode(models.Model):
         }[self.hiv]
 
     @property
+    def new_retreatment(self):
+        return {
+            'New': 'new',
+            'Retreatment': 'retreatment',
+            'N/A': '',
+            'Select': '',
+            None: '',
+        }[self.newOrRetreatment]
+
+    @property
     def site_choice(self):
         return {
             'Abdomen': 'abdominal',

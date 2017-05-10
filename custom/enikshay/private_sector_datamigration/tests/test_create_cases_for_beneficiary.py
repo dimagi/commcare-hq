@@ -191,6 +191,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('episode_type', 'confirmed_tb'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
+            ('new_retreatment', 'new'),
             ('nikshay_id', '02139-02215'),
             ('site_choice', 'abdominal'),
             ('transfer_in', ''),
