@@ -818,7 +818,7 @@ class LocationImportView(BaseLocationView):
         domain = args[0]
 
         # stash this in soil to make it easier to pass to celery
-        TEN_HOURS = 10*60*60
+        TEN_HOURS = 10 * 60 * 60
         file_ref = expose_cached_download(
             upload.read(),
             expiry=TEN_HOURS,
