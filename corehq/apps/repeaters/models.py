@@ -287,16 +287,9 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def fire_for_record(self, repeat_record):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
-
-        try:
-            payload = self.get_payload(repeat_record)
-        except Exception as e:
-            # todo: seems like this just does everything that handle_exception does but not as well.
-            # todo:   seems like they could be combined
-            repeat_record.handle_payload_exception(e)
-            raise
-
+        payload = self.get_payload(repeat_record)
         url = self.get_url(repeat_record)
+
         try:
             response = simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
         except (Timeout, ConnectionError) as error:
@@ -573,8 +566,15 @@ class RepeatRecord(Document):
     def fire(self, force_send=False):
         if self.try_now() or force_send:
             self.overall_tries += 1
-            self.repeater.fire_for_record(self)
-            self.save()
+            try:
+                self.repeater.fire_for_record(self)
+            except Exception as e:
+                # todo: seems like this just does everything that handle_exception does but not as well.
+                # todo:   seems like they could be combined
+                self.handle_payload_exception(e)
+                raise
+            else:
+                self.save()
 
     def handle_success(self, response):
         """Do something with the response if the repeater succeeds
