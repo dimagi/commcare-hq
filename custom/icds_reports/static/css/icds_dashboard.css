@@ -1,0 +1,51 @@
+.dashboard-title {
+    color: #0a6aa1;
+}
+
+.left-menu {
+    height: 100%;
+    position: fixed;
+    background: #373737;
+    color: #ffffff;
+    font-size: 16px;
+}
+
+.main-container {
+    height: auto;
+    position: absolute;
+    right: 0;
+}
+
+ul {
+  list-style-type: none;
+}
+li {
+    margin: 10px;
+}
+
+.nav-list > li {
+    margin-left: 20px;
+}
+.pointer {
+    cursor: pointer;
+}
+
+.hq-icon {
+    background-image: url(/static/hqstyle/images/commcare-flower.png);
+    background-size: contain;
+    width: 38px;
+    height: 38px;
+}
+
+a {
+    color: #ffffff;
+    text-decoration: none;
+    padding: 0px !important;
+}
+
+a:hover, a:focus {
+     color: #ffffff;
+    background-color: inherit !important;
+     text-decoration:none;
+     cursor:pointer;
+}
