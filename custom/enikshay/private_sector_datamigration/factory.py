@@ -109,6 +109,17 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['other_id_number'] = self.beneficiary.identificationNumber
             kwargs['attrs']['update']['other_id_type'] = self.beneficiary.other_id_type
 
+        agency = (
+            self._episode.treating_provider or self.beneficiary.referred_provider
+            if self._episode else self.beneficiary.referred_provider
+        )
+        assert agency is not None
+        facility_assigned_to = SQLLocation.active_objects.get(
+            domain=self.domain,
+            site_code=agency.nikshayId,
+        ).location_id
+        kwargs['attrs']['update']['facility_assigned_to'] = facility_assigned_to
+
         if self._episode:
             kwargs['attrs']['update']['diabetes_status'] = self._episode.diabetes_status
             kwargs['attrs']['update']['hiv_status'] = self._episode.hiv_status
@@ -121,19 +132,10 @@ class BeneficiaryCaseFactory(object):
                 if self._episode.treatment_outcome == 'died':
                     kwargs['attrs']['close'] = True
             else:
+                kwargs['attrs']['owner_id'] = facility_assigned_to
                 kwargs['attrs']['update']['is_active'] = 'yes'
-
-        agency = (
-            self._episode.treating_provider or self.beneficiary.referred_provider
-            if self._episode else self.beneficiary.referred_provider
-        )
-        assert agency is not None
-
-        if not self._episode or not self._episode.is_treatment_ended:
-            kwargs['attrs']['owner_id'] = SQLLocation.active_objects.get(
-                domain=self.domain,
-                site_code=agency.nikshayId,
-            ).location_id
+        else:
+            kwargs['attrs']['owner_id'] = facility_assigned_to
 
         return CaseStructure(**kwargs)
 

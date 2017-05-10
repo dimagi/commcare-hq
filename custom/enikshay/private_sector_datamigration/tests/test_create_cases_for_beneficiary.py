@@ -129,6 +129,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('dob_entered', '1992-01-02'),
             ('dob_known', 'yes'),
             ('enrolled_in_private', 'true'),
+            ('facility_assigned_to', self.pcp.location_id),
             ('first_name', 'Nick'),
             ('hiv_status', 'non_reactive'),
             ('husband_father_name', 'Nick Sr.'),
