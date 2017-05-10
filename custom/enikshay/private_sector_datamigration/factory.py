@@ -214,6 +214,9 @@ class BeneficiaryCaseFactory(object):
                 kwargs['attrs']['external_id'] = self._episode.nikshayID
                 kwargs['attrs']['update']['nikshay_id'] = self._episode.nikshayID
 
+            if self._episode.rxOutcomeDate is not None:
+                kwargs['attrs']['update']['rx_outcome_date'] = self._episode.rxOutcomeDate.date()
+
             if self._episode.disease_classification == 'extra_pulmonary':
                 kwargs['attrs']['update']['site_choice'] = self._episode.site_choice
 
