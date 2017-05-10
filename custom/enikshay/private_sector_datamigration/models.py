@@ -253,6 +253,16 @@ class Episode(models.Model):
         }[self.site]
 
     @property
+    def dst_status(self):
+        return {
+            'DST Not done': 'not_done',
+            'Pending': 'pending',
+            'Rifampicin Resistant(MDR)': 'rif_resistant',
+            'Rifampicin sensitive': 'rif_sensitive',
+            'XDR': 'xdr',
+        }[self.dstStatus]
+
+    @property
     def hiv_status(self):
         return {
             'Positive': 'reactive',

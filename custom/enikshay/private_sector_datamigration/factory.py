@@ -199,6 +199,7 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['date_opened'] = rx_start_datetime
             kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()
             kwargs['attrs']['update']['disease_classification'] = self._episode.disease_classification
+            kwargs['attrs']['update']['dst_status'] = self._episode.dst_status
             kwargs['attrs']['update']['episode_pending_registration'] = (
                 'yes' if self._episode.nikshayID is None else 'no'
             )
