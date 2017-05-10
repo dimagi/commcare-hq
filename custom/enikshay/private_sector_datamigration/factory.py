@@ -173,6 +173,7 @@ class BeneficiaryCaseFactory(object):
                 'update': {
                     'date_of_mo_signature': self.beneficiary.dateOfRegn.date(),
                     'dots_99_enabled': 'false',  # TODO - confirm or fix
+                    'enrolled_in_private': 'true',
                     'episode_id': get_human_friendly_id(),
                     'episode_type': self.beneficiary.current_episode_type,
                     'name': self.beneficiary.episode_name,

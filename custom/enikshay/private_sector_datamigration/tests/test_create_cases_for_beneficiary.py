@@ -181,6 +181,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('date_of_mo_signature', '2017-04-17'),
             ('disease_classification', 'extra_pulmonary'),
             ('dots_99_enabled', 'false'),
+            ('enrolled_in_private', 'true'),
             ('episode_id', '20160908010203004'),
             ('episode_pending_registration', 'no'),
             ('episode_type', 'confirmed_tb'),
