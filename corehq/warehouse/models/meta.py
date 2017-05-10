@@ -2,7 +2,7 @@ from django.db import models
 
 from django_fsm import FSMField, transition
 
-from .states import (
+from ..states import (
     FACT_TABLE_NEEDS_UPDATING,
     FACT_TABLE_BATCH_DUMPED,
     FACT_TABLE_READY,
