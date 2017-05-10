@@ -2281,8 +2281,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def get_app(self):
         return self._parent
 
-    def default_name(self):
-        app = self.get_app()
+    def default_name(self, app=None):
+        if not app:
+            app = self.get_app()
         return trans(
             self.name,
             [app.default_language] + app.langs,

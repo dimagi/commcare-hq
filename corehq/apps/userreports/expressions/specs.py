@@ -1,4 +1,8 @@
 from __future__ import absolute_import
+import hashlib
+import json
+
+from django.core.serializers.json import DjangoJSONEncoder
 from jsonobject.base_properties import DefaultProperty
 from simpleeval import InvalidExpression
 import six
@@ -79,11 +83,12 @@ class NamedExpressionSpec(JsonObject):
             raise BadSpecError(u'Name {} not found in list of named expressions!'.format(self.name))
         self._context = context
 
-    def _context_cache_key(self):
-        return 'named_expression-{}'.format(self.name)
+    def _context_cache_key(self, item):
+        item_hash = hashlib.md5(json.dumps(item, cls=DjangoJSONEncoder, sort_keys=True)).hexdigest()
+        return 'named_expression-{}-{}'.format(self.name, item_hash)
 
     def __call__(self, item, context=None):
-        key = self._context_cache_key()
+        key = self._context_cache_key(item)
         if context and context.exists_in_cache(key):
             return context.get_cache_value(key)
 

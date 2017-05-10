@@ -29,9 +29,12 @@ def _should_sync(restore_state):
         return True
 
     sync_interval = restore_state.restore_user.get_mobile_ucr_sync_interval()
-    return not last_sync_log or (
-        not sync_interval or (datetime.utcnow() - last_sync_log.date).total_seconds() > sync_interval
+    return (
+        not last_sync_log or
+        not sync_interval or
+        (datetime.utcnow() - last_sync_log.date).total_seconds() > sync_interval
     )
+
 
 
 class ReportFixturesProvider(FixtureProvider):
