@@ -287,6 +287,8 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         try:
             payload = self.get_payload(repeat_record)
         except Exception as e:
+            # todo: seems like this just does everything that handle_exception does but not as well.
+            # todo:   seems like they could be combined
             repeat_record.handle_payload_exception(e)
             raise
 
@@ -543,6 +545,9 @@ class RepeatRecord(Document):
         return self.repeater.get_payload(self)
 
     def handle_payload_exception(self, exception):
+        # todo: this seems to just say that it failed but not actually cancel it
+        # todo:   or even change the last_checked or next_check
+        # todo:   so this will just get requeued indefinitely, right?
         self.succeeded = False
         self.failure_reason = unicode(exception)
         self.save()
