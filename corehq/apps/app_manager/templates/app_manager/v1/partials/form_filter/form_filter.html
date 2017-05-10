@@ -11,7 +11,7 @@
     <div id="form-filter" class="col-sm-4 row">
         <div data-bind="css: {'has-error': !allowed()}">
             <textarea name="form_filter" class="form-control vertical-resize" data-bind="
-                    xpathValidator: {text: inputValue, allowCaseHashtags: true,
+                    xpathValidator: {text: formFilter, allowCaseHashtags: true,
                                      errorHtml: $('#formFilterXpathErrorHtml').html()}
             "></textarea>
             <div class="help-block" data-bind="visible: !allowed()">

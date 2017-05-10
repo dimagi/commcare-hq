@@ -120,68 +120,57 @@
 
         var putInRoot = {{ module.put_in_root|BOOL }};
         var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
-        var formFilter = ko.observable({{ form.form_filter|JSON }});
         var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
 
         var caseXpathPatternMatches = {{ case_xpath_pattern_matches|JSON }};
         var caseXpathSubstringMatches = {{ case_xpath_substring_matches|JSON }};
         var userCaseXpathPatternMatches = {{ user_case_xpath_pattern_matches|JSON }};
         var userCaseXpathSubstringMatches = {{ user_case_xpath_substring_matches|JSON }};
-
-        var formFilterReferencesCase = ko.computed(function() {
-            // We want to determine here if the filter expression references
-            // any case but the user case.
-            var filter = formFilter();
-            if(typeof(filter) != 'string') {
-                return false;
-            }
-
-            $.each(userCaseXpathSubstringMatches, function(index, sub) {
-                filter = filter.replace(sub, '');
-            });
-
-            return formFilterMatches(filter, caseXpathPatternMatches, caseXpathSubstringMatches);
-        });
-
-        var formFilterReferencesUserCase = ko.computed(function() {
-            return formFilterMatches(formFilter(), userCaseXpathPatternMatches, userCaseXpathSubstringMatches);
-        });
-
         var formFilterErrorMessage = ko.observable();
 
-        var formFilterAllowed = ko.computed(function () {
-            if(!formFilter()) {
-                return true;
-            }
-
-            moduleUsesCase = (allOtherFormsRequireACase && form_requires() === 'case');
-            if(formFilterReferencesCase() && (!moduleUsesCase || putInRoot)) {
-                formFilterErrorMessage($('#caseReferenceNotAllowed').html());
-                return false;
-            }
-
-            if(formFilterReferencesUserCase() && !isUserCaseInUse) {
-                formFilterErrorMessage($('#userCaseReferenceNotAllowed').html());
-                return false;
-            }
-
-            return true;
-        });
-
-        function ValueOrNoneUI(opts) {
+        function FormFilter(opts) {
             var self = this;
-            var wrapObservable = function (o) {
-                if (ko.isObservable(o)) {
-                    return o;
-                } else {
-                    return ko.observable(o);
-                }
-            };
 
             self.messages = opts.messages;
-            self.allowed = wrapObservable(opts.allowed);
-            self.inputValue = wrapObservable(opts.value || '');
-            self.hasValue = ko.observable(!!self.inputValue());
+            self.formFilter = ko.observable({{ form.form_filter|JSON }});
+
+            self.formFilterReferencesCase = ko.computed(function() {
+                // We want to determine here if the filter expression references
+                // any case but the user case.
+                var filter = self.formFilter();
+                if(typeof(filter) != 'string') {
+                    return false;
+                }
+
+                $.each(userCaseXpathSubstringMatches, function(index, sub) {
+                    filter = filter.replace(sub, '');
+                });
+
+                return formFilterMatches(filter, caseXpathPatternMatches, caseXpathSubstringMatches);
+            });
+
+            self.formFilterReferencesUserCase = ko.computed(function() {
+                return formFilterMatches(self.formFilter(), userCaseXpathPatternMatches, userCaseXpathSubstringMatches);
+            });
+
+            self.allowed = ko.computed(function () {
+                if (!self.formFilter()) {
+                    return true;
+                }
+
+                var moduleUsesCase = allOtherFormsRequireACase && form_requires() === 'case';
+                if (self.formFilterReferencesCase() && (!moduleUsesCase || putInRoot)) {
+                    formFilterErrorMessage($('#caseReferenceNotAllowed').html());
+                    return false;
+                }
+
+                if (self.formFilterReferencesUserCase() && !isUserCaseInUse) {
+                    formFilterErrorMessage($('#userCaseReferenceNotAllowed').html());
+                    return false;
+                }
+
+                return true;
+            });
         }
 
         var messages = {};
@@ -189,9 +178,7 @@
             messages[$(this).data('slug')] = $(this).html();
             $(this).hide();
         });
-        $('#form-filter').koApplyBindings(new ValueOrNoneUI({
-            value: formFilter,
-            allowed: formFilterAllowed,
+        $('#form-filter').koApplyBindings(new FormFilter({
             messages: _.extend(messages, {notAllowed: formFilterErrorMessage}),
         }));
 
