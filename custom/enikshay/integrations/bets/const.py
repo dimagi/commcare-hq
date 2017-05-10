@@ -55,3 +55,5 @@ LOCATION_TYPE_MAP = {
     # TODO: ?? -> dots_provider
     # TODO: ?? -> compounder
 }
+
+TOTAL_DAY_THRESHOLDS = [30, 60, 90, 120]

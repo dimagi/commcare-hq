@@ -172,7 +172,7 @@ class BETS180TreatmentRepeaterView(AddCaseRepeaterView):
 class BETSDrugRefillRepeaterView(AddCaseRepeaterView):
     urlname = "bets_drug_refill_repeater"
     page_title = "Patients: Cash transfer on subsequent drug refill"
-    page_name = "Patients: Cash transfer on subsequent drug refill (voucher case_type)"
+    page_name = "Patients: Cash transfer on subsequent drug refill (episode case_type)"
 
 
 class BETSSuccessfulTreatmentRepeaterView(AddCaseRepeaterView):

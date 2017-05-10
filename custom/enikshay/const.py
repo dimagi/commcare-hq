@@ -52,6 +52,7 @@ DAILY_SCHEDULE_ID = 'schedule_daily'
 SCHEDULE_ID_FIXTURE = 'id'
 # one of values of 'adherence_closure_reason' case property
 HISTORICAL_CLOSURE_REASON = 'historical'
+PRESCRIPTION_TOTAL_DAYS_THRESHOLD = "prescription_total_days_threshold_{}"
 
 # Voucher Case Properties
 DATE_FULFILLED = "date_fulfilled"
