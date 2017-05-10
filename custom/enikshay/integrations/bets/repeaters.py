@@ -253,16 +253,12 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
             return False
 
         case_properties = episode_case.dynamic_case_properties()
-        presumptive_referral_by_ayush = (
-            case_properties.get("presumptive_referral_by_ayush")
-            and case_properties.get("presumptive_referral_by_ayush") != "false"
-        )
         not_sent = case_properties.get("event_{}".format(AYUSH_REFERRAL_EVENT)) != "sent"
         enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
         return (
-            presumptive_referral_by_ayush
-            and case_properties.get("nikshay_registered") == 'true'
-            and case_properties_changed(episode_case, ['nikshay_registered'])
+            case_properties.get("bets_first_prescription_voucher_redeemed") == 'true'
+            and case_properties_changed(episode_case, ['bets_first_prescription_voucher_redeemed'])
+            and case_properties.get("created_by_user_type") == "pac"
             and not_sent
             and enrolled_in_private_sector
             and is_valid_episode_submission(episode_case)

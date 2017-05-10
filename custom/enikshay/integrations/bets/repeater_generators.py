@@ -151,29 +151,21 @@ class IncentivePayload(BETSPayload):
     @classmethod
     def create_ayush_referral_payload(cls, episode_case):
         episode_case_properties = episode_case.dynamic_case_properties()
-        person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
 
         location = cls._get_location(
-            episode_case_properties.get("presumptive_referral_by_ayush"),
-            field_name="presumptive_referral_by_ayush",
+            episode_case_properties.get("created_by_user_location_id"),
+            field_name="created_by_user_location_id",
             related_case_type="episode",
             related_case_id=episode_case.case_id,
-        )
-
-        person_owner_location = cls._get_location(
-            person_case.owner_id,
-            field_name="owner_id",
-            related_case_type="person",
-            related_case_id=person_case.case_id
         )
 
         return cls(
             EventID=AYUSH_REFERRAL_EVENT,
             EventOccurDate=cls._india_now(),
-            BeneficiaryUUID=episode_case_properties.get("presumptive_referral_by_ayush"),
-            BeneficiaryType=LOCATION_TYPE_MAP[location.location_type],
+            BeneficiaryUUID=episode_case_properties.get("created_by_user_location_id"),
+            BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,
-            Location=person_owner_location.metadata["nikshay_code"],
+            Location=location.metadata["nikshay_code"],
         )
 
 
