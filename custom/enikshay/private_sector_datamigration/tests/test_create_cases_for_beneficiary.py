@@ -185,6 +185,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('dots_99_enabled', 'false'),
             ('dst_status', 'rif_sensitive'),
             ('enrolled_in_private', 'true'),
+            ('episode_details_complete', 'true'),
             ('episode_id', '20160908010203004'),
             ('episode_pending_registration', 'no'),
             ('episode_type', 'confirmed_tb'),
