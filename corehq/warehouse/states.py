@@ -6,7 +6,7 @@ fact tables need updating.
 FACT_TABLE_NEEDS_UPDATING = 'needs_updating'
 
 '''
-When a fact table has reached the batch dumped state, it will
+When a fact table in in the batch dumped state, it will
 have dumped all newly relevant modified data into an intermediate
 table to be processed.
 '''
@@ -28,7 +28,7 @@ FACT_TABLE_FAILED = 'failed'
 
 '''
 When a fact table is in a decommissioned state, it means
-that it no process will attempt to re-process it unless
+that no process will attempt to re-process it unless
 there is manual intervention.
 '''
 FACT_TABLE_DECOMMISSIONED = 'decommissioned'
