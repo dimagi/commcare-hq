@@ -36,26 +36,6 @@ class AddCaseRepeaterView(AddRepeaterView):
         return repeater
 
 
-class UserRepeaterView(AddRepeaterView):
-    urlname = "user_repeater"
-    page_title = "Users"
-    page_name = page_title
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
-
-
-class LocationRepeaterView(AddRepeaterView):
-    urlname = "location_repeater"
-    page_title = "Locations"
-    page_name = page_title
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
-
-
 class RepeatRecordView(LoginAndDomainMixin, View):
 
     urlname = 'repeat_record'
