@@ -130,44 +130,36 @@
             var self = this;
 
             self.formFilter = ko.observable({{ form.form_filter|JSON }});
-            self.formFilterErrorMessage = ko.observable();
 
-            self.formFilterReferencesCase = ko.computed(function() {
-                // We want to determine here if the filter expression references
-                // any case but the user case.
-                var filter = self.formFilter();
-                if(typeof(filter) != 'string') {
-                    return false;
+            self.caseReferenceNotAllowed = ko.computed(function() {
+                var moduleUsesCase = allOtherFormsRequireACase && form_requires() === 'case';
+                if (!moduleUsesCase || putInRoot) {
+                    // We want to determine here if the filter expression references
+                    // any case but the user case.
+                    var filter = self.formFilter();
+                    if (typeof(filter) !== 'string') {
+                        return true;
+                    }
+
+                    $.each(userCaseXpathSubstringMatches, function(index, sub) {
+                        filter = filter.replace(sub, '');
+                    });
+
+                    if (formFilterMatches(filter, caseXpathPatternMatches, caseXpathSubstringMatches)) {
+                        return true;
+                    }
                 }
-
-                $.each(userCaseXpathSubstringMatches, function(index, sub) {
-                    filter = filter.replace(sub, '');
-                });
-
-                return formFilterMatches(filter, caseXpathPatternMatches, caseXpathSubstringMatches);
+                return false;
             });
 
-            self.formFilterReferencesUserCase = ko.computed(function() {
-                return formFilterMatches(self.formFilter(), userCaseXpathPatternMatches, userCaseXpathSubstringMatches);
+            self.userCaseReferenceNotAllowed = ko.computed(function() {
+                return !isUserCaseInUse && formFilterMatches(
+                    self.formFilter(), userCaseXpathPatternMatches, userCaseXpathSubstringMatches
+                );
             });
 
             self.allowed = ko.computed(function () {
-                if (!self.formFilter()) {
-                    return true;
-                }
-
-                var moduleUsesCase = allOtherFormsRequireACase && form_requires() === 'case';
-                if (self.formFilterReferencesCase() && (!moduleUsesCase || putInRoot)) {
-                    self.formFilterErrorMessage($('#caseReferenceNotAllowed').html());
-                    return false;
-                }
-
-                if (self.formFilterReferencesUserCase() && !isUserCaseInUse) {
-                    self.formFilterErrorMessage($('#userCaseReferenceNotAllowed').html());
-                    return false;
-                }
-
-                return true;
+                return !self.formFilter() || !self.caseReferenceNotAllowed() && !self.userCaseReferenceNotAllowed();
             });
         }
 
