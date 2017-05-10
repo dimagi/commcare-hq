@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import logging
 import urllib
 import urlparse
+import warnings
 from django.utils.translation import ugettext_lazy as _
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
@@ -12,7 +13,6 @@ from corehq.form_processor.exceptions import XFormNotFound
 from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.quickcache import quickcache
-from utils import get_repeater_auth_header
 
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
@@ -46,20 +46,13 @@ from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
 
 
-def simple_post_with_logged_timeout(domain, data, url, *args, **kwargs):
-    try:
-        response = simple_post(data, url, *args, **kwargs)
-    except (Timeout, ConnectionError) as error:
-        datadog_counter('commcare.repeaters.timeout', tags=[
-            u'domain:{}'.format(domain),
-        ])
-        raise RequestConnectionError(error)
-    return response
+def log_repeater_timeout_in_datadog(domain):
+    datadog_counter('commcare.repeaters.timeout', tags=[u'domain:{}'.format(domain)])
+
 
 DELETED = "-Deleted"
 
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
-PostInfo = namedtuple('PostInfo', 'payload headers auth')
 
 
 class GeneratorCollection(object):
@@ -175,6 +168,24 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         generator = self.get_payload_generator(self.format_or_default_format())
         return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
+    def get_payload_and_handle_exception(self, repeat_record, save_failure=True):
+        try:
+            return self.get_payload(repeat_record)
+        except ResourceNotFound as e:
+            # this repeater is pointing at a missing document
+            # quarantine it and tell it to stop trying.
+            logging.exception(
+                u'Repeater {} in domain {} references a missing or deleted document!'.format(
+                    repeat_record._id, self.domain,
+                ))
+
+            if save_failure:
+                repeat_record.handle_payload_exception(e)
+        except Exception as e:
+            if save_failure:
+                repeat_record.handle_payload_exception(e)
+            raise
+
     def register(self, payload, next_check=None):
         if not self.allowed_to_forward(payload):
             return
@@ -287,6 +298,37 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             return HTTPDigestAuth(self.username, self.password)
         return None
 
+    def fire_for_record(self, repeat_record):
+        headers = self.get_headers(repeat_record)
+        auth = self.get_auth()
+        payload = self.get_payload_and_handle_exception(repeat_record)
+        url = self.get_url(repeat_record)
+        try:
+            response = simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
+        except (Timeout, ConnectionError) as error:
+            log_repeater_timeout_in_datadog(self.domain)
+            self.handle_response(RequestConnectionError(error), repeat_record)
+        except Exception as e:
+            self.handle_response(e, repeat_record)
+        else:
+            self.handle_response(response, repeat_record)
+
+    def handle_response(self, result, repeat_record):
+        """
+        route the result to the success, failure, or exception handlers
+
+        result may be either a response object or an exception
+        """
+        if isinstance(result, Exception):
+            repeat_record.handle_exception(result)
+            self.handle_exception(result, repeat_record)
+        elif 200 <= result.status_code < 300:
+            repeat_record.handle_success(result)
+            self.handle_success(result, repeat_record)
+        else:
+            repeat_record.handle_failure(result)
+            self.handle_failure(result, repeat_record)
+
     def handle_success(self, response, repeat_record):
         """handle a successful post
         """
@@ -334,7 +376,10 @@ class FormRepeater(Repeater):
             # adapted from http://stackoverflow.com/a/2506477/10840
             url_parts = list(urlparse.urlparse(url))
             query = urlparse.parse_qsl(url_parts[4])
-            query.append(("app_id", self.payload_doc(repeat_record).app_id))
+            try:
+                query.append(("app_id", self.payload_doc(repeat_record).app_id))
+            except (XFormNotFound, ResourceNotFound):
+                return None
             url_parts[4] = urllib.urlencode(query)
             return urlparse.urlunparse(url_parts)
 
@@ -449,10 +494,8 @@ class RepeatRecord(Document):
 
     @property
     def url(self):
-        try:
-            return self.repeater.get_url(self)
-        except (XFormNotFound, ResourceNotFound):
-            return None
+        warnings.warn("RepeatRecord.url is deprecated. Use Repeater.get_url instead", DeprecationWarning)
+        return self.repeater.get_url(self)
 
     @property
     def state(self):
@@ -509,62 +552,20 @@ class RepeatRecord(Document):
         return not self.succeeded
 
     def get_payload(self, save_failure=True):
-        try:
-            return self.repeater.get_payload(self)
-        except ResourceNotFound as e:
-            # this repeater is pointing at a missing document
-            # quarantine it and tell it to stop trying.
-            logging.exception(
-                u'Repeater {} in domain {} references a missing or deleted document!'.format(
-                    self._id, self.domain,
-                ))
+        warnings.warn("RepeatRecord.get_payload is deprecated. Use Repeater.get_payload_and_handle_exception.",
+                      DeprecationWarning)
+        return self.repeater.get_payload_and_handle_exception(self, save_failure=save_failure)
 
-            if save_failure:
-                self._payload_exception(e, reraise=False)
-        except Exception as e:
-            if save_failure:
-                self._payload_exception(e, reraise=True)
-            else:
-                raise
-
-    def _payload_exception(self, exception, reraise=False):
+    def handle_payload_exception(self, exception):
         self.succeeded = False
         self.failure_reason = unicode(exception)
         self.save()
-        if reraise:
-            raise
 
     def fire(self, force_send=False):
-        headers = self.repeater.get_headers(self)
-        auth = self.repeater.get_auth()
         if self.try_now() or force_send:
             self.overall_tries += 1
-            tries = 0
-            post_info = PostInfo(self.get_payload(), headers, auth)
-            self.post(post_info, tries=tries)
+            self.repeater.fire_for_record(self)
             self.save()
-
-    def post(self, post_info, tries=0):
-        tries += 1
-        try:
-            response = simple_post_with_logged_timeout(
-                self.domain,
-                post_info.payload,
-                self.url,
-                headers=post_info.headers,
-                timeout=POST_TIMEOUT,
-                auth=post_info.auth,
-            )
-        except Exception as e:
-            self.handle_exception(e)
-        else:
-            return self.handle_response(response, post_info, tries)
-
-    def handle_response(self, response, post_info, tries):
-        if 200 <= response.status_code < 300:
-            return self.handle_success(response)
-        else:
-            return self.handle_failure(response, post_info, tries)
 
     def handle_success(self, response):
         """Do something with the response if the repeater succeeds
@@ -572,22 +573,19 @@ class RepeatRecord(Document):
         self.last_checked = datetime.utcnow()
         self.next_check = None
         self.succeeded = True
-        self.repeater.handle_success(response, self)
 
-    def handle_failure(self, response, post_info, tries):
+    def handle_failure(self, response):
         """Do something with the response if the repeater fails
         """
         self._fail(
             u'{}: {}. {}'.format(response.status_code, response.reason, getattr(response, 'content', None)),
             response
         )
-        self.repeater.handle_failure(response, self)
 
     def handle_exception(self, exception):
         """handle internal exceptions
         """
         self._fail(unicode(exception), None)
-        self.repeater.handle_exception(exception, self)
 
     def _fail(self, reason, response):
         if self.repeater.allow_retries(response) and self.overall_tries < self.max_possible_tries:

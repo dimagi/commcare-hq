@@ -30,7 +30,7 @@ def _should_sync(restore_state):
 
     sync_interval = restore_state.restore_user.get_mobile_ucr_sync_interval()
     return not last_sync_log or (
-        sync_interval and (datetime.utcnow() - last_sync_log.date).total_seconds() > sync_interval
+        not sync_interval or (datetime.utcnow() - last_sync_log.date).total_seconds() > sync_interval
     )
 
 

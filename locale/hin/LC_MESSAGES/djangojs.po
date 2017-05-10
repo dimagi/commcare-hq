@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-02 20:05+0000\n"
+"POT-Creation-Date: 2017-05-09 18:38+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,11 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: bower_components/bower_components/underscore-legacy/test/utility.js:67
+#: bower_components/underscore-legacy/test/utility.js:67
+msgid "champ"
+msgstr ""
 
 #: bower_components/jquery-ui/jquery-ui.min.js:8
 msgid "'"
@@ -109,6 +114,7 @@ msgid "Auto-set by "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:414
+#: corehq/apps/app_manager/static/app_manager/js/graph-config.js:528
 msgid "Copied!"
 msgstr ""
 
@@ -307,6 +313,12 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/graph-config.js:537
+msgid ""
+"It is recommended that you leave this value blank. Future changes to your "
+"report's chart configuration will not be reflected here."
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/language-profiles.js:14
 msgid "You have unsaved changes to your application profiles"
 msgstr ""
@@ -346,20 +358,32 @@ msgstr ""
 msgid "Reset"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases.js:28
+#: corehq/apps/app_manager/static/app_manager/js/releases.js:35
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases.js:351
+#: corehq/apps/app_manager/static/app_manager/js/releases.js:361
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases.js:386
+#: corehq/apps/app_manager/static/app_manager/js/releases.js:396
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases.js:391
+#: corehq/apps/app_manager/static/app_manager/js/releases.js:401
 msgid "No new changes to deploy!"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/report-module.js:139
+msgid "Show All"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/report-module.js:306
+msgid "You have unsaved changes in your report list module"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/report-module.js:312
+msgid "Reports must have all properties set!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/supported-languages.js:16

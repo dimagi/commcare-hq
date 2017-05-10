@@ -5,7 +5,7 @@ hqDefine('app_manager/js/report-module.js', function () {
     var select2Separator = "\u001F";
 
     function GraphConfig(reportId, reportName, availableReportIds, reportCharts, graph_configs,
-                         columnXpathTemplate, lang, langs, changeSaveButton) {
+                         columnXpathTemplate, dataPathPlaceholders, lang, langs, changeSaveButton) {
         var self = this,
             columnTemplate = _.template(columnXpathTemplate);
 
@@ -26,8 +26,12 @@ hqDefine('app_manager/js/report-module.js', function () {
                 // Add series placeholders
                 _.each(currentChart.y_axis_columns, function(column, index) {
                     if (graph_config.series[index]) {
+                        var dataPathPlaceholder = dataPathPlaceholders && dataPathPlaceholders[currentReportId]
+                            ? dataPathPlaceholders[currentReportId][currentChart.chart_id]
+                            : "[path will be automatically generated]"
+                        ;
                         _.extend(graph_config.series[index], {
-                            data_path_placeholder: "[path will be automatically generated]",
+                            data_path_placeholder: dataPathPlaceholder,
                             x_placeholder: columnTemplate({ id: currentChart.x_axis_column }),
                             y_placeholder: columnTemplate({ id: column.column_id }),
                         });
@@ -191,7 +195,7 @@ hqDefine('app_manager/js/report-module.js', function () {
     function ReportConfig(report_id, display,
                           localizedDescription, xpathDescription, useXpathDescription,
                           showDataTable, uuid, availableReportIds,
-                          reportCharts, graph_configs, columnXpathTemplate,
+                          reportCharts, graph_configs, columnXpathTemplate, dataPathPlaceholders,
                           filterValues, reportFilters,
                           language, languages, changeSaveButton) {
         var self = this;
@@ -216,7 +220,8 @@ hqDefine('app_manager/js/report-module.js', function () {
         this.showDataTable.subscribe(changeSaveButton);
 
         self.graphConfig = new GraphConfig(this.reportId, this.display(), availableReportIds, reportCharts,
-                                           graph_configs, columnXpathTemplate, this.lang, languages, changeSaveButton);
+                                           graph_configs, columnXpathTemplate, dataPathPlaceholders,
+                                           this.lang, languages, changeSaveButton);
         this.display.subscribe(function(newValue) {
             self.graphConfig.name(newValue);
         });
@@ -269,6 +274,7 @@ hqDefine('app_manager/js/report-module.js', function () {
         self.reportFilters = {};
         self.reports = ko.observableArray([]);
         self.columnXpathTemplate = options.columnXpathTemplate || "";
+        self.dataPathPlaceholders = options.dataPathPlaceholders || {};
         for (var i = 0; i < availableReports.length; i++) {
             var report = availableReports[i];
             var report_id = report.report_id;
@@ -348,6 +354,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                 self.reportCharts,
                 options.complete_graph_configs,
                 self.columnXpathTemplate,
+                self.dataPathPlaceholders,
                 options.filters,
                 self.reportFilters,
                 self.lang,

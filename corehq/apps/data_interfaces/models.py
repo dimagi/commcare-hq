@@ -66,9 +66,14 @@ class AutomaticUpdateRule(models.Model):
                 with transaction.atomic():
                     # Migrate Criteria
                     for old_criteria in rule.automaticupdaterulecriteria_set.all():
+                        property_value = old_criteria.property_value
+                        if old_criteria.match_type == AutomaticUpdateRuleCriteria.MATCH_DAYS_BEFORE:
+                            property_value = int(property_value) * -1
+                            property_value = str(property_value)
+
                         new_criteria_definition = MatchPropertyDefinition(
                             property_name=old_criteria.property_name,
-                            property_value=old_criteria.property_value,
+                            property_value=property_value,
                             match_type=old_criteria.match_type,
                         )
                         new_criteria_definition.save()
@@ -343,7 +348,7 @@ class CaseRuleCriteriaDefinition(models.Model):
 
 
 class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
-    # True when today < (the date in property_name - property_value days)
+    # True when today < (the date in property_name + property_value days)
     MATCH_DAYS_BEFORE = 'DAYS_BEFORE'
 
     # True when today >= (the date in property_name + property_value days)
@@ -400,7 +405,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
             date_to_check = self.clean_datetime(date_to_check)
 
             days = int(self.property_value)
-            if now < (date_to_check - timedelta(days=days)):
+            if now < (date_to_check + timedelta(days=days)):
                 return True
 
         return False

@@ -110,6 +110,16 @@ def _get_select_details(config):
     ).serialize().decode('utf-8'))
 
 
+def get_data_path(config, domain):
+    return (
+        "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
+        .format(
+            config.uuid,
+            MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
+        )
+    )
+
+
 def _get_summary_details(config, domain, module):
     def _get_graph_fields():
         from corehq.apps.userreports.reports.specs import MultibarChartSpec
@@ -143,12 +153,9 @@ def _get_summary_details(config, domain, module):
                 config.migrate_graph_configs(domain)
                 graph_config = config.complete_graph_configs.get(chart_config.chart_id, GraphConfiguration())
                 for index, column in enumerate(chart_config.y_axis_columns):
-                    graph_config.series[index].data_path = graph_config.series[index].data_path or (
-                        "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
-                        .format(
-                            config.uuid,
-                            MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
-                        )
+                    graph_config.series[index].data_path = (
+                        graph_config.series[index].data_path or
+                        get_data_path(config, domain)
                     )
                     graph_config.series[index].x_function = (
                         graph_config.series[index].x_function
