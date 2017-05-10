@@ -693,13 +693,6 @@ COMMTRACK = StaticToggle(
     save_fn=_commtrackify,
 )
 
-INSTANCE_VIEWER = StaticToggle(
-    'instance_viewer',
-    'CloudCare Form Debugging Tool',
-    TAG_PRODUCT_PATH,
-    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
-)
-
 CUSTOM_INSTANCES = StaticToggle(
     'custom_instances',
     'Inject custom instance declarations',
