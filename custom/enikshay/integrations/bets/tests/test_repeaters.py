@@ -1,8 +1,13 @@
+from datetime import date
+
 from django.test import override_settings
 
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from custom.enikshay.const import ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD
+from custom.enikshay.integrations.bets.const import DRUG_REFILL_EVENT
 from custom.enikshay.integrations.bets.repeater_generators import ChemistBETSVoucherPayloadGenerator, \
     BETS180TreatmentPayloadGenerator, BETSSuccessfulTreatmentPayloadGenerator, \
-    BETSDiagnosisAndNotificationPayloadGenerator, BETSAYUSHReferralPayloadGenerator
+    BETSDiagnosisAndNotificationPayloadGenerator, BETSAYUSHReferralPayloadGenerator, BETSDrugRefillPayloadGenerator
 from custom.enikshay.integrations.bets.repeaters import ChemistBETSVoucherRepeater, BETS180TreatmentRepeater, \
     BETSDrugRefillRepeater, BETSSuccessfulTreatmentRepeater, BETSDiagnosisAndNotificationRepeater, \
     BETSAYUSHReferralRepeater
@@ -69,8 +74,8 @@ class TestBETS180TreatmentRepeater(ENikshayLocationStructureMixin, ENikshayRepea
             self.domain,
             self.episode_id,
             {
-                'adherence_total_doses_taken': 150,
-                'treatment_outcome': 'not_evaluated'
+                'prescription_total_days': 20,
+                ENROLLED_IN_PRIVATE: "true",
             },
         )
         case = cases[self.episode_id]
@@ -78,15 +83,14 @@ class TestBETS180TreatmentRepeater(ENikshayLocationStructureMixin, ENikshayRepea
 
         # meet trigger conditions
         update_case(self.domain, case.case_id, {
-            "treatment_outcome": "cured",
-            "adherence_total_doses_taken": 180,
+            "prescription_total_days": 181,
         })
         self.assertEqual(1, len(self.repeat_records().all()))
 
         # trigger only once
         payload_generator = BETS180TreatmentPayloadGenerator(None)
         payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), case, None)
-        update_case(self.domain, case.case_id, {"adherence_total_doses_taken": "181"})
+        update_case(self.domain, case.case_id, {"prescription_total_days": "182"})
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
@@ -98,33 +102,51 @@ class BETSDrugRefillRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeate
             domain=self.domain,
             url='super-cool-url',
         )
-        self.repeater.white_listed_case_types = ['voucher']
+        self.repeater.white_listed_case_types = ['episode']
         self.repeater.save()
 
     def test_trigger(self):
 
-        # make prescription and episode too
-        self.create_case_structure()
-        voucher = self.create_prescription_voucher({"state": "foo"})
+        # Create case that doesn't meet trigger
+        cases = self.create_case_structure()
         self.assign_person_to_location(self.phi.location_id)
+        update_case(
+            self.domain,
+            self.episode_id,
+            {
+                ENROLLED_IN_PRIVATE: "true",
+            },
+        )
+        case = cases[self.episode_id]
         self.assertEqual(0, len(self.repeat_records().all()))
 
-        # update voucher to meet the trigger, but is only first voucher (need 2 to trigger)
-        update_case(self.domain, voucher.case_id, {"state": "fulfilled"})
-        self.assertEqual(0, len(self.repeat_records().all()))
-
-        # Meet the trigger condition
-        voucher_2 = self.create_prescription_voucher({"state": "foo"})
-        update_case(self.domain, voucher_2.case_id, {"state": "fulfilled"})
+        # Pass one threshold
+        update_case(self.domain, case.case_id, {PRESCRIPTION_TOTAL_DAYS_THRESHOLD.format(30): date(2017, 1, 1)})
         self.assertEqual(1, len(self.repeat_records().all()))
 
-        # Create another case that meets the trigger again
-        voucher_3 = self.create_prescription_voucher({"state": "foo"})
-        update_case(self.domain, voucher_3.case_id, {"state": "fulfilled"})
+        # Pass a second threshold
+        update_case(self.domain, case.case_id, {
+            "event_{}_{}".format(DRUG_REFILL_EVENT, 30): "sent",
+            PRESCRIPTION_TOTAL_DAYS_THRESHOLD.format(60): date(2017, 1, 2)
+        })
         self.assertEqual(2, len(self.repeat_records().all()))
+        self.assertEqual(
+            BETSDrugRefillPayloadGenerator._get_prescription_threshold_to_send(
+                CaseAccessors(case.domain).get_case(case.case_id).dynamic_case_properties()
+            ),
+            60
+        )
 
-        # Don't trigger on other update to voucher
-        update_case(self.domain, voucher.case_id, {"foo": "bar"})
+        # Attempt to pass two thresholds at once
+        update_case(
+            self.domain,
+            case.case_id,
+            {
+                PRESCRIPTION_TOTAL_DAYS_THRESHOLD.format(90): date(2017, 1, 3),
+                PRESCRIPTION_TOTAL_DAYS_THRESHOLD.format(120): date(2017, 1, 3)
+            }
+        )
+        # record count does not increase
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
@@ -147,7 +169,8 @@ class BETSSuccessfulTreatmentRepeaterTest(ENikshayLocationStructureMixin, ENiksh
             self.domain,
             self.episode_id,
             {
-                'treatment_outcome': 'not_evaluated'
+                'treatment_outcome': 'not_evaluated',
+                ENROLLED_IN_PRIVATE: "true",
             },
         )
         case = cases[self.episode_id]
@@ -183,15 +206,15 @@ class BETSDiagnosisAndNotificationRepeaterTest(ENikshayLocationStructureMixin, E
             self.domain,
             self.episode_id,
             {
-                'pending_registration': 'yes',
-                'nikshay_registered': 'false',
+                'bets_first_prescription_voucher_redeemed': 'false',
+                ENROLLED_IN_PRIVATE: "true",
             },
         )
         case = cases[self.episode_id]
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # Meet trigger
-        update_case(self.domain, case.case_id, {"nikshay_registered": "true", 'pending_registration': "no"})
+        update_case(self.domain, case.case_id, {"bets_first_prescription_voucher_redeemed": "true"})
         self.assertEqual(1, len(self.repeat_records().all()))
 
         # Make sure same case doesn't trigger event again
@@ -219,19 +242,23 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
         update_case(
             self.domain,
             self.episode_id,
-            {'presumptive_referral_by_ayush': 'false', 'nikshay_registered': 'false'},
+            {
+                'bets_first_prescription_voucher_redeemed': 'false',
+                'created_by_user_type': 'pac',
+                ENROLLED_IN_PRIVATE: "true",
+            },
         )
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # Meet trigger
         update_case(
-            self.domain, self.episode_id, {"nikshay_registered": "true", 'presumptive_referral_by_ayush': "123"}
+            self.domain, self.episode_id, {"bets_first_prescription_voucher_redeemed": "true"}
         )
         self.assertEqual(1, len(self.repeat_records().all()))
 
         # Make sure same case doesn't trigger event again
         payload_generator = BETSAYUSHReferralPayloadGenerator(None)
         payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), cases[self.episode_id], None)
-        update_case(self.domain, self.episode_id, {"nikshay_registered": "false"})
-        update_case(self.domain, self.episode_id, {"nikshay_registered": "true"})
+        update_case(self.domain, self.episode_id, {"bets_first_prescription_voucher_redeemed": "false"})
+        update_case(self.domain, self.episode_id, {"bets_first_prescription_voucher_redeemed": "true"})
         self.assertEqual(1, len(self.repeat_records().all()))
