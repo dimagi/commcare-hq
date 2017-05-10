@@ -16,7 +16,7 @@
             "></textarea>
             <div class="help-block" data-bind="visible: !allowed()">
                 <strong>{% trans "Error: Module Does Not Use Cases" %}</strong>
-                <div data-bind="html: messages.notAllowed"></div>
+                <div data-bind="html: formFilterErrorMessage"></div>
             </div>
         </div>
         <span class="hide" id="caseReferenceNotAllowed">

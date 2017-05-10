@@ -121,18 +121,16 @@
         var putInRoot = {{ module.put_in_root|BOOL }};
         var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
         var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
-
         var caseXpathPatternMatches = {{ case_xpath_pattern_matches|JSON }};
         var caseXpathSubstringMatches = {{ case_xpath_substring_matches|JSON }};
         var userCaseXpathPatternMatches = {{ user_case_xpath_pattern_matches|JSON }};
         var userCaseXpathSubstringMatches = {{ user_case_xpath_substring_matches|JSON }};
-        var formFilterErrorMessage = ko.observable();
 
-        function FormFilter(opts) {
+        function FormFilter() {
             var self = this;
 
-            self.messages = opts.messages;
             self.formFilter = ko.observable({{ form.form_filter|JSON }});
+            self.formFilterErrorMessage = ko.observable();
 
             self.formFilterReferencesCase = ko.computed(function() {
                 // We want to determine here if the filter expression references
@@ -160,12 +158,12 @@
 
                 var moduleUsesCase = allOtherFormsRequireACase && form_requires() === 'case';
                 if (self.formFilterReferencesCase() && (!moduleUsesCase || putInRoot)) {
-                    formFilterErrorMessage($('#caseReferenceNotAllowed').html());
+                    self.formFilterErrorMessage($('#caseReferenceNotAllowed').html());
                     return false;
                 }
 
                 if (self.formFilterReferencesUserCase() && !isUserCaseInUse) {
-                    formFilterErrorMessage($('#userCaseReferenceNotAllowed').html());
+                    self.formFilterErrorMessage($('#userCaseReferenceNotAllowed').html());
                     return false;
                 }
 
@@ -173,14 +171,7 @@
             });
         }
 
-        var messages = {};
-        $('#form-filter span').each(function () {
-            messages[$(this).data('slug')] = $(this).html();
-            $(this).hide();
-        });
-        $('#form-filter').koApplyBindings(new FormFilter({
-            messages: _.extend(messages, {notAllowed: formFilterErrorMessage}),
-        }));
+        $('#form-filter').koApplyBindings(new FormFilter());
 
         {% endif %}
 
