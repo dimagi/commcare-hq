@@ -6,9 +6,9 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load compress %}
-@@ -51,10 +51,10 @@
-         <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
-     {% endif %}
+@@ -48,10 +48,10 @@
+         }
+     </style>
  
 -    {% include "app_manager/v1/partials/form_filter/value-or-none-ui.html" %}
 -    {% include "app_manager/v1/partials/xpathValidator.html" %}
@@ -21,7 +21,7 @@
      {% if allow_form_workflow %}
          <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
      {% endif %}
-@@ -170,18 +170,21 @@
+@@ -167,18 +167,21 @@
              return true;
          });
  
@@ -49,7 +49,7 @@
              {% with module_name=module.name|trans:langs %}
              labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
              {% endwith %}
-@@ -197,13 +200,6 @@
+@@ -194,13 +197,6 @@
                  workflow: '{{ form.post_form_workflow }}',
              };
  
@@ -63,16 +63,16 @@
              $('#form-workflow').koApplyBindings(new FormWorkflow(options))
          {% endif %}
  
-@@ -224,7 +220,7 @@
+@@ -221,7 +217,7 @@
          });
          {% endif %}
  
 -        {% if allow_cloudcare %}
 +        {% if can_preview_form and allow_cloudcare %}
-             // tag the 'preview in cloudcare' button with the right url
-             // unfortunately, has to be done in javascript
-             var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -290,72 +286,55 @@
+             // build the previewCommand in the format that the CommCareSession will understand
+             var getFormplayerUrl = function(urlRoot, appId, moduleId, formId) {
+                 var urlObject = new Util.CloudcareUrl({
+@@ -265,72 +261,55 @@
      </script>
  {% endblock %}
  
@@ -187,7 +187,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -367,35 +346,36 @@
+@@ -342,35 +321,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -241,7 +241,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -407,30 +387,32 @@
+@@ -382,30 +362,32 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -298,7 +298,7 @@
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
                      <p class="alert alert-warning">
-@@ -456,7 +438,6 @@
+@@ -431,7 +413,6 @@
                          {% block usercase_management_content %}
                              {%  if form.uses_usercase and not allow_usercase %}
                                  <div class="container-fluid col-sm-6">
@@ -306,7 +306,7 @@
                                {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                                  <p>{% blocktrans %}
                                      The User Properties feature is no longer available because of the change in your
-@@ -501,7 +482,7 @@
+@@ -476,7 +457,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -315,7 +315,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -514,14 +495,15 @@
+@@ -489,14 +470,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -333,7 +333,7 @@
              {% endif %}
          </div>
      </div>
-@@ -529,12 +511,12 @@
+@@ -504,12 +486,12 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}

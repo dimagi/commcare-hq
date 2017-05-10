@@ -26,6 +26,7 @@
     <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     <script src="{% static 'style/js/knockout_subscribables.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/value-or-none-ui.js' %}"></script>
+    <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
@@ -46,10 +47,6 @@
             margin-left: 15px;
         }
     </style>
-
-    {% if not request|toggle_enabled:"USE_OLD_CLOUDCARE"%}
-        <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
-    {% endif %}
 
     {% include "app_manager/v1/partials/form_filter/value-or-none-ui.html" %}
     {% include "app_manager/v1/partials/xpathValidator.html" %}
@@ -225,24 +222,6 @@
         {% endif %}
 
         {% if allow_cloudcare %}
-            // tag the 'preview in cloudcare' button with the right url
-            // unfortunately, has to be done in javascript
-            var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-                var url = urlRoot;
-                if (appId !== undefined) {
-                    url = url + "view/" + appId;
-                    if (moduleId !== undefined) {
-                        url = url + "/" + moduleId;
-                        if (formId !== undefined) {
-                            url = url + "/" + formId;
-                            if (caseId !== undefined) {
-                                url = url + "/" + caseId;
-                            }
-                        }
-                    }
-                }
-                return url;
-            };
             // build the previewCommand in the format that the CommCareSession will understand
             var getFormplayerUrl = function(urlRoot, appId, moduleId, formId) {
                 var urlObject = new Util.CloudcareUrl({
@@ -252,11 +231,7 @@
                 return urlRoot + '#' + Util.objectToEncodedUrl(urlObject.toJson());
             };
 
-            {% if not request|toggle_enabled:"USE_OLD_CLOUDCARE"%}
             var cloudCareUrl = getFormplayerUrl("{% url "formplayer_single_app" domain app.id %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}");
-            {% else %}
-                var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
-            {% endif %}
 
             $("#cloudcare-preview-url").attr("href", cloudCareUrl);
             $('#cloudcare-preview-url').click(function(e) {
