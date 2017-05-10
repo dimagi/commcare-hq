@@ -6,7 +6,6 @@ from uuid import uuid4
 from django.core.serializers.json import DjangoJSONEncoder
 from casexml.apps.case.xform import cases_referenced_by_xform
 
-from corehq.apps.api.resources.v0_5 import CommCareUserResource
 from corehq.apps.repeaters.models import (
     FormRepeater,
     CaseRepeater,
@@ -230,6 +229,7 @@ class UserPayloadGenerator(BasePayloadGenerator):
         return 'application/json'
 
     def get_payload(self, repeat_record, user):
+        from corehq.apps.api.resources.v0_5 import CommCareUserResource
         resource = CommCareUserResource(api_name='v0.5')
         bundle = resource.build_bundle(obj=user)
         return resource.full_dehydrate(bundle).data
