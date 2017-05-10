@@ -20,8 +20,8 @@ from corehq.apps.repeaters.tasks import check_repeaters
 from corehq.apps.repeaters.models import (
     CaseRepeater,
     FormRepeater,
-    BETSUserRepeater,
-    BETSLocationRepeater,
+    UserRepeater,
+    LocationRepeater,
     RepeatRecord,
     ShortFormRepeater)
 from corehq.apps.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT, RECORD_SUCCESS_STATE
@@ -682,19 +682,19 @@ class TestRepeaterFormat(BaseRepeaterTest):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class BETSUserRepeaterTest(TestCase):
+class UserRepeaterTest(TestCase):
     domain = 'user-repeater'
 
     def setUp(self):
-        super(BETSUserRepeaterTest, self).setUp()
-        self.repeater = BETSUserRepeater(
+        super(UserRepeaterTest, self).setUp()
+        self.repeater = UserRepeater(
             domain=self.domain,
             url='super-cool-url',
         )
         self.repeater.save()
 
     def tearDown(self):
-        super(BETSUserRepeaterTest, self).tearDown()
+        super(UserRepeaterTest, self).tearDown()
         delete_all_repeat_records()
         delete_all_repeaters()
 
@@ -734,13 +734,13 @@ class BETSUserRepeaterTest(TestCase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class BETSLocationRepeaterTest(TestCase):
+class LocationRepeaterTest(TestCase):
     domain = 'location-repeater'
 
     def setUp(self):
-        super(BETSLocationRepeaterTest, self).setUp()
+        super(LocationRepeaterTest, self).setUp()
         self.domain_obj = create_domain(self.domain)
-        self.repeater = BETSLocationRepeater(
+        self.repeater = LocationRepeater(
             domain=self.domain,
             url='super-cool-url',
         )
@@ -751,7 +751,7 @@ class BETSLocationRepeaterTest(TestCase):
         )
 
     def tearDown(self):
-        super(BETSLocationRepeaterTest, self).tearDown()
+        super(LocationRepeaterTest, self).tearDown()
         delete_all_repeat_records()
         delete_all_repeaters()
         self.domain_obj.delete()

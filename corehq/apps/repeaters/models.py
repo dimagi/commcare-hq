@@ -8,7 +8,6 @@ from django.utils.translation import ugettext_lazy as _
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
 from requests.exceptions import Timeout, ConnectionError
-from corehq.toggles import BETS_INTEGRATION
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
@@ -470,7 +469,7 @@ class AppStructureRepeater(Repeater):
         return None
 
 
-class BETSUserRepeater(Repeater):
+class UserRepeater(Repeater):
     friendly_name = _("Forward Users")
 
     class Meta(object):
@@ -480,15 +479,11 @@ class BETSUserRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return CommCareUser.get(repeat_record.payload_id)
 
-    @classmethod
-    def available_for_domain(cls, domain):
-        return BETS_INTEGRATION.enabled(domain)
-
     def __unicode__(self):
         return "forwarding users to: %s" % self.url
 
 
-class BETSLocationRepeater(Repeater):
+class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
 
     class Meta(object):
@@ -497,10 +492,6 @@ class BETSLocationRepeater(Repeater):
     @memoized
     def payload_doc(self, repeat_record):
         return SQLLocation.objects.get(location_id=repeat_record.payload_id)
-
-    @classmethod
-    def available_for_domain(cls, domain):
-        return BETS_INTEGRATION.enabled(domain)
 
     def __unicode__(self):
         return "forwarding locations to: %s" % self.url

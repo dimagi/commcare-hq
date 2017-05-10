@@ -13,8 +13,8 @@ from corehq.apps.repeaters.models import (
     ShortFormRepeater,
     AppStructureRepeater,
     GeneratorCollection,
-    BETSUserRepeater,
-    BETSLocationRepeater,
+    UserRepeater,
+    LocationRepeater,
 )
 
 from casexml.apps.case.xml import V2
@@ -222,8 +222,8 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         return self.get_payload(None, _get_test_form(domain))
 
 
-@RegisterGenerator(BETSUserRepeater, "user_json", "JSON", is_default=True)
-class BETSUserPayloadGenerator(BasePayloadGenerator):
+@RegisterGenerator(UserRepeater, "user_json", "JSON", is_default=True)
+class UserPayloadGenerator(BasePayloadGenerator):
 
     @property
     def content_type(self):
@@ -235,8 +235,8 @@ class BETSUserPayloadGenerator(BasePayloadGenerator):
         return resource.full_dehydrate(bundle).data
 
 
-@RegisterGenerator(BETSLocationRepeater, "user_json", "JSON", is_default=True)
-class BETSLocationPayloadGenerator(BasePayloadGenerator):
+@RegisterGenerator(LocationRepeater, "user_json", "JSON", is_default=True)
+class LocationPayloadGenerator(BasePayloadGenerator):
 
     @property
     def content_type(self):

@@ -1715,8 +1715,8 @@ BASE_REPEATERS = (
     'corehq.apps.repeaters.models.CaseRepeater',
     'corehq.apps.repeaters.models.ShortFormRepeater',
     'corehq.apps.repeaters.models.AppStructureRepeater',
-    'corehq.apps.repeaters.models.BETSUserRepeater',
-    'corehq.apps.repeaters.models.BETSLocationRepeater',
+    'corehq.apps.repeaters.models.UserRepeater',
+    'corehq.apps.repeaters.models.LocationRepeater',
 )
 
 CUSTOM_REPEATERS = (

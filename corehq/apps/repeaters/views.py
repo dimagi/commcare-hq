@@ -36,7 +36,7 @@ class AddCaseRepeaterView(AddRepeaterView):
         return repeater
 
 
-class BETSUserRepeaterView(AddRepeaterView):
+class UserRepeaterView(AddRepeaterView):
     urlname = "user_repeater"
     page_title = "Users"
     page_name = page_title
@@ -46,7 +46,7 @@ class BETSUserRepeaterView(AddRepeaterView):
         return reverse(self.urlname, args=[self.domain])
 
 
-class BETSLocationRepeaterView(AddRepeaterView):
+class LocationRepeaterView(AddRepeaterView):
     urlname = "location_repeater"
     page_title = "Locations"
     page_name = page_title
