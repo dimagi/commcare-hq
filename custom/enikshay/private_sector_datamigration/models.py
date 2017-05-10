@@ -241,14 +241,23 @@ class Episode(models.Model):
         }[self.diabetes]
 
     @property
-    def disease_classification(self):
+    def site_property(self):
         return {
             'Pulmonary': 'pulmonary',
-            'Extrapulmonary': 'extra_pulmonary',
-            'Pulmonary+Extrapulmonary': 'extra_pulmonary',
-            'Select': '',
-            'N/A': '',
+            'Extrapulmonary': 'extrapulmonary',
+            'Pulmonary+Extrapulmonary': 'pulmonary_and_extrapulmonary',
+            'Select': 'na',
+            'N/A': 'na',
         }[self.site]
+
+    @property
+    def disease_classification(self):
+        return {
+            'na': 'na',
+            'extrapulmonary': 'extrapulmonary',
+            'pulmonary': 'pulmonary',
+            'pulmonary_and_extrapulmonary': 'pulmonary',
+        }[self.site_property]
 
     @property
     def dst_status(self):
@@ -282,21 +291,27 @@ class Episode(models.Model):
 
     @property
     def site_choice(self):
-        return {
-            'Abdomen': 'abdominal',
-            'Bones And Joints': 'other',
-            'Brain': 'brain',
-            'Eye': 'other',
-            'Genitourinary': 'other',
-            'Intestines': 'other',
-            'Lymph Nodes': 'lymph_node',
-            'Other': 'other',
-            'Pleural effusion': 'pleural_effusion',
-            'Skin': 'other',
-            'Spine': 'spine',
-            None: '',
-            'Select': '',
-        }[self.extraPulmonary]
+        if self.site_property in [
+            'extrapulmonary',
+            'pulmonary_and_extrapulmonary',
+        ]:
+            return {
+                'Abdomen': 'abdominal',
+                'Bones And Joints': 'bones_and_joints',
+                'Brain': 'brain',
+                'Eye': 'eye',
+                'Genitourinary': 'genitourinary',
+                'Intestines': 'intestines',
+                'Lymph Nodes': 'lymph_node',
+                'Other': 'other',
+                'Pleural effusion': 'pleural_effusion',
+                'Skin': 'skin',
+                'Spine': 'spine',
+                None: 'other',
+                'Select': 'other',
+            }[self.extraPulmonary]
+        else:
+            return ''
 
     @property
     def treating_provider(self):

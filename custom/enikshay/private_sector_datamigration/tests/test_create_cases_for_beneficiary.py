@@ -181,7 +181,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(episode_case.dynamic_case_properties(), OrderedDict([
             ('date_of_diagnosis', '2017-04-18'),
             ('date_of_mo_signature', '2017-04-17'),
-            ('disease_classification', 'extra_pulmonary'),
+            ('disease_classification', 'extrapulmonary'),
             ('dots_99_enabled', 'false'),
             ('dst_status', 'rif_sensitive'),
             ('enrolled_in_private', 'true'),
@@ -195,6 +195,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('nikshay_id', '02139-02215'),
             ('retreatment_reason', ''),
             ('rx_outcome_date', '2017-05-19'),
+            ('site', 'extrapulmonary'),
             ('site_choice', 'abdominal'),
             ('transfer_in', ''),
             ('treatment_card_completed_date', '2017-04-20'),

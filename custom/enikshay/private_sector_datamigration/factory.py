@@ -205,6 +205,8 @@ class BeneficiaryCaseFactory(object):
             )
             kwargs['attrs']['update']['new_retreatment'] = self._episode.new_retreatment
             kwargs['attrs']['update']['retreatment_reason'] = self._episode.retreatment_reason
+            kwargs['attrs']['update']['site'] = self._episode.site_property
+            kwargs['attrs']['update']['site_choice'] = self._episode.site_choice
             kwargs['attrs']['update']['treatment_card_completed_date'] = self._episode.creationDate.date()
             kwargs['attrs']['update']['treatment_initiated'] = 'yes_private'
             kwargs['attrs']['update']['treatment_initiation_date'] = rx_start_datetime.date()
