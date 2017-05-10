@@ -231,9 +231,8 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
         not_sent = case_properties.get("event_{}".format(DIAGNOSIS_AND_NOTIFICATION_EVENT)) != "sent"
         enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
         return (
-            case_properties.get("pending_registration") == "no"
-            and case_properties.get("nikshay_registered") == 'true'
-            and case_properties_changed(episode_case, ['nikshay_registered'])
+            case_properties.get("bets_first_prescription_voucher_redeemed") == 'true'
+            and case_properties_changed(episode_case, ['bets_first_prescription_voucher_redeemed'])
             and not_sent
             and enrolled_in_private_sector
             and is_valid_episode_submission(episode_case)
