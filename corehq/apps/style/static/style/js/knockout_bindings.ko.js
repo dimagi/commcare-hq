@@ -345,7 +345,6 @@ ko.bindingHandlers.bootstrapTabs = {
 };
 
 function ValueOrNoneUI(opts) {
-    /* Helper used with exitInput/enterInput */
     var self = this;
     var wrapObservable = function (o) {
         if (ko.isObservable(o)) {
@@ -356,22 +355,9 @@ function ValueOrNoneUI(opts) {
     };
 
     self.messages = opts.messages;
-    self.inputCss = opts.inputCss;
-    self.inputAttr = opts.inputAttr;
-    self.defaultValue = opts.defaultValue;
-
-
     self.allowed = wrapObservable(opts.allowed);
     self.inputValue = wrapObservable(opts.value || '');
     self.hasValue = ko.observable(!!self.inputValue());
-    self.hasFocus = ko.observable();
-
-    // make the input get preloaded with the defaultValue
-    self.hasFocus.subscribe(function (value) {
-        if (!self.inputValue()) {
-            self.inputValue(self.defaultValue);
-        }
-    });
 
     self.value = ko.computed({
         read: function () {
@@ -385,25 +371,6 @@ function ValueOrNoneUI(opts) {
             self.inputValue(value)
         }
     });
-    self.setHasValue = function (hasValue, event) {
-        var before = self.value(),
-            after;
-        self.hasValue(hasValue);
-        after = self.value();
-        if (before !== after) {
-            $(event.toElement).change();
-        }
-    };
-    self.enterInput = function (data, event) {
-        if (self.allowed()) {
-            self.hasFocus(true);
-        }
-        self.setHasValue(true, event);
-    };
-    self.exitInput = function (data, event) {
-        self.setHasValue(false, event);
-        self.value('');
-    };
 }
 
 function _makeClickHelper(fnName, icon) {
@@ -417,9 +384,6 @@ function _makeClickHelper(fnName, icon) {
         }
     };
 }
-
-ko.bindingHandlers.exitInput = _makeClickHelper('exitInput', 'icon icon-remove fa fa-remove');
-ko.bindingHandlers.enterInput = _makeClickHelper('enterInput', 'icon icon-plus fa fa-plus');
 
 ko.bindingHandlers.makeHqHelp = {
     update: function (element, valueAccessor) {

@@ -4,10 +4,7 @@
     <div data-bind="css: {'has-error': !allowed()}">
         <textarea name="form_filter" class="form-control vertical-resize" data-bind="
                 xpathValidator: {text: inputValue, allowCaseHashtags: true,
-                                 errorHtml: $('#formFilterXpathErrorHtml').html()},
-                hasfocus: hasFocus,
-                css: inputCss,
-                attr: inputAttr
+                                 errorHtml: $('#formFilterXpathErrorHtml').html()}
         "></textarea>
         <div class="help-block" data-bind="visible: !allowed()">
             <strong>{% trans "Error: Module Does Not Use Cases" %}</strong>
