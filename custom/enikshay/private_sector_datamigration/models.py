@@ -115,6 +115,10 @@ class Beneficiary(models.Model):
         }[self.caseStatus.strip()]
 
     @property
+    def husband_father_name(self):
+        return self.fatherHusbandName or ''
+
+    @property
     def referred_provider(self):
         return get_agency_by_motech_user_name(self.referredQP)
 
