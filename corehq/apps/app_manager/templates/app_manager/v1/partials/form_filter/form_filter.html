@@ -15,7 +15,6 @@
                                      errorHtml: $('#formFilterXpathErrorHtml').html()}
             "></textarea>
             <div class="help-block" data-bind="visible: !allowed()">
-                <strong>{% trans "Error: Module Does Not Use Cases" %}</strong>
                 <span data-bind="visible: caseReferenceNotAllowed">
                   {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                     {% blocktrans %}
