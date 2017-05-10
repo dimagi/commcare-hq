@@ -196,6 +196,8 @@ class BeneficiaryCaseFactory(object):
         if self._episode:
             rx_start_datetime = self._episode.rxStartDate
             kwargs['attrs']['date_opened'] = rx_start_datetime
+            kwargs['attrs']['update']['basis_of_diagnosis'] = self._episode.basis_of_diagnosis
+            kwargs['attrs']['update']['case_definition'] = self._episode.case_definition
             kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()
             kwargs['attrs']['update']['disease_classification'] = self._episode.disease_classification
             kwargs['attrs']['update']['dst_status'] = self._episode.dst_status

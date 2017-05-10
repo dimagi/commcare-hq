@@ -218,6 +218,30 @@ class Episode(models.Model):
     adherenceSupportAssigned = models.CharField(max_length=255, null=True)
 
     @property
+    def basis_of_diagnosis(self):
+        return {
+            'Clinical - Chest Xray': 'clinical_chest',
+            'Clinical - Other': 'clinical_other',
+            'Microbiologically Confirmed - Smear-positive': 'microbiological_smear',
+            'Microbiologically Confirmed - Xpert MTB/RIF TB-positive': 'microbiological_cbnaat',
+            'Microbiologically Confirmed - Xpert TB-positive': '', # TODO
+            'Microbiologically Confirmed - Culture-positive': 'microbiological_culture',
+            'Microbiologically Confirmed - PCR (including LPA)': 'microbiological_pcr',
+            'Microbiologically Confirmed - PCR(including LPA)': 'microbiological_pcr',
+            'Microbiologically Confirmed - Other': 'microbiological_other',
+        }[self.basisOfDiagnosis]
+
+    @property
+    def case_definition(self):
+        if self.basis_of_diagnosis in [
+            'clinical_chest',
+            'clinical_other',
+        ]:
+            return 'clinical'
+        else:
+            return 'microbiological'
+
+    @property
     def retreatment_reason(self):
         if self.newOrRetreatment == 'Retreatment':
             return {
