@@ -388,7 +388,7 @@ class NewLocationImporter(object):
     and saves the changes in a transaction.
     """
 
-    def __init__(self, domain, type_rows, location_rows, excel_importer=None):
+    def __init__(self, domain, type_rows, location_rows, excel_importer=None, chunk_size=100):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.type_rows = type_rows
@@ -396,6 +396,7 @@ class NewLocationImporter(object):
         self.result = LocationUploadResult()
         self.old_collection = LocationCollection(self.domain_obj)
         self.excel_importer = excel_importer  # excel_importer is used for providing progress feedback
+        self.chunk_size = chunk_size
 
     @classmethod
     def from_excel_importer(cls, domain, excel_importer):
@@ -421,7 +422,7 @@ class NewLocationImporter(object):
             loc.lookup_old_collection_data(self.old_collection)
 
         type_objects = save_types(type_stubs, self.excel_importer)
-        save_locations(location_stubs, type_objects, self.domain, self.excel_importer)
+        save_locations(location_stubs, type_objects, self.domain, self.excel_importer, self.chunk_size)
         # Since we updated LocationType objects in bulk, some of the post-save logic
         #   that occurs inside LocationType.save needs to be explicitly called here
         for lt in type_stubs:
@@ -836,7 +837,7 @@ def save_types(type_stubs, excel_importer=None):
     return all_objs_by_code
 
 
-def save_locations(location_stubs, types_by_code, domain, excel_importer=None):
+def save_locations(location_stubs, types_by_code, domain, excel_importer=None, chunk_size=100):
     """
     :param location_stubs: (list) List of LocationStub objects with
         attributes like 'db_object', 'needs_save', 'do_delete' set
@@ -846,8 +847,6 @@ def save_locations(location_stubs, types_by_code, domain, excel_importer=None):
     This recursively saves tree top to bottom. Note that the bulk updates are not possible
     as the mptt.Model (inherited by SQLLocation) doesn't support bulk creation
     """
-
-    chunk_size = 100
 
     def order_by_location_type():
         # returns locations in the order from top to bottom
