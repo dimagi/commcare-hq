@@ -218,19 +218,17 @@ class Episode(models.Model):
     adherenceSupportAssigned = models.CharField(max_length=255, null=True)
 
     @property
-    def current_patient_type_choice(self):
-        if self.newOrRetreatment == 'New':
-            return 'new'
-        elif self.newOrRetreatment == 'Retreatment':
-            if self.retreatmentReason in ['Recurrent', 'Relapse']:
-                return 'recurrent'
-            elif self.retreatmentReason == 'After Treatment Failure':
-                return 'treatment_after_failure'
-            elif self.retreatmentReason == 'After loss to follow-up':
-                return 'treatment_after_lfu'
-            elif self.retreatmentReason == 'Others':
-                return 'other_previously_treated'
-        return ''  # TODO - handle
+    def retreatment_reason(self):
+        if self.newOrRetreatment == 'Retreatment':
+            return {
+                'After loss to follow-up': 'treatment_after_lfu',
+                'After Treatment Failure': 'treatment_after_failure',
+                'Recurrent': 'recurrent',
+                'Relapse': 'recurrent',
+                'Select': '',
+                'None': '',
+            }
+        return ''
 
     @property
     def diabetes_status(self):

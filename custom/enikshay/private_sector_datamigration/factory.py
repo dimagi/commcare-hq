@@ -123,7 +123,6 @@ class BeneficiaryCaseFactory(object):
         if self._episode:
             kwargs['attrs']['update']['diabetes_status'] = self._episode.diabetes_status
             kwargs['attrs']['update']['hiv_status'] = self._episode.hiv_status
-            kwargs['attrs']['update']['current_patient_type_choice'] = self._episode.current_patient_type_choice
 
             if self._episode.is_treatment_ended:
                 kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
@@ -205,6 +204,7 @@ class BeneficiaryCaseFactory(object):
                 'yes' if self._episode.nikshayID is None else 'no'
             )
             kwargs['attrs']['update']['new_retreatment'] = self._episode.new_retreatment
+            kwargs['attrs']['update']['retreatment_reason'] = self._episode.retreatment_reason
             kwargs['attrs']['update']['treatment_card_completed_date'] = self._episode.creationDate.date()
             kwargs['attrs']['update']['treatment_initiated'] = 'yes_private'
             kwargs['attrs']['update']['treatment_initiation_date'] = rx_start_datetime.date()
