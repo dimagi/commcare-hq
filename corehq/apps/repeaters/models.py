@@ -168,17 +168,9 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         generator = self.get_payload_generator(self.format_or_default_format())
         return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
-    def get_payload_or_none(self, repeat_record):
-        try:
-            return self.get_payload(repeat_record)
-        except ResourceNotFound:
-            return None
-
     def get_payload_and_save_exception(self, repeat_record):
         try:
-            return self.get_payload(repeat_record)
-        except ResourceNotFound as e:
-            repeat_record.handle_payload_exception(e)
+            self.get_payload(repeat_record)
         except Exception as e:
             repeat_record.handle_payload_exception(e)
             raise
@@ -549,7 +541,7 @@ class RepeatRecord(Document):
         return not self.succeeded
 
     def get_payload(self):
-        return self.repeater.get_payload_or_none(self)
+        return self.repeater.get_payload(self)
 
     def handle_payload_exception(self, exception):
         self.succeeded = False
