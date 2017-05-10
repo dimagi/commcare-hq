@@ -847,6 +847,8 @@ def save_locations(location_stubs, types_by_code, domain, excel_importer=None):
     as the mptt.Model (inherited by SQLLocation) doesn't support bulk creation
     """
 
+    chunk_size = 100
+
     def order_by_location_type():
         # returns locations in the order from top to bottom
         types_by_parent = defaultdict(list)
@@ -870,31 +872,55 @@ def save_locations(location_stubs, types_by_code, domain, excel_importer=None):
 
         return top_to_bottom_locations
 
+    def _process_locations(locs_to_process):
+        for loc in locs_to_process:
+            if excel_importer:
+                excel_importer.add_progress()
+            if loc.do_delete:
+                # keep track of to be deleted items to delete them in top-to-bottom order
+                to_be_deleted.append(loc.db_object)
+            elif loc.needs_save:
+                loc_object = loc.db_object
+                loc_object.location_type = types_by_code.get(loc.location_type)
+                if loc.parent_code and loc.parent_code is not ROOT_LOCATION_TYPE:
+                    # refetch parent_location object so that mptt related fields are updated consistently,
+                    #   since we are saving top to bottom, parent_location would not have any pending
+                    #   saves, so this is the right point to refetch the object.
+                    loc_object.parent = SQLLocation.objects.get(
+                        domain=domain,
+                        site_code__iexact=loc.parent_code
+                    )
+                else:
+                    loc_object.parent = None
+                loc.db_object.save()
+
     to_be_deleted = []
 
     top_to_bottom_locations = order_by_location_type()
-    for loc in top_to_bottom_locations:
-        if excel_importer:
-            excel_importer.add_progress()
-        if loc.do_delete:
-            # keep track of to be deleted items to delete them in top-to-bottom order
-            to_be_deleted.append(loc.db_object)
-        elif loc.needs_save:
-            loc_object = loc.db_object
-            loc_object.location_type = types_by_code.get(loc.location_type)
-            if loc.parent_code and loc.parent_code is not ROOT_LOCATION_TYPE:
-                # refetch parent_location object so that mptt related fields are updated consistently,
-                #   since we are saving top to bottom, parent_location would not have any pending
-                #   saves, so this is the right point to refetch the object.
-                loc_object.parent = SQLLocation.objects.get(
-                    domain=domain,
-                    site_code__iexact=loc.parent_code
-                )
-            else:
-                loc_object.parent = None
-            loc.db_object.save()
+    locs_to_process = []
+    for location in top_to_bottom_locations:
+        locs_to_process.append(location)
+        if len(locs_to_process) > chunk_size:
+            with transaction.atomic():
+                with SQLLocation.objects.delay_mptt_updates():
+                    _process_locations(locs_to_process)
+            locs_to_process = []
+    if locs_to_process:
+        _process_locations(locs_to_process)
 
+    locs_to_delete = []
     for l in reversed(to_be_deleted):
         # Deletion has to happen bottom to top, otherwise mptt complains
         #   about missing parents
-        l.delete()
+        locs_to_delete.append(l)
+        if len(locs_to_delete) > chunk_size:
+            with transaction.atomic():
+                with SQLLocation.objects.delay_mptt_updates():
+                    for l in locs_to_delete:
+                        l.delete()
+            locs_to_delete = []
+    if locs_to_delete:
+        with transaction.atomic():
+            with SQLLocation.objects.delay_mptt_updates():
+                for l in locs_to_delete:
+                    l.delete()

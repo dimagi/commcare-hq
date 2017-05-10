@@ -818,10 +818,10 @@ class LocationImportView(BaseLocationView):
         domain = args[0]
 
         # stash this in soil to make it easier to pass to celery
-        ONE_HOUR = 1*60*60
+        TEN_HOURS = 10*60*60
         file_ref = expose_cached_download(
             upload.read(),
-            expiry=ONE_HOUR,
+            expiry=TEN_HOURS,
             file_extension=file_extention_from_filename(upload.name),
         )
         # We need to start this task after this current request finishes because this
@@ -829,7 +829,7 @@ class LocationImportView(BaseLocationView):
         # the task will try to acquire.
         task = import_locations_async.apply_async(args=[domain, file_ref.download_id], countdown=10)
         # put the file_ref.download_id in cache to lookup from elsewhere
-        cache.set(import_locations_task_key(domain), file_ref.download_id, ONE_HOUR)
+        cache.set(import_locations_task_key(domain), file_ref.download_id, TEN_HOURS)
         file_ref.set_task(task)
         return HttpResponseRedirect(
             reverse(
