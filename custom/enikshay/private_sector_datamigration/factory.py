@@ -116,6 +116,7 @@ class BeneficiaryCaseFactory(object):
 
             if self._episode.is_treatment_ended:
                 kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
+                kwargs['attrs']['update']['archive_reason'] = self._episode.treatment_outcome
                 kwargs['attrs']['update']['is_active'] = 'no'
                 if self._episode.treatment_outcome == 'died':
                     kwargs['attrs']['close'] = True
