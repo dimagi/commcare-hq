@@ -174,8 +174,6 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(episode_case.opened_on, datetime(2017, 4, 19))
         self.assertEqual(episode_case.owner_id, '-')
         self.assertEqual(episode_case.dynamic_case_properties(), OrderedDict([
-            ('adherence_schedule_date_start', '2017-04-19'),
-            ('adherence_schedule_id', 'schedule_mwf'),
             ('date_of_diagnosis', '2017-04-18'),
             ('date_of_mo_signature', '2017-04-17'),
             ('disease_classification', 'extra_pulmonary'),

@@ -169,7 +169,6 @@ class BeneficiaryCaseFactory(object):
                 'create': True,
                 'owner_id': '-',
                 'update': {
-                    'adherence_schedule_id': 'schedule_mwf',  # TODO - confirm
                     'date_of_mo_signature': self.beneficiary.dateOfRegn.date(),
                     'dots_99_enabled': 'false',  # TODO - confirm or fix
                     'episode_id': get_human_friendly_id(),
@@ -192,7 +191,6 @@ class BeneficiaryCaseFactory(object):
         if self._episode:
             rx_start_datetime = self._episode.rxStartDate
             kwargs['attrs']['date_opened'] = rx_start_datetime
-            kwargs['attrs']['update']['adherence_schedule_date_start'] = rx_start_datetime.date()
             kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()
             kwargs['attrs']['update']['disease_classification'] = self._episode.disease_classification
             kwargs['attrs']['update']['episode_pending_registration'] = (
