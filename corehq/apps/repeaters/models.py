@@ -178,13 +178,6 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         try:
             return self.get_payload(repeat_record)
         except ResourceNotFound as e:
-            # this repeater is pointing at a missing document
-            # quarantine it and tell it to stop trying.
-            logging.exception(
-                u'Repeater {} in domain {} references a missing or deleted document!'.format(
-                    repeat_record._id, self.domain,
-                ))
-
             repeat_record.handle_payload_exception(e)
         except Exception as e:
             repeat_record.handle_payload_exception(e)
