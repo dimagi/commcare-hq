@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import hashlib
 import json
 
+from django.core.serializers.json import DjangoJSONEncoder
 from jsonobject.base_properties import DefaultProperty
 from simpleeval import InvalidExpression
 import six
@@ -83,7 +84,7 @@ class NamedExpressionSpec(JsonObject):
         self._context = context
 
     def _context_cache_key(self, item):
-        item_hash = hashlib.md5(json.dumps(item, sort_keys=True)).hexdigest()
+        item_hash = hashlib.md5(json.dumps(item, cls=DjangoJSONEncoder, sort_keys=True)).hexdigest()
         return 'named_expression-{}-{}'.format(self.name, item_hash)
 
     def __call__(self, item, context=None):
