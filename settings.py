@@ -1715,6 +1715,8 @@ BASE_REPEATERS = (
     'corehq.apps.repeaters.models.CaseRepeater',
     'corehq.apps.repeaters.models.ShortFormRepeater',
     'corehq.apps.repeaters.models.AppStructureRepeater',
+    'corehq.apps.repeaters.models.BETSUserRepeater',
+    'corehq.apps.repeaters.models.BETSLocationRepeater',
 )
 
 CUSTOM_REPEATERS = (
@@ -1726,8 +1728,6 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSUserRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSLocationRepeater',
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS

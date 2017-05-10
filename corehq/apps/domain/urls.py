@@ -69,7 +69,12 @@ from corehq.apps.domain.views import (
     test_repeater,
     toggle_diff,
 )
-from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
+from corehq.apps.repeaters.views import (
+    AddCaseRepeaterView,
+    RepeatRecordView,
+    BETSUserRepeaterView,
+    BETSLocationRepeaterView,
+)
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 
 
@@ -133,8 +138,7 @@ domain_settings = [
         name=CreditsWireInvoiceView.urlname),
     url(r'^billing/statements/download/(?P<statement_id>[\w-]+).pdf$',
         BillingStatementPdfView.as_view(),
-        name=BillingStatementPdfView.urlname
-    ),
+        name=BillingStatementPdfView.urlname),
     url(r'^billing/statements/$', DomainBillingStatementsView.as_view(),
         name=DomainBillingStatementsView.urlname),
     url(r'^billing/make_payment/$', InvoiceStripePaymentView.as_view(),
@@ -162,6 +166,10 @@ domain_settings = [
         name=AddFormRepeaterView.urlname),
     url(r'^forwarding/new/CaseRepeater/$', AddCaseRepeaterView.as_view(), {'repeater_type': 'CaseRepeater'},
         name=AddCaseRepeaterView.urlname),
+    url(r'^forwarding/new/UserRepeater/$', BETSUserRepeaterView.as_view(), {'repeater_type': 'UserRepeater'},
+        name=BETSUserRepeaterView.urlname),
+    url(r'^forwarding/new/LocationRepeater/$', BETSLocationRepeaterView.as_view(), {'repeater_type': 'LocationRepeater'},
+        name=BETSLocationRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
     url(r'^forwarding/test/$', test_repeater, name='test_repeater'),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', drop_repeater, name='drop_repeater'),
