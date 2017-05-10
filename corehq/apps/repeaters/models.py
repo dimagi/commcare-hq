@@ -471,6 +471,12 @@ class LocationRepeater(Repeater):
         return "forwarding locations to: %s" % self.url
 
 
+class RepeatRecordAttempt(DocumentSchema):
+    datetime = DateTimeProperty()
+    succeeded = BooleanProperty(default=False)
+    failure_reason = StringProperty()
+
+
 class RepeatRecord(Document):
     """
     An record of a particular instance of something that needs to be forwarded
