@@ -1,18 +1,12 @@
 ko.bindingHandlers.valueOrNoneUI = {
     init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var opts = valueAccessor(),
-            helper;
+        var opts = valueAccessor();
         opts.messages = opts.messages || {};
         $('span', element).each(function () {
             opts.messages[$(this).data('slug')] = $(this).html();
             $(this).hide();
         });
-        helper = new ValueOrNoneUI(opts);
-        var subElement = $('<div></div>').attr(
-            'data-bind',
-            "template: 'value-or-none-ui-template'"
-        ).appendTo(element);
-        subElement.koApplyBindings(helper);
+        $(element).find(".inner").koApplyBindings(new ValueOrNoneUI(opts));
         return {controlsDescendantBindings: true};
     }
 };
