@@ -137,3 +137,21 @@ def get_tableau_access_token(tableau_user, client_ip):
             return r.text
     else:
         raise TableauTokenException("Token request failed with code {}".format(r.status_code))
+
+
+@location_safe
+@method_decorator([toggles.ICDS_REPORTS.required_decorator(), login_and_domain_required], name='dispatch')
+class DashboardView(TemplateView):
+    template_name = 'icds_reports/dashboard.html'
+
+    @property
+    def domain(self):
+        return self.kwargs['domain']
+
+    @property
+    def couch_user(self):
+        return self.request.couch_user
+
+    def get_context_data(self, **kwargs):
+        kwargs.update(self.kwargs)
+        return super(DashboardView, self).get_context_data(**kwargs)
