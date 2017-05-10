@@ -2,7 +2,7 @@ web:
   build: .
   environment:
     COMMCAREHQ_BOOTSTRAP: "yes"
-    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379 KAFKA:9092 ELASTICSEARCH:9200 RIAKCS:9980"
+    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379 KAFKA:9092 ELASTICSEARCH:9200 RIAKCS:9980 COUCH16:5000"
     DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
   privileged: true  # allows mount inside container
   command: [runserver]
@@ -30,6 +30,11 @@ couch:
   extends:
     file: hq-compose-services.yml
     service: couch
+
+couch16:
+  extends:
+    file: hq-compose-services.yml
+    service: couch16
 
 redis:
   extends:

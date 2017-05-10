@@ -1,7 +1,7 @@
 web:
   build: .
   environment:
-    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379 KAFKA:9092 ELASTICSEARCH:9200 RIAKCS:9980"
+    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379 KAFKA:9092 ELASTICSEARCH:9200 RIAKCS:9980 COUCH16:5000"
     DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
     JS_SETUP: "${JS_SETUP}"
     NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
@@ -39,6 +39,13 @@ couch:
   command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
   expose:
     - "5984"
+  volumes:
+    - ${VOLUME_PREFIX}couchdb:/usr/local/var/lib/couchdb
+
+couch16:
+  image: klaemo/couchdb:1.6.1
+  expose:
+    - "5000"
   volumes:
     - ${VOLUME_PREFIX}couchdb:/usr/local/var/lib/couchdb
 

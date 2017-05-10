@@ -12,6 +12,13 @@ couch:
   ports:
     - "5984:5984"
 
+couch16:
+  extends:
+    file: hq-compose.yml
+    service: couch16
+  ports:
+    - "5000:5984"
+
 redis:
   extends:
     file: hq-compose.yml
