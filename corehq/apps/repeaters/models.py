@@ -168,13 +168,6 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         generator = self.get_payload_generator(self.format_or_default_format())
         return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
-    def get_payload_and_save_exception(self, repeat_record):
-        try:
-            self.get_payload(repeat_record)
-        except Exception as e:
-            repeat_record.handle_payload_exception(e)
-            raise
-
     def register(self, payload, next_check=None):
         if not self.allowed_to_forward(payload):
             return
@@ -290,7 +283,13 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def fire_for_record(self, repeat_record):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
-        payload = self.get_payload_and_save_exception(repeat_record)
+
+        try:
+            payload = self.get_payload(repeat_record)
+        except Exception as e:
+            repeat_record.handle_payload_exception(e)
+            raise
+
         url = self.get_url(repeat_record)
         try:
             response = simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
