@@ -90,6 +90,7 @@ class BeneficiaryCaseFactory(object):
 
         if self.beneficiary.dob is not None:
             kwargs['attrs']['update']['dob'] = self.beneficiary.dob.date()
+            kwargs['attrs']['update']['dob_entered'] = self.beneficiary.dob.date()
             kwargs['attrs']['update']['dob_known'] = 'yes'
         else:
             if self.beneficiary.age_entered is not None:

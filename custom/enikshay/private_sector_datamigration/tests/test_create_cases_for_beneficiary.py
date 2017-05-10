@@ -125,6 +125,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('dataset', 'real'),
             ('diabetes_status', 'diabetic'),
             ('dob', '1992-01-02'),
+            ('dob_entered', '1992-01-02'),
             ('dob_known', 'yes'),
             ('enrolled_in_private', 'true'),
             ('first_name', 'Nick'),
