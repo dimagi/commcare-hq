@@ -138,7 +138,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('migration_created_from_record', '3'),
             ('occupation', ''),
             ('phone_number', '5432109876'),
-            ('secondary_contact_phone_number', '1234567890'),
+            ('secondary_phone', '1234567890'),
             ('sex', 'male'),
         ]))
         self.assertEqual(len(person_case.xform_ids), 1)
