@@ -1,0 +1,6 @@
+<ui-select ng-model="$locationCtrl.location" thame="bootstrap">
+    <ui-select-match placeholder="Select Location"><span ng-bind="$select.selected.name"></span></ui-select-match>
+      <ui-select-choices repeat="location in $locationCtrl.locations| propsFilter: {name: $select.search}">
+        <div ng-bind-html="location.name | highlight: $select.search"></div>
+      </ui-select-choices>
+</ui-select>

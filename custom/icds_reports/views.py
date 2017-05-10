@@ -155,3 +155,9 @@ class DashboardView(TemplateView):
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
         return super(DashboardView, self).get_context_data(**kwargs)
+
+
+class IcdsDynamicTemplateView(TemplateView):
+
+    def get_template_names(self):
+        return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
