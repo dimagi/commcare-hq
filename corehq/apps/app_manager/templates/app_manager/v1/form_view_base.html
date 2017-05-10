@@ -25,7 +25,6 @@
     <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     <script src="{% static 'style/js/knockout_subscribables.ko.js' %}"></script>
-    <script src="{% static 'app_manager/js/value-or-none-ui.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
@@ -169,11 +168,33 @@
             return true;
         });
 
-        $('#form-filter').koApplyBindings({
-                formFilter: formFilter,
-                formFilterAllowed: formFilterAllowed,
-                errorMessages: {notAllowed: formFilterErrorMessage}
+        function ValueOrNoneUI(opts) {
+            var self = this;
+            var wrapObservable = function (o) {
+                if (ko.isObservable(o)) {
+                    return o;
+                } else {
+                    return ko.observable(o);
+                }
+            };
+
+            self.messages = opts.messages;
+            self.allowed = wrapObservable(opts.allowed);
+            self.inputValue = wrapObservable(opts.value || '');
+            self.hasValue = ko.observable(!!self.inputValue());
+        }
+
+        var messages = {};
+        $('#form-filter span').each(function () {
+            messages[$(this).data('slug')] = $(this).html();
+            $(this).hide();
         });
+        $('#form-filter').koApplyBindings(new ValueOrNoneUI({
+            value: formFilter,
+            allowed: formFilterAllowed,
+            messages: _.extend(messages, {notAllowed: formFilterErrorMessage}),
+        }));
+
         {% endif %}
 
         {% if allow_form_workflow %}
