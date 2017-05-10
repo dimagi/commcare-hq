@@ -344,47 +344,6 @@ ko.bindingHandlers.bootstrapTabs = {
     }
 };
 
-function ValueOrNoneUI(opts) {
-    var self = this;
-    var wrapObservable = function (o) {
-        if (ko.isObservable(o)) {
-            return o;
-        } else {
-            return ko.observable(o);
-        }
-    };
-
-    self.messages = opts.messages;
-    self.allowed = wrapObservable(opts.allowed);
-    self.inputValue = wrapObservable(opts.value || '');
-    self.hasValue = ko.observable(!!self.inputValue());
-
-    self.value = ko.computed({
-        read: function () {
-            if (self.hasValue()) {
-                return self.inputValue() || '';
-            } else {
-                return '';
-            }
-        },
-        write: function (value) {
-            self.inputValue(value)
-        }
-    });
-}
-
-function _makeClickHelper(fnName, icon) {
-    return {
-        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-            var $el = $(element);
-            $('<i></i>').addClass(icon).prependTo($el);
-            return ko.bindingHandlers.click.init(element, function () {
-                return valueAccessor()[fnName];
-            }, allBindingsAccessor, viewModel, bindingContext);
-        }
-    };
-}
-
 ko.bindingHandlers.makeHqHelp = {
     update: function (element, valueAccessor) {
         var opts = valueAccessor(),
