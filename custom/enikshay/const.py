@@ -18,6 +18,7 @@ EPISODE_PENDING_REGISTRATION = "episode_pending_registration"
 WEIGHT_BAND = 'weight_band'
 
 CURRENT_ADDRESS = 'current_address'
+ENROLLED_IN_PRIVATE = "enrolled_in_private"
 
 NINETYNINEDOTS_PERSON_PROPERTIES = [
     PRIMARY_PHONE_NUMBER,
@@ -51,5 +52,11 @@ DAILY_SCHEDULE_ID = 'schedule_daily'
 SCHEDULE_ID_FIXTURE = 'id'
 # one of values of 'adherence_closure_reason' case property
 HISTORICAL_CLOSURE_REASON = 'historical'
+
+# Voucher Case Properties
+DATE_FULFILLED = "date_fulfilled"
+VOUCHER_ID = "voucher_id"
+FULFILLED_BY_ID = "fulfilled_by_id"
+AMOUNT_APPROVED = "amount_approved"
 
 ENIKSHAY_TIMEZONE = 'Asia/Kolkata'

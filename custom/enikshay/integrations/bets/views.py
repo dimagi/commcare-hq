@@ -4,6 +4,7 @@ https://docs.google.com/document/d/1RPPc7t9NhRjOOiedlRmtCt3wQSjAnWaj69v2g7QRzS0/
 import datetime
 import json
 from django.conf import settings
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -14,7 +15,9 @@ from jsonobject.exceptions import BadValueError
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.views import AddRepeaterView
 from corehq.apps.hqcase.utils import update_case
+from corehq.apps.repeaters.views import AddCaseRepeaterView
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
@@ -63,7 +66,7 @@ class IncentiveUpdate(jsonobject.JsonObject):
     payment_amount = jsonobject.DecimalProperty(required=False)
     failure_description = jsonobject.StringProperty(required=False)
     bets_parent_event_id = jsonobject.StringProperty(
-        required=False, choices=BETS_EVENT_IDS.values())
+        required=False, choices=BETS_EVENT_IDS)
 
     case_type = CASE_TYPE_EPISODE
 
@@ -145,3 +148,67 @@ def update_voucher(request, domain):
 @toggles.ENIKSHAY_API.required_decorator()
 def update_incentive(request, domain):
     return _update_case_from_request(request, domain, IncentiveUpdate)
+
+
+class ChemistBETSVoucherRepeaterView(AddCaseRepeaterView):
+    urlname = 'chemist_bets_voucher_repeater'
+    page_title = "BETS Chemist Vouchers"
+    page_name = "BETS Chemist Vouchers (voucher case type)"
+
+
+class LabBETSVoucherRepeaterView(AddCaseRepeaterView):
+    urlname = 'lab_bets_voucher_repeater'
+    page_title = "BETS Lab Vouchers"
+    page_name = "BETS Lab Vouchers (voucher case type)"
+
+
+class BETS180TreatmentRepeaterView(AddCaseRepeaterView):
+    urlname = "bets_180_treatment_repeater"
+    page_title = "MBBS+ Providers: 6 months (180 days) of private OR govt. FDCs with treatment outcome reported"
+    page_name = "MBBS+ Providers: 6 months (180 days) of private OR govt. " \
+                "FDCs with treatment outcome reported (episode case type)"
+
+
+class BETSDrugRefillRepeaterView(AddCaseRepeaterView):
+    urlname = "bets_drug_refill_repeater"
+    page_title = "Patients: Cash transfer on subsequent drug refill"
+    page_name = "Patients: Cash transfer on subsequent drug refill (voucher case_type)"
+
+
+class BETSSuccessfulTreatmentRepeaterView(AddCaseRepeaterView):
+    urlname = "bets_successful_treatment_repeater"
+    page_title = "Patients: Cash transfer on successful treatment completion"
+    page_name = "Patients: Cash transfer on successful treatment completion (episode case type)"
+
+
+class BETSDiagnosisAndNotificationRepeaterView(AddCaseRepeaterView):
+    urlname = "bets_diagnosis_and_notification_repeater"
+    page_title = "MBBS+ Providers: To provider for diagnosis and notification of TB case"
+    page_name = "MBBS+ Providers: To provider for diagnosis and notification of TB case (episode case type)"
+
+
+class BETSAYUSHReferralRepeaterView(AddCaseRepeaterView):
+    urlname = "bets_ayush_referral_repeater"
+    page_title = "AYUSH/Other provider: Registering and referral of a presumptive TB case in UATBC/e-Nikshay"
+    page_name = "AYUSH/Other provider: Registering and referral of a presumptive TB " \
+                "case in UATBC/e-Nikshay (episode case type)"
+
+
+class BETSUserRepeaterView(AddRepeaterView):
+    urlname = "user_repeater"
+    page_title = "Users"
+    page_name = page_title
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+
+class BETSLocationRepeaterView(AddRepeaterView):
+    urlname = "location_repeater"
+    page_title = "Locations"
+    page_name = page_title
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
