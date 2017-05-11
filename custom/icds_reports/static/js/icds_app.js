@@ -1,4 +1,4 @@
-angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps'])
+angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap'])
     .controller('MainController', function($scope, $route, $routeParams, $location) {
          $scope.$route = $route;
          $scope.$location = $location;
