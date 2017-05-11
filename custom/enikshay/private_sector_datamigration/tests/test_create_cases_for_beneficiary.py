@@ -161,7 +161,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('current_episode_type', 'confirmed_tb'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
-            ('occurrence_id', '20160908010203004')
+            ('occurrence_episode_count', '1'),
+            ('occurrence_id', '20160908010203004'),
         ]))
         self.assertEqual(len(occurrence_case.indices), 1)
         self._assertIndexEqual(

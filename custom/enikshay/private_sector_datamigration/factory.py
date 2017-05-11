@@ -151,6 +151,7 @@ class BeneficiaryCaseFactory(object):
                 'update': {
                     'current_episode_type': self.beneficiary.current_episode_type,
                     'name': 'Occurrence #1',
+                    'occurrence_episode_count': 1,
                     'occurrence_id': get_human_friendly_id(),
 
                     'migration_created_case': 'true',
