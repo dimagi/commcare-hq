@@ -307,14 +307,15 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         result may be either a response object or an exception
         """
         if isinstance(result, Exception):
-            repeat_record.handle_exception(result)
+            attempt = repeat_record.handle_exception(result)
             self.generator.handle_exception(result, repeat_record)
         elif 200 <= result.status_code < 300:
-            repeat_record.handle_success(result)
+            attempt = repeat_record.handle_success(result)
             self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:
-            repeat_record.handle_failure(result)
+            attempt = repeat_record.handle_failure(result)
             self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
+        repeat_record.add_attempt(attempt)
 
 
 class FormRepeater(Repeater):
@@ -596,29 +597,26 @@ class RepeatRecord(Document):
         """Do something with the response if the repeater succeeds
         """
         now = datetime.utcnow()
-        attempt = RepeatRecordAttempt(
+        return RepeatRecordAttempt(
             cancelled=False,
             datetime=now,
             failure_reason=None,
             next_check=None,
             succeeded=True,
         )
-        self.add_attempt(attempt)
 
     def handle_failure(self, response):
         """Do something with the response if the repeater fails
         """
-        attempt = self._make_failure_attempt(
+        return self._make_failure_attempt(
             u'{}: {}. {}'.format(response.status_code, response.reason, getattr(response, 'content', None)),
             response
         )
-        self.add_attempt(attempt)
 
     def handle_exception(self, exception):
         """handle internal exceptions
         """
-        attempt = self._make_failure_attempt(unicode(exception), None)
-        self.add_attempt(attempt)
+        return self._make_failure_attempt(unicode(exception), None)
 
     def _make_failure_attempt(self, reason, response):
         datadog_counter(REPEATER_ERROR_COUNT, tags=[
