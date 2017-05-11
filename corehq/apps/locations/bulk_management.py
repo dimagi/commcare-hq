@@ -281,7 +281,7 @@ class LocationStub(object):
 
     def _moved_to_root(self):
         old_parent = self.db_object.parent.site_code if self.db_object.parent else ROOT_LOCATION_TYPE
-        if not self.is_new and self.parent_code == ROOT_LOCATION_TYPE and old_parent !=  ROOT_LOCATION_TYPE:
+        if not self.is_new and self.parent_code == ROOT_LOCATION_TYPE and old_parent != ROOT_LOCATION_TYPE:
             return True
         return False
 
