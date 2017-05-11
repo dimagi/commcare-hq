@@ -331,8 +331,21 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 title: django.gettext("Add"),
                 container: 'body',
                 content: function () {
-                    var slug = $(this).data("slug");
-                    return $('.js-popover-template-add-item-content[data-slug="' + slug + '"]').text();
+                    var slug = $(this).data("slug"),
+                        types = $(this).data("types"),
+                        $popover = $($('.js-popover-template-add-item-content[data-slug="' + slug + '"]').text());
+
+                    // Remove irrelevant items
+                    if (types && types.length) {
+                        _.each($popover.find("[data-type]"), function(item) {
+                            var $item = $(item);
+                            if (!_.contains(types, $item.data("type"))) {
+                                $item.remove()
+                            }
+                        });
+                    }
+
+                    return $popover;
                 },
                 html: true,
                 trigger: 'manual',
@@ -340,7 +353,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 template: $('#js-popover-template-add-item').text()
             }).on('show.bs.popover', function () {
                 // Close any other open popover
-                $('.js-add-new-item').not($(this).closest('.js-add-new-item')).popover('hide');
+                $('.js-add-new-item').not($(this)).popover('hide');
             }).one('shown.bs.popover', function () {
                 var pop = this;
                 $('.popover-additem').on('click', function (e) {
@@ -355,7 +368,6 @@ hqDefine('app_manager/js/app_manager.js', function () {
                             form.submit();
                         }
                     }
-
                 });
             }).on('click', function (e) {
                 e.preventDefault();

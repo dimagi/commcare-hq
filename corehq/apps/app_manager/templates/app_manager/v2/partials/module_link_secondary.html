@@ -19,7 +19,7 @@
 
   <a href="#"
      class="appnav-secondary appnav-responsive js-add-new-item" data-slug="form"
-     data-case-action="{% if module.is_surveys %}none{% else %}update{% endif %}">
+     data-types='["{% if module.is_surveys %}survey{% else %}followup{% endif %}"{% if module.doc_type == "AdvancedModule" %},"shadow"{% endif %}]'>
     <i class="fa fa-plus"></i>
   </a>
 
