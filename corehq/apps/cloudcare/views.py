@@ -49,7 +49,6 @@ from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.cloudcare.api import (
     api_closed_to_status,
     CaseAPIResult,
@@ -60,6 +59,7 @@ from corehq.apps.cloudcare.api import (
     look_up_app_json,
 )
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_app_id_from_hash
+from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
@@ -458,19 +458,14 @@ class LoginAsUsers(View):
         })
 
     def _user_query(self, search_string, page, limit):
-        user_es = get_search_users_in_domain_es_query(
-            domain=self.domain,
-            search_string=search_string or None,
-            offset=page * limit,
-            limit=limit,
-            search_fields=['phone_numbers'],
+        return login_as_user_query(
+            self.domain,
+            self.couch_user,
+            search_string,
+            limit,
+            page * limit,
+            can_access_all_locations=self.can_access_all_locations,
         )
-        if not self.can_access_all_locations:
-            loc_ids = SQLLocation.objects.accessible_to_user(
-                self.domain, self.couch_user
-            ).location_ids()
-            user_es = user_es.location(list(loc_ids))
-        return user_es.mobile_users()
 
     def _format_user(self, user_json):
         user = CouchUser.wrap_correctly(user_json)
