@@ -300,6 +300,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         });
 
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+            // TODO
             $(document).on('click', '.js-new-form', function (e) {
                 e.preventDefault();
                 var $a = $(this),
@@ -326,16 +327,20 @@ hqDefine('app_manager/js/app_manager.js', function () {
 
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
 
-            $('#js-add-new-item').popover({
+            $('.js-add-new-item').popover({
                 title: django.gettext("Add"),
                 container: 'body',
                 content: function () {
-                    return $('#js-popover-template-add-item-content').text();
+                    var slug = $(this).data("slug");
+                    return $('.js-popover-template-add-item-content[data-slug="' + slug + '"]').text();
                 },
                 html: true,
                 trigger: 'manual',
                 placement: 'right',
                 template: $('#js-popover-template-add-item').text()
+            }).on('show.bs.popover', function () {
+                // Close any other open popover
+                $('.js-add-new-item').not($(this).closest('.js-add-new-item')).popover('hide');
             }).one('shown.bs.popover', function () {
                 var pop = this;
                 $('.popover-additem').on('click', function (e) {
@@ -357,9 +362,10 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 $(this).popover('show');
             });
 
+            // Close any open popover when user clicks elsewhere on the page
             $('body').click(function (event) {
                 if (!($(event.target).hasClass('appnav-add') || $(event.target).hasClass('popover-additem-option') || $(event.target).hasClass('fa'))) {
-                    $('#js-add-new-item').popover('hide');
+                    $('.js-add-new-item').popover('hide');
                 }
             });
 

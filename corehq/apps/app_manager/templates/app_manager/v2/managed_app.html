@@ -108,7 +108,7 @@
       <div class="popover popover-additem" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>
     </script>
 
-    <script type="text/html" id="js-popover-template-add-item-content">
+    <script type="text/html" class="js-popover-template-add-item-content" data-slug="module">
       <div>
         <div class="pull-left">
           <button type="button" class="popover-additem-option new-module" data-type="survey">
@@ -155,6 +155,26 @@
             </button>
           </div>
         {% endif %}
+      </div>
+    </script>
+
+    <script type="text/html" class="js-popover-template-add-item-content" data-slug="form">
+      <div>
+          <div class="pull-left">
+              <button type="button" class="popover-additem-option new-module-form" data-type="survey">
+                <i class="fa fa-file-o"></i> {% trans "Survey" %}
+              </button>
+          </div>
+          <div class="pull-left">
+              <button type="button" class="popover-additem-option new-module-form" data-type="survey">
+                <i class="fcc fcc-app-updateform"></i> {% trans "Followup" %}
+              </button>
+          </div>
+          <div class="pull-left">
+            <button type="button" class="popover-additem-option new-module-form" data-type="shadow">
+              <i class="fa fa-moon-o"></i> {% trans "Shadow Form" %}
+            </button>
+          </div>
       </div>
     </script>
 {% endblock %}
