@@ -57,7 +57,7 @@ def _get_commcare_users_in_domain(active_flag, domain, start_at, limit):
     ).all()
 
 
-def get_search_users_in_domain_es_query(domain, search_string, limit, offset, search_fields=None):
+def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
     """
     returns a UserES object
     :param domain:
@@ -67,8 +67,6 @@ def get_search_users_in_domain_es_query(domain, search_string, limit, offset, se
     :param search_fields: An array of additional search fields to search
     """
     default_search_fields = ["base_username", "last_name", "first_name"]
-    if search_fields:
-        default_search_fields.extend(search_fields)
 
     return (UserES()
             .domain(domain)
