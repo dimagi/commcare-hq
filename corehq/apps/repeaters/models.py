@@ -538,8 +538,9 @@ class RepeatRecord(Document):
         self.last_checked = attempt.datetime
         self.next_check = attempt.next_check
         self.succeeded = attempt.succeeded
-        self.failure_reason = attempt.failure_reason
         self.cancelled = attempt.cancelled
+        if attempt.failure_reason is not None:
+            self.failure_reason = attempt.failure_reason
 
     def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls
@@ -593,9 +594,15 @@ class RepeatRecord(Document):
     def handle_success(self, response):
         """Do something with the response if the repeater succeeds
         """
-        self.last_checked = datetime.utcnow()
-        self.next_check = None
-        self.succeeded = True
+        now = datetime.utcnow()
+        attempt = RepeatRecordAttempt(
+            datetime=now,
+            next_check=None,
+            succeeded=True,
+            cancelled=False,
+            failure_reason=None,
+        )
+        self.add_attempt(attempt)
 
     def handle_failure(self, response):
         """Do something with the response if the repeater fails
