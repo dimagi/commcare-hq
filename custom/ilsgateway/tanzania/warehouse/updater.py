@@ -221,16 +221,20 @@ def _get_test_locations(domain):
            [test_region.couch_location]
 
 
+def _get_locations_by_type(domain, type_name):
+    return list(SQLLocation.active_objects.filter(domain=domain, location_type__name=type_name))
+
+
 def populate_report_data(start_date, end_date, domain, runner, strict=True):
     facilities = SQLLocation.objects.filter(
         location_type__name='FACILITY',
         domain=domain,
         created_at__lt=end_date
     ).order_by('pk').couch_locations()
-    non_facilities = list(Location.filter_by_type(domain, 'DISTRICT'))
-    non_facilities += list(Location.filter_by_type(domain, 'REGION'))
-    non_facilities += list(Location.filter_by_type(domain, 'MSDZONE'))
-    non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
+    non_facilities = _get_locations_by_type(domain, 'DISTRICT')
+    non_facilities += _get_locations_by_type(domain, 'REGION')
+    non_facilities += _get_locations_by_type(domain, 'MSDZONE')
+    non_facilities += _get_locations_by_type(domain, 'MOHSW')
 
     if runner.location:
         if runner.location.location_type.name.upper() != 'FACILITY':
