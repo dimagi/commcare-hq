@@ -858,6 +858,26 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     class InvalidID(Exception):
         pass
 
+    def __repr__(self):
+        # copied from jsonobject/base.py
+        name = self.__class__.__name__
+        predefined_properties = set(self._properties_by_attr.keys())
+        predefined_property_keys = set(self._properties_by_attr[p].name
+                                       for p in predefined_properties)
+        dynamic_properties = (set(self._wrapped.keys())
+                              - predefined_property_keys)
+
+        # redact hashed password
+        properties = sorted(predefined_properties - {'password'}) + sorted(dynamic_properties - {'password'})
+
+        return u'{name}({keyword_args})'.format(
+            name=name,
+            keyword_args=', '.join('{key}={value!r}'.format(
+                key=key,
+                value=getattr(self, key)
+            ) for key in properties),
+        )
+
     @property
     def is_dimagi(self):
         return self.username.endswith('@dimagi.com')
@@ -1604,7 +1624,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             )
             deleted_forms.update(form_id_list)
 
-        tag_system_forms_as_deleted(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
+        tag_system_forms_as_deleted.delay(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
 
         try:
             django_user = self.get_django_user()

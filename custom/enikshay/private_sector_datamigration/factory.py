@@ -64,11 +64,14 @@ class BeneficiaryCaseFactory(object):
                     'dataset': 'real',
                     'enrolled_in_private': 'true',
                     'first_name': self.beneficiary.firstName,
+                    'husband_father_name': self.beneficiary.husband_father_name,
+                    'language_preference': self.beneficiary.language_preference,
                     'last_name': self.beneficiary.lastName,
                     'name': ' '.join([self.beneficiary.firstName, self.beneficiary.lastName]),
-                    'occupation': '',
+                    'person_occurrence_count': 1,
                     'phone_number': self.beneficiary.phoneNumber,
-                    'secondary_contact_phone_number': self.beneficiary.emergencyContactNo,
+                    'send_alerts': self.beneficiary.send_alerts,
+                    'secondary_phone': self.beneficiary.emergencyContactNo,
 
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.beneficiary.caseId,
@@ -90,6 +93,7 @@ class BeneficiaryCaseFactory(object):
 
         if self.beneficiary.dob is not None:
             kwargs['attrs']['update']['dob'] = self.beneficiary.dob.date()
+            kwargs['attrs']['update']['dob_entered'] = self.beneficiary.dob.date()
             kwargs['attrs']['update']['dob_known'] = 'yes'
         else:
             if self.beneficiary.age_entered is not None:
@@ -107,30 +111,34 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['other_id_number'] = self.beneficiary.identificationNumber
             kwargs['attrs']['update']['other_id_type'] = self.beneficiary.other_id_type
 
-        if self._episode:
-            kwargs['attrs']['update']['diabetes_status'] = self._episode.diabetes_status
-            kwargs['attrs']['update']['hiv_status'] = self._episode.hiv_status
-            kwargs['attrs']['update']['current_patient_type_choice'] = self._episode.current_patient_type_choice
-
-            if self._episode.is_treatment_ended:
-                kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
-                kwargs['attrs']['update']['is_active'] = 'no'
-                if self._episode.treatment_outcome == 'died':
-                    kwargs['attrs']['close'] = True
-            else:
-                kwargs['attrs']['update']['is_active'] = 'yes'
-
         agency = (
             self._episode.treating_provider or self.beneficiary.referred_provider
             if self._episode else self.beneficiary.referred_provider
         )
         assert agency is not None
+        facility_assigned_to = SQLLocation.active_objects.get(
+            domain=self.domain,
+            site_code=agency.nikshayId,
+        ).location_id
+        kwargs['attrs']['update']['facility_assigned_to'] = facility_assigned_to
 
-        if not self._episode or not self._episode.is_treatment_ended:
-            kwargs['attrs']['owner_id'] = SQLLocation.active_objects.get(
-                domain=self.domain,
-                site_code=agency.nikshayId,
-            ).location_id
+        if self._episode:
+            kwargs['attrs']['update']['diabetes_status'] = self._episode.diabetes_status
+            kwargs['attrs']['update']['hiv_status'] = self._episode.hiv_status
+
+            if self._episode.is_treatment_ended:
+                kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
+                kwargs['attrs']['update']['archive_reason'] = self._episode.treatment_outcome
+                kwargs['attrs']['update']['is_active'] = 'no'
+                kwargs['attrs']['update']['last_owner'] = facility_assigned_to
+                if self._episode.treatment_outcome == 'died':
+                    kwargs['attrs']['close'] = True
+                    kwargs['attrs']['update']['last_reason_to_close'] = self._episode.treatment_outcome
+            else:
+                kwargs['attrs']['owner_id'] = facility_assigned_to
+                kwargs['attrs']['update']['is_active'] = 'yes'
+        else:
+            kwargs['attrs']['owner_id'] = facility_assigned_to
 
         return CaseStructure(**kwargs)
 
@@ -143,6 +151,7 @@ class BeneficiaryCaseFactory(object):
                 'update': {
                     'current_episode_type': self.beneficiary.current_episode_type,
                     'name': 'Occurrence #1',
+                    'occurrence_episode_count': 1,
                     'occurrence_id': get_human_friendly_id(),
 
                     'migration_created_case': 'true',
@@ -169,9 +178,9 @@ class BeneficiaryCaseFactory(object):
                 'create': True,
                 'owner_id': '-',
                 'update': {
-                    'adherence_schedule_id': 'schedule_mwf',  # TODO - confirm
                     'date_of_mo_signature': self.beneficiary.dateOfRegn.date(),
                     'dots_99_enabled': 'false',  # TODO - confirm or fix
+                    'enrolled_in_private': 'true',
                     'episode_id': get_human_friendly_id(),
                     'episode_type': self.beneficiary.current_episode_type,
                     'name': self.beneficiary.episode_name,
@@ -192,12 +201,20 @@ class BeneficiaryCaseFactory(object):
         if self._episode:
             rx_start_datetime = self._episode.rxStartDate
             kwargs['attrs']['date_opened'] = rx_start_datetime
-            kwargs['attrs']['update']['adherence_schedule_date_start'] = rx_start_datetime.date()
+            kwargs['attrs']['update']['basis_of_diagnosis'] = self._episode.basis_of_diagnosis
+            kwargs['attrs']['update']['case_definition'] = self._episode.case_definition
             kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()
             kwargs['attrs']['update']['disease_classification'] = self._episode.disease_classification
+            kwargs['attrs']['update']['dst_status'] = self._episode.dst_status
+            kwargs['attrs']['update']['episode_details_complete'] = 'true'
             kwargs['attrs']['update']['episode_pending_registration'] = (
                 'yes' if self._episode.nikshayID is None else 'no'
             )
+            kwargs['attrs']['update']['new_retreatment'] = self._episode.new_retreatment
+            kwargs['attrs']['update']['patient_type'] = self._episode.patient_type
+            kwargs['attrs']['update']['retreatment_reason'] = self._episode.retreatment_reason
+            kwargs['attrs']['update']['site'] = self._episode.site_property
+            kwargs['attrs']['update']['site_choice'] = self._episode.site_choice
             kwargs['attrs']['update']['treatment_card_completed_date'] = self._episode.creationDate.date()
             kwargs['attrs']['update']['treatment_initiated'] = 'yes_private'
             kwargs['attrs']['update']['treatment_initiation_date'] = rx_start_datetime.date()
@@ -206,6 +223,9 @@ class BeneficiaryCaseFactory(object):
             if self._episode.nikshayID:
                 kwargs['attrs']['external_id'] = self._episode.nikshayID
                 kwargs['attrs']['update']['nikshay_id'] = self._episode.nikshayID
+
+            if self._episode.rxOutcomeDate is not None:
+                kwargs['attrs']['update']['rx_outcome_date'] = self._episode.rxOutcomeDate.date()
 
             if self._episode.disease_classification == 'extra_pulmonary':
                 kwargs['attrs']['update']['site_choice'] = self._episode.site_choice

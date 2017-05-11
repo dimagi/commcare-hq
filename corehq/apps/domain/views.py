@@ -2487,7 +2487,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
         except KeyError:
             raise Http404(
                 "No such repeater {}. Valid types: {}".format(
-                    self.repeater_type, get_all_repeater_types.keys()
+                    self.repeater_type, get_all_repeater_types().keys()
                 )
             )
 

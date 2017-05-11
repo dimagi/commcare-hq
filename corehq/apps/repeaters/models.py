@@ -9,6 +9,8 @@ from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
 from requests.exceptions import Timeout, ConnectionError
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
 from corehq.util.datadog.gauges import datadog_counter
@@ -152,39 +154,25 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def get_cancelled_record_count(self):
         return get_cancelled_repeat_record_count(self.domain, self._id)
 
-    def format_or_default_format(self):
+    def _format_or_default_format(self):
         from corehq.apps.repeaters.repeater_generators import RegisterGenerator
         return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
 
-    def get_payload_generator(self, payload_format):
+    def _get_payload_generator(self, payload_format):
         from corehq.apps.repeaters.repeater_generators import RegisterGenerator
         gen = RegisterGenerator.generator_class_by_repeater_format(self.__class__, payload_format)
         return gen(self)
+
+    @property
+    @memoized
+    def generator(self):
+        return self._get_payload_generator(self._format_or_default_format())
 
     def payload_doc(self, repeat_record):
         raise NotImplementedError
 
     def get_payload(self, repeat_record):
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
-
-    def get_payload_and_handle_exception(self, repeat_record, save_failure=True):
-        try:
-            return self.get_payload(repeat_record)
-        except ResourceNotFound as e:
-            # this repeater is pointing at a missing document
-            # quarantine it and tell it to stop trying.
-            logging.exception(
-                u'Repeater {} in domain {} references a missing or deleted document!'.format(
-                    repeat_record._id, self.domain,
-                ))
-
-            if save_failure:
-                repeat_record.handle_payload_exception(e)
-        except Exception as e:
-            if save_failure:
-                repeat_record.handle_payload_exception(e)
-            raise
+        return self.generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
     def register(self, payload, next_check=None):
         if not self.allowed_to_forward(payload):
@@ -281,9 +269,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
 
     def get_headers(self, repeat_record):
         # to be overridden
-        generator = self.get_payload_generator(self.format_or_default_format())
-        headers = generator.get_headers()
-        return headers
+        return self.generator.get_headers()
 
     def _use_basic_auth(self):
         return self.auth_type == "basic"
@@ -301,7 +287,15 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def fire_for_record(self, repeat_record):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
-        payload = self.get_payload_and_handle_exception(repeat_record)
+
+        try:
+            payload = self.get_payload(repeat_record)
+        except Exception as e:
+            # todo: seems like this just does everything that handle_exception does but not as well.
+            # todo:   seems like they could be combined
+            repeat_record.handle_payload_exception(e)
+            raise
+
         url = self.get_url(repeat_record)
         try:
             response = simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
@@ -321,31 +315,13 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         """
         if isinstance(result, Exception):
             repeat_record.handle_exception(result)
-            self.handle_exception(result, repeat_record)
+            self.generator.handle_exception(result, repeat_record)
         elif 200 <= result.status_code < 300:
             repeat_record.handle_success(result)
-            self.handle_success(result, repeat_record)
+            self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:
             repeat_record.handle_failure(result)
-            self.handle_failure(result, repeat_record)
-
-    def handle_success(self, response, repeat_record):
-        """handle a successful post
-        """
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_success(response, self.payload_doc(repeat_record), repeat_record)
-
-    def handle_failure(self, response, repeat_record):
-        """handle a failed post
-        """
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_failure(response, self.payload_doc(repeat_record), repeat_record)
-
-    def handle_exception(self, exception, repeat_record):
-        """handle an exception during a post
-        """
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_exception(exception, repeat_record)
+            self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
 
 
 class FormRepeater(Repeater):
@@ -467,6 +443,34 @@ class AppStructureRepeater(Repeater):
         return None
 
 
+class UserRepeater(Repeater):
+    friendly_name = _("Forward Users")
+
+    class Meta(object):
+        app_label = 'repeaters'
+
+    @memoized
+    def payload_doc(self, repeat_record):
+        return CommCareUser.get(repeat_record.payload_id)
+
+    def __unicode__(self):
+        return "forwarding users to: %s" % self.url
+
+
+class LocationRepeater(Repeater):
+    friendly_name = _("Forward Locations")
+
+    class Meta(object):
+        app_label = 'repeaters'
+
+    @memoized
+    def payload_doc(self, repeat_record):
+        return SQLLocation.objects.get(location_id=repeat_record.payload_id)
+
+    def __unicode__(self):
+        return "forwarding locations to: %s" % self.url
+
+
 class RepeatRecord(Document):
     """
     An record of a particular instance of something that needs to be forwarded
@@ -551,14 +555,13 @@ class RepeatRecord(Document):
         # never checked, or it's time to check again
         return not self.succeeded
 
-    def get_payload(self, save_failure=True):
-        warnings.warn("RepeatRecord.get_payload is deprecated. Use Repeater.get_payload_and_handle_exception.",
-                      DeprecationWarning)
-        return self.repeater.get_payload_and_handle_exception(self, save_failure=save_failure)
+    def get_payload(self):
+        return self.repeater.get_payload(self)
 
     def handle_payload_exception(self, exception):
         self.succeeded = False
         self.failure_reason = unicode(exception)
+        self.cancel()
         self.save()
 
     def fire(self, force_send=False):

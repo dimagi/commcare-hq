@@ -9,14 +9,15 @@
     <fieldset>
         {% block settings_fields %}
 
+
+          {% if child_module_enabled or module.module_type == 'shadow' or app.advanced_app_builder or module.put_in_root or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
           <div class="panel panel-appmanager">
             <div class="panel-heading">
               <h4 class="panel-title panel-title-nolink">{% trans "Case Settings" %}</h4>
             </div>
             <div class="panel-body">
-
               {% if not module.is_surveys %}
-                  {% include "app_manager/v2/partials/module_view_case_type.html" %}
+                {% include "app_manager/v2/partials/module_view_case_type.html" %}
               {% endif %}
 
               {% if child_module_enabled %}
@@ -112,6 +113,7 @@
 
             </div>
           </div>
+          {% endif %}
 
            <div class="panel panel-appmanager">
             <div class="panel-heading">
