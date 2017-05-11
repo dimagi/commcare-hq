@@ -109,6 +109,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             rxStartDate=datetime(2017, 4, 19),
             rxOutcomeDate=datetime(2017, 5, 19),
             site='Extrapulmonary',
+            treatmentPhase='Continuation Phase',
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )
@@ -210,6 +211,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('treatment_card_completed_date', '2017-04-20'),
             ('treatment_initiated', 'yes_private'),
             ('treatment_initiation_date', '2017-04-19'),
+            ('treatment_phase', 'continuation_phase_cp'),
             ('weight', '50'),
         ]))
         self.assertEqual(len(episode_case.indices), 1)

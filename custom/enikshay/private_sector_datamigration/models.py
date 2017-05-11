@@ -368,6 +368,17 @@ class Episode(models.Model):
         return get_agency_by_motech_user_name(self.treatingQP)
 
     @property
+    def treatment_phase(self):
+        return {
+            'Intensive Phase': 'ip',
+            'Extended IP': 'extended_ip',
+            'Continuation Phase': 'continuation_phase_cp',
+            'N/A': '',
+            'Select': '',
+            None: '',
+        }[self.treatmentPhase]
+
+    @property
     def treatment_outcome(self):
         if self.treatmentOutcomeId is None:
             return None

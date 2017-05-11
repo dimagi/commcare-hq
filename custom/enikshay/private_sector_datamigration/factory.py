@@ -218,6 +218,7 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['treatment_card_completed_date'] = self._episode.creationDate.date()
             kwargs['attrs']['update']['treatment_initiated'] = 'yes_private'
             kwargs['attrs']['update']['treatment_initiation_date'] = rx_start_datetime.date()
+            kwargs['attrs']['update']['treatment_phase'] = self._episode.treatment_phase
             kwargs['attrs']['update']['weight'] = int(self._episode.patientWeight)
 
             if self._episode.nikshayID:
