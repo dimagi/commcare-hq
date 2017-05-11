@@ -55,9 +55,7 @@ class RepeatRecordView(LoginAndDomainMixin, View):
 
     def get(self, request, domain):
         record = self.get_record_or_404(request, domain)
-        content_type = record.repeater.get_payload_generator(
-            record.repeater.format_or_default_format()
-        ).content_type
+        content_type = record.repeater.generator.content_type
         try:
             payload = record.get_payload()
         except XFormNotFound:
