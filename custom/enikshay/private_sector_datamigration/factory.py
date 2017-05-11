@@ -170,6 +170,7 @@ class BeneficiaryCaseFactory(object):
                 'owner_id': '-',
                 'update': {
                     'date_of_mo_signature': self.beneficiary.dateOfRegn.date(),
+                    'diagnosing_facility_id': self._location_owner_id,
                     'dots_99_enabled': 'false',  # TODO - confirm or fix
                     'enrolled_in_private': 'true',
                     'episode_id': get_human_friendly_id(),

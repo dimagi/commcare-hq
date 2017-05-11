@@ -190,6 +190,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('case_definition', 'clinical'),
             ('date_of_diagnosis', '2017-04-18'),
             ('date_of_mo_signature', '2017-04-17'),
+            ('diagnosing_facility_id', self.pcp.location_id),
             ('disease_classification', 'extrapulmonary'),
             ('dots_99_enabled', 'false'),
             ('dst_status', 'rif_sensitive'),
