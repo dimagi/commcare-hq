@@ -93,9 +93,10 @@ class GetCaseHistorySpec(JsonObject):
         case_history = []
         for f in forms:
             case_blocks = extract_case_blocks(f)
-            case_history.append(
-                next(case_block for case_block in case_blocks
-                     if case_block['@case_id'] == case_id))
+            if case_blocks:
+                case_history.append(
+                    next(case_block for case_block in case_blocks
+                         if case_block['@case_id'] == case_id))
         context.set_cache_value(cache_key, case_history)
         return case_history
 
