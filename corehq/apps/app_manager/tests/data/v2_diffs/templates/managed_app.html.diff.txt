@@ -20,7 +20,7 @@
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -25,281 +28,137 @@
+@@ -25,281 +28,131 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -98,28 +98,7 @@
 -                {% trans "Multimedia" %}
 -            </a>
 -        </li>
-+
-+      <div class="appnav-toggle-label">
-+          <div class="btn-group pull-right">
-+            <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
-+            <button type="button"
-+                    class="btn btn-xs btn-default"
-+                    data-toggle="modal"
-+                    data-target="#rollout-revert-modal"
-+                    data-redirect="{% url "view_app" domain app.id %}"
-+            >{% trans "Off" %}</button>
-+          </div>
-+          {% trans "New App Builder" %}
-+          <span class="hq-help-template"
-+                data-title="New App Builder"
-+                data-content="{% trans "Turn off new app builder for now." %}"></span>
-+      </div>
-+
-+        {% if app.advanced_app_builder %}
-+          <div class="appnav-advanced-label">
-+            {% trans "Advanced App Builder" %}
-+          </div>
-         {% endif %}
+-        {% endif %}
 -        {% if app.get_doc_type != "LinkedApplication" %}
 -        <li>
 -            <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Languages" %}: {{ app.name }}"{% endif %}>
@@ -179,7 +158,22 @@
 -                            data-placement="top"
 -                            {% endif %}
 -                            ></i>
--
++      <div class="appnav-toggle-label">
++          <div class="btn-group pull-right">
++            <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
++            <button type="button"
++                    class="btn btn-xs btn-default"
++                    data-toggle="modal"
++                    data-target="#rollout-revert-modal"
++                    data-redirect="{% url "view_app" domain app.id %}"
++            >{% trans "Off" %}</button>
++          </div>
++          {% trans "New App Builder" %}
++          <span class="hq-help-template"
++                data-title="New App Builder"
++                data-content="{% trans "Turn off new app builder for now." %}"></span>
++      </div>
+ 
 -                            <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
 -                                {{ module.name|html_trans:langs }}
 -
