@@ -470,7 +470,6 @@ class LoginAsUsers(View):
                 self.domain, self.couch_user
             ).location_ids()
             user_es = user_es.location(list(loc_ids))
-        print user_es.pprint()
         return user_es.mobile_users()
 
     def _format_user(self, user_json):
