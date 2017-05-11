@@ -492,6 +492,24 @@ class RepeatRecord(Document):
     cancelled = BooleanProperty(default=False)
 
     payload_id = StringProperty()
+    attempts = ListProperty(RepeatRecordAttempt)
+
+    @classmethod
+    def wrap(cls, data):
+        should_bootstrap_attempts = ('attempts' not in data)
+
+        self = super(RepeatRecord, cls).wrap(data)
+
+        if should_bootstrap_attempts and self.last_checked:
+            assert not self.attempts
+            self.attempts = [RepeatRecordAttempt(
+                cancelled=self.cancelled,
+                datetime=self.last_checked,
+                failure_reason=self.failure_reason,
+                next_check=self.next_check,
+                succeeded=self.succeeded,
+            )]
+        return self
 
     @property
     @memoized
@@ -536,6 +554,7 @@ class RepeatRecord(Document):
         return results['value'] if results else 0
 
     def add_attempt(self, attempt):
+        self.attempts.append(attempt)
         self.last_checked = attempt.datetime
         self.next_check = attempt.next_check
         self.succeeded = attempt.succeeded
