@@ -1,7 +1,7 @@
 from django.dispatch import receiver
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
-from corehq.apps.locations.models import SQLLocation, Location
+from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import WebUser
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
@@ -95,7 +95,7 @@ class EWSExtension(models.Model):
     def supply_point(self):
         if not self.location_id:
             return
-        return Location.get(doc_id=self.location_id).linked_supply_point()
+        return get_location(self.location_id).linked_supply_point()
 
     @property
     def web_user(self):
