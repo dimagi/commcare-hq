@@ -160,6 +160,7 @@ class LocationStub(object):
         # Whether the db_object needs a SQL save, either because it's new or because some attributes
         #   are changed
         self.needs_save = False
+        self.moved_to_root = False
 
     @classmethod
     def from_excel_row(cls, row, index, location_type):
@@ -201,6 +202,7 @@ class LocationStub(object):
             self.db_object = copy.copy(old_collection.locations_by_id[self.location_id])
 
         self.needs_save = self._needs_save()
+        self.moved_to_root = self._moved_to_root()
 
         for attr in self.meta_data_attrs:
             setattr(self.db_object, attr, getattr(self, attr, None))
@@ -275,6 +277,11 @@ class LocationStub(object):
         if old_parent != self.parent_code:
             return True
 
+        return False
+
+    def _moved_to_root(self):
+        if not self.is_new and self.parent_code == ROOT_LOCATION_TYPE and self.db_object.parent.site_code !=  ROOT_LOCATION_TYPE:
+            return True
         return False
 
 
@@ -424,8 +431,10 @@ class NewLocationImporter(object):
 
         type_objects = save_types(type_stubs, self.excel_importer)
         types_changed = any(loc_type.needs_save for loc_type in type_stubs)
+        moved_to_root = any(loc.moved_to_root for loc in location_stubs)
+        delay_updates = types_changed or moved_to_root
         save_locations(location_stubs, type_objects, self.domain,
-                       types_changed, self.excel_importer, self.chunk_size)
+                       delay_updates, self.excel_importer, self.chunk_size)
         # Since we updated LocationType objects in bulk, some of the post-save logic
         #   that occurs inside LocationType.save needs to be explicitly called here
         for lt in type_stubs:
@@ -840,7 +849,7 @@ def save_types(type_stubs, excel_importer=None):
     return all_objs_by_code
 
 
-def save_locations(location_stubs, types_by_code, domain, types_changed, excel_importer=None, chunk_size=100):
+def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_importer=None, chunk_size=100):
     """
     :param location_stubs: (list) List of LocationStub objects with
         attributes like 'db_object', 'needs_save', 'do_delete' set
@@ -899,7 +908,7 @@ def save_locations(location_stubs, types_by_code, domain, types_changed, excel_i
     to_be_deleted = []
 
     top_to_bottom_locations = order_by_location_type()
-    if not types_changed:
+    if not delay_updates:
         for locs in chunked(top_to_bottom_locations, chunk_size):
             with transaction.atomic():
                 with SQLLocation.objects.delay_mptt_updates():
