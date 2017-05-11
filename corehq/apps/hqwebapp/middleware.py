@@ -22,4 +22,3 @@ class HQCsrfViewMiddleWare(CsrfViewMiddleware):
         _assert(False, warning)
 
         return super(HQCsrfViewMiddleWare, self)._reject(request, reason)
-
