@@ -17,7 +17,7 @@ from custom.enikshay.const import (
     FULFILLED_BY_ID,
     AMOUNT_APPROVED,
     TREATMENT_OUTCOME_DATE,
-    PRESCRIPTION_TOTAL_DAYS_THRESHOLD)
+    PRESCRIPTION_TOTAL_DAYS_THRESHOLD, LAST_VOUCHER_CREATED_BY_ID, NOTIFYING_PROVIDER_USER_ID)
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT,
     DRUG_REFILL_EVENT,
@@ -72,8 +72,7 @@ class IncentivePayload(BETSPayload):
         return cls(
             EventID=TREATMENT_180_EVENT,
             EventOccurDate=episode_case_properties.get(TREATMENT_OUTCOME_DATE),
-            # TODO: Get this value from some episode/voucher case property
-            BeneficiaryUUID=None,
+            BeneficiaryUUID=episode_case_properties.get(LAST_VOUCHER_CREATED_BY_ID),
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=location.metadata["nikshay_code"],
@@ -142,7 +141,7 @@ class IncentivePayload(BETSPayload):
         return cls(
             EventID=DIAGNOSIS_AND_NOTIFICATION_EVENT,
             EventOccurDate=cls._india_now(),
-            BeneficiaryUUID=person_case.owner_id,
+            BeneficiaryUUID=episode_case.dynamic_case_properties().get(NOTIFYING_PROVIDER_USER_ID),
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type],
             EpisodeID=episode_case.case_id,
             Location=location.metadata["nikshay_code"],
@@ -162,7 +161,7 @@ class IncentivePayload(BETSPayload):
         return cls(
             EventID=AYUSH_REFERRAL_EVENT,
             EventOccurDate=cls._india_now(),
-            BeneficiaryUUID=episode_case_properties.get("created_by_user_location_id"),
+            BeneficiaryUUID=episode_case_properties.get("created_by_user_id"),
             BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,
             Location=location.metadata["nikshay_code"],
