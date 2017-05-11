@@ -201,6 +201,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('migration_created_from_record', '3'),
             ('new_retreatment', 'new'),
             ('nikshay_id', '02139-02215'),
+            ('patient_type', 'new'),
             ('retreatment_reason', ''),
             ('rx_outcome_date', '2017-05-19'),
             ('site', 'extrapulmonary'),

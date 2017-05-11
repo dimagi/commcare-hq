@@ -260,6 +260,14 @@ class Episode(models.Model):
             return 'microbiological'
 
     @property
+    def patient_type(self):
+        return {
+            'new': 'new',
+            'retreatment': self.retreatment_reason,
+            '': '',
+        }[self.new_retreatment]
+
+    @property
     def retreatment_reason(self):
         if self.newOrRetreatment == 'Retreatment':
             return {
