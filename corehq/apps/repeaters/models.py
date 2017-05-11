@@ -154,11 +154,11 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def get_cancelled_record_count(self):
         return get_cancelled_repeat_record_count(self.domain, self._id)
 
-    def format_or_default_format(self):
+    def _format_or_default_format(self):
         from corehq.apps.repeaters.repeater_generators import RegisterGenerator
         return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
 
-    def get_payload_generator(self, payload_format):
+    def _get_payload_generator(self, payload_format):
         from corehq.apps.repeaters.repeater_generators import RegisterGenerator
         gen = RegisterGenerator.generator_class_by_repeater_format(self.__class__, payload_format)
         return gen(self)
@@ -166,7 +166,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     @property
     @memoized
     def generator(self):
-        return self.get_payload_generator(self.format_or_default_format())
+        return self._get_payload_generator(self._format_or_default_format())
 
     def payload_doc(self, repeat_record):
         raise NotImplementedError
