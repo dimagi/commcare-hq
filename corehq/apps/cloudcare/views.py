@@ -462,7 +462,8 @@ class LoginAsUsers(View):
             domain=self.domain,
             search_string=search_string or None,
             offset=page * limit,
-            limit=limit
+            limit=limit,
+            search_fields=['phone_numbers'],
         )
         if not self.can_access_all_locations:
             loc_ids = SQLLocation.objects.accessible_to_user(
